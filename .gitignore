@@ -1,0 +1,7 @@
+# Godot
+game/.godot/
+game/export_presets.cfg
+*.translation
+# local
+screenshots/
+.DS_Store

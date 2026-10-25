@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bandit_archer"
+name_key = "ENEMY_BANDIT_ARCHER"
+max_hp = 7
+move = 4
+jump = 1
+attack = 3
+defense = 10
+damage = 2
+range_min = 2
+range_max = 4
+magic = false
+skills = {}

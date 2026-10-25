@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/character_def.gd" id="1"]
+[ext_resource type="Resource" path="res://data/classes/duo.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"lewith_flark"
+name_key = "CHAR_LEWITH_FLARK"
+class_def = ExtResource("2")
+off_skills = {"masonry": 3, "tame": 3}
+perks = Array[StringName]([])
+deficiency = &""
+food_per_day = 2
+party_slots = 2
+inventory_slots = 0
+unlock = "runs_2"
+tint = Color(0.75, 0.55, 0.35, 1)

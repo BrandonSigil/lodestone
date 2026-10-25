@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hunter"
+name_key = "CLASS_HUNTER"
+max_hp = 10
+move = 5
+jump = 2
+attack = 4
+defense = 11
+damage = 3
+range_min = 2
+range_max = 4
+magic = false
+skills = {"hunt": 5, "sneak": 3}

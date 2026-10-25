@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/character_def.gd" id="1"]
+[ext_resource type="Resource" path="res://data/classes/wizard.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"wizard"
+name_key = "CHAR_WIZARD"
+class_def = ExtResource("2")
+off_skills = {"forage": 1}
+perks = Array[StringName]([])
+deficiency = &"bookbound"
+food_per_day = 1
+party_slots = 1
+inventory_slots = 3
+unlock = "runs_1"
+tint = Color(0.35, 0.4, 0.75, 1)

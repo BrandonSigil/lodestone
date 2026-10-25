@@ -1,0 +1,63 @@
+extends Node
+## Loads game data once: roster, classes, events, encounters.
+
+const CHAR_DIR := "res://data/characters/"
+const CLASS_DIR := "res://data/classes/"
+## Roster display order. Every id needs a .tres in data/characters.
+const ROSTER := [&"lead", &"stardrop", &"hunter", &"wizard", &"bushberry", &"skeleton_archer", &"lewith_flark"]
+
+var characters: Dictionary = {}  # id -> CharacterDef
+var events: Array[Dictionary] = []
+var encounters: Dictionary = {}  # id -> {"units": Array[String], "loot": String}
+
+
+func _ready() -> void:
+	reload()
+
+
+func reload() -> void:
+	characters.clear()
+	for id in ROSTER:
+		characters[id] = load(CHAR_DIR + String(id) + ".tres")
+	events = parse_events(CsvTable.load_rows("res://data/events.csv"))
+	encounters.clear()
+	for row in CsvTable.load_rows("res://data/encounters.csv"):
+		encounters[row.id] = {"units": Array(row.units.split("|")), "loot": row.loot}
+
+
+func character(id: StringName) -> CharacterDef:
+	return characters.get(id)
+
+
+func class_def(id: String) -> ClassDef:
+	return load(CLASS_DIR + id + ".tres")
+
+
+func roster() -> Array[CharacterDef]:
+	var out: Array[CharacterDef] = []
+	for id in ROSTER:
+		out.append(characters[id])
+	return out
+
+
+static func parse_events(rows: Array[Dictionary]) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for row in rows:
+		var ev := {
+			"id": row.id, "weight": float(row.weight),
+			"min_s": float(row.min_s), "max_s": float(row.max_s),
+			"once_flag": row.once_flag, "text_key": row.text_key, "options": [],
+		}
+		for n in range(1, 4):
+			var key: String = row.get("opt%d_key" % n, "")
+			if key == "":
+				continue
+			ev.options.append({
+				"key": key,
+				"check": row["opt%d_check" % n],
+				"dc": int(row["opt%d_dc" % n]),
+				"win": row["opt%d_win" % n],
+				"lose": row["opt%d_lose" % n],
+			})
+		out.append(ev)
+	return out

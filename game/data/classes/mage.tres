@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"mage"
+name_key = "CLASS_MAGE"
+max_hp = 8
+move = 4
+jump = 1
+attack = 4
+defense = 10
+damage = 4
+range_min = 2
+range_max = 3
+magic = true
+skills = {"wayfind": 2, "forage": 1}

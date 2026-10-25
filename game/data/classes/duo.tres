@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"duo"
+name_key = "CLASS_DUO"
+max_hp = 18
+move = 4
+jump = 1
+attack = 4
+defense = 12
+damage = 4
+range_min = 1
+range_max = 1
+magic = false
+skills = {"persuade": 2}

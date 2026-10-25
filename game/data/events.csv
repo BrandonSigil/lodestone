@@ -1,0 +1,11 @@
+id,weight,min_s,max_s,once_flag,text_key,opt1_key,opt1_check,opt1_dc,opt1_win,opt1_lose,opt2_key,opt2_check,opt2_dc,opt2_win,opt2_lose,opt3_key,opt3_check,opt3_dc,opt3_win,opt3_lose
+bandits,4,0,0.6,,EV_BANDITS,OPT_FIGHT,fight,0,combat:bandits,,OPT_TALK,persuade,13,morale:+5,food:-8;gold:-5,OPT_SNEAK,sneak,12,dist:+5,combat:bandits
+river,3,0,1,,EV_RIVER,OPT_FORD,tame,11,dist:+5,food:-6;hp_one:-3,OPT_AROUND,none,0,dist:-8;day:+1,,,,,,
+bush,2,0,0.5,found_bushberry,EV_BUSH,OPT_TAKE,none,0,unlock:found_bushberry;food:+3,,OPT_LEAVE,none,0,,,,,,,
+wolves,3,0.1,0.7,,EV_WOLVES,OPT_FIGHT,fight,0,combat:wolves,,OPT_SCARE,nerve,12,morale:+5,combat:wolves,,,,,
+ruin,2,0,1,,EV_RUIN,OPT_SEARCH,forage,12,medicine:+3,hp_one:-3,OPT_BRACE,masonry,12,medicine:+2;food:+6,hp_one:-2,OPT_LEAVE,none,0,,
+trader,2,0,0.7,,EV_TRADER,OPT_TRADE,persuade,10,food:+10;gold:-5,gold:-5,OPT_LEAVE,none,0,,,,,,,
+stars,2,0,1,,EV_STARS,OPT_READ_STARS,wayfind,12,dist:+15;morale:+5,dist:-5,OPT_SLEEP,none,0,morale:+5,,,,,,
+storm,2,0.2,1,,EV_STORM,OPT_PUSH_ON,nerve,13,dist:+5,hp_all:-2;morale:-5,OPT_SHELTER,none,0,day:+1;morale:-5,,,,,,
+fruit,3,0.5,1,,EV_FRUIT,OPT_EAT,forage,14,food:+12,hp_all:-3;morale:-10,OPT_LEAVE,none,0,,,,,,,
+thing,3,0.5,1,,EV_THING,OPT_FIGHT,fight,0,combat:strange,,OPT_SNEAK,sneak,14,dist:+5,combat:strange,,,,,

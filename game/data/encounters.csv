@@ -1,0 +1,5 @@
+id,units,loot
+bandits,bandit|bandit|bandit_archer,food:+6;gold:+10
+wolves,wolf|wolf|wolf,food:+10
+strange,strange_thing|strange_thing|wolf,medicine:+2;food:+4
+debug,bandit|bandit_archer|wolf,food:+5

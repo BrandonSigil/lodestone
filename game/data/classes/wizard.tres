@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"wizard"
+name_key = "CLASS_WIZARD"
+max_hp = 8
+move = 3
+jump = 1
+attack = 5
+defense = 10
+damage = 5
+range_min = 2
+range_max = 3
+magic = true
+skills = {"persuade": 2, "heal": 2}

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/character_def.gd" id="1"]
+[ext_resource type="Resource" path="res://data/classes/bush.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"bushberry"
+name_key = "CHAR_BUSHBERRY"
+class_def = ExtResource("2")
+off_skills = {}
+perks = Array[StringName]([&"bushberry_ration", &"flammable"])
+deficiency = &""
+food_per_day = 0
+party_slots = 1
+inventory_slots = 0
+unlock = "found_bushberry"
+tint = Color(0.35, 0.55, 0.3, 1)
