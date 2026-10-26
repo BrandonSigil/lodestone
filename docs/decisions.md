@@ -73,3 +73,12 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-26 Regions are flat fills with wobbly warped-Voronoi borders, colored by the region palette at each region's strangeness. Regions never cross the Wall.
 - [AI] 2026-10-26 The trail's 300 leagues map onto the drawn route; the Wall gate is league 150. The walked part of the route prints dark, the rest pale.
 - [AI] 2026-10-26 Discovery: the village plus about 170 map units around it start known; each run reveals 95 units either side of the route it walked. Stored as circles in meta so it survives a recall.
+
+## Village hub
+- [USER] 2026-10-26 The starting village uses the style lab look. It is where the player picks the team, buys supplies, arranges a Tetris-like grid inventory and talks to the mayor for lore and side quests.
+- [AI] 2026-10-26 The village uses frame A (embroidered band) from the style lab for now: party left, Lodestone medallion center, pack right. Swapping to B or C only touches `village_frame.gd`.
+- [AI] 2026-10-26 The pack is a 4 x 3 grid (12 cells, matching the trail's 12 slots). Items are shapes that can be turned. The Wizard's books are a 3-cell L shape that can't be sold.
+- [AI] 2026-10-26 The lord's backing is gold, not free food: 30 starting gold plus 5 per 50 leagues of best distance. This replaces the "+5 starting food per 50 leagues" line. Leftover gold goes on the trip.
+- [AI] 2026-10-26 Shop (graybox prices): food bit 1 cell 5 food 2G, food sack 2 cells 12 food 4G, dry meat T 4 cells 30 food 7G, food box 2x2 36 food 9G, goop 1 cell 2 medicine 4G, herb bag L 3 cells 8 medicine 9G. Selling in town refunds the full price.
+- [AI] 2026-10-26 The mayor offers side jobs from `data/quests.csv`. Taking one is saved across recalls. Completing them is not built yet.
+- [AI] 2026-10-26 The Lodestone medallion and the MAP tab open the world map scene (owned by the world map work). Head out still goes straight to the trail.
