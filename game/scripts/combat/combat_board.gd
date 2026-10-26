@@ -315,9 +315,10 @@ func _draw_tile(c: Vector2i) -> void:
 			draw_colored_polygon(PackedVector2Array([mid + Vector2(-14, 4), mid + Vector2(-8, -14), mid + Vector2(6, -18), mid + Vector2(15, 2)]), top_col.darkened(0.25))
 			draw_colored_polygon(PackedVector2Array([mid + Vector2(-8, -14), mid + Vector2(6, -18), mid + Vector2(2, -8)]), top_col.lightened(0.1))
 		CombatGrid.T.WATER:
-			var wob := sin(_time * 2.0 + c.x + c.y) * 2.0
-			draw_line(mid + Vector2(-10 + wob, -2), mid + Vector2(4 + wob, -2), top_col.lightened(0.3), 2.0)
-			draw_line(mid + Vector2(-2 - wob, 4), mid + Vector2(10 - wob, 4), top_col.lightened(0.3), 2.0)
+			if top_tex == null:  # painted water has its own streaks
+				var wob := sin(_time * 2.0 + c.x + c.y) * 2.0
+				draw_line(mid + Vector2(-10 + wob, -2), mid + Vector2(4 + wob, -2), top_col.lightened(0.3), 2.0)
+				draw_line(mid + Vector2(-2 - wob, 4), mid + Vector2(10 - wob, 4), top_col.lightened(0.3), 2.0)
 		CombatGrid.T.RUIN:
 			_ruin(c, h, seed_v)
 
