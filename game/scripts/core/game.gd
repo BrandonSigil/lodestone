@@ -8,6 +8,7 @@ const VILLAGE := "res://scenes/village.tscn"
 const TRAIL := "res://scenes/trail.tscn"
 const COMBAT := "res://scenes/combat.tscn"
 const WORLD_MAP := "res://scenes/world_map.tscn"
+const SANDBOX := "res://scenes/combat_sandbox.tscn"  ## developer tool, F9 from any screen
 
 var meta := {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": []}
 var run: RunState = null
@@ -22,6 +23,12 @@ var village_party: Array[StringName] = []
 func _ready() -> void:
 	TranslationServer.set_locale("en")
 	load_meta()
+
+
+## Developer shortcut: F9 opens the combat sandbox from anywhere.
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event.pressed and not event.is_echo() and event.keycode == KEY_F9:
+		go(SANDBOX)
 
 
 # --- meta ---------------------------------------------------------------

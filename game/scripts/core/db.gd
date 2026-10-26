@@ -11,6 +11,8 @@ var events: Array[Dictionary] = []
 var encounters: Dictionary = {}  # id -> {"units": Array[String], "loot": String}
 var items: Dictionary = {}  # id -> row of data/items.csv
 var quests: Array[Dictionary] = []  # rows of data/quests.csv
+var abilities: Dictionary = {}  # id -> Ability, from data/abilities.csv
+var combat_items: Dictionary = {}  # id -> Ability, from data/combat_items.csv
 
 
 func _ready() -> void:
@@ -29,6 +31,12 @@ func reload() -> void:
 	for row in CsvTable.load_rows("res://data/items.csv"):
 		items[row.id] = row
 	quests = CsvTable.load_rows("res://data/quests.csv")
+	abilities.clear()
+	for row in CsvTable.load_rows("res://data/abilities.csv"):
+		abilities[row.id] = Ability.from_row(row)
+	combat_items.clear()
+	for row in CsvTable.load_rows("res://data/combat_items.csv"):
+		combat_items[row.id] = Ability.from_item_row(row)
 
 
 ## Items the village shop sells, in table order.
@@ -42,6 +50,24 @@ func shop_items() -> Array[String]:
 
 func character(id: StringName) -> CharacterDef:
 	return characters.get(id)
+
+
+func ability(id: String) -> Ability:
+	if abilities.is_empty():
+		reload()
+	return abilities.get(id)
+
+
+## Every class id with a .tres in data/classes, sorted.
+func class_ids() -> Array[String]:
+	var out: Array[String] = []
+	for f in DirAccess.get_files_at(CLASS_DIR):
+		if f.ends_with(".tres"):
+			out.append(f.get_basename())
+		elif f.ends_with(".tres.remap"):
+			out.append(f.get_basename().get_basename())
+	out.sort()
+	return out
 
 
 func class_def(id: String) -> ClassDef:

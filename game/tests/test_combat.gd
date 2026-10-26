@@ -148,3 +148,167 @@ func test_ai_vs_ai_terminates() -> void:
 						CombatRules.attack(rng, g, u, plan.target, units)
 			rounds += 1
 		ok(rounds < 60, "seed %d ended in %d rounds" % [s, rounds])
+
+
+# --- skills, items, counters, pushes (sandbox build) ------------------------------------
+
+func _ab(id: String) -> Ability:
+	return Db.ability(id)
+
+
+func test_counter_melee_only() -> void:
+	CombatRules.reset_switches()
+	var g := CombatGrid.flat(6, 3)
+	var k := _unit("knight", 0, Vector2i(1, 1), g)
+	var b := _unit("bandit", 1, Vector2i(2, 1), g)
+	ok(CombatRules.counters_from(g, k, b, k.cell), "bandit hits back at an adjacent knight")
+	var h := _unit("hunter", 0, Vector2i(0, 1), g)
+	ok(not CombatRules.counters_from(g, h, b, h.cell), "melee can't hit back at range 2")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var events := CombatRules.resolve(rng, g, k, k.abilities[0], b.cell, [k, b])
+	if b.alive():
+		ok(events.any(func(e: Dictionary) -> bool: return e.type == "counter"), "counter event")
+	CombatRules.counters = false
+	ok(not CombatRules.counters_from(g, k, b, k.cell), "switch turns counters off")
+	CombatRules.reset_switches()
+
+
+func test_guard_and_phase_clear() -> void:
+	var g := CombatGrid.flat(4, 1)
+	var k := _unit("knight", 0, Vector2i(0, 0), g)
+	var b := _unit("bandit", 1, Vector2i(1, 0), g)
+	var tn := CombatRules.target_number(g, b, k)
+	CombatRules.guard(k)
+	eq(CombatRules.target_number(g, b, k), tn + CombatRules.GUARD_DEF)
+	CombatRules.begin_phase([k, b], 1)
+	ok(k.has_status("guard"), "guard lasts through the enemy phase")
+	CombatRules.begin_phase([k, b], 0)
+	ok(not k.has_status("guard"), "guard ends at own next phase")
+
+
+func test_cooldown_ticks() -> void:
+	var g := CombatGrid.flat(4, 1)
+	var k := _unit("knight", 0, Vector2i(0, 0), g)
+	var b := _unit("bandit", 1, Vector2i(1, 0), g)
+	var shove := _ab("shove")
+	CombatRules.resolve(RandomNumberGenerator.new(), g, k, shove, b.cell, [k, b])
+	ok(not k.can_use(shove), "on cooldown")
+	for i in shove.cooldown:
+		CombatRules.begin_phase([k, b], 0)
+	ok(k.can_use(shove), "ready after %d phases" % shove.cooldown)
+
+
+func test_push_fall_and_bump() -> void:
+	var g := CombatGrid.flat(5, 1)
+	g.set_height(Vector2i(1, 0), 3)
+	g.set_height(Vector2i(2, 0), 3)
+	var k := _unit("knight", 0, Vector2i(1, 0), g)
+	var b := _unit("bandit", 1, Vector2i(2, 0), g)
+	var hp := b.hp
+	var ev := CombatRules.push(g, [k, b], k.cell, b, 1)
+	eq(b.cell, Vector2i(3, 0), "pushed one tile")
+	eq(b.hp, hp - 2 * CombatRules.FALL_DAMAGE, "3 level drop hurts")
+	ok(ev[0].type == "push")
+	g.set_terrain(Vector2i(4, 0), CombatGrid.T.ROCK)
+	hp = b.hp
+	k.place(Vector2i(2, 0), 3)
+	CombatRules.push(g, [k, b], k.cell, b, 1)
+	eq(b.cell, Vector2i(3, 0), "rock stops the push")
+	eq(b.hp, hp - CombatRules.BUMP_DAMAGE)
+
+
+func test_rooted() -> void:
+	var g := CombatGrid.flat(4, 1)
+	var b := _unit("bandit", 1, Vector2i(0, 0), g)
+	b.statuses["rooted"] = 1
+	eq(CombatRules.move_points(b), 0)
+	CombatRules.end_phase([b], 1)
+	ok(CombatRules.move_points(b) > 0, "free after its phase")
+
+
+func test_area_hits_everyone_in_it() -> void:
+	var g := CombatGrid.flat(7, 5)
+	var m := _unit("mage", 0, Vector2i(0, 2), g)
+	var e1 := _unit("bandit", 1, Vector2i(3, 2), g)
+	var e2 := _unit("bandit", 1, Vector2i(4, 2), g)
+	var ally := _unit("knight", 0, Vector2i(3, 3), g)
+	var hit := CombatRules.affected_units(g, m, _ab("moonbeam"), Vector2i(3, 2), [m, e1, e2, ally], m.cell)
+	eq(hit.size(), 3, "two foes and the ally in the plus")
+	ok(CombatRules.forecast(g, m, _ab("moonbeam"), Vector2i(3, 2), [m, e1, e2, ally], m.cell).counter.is_empty(), "no counter for area hits")
+
+
+func test_heal_item_spends_supplies() -> void:
+	var g := CombatGrid.flat(3, 1)
+	var k := _unit("knight", 0, Vector2i(0, 0), g)
+	k.hp = 5
+	var salve: Ability = Db.combat_items["salve"]
+	var sup := {"medicine": 1}
+	ok(CombatRules.usable(k, salve, sup))
+	CombatRules.resolve(RandomNumberGenerator.new(), g, k, salve, k.cell, [k], sup)
+	eq(k.hp, 5 + salve.power)
+	eq(sup.medicine, 0)
+	ok(not CombatRules.usable(k, salve, sup), "out of medicine")
+	k.hp = k.max_hp - 1
+	sup.medicine = 1
+	CombatRules.resolve(RandomNumberGenerator.new(), g, k, salve, k.cell, [k], sup)
+	eq(k.hp, k.max_hp, "heal caps at max")
+
+
+func test_mercy_bonus() -> void:
+	CombatRules.reset_switches()
+	var g := CombatGrid.flat(3, 1)
+	var k := _unit("knight", 0, Vector2i(0, 0), g)
+	var b := _unit("bandit", 1, Vector2i(1, 0), g)
+	var base := CombatRules.hit_bonus(g, k, b, [k, b], k.cell)
+	k.miss_streak = 5
+	eq(CombatRules.hit_bonus(g, k, b, [k, b], k.cell), base + CombatRules.MERCY_MAX)
+	b.miss_streak = 5
+	eq(CombatRules.hit_bonus(g, b, k, [k, b], b.cell), CombatRules.hit_bonus(g, b, k, [k, b], b.cell), "enemies get no mercy")
+	ok(CombatRules.hit_parts(g, b, k, [k, b], b.cell).all(func(p: Array) -> bool: return p[0] != "MOD_MERCY"))
+	CombatRules.mercy = false
+	eq(CombatRules.hit_bonus(g, k, b, [k, b], k.cell), base)
+	CombatRules.reset_switches()
+
+
+func test_scaling_mods() -> void:
+	var c: ClassDef = load("res://data/classes/bandit.tres")
+	var u := CombatUnit.enemy(c, {"hp_pct": 150, "attack": 2, "defense": 1, "damage": 1, "move": -1})
+	eq(u.max_hp, int(round(c.max_hp * 1.5)))
+	eq(u.attack, c.attack + 2)
+	eq(u.defense, c.defense + 1)
+	eq(u.damage, c.damage + 1)
+	eq(u.move, c.move - 1)
+
+
+func test_danger_zone() -> void:
+	var g := CombatGrid.flat(10, 1)
+	var b := _unit("bandit", 1, Vector2i(9, 0), g)
+	var zone := CombatRules.danger_zone(g, [b], 1)
+	ok(zone.has(Vector2i(4, 0)), "move 4 + reach 1")
+	ok(not zone.has(Vector2i(3, 0)))
+
+
+func test_grid_round_trip() -> void:
+	var g := CombatGrid.generate(5, 9, 7, 0.3)
+	var back := CombatGrid.from_dict(JSON.parse_string(JSON.stringify(g.to_dict())))
+	eq(back.w, 9)
+	eq(back.heights, g.heights)
+	eq(back.terrain, g.terrain)
+
+
+## AI plays both sides with skills; every fight must end.
+func test_sim_terminates_with_skills() -> void:
+	for s in 10:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = s
+		var g := CombatGrid.generate(s, 10, 8, 0.0)
+		var units: Array = []
+		var spots := g.deploy_cells(0)
+		for id in ["knight", "mage", "hunter", "wizard"]:
+			units.append(_unit(id, 0, spots.pop_front(), g))
+		var es := g.deploy_cells(1)
+		for id in ["bandit", "bandit", "bandit_archer", "wolf"]:
+			units.append(_unit(id, 1, es.pop_front(), g))
+		var r := CombatSim.fight(rng, g, units, {"medicine": 2})
+		ok(r.winner != -1, "seed %d stalled" % s)

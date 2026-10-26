@@ -1,6 +1,7 @@
 class_name CombatUnit
 extends RefCounted
 ## One piece on the board. Team 0 is the party, team 1 the enemy.
+## Stats are copied from the class and then scaled by the fight's difficulty dials (see apply_class).
 
 var name_key := ""
 var cls: ClassDef
@@ -12,41 +13,87 @@ var deficiency: StringName = &""
 var skills: Dictionary = {}
 var member: Dictionary = {}  ## the RunState member this unit came from (party only)
 
+# Combat stats after scaling.
+var max_hp := 1
+var move := 4
+var jump := 1
+var attack := 0
+var defense := 10
+var damage := 1
+var range_min := 1
+var range_max := 1
+var magic := false
+var abilities: Array[Ability] = []  ## strike first, then class skills
+
 var moved := false
 var acted := false
 var spooked := false
 var move_origin := Vector2i.ZERO
+var cooldowns := {}  ## ability id -> own phases left
+var statuses := {}  ## status id -> turns left (see CombatRules.STATUS_*)
+var miss_streak := 0  ## consecutive misses, feeds the party's mercy bonus
 
 # View state, animated by CombatBoard.
 var vis := Vector2.ZERO  ## fractional grid position
 var vis_h := 0.0
 var hop := 0.0
 var offset := Vector2.ZERO
+var shown_hp := 1  ## HP the board draws; trails hp while hits animate
 
 
-static func from_member(m: Dictionary) -> CombatUnit:
-	var d: CharacterDef = m.def
+## mods: {"hp_pct": 100, "attack": 0, "defense": 0, "damage": 0, "move": 0}. Missing keys mean no change.
+func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
+	cls = c
+	max_hp = maxi(1, int(round(c.max_hp * float(mods.get("hp_pct", 100)) / 100.0)))
+	move = maxi(1, c.move + int(mods.get("move", 0)))
+	jump = c.jump
+	attack = c.attack + int(mods.get("attack", 0))
+	defense = c.defense + int(mods.get("defense", 0))
+	damage = maxi(1, c.damage + int(mods.get("damage", 0)))
+	range_min = c.range_min
+	range_max = c.range_max
+	magic = c.magic
+	abilities.clear()
+	var strike := Db.ability("strike")
+	if strike:
+		abilities.append(strike)
+	for id in c.abilities:
+		var a := Db.ability(String(id))
+		if a:
+			abilities.append(a)
+
+
+static func from_def(d: CharacterDef, mods: Dictionary = {}) -> CombatUnit:
 	var u := CombatUnit.new()
 	u.name_key = d.name_key
-	u.cls = d.class_def
+	u.apply_class(d.class_def, mods)
 	u.team = 0
-	u.hp = maxi(1, m.hp)
+	u.hp = u.max_hp
+	u.shown_hp = u.hp
 	u.tint = d.tint
 	u.deficiency = d.deficiency
 	for k in d.class_def.skills:
 		u.skills[k] = d.skill(k)
 	for k in d.off_skills:
 		u.skills[k] = d.skill(k)
+	return u
+
+
+static func from_member(m: Dictionary, mods: Dictionary = {}) -> CombatUnit:
+	var u := from_def(m.def, mods)
+	u.hp = clampi(m.hp, 1, u.max_hp)
+	u.shown_hp = u.hp
 	u.member = m
 	return u
 
 
-static func enemy(c: ClassDef) -> CombatUnit:
+static func enemy(c: ClassDef, mods: Dictionary = {}) -> CombatUnit:
 	var u := CombatUnit.new()
 	u.name_key = c.name_key
-	u.cls = c
+	u.apply_class(c, mods)
 	u.team = 1
-	u.hp = c.max_hp
+	u.hp = u.max_hp
+	u.shown_hp = u.hp
 	u.tint = Color(0.72, 0.36, 0.33)
 	u.skills = c.skills.duplicate()
 	return u
@@ -54,6 +101,22 @@ static func enemy(c: ClassDef) -> CombatUnit:
 
 func alive() -> bool:
 	return hp > 0
+
+
+func done() -> bool:
+	return acted and moved
+
+
+func has_status(s: String) -> bool:
+	return statuses.get(s, 0) > 0
+
+
+func can_use(a: Ability) -> bool:
+	return int(cooldowns.get(a.id, 0)) <= 0
+
+
+func sync_view() -> void:
+	shown_hp = hp
 
 
 func place(c: Vector2i, height: int) -> void:

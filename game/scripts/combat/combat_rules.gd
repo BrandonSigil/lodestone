@@ -1,6 +1,6 @@
 class_name CombatRules
 extends RefCounted
-## Pure combat math. No nodes, so tests can call it headless.
+## Pure combat math. No nodes, so tests and the balance sim can call it headless.
 ## Numbers are [AI] proposals; see docs/decisions.md.
 
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
@@ -12,6 +12,26 @@ const SPOOKED_MOVE := -2
 const MELEE_REACH := 2  ## melee can't hit across more height than this
 const SKITTISH_DC := 11
 const SKITTISH_RANGE := 3
+const GUARD_DEF := 3  ## Guard: +3 defense until the unit's next phase
+const VEIL_DEF := 2
+const MERCY_MAX := 3  ## party gets +1 to hit per miss in a row, up to this
+const BUMP_DAMAGE := 2  ## pushed into a wall, rock, cliff face or another unit
+const FALL_DAMAGE := 2  ## per level dropped beyond the first when pushed off a ledge
+
+const STATUS_GUARD := "guard"
+const STATUS_VEIL := "veil"
+const STATUS_ROOTED := "rooted"
+## Cleared when the owner's next phase starts (they protect through the enemy phase).
+const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL]
+
+## Rule switches the sandbox can flip to compare. Real fights use the defaults.
+static var counters := true  ## melee units hit back once when attacked in reach
+static var mercy := true  ## anti-streak help for the party (XCOM-style, but visible in the forecast)
+
+
+static func reset_switches() -> void:
+	counters = true
+	mercy = true
 
 
 static func dist(a: Vector2i, b: Vector2i) -> int:
@@ -23,7 +43,9 @@ static func height_levels(grid: CombatGrid, from: Vector2i, to: Vector2i) -> int
 
 
 static func move_points(u: CombatUnit) -> int:
-	return maxi(1, u.cls.move + (SPOOKED_MOVE if u.spooked else 0))
+	if u.has_status(STATUS_ROOTED):
+		return 0
+	return maxi(1, u.move + (SPOOKED_MOVE if u.spooked else 0))
 
 
 static func unit_at(units: Array, c: Vector2i) -> CombatUnit:
@@ -50,7 +72,7 @@ static func reachable(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictiona
 			var n: Vector2i = c + d
 			if not grid.passable(n):
 				continue
-			if absi(grid.height_at(n) - grid.height_at(c)) > u.cls.jump:
+			if absi(grid.height_at(n) - grid.height_at(c)) > u.jump:
 				continue
 			var other := unit_at(units, n)
 			if other != null and other.team != u.team:
@@ -79,20 +101,96 @@ static func path_to(prev: Dictionary, from: Vector2i, to: Vector2i) -> Array[Vec
 	return path
 
 
-static func can_attack(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i) -> bool:
-	if not tgt.alive() or tgt.team == att.team:
+# --- reach ----------------------------------------------------------------------
+
+## Vector2i(min, max) for this unit using this ability. Strike and weapon-range skills use the unit's own range.
+static func ability_range(u: CombatUnit, a: Ability) -> Vector2i:
+	if a == null or a.uses_weapon_range():
+		return Vector2i(u.range_min, u.range_max)
+	return Vector2i(a.range_min, a.range_max)
+
+
+## Range 1 is melee: it can't cross more than MELEE_REACH levels. Longer reach gains +1 per level of high ground.
+static func in_reach(grid: CombatGrid, from: Vector2i, to: Vector2i, r: Vector2i) -> bool:
+	var d := dist(from, to)
+	if d < r.x:
 		return false
-	var d := dist(from, tgt.cell)
-	var dh := grid.height_at(from) - grid.height_at(tgt.cell)
-	if d < att.cls.range_min:
-		return false
-	var reach := att.cls.range_max
+	var dh := grid.height_at(from) - grid.height_at(to)
+	var reach := r.y
 	if reach > 1:
-		reach += maxi(0, dh)  # high ground extends bows and spells
+		reach += maxi(0, dh)
 	elif absi(dh) > MELEE_REACH:
 		return false
 	return d <= reach
 
+
+static func can_attack(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i) -> bool:
+	if not tgt.alive() or tgt.team == att.team:
+		return false
+	return in_reach(grid, from, tgt.cell, ability_range(att, null))
+
+
+## Can this unit use this ability right now (cooldown, supplies)? Supplies only matter for items.
+static func usable(u: CombatUnit, a: Ability, supplies: Dictionary = {}) -> bool:
+	if not u.can_use(a):
+		return false
+	if a.is_item():
+		return int(supplies.get(a.resource, 0)) >= a.cost
+	return true
+
+
+## Cells the ability can be aimed at from `from`.
+static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Array, from: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var r := ability_range(u, a)
+	match a.target:
+		"self":
+			out.append(from)
+		"enemy", "ally":
+			for o: CombatUnit in units:
+				if not o.alive():
+					continue
+				if (a.target == "enemy") != (o.team != u.team):
+					continue
+				var oc := from if o == u else o.cell
+				if in_reach(grid, from, oc, r):
+					out.append(oc)
+		"cell":
+			for y in grid.h:
+				for x in grid.w:
+					var c := Vector2i(x, y)
+					if in_reach(grid, from, c, r):
+						out.append(c)
+	return out
+
+
+## Cells hit when aiming at `center` (a plus shape for radius 1).
+static func area(grid: CombatGrid, a: Ability, center: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for y in range(center.y - a.radius, center.y + a.radius + 1):
+		for x in range(center.x - a.radius, center.x + a.radius + 1):
+			var c := Vector2i(x, y)
+			if grid.in_bounds(c) and dist(c, center) <= a.radius:
+				out.append(c)
+	return out
+
+
+## Units an ability affects when aimed at `center`. `user` stands in for whoever is at `from` while previewing a move.
+static func affected_units(grid: CombatGrid, user: CombatUnit, a: Ability, center: Vector2i, units: Array, from: Vector2i) -> Array[CombatUnit]:
+	var out: Array[CombatUnit] = []
+	for c in area(grid, a, center):
+		var o: CombatUnit = user if c == from else unit_at(units, c)
+		if o == null or (o == user and c != from):
+			continue
+		if a.target == "enemy" and o.team == user.team:
+			continue
+		if a.target == "ally" and o.team != user.team:
+			continue
+		out.append(o)
+	return out
+
+
+# --- to-hit and damage ------------------------------------------------------------
 
 static func flanked(att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2i) -> bool:
 	for o: CombatUnit in units:
@@ -103,28 +201,165 @@ static func flanked(att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector
 	return false
 
 
-static func hit_bonus(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2i) -> int:
-	var b := att.cls.attack + height_levels(grid, from, tgt.cell) * HEIGHT_HIT
+## Every modifier on one attack, as [label key, value] pairs. The forecast prints these.
+static func hit_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2i, a: Ability = null) -> Array:
+	var parts := [["MOD_ATTACK", att.attack]]
+	if a and a.hit != 0:
+		parts.append(["MOD_SKILL", a.hit])
+	var hl := height_levels(grid, from, tgt.cell) * HEIGHT_HIT
+	if hl != 0:
+		parts.append(["MOD_HEIGHT", hl])
 	if flanked(att, tgt, units, from):
-		b += FLANK_HIT
+		parts.append(["MOD_FLANK", FLANK_HIT])
 	if att.spooked:
-		b += SPOOKED_HIT
-	return b
+		parts.append(["MOD_SPOOKED", SPOOKED_HIT])
+	if mercy and att.team == 0 and att.miss_streak > 0:
+		parts.append(["MOD_MERCY", mini(att.miss_streak, MERCY_MAX)])
+	return parts
 
 
-static func target_number(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit) -> int:
-	return tgt.cls.defense + (0 if att.cls.magic else grid.cover(tgt.cell))
+static func defense_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, a: Ability = null) -> Array:
+	var parts := [["MOD_DEFENSE", tgt.defense]]
+	var magic := att.magic or (a != null and a.magic)
+	var cover := grid.cover(tgt.cell)
+	if not magic and cover != 0:
+		parts.append(["MOD_COVER", cover])
+	if tgt.has_status(STATUS_GUARD):
+		parts.append(["MOD_GUARD", GUARD_DEF])
+	if tgt.has_status(STATUS_VEIL):
+		parts.append(["MOD_VEIL", VEIL_DEF])
+	return parts
 
 
-static func hit_chance(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2i) -> float:
-	return Dice.chance(hit_bonus(grid, att, tgt, units, from), target_number(grid, att, tgt))
+static func _sum(parts: Array) -> int:
+	var s := 0
+	for p in parts:
+		s += int(p[1])
+	return s
 
 
-static func damage(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i) -> int:
-	return maxi(1, att.cls.damage + height_levels(grid, from, tgt.cell))
+static func hit_bonus(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2i, a: Ability = null) -> int:
+	return _sum(hit_parts(grid, att, tgt, units, from, a))
 
 
-## Rolls and applies one attack. Returns the Dice result plus "damage".
+static func target_number(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, a: Ability = null) -> int:
+	return _sum(defense_parts(grid, att, tgt, a))
+
+
+static func hit_chance(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2i, a: Ability = null) -> float:
+	return Dice.chance(hit_bonus(grid, att, tgt, units, from, a), target_number(grid, att, tgt, a))
+
+
+static func damage(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i, a: Ability = null) -> int:
+	var power := a.power if a else 0
+	return maxi(1, att.damage + power + height_levels(grid, from, tgt.cell))
+
+
+## Would `tgt` strike back at `att` standing on `from`?
+static func counters_from(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i) -> bool:
+	if not counters or not tgt.alive() or tgt.team == att.team:
+		return false
+	return in_reach(grid, tgt.cell, from, ability_range(tgt, null))
+
+
+## What the player sees before committing. One entry per affected unit, plus the counter if any.
+## {"targets": [{"unit", "hit", "dmg", "heal", "hit_parts", "def_parts"}], "counter": {"hit", "dmg"} or {}}
+static func forecast(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector2i, units: Array, from: Vector2i) -> Dictionary:
+	var out := {"targets": [], "counter": {}}
+	var hit_list := affected_units(grid, u, a, center, units, from)
+	for t in hit_list:
+		var e := {"unit": t, "hit": 1.0, "dmg": 0, "heal": 0, "hit_parts": [], "def_parts": []}
+		match a.kind:
+			"attack":
+				e.hit = hit_chance(grid, u, t, units, from, a)
+				e.dmg = damage(grid, u, t, from, a)
+				e.hit_parts = hit_parts(grid, u, t, units, from, a)
+				e.def_parts = defense_parts(grid, u, t, a)
+			"heal":
+				e.heal = mini(a.power, t.max_hp - t.hp)
+		out.targets.append(e)
+	if a.kind == "attack" and a.radius == 0 and hit_list.size() == 1:
+		var t: CombatUnit = hit_list[0]
+		if counters_from(grid, u, t, from):
+			out.counter = {"unit": t, "hit": hit_chance(grid, t, u, units, t.cell), "dmg": damage(grid, t, u, t.cell)}
+	return out
+
+
+# --- resolving actions ------------------------------------------------------------
+
+## Uses an ability (or item) and applies everything. Returns the events in order so the board can animate them:
+## {"type": "hit"|"miss"|"heal"|"status"|"push"|"bump"|"fall"|"counter", "src", "unit", "amount", "roll", "path"}
+## Item costs are paid from `supplies` here.
+static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector2i, units: Array, supplies: Dictionary = {}, allow_counter := true) -> Array:
+	var events := []
+	if a.cooldown > 0:
+		u.cooldowns[a.id] = a.cooldown
+	if a.is_item():
+		supplies[a.resource] = int(supplies.get(a.resource, 0)) - a.cost
+	var hit_list := affected_units(grid, u, a, center, units, u.cell)
+	for t in hit_list:
+		match a.kind:
+			"attack":
+				var r := Dice.check(rng, hit_bonus(grid, u, t, units, u.cell, a), target_number(grid, u, t, a))
+				if r.success:
+					var dmg := damage(grid, u, t, u.cell, a) * (2 if r.crit else 1)
+					t.hp = maxi(0, t.hp - dmg)
+					u.miss_streak = 0
+					events.append({"type": "hit", "src": u, "unit": t, "amount": dmg, "roll": r})
+					if t.alive() and a.status != "":
+						t.statuses[a.status] = a.status_turns
+						events.append({"type": "status", "src": u, "unit": t, "status": a.status})
+					if t.alive() and a.push > 0:
+						events.append_array(push(grid, units, u.cell, t, a.push))
+				else:
+					u.miss_streak += 1
+					events.append({"type": "miss", "src": u, "unit": t, "amount": 0, "roll": r})
+			"heal":
+				var before := t.hp
+				t.hp = mini(t.max_hp, t.hp + a.power)
+				events.append({"type": "heal", "src": u, "unit": t, "amount": t.hp - before})
+			"buff":
+				if a.status != "":
+					t.statuses[a.status] = a.status_turns
+					events.append({"type": "status", "src": u, "unit": t, "status": a.status})
+	if allow_counter and a.kind == "attack" and a.radius == 0 and hit_list.size() == 1:
+		var t: CombatUnit = hit_list[0]
+		if u.alive() and counters_from(grid, u, t, u.cell):
+			events.append({"type": "counter", "src": t, "unit": u})
+			events.append_array(resolve(rng, grid, t, t.abilities[0], u.cell, units, supplies, false))
+	return events
+
+
+## Shoves `t` away from `from` up to n tiles. Blocked: bump damage. Dropping 2+ levels: fall damage.
+static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, n: int) -> Array:
+	var events := []
+	var delta := t.cell - from
+	var dir := Vector2i(signi(delta.x), 0) if absi(delta.x) >= absi(delta.y) else Vector2i(0, signi(delta.y))
+	if dir == Vector2i.ZERO:
+		return events
+	var path: Array[Vector2i] = [t.cell]
+	for i in n:
+		var dest := t.cell + dir
+		var blocked := not grid.passable(dest) or unit_at(units, dest) != null
+		if not blocked and grid.height_at(dest) - grid.height_at(t.cell) > 1:
+			blocked = true
+		if blocked:
+			t.hp = maxi(0, t.hp - BUMP_DAMAGE)
+			events.append({"type": "bump", "unit": t, "amount": BUMP_DAMAGE, "at": dest})
+			break
+		var drop := grid.height_at(t.cell) - grid.height_at(dest)
+		t.place(dest, grid.height_at(dest))
+		path.append(dest)
+		if drop >= 2:
+			var dmg := (drop - 1) * FALL_DAMAGE
+			t.hp = maxi(0, t.hp - dmg)
+			events.append({"type": "fall", "unit": t, "amount": dmg})
+	if path.size() > 1:
+		events.push_front({"type": "push", "unit": t, "path": path})
+	return events
+
+
+## Back-compat single strike (used by older tests and the simple sim).
 static func attack(rng: RandomNumberGenerator, grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units: Array) -> Dictionary:
 	var r := Dice.check(rng, hit_bonus(grid, att, tgt, units, att.cell), target_number(grid, att, tgt))
 	var dmg := 0
@@ -133,6 +368,66 @@ static func attack(rng: RandomNumberGenerator, grid: CombatGrid, att: CombatUnit
 		tgt.hp = maxi(0, tgt.hp - dmg)
 	r["damage"] = dmg
 	return r
+
+
+static func guard(u: CombatUnit) -> void:
+	u.statuses[STATUS_GUARD] = 1
+
+
+## Start of a team's phase: fresh actions, cooldowns tick, guard and veil end.
+static func begin_phase(units: Array, team: int) -> void:
+	for u: CombatUnit in units:
+		if u.team != team:
+			continue
+		u.moved = false
+		u.acted = false
+		for s in STATUS_UNTIL_OWN_PHASE:
+			u.statuses.erase(s)
+		for id in u.cooldowns.keys():
+			u.cooldowns[id] = int(u.cooldowns[id]) - 1
+			if u.cooldowns[id] <= 0:
+				u.cooldowns.erase(id)
+
+
+## End of a team's phase: timed statuses like rooted tick down.
+static func end_phase(units: Array, team: int) -> void:
+	for u: CombatUnit in units:
+		if u.team != team:
+			continue
+		for s in u.statuses.keys():
+			if s in STATUS_UNTIL_OWN_PHASE:
+				continue
+			u.statuses[s] = int(u.statuses[s]) - 1
+			if u.statuses[s] <= 0:
+				u.statuses.erase(s)
+
+
+## Every cell a team could hit next phase (Fire Emblem's danger zone).
+static func danger_zone(grid: CombatGrid, units: Array, team: int) -> Dictionary:
+	var zone := {}
+	for u: CombatUnit in units:
+		if u.team != team or not u.alive():
+			continue
+		var froms: Array = CombatRules.reachable(grid, u, units).cost.keys()
+		var ranges: Array[Vector2i] = []
+		for a in u.abilities:
+			if a.hostile() and u.can_use(a):
+				var r := ability_range(u, a)
+				if a.target == "cell":
+					r.y += a.radius
+				if not ranges.has(r):
+					ranges.append(r)
+		for f: Vector2i in froms:
+			for y in grid.h:
+				for x in grid.w:
+					var c := Vector2i(x, y)
+					if zone.has(c):
+						continue
+					for r in ranges:
+						if in_reach(grid, f, c, r):
+							zone[c] = true
+							break
+	return zone
 
 
 ## Stardrop's deficiency. Returns {} if no roll was needed.

@@ -1,0 +1,3 @@
+id,name_key,resource,cost,heal,range_max,status,status_turns
+salve,CITEM_SALVE,medicine,1,5,1,,0
+snack,CITEM_SNACK,food,3,2,0,,0

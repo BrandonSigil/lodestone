@@ -43,6 +43,16 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-25 A unit can climb or drop up to its Jump stat per step. Melee can't reach across more than 2 height levels. Ranged attacks gain +1 max range per level of high ground.
 - [AI] 2026-10-25 Downed units return with 1 HP after a won fight. If the whole party is downed, the Lodestone recalls everyone.
 - [AI] 2026-10-25 Right-click undoes a move before the unit acts.
+- [USER] 2026-10-26 Make combat full fledged: a test environment to edit maps, reload fights, balance teams and scale enemy difficulty, plus Fire Emblem / XCOM style menus (move, attack, spell, item, etc.). Graybox visuals. Research in `docs/research/tactical-combat.md`.
+- [AI] 2026-10-26 Each piece gets one move and one action per turn, in either order. Actions: basic hit, class skills, items, Guard (+3 defense until its next turn), Wait.
+- [AI] 2026-10-26 Before committing, a forecast shows hit chance, damage, HP before and after, every modifier, and the counterattack. D toggles a danger zone of every tile the enemy can hit next phase.
+- [AI] 2026-10-26 Counterattacks: a unit hit by a single-target attack swings back once if its basic attack reaches. Area skills draw no counter.
+- [AI] 2026-10-26 Pushes: blocked = 2 bump damage; shoved off a ledge = 2 damage per level beyond the first.
+- [AI] 2026-10-26 Skills use cooldowns (no mana bar). One or two per class, listed in `game/data/abilities.csv`. Area skills hit friends too.
+- [AI] 2026-10-26 Fight items spend the run's real supplies: GOOP (1 medicine, heal 5, adjacent) and SNACK (3 food, heal 2, self).
+- [AI] 2026-10-26 Party luck: +1 to hit per consecutive party miss, up to +3, reset on a hit, visible in the forecast. Enemies get none.
+- [AI] 2026-10-26 Difficulty is four separate dials per side (HP %, to-hit, defense, damage, move) plus extra enemies. Presets: EASY 80% HP -1 hit -1 def; NORMAL base; HARD 115% HP +1 hit +1 enemy; BRUTAL 130% HP +2 hit +1 def +1 dmg +2 enemies.
+- [AI] 2026-10-26 Balance pass from the AI-vs-AI sim: bandit and wolf attack 3 to 4, bandit bow HP 7 to 8 and damage 2 to 3, GOOD SHOT +1 damage (was +2), MOON BOOM range 2-3 (was 2-4). Trail encounters stay at 3 enemies; their cost comes from HP carrying over.
 
 ## Trail and survival
 - [USER] 2026-10-25 Balance combat, unearthing the map, survival, mental and physical health.

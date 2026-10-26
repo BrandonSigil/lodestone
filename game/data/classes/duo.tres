@@ -16,3 +16,4 @@ range_min = 1
 range_max = 1
 magic = false
 skills = {"persuade": 2}
+abilities = Array[StringName]([&"shove"])

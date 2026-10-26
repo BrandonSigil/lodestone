@@ -83,6 +83,57 @@ func terrain_at(c: Vector2i) -> int:
 	return terrain[idx(c)]
 
 
+func set_terrain(c: Vector2i, t: int) -> void:
+	terrain[idx(c)] = t
+
+
+## A copy at a new size. Cells that still fit keep their height and terrain; new cells are flat grass.
+func resized(width: int, height: int) -> CombatGrid:
+	var g := flat(width, height)
+	for y in mini(h, height):
+		for x in mini(w, width):
+			var c := Vector2i(x, y)
+			g.set_height(c, height_at(c))
+			g.set_terrain(c, terrain_at(c))
+	return g
+
+
+## Saved maps store terrain as letters, one string per row: g grass, f forest, w water, r rock, d road.
+## Heights are digits, one string per row. Easy to read and hand-edit in the JSON.
+const LETTERS := {T.GRASS: "g", T.FOREST: "f", T.WATER: "w", T.ROCK: "r", T.ROAD: "d"}
+
+
+func to_dict() -> Dictionary:
+	var t_rows: Array[String] = []
+	var h_rows: Array[String] = []
+	for y in h:
+		var tr := ""
+		var hr := ""
+		for x in w:
+			tr += LETTERS[terrain_at(Vector2i(x, y))]
+			hr += str(height_at(Vector2i(x, y)))
+		t_rows.append(tr)
+		h_rows.append(hr)
+	return {"w": w, "h": h, "terrain": t_rows, "heights": h_rows}
+
+
+static func from_dict(d: Dictionary) -> CombatGrid:
+	var g := flat(int(d.get("w", 10)), int(d.get("h", 8)))
+	var from_letter := {}
+	for k in LETTERS:
+		from_letter[LETTERS[k]] = k
+	var t_rows: Array = d.get("terrain", [])
+	var h_rows: Array = d.get("heights", [])
+	for y in g.h:
+		for x in g.w:
+			var c := Vector2i(x, y)
+			if y < t_rows.size() and x < String(t_rows[y]).length():
+				g.set_terrain(c, from_letter.get(String(t_rows[y])[x], T.GRASS))
+			if y < h_rows.size() and x < String(h_rows[y]).length():
+				g.set_height(c, clampi(int(String(h_rows[y])[x]), 0, MAX_HEIGHT))
+	return g
+
+
 func step_cost(c: Vector2i) -> int:
 	return STEP_COST[terrain_at(c)]
 

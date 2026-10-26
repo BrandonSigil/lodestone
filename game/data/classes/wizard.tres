@@ -16,3 +16,4 @@ range_min = 2
 range_max = 3
 magic = true
 skills = {"persuade": 2, "heal": 2}
+abilities = Array[StringName]([&"fireball", &"mend"])
