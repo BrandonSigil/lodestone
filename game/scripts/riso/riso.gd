@@ -166,15 +166,39 @@ static func draw_gumdrop(ci: CanvasItem, x: float, base: float, w: float, h: flo
 
 
 static func draw_crescent(ci: CanvasItem, c: Vector2, r: float, col: Color) -> void:
-	# Outer arc along the lit side, inner arc offset toward the dark side.
-	var pts := circle_pts(c, r, r, 24, deg_to_rad(-150), deg_to_rad(150))
-	var inner := circle_pts(c + Vector2(r * 0.45, -r * 0.2), r * 0.85, r * 0.85, 24, deg_to_rad(130), deg_to_rad(-130))
-	# Keep only the inner arc points that sit inside the outer circle.
-	for p in inner:
-		if p.distance_to(c) <= r:
-			pts.append(p)
-	pts.reverse()
-	poly(ci, pts, col)
+	# The moon disc minus a bite circle offset up and right, as in the style lab.
+	var bite_c := c + Vector2(r * 0.5, -r * 0.25)
+	var bite_r := r * 0.92
+	var pts := PackedVector2Array()
+	var n := 48
+	for i in n:
+		var a := TAU * i / n
+		var q := c + Vector2(cos(a), sin(a)) * r
+		if q.distance_to(bite_c) >= bite_r:
+			pts.append(q)
+	# walk the bite's edge back, keeping only the part inside the moon
+	var inner := PackedVector2Array()
+	for i in n:
+		var a := TAU * i / n
+		var q := bite_c + Vector2(cos(a), sin(a)) * bite_r
+		if q.distance_to(c) < r:
+			inner.append(q)
+	# order both runs by angle around the moon's center so they join into one outline
+	var outer_sorted := _sort_around(pts, c, bite_c)
+	var inner_sorted := _sort_around(inner, c, bite_c)
+	inner_sorted.reverse()
+	outer_sorted.append_array(inner_sorted)
+	poly(ci, outer_sorted, col)
+
+
+## Sorts points by angle measured from the direction pointing away from the bite,
+## so a run that wraps past angle 0 stays contiguous.
+static func _sort_around(pts: PackedVector2Array, c: Vector2, bite_c: Vector2) -> PackedVector2Array:
+	var away := (c - bite_c).angle()
+	var arr: Array = Array(pts)
+	arr.sort_custom(func(a: Vector2, b: Vector2) -> bool:
+		return wrapf((a - c).angle() - away, -PI, PI) < wrapf((b - c).angle() - away, -PI, PI))
+	return PackedVector2Array(arr)
 
 
 ## Stepped cut-paper cloud.
@@ -221,7 +245,7 @@ static func draw_house(ci: CanvasItem, x: float, y: float, w: float, p: Dictiona
 		Vector2(x + w * 0.12, y - h - w * 0.42), Vector2(x + w * 0.62, y - h + 2)]), roof)
 	ci.draw_rect(Rect2(x + w * 0.2, y - h - w * 0.5, w * 0.08, w * 0.18), dark)
 	if lit:
-		ci.draw_circle(Vector2(x - w * 0.2, y - h * 0.45), w * 0.22, alpha(p.accent, 0.28))
+		ci.draw_circle(Vector2(x - w * 0.2, y - h * 0.48), w * 0.13, alpha(p.accent, 0.22))
 		ci.draw_rect(Rect2(x - w * 0.26, y - h * 0.58, w * 0.12, w * 0.14), p.accent)
 	else:
 		ci.draw_rect(Rect2(x + w * 0.05, y - h * 0.58, w * 0.1, w * 0.12), alpha(p.light, 0.25))
