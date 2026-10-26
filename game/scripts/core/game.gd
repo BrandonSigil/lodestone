@@ -7,12 +7,16 @@ const PARTY_SLOTS := 4
 const VILLAGE := "res://scenes/village.tscn"
 const TRAIL := "res://scenes/trail.tscn"
 const COMBAT := "res://scenes/combat.tscn"
+const WORLD_MAP := "res://scenes/world_map.tscn"
 
-var meta := {"flags": [], "runs": 0, "best_distance": 0, "marks": []}
+var meta := {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": []}
 var run: RunState = null
 var save_enabled := true
 var _combat_setup := {}
 var pending_lines: PackedStringArray = []  ## shown by the next screen
+## Village prep that survives a trip to the world map and back. Cleared on departure.
+var outfit: Outfit = null
+var village_party: Array[StringName] = []
 
 
 func _ready() -> void:
@@ -39,8 +43,29 @@ func is_unlocked(d: CharacterDef) -> bool:
 
 
 ## The lord backs the trip more once it has proven worthwhile.
-func bonus_food() -> int:
+func bonus_gold() -> int:
 	return int(meta.best_distance / 50) * 5
+
+
+func purse() -> int:
+	return Outfit.BASE_GOLD + bonus_gold()
+
+
+func has_quest(id: String) -> bool:
+	return meta.quests.has(id)
+
+
+func take_quest(id: String) -> void:
+	if not has_quest(id):
+		meta.quests.append(id)
+		save_meta()
+
+
+## The village prep in progress, made on first visit.
+func village_outfit() -> Outfit:
+	if outfit == null:
+		outfit = Outfit.create(Db.items, purse())
+	return outfit
 
 
 func load_meta() -> void:
@@ -62,14 +87,29 @@ func save_meta() -> void:
 
 
 func reset_meta() -> void:
-	meta = {"flags": [], "runs": 0, "best_distance": 0, "marks": []}
+	meta = {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": []}
 	save_meta()
+
+
+## The Lodestone keeps what the party unearthed on the world map: the village area plus the walked route.
+func remember_route(distance: int) -> void:
+	var world := WorldMap.load_default()
+	if meta.revealed.is_empty():
+		meta.revealed = Discovery.start(world)
+	Discovery.reveal_route(meta.revealed, world, distance)
 
 
 # --- run flow -------------------------------------------------------------
 
-func start_run(defs: Array) -> void:
-	run = RunState.create(defs, randi(), bonus_food())
+## Leaves the village. The outfit's pack becomes the run's food and medicine, leftover gold comes along.
+func start_run(defs: Array, kit: Outfit = null) -> void:
+	run = RunState.create(defs, randi())
+	if kit:
+		run.food = kit.food()
+		run.medicine = kit.medicine()
+		run.gold = kit.gold
+	outfit = null
+	village_party = []
 	go(TRAIL)
 
 
@@ -120,6 +160,7 @@ func recall() -> void:
 		for mk in run.marks:
 			meta.marks.append(mk)
 		meta.marks = meta.marks.slice(-200)
+		remember_route(run.distance)
 	meta.runs = int(meta.runs) + 1
 	for i in range(1, int(meta.runs) + 1):
 		if not meta.flags.has("runs_%d" % i):
@@ -135,6 +176,7 @@ func complete_run() -> void:
 	meta.best_distance = maxi(int(meta.best_distance), run.distance)
 	for mk in run.marks:
 		meta.marks.append(mk)
+	remember_route(run.distance)
 	if not has_flag("reached_end"):
 		meta.flags.append("reached_end")
 	save_meta()

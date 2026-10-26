@@ -1,0 +1,9 @@
+id,kind,x,y,name_key
+village,village,300,770,MAP_VILLAGE
+farm,farm,520,820,
+tower,tower,600,520,
+pass,pass,800,400,
+gate,gate,1030,560,MAP_GATE
+ruin,ruin,1300,500,
+spire,spire,1560,420,
+end,end,1800,420,MAP_END

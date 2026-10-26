@@ -1,0 +1,4 @@
+id,text_key,reward_gold,goal
+river_cross,QUEST_RIVER,10,cross_river
+bring_herb,QUEST_HERB,8,carry_medicine_5
+find_wall,QUEST_WALL,25,reached_wall

@@ -1,0 +1,8 @@
+id,name_key,kind,shape,price,food,medicine,shop
+ration,ITEM_RATION,food,#,2,5,0,1
+sack,ITEM_SACK,food,##,4,12,0,1
+jerky,ITEM_JERKY,food,.#./###,7,30,0,1
+crate,ITEM_CRATE,crate,##/##,9,36,0,1
+salve,ITEM_SALVE,med,#,4,0,2,1
+herbkit,ITEM_HERBKIT,herb,##/#.,9,0,8,1
+books,ITEM_BOOKS,book,##/#.,0,0,0,0

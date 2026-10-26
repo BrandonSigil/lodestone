@@ -9,6 +9,8 @@ const ROSTER := [&"lead", &"stardrop", &"hunter", &"wizard", &"bushberry", &"ske
 var characters: Dictionary = {}  # id -> CharacterDef
 var events: Array[Dictionary] = []
 var encounters: Dictionary = {}  # id -> {"units": Array[String], "loot": String}
+var items: Dictionary = {}  # id -> row of data/items.csv
+var quests: Array[Dictionary] = []  # rows of data/quests.csv
 
 
 func _ready() -> void:
@@ -23,6 +25,19 @@ func reload() -> void:
 	encounters.clear()
 	for row in CsvTable.load_rows("res://data/encounters.csv"):
 		encounters[row.id] = {"units": Array(row.units.split("|")), "loot": row.loot}
+	items.clear()
+	for row in CsvTable.load_rows("res://data/items.csv"):
+		items[row.id] = row
+	quests = CsvTable.load_rows("res://data/quests.csv")
+
+
+## Items the village shop sells, in table order.
+func shop_items() -> Array[String]:
+	var out: Array[String] = []
+	for id in items:
+		if items[id].shop == "1":
+			out.append(id)
+	return out
 
 
 func character(id: StringName) -> CharacterDef:
