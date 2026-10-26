@@ -65,3 +65,4 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-26 Five region palettes of nine roles each (Home 0, Snow pass 0.25, The Wall 0.5, Past the Wall 0.75, Deep lands 1.0), blended by strangeness. Piece colors are fixed in every region.
 - [AI] 2026-10-26 Every visual is a pure function of seed and strangeness, so any screen can be reproduced and screenshot-checked (borrowed from riso-windowseat).
 - [AI] 2026-10-26 Three bottom-frame candidates: A embroidered band, B quilt row, C foreground sill. Brandon picks one or a mix.
+- [USER] 2026-10-26 Adopt the style lab draft 1 look (rules R1 to R10, region palettes, riso grain) for the starting village hub and the world map. The bottom frame pick (A, B or C) is still open.

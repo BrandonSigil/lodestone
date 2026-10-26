@@ -1,7 +1,7 @@
 # Lodestone style bible
 
 Brandon owns this page. Every session that touches visuals reads it.
-Lines marked **Proposed (AI)** come from style lab draft 1 (`docs/style-lab/index.html`, published as an artifact in the visual language thread). They are proposals until Brandon marks them **Brandon** or strikes them. `TODO` slots are still his call.
+Brandon adopted the style lab draft 1 look on 2026-10-26 for the village hub and world map; the rules and palettes below are the working standard. Lines still marked **Proposed (AI)** come from style lab draft 1 (`docs/style-lab/index.html`, published as an artifact in the visual language thread). They are proposals until Brandon marks them **Brandon** or strikes them. `TODO` slots are still his call.
 
 ## 0. How visual work happens
 - Brandon directs; code draws. Ideas are tried in the style lab page first, Brandon reacts in the thread or by commenting on the page, and a liked rule is recorded here before it goes into Godot.
