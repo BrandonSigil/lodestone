@@ -26,6 +26,7 @@ var seed_value := 1
 var strangeness := 0.0
 var counters := true
 var mercy := true
+var view := 0  ## camera quarter turns the map opens with
 
 
 static func default_setup() -> SandboxSetup:
@@ -192,7 +193,7 @@ func to_dict() -> Dictionary:
 		"name": map_name, "map": grid.to_dict(), "party": cells.call(party), "enemies": cells.call(enemies),
 		"party_mods": party_mods, "enemy_mods": enemy_mods, "extra_enemies": extra_enemies,
 		"supplies": supplies, "seed": seed_value, "strangeness": strangeness,
-		"counters": counters, "mercy": mercy,
+		"counters": counters, "mercy": mercy, "view": view,
 	}
 
 
@@ -214,6 +215,7 @@ static func from_dict(d: Dictionary) -> SandboxSetup:
 	s.strangeness = float(d.get("strangeness", 0.0))
 	s.counters = bool(d.get("counters", true))
 	s.mercy = bool(d.get("mercy", true))
+	s.view = int(d.get("view", 0)) % 4
 	return s
 
 

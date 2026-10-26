@@ -52,7 +52,7 @@ UI_DEFEAT,ALL FALL. STONE PULL BACK.
 UI_RECALL,STONE PULL BACK. stuff lost.
 UI_GOAL_REACHED,REACH END. lorem ipsum.
 UI_HIT_PREVIEW,HIT %d%%  DMG %d
-UI_HELP_COMBAT,click piece. pick thing. right click = back. D = danger. TAB = next. E = end turn
+UI_HELP_COMBAT,click piece. pick thing. right click = back. D = danger. Q = turn look. TAB = next. E = end turn
 SLOT_FOOD,FOOD
 SLOT_MEDICINE,MED
 SLOT_BOOKS,BOOK
@@ -220,3 +220,4 @@ MOD_COVER,COVER
 MOD_GUARD,GUARD
 MOD_VEIL,MOON
 UI_DANGER,DANGER (D)
+UI_TURN_VIEW,TURN LOOK (Q)

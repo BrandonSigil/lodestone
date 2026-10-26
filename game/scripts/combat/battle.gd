@@ -6,7 +6,7 @@ extends Node2D
 ##
 ## Player controls: click a piece to open its menu. Blue tiles = move there. Pick ATTACK, a skill or an item,
 ## then click a lit target (hover shows the forecast). Right click or Esc steps back (and undoes a move).
-## D shows the enemy's danger zone, Tab jumps to the next ready piece, E ends the turn.
+## D shows the enemy's danger zone, Tab jumps to the next ready piece, E ends the turn, Q turns the camera.
 
 signal log_line(text: String)
 signal info(text: String)
@@ -40,6 +40,7 @@ var _menu_box: VBoxContainer
 var _forecast: PanelContainer
 var _forecast_label: Label
 var _banner: Label
+var _rect := Rect2()
 
 
 func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0.0, p_supplies := {}) -> void:
@@ -56,6 +57,7 @@ func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0
 	add_child(board)
 	board.cell_clicked.connect(_on_cell_clicked)
 	board.cell_hovered.connect(_on_cell_hovered)
+	board.rotated.connect(_on_rotated)
 	_build_ui()
 
 
@@ -100,6 +102,7 @@ static func _panel_style(bg: Color) -> StyleBoxFlat:
 func layout(r: Rect2) -> void:
 	if board == null:
 		return
+	_rect = r
 	var bs := board.board_size()
 	var s := minf(r.size.x / bs.x, r.size.y / bs.y) * 0.95
 	s = clampf(s, 0.5, 1.6)
@@ -107,6 +110,12 @@ func layout(r: Rect2) -> void:
 	board.position = r.position + (r.size - bs * s) * 0.5 - board.board_origin() * s
 	_forecast.position = r.position + Vector2(8, 8)
 	_banner.position = r.position + Vector2(r.size.x * 0.5 - 90, r.size.y - 48)
+
+
+func _on_rotated() -> void:
+	layout(_rect)
+	if selected and _menu.visible:
+		_place_menu()
 
 
 func start() -> void:

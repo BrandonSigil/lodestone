@@ -13,9 +13,10 @@ const RIGHT_W := 270.0
 const BG := Color(0.13, 0.16, 0.16)
 const PANEL := Color(0.18, 0.22, 0.22)
 const INK := Color(0.9, 0.92, 0.87)
-const BRUSHES := ["GRASS", "FOREST", "WATER", "ROCK", "ROAD", "RAISE", "LOWER", "PARTY", "ENEMY", "ERASE"]
+const BRUSHES := ["GRASS", "FOREST", "WATER", "ROCK", "ROAD", "STONE", "STAIRS", "RUIN", "RAISE", "LOWER", "PARTY", "ENEMY", "ERASE"]
 const BRUSH_TERRAIN := {"GRASS": CombatGrid.T.GRASS, "FOREST": CombatGrid.T.FOREST, "WATER": CombatGrid.T.WATER,
-	"ROCK": CombatGrid.T.ROCK, "ROAD": CombatGrid.T.ROAD}
+	"ROCK": CombatGrid.T.ROCK, "ROAD": CombatGrid.T.ROAD, "STONE": CombatGrid.T.STONE, "STAIRS": CombatGrid.T.STAIRS,
+	"RUIN": CombatGrid.T.RUIN}
 
 var setup: SandboxSetup
 var editing := true
@@ -137,6 +138,8 @@ func _build_ui() -> void:
 	_seed_spin = _spin(bar, 0, 99999, 1, 1)
 	_seed_spin.value_changed.connect(func(v: float) -> void: if not _syncing: setup.seed_value = int(v))
 	_button(bar, "GENERATE", _generate)
+	bar.add_child(VSeparator.new())
+	_button(bar, "TURN (Q)", _turn)
 
 	# Left: editor tools or the fight log
 	var left := _panel(root)
@@ -172,7 +175,7 @@ func _build_ui() -> void:
 	_enemy_pick.item_selected.connect(func(_i: int) -> void: _set_brush("ENEMY"))
 	_edit_panel.add_child(_enemy_pick)
 	_edit_panel.add_child(_small_label(
-		"left click / drag = paint\nright click = remove piece\nRAISE / LOWER = height 0-3\nrock removes pieces on it\n\nF1 play   R restart\nsaved maps live in data/maps", 11))
+		"left click / drag = paint\nright click = remove piece\nRAISE / LOWER = height 0-8\nSTAIRS climb +2 over Jump\nRUIN walls block sight\nrock / ruin remove pieces\n\nF1 play   R restart\nsaved maps live in data/maps", 11))
 
 	_status = _small_label("", 11)
 	_status.add_theme_color_override("font_color", Color(0.75, 0.95, 0.75))
@@ -366,6 +369,8 @@ func _toggle_mode() -> void:
 func _enter_edit() -> void:
 	editing = true
 	if battle:
+		if preview:
+			preview.rot = battle.board.rot
 		battle.queue_free()
 		battle = null
 	CombatRules.reset_switches()
@@ -377,7 +382,10 @@ func _enter_edit() -> void:
 		add_child(preview)
 		preview.cell_painted.connect(_on_paint)
 		preview.cell_hovered.connect(_on_preview_hover)
+		preview.rotated.connect(_layout)
+		preview.rot = setup.view
 	preview.visible = true
+	preview.set_process_unhandled_key_input(true)
 	_refresh_preview()
 
 
@@ -388,6 +396,7 @@ func _enter_play() -> void:
 	_play_panel.visible = true
 	if preview:
 		preview.visible = false
+		preview.set_process_unhandled_key_input(false)
 	_restart()
 
 
@@ -403,6 +412,8 @@ func _restart() -> void:
 	add_child(battle)
 	var fight_seed := randi() if random_dice else setup.seed_value
 	battle.setup(setup.grid.resized(setup.grid.w, setup.grid.h), units, fight_seed, setup.strangeness, setup.supplies.duplicate())
+	if preview:
+		battle.board.rot = preview.rot
 	battle.log_line.connect(_log)
 	battle.info.connect(func(t: String) -> void: _info_label.text = t)
 	battle.phase_changed.connect(func(team: int) -> void:
@@ -413,6 +424,13 @@ func _restart() -> void:
 	_log("dice seed %d" % fight_seed)
 	_layout()
 	battle.start()
+
+
+func _turn() -> void:
+	if battle:
+		battle.board.turn()
+	elif preview:
+		preview.turn()
 
 
 func _log(line: String) -> void:
@@ -524,6 +542,7 @@ func _generate() -> void:
 # --- files ------------------------------------------------------------------------------
 
 func _save() -> void:
+	setup.view = battle.board.rot if battle else (preview.rot if preview else 0)
 	setup.map_name = SandboxSetup.safe_name(_name_edit.text)
 	_name_edit.text = setup.map_name
 	var path := setup.save()
@@ -550,6 +569,8 @@ func _on_load_selected(i: int) -> void:
 		_status.text = "could not read that map"
 		return
 	setup = s
+	if preview:
+		preview.rot = setup.view
 	_sync_controls()
 	_status.text = "loaded " + setup.map_name
 	_enter_edit()

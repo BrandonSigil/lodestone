@@ -52,6 +52,10 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-26 Fight items spend the run's real supplies: GOOP (1 medicine, heal 5, adjacent) and SNACK (3 food, heal 2, self).
 - [AI] 2026-10-26 Party luck: +1 to hit per consecutive party miss, up to +3, reset on a hit, visible in the forecast. Enemies get none.
 - [AI] 2026-10-26 Difficulty is four separate dials per side (HP %, to-hit, defense, damage, move) plus extra enemies. Presets: EASY 80% HP -1 hit -1 def; NORMAL base; HARD 115% HP +1 hit +1 enemy; BRUTAL 130% HP +2 hit +1 def +1 dmg +2 enemies.
+- [USER] 2026-10-26 More terrain and height in combat, in a nice isometric view (references: stacked stone terraces, stairs, waterfalls, ruins).
+- [AI] 2026-10-26 Heights 0 to 8 for authored maps (generator 0 to 4). New terrain: stone floor, stairs (+2 climb over Jump), ruin walls (impassable, block sight 2 levels).
+- [AI] 2026-10-26 Ranged attacks and spells need line of sight. Cliffs, ruins, boulders and trees block it. High-ground range bonus capped at +3.
+- [AI] 2026-10-26 The camera turns in quarter steps (Q). Saved sandbox maps keep their opening angle.
 - [AI] 2026-10-26 Balance pass from the AI-vs-AI sim: bandit and wolf attack 3 to 4, bandit bow HP 7 to 8 and damage 2 to 3, GOOD SHOT +1 damage (was +2), MOON BOOM range 2-3 (was 2-4). Trail encounters stay at 3 enemies; their cost comes from HP carrying over.
 
 ## Trail and survival

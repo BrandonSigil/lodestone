@@ -3,6 +3,10 @@ extends RefCounted
 
 
 func run(s: Node, _frames: int, _step: String) -> void:
+	if _step.begins_with("turn"):
+		if _frames == 6:
+			s.preview.turn(int(_step.substr(4)))
+		return
 	if _frames == 5 and _step != "edit":
 		s._enter_play()
 	if _step == "restart_mid":

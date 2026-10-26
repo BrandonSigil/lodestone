@@ -10,6 +10,7 @@ const FLANK_HIT := 2
 const SPOOKED_HIT := -3
 const SPOOKED_MOVE := -2
 const MELEE_REACH := 2  ## melee can't hit across more height than this
+const HIGH_RANGE_MAX := 3  ## bows and spells gain +1 range per level up, to this many
 const SKITTISH_DC := 11
 const SKITTISH_RANGE := 3
 const GUARD_DEF := 3  ## Guard: +3 defense until the unit's next phase
@@ -72,7 +73,7 @@ static func reachable(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictiona
 			var n: Vector2i = c + d
 			if not grid.passable(n):
 				continue
-			if absi(grid.height_at(n) - grid.height_at(c)) > u.jump:
+			if not grid.can_step(c, n, u.jump):
 				continue
 			var other := unit_at(units, n)
 			if other != null and other.team != u.team:
@@ -110,7 +111,8 @@ static func ability_range(u: CombatUnit, a: Ability) -> Vector2i:
 	return Vector2i(a.range_min, a.range_max)
 
 
-## Range 1 is melee: it can't cross more than MELEE_REACH levels. Longer reach gains +1 per level of high ground.
+## Range 1 is melee: it can't cross more than MELEE_REACH levels. Longer reach gains +1 per level of high ground
+## (up to HIGH_RANGE_MAX) and needs a clear line of sight: walls, cliffs, boulders and trees in between block it.
 static func in_reach(grid: CombatGrid, from: Vector2i, to: Vector2i, r: Vector2i) -> bool:
 	var d := dist(from, to)
 	if d < r.x:
@@ -118,10 +120,12 @@ static func in_reach(grid: CombatGrid, from: Vector2i, to: Vector2i, r: Vector2i
 	var dh := grid.height_at(from) - grid.height_at(to)
 	var reach := r.y
 	if reach > 1:
-		reach += maxi(0, dh)
+		reach += clampi(dh, 0, HIGH_RANGE_MAX)
 	elif absi(dh) > MELEE_REACH:
 		return false
-	return d <= reach
+	if d > reach:
+		return false
+	return reach <= 1 or d <= 1 or grid.line_of_sight(from, to)
 
 
 static func can_attack(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i) -> bool:
