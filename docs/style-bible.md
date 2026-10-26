@@ -99,3 +99,11 @@ Pieces, fixed everywhere: red #c8363c, ochre #e0a03a, cream #f3ead2, indigo #3a3
 ## 12. On-model / off-model
 Put 5 pictures that are on-model in `game/art/source/bible/do/` and 5 that are not in `game/art/source/bible/dont/`.
 Notes: TODO
+
+## 13. Draft 2 fixes (Proposed (AI), 2026-10-26)
+- F1 Every shape gets a hand-cut edge (noise along its normal), never a perfect curve or rectangle.
+- F2 One light per scene. At home dusk: warm from the set sun at right, cool sky fill, warm rim on lit shoulders, light pools under windows.
+- F3 Each plane has its own texture (stipple gradient, dry-brush strokes, mottle); the shared grain stays light.
+- F4 Compose every screen: a framing foreground shape, a path or diagonal that leads to one focal point, and one hero form behind it.
+- F5 Pieces get costume (cape, stripes, pack), one prop (staff, bow, stone), two eyes and cheeks, and are about 90 px tall at 1600 wide.
+- F6 The frame and labels stay quieter than the picture: thinner band, labels on hover.
