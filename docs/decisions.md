@@ -73,4 +73,3 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-26 Regions are flat fills with wobbly warped-Voronoi borders, colored by the region palette at each region's strangeness. Regions never cross the Wall.
 - [AI] 2026-10-26 The trail's 300 leagues map onto the drawn route; the Wall gate is league 150. The walked part of the route prints dark, the rest pale.
 - [AI] 2026-10-26 Discovery: the village plus about 170 map units around it start known; each run reveals 95 units either side of the route it walked. Stored as circles in meta so it survives a recall.
-
