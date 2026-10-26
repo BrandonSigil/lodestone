@@ -10,6 +10,7 @@ name_key = "CHAR_STARDROP"
 class_def = ExtResource("2")
 off_skills = {"wayfind": 4}
 perks = Array[StringName]([])
+traits = Array[StringName]([&"starlit"])
 deficiency = &"skittish"
 food_per_day = 1
 party_slots = 1

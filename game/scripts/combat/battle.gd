@@ -131,7 +131,7 @@ func is_player_turn() -> bool:
 
 func _start_player_phase() -> void:
 	round_no += 1
-	CombatRules.begin_phase(units, 0)
+	_show_phase_events(CombatRules.begin_phase(units, 0))
 	_banner.text = Txt.f("UI_ROUND", round_no) + "  " + Txt.t("UI_PLAYER_PHASE")
 	for u: CombatUnit in units:
 		if u.team == 0 and u.alive():
@@ -159,9 +159,12 @@ func _enemy_phase() -> void:
 	_banner.text = Txt.t("UI_ENEMY_PHASE")
 	board.danger = {}
 	phase_changed.emit(1)
-	CombatRules.begin_phase(units, 1)
+	_show_phase_events(CombatRules.begin_phase(units, 1))
 	for e: CombatUnit in units:
 		if e.team != 1 or not e.alive() or state == S.OVER:
+			continue
+		if e.has_status(CombatRules.STATUS_SLEEP):
+			board.float_text(e.cell, Txt.t("TAG_SLEEP"), Color(0.75, 0.85, 1.0))
 			continue
 		var plan := EnemyAi.plan(grid, e, units)
 		if plan.move != e.cell:
@@ -176,6 +179,15 @@ func _enemy_phase() -> void:
 			return
 	CombatRules.end_phase(units, 1)
 	_start_player_phase()
+
+
+## Regrowth and the like at the start of a phase: no animation, just numbers.
+func _show_phase_events(events: Array) -> void:
+	for ev in events:
+		if ev.type == "heal":
+			board.float_text(ev.unit.cell, "+%d" % ev.amount, Color(0.5, 1.0, 0.6))
+	for o: CombatUnit in units:
+		o.sync_view()
 
 
 ## Resolve an action and play its events. Returns after the animation.
@@ -222,6 +234,8 @@ func _play(ev: Dictionary) -> void:
 			board.float_text(t.cell, "+%d" % ev.amount, Color(0.5, 1.0, 0.6))
 			await get_tree().create_timer(0.25).timeout
 		"status":
+			if ev.has("roll"):
+				await board.animate_attack(ev.src, t, true)
 			board.float_text(t.cell, Txt.t("TAG_" + String(ev.status).to_upper()), Color(0.75, 0.85, 1.0))
 			await get_tree().create_timer(0.2).timeout
 		"push":
@@ -542,16 +556,26 @@ func _show_forecast(u: CombatUnit, a: Ability, c: Vector2i) -> void:
 		var t: CombatUnit = e.unit
 		match a.kind:
 			"attack":
-				var after := maxi(0, t.hp - int(e.dmg))
+				var after := maxi(0, t.hp - int(e.dmg) * int(e.swings))
 				lines.append("%s  HP %d > %d" % [Txt.t(t.name_key), t.hp, after])
-				lines.append("  " + Txt.f("UI_HIT_PREVIEW", [int(round(e.hit * 100)), e.dmg]))
+				var line := Txt.f("UI_HIT_PREVIEW", [int(round(e.hit * 100)), e.dmg])
+				if e.swings > 1:
+					line += "  " + Txt.f("UI_SWINGS", e.swings)
+				lines.append("  " + line)
+				lines.append("  " + _parts_text(e.hit_parts) + "  vs  " + _parts_text(e.def_parts))
+			"hex":
+				lines.append("%s  %s" % [Txt.t(t.name_key), Txt.t("TAG_" + a.status.to_upper())])
+				lines.append("  " + Txt.f("UI_HEX_PREVIEW", int(round(e.hit * 100))))
 				lines.append("  " + _parts_text(e.hit_parts) + "  vs  " + _parts_text(e.def_parts))
 			"heal":
 				lines.append("%s  HP %d > %d" % [Txt.t(t.name_key), t.hp, t.hp + int(e.heal)])
 			"buff":
 				lines.append("%s  %s" % [Txt.t(t.name_key), Txt.t("TAG_" + a.status.to_upper())])
 	if not f.counter.is_empty():
-		lines.append(Txt.f("UI_COUNTER_PREVIEW", [int(round(f.counter.hit * 100)), f.counter.dmg]))
+		var c_line := Txt.f("UI_COUNTER_PREVIEW", [int(round(f.counter.hit * 100)), f.counter.dmg])
+		if int(f.counter.get("swings", 1)) > 1:
+			c_line += "  " + Txt.f("UI_SWINGS", f.counter.swings)
+		lines.append(c_line)
 	_forecast_label.text = "\n".join(lines)
 	_forecast.visible = true
 	_forecast.reset_size()
@@ -577,6 +601,10 @@ func unit_text(u: CombatUnit) -> String:
 		skills.append(_ability_label(u, a))
 	if not skills.is_empty():
 		lines.append(", ".join(skills))
+	for t in u.traits:
+		var key := "TRAIT_" + String(t).to_upper()
+		if Txt.has(key):
+			lines.append("%s: %s" % [Txt.t(key), Txt.t(key + "_DESC")])
 	return "\n".join(lines)
 
 

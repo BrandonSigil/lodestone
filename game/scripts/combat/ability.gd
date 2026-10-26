@@ -5,7 +5,7 @@ extends RefCounted
 
 var id := ""
 var name_key := ""
-var kind := "attack"  ## attack (rolls d20, deals damage), heal (no roll), buff (no roll, adds a status)
+var kind := "attack"  ## attack (rolls d20, deals damage), hex (rolls d20, only adds its status), heal (no roll), buff (no roll, adds a status)
 var target := "enemy"  ## enemy, ally (includes self), self, cell (aim at any cell, hits everyone in the radius)
 var range_min := 0  ## 0 and 0 = use the unit's weapon range
 var range_max := 0
@@ -17,6 +17,7 @@ var push := 0  ## tiles the target is shoved away from the user
 var status := ""  ## rooted, veil, guard
 var status_turns := 0
 var magic := false  ## ignores cover
+var element := ""  ## fire, moon, frost or empty. Some traits care (flammable takes more from fire).
 ## Items only: which supply it spends and how much.
 var resource := ""
 var cost := 0
@@ -38,6 +39,7 @@ static func from_row(row: Dictionary) -> Ability:
 	a.status = row.status
 	a.status_turns = int(row.status_turns)
 	a.magic = row.magic == "1"
+	a.element = row.get("element", "")
 	return a
 
 
@@ -66,4 +68,9 @@ func is_item() -> bool:
 
 
 func hostile() -> bool:
-	return kind == "attack"
+	return kind == "attack" or kind == "hex"
+
+
+## Spells are the magic skills a caster picks into their slots. The basic strike never counts.
+func is_spell() -> bool:
+	return magic and id != "strike"

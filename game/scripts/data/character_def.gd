@@ -7,6 +7,8 @@ extends Resource
 @export var class_def: ClassDef
 @export var off_skills: Dictionary = {}  ## 1-3 non-class skills, check id -> bonus
 @export var perks: Array[StringName] = []
+@export var traits: Array[StringName] = []  ## combat traits, see CombatRules.TRAIT_*
+@export var spells: Array[StringName] = []  ## default spell picks for casters; empty = the class default
 @export var deficiency: StringName = &""
 @export var food_per_day: int = 1
 @export var party_slots: int = 1
@@ -21,3 +23,7 @@ func skill(check: String) -> int:
 
 func has_perk(p: StringName) -> bool:
 	return perks.has(p)
+
+
+func default_spells() -> Array[StringName]:
+	return spells.duplicate() if not spells.is_empty() else class_def.default_spells()

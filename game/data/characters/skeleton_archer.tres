@@ -10,6 +10,7 @@ name_key = "CHAR_SKELETON"
 class_def = ExtResource("2")
 off_skills = {}
 perks = Array[StringName]([&"no_needs"])
+traits = Array[StringName]([&"bones"])
 deficiency = &"gloomy"
 food_per_day = 0
 party_slots = 1

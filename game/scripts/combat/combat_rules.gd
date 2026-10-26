@@ -22,8 +22,28 @@ const FALL_DAMAGE := 2  ## per level dropped beyond the first when pushed off a 
 const STATUS_GUARD := "guard"
 const STATUS_VEIL := "veil"
 const STATUS_ROOTED := "rooted"
+const STATUS_SLEEP := "sleep"  ## skips the owner's next phase, can't hit back; any damage wakes it
+const STATUS_GUIDED := "guided"  ## +2 to hit until the owner's next phase
 ## Cleared when the owner's next phase starts (they protect through the enemy phase).
-const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL]
+const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED]
+const GUIDED_HIT := 2
+
+## Combat traits (one per roster character, a few for enemy classes). Ids live in the .tres traits arrays.
+const TRAIT_SHIELD_WALL := &"shield_wall"  ## Lead: allies standing next to them get +2 defense
+const TRAIT_STARLIT := &"starlit"  ## Stardrop: spells get +1 hit and +1 damage when cast from height 2 or more
+const TRAIT_STEADY_AIM := &"steady_aim"  ## Hunter: +2 to hit when attacking without having moved this turn
+const TRAIT_SCHOLAR := &"scholar"  ## Wizard: spells deal +1 damage and heal +1
+const TRAIT_DEEP_ROOTS := &"deep_roots"  ## Bushberry: can't be pushed, regrows 1 HP at the start of its phase
+const TRAIT_BONES := &"bones"  ## Skeleton: takes 2 less damage from arrows and other non-magic ranged hits
+const TRAIT_DOUBLE_STRIKE := &"double_strike"  ## Lewith & Flark: the basic hit swings twice at -1 damage each
+const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
+const PERK_FLAMMABLE := &"flammable"  ## takes +2 damage from fire
+const SHIELD_WALL_DEF := 2
+const STARLIT_HEIGHT := 2
+const STEADY_AIM_HIT := 2
+const BONES_DR := 2
+const FLAMMABLE_DMG := 2
+const REGROW := 1
 
 ## Rule switches the sandbox can flip to compare. Real fights use the defaults.
 static var counters := true  ## melee units hit back once when attacked in reach
@@ -44,7 +64,7 @@ static func height_levels(grid: CombatGrid, from: Vector2i, to: Vector2i) -> int
 
 
 static func move_points(u: CombatUnit) -> int:
-	if u.has_status(STATUS_ROOTED):
+	if u.has_status(STATUS_ROOTED) or u.has_status(STATUS_SLEEP):
 		return 0
 	return maxi(1, u.move + (SPOOKED_MOVE if u.spooked else 0))
 
@@ -217,12 +237,18 @@ static func hit_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units:
 		parts.append(["MOD_FLANK", FLANK_HIT])
 	if att.spooked:
 		parts.append(["MOD_SPOOKED", SPOOKED_HIT])
+	if att.has_status(STATUS_GUIDED):
+		parts.append(["MOD_GUIDED", GUIDED_HIT])
+	if att.has_trait(TRAIT_STEADY_AIM) and not att.moved and from == att.cell:
+		parts.append(["MOD_STEADY", STEADY_AIM_HIT])
+	if _starlit(grid, att, from, a):
+		parts.append(["MOD_STARLIT", 1])
 	if mercy and att.team == 0 and att.miss_streak > 0:
 		parts.append(["MOD_MERCY", mini(att.miss_streak, MERCY_MAX)])
 	return parts
 
 
-static func defense_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, a: Ability = null) -> Array:
+static func defense_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, a: Ability = null, units: Array = []) -> Array:
 	var parts := [["MOD_DEFENSE", tgt.defense]]
 	var magic := att.magic or (a != null and a.magic)
 	var cover := grid.cover(tgt.cell)
@@ -232,7 +258,31 @@ static func defense_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, a:
 		parts.append(["MOD_GUARD", GUARD_DEF])
 	if tgt.has_status(STATUS_VEIL):
 		parts.append(["MOD_VEIL", VEIL_DEF])
+	if shielded(tgt, units):
+		parts.append(["MOD_SHIELD", SHIELD_WALL_DEF])
 	return parts
+
+
+## Is someone with shield_wall standing next to this unit (and on its side)?
+static func shielded(tgt: CombatUnit, units: Array) -> bool:
+	for o: CombatUnit in units:
+		if o != tgt and o.alive() and o.team == tgt.team and o.has_trait(TRAIT_SHIELD_WALL) and dist(o.cell, tgt.cell) == 1:
+			return true
+	return false
+
+
+static func _starlit(grid: CombatGrid, u: CombatUnit, from: Vector2i, a: Ability) -> bool:
+	return a != null and a.is_spell() and u.has_trait(TRAIT_STARLIT) and grid.height_at(from) >= STARLIT_HEIGHT
+
+
+## How many times this ability rolls against each target (Lewith & Flark's basic hit swings twice).
+static func swings(u: CombatUnit, a: Ability) -> int:
+	return 2 if a != null and a.id == "strike" and u.has_trait(TRAIT_DOUBLE_STRIKE) else 1
+
+
+## What a heal restores, before capping at max HP.
+static func heal_amount(u: CombatUnit, a: Ability) -> int:
+	return a.power + (1 if a.is_spell() and u.has_trait(TRAIT_SCHOLAR) else 0)
 
 
 static func _sum(parts: Array) -> int:
@@ -246,46 +296,64 @@ static func hit_bonus(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units:
 	return _sum(hit_parts(grid, att, tgt, units, from, a))
 
 
-static func target_number(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, a: Ability = null) -> int:
-	return _sum(defense_parts(grid, att, tgt, a))
+static func target_number(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, a: Ability = null, units: Array = []) -> int:
+	return _sum(defense_parts(grid, att, tgt, a, units))
 
 
 static func hit_chance(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2i, a: Ability = null) -> float:
-	return Dice.chance(hit_bonus(grid, att, tgt, units, from, a), target_number(grid, att, tgt, a))
+	return Dice.chance(hit_bonus(grid, att, tgt, units, from, a), target_number(grid, att, tgt, a, units))
 
 
-static func damage(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i, a: Ability = null) -> int:
-	var power := a.power if a else 0
-	return maxi(1, att.damage + power + height_levels(grid, from, tgt.cell))
+## Damage of one swing. `units` is only needed for the wolf's pack trait.
+static func damage(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i, a: Ability = null, units: Array = []) -> int:
+	var dmg := att.damage + (a.power if a else 0) + height_levels(grid, from, tgt.cell)
+	var spell := a != null and a.is_spell()
+	if spell and att.has_trait(TRAIT_SCHOLAR):
+		dmg += 1
+	if _starlit(grid, att, from, a):
+		dmg += 1
+	if swings(att, a) > 1:
+		dmg -= 1
+	if att.has_trait(TRAIT_PACK) and flanked(att, tgt, units, from):
+		dmg += 1
+	if a != null and a.element == "fire" and tgt.has_trait(PERK_FLAMMABLE):
+		dmg += FLAMMABLE_DMG
+	var magic := att.magic or (a != null and a.magic)
+	if tgt.has_trait(TRAIT_BONES) and not magic and dist(from, tgt.cell) > 1:
+		dmg -= BONES_DR
+	return maxi(1, dmg)
 
 
 ## Would `tgt` strike back at `att` standing on `from`?
 static func counters_from(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i) -> bool:
-	if not counters or not tgt.alive() or tgt.team == att.team:
+	if not counters or not tgt.alive() or tgt.team == att.team or tgt.has_status(STATUS_SLEEP):
 		return false
 	return in_reach(grid, tgt.cell, from, ability_range(tgt, null))
 
 
 ## What the player sees before committing. One entry per affected unit, plus the counter if any.
-## {"targets": [{"unit", "hit", "dmg", "heal", "hit_parts", "def_parts"}], "counter": {"hit", "dmg"} or {}}
+## {"targets": [{"unit", "hit", "dmg", "swings", "heal", "hit_parts", "def_parts"}], "counter": {"hit", "dmg"} or {}}
+## dmg is per swing; swings is 2 for a double strike.
 static func forecast(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector2i, units: Array, from: Vector2i) -> Dictionary:
 	var out := {"targets": [], "counter": {}}
 	var hit_list := affected_units(grid, u, a, center, units, from)
 	for t in hit_list:
-		var e := {"unit": t, "hit": 1.0, "dmg": 0, "heal": 0, "hit_parts": [], "def_parts": []}
+		var e := {"unit": t, "hit": 1.0, "dmg": 0, "swings": 1, "heal": 0, "hit_parts": [], "def_parts": []}
 		match a.kind:
-			"attack":
+			"attack", "hex":
 				e.hit = hit_chance(grid, u, t, units, from, a)
-				e.dmg = damage(grid, u, t, from, a)
+				e.dmg = damage(grid, u, t, from, a, units) if a.kind == "attack" else 0
+				e.swings = swings(u, a)
 				e.hit_parts = hit_parts(grid, u, t, units, from, a)
-				e.def_parts = defense_parts(grid, u, t, a)
+				e.def_parts = defense_parts(grid, u, t, a, units)
 			"heal":
-				e.heal = mini(a.power, t.max_hp - t.hp)
+				e.heal = mini(heal_amount(u, a), t.max_hp - t.hp)
 		out.targets.append(e)
 	if a.kind == "attack" and a.radius == 0 and hit_list.size() == 1:
 		var t: CombatUnit = hit_list[0]
 		if counters_from(grid, u, t, from):
-			out.counter = {"unit": t, "hit": hit_chance(grid, t, u, units, t.cell), "dmg": damage(grid, t, u, t.cell)}
+			out.counter = {"unit": t, "hit": hit_chance(grid, t, u, units, t.cell), "dmg": damage(grid, t, u, t.cell, null, units),
+				"swings": swings(t, t.abilities[0])}
 	return out
 
 
@@ -303,24 +371,14 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 	var hit_list := affected_units(grid, u, a, center, units, u.cell)
 	for t in hit_list:
 		match a.kind:
-			"attack":
-				var r := Dice.check(rng, hit_bonus(grid, u, t, units, u.cell, a), target_number(grid, u, t, a))
-				if r.success:
-					var dmg := damage(grid, u, t, u.cell, a) * (2 if r.crit else 1)
-					t.hp = maxi(0, t.hp - dmg)
-					u.miss_streak = 0
-					events.append({"type": "hit", "src": u, "unit": t, "amount": dmg, "roll": r})
-					if t.alive() and a.status != "":
-						t.statuses[a.status] = a.status_turns
-						events.append({"type": "status", "src": u, "unit": t, "status": a.status})
-					if t.alive() and a.push > 0:
-						events.append_array(push(grid, units, u.cell, t, a.push))
-				else:
-					u.miss_streak += 1
-					events.append({"type": "miss", "src": u, "unit": t, "amount": 0, "roll": r})
+			"attack", "hex":
+				for i in swings(u, a):
+					if not t.alive():
+						break
+					events.append_array(_swing(rng, grid, u, a, t, units))
 			"heal":
 				var before := t.hp
-				t.hp = mini(t.max_hp, t.hp + a.power)
+				t.hp = mini(t.max_hp, t.hp + heal_amount(u, a))
 				events.append({"type": "heal", "src": u, "unit": t, "amount": t.hp - before})
 			"buff":
 				if a.status != "":
@@ -334,9 +392,33 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 	return events
 
 
+## One roll of an attack or hex against one target.
+static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, a: Ability, t: CombatUnit, units: Array) -> Array:
+	var events := []
+	var r := Dice.check(rng, hit_bonus(grid, u, t, units, u.cell, a), target_number(grid, u, t, a, units))
+	if not r.success:
+		u.miss_streak += 1
+		events.append({"type": "miss", "src": u, "unit": t, "amount": 0, "roll": r})
+		return events
+	u.miss_streak = 0
+	if a.kind == "attack":
+		var dmg := damage(grid, u, t, u.cell, a, units) * (2 if r.crit else 1)
+		t.hp = maxi(0, t.hp - dmg)
+		t.statuses.erase(STATUS_SLEEP)
+		events.append({"type": "hit", "src": u, "unit": t, "amount": dmg, "roll": r})
+	if t.alive() and a.status != "":
+		t.statuses[a.status] = a.status_turns
+		events.append({"type": "status", "src": u, "unit": t, "status": a.status, "roll": r})
+	if t.alive() and a.push > 0:
+		events.append_array(push(grid, units, u.cell, t, a.push))
+	return events
+
+
 ## Shoves `t` away from `from` up to n tiles. Blocked: bump damage. Dropping 2+ levels: fall damage.
 static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, n: int) -> Array:
 	var events := []
+	if t.has_trait(TRAIT_DEEP_ROOTS):
+		return events
 	var delta := t.cell - from
 	var dir := Vector2i(signi(delta.x), 0) if absi(delta.x) >= absi(delta.y) else Vector2i(0, signi(delta.y))
 	if dir == Vector2i.ZERO:
@@ -349,6 +431,7 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 			blocked = true
 		if blocked:
 			t.hp = maxi(0, t.hp - BUMP_DAMAGE)
+			t.statuses.erase(STATUS_SLEEP)
 			events.append({"type": "bump", "unit": t, "amount": BUMP_DAMAGE, "at": dest})
 			break
 		var drop := grid.height_at(t.cell) - grid.height_at(dest)
@@ -357,6 +440,7 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 		if drop >= 2:
 			var dmg := (drop - 1) * FALL_DAMAGE
 			t.hp = maxi(0, t.hp - dmg)
+			t.statuses.erase(STATUS_SLEEP)
 			events.append({"type": "fall", "unit": t, "amount": dmg})
 	if path.size() > 1:
 		events.push_front({"type": "push", "unit": t, "path": path})
@@ -365,10 +449,10 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 
 ## Back-compat single strike (used by older tests and the simple sim).
 static func attack(rng: RandomNumberGenerator, grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units: Array) -> Dictionary:
-	var r := Dice.check(rng, hit_bonus(grid, att, tgt, units, att.cell), target_number(grid, att, tgt))
+	var r := Dice.check(rng, hit_bonus(grid, att, tgt, units, att.cell), target_number(grid, att, tgt, null, units))
 	var dmg := 0
 	if r.success:
-		dmg = damage(grid, att, tgt, att.cell) * (2 if r.crit else 1)
+		dmg = damage(grid, att, tgt, att.cell, null, units) * (2 if r.crit else 1)
 		tgt.hp = maxi(0, tgt.hp - dmg)
 	r["damage"] = dmg
 	return r
@@ -378,19 +462,28 @@ static func guard(u: CombatUnit) -> void:
 	u.statuses[STATUS_GUARD] = 1
 
 
-## Start of a team's phase: fresh actions, cooldowns tick, guard and veil end.
-static func begin_phase(units: Array, team: int) -> void:
+## Start of a team's phase: fresh actions, cooldowns tick, guard and veil end, sleepers lose the turn.
+## Returns heal events for traits that regrow, so the board can show them.
+static func begin_phase(units: Array, team: int) -> Array:
+	var events := []
 	for u: CombatUnit in units:
 		if u.team != team:
 			continue
 		u.moved = false
 		u.acted = false
+		if u.has_status(STATUS_SLEEP):
+			u.moved = true
+			u.acted = true
+		if u.alive() and u.has_trait(TRAIT_DEEP_ROOTS) and u.hp < u.max_hp:
+			u.hp = mini(u.max_hp, u.hp + REGROW)
+			events.append({"type": "heal", "src": u, "unit": u, "amount": REGROW})
 		for s in STATUS_UNTIL_OWN_PHASE:
 			u.statuses.erase(s)
 		for id in u.cooldowns.keys():
 			u.cooldowns[id] = int(u.cooldowns[id]) - 1
 			if u.cooldowns[id] <= 0:
 				u.cooldowns.erase(id)
+	return events
 
 
 ## End of a team's phase: timed statuses like rooted tick down.
@@ -410,7 +503,7 @@ static func end_phase(units: Array, team: int) -> void:
 static func danger_zone(grid: CombatGrid, units: Array, team: int) -> Dictionary:
 	var zone := {}
 	for u: CombatUnit in units:
-		if u.team != team or not u.alive():
+		if u.team != team or not u.alive() or u.has_status(STATUS_SLEEP):
 			continue
 		var froms: Array = CombatRules.reachable(grid, u, units).cost.keys()
 		var ranges: Array[Vector2i] = []

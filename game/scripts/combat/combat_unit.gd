@@ -23,7 +23,9 @@ var damage := 1
 var range_min := 1
 var range_max := 1
 var magic := false
-var abilities: Array[Ability] = []  ## strike first, then class skills
+var abilities: Array[Ability] = []  ## strike first, then class skills, then picked spells
+var spells: Array[StringName] = []  ## the spells picked into this unit's slots
+var traits: Array[StringName] = []  ## combat traits from the class and the character, plus their perks (see CombatRules.TRAIT_*)
 
 var moved := false
 var acted := false
@@ -61,12 +63,42 @@ func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 		var a := Db.ability(String(id))
 		if a:
 			abilities.append(a)
+	traits = c.traits.duplicate()
+	set_spells(c.default_spells())
 
 
-static func from_def(d: CharacterDef, mods: Dictionary = {}) -> CombatUnit:
+## Swap the picked spells. Only spells from the class pool count, and only as many as it has slots.
+func set_spells(ids: Array) -> void:
+	for id in spells:
+		var old := Db.ability(String(id))
+		if old:
+			abilities.erase(old)
+	spells.clear()
+	if cls == null:
+		return
+	for id in ids:
+		var sid := StringName(id)
+		if spells.size() >= cls.spell_slots or spells.has(sid) or not cls.spell_pool.has(sid):
+			continue
+		var a := Db.ability(String(sid))
+		if a:
+			spells.append(sid)
+			abilities.append(a)
+
+
+func has_trait(t: StringName) -> bool:
+	return traits.has(t)
+
+
+## spell_ids: the player's picks; null = the character's default loadout.
+static func from_def(d: CharacterDef, mods: Dictionary = {}, spell_ids: Variant = null) -> CombatUnit:
 	var u := CombatUnit.new()
 	u.name_key = d.name_key
 	u.apply_class(d.class_def, mods)
+	u.set_spells(spell_ids if spell_ids is Array else d.default_spells())
+	for t in d.traits + d.perks:
+		if not u.traits.has(t):
+			u.traits.append(t)
 	u.team = 0
 	u.hp = u.max_hp
 	u.shown_hp = u.hp
@@ -80,7 +112,7 @@ static func from_def(d: CharacterDef, mods: Dictionary = {}) -> CombatUnit:
 
 
 static func from_member(m: Dictionary, mods: Dictionary = {}) -> CombatUnit:
-	var u := from_def(m.def, mods)
+	var u := from_def(m.def, mods, m.get("spells"))
 	u.hp = clampi(m.hp, 1, u.max_hp)
 	u.shown_hp = u.hp
 	u.member = m

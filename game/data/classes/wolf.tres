@@ -17,3 +17,4 @@ range_max = 1
 magic = false
 skills = {}
 abilities = Array[StringName]([&"pounce"])
+traits = Array[StringName]([&"pack"])
