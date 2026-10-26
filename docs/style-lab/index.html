@@ -1,0 +1,539 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lodestone Style Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one long folio. Each section is a plate: a short header, then a picture you react to. */
+:root{
+  --paper:#e9ebf3; --paper-2:#dfe2ee; --ink:#232746; --ink-soft:#4b5078; --rule:#c4c8db;
+  --ember:#d9542f; --ochre:#e2b450; --card:#f4f5fa;
+  --f-display:"Young Serif", Georgia, "Times New Roman", serif;
+  --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#161930; --paper-2:#1e2240; --ink:#e7e8f2; --ink-soft:#a9acc8; --rule:#33385c;
+  --ember:#f07a52; --ochre:#e9c46a; --card:#1c2039; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#161930; --paper-2:#1e2240; --ink:#e7e8f2; --ink-soft:#a9acc8; --rule:#33385c;
+  --ember:#f07a52; --ochre:#e9c46a; --card:#1c2039; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 64px}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;margin:0}
+h1{font-size:clamp(36px,6vw,64px);line-height:1.02;letter-spacing:-.01em}
+h2{font-size:clamp(26px,3.4vw,36px);line-height:1.1}
+h3{font-size:20px;line-height:1.2}
+p{margin:0;max-width:66ch}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+header.top{padding-block:40px 20px;display:grid;gap:14px}
+.lede{font-size:18px;color:var(--ink-soft)}
+section{padding-block:48px 8px;border-top:1px solid var(--rule);margin-top:40px;display:grid;gap:20px}
+canvas{display:block;width:100%;height:auto;max-width:100%;border-radius:3px}
+.stage{display:grid;gap:12px}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;font-size:14px}
+.controls label{display:flex;gap:10px;align-items:center}
+input[type=range]{width:min(360px,70vw);accent-color:var(--ember)}
+button{font:600 14px var(--f-body);color:var(--ink);background:var(--card);border:1px solid var(--rule);padding:7px 14px;border-radius:2px;cursor:pointer}
+button:hover{border-color:var(--ink-soft)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.dial{font-family:var(--f-mono);font-size:13px;color:var(--ink-soft);min-width:15ch}
+.refs{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px}
+.ref{display:grid;gap:10px;align-content:start;min-width:0}
+.ref img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:2px}
+.bar{display:flex;height:22px;border-radius:2px;overflow:hidden}
+.bar span{display:block}
+.ref p{font-size:14.5px}
+.ref .who{font-family:var(--f-mono);font-size:12px;color:var(--ink-soft)}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px 32px;margin:0;padding:0;list-style:none}
+.rules li{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;min-width:0}
+.rules b{font-family:var(--f-display);font-weight:400;font-size:18px}
+.rules .tag{font-family:var(--f-mono);font-size:11px;color:var(--ink-soft);grid-column:2}
+.rules .k{grid-row:span 3;font-family:var(--f-mono);font-size:12px;color:var(--ember);padding-top:4px}
+.rules p{grid-column:2;font-size:15px}
+.pals{display:grid;gap:10px}
+.pal{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center}
+.pal .nm{font-family:var(--f-display);font-size:17px;line-height:1.15}
+.pal .nm small{display:block;font-family:var(--f-mono);font-size:11px;color:var(--ink-soft)}
+.sw{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px}
+.sw div{height:46px;border-radius:2px;position:relative}
+.sw div i{position:absolute;left:4px;bottom:3px;font:500 10px var(--f-mono);font-style:normal;color:#fff;mix-blend-mode:difference;opacity:.85}
+.sw-key{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px;font:11px var(--f-mono);color:var(--ink-soft);margin-left:164px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.thumbs figure{margin:0;display:grid;gap:6px}
+.thumbs figcaption{font-size:13.5px;color:var(--ink-soft)}
+.thumbs figcaption b{color:var(--ink);font-weight:600}
+.mock{display:grid;gap:12px}
+.mock .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 28px;font-size:15px}
+.mock .meta p{max-width:none}
+.pro{color:var(--ink)} .con{color:var(--ink-soft)}
+.mock h3 .letter{font-family:var(--f-mono);font-size:13px;color:var(--ember);margin-right:8px;vertical-align:middle}
+.loop{counter-reset:s;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;list-style:none;padding:0;margin:0}
+.loop li{counter-increment:s;display:grid;gap:6px;align-content:start;padding-top:12px;border-top:2px solid var(--ink)}
+.loop li::before{content:"Step " counter(s);font:12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ember)}
+.loop li p{font-size:15px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.cols ul{margin:8px 0 0;padding-left:18px;font-size:15px;display:grid;gap:6px}
+.note{font-size:14px;color:var(--ink-soft)}
+code{font-family:var(--f-mono);font-size:.9em}
+@media (max-width:640px){
+  .pal{grid-template-columns:1fr;gap:6px}
+  .sw-key{margin-left:0}
+  .sw div{height:34px}
+  .sw div i{display:none}
+}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Lodestone · visual language · draft 1 · 26 Oct 2026</div>
+  <h1>Lodestone Style Lab</h1>
+  <p class="lede">Every picture on this page is drawn by code, from the rules underneath it. Nothing here is a painting or a generated image, so anything you dislike is a rule we can change. Drag the dial to walk the party from home, through the Wall, into the strange lands.</p>
+</header>
+
+<div class="stage">
+  <canvas id="hero" width="1600" height="900" aria-label="A code-drawn landscape that changes as the strangeness dial moves"></canvas>
+  <div class="controls">
+    <label for="dial">Strangeness <input id="dial" type="range" min="0" max="1" step="0.01" value="0.08"></label>
+    <span class="dial" id="dialOut">0.08 · Home</span>
+    <button id="reseed" type="button">New seed</button>
+    <label for="grain"><input id="grain" type="checkbox" checked> Print grain</label>
+    <span class="dial" id="seedOut"></span>
+  </div>
+</div>
+
+<section id="refs">
+  <div class="eyebrow">01 · what I read from your references</div>
+  <h2>Seven pictures, one family</h2>
+  <p>Colors were measured from your images (the bars show each image's seven main colors by area). The note under each is the rule I took from it.</p>
+  <div class="refs" id="refGrid"></div>
+</section>
+
+<section id="rules">
+  <div class="eyebrow">02 · the rules</div>
+  <h2>Shape, value and texture rules</h2>
+  <p>These are what the code obeys. They are proposals until you mark them yours.</p>
+  <ul class="rules">
+    <li><span class="k">R1</span><b>Big flat fields of color</b><p>A scene is 3 to 5 flat planes. Sky and ground carry most of the color; detail is rare and small.</p><span class="tag">snow village, figure on hill</span></li>
+    <li><span class="k">R2</span><b>Gradients only in skies</b><p>Land and pieces are flat fills. A sky may fade from top to horizon. A plane may get one soft light band, never shading.</p><span class="tag">mesa, cats on log</span></li>
+    <li><span class="k">R3</span><b>Soft, stacked, round forms</b><p>Mountains are gumdrops stacked in rows, trees are scallops or lollipops. Corners are rounded, nothing is a sharp spike at home.</p><span class="tag">cats on log, autumn wood</span></li>
+    <li><span class="k">R4</span><b>Marks instead of rendering</b><p>Texture comes from stamped marks on a plane: dots, fans, ticks, little arcs. They follow the plane's color, a step lighter or darker.</p><span class="tag">cats on log, figure on hill</span></li>
+    <li><span class="k">R5</span><b>No black, ever</b><p>The darkest color in a region is a deep tint of its own hue: plum at home, navy in snow. Darks read like two inks printed over each other.</p><span class="tag">riso-windowseat quality bar</span></li>
+    <li><span class="k">R6</span><b>Grain pinned to the world</b><p>One paper grain and mottle over everything, seeded and fixed, so it never swims or flickers when the camera moves.</p><span class="tag">riso-windowseat, autumn wood</span></li>
+    <li><span class="k">R7</span><b>Tiny pieces, huge world</b><p>Pieces are small against the land and keep their own warm colors in every region. The world shifts, the pieces don't, so you always find your party.</p><span class="tag">cats on log, figure on hill</span></li>
+    <li><span class="k">R8</span><b>One light source of accent</b><p>Each region has one accent ink used for one thing: a lit window, a moon, the Lodestone's glow. Never sprinkled.</p><span class="tag">snow village</span></li>
+    <li><span class="k">R9</span><b>Folk borders frame the picture</b><p>The picture sits inside a decorated band built from repeating stamps (stars, trees, steps, checks). The band holds the UI.</p><span class="tag">church, goat quilt</span></li>
+    <li><span class="k">R10</span><b>Strangeness inverts the values</b><p>At home the sky is light and the land is dark. Past the Wall the land brightens and the sky darkens, until the deepest lands glow against a dark sky.</p><span class="tag">my proposal for Earth to Alien</span></li>
+  </ul>
+</section>
+
+<section id="palettes">
+  <div class="eyebrow">03 · region palettes</div>
+  <h2>Nine inks per region, blended by distance</h2>
+  <p>Each region is one row of nine roles. The game blends between rows as the party travels, so there is never a hard cut. The piece colors at the bottom never change.</p>
+  <div class="pals" id="pals"></div>
+  <div class="sw-key" id="swKey"></div>
+</section>
+
+<section id="scenes">
+  <div class="eyebrow">04 · sample scenes</div>
+  <h2>The same generator at five distances</h2>
+  <p>Each scene is one call of the same code with a different strangeness. Mountains turn from gumdrops to mesas to floating rocks; trees turn from pines to lollipops to stalks, one tree at a time.</p>
+  <div class="thumbs" id="thumbs"></div>
+</section>
+
+<section id="frames">
+  <div class="eyebrow">05 · the bottom frame</div>
+  <h2>Three ways to tuck the UI into a border</h2>
+  <p>Each mockup is the trail screen at the game's 16:9 size. All three move the party, items and Lodestone out of the side panels into one band along the bottom, so the picture gets the whole top of the screen. Labels are placeholders.</p>
+
+  <div class="mock">
+    <h3><span class="letter">A</span>Embroidered band</h3>
+    <canvas id="frameA" width="1280" height="720" aria-label="Mockup A: a yellow embroidered border band with party, Lodestone medallion and item slots"></canvas>
+    <div class="meta">
+      <p class="pro">From the church print. A thin golden border wraps the picture and thickens into a stitched band at the bottom. The Lodestone is a medallion that breaks the band's top edge and sits in the picture.</p>
+      <p class="con">Reads as a storybook page. The gold band stays the same in every region, which anchors the strange lands but may feel heavy at home.</p>
+    </div>
+  </div>
+
+  <div class="mock">
+    <h3><span class="letter">B</span>Quilt row</h3>
+    <canvas id="frameB" width="1280" height="720" aria-label="Mockup B: a row of quilt squares, some decorative, some holding party members and items"></canvas>
+    <div class="meta">
+      <p class="pro">From the goat quilt. The band is a row of quilt squares. Some are only stamps, others hold a party member, the Lodestone or items. Square colors come from the current region, so the frame drifts strange with the world.</p>
+      <p class="con">Very modular and easy for code to extend, since one square is one thing. Busy if every square carries a stamp; it needs empty squares to breathe.</p>
+    </div>
+  </div>
+
+  <div class="mock">
+    <h3><span class="letter">C</span>Foreground sill</h3>
+    <canvas id="frameC" width="1280" height="720" aria-label="Mockup C: a dark foreground ridge and trees framing the scene, with party pieces standing on the ridge"></canvas>
+    <div class="meta">
+      <p class="pro">From the cats on the log. The frame is the nearest layer of the landscape itself: dark trees at the sides, a ridge along the bottom. Pieces stand on it as real board pieces, items rest on it as tokens.</p>
+      <p class="con">Most immersive and most screenshot-worthy. Hardest to keep readable when the inventory is full, and it must be redrawn per region.</p>
+    </div>
+  </div>
+</section>
+
+<section id="workflow">
+  <div class="eyebrow">06 · how we work</div>
+  <h2>You direct, the code draws, this page is the table</h2>
+  <p>This thread is the home for visual ideas, and this page is what we look at together. I learned the loop from riso-windowseat: write the rule first, prove the hardest picture first, keep every picture reproducible from a seed, and write down what is still weak.</p>
+  <ol class="loop">
+    <li><h3>You react</h3><p>Reply in the thread or leave a comment on this page: "B, but with C's trees", "home is too purple", a new reference image.</p></li>
+    <li><h3>I change a rule</h3><p>Each change is a rule or a palette edit, not a one-off tweak, so it holds across every scene the game draws.</p></li>
+    <li><h3>I republish this page</h3><p>Same link, new draft number. Old drafts stay in the page history if we want to go back.</p></li>
+    <li><h3>You mark it yours</h3><p>When you like a rule, I record it in the style bible and decisions file as yours. Only then does it go into the game.</p></li>
+    <li><h3>I port it to Godot</h3><p>The same rules become shaders and draw scripts in the game, checked against this page with screenshots.</p></li>
+  </ol>
+  <div class="cols">
+    <div>
+      <h3>What the code builds</h3>
+      <ul>
+        <li>Landscape generator: layered planes driven by seed and strangeness</li>
+        <li>Region palettes as data, blended by distance</li>
+        <li>Paper grain and mottle as one fixed shader</li>
+        <li>Mark stamper that scatters dots, fans and ticks on planes</li>
+        <li>Pieces built from parts (base, body, head, hat, pack) for random members</li>
+        <li>The bottom frame as stamps on a 9-slice band</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Where your hand matters most</h3>
+      <ul>
+        <li>Picking and killing rules on this page</li>
+        <li>Faces and hats for the pieces, if you want them hand drawn</li>
+        <li>A small set of stamps (star, tree, moon, motif) the code repeats</li>
+        <li>The hero moments: the Wall, first sight of the strange lands</li>
+        <li>All words. Labels here are placeholders</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Questions for you</h3>
+      <ul>
+        <li>Which frame, A, B or C, or a mix?</li>
+        <li>Should the frame stay constant as an anchor, or drift strange with the world?</li>
+        <li>Is R10, the value inversion past the Wall, the right twist?</li>
+        <li>Do the pieces get faces, or stay faceless like the figure on the hill?</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+const REFS = {}  // reference images live in the project files, not the repo;
+
+// ---------- palettes ----------
+const ROLES = ['skyTop','skyLow','far','mid','near','ground','dark','accent','light'];
+const ROLE_NAMES = ['sky top','horizon','far','mid','near','ground','dark','accent','light'];
+const REGIONS = [
+  {s:0.00, name:'Home', sub:'village, fields', c:['#b6a2d0','#f2b36b','#9a86b6','#7f8c5c','#4c5a3b','#d6cc96','#2e2440','#ffcf4a','#fbf1d8']},
+  {s:0.25, name:'Snow pass', sub:'mountains, pines', c:['#5f8bc6','#ece8c6','#3d8ff5','#79c0f6','#1d68cf','#c6e1e2','#1a2c55','#ffe08a','#f1f8f8']},
+  {s:0.50, name:'The Wall', sub:'the threshold', c:['#c46a01','#ec5a10','#8a3b6e','#6a46a0','#3c0f2a','#6c4aa6','#2a0a1c','#f4e04d','#c2aef0']},
+  {s:0.75, name:'Past the Wall', sub:'mesas, strange light', c:['#7891db','#d6a6cf','#c28594','#f99487','#c9664c','#ebbacb','#3b2a5a','#ff5fa8','#ffe6da']},
+  {s:1.00, name:'Deep lands', sub:'value inverted', c:['#14302f','#3d6c5c','#9de0b5','#e6f29a','#6b3278','#2c1f3d','#110c1e','#ff8a3d','#f5ffe0']},
+];
+const PIECES = {red:'#c8363c', ochre:'#e0a03a', cream:'#f3ead2', indigo:'#3a3f7a', base:'#2a2433'};
+
+const hex2rgb = h => [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const rgb2hex = a => '#'+a.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+const mix = (a,b,t) => { const A=hex2rgb(a),B=hex2rgb(b); return rgb2hex(A.map((v,i)=>v+(B[i]-v)*t)); };
+const lerp = (a,b,t)=>a+(b-a)*t;
+const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a));return t*t*(3-2*t);};
+const rgba=(h,a)=>{const [r,g,b]=hex2rgb(h);return `rgba(${r},${g},${b},${a})`;};
+
+function paletteAt(s){
+  s=clamp(s);
+  let i=0; while(i<REGIONS.length-2 && s>REGIONS[i+1].s) i++;
+  const A=REGIONS[i],B=REGIONS[i+1],t=(s-A.s)/(B.s-A.s);
+  const p={}; ROLES.forEach((r,k)=>p[r]=mix(A.c[k],B.c[k],t)); return p;
+}
+function regionName(s){let best=REGIONS[0];for(const r of REGIONS) if(Math.abs(r.s-s)<Math.abs(best.s-s)) best=r;return best.name;}
+
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+// ---------- grain (seeded once, fixed) ----------
+const grainTile=(()=>{const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');const d=g.createImageData(256,256);const r=rng(7);
+  for(let i=0;i<d.data.length;i+=4){const v=118+(r()-.5)*120+(r()<.012?-70:0);d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255;}
+  g.putImageData(d,0,0);return c;})();
+function finish(g,W,H,seed){
+  g.save();
+  const r=rng(seed*13+5);
+  g.globalCompositeOperation='soft-light';
+  for(let i=0;i<14;i++){const x=r()*W,y=r()*H,rad=(.15+r()*.3)*W;const gr=g.createRadialGradient(x,y,0,x,y,rad);
+    const lt=r()<.5;gr.addColorStop(0,lt?'rgba(255,255,255,.16)':'rgba(0,0,0,.14)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,W,H);}
+  g.globalAlpha=.55;g.fillStyle=g.createPattern(grainTile,'repeat');g.fillRect(0,0,W,H);
+  g.restore();
+}
+
+// ---------- shape vocabulary ----------
+function gumdrop(g,x,base,w,h){g.beginPath();g.moveTo(x-w/2,base);g.bezierCurveTo(x-w*.3,base-h*.12,x-w*.34,base-h,x,base-h);g.bezierCurveTo(x+w*.34,base-h,x+w*.3,base-h*.12,x+w/2,base);g.closePath();}
+function crescent(g,x,y,R,col){const c=document.createElement('canvas');c.width=c.height=Math.ceil(R*2+6);const k=c.getContext('2d');k.fillStyle=col;k.beginPath();k.arc(R+3,R+3,R,0,7);k.fill();k.globalCompositeOperation='destination-out';k.beginPath();k.arc(R+3+R*.5,R+3-R*.25,R*.92,0,7);k.fill();g.drawImage(c,x-R-3,y-R-3);}
+function layer(W,H,fn){const c=document.createElement('canvas');c.width=W;c.height=H;fn(c.getContext('2d'));return c;}
+function mesa(g,x,base,w,h,r){g.beginPath();g.moveTo(x-w/2,base);const top=base-h;g.lineTo(x-w*.36,top+h*.12);g.lineTo(x-w*.3,top+h*.02);
+  g.lineTo(x-w*.05,top);g.lineTo(x+w*.06,top+h*.05*r());g.lineTo(x+w*.28,top+h*.04);g.lineTo(x+w*.33,top+h*.2);g.lineTo(x+w/2,base);g.closePath();}
+function island(g,x,y,w,h){g.beginPath();g.moveTo(x-w/2,y);g.quadraticCurveTo(x-w*.5,y-h*.18,x-w*.3,y-h*.2);g.lineTo(x+w*.32,y-h*.2);g.quadraticCurveTo(x+w*.5,y-h*.18,x+w/2,y);
+  g.quadraticCurveTo(x+w*.15,y+h*.35,x+w*.04,y+h);g.quadraticCurveTo(x-w*.12,y+h*.4,x-w/2,y);g.closePath();}
+function stepCloud(g,x,y,w,h,r){const n=3+Math.floor(r()*3);g.beginPath();let cx=x;for(let i=0;i<n;i++){const ww=w*(.4+r()*.6);g.rect(cx,y+i*h,ww,h+1);cx+=(r()-.3)*w*.35;}}
+function ridgePath(g,W,y0,amp,freq,phase,H){g.beginPath();g.moveTo(0,H);for(let x=0;x<=W;x+=W/80){const y=y0-amp*(Math.sin(x/W*freq*6.28+phase)*.6+Math.sin(x/W*freq*2.7*6.28+phase*1.7)*.4);g.lineTo(x,y);}g.lineTo(W,H);g.closePath();}
+function ridgeY(x,W,y0,amp,freq,phase){return y0-amp*(Math.sin(x/W*freq*6.28+phase)*.6+Math.sin(x/W*freq*2.7*6.28+phase*1.7)*.4);}
+
+function pine(g,x,y,h,col,lt){const w=h*.42;g.fillStyle=col;for(let i=0;i<4;i++){const ty=y-h*(i*.22);const tw=w*(1-i*.2);g.beginPath();g.moveTo(x-tw/2,ty);
+  g.quadraticCurveTo(x-tw*.15,ty-h*.12,x,ty-h*.34);g.quadraticCurveTo(x+tw*.15,ty-h*.12,x+tw/2,ty);g.quadraticCurveTo(x+tw*.25,ty-h*.05,x,ty-h*.02);g.quadraticCurveTo(x-tw*.25,ty-h*.05,x-tw/2,ty);g.fill();}
+  if(h<300){g.fillStyle=lt;for(let i=0;i<3;i++){g.beginPath();g.arc(x+(i-1)*h*.06,y-h*(.2+i*.18),h*.018,0,7);g.fill();}}}
+function lolly(g,x,y,h,trunk,crown,r){g.strokeStyle=trunk;g.lineWidth=Math.max(1.5,h*.035);g.lineCap='round';g.beginPath();g.moveTo(x,y);g.lineTo(x,y-h*.75);g.moveTo(x,y-h*.45);g.lineTo(x+h*.12,y-h*.62);g.stroke();
+  g.fillStyle=crown;const n=4+Math.floor(r()*3);for(let i=0;i<n;i++){g.beginPath();g.arc(x+(r()-.5)*h*.32,y-h*(.6+r()*.38),h*(.08+r()*.07),0,7);g.fill();}}
+function stalk(g,x,y,h,col,orb,r){const bend=(r()-.5)*h*.5;g.strokeStyle=col;g.lineWidth=Math.max(1.5,h*.03);g.lineCap='round';g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+bend,y-h*.5,x+bend*.3,y-h);g.stroke();
+  g.fillStyle=rgba(orb,.25);g.beginPath();g.arc(x+bend*.3,y-h,h*.13,0,7);g.fill();g.fillStyle=orb;g.beginPath();g.arc(x+bend*.3,y-h,h*.065,0,7);g.fill();
+  if(r()<.5){g.fillStyle=col;g.beginPath();g.ellipse(x+bend*.45,y-h*.55,h*.08,h*.025,-.5,0,7);g.fill();}}
+
+function house(g,x,y,w,p,roofLight,lit){const h=w*.55;g.fillStyle=p.dark;g.fillRect(x-w/2,y-h,w,h);
+  g.fillStyle=roofLight;g.beginPath();g.moveTo(x-w*.62,y-h+2);g.lineTo(x-w*.1,y-h-w*.42);g.lineTo(x+w*.12,y-h-w*.42);g.lineTo(x+w*.62,y-h+2);g.closePath();g.fill();
+  g.fillStyle=p.dark;g.fillRect(x+w*.2,y-h-w*.5,w*.08,w*.18);
+  if(lit){g.fillStyle=rgba(p.accent,.28);g.beginPath();g.arc(x-w*.2,y-h*.45,w*.22,0,7);g.fill();g.fillStyle=p.accent;g.fillRect(x-w*.26,y-h*.58,w*.12,w*.14);}
+  else{g.fillStyle=rgba(p.light,.25);g.fillRect(x+w*.05,y-h*.58,w*.1,w*.12);}}
+
+// pieces: board-game pawns. base disc, body, head, two dot eyes, optional hat and pack.
+function pawn(g,x,y,h,col,opt={}){const p=opt.pal;g.save();
+  g.fillStyle=rgba(PIECES.base,.35);g.beginPath();g.ellipse(x,y,h*.34,h*.09,0,0,7);g.fill();
+  g.fillStyle=mix(col,PIECES.base,.35);g.beginPath();g.ellipse(x,y-h*.04,h*.27,h*.075,0,0,7);g.fill();
+  if(opt.pack){g.fillStyle=mix(PIECES.ochre,PIECES.base,.25);g.beginPath();g.ellipse(x+(opt.dir||1)*-h*.17,y-h*.45,h*.14,h*.17,0,0,7);g.fill();}
+  if(opt.rim){g.strokeStyle=opt.rim;g.lineWidth=h*.07;g.beginPath();g.moveTo(x-h*.22,y-h*.06);g.quadraticCurveTo(x-h*.2,y-h*.55,x,y-h*.6);g.quadraticCurveTo(x+h*.2,y-h*.55,x+h*.22,y-h*.06);g.closePath();g.stroke();g.beginPath();g.arc(x,y-h*.74,h*.17,0,7);g.stroke();}
+  g.fillStyle=col;g.beginPath();g.moveTo(x-h*.22,y-h*.06);g.quadraticCurveTo(x-h*.2,y-h*.55,x,y-h*.6);g.quadraticCurveTo(x+h*.2,y-h*.55,x+h*.22,y-h*.06);g.closePath();g.fill();
+  g.fillStyle=mix(col,'#ffffff',.25);g.beginPath();g.arc(x,y-h*.74,h*.17,0,7);g.fill();
+  g.fillStyle=PIECES.base;g.beginPath();g.arc(x-h*.06,y-h*.75,h*.022,0,7);g.arc(x+h*.06,y-h*.75,h*.022,0,7);g.fill();
+  if(opt.hat==='point'){g.fillStyle=mix(col,PIECES.base,.3);g.beginPath();g.moveTo(x-h*.15,y-h*.84);g.lineTo(x+h*.04,y-h*1.12);g.lineTo(x+h*.16,y-h*.84);g.closePath();g.fill();}
+  if(opt.hat==='hood'){g.fillStyle=mix(col,PIECES.base,.2);g.beginPath();g.arc(x,y-h*.78,h*.19,Math.PI*1.05,Math.PI*1.95);g.fill();}
+  if(opt.stone&&p){g.fillStyle=rgba(p.accent,.3);g.beginPath();g.arc(x+h*.28,y-h*.42,h*.14,0,7);g.fill();g.fillStyle=p.accent;g.beginPath();g.arc(x+h*.28,y-h*.42,h*.06,0,7);g.fill();}
+  g.restore();}
+
+function marks(g,clipFn,W,H,col,r,kind,density,y0){g.save();clipFn();g.clip();g.fillStyle=col;g.strokeStyle=col;g.lineCap='round';
+  for(let i=0;i<density;i++){const x=r()*W,y=y0+r()*(H-y0),s=3+r()*5;
+    if(kind==='tick'){g.lineWidth=1.6;g.beginPath();g.moveTo(x,y);g.lineTo(x+s*2.2,y-s*.35);g.stroke();}
+    else if(kind==='dot'){g.beginPath();g.arc(x,y,s*.35,0,7);g.fill();}
+    else if(kind==='fan'){g.lineWidth=1.4;for(let k=-2;k<=2;k++){g.beginPath();g.moveTo(x,y);g.lineTo(x+k*s*.45,y-s*1.4);g.stroke();}}
+    else if(kind==='ring'){g.lineWidth=1.4;g.beginPath();g.arc(x,y,s*.55,0,7);g.stroke();}
+  }g.restore();}
+
+// ---------- the scene generator ----------
+function drawScene(g,W,H,s,seed,opts={}){
+  const p=paletteAt(s),r=rng(seed);
+  const horizon=H*(opts.horizon||.58);
+  // sky
+  const sk=g.createLinearGradient(0,0,0,horizon);sk.addColorStop(0,p.skyTop);sk.addColorStop(.6,mix(p.skyTop,p.skyLow,.38));sk.addColorStop(1,p.skyLow);g.fillStyle=sk;g.fillRect(0,0,W,H);
+  // rings in deep skies
+  const ringW=smooth(.68,.95,s);
+  if(ringW>0){g.save();g.globalAlpha=ringW*.5;g.strokeStyle=p.light;g.lineWidth=W*.004;for(let i=0;i<3;i++){g.beginPath();g.ellipse(W*.68,H*.18,W*(.16+i*.05),H*(.04+i*.012),-.18,0,7);g.stroke();}g.restore();}
+  // celestial: crescent moon at home, pink sun past wall, two moons deep
+  const moonX=W*(.18+r()*.64),moonY=H*(.12+r()*.12),mr=W*.022;
+  if(s<.62){crescent(g,moonX,moonY,mr,p.accent);}
+  else{g.fillStyle=rgba(p.accent,.25);g.beginPath();g.arc(moonX,moonY,mr*2,0,7);g.fill();g.fillStyle=p.accent;g.beginPath();g.arc(moonX,moonY,mr*1.1,0,7);g.fill();
+    if(s>.85){g.fillStyle=p.light;g.beginPath();g.arc(moonX+W*.08,moonY+H*.05,mr*.45,0,7);g.fill();}}
+  // stepped cut-paper clouds
+  const cloudA=1-smooth(.55,.8,s);
+  if(cloudA>0){g.fillStyle=rgba(p.light,.38*cloudA);for(let i=0;i<3;i++){stepCloud(g,r()*W*.85,H*(.08+r()*.26),W*(.12+r()*.16),H*.018,r);g.fill();}}
+  // far range: gumdrop -> mesa -> islands, decided tree by tree
+  for(const row of [0,1]){
+  const nFar=row?7:9,base=horizon+H*(row?.1:.08);
+  for(let i=0;i<nFar;i++){
+    const x=(i+.2+r()*.6)/nFar*W*1.15-W*.07,w=W*(row?.16+r()*.12:.13+r()*.1),h=H*(row?.14+r()*.14:.22+r()*.2),roll=r();
+    const kind = roll < smooth(.3,.62,s) ? (roll < smooth(.78,1,s)*.8 ? 'island':'mesa') : 'gum';
+    const col=row?mix(p.far,p.mid,.15+.15*r()):mix(p.far,p.skyLow,.3+.25*r());
+    if(kind==='gum'){
+      g.fillStyle=col;gumdrop(g,x,base,w,h);g.fill();
+      g.save();gumdrop(g,x,base,w,h);g.clip();g.fillStyle=mix(col,p.light,.28);
+      for(let k=1;k<=2;k++){gumdrop(g,x+w*.16*k,base,w*(1-.22*k),h*(1-.24*k));g.fill();g.fillStyle=mix(col,p.light,.5);}g.restore();
+    } else if(kind==='mesa'){
+      g.fillStyle=col;mesa(g,x,base,w*.85,h*1.15,r);g.fill();
+      g.save();mesa(g,x,base,w*.85,h*1.15,r);g.clip();g.strokeStyle=mix(col,p.light,.3);g.lineWidth=W*.006;
+      for(let k=0;k<4;k++){const sx=x-w*.25+k*w*.15;g.beginPath();g.moveTo(sx,base-h*1.2);g.lineTo(sx+w*.03,base);g.stroke();}
+      const lb=g.createLinearGradient(0,base-h,0,base);lb.addColorStop(0,'rgba(0,0,0,0)');lb.addColorStop(1,rgba(p.accent,.18));g.fillStyle=lb;g.fillRect(x-w,base-h*1.3,w*2,h*1.4);g.restore();
+    } else {
+      const fy=base-h*(.8+r()*.6);g.fillStyle=col;island(g,x,fy,w*.5,h*.6);g.fill();
+      g.fillStyle=mix(col,p.light,.35);g.fillRect(x-w*.15,fy-h*.12-1,w*.31,h*.03);
+    }
+  }}
+  // mid hills
+  const ph=r()*6;g.fillStyle=p.mid;ridgePath(g,W,horizon+H*.06,H*.04,1.3,ph,H);g.fill();
+  marks(g,()=>ridgePath(g,W,horizon+H*.06,H*.04,1.3,ph,H),W,H,mix(p.mid,p.light,.25),r,s>.6?'ring':'tick',60,horizon);
+  // the Wall
+  const wallW=Math.max(0,1-Math.abs(s-.5)/.13);
+  if(wallW>0){g.save();g.globalAlpha=wallW;const wy=horizon+H*.035,wh=H*.12;g.fillStyle=p.dark;g.fillRect(0,wy-wh,W,wh+H*.03);
+    g.fillStyle=p.skyLow;const gate=W*(.55+r()*.1);g.beginPath();g.moveTo(gate-W*.03,wy+H*.03);g.lineTo(gate-W*.03,wy-wh*.55);g.arc(gate,wy-wh*.55,W*.03,Math.PI,0);g.lineTo(gate+W*.03,wy+H*.03);g.fill();
+    g.fillStyle=p.dark;for(let x=0;x<W;x+=W*.03){g.fillRect(x,wy-wh-H*.022,W*.016,H*.024);}
+    g.fillStyle=rgba(p.light,.28);for(let x=W*.01;x<W;x+=W*.07){g.fillRect(x,wy-wh*.6,W*.008,wh*.25);}g.restore();}
+  // trees and houses on the near ridge
+  const ph2=r()*6,nearY=horizon+H*.17;
+  const villageW=1-smooth(.12,.26,s);
+  const items=[];
+  for(let i=0;i<26;i++){const x=r()*W;items.push({x,y:ridgeY(x,W,nearY,H*.03,.8,ph2)+H*.01,h:H*(.07+r()*.1),roll:r(),kind:'tree'});}
+  if(villageW>0){for(let i=0;i<4;i++){const x=W*(.1+i*.11+r()*.04);items.push({x,y:ridgeY(x,W,nearY,H*.03,.8,ph2)+H*.012,h:W*(.05+r()*.03),kind:'house',lit:i===1||i===3,roll:r()});}}
+  items.sort((a,b)=>a.y-b.y);
+  for(const it of items){
+    if(it.kind==='house'){g.save();g.globalAlpha=villageW;house(g,it.x,it.y,it.h,p,mix(p.light,p.skyTop,.25),it.lit);g.restore();continue;}
+    if(villageW>.5&&it.x<W*.55) continue;
+    const t=it.roll; const sL=smooth(.2,.45,s), sS=smooth(.6,.9,s);
+    if(t<sS) stalk(g,it.x,it.y,it.h*1.4,p.near,p.accent,r);
+    else if(t<sL) lolly(g,it.x,it.y,it.h*1.2,mix(p.light,p.near,.3),mix(p.accent,p.mid,.45),r);
+    else pine(g,it.x,it.y,it.h*1.15,p.near,mix(p.near,p.light,.35));
+  }
+  // near ground
+  g.fillStyle=p.ground;ridgePath(g,W,nearY,H*.03,.8,ph2,H);g.fill();
+  marks(g,()=>ridgePath(g,W,nearY,H*.03,.8,ph2,H),W,H,mix(p.ground,p.dark,.18),r,'tick',90,nearY);
+  marks(g,()=>ridgePath(g,W,nearY,H*.03,.8,ph2,H),W,H,mix(p.ground,p.light,.4),r,s>.6?'ring':(s>.3?'dot':'fan'),40,nearY);
+  // path and party
+  if(!opts.noParty){
+    const py=H*(opts.partyY||.86);
+    g.strokeStyle=mix(p.ground,p.light,.45);g.lineWidth=H*.012;g.setLineDash([H*.02,H*.018]);g.beginPath();g.moveTo(-10,py+H*.03);g.quadraticCurveTo(W*.5,py-H*.03,W+10,py+H*.01);g.stroke();g.setLineDash([]);
+    const px=W*(opts.partyX||.42),ph=H*.085;
+    const rim=rgba(p.light,.45);pawn(g,px,py,ph,PIECES.red,{hat:'hood',pack:true,stone:true,pal:p,rim});
+    pawn(g,px-ph*.8,py+ph*.04,ph*.92,PIECES.indigo,{hat:'point',pal:p,rim});
+    pawn(g,px-ph*1.6,py+ph*.02,ph*.96,PIECES.ochre,{pack:true,pal:p,rim});
+  }
+  if(opts.grain!==false) finish(g,W,H,seed);
+}
+
+// ---------- UI pieces for frames ----------
+function stone(g,x,y,R,p,s){g.save();
+  g.fillStyle=rgba(p.accent,.22);g.beginPath();g.arc(x,y,R*1.25,0,7);g.fill();
+  g.fillStyle='#3a3350';g.beginPath();g.arc(x,y,R,0,7);g.fill();
+  g.fillStyle='#4d4568';g.beginPath();g.arc(x-R*.12,y-R*.12,R*.86,0,7);g.fill();
+  g.strokeStyle='#d9cfa8';g.lineWidth=R*.04;g.setLineDash([R*.05,R*.07]);g.beginPath();g.arc(x,y,R*.64,Math.PI*.85,Math.PI*2.15);g.stroke();g.setLineDash([]);
+  const a=Math.PI*.85+(Math.PI*1.3)*s;g.strokeStyle='#ffe9a8';g.lineWidth=R*.07;g.beginPath();g.arc(x,y,R*.64,Math.PI*.85,a);g.stroke();
+  const wa=Math.PI*1.5;g.strokeStyle='#b49be6';g.lineWidth=R*.05;g.beginPath();g.moveTo(x+Math.cos(wa)*R*.5,y+Math.sin(wa)*R*.5);g.lineTo(x+Math.cos(wa)*R*.8,y+Math.sin(wa)*R*.8);g.stroke();
+  g.fillStyle=p.accent;g.beginPath();g.arc(x+Math.cos(a)*R*.64,y+Math.sin(a)*R*.64,R*.09,0,7);g.fill();
+  g.fillStyle='#ffe9a8';g.beginPath();g.moveTo(x,y-R*.2);g.lineTo(x+R*.07,y);g.lineTo(x,y+R*.2);g.lineTo(x-R*.07,y);g.closePath();g.fill();
+  g.restore();}
+function itemIcon(g,kind,x,y,sz){g.save();
+  if(kind==='food'){g.fillStyle='#c98a3c';g.beginPath();g.ellipse(x,y,sz*.36,sz*.24,0,0,7);g.fill();g.strokeStyle='#8a5a22';g.lineWidth=sz*.05;for(let i=-1;i<=1;i++){g.beginPath();g.moveTo(x+i*sz*.14-sz*.05,y-sz*.12);g.lineTo(x+i*sz*.14+sz*.05,y+sz*.02);g.stroke();}}
+  if(kind==='med'){g.fillStyle='#6f9a6a';g.beginPath();g.arc(x,y,sz*.3,0,7);g.fill();g.fillStyle='#f3ead2';g.fillRect(x-sz*.06,y-sz*.18,sz*.12,sz*.36);g.fillRect(x-sz*.18,y-sz*.06,sz*.36,sz*.12);}
+  if(kind==='book'){const c=['#7a4a8c','#3a5f8a','#a8433f'];for(let i=0;i<3;i++){g.fillStyle=c[i];g.fillRect(x-sz*.3+i*sz*.04,y+sz*.18-i*sz*.15,sz*.56,sz*.13);}}
+  g.restore();}
+function hp(g,x,y,n,max,sz,on,off){for(let i=0;i<max;i++){g.fillStyle=i<n?on:off;g.beginPath();g.arc(x+i*sz*2.4,y,sz,0,7);g.fill();}}
+function label(g,t,x,y,size,col,align='left'){g.font=`${size}px "Young Serif", Georgia, serif`;g.fillStyle=col;g.textAlign=align;g.textBaseline='middle';g.fillText(t,x,y);}
+
+const PARTY=[{n:'LEAD',c:PIECES.red,hat:'hood',hp:[5,5]},{n:'STARDROP',c:PIECES.indigo,hat:'point',hp:[3,4]},{n:'HUNTER',c:PIECES.ochre,hp:[4,5]}];
+const ITEMS=['food','food','med','book','book','book'];
+
+// folk stamps
+function stampStar(g,x,y,R,col){g.fillStyle=col;g.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/2,rr=i%2?R*.32:R;g.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);}g.closePath();g.fill();}
+function stampTree(g,x,y,R,col){g.fillStyle=col;g.beginPath();g.moveTo(x,y-R);g.lineTo(x+R*.5,y-R*.25);g.lineTo(x+R*.25,y-R*.25);g.lineTo(x+R*.7,y+R*.45);g.lineTo(x+R*.12,y+R*.45);g.lineTo(x+R*.12,y+R*.8);g.lineTo(x-R*.12,y+R*.8);g.lineTo(x-R*.12,y+R*.45);g.lineTo(x-R*.7,y+R*.45);g.lineTo(x-R*.25,y-R*.25);g.lineTo(x-R*.5,y-R*.25);g.closePath();g.fill();}
+function stampStep(g,x,y,R,col){g.fillStyle=col;const u=R/3;for(let i=-2;i<=2;i++){const w=(3-Math.abs(i))*u*1.1;g.fillRect(x-w/2,y+i*u-u/2,w,u*.8);}}
+function stampChecker(g,x,y,R,a,b){const u=R*2/4;for(let i=0;i<4;i++)for(let j=0;j<4;j++){g.fillStyle=(i+j)%2?a:b;g.fillRect(x-R+i*u,y-R+j*u,u,u);}}
+function stampMoon(g,x,y,R,col,bg){g.fillStyle=col;g.beginPath();g.arc(x,y,R*.6,0,7);g.fill();g.fillStyle=bg;g.beginPath();g.arc(x+R*.28,y-R*.18,R*.52,0,7);g.fill();}
+
+// ---------- frame A: embroidered band ----------
+function frameA(cv,s,seed){const g=cv.getContext('2d'),W=cv.width,H=cv.height,p=paletteAt(s);
+  drawScene(g,W,H,s,seed,{partyY:.66,partyX:.5,grain:false});
+  const gold='#e6c76a',goldD='#b8913c',cream='#f7eccb',inkc='#3b2c2a',band=176,b=14;
+  g.fillStyle=gold;g.fillRect(0,0,W,b);g.fillRect(0,0,b,H);g.fillRect(W-b,0,b,H);g.fillRect(0,H-band,W,band);
+  g.strokeStyle=inkc;g.lineWidth=2;g.strokeRect(b,b,W-2*b,H-band-b);
+  // embroidery rows
+  for(const ry of [H-band+18,H-14]){for(let x=26;x<W;x+=34){stampStep(g,x,ry,10,cream);}}
+  g.strokeStyle=goldD;g.lineWidth=2;g.beginPath();g.moveTo(b,H-band+34);g.lineTo(W-b,H-band+34);g.moveTo(b,H-30);g.lineTo(W-b,H-30);g.stroke();
+  // party panel
+  const py=H-band+40,ph=H-30-py-6;
+  g.fillStyle=cream;g.fillRect(40,py,430,ph);g.strokeStyle=inkc;g.lineWidth=2;g.strokeRect(40,py,430,ph);
+  PARTY.forEach((m,i)=>{const x=95+i*140;pawn(g,x,py+ph*.72,58,m.c,{hat:m.hat});label(g,m.n,x+34,py+28,15,inkc);hp(g,x+40,py+56,m.hp[0],m.hp[1],5,'#b8363c','#d9cba8');});
+  // item panel
+  g.fillStyle=cream;g.fillRect(W-470,py,430,ph);g.strokeRect(W-470,py,430,ph);
+  for(let i=0;i<12;i++){const cx=W-450+(i%6)*66,cy=py+8+Math.floor(i/6)*48;g.strokeStyle=goldD;g.setLineDash([4,3]);g.strokeRect(cx,cy,56,42);g.setLineDash([]);if(ITEMS[i])itemIcon(g,ITEMS[i],cx+28,cy+21,40);}
+  // medallion
+  const mx=W/2,my=H-band+50;g.fillStyle=gold;g.beginPath();g.arc(mx,my,104,0,7);g.fill();g.strokeStyle=inkc;g.lineWidth=2;g.beginPath();g.arc(mx,my,104,0,7);g.stroke();
+  for(let i=0;i<16;i++){const a=i/16*6.283;stampStar(g,mx+Math.cos(a)*92,my+Math.sin(a)*92,6,cream);}
+  stone(g,mx,my,76,p,s);
+  // tabs
+  g.fillStyle=gold;g.fillRect(40,H-band-30,300,32);g.strokeStyle=inkc;g.lineWidth=2;g.strokeRect(40,H-band-30,300,32);label(g,'DAY 12 · FOOD 7 · MORALE 70',190,H-band-13,15,inkc,'center');
+  const tabs=['WALK','REST','HUNT'];tabs.forEach((t,i)=>{const x=W-470+i*112,y=H-band-30;g.fillStyle=gold;g.fillRect(x,y,104,32);g.strokeStyle=inkc;g.strokeRect(x,y,104,32);label(g,t,x+52,y+17,15,inkc,'center');});
+  finish(g,W,H,seed);}
+
+// ---------- frame B: quilt row ----------
+function frameB(cv,s,seed){const g=cv.getContext('2d'),W=cv.width,H=cv.height,p=paletteAt(s);
+  drawScene(g,W,H,s,seed,{partyY:.7,partyX:.45,grain:false});
+  const T=128,y=H-T,cols=[p.near,p.mid,p.far,p.ground,mix(p.skyTop,p.light,.3),p.dark];
+  const tiles=['star','party0','party1','party2','tree','stone','items0','items1','check','moon'];
+  const inkL=p.light;
+  tiles.forEach((k,i)=>{const x=i*T,c=k==='stone'?mix(p.dark,p.near,.3):k.startsWith('party')?mix(p.light,p.ground,.25+.2*(i%2)):cols[(i*2+1)%cols.length];g.fillStyle=c;g.fillRect(x,y,T,T);
+    g.strokeStyle=rgba(p.dark,.6);g.lineWidth=2;g.setLineDash([5,4]);g.strokeRect(x+6,y+6,T-12,T-12);g.setLineDash([]);
+    const cx=x+T/2,cy=y+T/2,lt=mix(c,'#ffffff',.65),lab=k.startsWith('party')?p.dark:lt;
+    if(k==='star')stampStar(g,cx,cy,40,lt);
+    if(k==='tree'){stampTree(g,cx-28,cy,22,lt);stampTree(g,cx+4,cy,22,lt);stampTree(g,cx+36,cy,22,lt);}
+    if(k==='check')stampChecker(g,cx,cy,40,lt,mix(c,p.dark,.3));
+    if(k==='moon')stampMoon(g,cx,cy,52,lt,c);
+    if(k.startsWith('party')){const m=PARTY[+k.slice(5)];pawn(g,cx,cy+34,70,m.c,{hat:m.hat});label(g,m.n,cx,y+20,13,lab,'center');hp(g,cx-m.hp[1]*5+5,y+T-14,m.hp[0],m.hp[1],4.2,'#c8363c',rgba(p.dark,.25));}
+    if(k==='stone'){stone(g,cx,cy-4,46,p,s);label(g,'DAY 12',cx,y+T-14,13,lt,'center');}
+    if(k.startsWith('items')){const o=+k.slice(5)*4;for(let j=0;j<4;j++){const ix=x+14+(j%2)*52,iy=y+14+Math.floor(j/2)*52;g.fillStyle=rgba(p.dark,.25);g.fillRect(ix,iy,48,48);if(ITEMS[o+j])itemIcon(g,ITEMS[o+j],ix+24,iy+24,40);}}
+  });
+  // corner tiles at top
+  g.fillStyle=rgba(p.dark,.85);g.fillRect(0,y-4,W,4);
+  const tabs=['WALK','REST','HUNT'];tabs.forEach((t,i)=>{const x=W-3*T+i*T+8,yy=y-40;g.fillStyle=mix(p.light,p.ground,.3);g.fillRect(x,yy,T-16,32);g.strokeStyle=rgba(p.dark,.7);g.lineWidth=2;g.strokeRect(x,yy,T-16,32);label(g,t,x+(T-16)/2,yy+17,14,p.dark,'center');});
+  finish(g,W,H,seed);}
+
+// ---------- frame C: foreground sill ----------
+function frameC(cv,s,seed){const g=cv.getContext('2d'),W=cv.width,H=cv.height,p=paletteAt(s),r=rng(seed+99);
+  drawScene(g,W,H,s,seed,{noParty:true,grain:false,horizon:.5});
+  const dk=mix(p.dark,p.near,.25),dk2=mix(p.dark,p.near,.5),mk=mix(dk,p.light,.22);
+  // framing pines, left and right, with folk fans stamped only on the trees
+  const trees=layer(W,H,t=>{pine(t,-10,H-60,980,dk,mk);pine(t,W+30,H-40,900,dk2,mk);
+    t.globalCompositeOperation='source-atop';t.strokeStyle=mk;t.lineWidth=2;t.lineCap='round';
+    for(let k=0;k<90;k++){const side=k%2,xx=side?W-r()*170:r()*170,yy=r()*H;for(let f=-2;f<=2;f++){t.beginPath();t.moveTo(xx,yy);t.lineTo(xx+f*4,yy-11);t.stroke();}}});
+  g.drawImage(trees,0,0);
+  // ridge sill
+  const sy=H-150;g.fillStyle=dk;g.beginPath();g.moveTo(0,H);g.lineTo(0,sy+20);g.bezierCurveTo(W*.2,sy-24,W*.38,sy+18,W*.5,sy-6);g.bezierCurveTo(W*.64,sy-26,W*.8,sy+14,W,sy-10);g.lineTo(W,H);g.closePath();g.fill();
+  g.save();g.clip();for(let k=0;k<160;k++){g.fillStyle=mk;g.beginPath();g.arc(r()*W,sy+r()*160,1.5+r()*2,0,7);g.fill();}g.restore();
+  // party standing on the sill
+  PARTY.forEach((m,i)=>{const x=170+i*120,y=H-58;g.fillStyle=rgba(p.light,.14);g.beginPath();g.ellipse(x,y,48,13,0,0,7);g.fill();pawn(g,x,y,92,m.c,{hat:m.hat,pack:i!==1,rim:rgba(p.light,.55)});label(g,m.n,x,H-20,14,p.light,'center');hp(g,x-m.hp[1]*5.5+5,H-40,m.hp[0],m.hp[1],4,'#f3ead2',rgba(p.light,.2));});
+  // the Lodestone on a cairn
+  const mx=W/2+10;g.fillStyle=dk2;g.beginPath();g.ellipse(mx,H-28,92,22,0,0,7);g.fill();g.beginPath();g.ellipse(mx,H-48,70,18,0,0,7);g.fill();
+  stone(g,mx,H-110,62,p,s);label(g,'DAY 12   FOOD 7',mx,H-22,14,p.light,'center');
+  // items as tokens on a log
+  const lx=W-470;g.fillStyle=mix(p.near,p.dark,.4);g.beginPath();g.roundRect?g.roundRect(lx,H-62,400,30,14):g.rect(lx,H-62,400,30);g.fill();
+  for(let i=0;i<12;i++){const tx=lx+26+i*31.5,ty=H-82;g.fillStyle=rgba(p.light,ITEMS[i]?.22:.08);g.beginPath();g.arc(tx,ty,14,0,7);g.fill();if(ITEMS[i])itemIcon(g,ITEMS[i],tx,ty,26);}
+  ['WALK','REST','HUNT'].forEach((t,i)=>{label(g,t,lx+60+i*140,H-20,15,p.light,'center');});
+  finish(g,W,H,seed);}
+
+// ---------- page wiring ----------
+let seed=1207;
+const hero=document.getElementById('hero'),dial=document.getElementById('dial'),grain=document.getElementById('grain');
+function drawHero(){const s=+dial.value;drawScene(hero.getContext('2d'),hero.width,hero.height,s,seed,{grain:grain.checked});
+  document.getElementById('dialOut').textContent=s.toFixed(2)+' · '+regionName(s);document.getElementById('seedOut').textContent='seed '+seed;}
+dial.addEventListener('input',drawHero);grain.addEventListener('change',drawHero);
+document.getElementById('reseed').addEventListener('click',()=>{seed=Math.floor(Math.random()*9000)+1000;drawHero();});
+
+const REF_INFO=[
+  ['cats','cats on a log','One hue, many values. Mountains are stacked gumdrops with lighter inner bands. Warm pieces pop against the cool world. Folk marks (fans, dots) on the tree planes.', ['#3d8ff5',23,'#176cd5',20,'#70bdf8',17,'#6f95c4',12,'#2f4757',10,'#9ebac7',10,'#c1dedf',8]],
+  ['church','church print','The picture sits in a gold border that thickens into an embroidered band at the bottom. Clouds are stepped, like cut paper. Ink line on buildings only.', ['#edd0cf',27,'#645734',19,'#322d20',13,'#af88a6',12,'#a68868',11,'#ecce7e',9,'#c8a7a7',9]],
+  ['goat','goat quilt','A quilt border of square tiles, each holding one stamp: star, trees, checks, moon, skull. Five muted tints of two hues. Grain everywhere.', ['#4e594e',22,'#e6ebe2',16,'#c2cda4',15,'#d2d6cc',14,'#aebcae',13,'#f7f3f2',10,'#8b9a82',10]],
+  ['hill','figure on a hill','Two thirds empty sky. A tiny figure on top. Texture is crayon ticks and dashes on flat cream, never shading.', ['#91a6d1',28,'#f6f5d7',24,'#9ab0d6',22,'#a4c0d7',18,'#d0d0b6',3,'#666e4b',3,'#8f9383',2]],
+  ['mesa','pink mesa','Hot rock against a cool sky, with a pink sun. The only image with soft gradients on land. A good starting point for past the Wall.', ['#f99487',22,'#7b96dd',22,'#8197de',20,'#9e9ad9',10,'#c28594',9,'#ca6e53',9,'#cea2cd',9]],
+  ['snow','snow village','Two colors do almost everything: amber sky, violet snow. Houses are dark blocks. One lit window and a crescent moon are the only accents.', ['#614094',37,'#c47201',34,'#e25b02',15,'#cd8102',8,'#3c0916',4,'#60265c',1,'#a43332',1]],
+  ['autumn','autumn wood','Lollipop trees in ochre, a ghostly giant shape, floating light motes. Muted sage sky. Strangeness can sit inside a familiar forest.', ['#c8b98a',24,'#aead87',23,'#905c34',15,'#b17d3f',14,'#634425',11,'#392018',8,'#f2e9cb',5]],
+];
+const grid=document.getElementById('refGrid');
+REF_INFO.forEach(([k,name,txt,bar])=>{const d=document.createElement('div');d.className='ref';
+  let b='';for(let i=0;i<bar.length;i+=2)b+=`<span style="background:${bar[i]};flex:${bar[i+1]}" title="${bar[i]}"></span>`;
+  d.innerHTML=`${REFS[k]?`<img src="${REFS[k]}" alt="Reference: ${name}">`:''}<div class="bar">${b}</div><div class="who">${name}</div><p>${txt}</p>`;grid.appendChild(d);});
+
+const pals=document.getElementById('pals');
+REGIONS.forEach(R=>{const row=document.createElement('div');row.className='pal';
+  row.innerHTML=`<div class="nm">${R.name}<small>strangeness ${R.s.toFixed(2)} · ${R.sub}</small></div><div class="sw">${R.c.map(c=>`<div style="background:${c}"><i>${c}</i></div>`).join('')}</div>`;pals.appendChild(row);});
+const pr=document.createElement('div');pr.className='pal';
+pr.innerHTML=`<div class="nm">Pieces<small>never change</small></div><div class="sw">${Object.values(PIECES).map(c=>`<div style="background:${c}"><i>${c}</i></div>`).join('')}</div>`;pals.appendChild(pr);
+document.getElementById('swKey').innerHTML=ROLE_NAMES.map(n=>`<span>${n}</span>`).join('');
+
+const thumbs=document.getElementById('thumbs');
+REGIONS.forEach((R,i)=>{const f=document.createElement('figure');const c=document.createElement('canvas');c.width=640;c.height=400;c.setAttribute('aria-label','Scene: '+R.name);
+  f.appendChild(c);const cap=document.createElement('figcaption');cap.innerHTML=`<b>${R.name}</b> · strangeness ${R.s.toFixed(2)}`;f.appendChild(cap);thumbs.appendChild(f);
+  drawScene(c.getContext('2d'),c.width,c.height,R.s,300+i*17,{});});
+
+function drawFrames(){frameA(document.getElementById('frameA'),0.06,1207);frameB(document.getElementById('frameB'),0.3,4410);frameC(document.getElementById('frameC'),0.27,2203);}
+drawHero();drawFrames();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{drawFrames();});
+</script>

@@ -55,3 +55,14 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-25 Route is 300 leagues. The Wall sits at 150. Strangeness = distance / 300.
 - [AI] 2026-10-25 Meta progression: the village grants +5 starting food per 50 leagues of best distance (the "prove it's worthwhile" lord). The Lodestone remembers event marks from every run.
 - [AI] 2026-10-25 Deferred: water, warmth and shelter needs; minigames (hunt, fish, herbs are dice rolls for now).
+
+## Visual language
+- [USER] 2026-10-26 AI builds much of the visual work; Brandon directs and shapes it. Ideation happens in the "Shape the Lodestone visual language" project thread, around a published style lab page (source in `docs/style-lab/index.html`).
+- [USER] 2026-10-26 References: flat shape-language landscapes, folk-art borders and quilt frames, riso grain, saturated limited palettes (7 images in the thread), plus the workflow of github.com/sevenevesai/riso-windowseat.
+- [USER] 2026-10-26 Explore tucking most of the UI into a decorative bottom frame, like the bordered reference images.
+- [AI] 2026-10-26 This relaxes "Brandon draws all final art": code-drawn visuals (shapes, shaders, palettes, stamps) may ship once Brandon approves the rule they follow. Image-generation models are still never used. The CLAUDE.md art rule needs Brandon's edit to match.
+- [AI] 2026-10-26 Style rules R1 to R10 from style lab draft 1 (see `docs/style-bible.md`): flat fields, gradients only in skies, soft stacked forms, marks instead of rendering, no black, fixed grain, tiny pieces in a huge world, one accent per region, folk borders hold the UI, values invert past the Wall.
+- [AI] 2026-10-26 Five region palettes of nine roles each (Home 0, Snow pass 0.25, The Wall 0.5, Past the Wall 0.75, Deep lands 1.0), blended by strangeness. Piece colors are fixed in every region.
+- [AI] 2026-10-26 Every visual is a pure function of seed and strangeness, so any screen can be reproduced and screenshot-checked (borrowed from riso-windowseat).
+- [AI] 2026-10-26 Three bottom-frame candidates: A embroidered band, B quilt row, C foreground sill. Brandon picks one or a mix.
+- [USER] 2026-10-26 Adopt the style lab draft 1 look (rules R1 to R10, region palettes, riso grain) for the starting village hub and the world map. The bottom frame pick (A, B or C) is still open.
