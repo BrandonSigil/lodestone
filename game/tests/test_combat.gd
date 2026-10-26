@@ -312,3 +312,60 @@ func test_sim_terminates_with_skills() -> void:
 			units.append(_unit(id, 1, es.pop_front(), g))
 		var r := CombatSim.fight(rng, g, units, {"medicine": 2})
 		ok(r.winner != -1, "seed %d stalled" % s)
+
+
+# --- terrain and height -----------------------------------------------------------------
+
+func test_stairs_let_jump1_climb() -> void:
+	var g := CombatGrid.flat(3, 1)
+	g.set_height(Vector2i(1, 0), 3)
+	ok(not g.can_step(Vector2i(0, 0), Vector2i(1, 0), 1), "3 levels too tall for jump 1")
+	g.set_terrain(Vector2i(0, 0), CombatGrid.T.STAIRS)
+	ok(g.can_step(Vector2i(0, 0), Vector2i(1, 0), 1), "stairs add 2")
+	var u := _unit("knight", 0, Vector2i(0, 0), g)
+	ok(CombatRules.reachable(g, u, [u]).cost.has(Vector2i(1, 0)))
+
+
+func test_ruin_blocks_sight_and_bow() -> void:
+	var g := CombatGrid.flat(6, 1)
+	var h := _unit("hunter", 0, Vector2i(0, 0), g)
+	var b := _unit("bandit", 1, Vector2i(4, 0), g)
+	ok(CombatRules.can_attack(g, h, b, h.cell), "clear shot")
+	g.set_terrain(Vector2i(2, 0), CombatGrid.T.RUIN)
+	ok(not g.line_of_sight(h.cell, b.cell), "ruin in the way")
+	ok(not CombatRules.can_attack(g, h, b, h.cell), "no shot through a wall")
+	g.set_height(Vector2i(0, 0), 4)
+	h.place(Vector2i(0, 0), 4)
+	ok(g.line_of_sight(h.cell, b.cell), "shoot over it from high up")
+
+
+func test_cliff_edge_hides_target() -> void:
+	var g := CombatGrid.flat(5, 1)
+	for x in range(2, 5):
+		g.set_height(Vector2i(x, 0), 3)
+	var h := _unit("hunter", 0, Vector2i(0, 0), g)
+	var b := _unit("bandit", 1, Vector2i(4, 0), g)
+	ok(not CombatRules.can_attack(g, h, b, h.cell), "can't see someone back from the cliff edge")
+	b.place(Vector2i(2, 0), 3)
+	ok(CombatRules.can_attack(g, h, b, h.cell), "can see someone standing at the edge")
+
+
+func test_high_range_capped() -> void:
+	var g := CombatGrid.flat(12, 1)
+	g.set_height(Vector2i(0, 0), 8)
+	var h := _unit("hunter", 0, Vector2i(0, 0), g)  # range 4
+	var b := _unit("bandit", 1, Vector2i(7, 0), g)
+	ok(CombatRules.can_attack(g, h, b, h.cell), "4 + 3")
+	b.place(Vector2i(8, 0), 0)
+	ok(not CombatRules.can_attack(g, h, b, h.cell), "8 levels only buy +3")
+
+
+func test_tall_map_round_trip() -> void:
+	var g := CombatGrid.flat(3, 1)
+	g.set_height(Vector2i(1, 0), 8)
+	g.set_terrain(Vector2i(2, 0), CombatGrid.T.RUIN)
+	g.set_terrain(Vector2i(0, 0), CombatGrid.T.STAIRS)
+	var back := CombatGrid.from_dict(g.to_dict())
+	eq(back.height_at(Vector2i(1, 0)), 8)
+	eq(back.terrain_at(Vector2i(2, 0)), CombatGrid.T.RUIN)
+	eq(back.terrain_at(Vector2i(0, 0)), CombatGrid.T.STAIRS)

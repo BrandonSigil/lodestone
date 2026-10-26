@@ -2,18 +2,26 @@ class_name CombatGrid
 extends RefCounted
 ## The battle map: a height and a terrain type per cell.
 
-enum T { GRASS, FOREST, WATER, ROCK, ROAD }
+## STONE is paved ruin floor. STAIRS let pieces climb STAIRS_CLIMB more levels than their Jump.
+## RUIN is a broken wall or pillar: impassable, and it stands RUIN_RISE levels above its cell for line of sight.
+enum T { GRASS, FOREST, WATER, ROCK, ROAD, STONE, STAIRS, RUIN }
 
 const BLOCKED := 999
-const STEP_COST := {T.GRASS: 1, T.FOREST: 2, T.WATER: 3, T.ROCK: BLOCKED, T.ROAD: 1}
-const COVER := {T.GRASS: 0, T.FOREST: 2, T.WATER: -2, T.ROCK: 0, T.ROAD: 0}
-const MAX_HEIGHT := 3
+const STEP_COST := {T.GRASS: 1, T.FOREST: 2, T.WATER: 3, T.ROCK: BLOCKED, T.ROAD: 1, T.STONE: 1, T.STAIRS: 1, T.RUIN: BLOCKED}
+const COVER := {T.GRASS: 0, T.FOREST: 2, T.WATER: -2, T.ROCK: 0, T.ROAD: 0, T.STONE: 0, T.STAIRS: 0, T.RUIN: 0}
+## How far above the ground each terrain blocks sight (trees and boulders block a little, ruins a lot).
+const SIGHT_BLOCK := {T.GRASS: 0.0, T.FOREST: 0.8, T.WATER: 0.0, T.ROCK: 1.0, T.ROAD: 0.0, T.STONE: 0.0, T.STAIRS: 0.0, T.RUIN: 2.0}
+const RUIN_RISE := 2
+const STAIRS_CLIMB := 2
+const MAX_HEIGHT := 8  ## editor and saved maps
+const GEN_MAX_HEIGHT := 4  ## the random generator stays gentle; stairs keep it crossable
 const DEPLOY_COLS := 2  ## columns kept clear at each side for deployment
 
 var w := 0
 var h := 0
 var heights := PackedInt32Array()
 var terrain := PackedInt32Array()
+var _sight := {}  ## line of sight cache, cleared on any edit
 
 
 static func flat(width: int, height: int) -> CombatGrid:
@@ -48,7 +56,7 @@ static func _try(seed_value: int, width: int, height: int, strangeness: float) -
 		for x in width:
 			var c := Vector2i(x, y)
 			var hv := (hn.get_noise_2d(x, y) + 1.0) * 0.5  # 0..1
-			var lvl := clampi(int(hv * (MAX_HEIGHT + 1.5)) - 1, 0, MAX_HEIGHT)
+			var lvl := clampi(int(hv * (GEN_MAX_HEIGHT + 1.5)) - 1, 0, GEN_MAX_HEIGHT)
 			g.set_height(c, lvl)
 			var tv := tn.get_noise_2d(x, y)
 			var edge := x < DEPLOY_COLS or x >= width - DEPLOY_COLS
@@ -58,8 +66,21 @@ static func _try(seed_value: int, width: int, height: int, strangeness: float) -
 			elif lvl > 0 and tv > 0.25 - strangeness * 0.15:
 				t = T.FOREST
 			elif tv < -0.55 and not edge:
-				t = T.ROCK
+				t = T.RUIN if lvl >= 2 and strangeness < 0.5 else T.ROCK
 			g.terrain[g.idx(c)] = t
+	# Stairs where the ground jumps two levels, so ledges become chokepoints instead of walls.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for y in height:
+		for x in width:
+			var c := Vector2i(x, y)
+			if g.terrain_at(c) != T.GRASS:
+				continue
+			for d in CombatRules.DIRS:
+				var n: Vector2i = c + d
+				if g.in_bounds(n) and g.passable(n) and g.height_at(n) - g.height_at(c) == 2 and rng.randf() < 0.5:
+					g.set_terrain(c, T.STAIRS)
+					break
 	return g
 
 
@@ -77,6 +98,7 @@ func height_at(c: Vector2i) -> int:
 
 func set_height(c: Vector2i, v: int) -> void:
 	heights[idx(c)] = v
+	_sight.clear()
 
 
 func terrain_at(c: Vector2i) -> int:
@@ -85,6 +107,7 @@ func terrain_at(c: Vector2i) -> int:
 
 func set_terrain(c: Vector2i, t: int) -> void:
 	terrain[idx(c)] = t
+	_sight.clear()
 
 
 ## A copy at a new size. Cells that still fit keep their height and terrain; new cells are flat grass.
@@ -98,9 +121,10 @@ func resized(width: int, height: int) -> CombatGrid:
 	return g
 
 
-## Saved maps store terrain as letters, one string per row: g grass, f forest, w water, r rock, d road.
-## Heights are digits, one string per row. Easy to read and hand-edit in the JSON.
-const LETTERS := {T.GRASS: "g", T.FOREST: "f", T.WATER: "w", T.ROCK: "r", T.ROAD: "d"}
+## Saved maps store terrain as letters, one string per row: g grass, f forest, w water, r rock, d road,
+## s stone, t stairs, u ruin.
+## Heights are digits 0-8, one string per row. Easy to read and hand-edit in the JSON.
+const LETTERS := {T.GRASS: "g", T.FOREST: "f", T.WATER: "w", T.ROCK: "r", T.ROAD: "d", T.STONE: "s", T.STAIRS: "t", T.RUIN: "u"}
 
 
 func to_dict() -> Dictionary:
@@ -146,6 +170,53 @@ func passable(c: Vector2i) -> bool:
 	return in_bounds(c) and step_cost(c) < BLOCKED
 
 
+## Can a piece with this Jump step between two neighbouring cells? Stairs on either end help it climb.
+func can_step(a: Vector2i, b: Vector2i, jump: int) -> bool:
+	var limit := jump
+	if terrain_at(a) == T.STAIRS or terrain_at(b) == T.STAIRS:
+		limit += STAIRS_CLIMB
+	return absi(height_at(b) - height_at(a)) <= limit
+
+
+## Highest point of the cell for line of sight: ground plus whatever stands on it.
+func sight_top(c: Vector2i) -> float:
+	return height_at(c) + SIGHT_BLOCK[terrain_at(c)]
+
+
+func top_height() -> int:
+	var m := 0
+	for v in heights:
+		m = maxi(m, v)
+	return m
+
+
+## Clear line from an eye one level above `from` to the body of whoever stands on `to`?
+## Walks the straight line between cell centres; any cell in between whose top rises above the line blocks it.
+func line_of_sight(from: Vector2i, to: Vector2i) -> bool:
+	var key := ((from.y * w + from.x) << 16) | (to.y * w + to.x)
+	if _sight.has(key):
+		return _sight[key]
+	var clear := _trace_sight(from, to)
+	_sight[key] = clear
+	return clear
+
+
+func _trace_sight(from: Vector2i, to: Vector2i) -> bool:
+	var a := Vector2(from) + Vector2(0.5, 0.5)
+	var b := Vector2(to) + Vector2(0.5, 0.5)
+	var ha := height_at(from) + 1.0
+	var hb := height_at(to) + 0.6
+	var steps := int(ceil(a.distance_to(b) * 4.0))
+	for i in range(1, steps):
+		var t := float(i) / steps
+		var p := a.lerp(b, t)
+		var c := Vector2i(int(floor(p.x)), int(floor(p.y)))
+		if c == from or c == to or not in_bounds(c):
+			continue
+		if sight_top(c) > lerpf(ha, hb, t) + 0.05:
+			return false
+	return true
+
 ## Can a unit with this jump walk from the left deploy zone to the right one?
 func connected(jump: int) -> bool:
 	var start := Vector2i(-1, -1)
@@ -163,7 +234,7 @@ func connected(jump: int) -> bool:
 			return true
 		for d in CombatRules.DIRS:
 			var n: Vector2i = c + d
-			if passable(n) and not seen.has(n) and absi(height_at(n) - height_at(c)) <= jump:
+			if passable(n) and not seen.has(n) and can_step(c, n, jump):
 				seen[n] = true
 				queue.append(n)
 	return false

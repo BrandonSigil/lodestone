@@ -1,0 +1,104 @@
+{
+	"counters": true,
+	"enemies": [
+		{
+			"id": "bandit_archer",
+			"x": 10,
+			"y": 2
+		},
+		{
+			"id": "bandit_archer",
+			"x": 10,
+			"y": 4
+		},
+		{
+			"id": "bandit",
+			"x": 9,
+			"y": 8
+		},
+		{
+			"id": "bandit",
+			"x": 10,
+			"y": 8
+		},
+		{
+			"id": "wolf",
+			"x": 11,
+			"y": 8
+		}
+	],
+	"enemy_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"extra_enemies": 0,
+	"map": {
+		"h": 10,
+		"heights": [
+			"111133345533",
+			"111233335533",
+			"111234335533",
+			"111133333343",
+			"111133333333",
+			"111001111133",
+			"111001111133",
+			"111001112222",
+			"111001112222",
+			"111111112222"
+		],
+		"terrain": [
+			"ggggssutsusu",
+			"gfgtsssswwss",
+			"gggtsssswwss",
+			"ggggsssswwts",
+			"ggggussswwss",
+			"gggwwgggwwss",
+			"gggwwgggwwtt",
+			"ffgwwgfdssss",
+			"grgwwgfdssss",
+			"gggddggdssss"
+		],
+		"w": 12
+	},
+	"mercy": true,
+	"name": "temple",
+	"party": [
+		{
+			"id": "lead",
+			"x": 1,
+			"y": 4
+		},
+		{
+			"id": "stardrop",
+			"x": 0,
+			"y": 5
+		},
+		{
+			"id": "hunter",
+			"x": 0,
+			"y": 3
+		},
+		{
+			"id": "wizard",
+			"x": 0,
+			"y": 4
+		}
+	],
+	"party_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"seed": 1,
+	"strangeness": 0.0,
+	"supplies": {
+		"food": 10,
+		"medicine": 3
+	},
+	"view": 0
+}

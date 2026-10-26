@@ -28,6 +28,16 @@ Code: `game/scripts/combat/`. Rules math is in `combat_rules.gd` (pure, no nodes
 - Cooldowns: a skill with cooldown N can be used again after N of the owner's phases.
 - Luck (anti-streak): each party miss in a row gives the next party roll +1, up to +3; a hit resets it. Shown in the forecast as LUCK. Enemies don't get it. The sandbox can switch it off.
 - Stardrop's skittish check runs at the start of each player phase.
+
+## Terrain and height
+- Heights run 0 to 8 in the editor and saved maps (the random generator stays at 0 to 4).
+- Climbing: a piece steps up or down at most its Jump per tile. **STAIRS** add +2 to that when either end is a stair, so a Jump 1 knight can take a 3 level stair but not a 3 level cliff. Stairs are the chokepoints of tall maps.
+- **Line of sight**: anything with reach over 1 (bows, spells, area skills) needs a clear line from one level above the attacker to the target's body. Cliffs, trees (0.8 of a level), boulders (1 level) and **RUIN** walls (2 levels) block it. Standing high lets you shoot over things, and someone standing back from a cliff edge can't be seen from below.
+- High ground still gives +2 to hit and +1 damage per level (counting 2 levels), and +1 bow and spell range per level, now capped at +3.
+- Pushes off tall ledges hurt more: 2 damage per level dropped beyond the first.
+- Terrain types: grass, forest (cost 2, +2 cover), shallow water (cost 3, -2 defense), road, **stone** (paved ruin floor), **stairs**, rock and **ruin** (both impassable).
+- The camera turns in quarter steps (**Q**, Shift+Q back, or the TURN button), like FFT. Saved maps remember the angle they open at.
+- The look (graybox, all drawn in code): stone courses on cliff faces, moss hanging over grassy ledges, waterfalls wherever water meets a drop, stair treads, ruin walls with arches, contact shadows under tall neighbours, and a faint outline of any piece hidden behind a wall.
 - Win: loot from `data/encounters.csv`, downed members stand back up with 1 HP. Lose: the Lodestone recalls the party. Items used in a fight are gone from the run.
 
 ## Skills (graybox set, `data/abilities.csv`)
@@ -47,7 +57,7 @@ Adding a skill: add a row to `data/abilities.csv` and its name key to `text/plac
 ## Combat sandbox
 `scenes/combat_sandbox.tscn`. Open it and press F6, or press **F9 from any screen** while the game runs. Code in `game/scripts/sandbox/`.
 
-- **EDIT** (F1 toggles): paint terrain (grass, forest, water, rock, road), RAISE / LOWER height, place party members (pick from the roster) and enemies (any class, including party classes for mirror matches). Left click and drag paints, right click removes a piece. The faint red tiles are the enemy deploy zone used by "extra enemies".
+- **EDIT** (F1 toggles): paint terrain (grass, forest, water, rock, road, stone, stairs, ruin), RAISE / LOWER height (0 to 8), place party members (pick from the roster) and enemies (any class, including party classes for mirror matches). Left click and drag paints, right click removes a piece. The faint red tiles are the enemy deploy zone used by "extra enemies".
 - **PLAY**: the real fight controller on your map. **RESTART (R)** rebuilds the fight from the setup. "new dice on restart" off = the same rolls every time (useful to replay one exact situation), on = fresh rolls.
 - **Map**: name it and SAVE (writes `game/data/maps/<name>.json`, readable and hand-editable), LOAD from the list, RESIZE (5 to 16 a side), or GENERATE a random map from a seed. `default.json` loads first.
 - **Difficulty dials** for each side: HP %, to-hit, defense, damage, move, plus "extra enemies" (copies of your enemies added in the deploy zone). Presets EASY / NORMAL / HARD / BRUTAL set the enemy dials. They scale four things separately (toughness, accuracy, damage, numbers) because those feel different in play.
@@ -55,14 +65,17 @@ Adding a skill: add a row to `data/abilities.csv` and its name key to `text/plac
 - **BALANCE**: RUN AI vs AI plays the setup N times with the AI on both sides and reports party win rate, rounds, party HP left and pieces downed per fight. The party AI is greedy and much weaker than a person, so read it as a floor. A good normal fight: party wins 60 to 85% (AI) and keeps 30 to 60% HP.
 - Headless: `godot --headless --path game -s res://tools/balance_report.gd -- 100` prints every saved map at every preset.
 
-## Balance baseline (2026-10-26, 60 AI fights each, counters and luck on)
+## Balance baseline (2026-10-26, AI fights, counters and luck on)
 | Map | EASY | NORMAL | HARD | BRUTAL |
 |---|---|---|---|---|
-| default (3 vs 4) | 100% win, 66% HP | 100%, 56% | 100%, 45% | 28%, 8% |
-| ridge (3 vs 4) | 100%, 78% | 100%, 54% | 53%, 15% | 0% |
-| river (4 vs 5) | 100%, 63% | 100%, 56% | 92%, 33% | 0% |
+| default (3 vs 4) | 100% win, 66% HP | 100%, 56% | 100%, 45% | 27%, 7% |
+| ridge (3 vs 4) | 100%, 63% | 90%, 29% | 15%, 3% | 0% |
+| river (4 vs 5) | 100%, 63% | 100%, 56% | 92%, 34% | 0% |
+| temple (4 vs 5, tall) | 98%, 50% | 98%, 44% | 55%, 15% | not run |
+| cliffs (3 vs 4, tall) | 95%, 42% | 85%, 32% | 40%, 8% | not run |
 
-What the sim taught so far: the enemy AI used to walk up to a knight and then not swing because it feared the counter (fixed: damage taken now weighs about a third of damage dealt). High ground plus range is the strongest thing on the board: a hunter on a hill can take half a bandit's HP before it can answer. 3 vs 3 trail fights are easy one at a time; they get their bite from HP carrying over between fights.
+What the sim taught so far: with line of sight on, high ground decides fights. The first versions of temple and cliffs (all enemies on top of a 5 to 6 level fortress) were 0 to 2% wins at NORMAL, so both maps now give each side some high ground. Fights on tall maps run about 6 rounds instead of 3. Also: the enemy AI used to walk up to a knight and then not swing because it feared the counter (fixed: damage taken now weighs about a third of damage dealt). High ground plus range is the strongest thing on the board: a hunter on a hill can take half a bandit's HP before it can answer. 3 vs 3 trail fights are easy one at a time; they get their bite from HP carrying over between fights.
 
 ## Not yet
+Seeing why a target can't be hit (a "no sight" hint on hover), deep water and swimming, climbing as an action, destructible ruins.
 Facing and back attacks, overwatch, charge-time spells with a countdown, fire on forest (Bushberry's "flammable"), objectives beyond "defeat all", enemy behaviour types (charger, ambusher, guard), per-character skills on top of class skills, the party AI using items in the sim.
