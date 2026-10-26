@@ -15,3 +15,4 @@ extends Resource
 @export var range_max: int = 1
 @export var magic: bool = false  ## ignores terrain cover
 @export var skills: Dictionary = {}  ## check id -> bonus, e.g. {"hunt": 5}
+@export var abilities: Array[StringName] = []  ## rows of data/abilities.csv beyond the basic strike

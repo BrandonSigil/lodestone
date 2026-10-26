@@ -16,3 +16,4 @@ range_min = 1
 range_max = 1
 magic = false
 skills = {"forage": 3}
+abilities = Array[StringName]([])

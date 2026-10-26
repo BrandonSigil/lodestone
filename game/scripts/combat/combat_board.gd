@@ -5,6 +5,7 @@ extends Node2D
 
 signal cell_clicked(cell: Vector2i, right: bool)
 signal cell_hovered(cell: Vector2i)
+signal cell_painted(cell: Vector2i, right: bool)  ## press and drag, for the map editor
 
 const TW := 64.0  ## tile width on screen
 const TH := 32.0  ## tile height on screen
@@ -32,6 +33,10 @@ var grid: CombatGrid
 var units: Array = []
 var strangeness := 0.0
 var highlights := {}  # cell -> Color
+var danger := {}  # cell -> true, the enemy's reach next phase
+var area := {}  # cell -> true, cells a skill would hit
+var show_coords := false
+var _paint_button := 0
 var hover := NONE
 var selected: CombatUnit = null
 var _floaters: Array[Dictionary] = []  # {"text", "pos", "t", "color"}
@@ -91,10 +96,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		if c != hover:
 			hover = c
 			cell_hovered.emit(c)
-	elif event is InputEventMouseButton and event.pressed:
+			if _paint_button != 0 and c != NONE:
+				cell_painted.emit(c, _paint_button == MOUSE_BUTTON_RIGHT)
+	elif event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_LEFT or mb.button_index == MOUSE_BUTTON_RIGHT:
-			cell_clicked.emit(pick(get_local_mouse_position()), mb.button_index == MOUSE_BUTTON_RIGHT)
+		if mb.button_index != MOUSE_BUTTON_LEFT and mb.button_index != MOUSE_BUTTON_RIGHT:
+			return
+		if not mb.pressed:
+			_paint_button = 0
+			return
+		var c := pick(get_local_mouse_position())
+		_paint_button = mb.button_index
+		cell_clicked.emit(c, mb.button_index == MOUSE_BUTTON_RIGHT)
+		if c != NONE:
+			cell_painted.emit(c, mb.button_index == MOUSE_BUTTON_RIGHT)
 
 
 # --- drawing ------------------------------------------------------------------
@@ -108,7 +123,7 @@ func _draw() -> void:
 			if y >= 0 and y < grid.h:
 				_draw_tile(Vector2i(x, y))
 		for u: CombatUnit in units:
-			if u.alive() and int(round(u.vis.x + u.vis.y)) == depth:
+			if u.shown_hp > 0 and int(round(u.vis.x + u.vis.y)) == depth:
 				_draw_unit(u)
 	var font := ThemeDB.fallback_font
 	for f in _floaters:
@@ -134,12 +149,18 @@ func _draw_tile(c: Vector2i) -> void:
 	draw_colored_polygon(PackedVector2Array([br, tr, tr + drop, br + drop]), top_col.darkened(0.45))
 	var top := PackedVector2Array([tl, tr, br, bl])
 	draw_colored_polygon(top, top_col)
+	if danger.has(c):
+		draw_colored_polygon(top, Color(1.0, 0.55, 0.15, 0.22))
 	if highlights.has(c):
 		draw_colored_polygon(top, highlights[c])
+	if area.has(c):
+		draw_colored_polygon(top, Color(1.0, 0.4, 0.2, 0.45))
 	if c == hover:
 		draw_colored_polygon(top, Color(1, 1, 1, 0.18))
 	var edge := top_col.darkened(0.55)
 	draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(edge, 0.6), 1.0, true)
+	if danger.has(c):
+		draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(1.0, 0.5, 0.1, 0.7), 1.5, true)
 	var mid := cell_top(c)
 	match t:
 		CombatGrid.T.FOREST:
@@ -161,7 +182,7 @@ func _draw_unit(u: CombatUnit) -> void:
 		base += Vector2(sin(_time * 40.0) * 1.5, 0)
 	var breathe := 1.0 + sin(_time * 2.0 + u.vis.x) * 0.02
 	var col := u.tint
-	if u.team == 0 and u.acted:
+	if u.team == 0 and u.done():
 		col = col.darkened(0.35)
 	var ring := Color(0.4, 0.7, 1.0) if u.team == 0 else Color(1.0, 0.4, 0.35)
 	if u == selected:
@@ -171,7 +192,16 @@ func _draw_unit(u: CombatUnit) -> void:
 	var w := 34.0
 	var p := base + Vector2(-w * 0.5, -48)
 	draw_rect(Rect2(p, Vector2(w, 4)), Color(0, 0, 0, 0.6))
-	draw_rect(Rect2(p, Vector2(w * float(u.hp) / u.cls.max_hp, 4)), ring)
+	draw_rect(Rect2(p, Vector2(w * clampf(float(u.shown_hp) / u.max_hp, 0.0, 1.0), 4)), ring)
+	var tags := ""
+	for s in u.statuses:
+		tags += Txt.t("TAG_" + String(s).to_upper()) + " "
+	if u.spooked:
+		tags += Txt.t("TAG_SPOOKED")
+	if tags != "":
+		var font := ThemeDB.fallback_font
+		draw_string_outline(font, p + Vector2(-23, -4), tags.strip_edges(), HORIZONTAL_ALIGNMENT_CENTER, 80, 10, 3, Color(0, 0, 0, 0.8))
+		draw_string(font, p + Vector2(-23, -4), tags.strip_edges(), HORIZONTAL_ALIGNMENT_CENTER, 80, 10, Color(1, 0.95, 0.7))
 
 
 func float_text(c: Vector2i, text: String, color := Color.WHITE) -> void:
@@ -196,6 +226,26 @@ func animate_move(u: CombatUnit, path: Array[Vector2i]) -> void:
 		tw.tween_method(step, 0.0, 1.0, 0.16)
 		await tw.finished
 	u.hop = 0.0
+
+
+## Slide without a hop: shoved, not walking.
+func animate_push(u: CombatUnit, path: Array) -> void:
+	for i in range(1, path.size()):
+		var a := Vector2(path[i - 1])
+		var b := Vector2(path[i])
+		var ha := float(grid.height_at(path[i - 1]))
+		var hb := float(grid.height_at(path[i]))
+		var step := func(t: float) -> void:
+			u.vis = a.lerp(b, t)
+			u.vis_h = lerpf(ha, hb, t * t)
+		var tw := create_tween()
+		tw.tween_method(step, 0.0, 1.0, 0.14)
+		await tw.finished
+
+
+## Screen position of a cell's top, for placing menus next to a piece.
+func cell_screen_pos(c: Vector2i) -> Vector2:
+	return get_global_transform_with_canvas() * cell_top(c)
 
 
 func animate_attack(att: CombatUnit, tgt: CombatUnit, hit: bool) -> void:

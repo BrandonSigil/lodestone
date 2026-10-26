@@ -15,6 +15,8 @@ The flow is village, trail, fight, back to the trail, and back to the village wh
 - `game/text/placeholder.csv`: every word the player sees. Replace the caveman text whenever you like.
 - `game/data/events.csv`: trail events. See `docs/systems/trail.md` to add one without code.
 - `game/data/characters/*.tres` and `game/data/classes/*.tres`: stats, editable in the Godot inspector.
+- Combat sandbox: press F9 while the game runs (or open `game/scenes/combat_sandbox.tscn` and press F6). Paint maps, place pieces, turn difficulty dials, restart fights, and run AI-vs-AI balance checks. See `docs/systems/combat.md`.
+- `docs/research/tactical-combat.md`: what makes tactics combat fun and how to balance it, with sources.
 
 ## For Claude sessions
 Read `CLAUDE.md` first. Run `tools/check.sh` after every change (set `GODOT` to the Godot binary).

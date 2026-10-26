@@ -16,3 +16,4 @@ range_min = 2
 range_max = 4
 magic = false
 skills = {"hunt": 5, "sneak": 3}
+abilities = Array[StringName]([&"aimed_shot", &"snare"])
