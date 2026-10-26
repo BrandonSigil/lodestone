@@ -38,6 +38,7 @@ func _ready() -> void:
 			["UI_FORAGE", _act.bind(func(r: RunState) -> void: TrailRules.forage(r))],
 			["UI_HEAL", _act.bind(func(r: RunState) -> void: TrailRules.heal(r))]]:
 		action_buttons.append(hud.add_button(Txt.t(spec[0]), spec[1]))
+	action_buttons.append(hud.add_button(Txt.t("UI_MAP"), func() -> void: Game.go(Game.WORLD_MAP)))
 
 	event_panel = PanelContainer.new()
 	event_box = VBoxContainer.new()

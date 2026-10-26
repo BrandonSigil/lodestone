@@ -66,3 +66,11 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-26 Every visual is a pure function of seed and strangeness, so any screen can be reproduced and screenshot-checked (borrowed from riso-windowseat).
 - [AI] 2026-10-26 Three bottom-frame candidates: A embroidered band, B quilt row, C foreground sill. Brandon picks one or a mix.
 - [USER] 2026-10-26 Adopt the style lab draft 1 look (rules R1 to R10, region palettes, riso grain) for the starting village hub and the world map. The bottom frame pick (A, B or C) is still open.
+
+## World map
+- [USER] 2026-10-26 A general world map in the riso look that the player slowly unearths: only the first village and a few miles around it are known at the start. For now we see the whole map; fog of war comes later.
+- [AI] 2026-10-26 The map is one fixed 1920x1080 sheet with a folk stamp border. Home sits bottom-left, the route winds east through snow, the Wall runs north to south through the middle, and the deep lands fill the east edge.
+- [AI] 2026-10-26 Regions are flat fills with wobbly warped-Voronoi borders, colored by the region palette at each region's strangeness. Regions never cross the Wall.
+- [AI] 2026-10-26 The trail's 300 leagues map onto the drawn route; the Wall gate is league 150. The walked part of the route prints dark, the rest pale.
+- [AI] 2026-10-26 Discovery: the village plus about 170 map units around it start known; each run reveals 95 units either side of the route it walked. Stored as circles in meta so it survives a recall.
+

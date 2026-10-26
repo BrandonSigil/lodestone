@@ -12,7 +12,7 @@ if ! "$GODOT" --headless --path . -s res://tests/run_tests.gd; then
 	fail=1
 fi
 
-for scene in village trail combat; do
+for scene in village trail combat world_map; do
 	out=$("$GODOT" --headless --path . --quit-after 60 "res://scenes/$scene.tscn" 2>&1)
 	if grep -qE "SCRIPT ERROR|^ERROR" <<< "$out"; then
 		echo "FAIL scene $scene"

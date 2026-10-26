@@ -9,7 +9,7 @@ const TRAIL := "res://scenes/trail.tscn"
 const COMBAT := "res://scenes/combat.tscn"
 const WORLD_MAP := "res://scenes/world_map.tscn"
 
-var meta := {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": []}
+var meta := {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": []}
 var run: RunState = null
 var save_enabled := true
 var _combat_setup := {}
@@ -87,8 +87,16 @@ func save_meta() -> void:
 
 
 func reset_meta() -> void:
-	meta = {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": []}
+	meta = {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": []}
 	save_meta()
+
+
+## The Lodestone keeps what the party unearthed on the world map: the village area plus the walked route.
+func remember_route(distance: int) -> void:
+	var world := WorldMap.load_default()
+	if meta.revealed.is_empty():
+		meta.revealed = Discovery.start(world)
+	Discovery.reveal_route(meta.revealed, world, distance)
 
 
 # --- run flow -------------------------------------------------------------
@@ -152,6 +160,7 @@ func recall() -> void:
 		for mk in run.marks:
 			meta.marks.append(mk)
 		meta.marks = meta.marks.slice(-200)
+		remember_route(run.distance)
 	meta.runs = int(meta.runs) + 1
 	for i in range(1, int(meta.runs) + 1):
 		if not meta.flags.has("runs_%d" % i):
@@ -167,6 +176,7 @@ func complete_run() -> void:
 	meta.best_distance = maxi(int(meta.best_distance), run.distance)
 	for mk in run.marks:
 		meta.marks.append(mk)
+	remember_route(run.distance)
 	if not has_flag("reached_end"):
 		meta.flags.append("reached_end")
 	save_meta()
