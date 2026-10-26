@@ -287,12 +287,16 @@ func _draw_tile(c: Vector2i) -> void:
 		draw_colored_polygon(top, Color(1.0, 0.55, 0.15, 0.22))
 	if highlights.has(c):
 		draw_colored_polygon(top, highlights[c])
+		if top_tex != null:
+			# Painted tops are busier than graybox, so highlighted cells also get a solid rim.
+			var rim: Color = highlights[c]
+			draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(rim, 0.95), 2.0, true)
 	if area.has(c):
 		draw_colored_polygon(top, Color(1.0, 0.4, 0.2, 0.45))
 	if c == hover:
 		draw_colored_polygon(top, Color(1, 1, 1, 0.18))
 	var edge := top_col.darkened(0.55)
-	draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(edge, 0.5), 1.0, true)
+	draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(edge, 0.5 if top_tex == null else 0.2), 1.0, true)
 	for e in [lit_edge, shade_edge]:
 		draw_line(iso(e[0].x, e[0].y, h), iso(e[1].x, e[1].y, h), Color(top_col.lightened(0.35), 0.8), 1.5, true)
 	if danger.has(c):
@@ -414,7 +418,17 @@ func _waterfall(a: Vector2, b: Vector2, h: float, hb: float, c: Vector2i) -> voi
 	var b2 := a.lerp(b, 0.88)
 	var top_h := h - 0.08
 	var sheet := FALL.lerp(ALIEN_COLORS[CombatGrid.T.WATER], strangeness * 0.7)
-	draw_colored_polygon(PackedVector2Array([iso(a2.x, a2.y, top_h), iso(b2.x, b2.y, top_h), iso(b2.x, b2.y, hb), iso(a2.x, a2.y, hb)]), sheet)
+	var pts := PackedVector2Array([iso(a2.x, a2.y, top_h), iso(b2.x, b2.y, top_h), iso(b2.x, b2.y, hb), iso(a2.x, a2.y, hb)])
+	var fall_tex := BattleArt.texture("side_water", true)
+	if fall_tex != null:
+		# Painted falls scroll downward; one texture covers 2 levels of drop.
+		var v := -fmod(_time * 0.6, 1.0)
+		var tint := _tint(CombatGrid.T.WATER)
+		var uv := PackedVector2Array([Vector2(0, v - top_h * 0.5), Vector2(0.5, v - top_h * 0.5), Vector2(0.5, v - hb * 0.5), Vector2(0, v - hb * 0.5)])
+		draw_polygon(pts, PackedColorArray([tint, tint, tint, tint]), uv, fall_tex)
+		draw_line(iso(a2.x, a2.y, hb), iso(b2.x, b2.y, hb), Color(1, 1, 1, 0.85), 3.0, true)
+		return
+	draw_colored_polygon(pts, sheet)
 	for k in 4:
 		var f := 0.2 + k * 0.2
 		var p := a2.lerp(b2, f)
