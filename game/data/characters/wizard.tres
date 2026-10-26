@@ -10,6 +10,7 @@ name_key = "CHAR_WIZARD"
 class_def = ExtResource("2")
 off_skills = {"forage": 1}
 perks = Array[StringName]([])
+traits = Array[StringName]([&"scholar"])
 deficiency = &"bookbound"
 food_per_day = 1
 party_slots = 1

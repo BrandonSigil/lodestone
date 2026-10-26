@@ -31,7 +31,7 @@ static func fight(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, su
 				if u.team == team and u.alive():
 					CombatRules.skittish_check(rng, u, units)
 			for u: CombatUnit in units:
-				if u.team == team and u.alive():
+				if u.team == team and u.alive() and not u.done():
 					take_turn(rng, grid, u, units, supplies)
 					if not CombatRules.team_alive(units, 1 - team):
 						return {"winner": team, "rounds": rounds}

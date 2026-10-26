@@ -16,3 +16,14 @@ extends Resource
 @export var magic: bool = false  ## ignores terrain cover
 @export var skills: Dictionary = {}  ## check id -> bonus, e.g. {"hunt": 5}
 @export var abilities: Array[StringName] = []  ## rows of data/abilities.csv beyond the basic strike
+@export var spell_pool: Array[StringName] = []  ## spells (magic rows of data/abilities.csv) this class can learn
+@export var spell_slots: int = 0  ## how many it brings into a fight
+@export var traits: Array[StringName] = []  ## combat traits every unit of this class has (see CombatRules.TRAIT_*)
+
+
+## The spells a unit of this class brings when nobody picked: the first ones in the pool.
+func default_spells() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for id in spell_pool.slice(0, spell_slots):
+		out.append(id)
+	return out

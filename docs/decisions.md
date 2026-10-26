@@ -57,6 +57,10 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-26 Ranged attacks and spells need line of sight. Cliffs, ruins, boulders and trees block it. High-ground range bonus capped at +3.
 - [AI] 2026-10-26 The camera turns in quarter steps (Q). Saved sandbox maps keep their opening angle.
 - [AI] 2026-10-26 Balance pass from the AI-vs-AI sim: bandit and wolf attack 3 to 4, bandit bow HP 7 to 8 and damage 2 to 3, GOOD SHOT +1 damage (was +2), MOON BOOM range 2-3 (was 2-4). Trail encounters stay at 3 enemies; their cost comes from HP carrying over.
+- [USER] 2026-10-26 Give different characters unique combat modifications, and let spell casters pick 1 or 2 spells to use.
+- [AI] 2026-10-26 One combat trait per roster character: Lead shield_wall (adjacent allies +2 DEF), Stardrop starlit (spells +1 hit/+1 dmg from height 2+), Hunter steady_aim (+2 hit if not moved), Wizard scholar (spells +1 dmg, heals +1), Bushberry deep_roots (can't be pushed, regrows 1 HP a phase), Skeleton bones (-2 dmg from non-magic ranged), Lewith & Flark double_strike (basic hit twice at -1 dmg). Wolves get pack (+1 dmg on a flanked target). Bushberry's flammable now means +2 damage from fire.
+- [AI] 2026-10-26 Casters have a spell pool and 2 slots; a slot may stay empty. Moon mage pool: MOON BOOM, MOON SKIN, MOON NAP (sleep), MOON WAVE (push 2), STAR POINT (+2 hit). Wizard pool: FIRE BOOM, FIX, FIRE ZAP, COLD STUCK. Defaults are the old fixed spells, so trail fights play as before. Picks happen in the sandbox for now; a village picker comes later.
+- [AI] 2026-10-26 New status NAP (sleep): skips the owner's next phase, no counterattacks, any damage wakes it. New skill kind "hex": rolls to hit, adds a status, no damage.
 
 ## Trail and survival
 - [USER] 2026-10-25 Balance combat, unearthing the map, survival, mental and physical health.

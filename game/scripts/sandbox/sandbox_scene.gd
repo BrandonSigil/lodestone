@@ -36,6 +36,8 @@ var _h_spin: SpinBox
 var _seed_spin: SpinBox
 var _edit_panel: VBoxContainer
 var _play_panel: VBoxContainer
+var _spell_box: VBoxContainer  ## per-caster spell slot pickers, rebuilt when the party changes
+var _spell_sig := ""
 var _brush_buttons := {}
 var _party_pick: OptionButton
 var _enemy_pick: OptionButton
@@ -226,6 +228,10 @@ func _build_ui() -> void:
 			_changed())
 	rb.add_child(_title("PARTY"))
 	_dial_rows(rb, "party")
+	rb.add_child(_title(Txt.t("UI_SPELLS")))
+	_spell_box = VBoxContainer.new()
+	_spell_box.add_theme_constant_override("separation", 2)
+	rb.add_child(_spell_box)
 	rb.add_child(_title("SUPPLIES AND RULES"))
 	_med_spin = _dial(rb, "medicine", 0, 20, 1)
 	_med_spin.value_changed.connect(func(v: float) -> void: if not _syncing: setup.supplies.medicine = int(v))
@@ -354,6 +360,7 @@ func _sync_controls() -> void:
 	_mercy_check.button_pressed = setup.mercy
 	_dice_check.button_pressed = random_dice
 	_syncing = false
+	_rebuild_spells()
 	_set_brush(brush)
 
 
@@ -503,7 +510,55 @@ func _refresh_preview() -> void:
 	for c in zone:
 		if setup.entry_at(c).is_empty():
 			preview.highlights[c] = Color(1, 0.4, 0.3, 0.12)
+	_rebuild_spells()
 	_layout()
+
+
+## One row per caster in the party: a picker per spell slot. Picks are saved with the map.
+func _rebuild_spells() -> void:
+	var sig := ""
+	for p in setup.party:
+		sig += "%s:%s;" % [p.id, ",".join(setup.spells_of(p.id))]
+	if sig == _spell_sig:
+		return
+	_spell_sig = sig
+	for c in _spell_box.get_children():
+		c.queue_free()
+	for p in setup.party:
+		var d := Db.character(StringName(p.id))
+		if d == null or d.class_def.spell_slots <= 0:
+			continue
+		_spell_box.add_child(_small_label(Txt.t(d.name_key), 12))
+		var picks := setup.spells_of(p.id)
+		for slot in d.class_def.spell_slots:
+			var row := HBoxContainer.new()
+			_spell_box.add_child(row)
+			var l := _small_label(Txt.f("UI_SPELL_SLOT", slot + 1), 11)
+			l.custom_minimum_size.x = 60
+			row.add_child(l)
+			var ob := OptionButton.new()
+			ob.add_theme_font_size_override("font_size", 12)
+			ob.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			ob.add_item(Txt.t("UI_NO_SPELL"))
+			ob.set_item_metadata(0, "")
+			for id in d.class_def.spell_pool:
+				var a := Db.ability(String(id))
+				if a == null:
+					continue
+				ob.add_item(Txt.t(a.name_key))
+				ob.set_item_metadata(ob.item_count - 1, String(id))
+				if slot < picks.size() and picks[slot] == String(id):
+					ob.select(ob.item_count - 1)
+			if slot >= picks.size() or picks[slot] == "":
+				ob.select(0)
+			ob.item_selected.connect(func(i: int) -> void:
+				setup.set_spell(String(p.id), slot, ob.get_item_metadata(i))
+				_status.text = "spells: " + ", ".join(setup.spells_of(p.id))
+				_rebuild_spells.call_deferred()
+				_changed())
+			row.add_child(ob)
+	if _spell_box.get_child_count() == 0:
+		_spell_box.add_child(_small_label("no casters placed", 11))
 
 
 func _changed() -> void:

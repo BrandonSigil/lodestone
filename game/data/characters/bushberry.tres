@@ -10,6 +10,7 @@ name_key = "CHAR_BUSHBERRY"
 class_def = ExtResource("2")
 off_skills = {}
 perks = Array[StringName]([&"bushberry_ration", &"flammable"])
+traits = Array[StringName]([&"deep_roots"])
 deficiency = &""
 food_per_day = 0
 party_slots = 1

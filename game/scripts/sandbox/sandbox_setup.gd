@@ -16,7 +16,7 @@ const PRESETS := {
 
 var map_name := "untitled"
 var grid: CombatGrid
-var party: Array = []  ## [{"id": character id, "cell": Vector2i}]
+var party: Array = []  ## [{"id": character id, "cell": Vector2i, "spells": [ids] (casters only, optional)}]
 var enemies: Array = []  ## [{"id": class id, "cell": Vector2i}]
 var party_mods := {"hp_pct": 100, "attack": 0, "defense": 0, "damage": 0, "move": 0}
 var enemy_mods := {"hp_pct": 100, "attack": 0, "defense": 0, "damage": 0, "move": 0}
@@ -82,6 +82,32 @@ func place_enemy(id: String, c: Vector2i) -> void:
 	enemies.append({"id": id, "cell": c})
 
 
+## The spells this party member will bring: their pick if set, else their default loadout.
+func spells_of(id: String) -> Array:
+	for p in party:
+		if p.id == id and p.has("spells"):
+			return p.spells
+	var d := Db.character(StringName(id))
+	return Array(d.default_spells()).map(func(x: StringName) -> String: return String(x)) if d else []
+
+
+## Put spell `spell` (or "" for none) in slot `slot` of this party member's loadout.
+func set_spell(id: String, slot: int, spell: String) -> void:
+	for p in party:
+		if p.id != id:
+			continue
+		var picks: Array = spells_of(id).duplicate()
+		while picks.size() <= slot:
+			picks.append("")
+		picks[slot] = spell
+		if spell != "":
+			for i in picks.size():
+				if i != slot and picks[i] == spell:
+					picks[i] = ""
+		p["spells"] = picks  # "" = empty slot; CombatUnit.set_spells skips it
+		return
+
+
 func resize(w: int, h: int) -> void:
 	grid = grid.resized(w, h)
 	for list in [party, enemies]:
@@ -107,7 +133,7 @@ func build_units() -> Array:
 		var d := Db.character(StringName(p.id))
 		if d == null or not grid.passable(p.cell) or taken.has(p.cell):
 			continue
-		var u := CombatUnit.from_def(d, party_mods)
+		var u := CombatUnit.from_def(d, party_mods, p.get("spells"))
 		u.place(p.cell, grid.height_at(p.cell))
 		taken[p.cell] = true
 		units.append(u)
@@ -187,7 +213,10 @@ func to_dict() -> Dictionary:
 	var cells := func(list: Array) -> Array:
 		var out := []
 		for e in list:
-			out.append({"id": e.id, "x": e.cell.x, "y": e.cell.y})
+			var row := {"id": e.id, "x": e.cell.x, "y": e.cell.y}
+			if e.has("spells"):
+				row["spells"] = e.spells
+			out.append(row)
 		return out
 	return {
 		"name": map_name, "map": grid.to_dict(), "party": cells.call(party), "enemies": cells.call(enemies),
@@ -204,7 +233,10 @@ static func from_dict(d: Dictionary) -> SandboxSetup:
 	for key in ["party", "enemies"]:
 		var list: Array = s.party if key == "party" else s.enemies
 		for e in d.get(key, []):
-			list.append({"id": String(e.id), "cell": Vector2i(int(e.x), int(e.y))})
+			var entry := {"id": String(e.id), "cell": Vector2i(int(e.x), int(e.y))}
+			if e.has("spells"):
+				entry["spells"] = Array(e.spells).map(func(x: Variant) -> String: return String(x))
+			list.append(entry)
 	for key in MOD_KEYS:
 		s.party_mods[key] = int(d.get("party_mods", {}).get(key, s.party_mods[key]))
 		s.enemy_mods[key] = int(d.get("enemy_mods", {}).get(key, s.enemy_mods[key]))

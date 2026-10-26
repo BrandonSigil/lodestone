@@ -66,18 +66,20 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 		var side := 1.0 if t.team != u.team else -1.5
 		match a.kind:
 			"attack":
-				s += side * e.hit * e.dmg * 10.0
-				if e.dmg >= t.hp:
+				s += side * e.hit * e.dmg * e.swings * 10.0
+				if e.dmg * e.swings >= t.hp:
 					s += side * KILL_BONUS * e.hit
-				if a.status != "":
+				if a.status != "" and not t.has_status(a.status):
 					s += side * 6.0 * e.hit
-				if a.push > 0:
+				if a.push > 0 and not t.has_trait(CombatRules.TRAIT_DEEP_ROOTS):
 					s += side * 3.0 * e.hit
+			"hex":
+				if not t.has_status(a.status):
+					s += side * e.hit * _hex_value(t, a.status)
 			"heal":
 				s += e.heal * 6.0 if t.team == u.team else -e.heal * 6.0
 			"buff":
-				if t.team == u.team and t.hp < t.max_hp and not t.has_status(a.status):
-					s += 5.0
+				s += _buff_value(u, t, a.status)
 	if a.kind != "attack" and s <= 0.0:
 		return -INF
 	if not f.counter.is_empty():
@@ -85,6 +87,25 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 	if a.cooldown > 0:
 		s += 2.0  # spend skills when they're good, not only strikes
 	return s
+
+
+## What taking a foe out of play is worth: sleep costs it a whole turn, about one of its hits plus change.
+static func _hex_value(t: CombatUnit, status: String) -> float:
+	match status:
+		CombatRules.STATUS_SLEEP:
+			return 8.0 + t.damage * 6.0
+		CombatRules.STATUS_ROOTED:
+			return 6.0
+	return 4.0
+
+
+static func _buff_value(u: CombatUnit, t: CombatUnit, status: String) -> float:
+	if t.team != u.team or t.has_status(status):
+		return 0.0
+	match status:
+		CombatRules.STATUS_GUIDED:
+			return 5.0 if t != u and not t.acted else 0.0
+	return 5.0 if t.hp < t.max_hp else 0.0
 
 
 static func _approach(grid: CombatGrid, u: CombatUnit, units: Array, cost: Dictionary) -> Vector2i:

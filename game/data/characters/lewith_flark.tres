@@ -10,6 +10,7 @@ name_key = "CHAR_LEWITH_FLARK"
 class_def = ExtResource("2")
 off_skills = {"masonry": 3, "tame": 3}
 perks = Array[StringName]([])
+traits = Array[StringName]([&"double_strike"])
 deficiency = &""
 food_per_day = 2
 party_slots = 2
