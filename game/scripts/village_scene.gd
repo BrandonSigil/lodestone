@@ -29,7 +29,7 @@ func _ready() -> void:
 	slots_label = hud.add_side_label("")
 	hud.add_side_label(Txt.f("UI_RUNS", int(Game.meta.runs)))
 	hud.add_side_label(Txt.f("UI_BEST", int(Game.meta.best_distance)))
-	hud.add_side_label(Txt.f("UI_BONUS_FOOD", Game.bonus_food()))
+	hud.add_side_label(Txt.f("UI_BONUS_FOOD", Game.bonus_gold()))
 	go_button = hud.add_button(Txt.t("UI_START"), _go)
 	_toggle(Db.character(&"lead"))
 
@@ -94,7 +94,7 @@ func _toggle(d: CharacterDef) -> void:
 		cards[id].set_pressed_no_signal(picked.has(Db.character(id)))
 	slots_label.text = Txt.f("UI_SLOTS_USED", [_slots_used(), Game.PARTY_SLOTS])
 	go_button.disabled = picked.is_empty()
-	var preview := RunState.create(picked, 0, Game.bonus_food())
+	var preview := RunState.create(picked, 0)
 	hud.set_party(FrameHud.party_entries_from_run(preview))
 	hud.set_slots(preview.slot_list(), RunState.CAPACITY)
 
