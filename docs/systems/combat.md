@@ -119,3 +119,10 @@ What the sim taught so far: with line of sight on, high ground decides fights. T
 ## Not yet
 Seeing why a target can't be hit (a "no sight" hint on hover), deep water and swimming, climbing as an action, destructible ruins.
 Facing and back attacks, overwatch, charge-time spells with a countdown, fire on forest, objectives beyond "defeat all", enemy behaviour types (charger, ambusher, guard), the party AI using items in the sim, a spell picker in the village, learning new spells during a run, traits for the deficiencies (gloomy, fear of rodents) in fights.
+
+## Painted art
+- `BattleArt` (`scripts/combat/battle_art.gd`) loads terrain textures and prop sprites from `art/source/battle/`, wired per terrain by `data/battle_art.csv` (top texture, side texture, props, prop height in tile widths, props per cell).
+- Tops: a texture spans 2 x 2 cells, UV-mapped on the iso diamond so it reads the same in every camera turn. Sides: a texture spans 2 cells across and 4 height levels down (one stone row per level); shade faces draw at 72% of lit (the guide's 55 / 75).
+- Props stand on the cell's top centre, back to front, with a soft contact shadow. A ruin's pillar sprite replaces the graybox wall.
+- Strangeness multiplies the art toward the alien colours. Any missing file falls back to the graybox drawing, so art can arrive one terrain at a time.
+- Art rules: `docs/art/battle-maps.md`.

@@ -55,6 +55,12 @@ var _time := 0.0
 var rot := 0  ## camera quarter turns, 0-3 (Q turns it)
 
 
+func _ready() -> void:
+	# Painted textures tile across cells and are mipmapped (see BattleArt).
+	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+
+
 func _process(delta: float) -> void:
 	_time += delta
 	for f in _floaters:
@@ -214,6 +220,13 @@ func _terrain_color(t: int) -> Color:
 	return (TOP_COLORS[t] as Color).lerp(ALIEN_COLORS[t], strangeness)
 
 
+## Multiplier that drifts painted art toward the alien palette as strangeness rises.
+func _tint(t: int) -> Color:
+	var a: Color = TOP_COLORS[t]
+	var b: Color = ALIEN_COLORS[t]
+	return Color.WHITE.lerp(Color(b.r / a.r, b.g / a.g, b.b / a.b), strangeness)
+
+
 func _draw_tile(c: Vector2i) -> void:
 	var h := float(grid.height_at(c))
 	var t := grid.terrain_at(c)
@@ -223,6 +236,9 @@ func _draw_tile(c: Vector2i) -> void:
 	if t == CombatGrid.T.WATER:
 		face = MASONRY.lerp(ALIEN_CLIFF, strangeness)
 	var seed_v := _hash(c)
+	var top_tex := BattleArt.top(t)
+	var side_tex := BattleArt.side(t)
+	var tint := _tint(t)
 	# The two faces turned toward the camera: lit (lower-left) and shade (lower-right). Only the part
 	# above the neighbour shows, but painting down to it is fine because nearer cells paint over the rest.
 	var moss := _terrain_color(CombatGrid.T.GRASS if t != CombatGrid.T.FOREST else t).darkened(0.08)
@@ -232,7 +248,9 @@ func _draw_tile(c: Vector2i) -> void:
 		var nh := float(grid.height_at(n)) if grid.in_bounds(n) else BASE
 		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
 		var col := face.darkened(0.32 if shade else 0.12)
-		_face(side[0], side[1], h, maxf(BASE, minf(nh, h)), col, seed_v + (7 if shade else 0), not built)
+		# Painted sides keep the guide's values: lit 75% of the top (baked into the art), shade 55%.
+		var mod := Color(tint * (0.72 if shade else 1.0), 1.0)
+		_face(side[0], side[1], h, maxf(BASE, minf(nh, h)), col, seed_v + (7 if shade else 0), not built, false, side_tex, mod)
 		if nh >= h:
 			continue
 		if t == CombatGrid.T.WATER:
@@ -246,14 +264,22 @@ func _draw_tile(c: Vector2i) -> void:
 	var bl := top[3]
 	var lit_edge := _side(Vector2(c), Vector2(c) + Vector2.ONE, front_dir(false))
 	var shade_edge := _side(Vector2(c), Vector2(c) + Vector2.ONE, front_dir(true))
-	draw_colored_polygon(top, top_col)
+	if top_tex != null:
+		var uv := PackedVector2Array()
+		for k in [Vector2(c), Vector2(c.x + 1, c.y), Vector2(c) + Vector2.ONE, Vector2(c.x, c.y + 1)]:
+			uv.append(k / BattleArt.TOP_TILES)
+		var lift := Color(tint * (1.0 + minf(h, 6.0) * 0.025), 1.0)
+		draw_polygon(top, PackedColorArray([lift, lift, lift, lift]), uv, top_tex)
+	else:
+		draw_colored_polygon(top, top_col)
 	match t:
 		CombatGrid.T.STONE:
-			var line := top_col.darkened(0.18)
-			draw_line(iso(c.x + 0.5, c.y, h), iso(c.x + 0.5, c.y + 1, h), line, 1.0, true)
-			draw_line(iso(c.x, c.y + 0.5, h), iso(c.x + 1, c.y + 0.5, h), line, 1.0, true)
-			if seed_v % 3 == 0:
-				draw_line(iso(c.x + 0.2, c.y + 0.6, h), iso(c.x + 0.35, c.y + 0.85, h), line, 1.0, true)
+			if top_tex == null:  # painted stone has its own slab joints
+				var line := top_col.darkened(0.18)
+				draw_line(iso(c.x + 0.5, c.y, h), iso(c.x + 0.5, c.y + 1, h), line, 1.0, true)
+				draw_line(iso(c.x, c.y + 0.5, h), iso(c.x + 1, c.y + 0.5, h), line, 1.0, true)
+				if seed_v % 3 == 0:
+					draw_line(iso(c.x + 0.2, c.y + 0.6, h), iso(c.x + 0.35, c.y + 0.85, h), line, 1.0, true)
 		CombatGrid.T.STAIRS:
 			_stairs(c, h, top_col)
 	_contact_shadow(c, h)
@@ -261,17 +287,23 @@ func _draw_tile(c: Vector2i) -> void:
 		draw_colored_polygon(top, Color(1.0, 0.55, 0.15, 0.22))
 	if highlights.has(c):
 		draw_colored_polygon(top, highlights[c])
+		if top_tex != null:
+			# Painted tops are busier than graybox, so highlighted cells also get a solid rim.
+			var rim: Color = highlights[c]
+			draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(rim, 0.95), 2.0, true)
 	if area.has(c):
 		draw_colored_polygon(top, Color(1.0, 0.4, 0.2, 0.45))
 	if c == hover:
 		draw_colored_polygon(top, Color(1, 1, 1, 0.18))
 	var edge := top_col.darkened(0.55)
-	draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(edge, 0.5), 1.0, true)
+	draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(edge, 0.5 if top_tex == null else 0.2), 1.0, true)
 	for e in [lit_edge, shade_edge]:
 		draw_line(iso(e[0].x, e[0].y, h), iso(e[1].x, e[1].y, h), Color(top_col.lightened(0.35), 0.8), 1.5, true)
 	if danger.has(c):
 		draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(1.0, 0.5, 0.1, 0.7), 1.5, true)
 	var mid := cell_top(c)
+	if _props(c, h, t, seed_v, tint):
+		return
 	match t:
 		CombatGrid.T.FOREST:
 			# Boxy canopy trees, like the stacked-block references.
@@ -283,9 +315,10 @@ func _draw_tile(c: Vector2i) -> void:
 			draw_colored_polygon(PackedVector2Array([mid + Vector2(-14, 4), mid + Vector2(-8, -14), mid + Vector2(6, -18), mid + Vector2(15, 2)]), top_col.darkened(0.25))
 			draw_colored_polygon(PackedVector2Array([mid + Vector2(-8, -14), mid + Vector2(6, -18), mid + Vector2(2, -8)]), top_col.lightened(0.1))
 		CombatGrid.T.WATER:
-			var wob := sin(_time * 2.0 + c.x + c.y) * 2.0
-			draw_line(mid + Vector2(-10 + wob, -2), mid + Vector2(4 + wob, -2), top_col.lightened(0.3), 2.0)
-			draw_line(mid + Vector2(-2 - wob, 4), mid + Vector2(10 - wob, 4), top_col.lightened(0.3), 2.0)
+			if top_tex == null:  # painted water has its own streaks
+				var wob := sin(_time * 2.0 + c.x + c.y) * 2.0
+				draw_line(mid + Vector2(-10 + wob, -2), mid + Vector2(4 + wob, -2), top_col.lightened(0.3), 2.0)
+				draw_line(mid + Vector2(-2 - wob, 4), mid + Vector2(10 - wob, 4), top_col.lightened(0.3), 2.0)
 		CombatGrid.T.RUIN:
 			_ruin(c, h, seed_v)
 
@@ -305,11 +338,44 @@ static func _hash(c: Vector2i) -> int:
 	return absi((c.x * 73856093) ^ (c.y * 19349663)) % 9973
 
 
+## Prop sprites standing on the cell (trees, boulders, pillars). False when this terrain has no art yet.
+func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color) -> bool:
+	var art := BattleArt.props(t)
+	var list: Array = art.list
+	if list.is_empty() or art.count <= 0:
+		return false
+	# Spots in grid units around the cell centre, back (smaller x + y) first so they overlap correctly.
+	var spots: Array = [Vector2.ZERO] if art.count == 1 else [Vector2(-0.2, -0.16), Vector2(0.18, 0.2)]
+	for i in spots.size():
+		var r := float((seed_v * (i + 5)) % 101) / 101.0
+		var tex: Texture2D = list[(seed_v + i * 7) % list.size()]
+		var o: Vector2 = spots[i] + Vector2(r - 0.5, 0.5 - r) * 0.08
+		var base := iso(c.x + 0.5 + o.x, c.y + 0.5 + o.y, h)
+		var ph: float = art.height * TW * (0.88 + 0.24 * r)
+		var pw := ph * tex.get_width() / float(tex.get_height())
+		if pw > TW * 0.9:  # wide props (bush, boulder) stay inside their cell
+			ph *= TW * 0.9 / pw
+			pw = TW * 0.9
+		Pawn.ellipse(self, base, pw * 0.36, pw * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
+		draw_texture_rect(tex, Rect2(base.x - pw * 0.5, base.y - ph, pw, ph), false, tint)
+	return true
+
+
 ## One side face between grid corners a and b, from height h down to hb, with stone courses.
-func _face(a: Vector2, b: Vector2, h: float, hb: float, col: Color, seed_v: int, lip := false, plain := false) -> void:
+## With a painted texture, the courses come from the art instead (4 rows per texture = 1 per level).
+func _face(a: Vector2, b: Vector2, h: float, hb: float, col: Color, seed_v: int, lip := false, plain := false, tex: Texture2D = null, mod := Color.WHITE) -> void:
 	if h <= hb:
 		return
 	var pts := PackedVector2Array([iso(a.x, a.y, h), iso(b.x, b.y, h), iso(b.x, b.y, hb), iso(a.x, a.y, hb)])
+	if tex != null:
+		var along_x := is_equal_approx(a.y, b.y)
+		var ua := (a.x if along_x else a.y) / BattleArt.SIDE_TILES
+		var ub := (b.x if along_x else b.y) / BattleArt.SIDE_TILES
+		var vt := -h / BattleArt.SIDE_LEVELS
+		var vb := -hb / BattleArt.SIDE_LEVELS
+		draw_polygon(pts, PackedColorArray([mod, mod, mod, mod]), PackedVector2Array([Vector2(ua, vt), Vector2(ub, vt), Vector2(ub, vb), Vector2(ua, vb)]), tex)
+		draw_line(iso(a.x, a.y, hb), iso(b.x, b.y, hb), col.darkened(0.4), 1.0, true)
+		return
 	draw_colored_polygon(pts, col)
 	if plain:
 		return
@@ -353,7 +419,17 @@ func _waterfall(a: Vector2, b: Vector2, h: float, hb: float, c: Vector2i) -> voi
 	var b2 := a.lerp(b, 0.88)
 	var top_h := h - 0.08
 	var sheet := FALL.lerp(ALIEN_COLORS[CombatGrid.T.WATER], strangeness * 0.7)
-	draw_colored_polygon(PackedVector2Array([iso(a2.x, a2.y, top_h), iso(b2.x, b2.y, top_h), iso(b2.x, b2.y, hb), iso(a2.x, a2.y, hb)]), sheet)
+	var pts := PackedVector2Array([iso(a2.x, a2.y, top_h), iso(b2.x, b2.y, top_h), iso(b2.x, b2.y, hb), iso(a2.x, a2.y, hb)])
+	var fall_tex := BattleArt.texture("side_water", true)
+	if fall_tex != null:
+		# Painted falls scroll downward; one texture covers 2 levels of drop.
+		var v := -fmod(_time * 0.6, 1.0)
+		var tint := _tint(CombatGrid.T.WATER)
+		var uv := PackedVector2Array([Vector2(0, v - top_h * 0.5), Vector2(0.5, v - top_h * 0.5), Vector2(0.5, v - hb * 0.5), Vector2(0, v - hb * 0.5)])
+		draw_polygon(pts, PackedColorArray([tint, tint, tint, tint]), uv, fall_tex)
+		draw_line(iso(a2.x, a2.y, hb), iso(b2.x, b2.y, hb), Color(1, 1, 1, 0.85), 3.0, true)
+		return
+	draw_colored_polygon(pts, sheet)
 	for k in 4:
 		var f := 0.2 + k * 0.2
 		var p := a2.lerp(b2, f)
@@ -418,7 +494,7 @@ func _cube(p: Vector2, r: float, tall: float, col: Color) -> void:
 
 
 ## A broken wall standing on the cell: stone courses, a dark arch on some, a ragged top.
-func _ruin(c: Vector2i, h: float, seed_v: int) -> void:
+func _ruin(c: Vector2i, h: float, seed_v: int) -> void:  # graybox; a prop_pillar sprite replaces it
 	var rise := float(CombatGrid.RUIN_RISE) - (0.4 if seed_v % 2 == 0 else 0.0)
 	var top_h := h + rise
 	var col := MASONRY.lerp(ALIEN_CLIFF, strangeness)
