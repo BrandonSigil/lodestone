@@ -107,3 +107,7 @@ Notes: TODO
 - F4 Compose every screen: a framing foreground shape, a path or diagonal that leads to one focal point, and one hero form behind it.
 - F5 Pieces get costume (cape, stripes, pack), one prop (staff, bow, stone), two eyes and cheeks, and are about 90 px tall at 1600 wide.
 - F6 The frame and labels stay quieter than the picture: thinner band, labels on hover.
+
+## 14. Battle maps (Proposed (AI), 2026-10-26)
+- Look: Brandon's isometric reference (stone terraces, moss lips, waterfalls, island on cream paper), with the Style Lab surface (grain, no black, marks).
+- Full rules B1 to B32, sprite sizes, templates and prompt snippets: `docs/art/battle-maps.md`.

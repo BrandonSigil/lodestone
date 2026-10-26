@@ -48,7 +48,8 @@ Claude reads the samples, crops and resizes them to 1024 px, and writes one shor
 - In Krita, make a Style preset that uses the SDXL model plus the Lodestone LoRA and the trigger word.
 - Scenes: sketch flat shapes in Live mode, regenerate until it reads, then paint over by hand.
 - Pieces: draw each part (head, hat, body, pack, prop) on its own layer on a flat background, so code can assemble and recolor them.
-- Never generate animation frames or tile grids. Code animates the cut-out parts.
+- Never generate animation frames. Code animates the cut-out parts.
+- Battle map tiles: generate only on top of the templates in `art/templates/battle-maps/` with their line art and depth as control layers, then clip and paint over (proposed, see `docs/art/battle-maps.md`). Never a freehand tileset.
 
 ## Step 7. Into the game (Claude)
 - Exports go to `game/art/source/` (scenes as parallax layers, parts as separate PNGs).

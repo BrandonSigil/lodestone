@@ -103,3 +103,8 @@ Every design call goes here, newest at the bottom of its section.
 - [USER] 2026-10-26 Brandon doesn't like how the game looks yet and wants better drawings.
 - [AI] 2026-10-26 Style lab draft 2 names six gaps against the references (F1 machine-perfect edges, F2 no single light, F3 one grain on every surface, F4 everything on one horizon, F5 pieces without charm, F6 UI louder than the picture) and shows a code-drawn village fixing them. Next step depends on Brandon's pick: richer code only, a hybrid where he draws a small kit, or hand-painted scene plates.
 - [USER] 2026-10-26 Code-only art is not the route. Use the AI art pipeline in `docs/art-pipeline.md`: a style model trained only on Brandon's own drawings, Krita AI Diffusion run locally, Brandon paints over, code finishes. This replaces "Brandon draws all final art. No AI-generated art ships." Never train on other artists' work.
+
+## Battle map art
+- [USER] 2026-10-26 Battle maps take their look from Brandon's isometric reference: mossy stone cliff blocks, temple stair, waterfalls, pines, a floating island on cream paper.
+- [AI] 2026-10-26 Battle map rules B1 to B32 in `docs/art/battle-maps.md`: 2:1 dimetric, art at 2x (tile 128 x 64, 32 px per level), sun upper left, top / lit / shade values 100 / 75 / 55, ink outline #373335, reference structure with Style Lab surface (riso grain, no black, marks not rendering).
+- [AI] 2026-10-26 Tiles may be generated only on top of the battle map templates (line art and depth as control, clipped to the masks, hand-fixed). Never a freehand tileset. Replaces "never generate tile grids" in `docs/art-pipeline.md`. The reference image is a mood reference only, never training data.
