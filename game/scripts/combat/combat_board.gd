@@ -348,6 +348,9 @@ func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color) -> bool:
 		var base := iso(c.x + 0.5 + o.x, c.y + 0.5 + o.y, h)
 		var ph: float = art.height * TW * (0.88 + 0.24 * r)
 		var pw := ph * tex.get_width() / float(tex.get_height())
+		if pw > TW * 0.9:  # wide props (bush, boulder) stay inside their cell
+			ph *= TW * 0.9 / pw
+			pw = TW * 0.9
 		Pawn.ellipse(self, base, pw * 0.36, pw * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
 		draw_texture_rect(tex, Rect2(base.x - pw * 0.5, base.y - ph, pw, ph), false, tint)
 	return true
