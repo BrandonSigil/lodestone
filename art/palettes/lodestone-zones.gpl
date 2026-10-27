@@ -1,0 +1,89 @@
+GIMP Palette
+Name: Lodestone zones
+Columns: 8
+#
+# home
+183 195 122	home grass_light
+158 153 137	home stone_lit
+114 120 119	home stone_shade
+144 155 105	home moss
+216 203 151	home path
+179 175 150	home stone_pale
+215 207 176	home stone_top
+108 182 193	home water
+ 81 152 177	home water_deep
+165 205 203	home foam
+ 77 118 112	home pine
+112 143 106	home moss_dark
+197 190 162	home stone_mid
+ 85  89  84	home stone_deep
+ 55  51  53	home ink
+234 232 214	home paper
+# snow
+238 243 242	snow grass_light
+162 173 186	snow stone_lit
+113 128 146	snow stone_shade
+211 222 223	snow moss
+217 214 198	snow path
+195 202 203	snow stone_pale
+227 230 225	snow stone_top
+169 211 220	snow water
+127 180 198	snow water_deep
+165 205 203	snow foam
+ 47  85  96	snow pine
+169 188 194	snow moss_dark
+210 215 211	snow stone_mid
+ 58  69  88	snow stone_deep
+ 55  51  53	snow ink
+234 232 214	snow paper
+# desert
+227 201 143	desert grass_light
+194 154 107	desert stone_lit
+148 112  90	desert stone_shade
+185 164 106	desert moss
+217 185 138	desert path
+201 173 128	desert stone_pale
+230 210 168	desert stone_top
+121 181 168	desert water
+ 95 154 142	desert water_deep
+165 205 203	desert foam
+111 122  74	desert pine
+143 138  85	desert moss_dark
+214 191 147	desert stone_mid
+107  80  72	desert stone_deep
+ 55  51  53	desert ink
+234 232 214	desert paper
+# dungeon
+142 138 124	dungeon grass_light
+122 117 110	dungeon stone_lit
+ 88  86  86	dungeon stone_shade
+111 122 100	dungeon moss
+154 143 120	dungeon path
+138 132 117	dungeon stone_pale
+163 157 140	dungeon stone_top
+ 79 127 134	dungeon water
+ 61 102 112	dungeon water_deep
+165 205 203	dungeon foam
+ 63  90  85	dungeon pine
+ 89  99  79	dungeon moss_dark
+149 143 127	dungeon stone_mid
+ 55  51  53	dungeon stone_deep
+ 55  51  53	dungeon ink
+234 232 214	dungeon paper
+# forest
+159 180 106	forest grass_light
+140 138 122	forest stone_lit
+ 98 107 104	forest stone_shade
+111 138  85	forest moss
+185 162 122	forest path
+162 159 134	forest stone_pale
+196 189 159	forest stone_top
+ 94 167 168	forest water
+ 70 138 153	forest water_deep
+165 205 203	forest foam
+ 54  97  90	forest pine
+ 85 114  79	forest moss_dark
+179 173 145	forest stone_mid
+ 71  78  75	forest stone_deep
+ 55  51  53	forest ink
+234 232 214	forest paper

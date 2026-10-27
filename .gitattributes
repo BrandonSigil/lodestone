@@ -18,3 +18,4 @@ art/characters/**/*.psd -filter -diff -merge binary
 art/characters/**/*.ora -filter -diff -merge binary
 art/characters/**/*.png -filter -diff -merge binary
 game/art/source/characters/** -filter -diff -merge binary
+art/palettes/*.png -filter -diff -merge binary
