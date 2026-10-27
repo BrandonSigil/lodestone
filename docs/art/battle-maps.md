@@ -135,13 +135,12 @@ The reference image is mood only: never put it (or any other artist's work) in a
 
 Words that pin the camera for any image model: *"2:1 dimetric (pixel-art isometric), tile diamonds twice as wide as tall, grid lines at 26.565 degrees from horizontal, orthographic camera 45 degrees around and 30 degrees down, no perspective."* Avoid the phrase "1:1 isometric 45 degrees" alone: models read "isometric" as true 30 degree iso.
 
-## 6b. Krita walkthrough and a snowy example
-The full step-by-step (style setup, control layers, refine strengths, spot fixes, cleanup, export) and a worked snowy cliffs map with prompts are on the guide page (https://claude.ai/artifact/JjxHePXisJfFFTxoddXjYB). The short version:
-- Style "Lodestone battle": ZavyChroma XL, style prompt `{prompt}, flat illustrated 2D game art, flat fills with small hand-drawn marks, warm dark outlines, muted riso print colours, clean readable shapes`, negative from section 6. No LoRA until Brandon's style model exists.
-- Import `control-lineart.png` and `control-depth.png` as hidden layers; Control Layers: Line Art 80% (up to 100% if the grid drifts), Depth 55%.
-- Refine the blocking (or `control-blocking-snow.png` for snow) at strength 55 to 65% over the whole canvas; fix spots with a selection at 35 to 45%; trim to the blocking's opaque area; hand-paint lips and props.
-- Save `art/paintings/<map>-<region>.kra` and export `<map>-<region>.png` (2400 x 1600, transparent, CONTROL / GUIDE / paper hidden).
-- Every map template has `control-blocking-snow.png` (snow pass colours, `SNOW` in `tools/art/battle_art.py`).
+## 6b. Making tile sets in Krita (the main workflow)
+**Maps are built in Godot; Krita makes the tiles** ([USER] 2026-10-27). The sandbox (F1 editor) holds each map's shape. Krita makes square textures and cut-out props, and the board wraps them onto every block. Whole-map paintings (the map templates, `art/paintings/`, "map plates") are optional and shelved.
+- A **tile set** is a folder `game/art/source/battle/<set>/` (snow, dungeon, forest...) with the base file names: `top_grass|forest|road|stone|rock|water`, `side_cliff|masonry|water`, `prop_pine_1|pine_2|bush|boulder|pillar`. Missing files fall back to the base art. The sandbox's "tile set" menu picks it and saves it with the map.
+- Tops: straight down, seamless, one picture = 2 x 2 cells. Sides: straight on, seamless, exactly 4 stone rows (one per level). Props: transparent, feet at bottom centre. Any square size; the game downsizes to 256.
+- Krita: New 1024 x 1024, style "Lodestone battle" (ZavyChroma XL, style prompt `{prompt}, flat illustrated 2D game art, flat fills with small hand-drawn marks, warm dark outlines, muted riso print colours, clean readable shapes`), Generate at 100% with the texture prompts on the guide page. Seams: wrap-around mode (W), Layer > Transform > Offset by half, Refine a band over the seam cross at 40%.
+- Step by step and snow prompts: the guide page (https://claude.ai/artifact/JjxHePXisJfFFTxoddXjYB).
 
 ## 7. Recommendation: generating tiles
 `docs/art-pipeline.md` said never generate tile grids. Proposed change: **generate tiles only on top of these templates**, with line art and depth as control and the result clipped to the template's masks, then hand-fixed. Never ask a model for a tileset freehand; it will not hold 2:1, the pivots or the seams. Animation frames stay hand-made or code-made.
