@@ -1,0 +1,6 @@
+LODESTONE HOUSE STYLE: PROP
+A single game prop sprite, 2:1 dimetric three-quarter view from above (orthographic camera turned 45 degrees, looking down 30 degrees), standing alone in the centre on a plain flat cream background (#eae8d6) with nothing else in frame and no ground.
+Light from the upper left: left-facing sides mid, right-facing sides darkest. Warm dark plum-grey outline (#373335) around the silhouette, thinner inner lines.
+Flat illustrated 2D game art: flat fills with one light band, small hand-drawn marks, muted riso palette. Use only the colours in the palette card if one is given.
+The base of the prop sits at the bottom centre, as if standing on one map tile.
+Avoid: perspective, 3d render, photo, cast shadow on the ground, ground, scenery, text, watermark, black outlines, high contrast, saturated red, saturated blue.

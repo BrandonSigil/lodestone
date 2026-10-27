@@ -1,0 +1,7 @@
+LODESTONE HOUSE STYLE: CHARACTER
+Image 1 sets the pose, the camera, the facing, the size and the position: keep them exactly, feet on the same spot, top of the head at the same height. Image 2 sets who the character is: identical face, hair, costume, colours and props. Image 3 is the palette: use only its colours.
+Chibi board game piece character about 2.3 heads tall, big round head, small body, two dot eyes, one strong silhouette feature.
+Flat illustrated 2D game sprite: flat fills, one lighter and one darker tone per material, soft light from directly above (never from one side, no rim light). Warm dark plum-grey outline (#373335) around the silhouette, thinner inner lines.
+Plain flat cream background (#eae8d6), nothing else in the picture: no floor, no tile, no shadow.
+High orthographic camera looking down at 30 degrees, 2:1 dimetric game view, no perspective.
+Avoid: perspective, low angle, light from the side, rim light, cast shadow, floor, ground, grass, tile, scenery, text, letters, watermark, black outlines, 3d render, photo, extra characters, extra limbs.

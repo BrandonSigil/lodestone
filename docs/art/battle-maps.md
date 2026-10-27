@@ -136,6 +136,8 @@ The reference image is mood only: never put it (or any other artist's work) in a
 Words that pin the camera for any image model: *"2:1 dimetric (pixel-art isometric), tile diamonds twice as wide as tall, grid lines at 26.565 degrees from horizontal, orthographic camera 45 degrees around and 30 degrees down, no perspective."* Avoid the phrase "1:1 isometric 45 degrees" alone: models read "isometric" as true 30 degree iso.
 
 ## 6b. The zone pipeline: concept map, break-out, tile set
+
+Fixed house-style prompt blocks for terrain, tiles and props: `art/prompts/` (see its README).
 **Maps are built in Godot; Krita makes the look** ([USER] 2026-10-27). Each zone (forest, desert, dungeon, snow...) goes through three stages.
 
 **1. Prototype the zone in Krita.** Open `maps/sampler/sampler.ora` (or any map template). The sampler map has every ground type on a 2 x 2 patch, cliff and masonry faces over 4 levels tall, a stepped stream, stairs, ruins and open ground for key items. Import a starting picture (`control-blocking-<zone>.png`: snow, desert, dungeon, forest; `SNOW` / `DESERT` / `DUNGEON` / `FOREST` in `tools/art/battle_art.py`) or scribble colours over the blocking, add Control Layers (Line Art -> `control-lineart.png` 80%, Depth -> `control-depth.png` 55%), prompt the zone and Refine at 60-85%. Paint key items (campfire, fallen tree, ruins) on `paint 3 props`. On the MacBook (MPS) set Performance > Resolution multiplier to 0.5 or the full 2400 x 1600 pass fails ("tensor dims larger than INT_MAX").

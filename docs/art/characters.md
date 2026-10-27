@@ -104,6 +104,8 @@ python3 tools/art/char_art.py pack art/characters/hero/renders --id hero --class
 Rebuild the templates with `python3 tools/art/char_art.py` (about two minutes).
 
 ## 4b. Picsart (or any image model without control layers)
+
+Fixed house-style prompt blocks to paste once and reuse: `art/prompts/` (see its README).
 Flux in Picsart takes reference images instead of control layers, so a character is made from three pictures: the mannequin view for pose and camera (`views/<dir>-blocking.png`, or the 3:2 `control-blocking.png` for a whole turnaround), the identity (a sketch first, then the cleaned key view `art/characters/<id>/<id>-key.png`), and the colours (`art/palettes/characters.png`, no text; `characters-labeled.png` has the hex codes). Two Flows: "Lodestone character view" (1:1) and "Lodestone turnaround" (3:2). Prompts and the full steps are in the Character Guide's Picsart section.
 
 Raw pictures go in `art/characters/<id>/picsart/`. Bring each one in with:
