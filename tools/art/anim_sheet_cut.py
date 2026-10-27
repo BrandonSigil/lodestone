@@ -31,12 +31,14 @@ REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "game" / "art" / "source" / "characters"
 FRAME = 192
 ANCHOR = (96, 160)
-HERO_H = 108  # idle figure, feet to hair top, in art px (C3: head at 3 levels = 96, hair a bit above)
+HERO_H = 94  # idle body height in art px (wide rows only, see body_height); hair tips reach about 108 (C3)
 
 # Rows of the sheet: (anim, expected frames). Row 5 holds hurt and down.
 ROWS = [("idle", 4), ("walk", 6), ("attack", 6), ("cast", 6), ("hurt_down", 4)]
-ANIMS = {  # C16
+ANIMS = {  # C16; ready and advance are idle and walk with the weapon out (combat stance)
     "idle": {"fps": 6, "loop": True},
+    "ready": {"fps": 6, "loop": True},
+    "advance": {"fps": 10, "loop": True},
     "walk": {"fps": 10, "loop": True},
     "attack": {"fps": 12, "loop": False, "hit": 2},
     "cast": {"fps": 10, "loop": False, "hit": 3},
@@ -86,6 +88,14 @@ def figures(alpha, y0, y1, want):
     return boxes
 
 
+def body_height(alpha, box):
+    """Height of the rows at least a quarter as wide as the widest row: the body, not a thin blade."""
+    x0, y0, x1, y1 = box
+    widths = (alpha[y0:y1, x0:x1] > 128).sum(axis=1)
+    rows = np.nonzero(widths >= widths.max() * 0.25)[0]
+    return rows[-1] - rows[0] + 1 if rows.size else y1 - y0
+
+
 def feet_x(alpha, box):
     """Centre of the opaque pixels in the bottom 10% of the figure."""
     x0, y0, x1, y1 = box
@@ -117,15 +127,20 @@ def main():
     ap.add_argument("sheet")
     ap.add_argument("--id", required=True, help="character id (game/data/characters/<id>.tres)")
     ap.add_argument("--dir", required=True, choices=["s", "se", "e", "ne", "n", "sw", "w", "nw"])
+    ap.add_argument("--rows", help="rows of this sheet as anim:frames,... (default: the full animation sheet);"
+                    " e.g. ready:4,advance:6 for sheet-character-stance.txt")
     args = ap.parse_args()
+    rows_spec = ROWS if not args.rows else [(a, int(n)) for a, n in (r.split(":") for r in args.rows.split(","))]
 
     rgba = key_background(Image.open(args.sheet).convert("RGB"))
     alpha = np.asarray(rgba.getchannel("A"))
     rows = runs((alpha > 128).sum(axis=1) > 8, 40, min_gap=10)
-    if len(rows) != len(ROWS):
-        sys.exit("found %d rows, expected %d: is this an animation sheet?" % (len(rows), len(ROWS)))
-    boxes = [figures(alpha, y0, y1, want) for (y0, y1), (_, want) in zip(rows, ROWS)]
-    idle_h = float(np.median([b[3] - b[1] for b in boxes[0]]))
+    if len(rows) != len(rows_spec):
+        sys.exit("found %d rows, expected %d: is this the right sheet for --rows?" % (len(rows), len(rows_spec)))
+    boxes = [figures(alpha, y0, y1, want) for (y0, y1), (_, want) in zip(rows, rows_spec)]
+    # One scale per sheet: the first row's figures (idle or ready) come out HERO_H tall, measured on the
+    # body only so a sword held over the head doesn't shrink the character.
+    idle_h = float(np.median([body_height(alpha, b) for b in boxes[0]]))
     scale = HERO_H / idle_h
 
     out = OUT / args.id
@@ -146,7 +161,7 @@ def main():
             spec["frames"] = min(old["frames"], spec["frames"])
         meta["anims"][anim] = spec
 
-    for (anim, want), bx in zip(ROWS, boxes):
+    for (anim, want), bx in zip(rows_spec, boxes):
         frames = [place(rgba, alpha, b, scale) for b in bx]
         flag = "" if len(frames) == want else "  (expected %d)" % want
         print("  %s: %d frames%s" % (anim, len(frames), flag))

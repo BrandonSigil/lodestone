@@ -48,6 +48,9 @@ var highlights := {}  # cell -> Color
 var danger := {}  # cell -> true, the enemy's reach next phase
 var area := {}  # cell -> true, cells a skill would hit
 var show_coords := false
+var combat_stance := false  ## pieces stand ready (weapon drawn) instead of relaxed; Battle sets it
+var _fade := {}  ## cells whose props draw see-through this frame (a party piece stands behind them)
+var _covered := {}  ## units something in front hides this frame
 var _paint_button := 0
 var hover := NONE
 var selected: CombatUnit = null
@@ -206,6 +209,7 @@ func _draw() -> void:
 	if grid == null:
 		return
 	var layers := _layers()
+	_find_cover()
 	for depth in layers.size():
 		for c: Vector2i in layers[depth]:
 			if hidden(c):
@@ -217,14 +221,17 @@ func _draw() -> void:
 			if u.shown_hp > 0 and clampi(depth_of(u.vis.x, u.vis.y), 0, layers.size() - 1) == depth:
 				_draw_unit(u)
 	var font := ThemeDB.fallback_font
-	# Ghost pass: pieces hidden behind tall blocks still show as a faint outline.
+	# Ghost pass: pieces something in front hides still show, over everything: a party sprite as a tinted
+	# see-through copy (x-ray), anyone else as a bright foot ring and head outline.
 	for u: CombatUnit in units:
-		if u.shown_hp > 0:
-			var base := iso(u.vis.x + 0.5, u.vis.y + 0.5, u.vis_h) + u.offset - Vector2(0, u.hop)
+		if u.shown_hp > 0 and _covered.has(u):
+			var base := _unit_base(u)
 			var ring := Color(0.4, 0.7, 1.0) if u.team == 0 else Color(1.0, 0.4, 0.35)
-			Pawn.ellipse(self, base, 26.0 * 0.62, 26.0 * 0.22, Color(ring, 0.45), false, 1.5)
-			if not CharacterArt.has_art(u.sprite):  # the head ghost is pawn-shaped; sprites keep the foot ring
-				draw_arc(base + Vector2(0, -26.0 * 1.22), 26.0 * 0.3, 0, TAU, 20, Color(ring, 0.35), 1.5, true)
+			Pawn.ellipse(self, base, 26.0 * 0.62, 26.0 * 0.22, Color(ring, 0.85), false, 2.0)
+			if CharacterArt.has_art(u.sprite):
+				_draw_frame(u, base, Color(ring.lightened(0.3), 0.55))
+			else:
+				draw_arc(base + Vector2(0, -26.0 * 1.22), 26.0 * 0.3, 0, TAU, 20, Color(ring, 0.7), 2.0, true)
 	for f in _floaters:
 		var a := clampf(f.t, 0.0, 1.0)
 		draw_string_outline(font, f.pos, f.text, HORIZONTAL_ALIGNMENT_CENTER, 120, 16, 4, Color(0, 0, 0, a))
@@ -401,7 +408,8 @@ func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color) -> bool:
 			ph *= TW * 0.9 / pw
 			pw = TW * 0.9
 		Pawn.ellipse(self, base, pw * 0.36, pw * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
-		draw_texture_rect(tex, Rect2(base.x - pw * 0.5, base.y - ph, pw, ph), false, tint)
+		var a := 0.35 if _fade.has(c) else 1.0  # see-through while a piece stands behind it
+		draw_texture_rect(tex, Rect2(base.x - pw * 0.5, base.y - ph, pw, ph), false, Color(tint, a))
 	return true
 
 
@@ -579,8 +587,59 @@ func _block(lo: Vector2, hi: Vector2, h0: float, h1: float, col: Color, seed_v: 
 	draw_polyline(cap, col.darkened(0.45), 1.0, true)
 
 
+func _unit_base(u: CombatUnit) -> Vector2:
+	return iso(u.vis.x + 0.5, u.vis.y + 0.5, u.vis_h) + u.offset - Vector2(0, u.hop)
+
+
+## Screen box a piece's body covers (sprite or pawn), for cover checks.
+func _unit_box(u: CombatUnit) -> Rect2:
+	return Rect2(_unit_base(u) + Vector2(-20, -54), Vector2(40, 54))
+
+
+## Which props to fade and which pieces to x-ray this frame: anything drawn after a piece (nearer the
+## camera) whose prop or block face overlaps a good part of the piece's body.
+func _find_cover() -> void:
+	_fade.clear()
+	_covered.clear()
+	for u: CombatUnit in units:
+		if u.shown_hp <= 0:
+			continue
+		var box := _unit_box(u)
+		var d := depth_of(u.vis.x, u.vis.y)
+		var uc := Vector2i(roundi(u.vis.x), roundi(u.vis.y))
+		for dy in range(-4, 5):
+			for dx in range(-4, 5):
+				var c := uc + Vector2i(dx, dy)
+				if not grid.in_bounds(c) or depth_of(c.x, c.y) <= d or hidden(c):
+					continue
+				var h := float(grid.height_at(c))
+				var mid := cell_top(c)
+				var art := BattleArt.props(grid.terrain_at(c))
+				if not art.list.is_empty() and art.count > 0:
+					var ph: float = art.height * TW * 1.1
+					var prop := Rect2(mid.x - TW * 0.45, mid.y - ph, TW * 0.9, ph)
+					if _overlap(box, prop) > 0.2:
+						_fade[c] = true
+						if u.team == 0:
+							_covered[u] = true
+				if h > u.vis_h + 0.5:
+					var pts := _diamond(c, h)
+					var col := Rect2(pts[0], Vector2.ZERO)
+					for q in pts:
+						col = col.expand(q)
+						col = col.expand(q + Vector2(0, (h - u.vis_h) * HS))
+					if _overlap(box, col) > 0.35:
+						_covered[u] = true
+
+
+## Share of a covered by b.
+static func _overlap(a: Rect2, b: Rect2) -> float:
+	var i := a.intersection(b)
+	return i.get_area() / maxf(a.get_area(), 1.0)
+
+
 func _draw_unit(u: CombatUnit) -> void:
-	var base := iso(u.vis.x + 0.5, u.vis.y + 0.5, u.vis_h) + u.offset - Vector2(0, u.hop)
+	var base := _unit_base(u)
 	if u.spooked:
 		base += Vector2(sin(_time * 40.0) * 1.5, 0)
 	var breathe := 1.0 + sin(_time * 2.0 + u.vis.x) * 0.02
@@ -616,13 +675,27 @@ func _draw_unit(u: CombatUnit) -> void:
 func _draw_sprite(u: CombatUnit, base: Vector2, col: Color, ring: Color) -> float:
 	Pawn.ellipse(self, base + Vector2(0, 2), 15.0, 5.0, Color(0, 0, 0, 0.25))
 	Pawn.ellipse(self, base, 16.0, 5.7, ring, false, 2.5)
+	var mod := Color.WHITE if col == u.tint else Color(0.65, 0.65, 0.65)  # done pieces dim like the pawn
+	return _draw_frame(u, base, mod)
+
+
+## The anim to draw: in a fight, idle and walk become ready and advance (weapon out) when the art has them.
+func _stance(u: CombatUnit) -> String:
+	if combat_stance and (u.anim == "idle" or u.anim == "walk"):
+		var alt := "ready" if u.anim == "idle" else "advance"
+		if CharacterArt.has_anim(u.sprite, alt):
+			return alt
+	return u.anim
+
+
+## The piece's current anim frame at base, modulated. Returns how far above base the HP pips go.
+func _draw_frame(u: CombatUnit, base: Vector2, mod: Color) -> float:
 	var d := Vector2(u.facing)
 	var dir := CharacterArt.screen_dir(iso(1.0 + d.x, 1.0 + d.y, 0.0) - iso(1.0, 1.0, 0.0))
-	var f := CharacterArt.frame(u.sprite, u.anim, dir, _time - u.anim_start)
+	var f := CharacterArt.frame(u.sprite, _stance(u), dir, _time - u.anim_start)
 	if f.is_empty():
 		return 48.0
 	var s: float = f.scale
-	var mod := Color.WHITE if col == u.tint else Color(0.65, 0.65, 0.65)  # done pieces dim like the pawn
 	draw_set_transform(base, 0.0, Vector2(-s if f.flip else s, s))
 	draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, mod)
 	draw_set_transform(Vector2.ZERO)

@@ -22,6 +22,7 @@ var setup: SandboxSetup
 var editing := true
 var brush := "GRASS"
 var random_dice := true
+var show_grid := true  ## cell outlines on the board (tester only, not saved with the map)
 var preview: CombatBoard
 var battle: Battle
 var _sim_running := false
@@ -245,7 +246,7 @@ func _build_ui() -> void:
 			_changed())
 	_set_menu = OptionButton.new()
 	_set_menu.add_theme_font_size_override("font_size", 12)
-	_set_menu.add_item("tile set: base")
+	_set_menu.add_item("tile set: forest")  # the base art is the forest set
 	for name in BattleArt.sets():
 		_set_menu.add_item(name)
 	_set_menu.item_selected.connect(func(i: int) -> void:
@@ -253,6 +254,13 @@ func _build_ui() -> void:
 			setup.art_set = "" if i == 0 else _set_menu.get_item_text(i)
 			_changed())
 	rb.add_child(_set_menu)
+	var grid_check := _check(rb, "grid lines", func(on: bool) -> void:
+		show_grid = on
+		if preview:
+			preview.show_grid = on
+		if battle:
+			battle.board.show_grid = on)
+	grid_check.button_pressed = show_grid
 	_counter_check = _check(rb, "counterattacks", func(on: bool) -> void: setup.counters = on)
 	_mercy_check = _check(rb, "party luck after misses", func(on: bool) -> void: setup.mercy = on)
 	_dice_check = _check(rb, "new dice on restart", func(on: bool) -> void: random_dice = on)
@@ -435,6 +443,7 @@ func _restart() -> void:
 	var fight_seed := randi() if random_dice else setup.seed_value
 	battle.setup(setup.grid.resized(setup.grid.w, setup.grid.h), units, fight_seed, setup.strangeness, setup.supplies.duplicate())
 	battle.board.art_set = setup.art_set
+	battle.board.show_grid = show_grid
 	if preview:
 		battle.board.rot = preview.rot
 	battle.log_line.connect(_log)
@@ -519,6 +528,7 @@ func _refresh_preview() -> void:
 	preview.grid = setup.grid
 	preview.strangeness = setup.strangeness
 	preview.art_set = setup.art_set
+	preview.show_grid = show_grid
 	preview.units = setup.build_units()
 	var zone := {}
 	for c in setup.grid.deploy_cells(1):

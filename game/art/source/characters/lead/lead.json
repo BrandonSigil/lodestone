@@ -48,6 +48,16 @@
    "fps": 6,
    "loop": false,
    "frames": 2
+  },
+  "ready": {
+   "fps": 6,
+   "loop": true,
+   "frames": 4
+  },
+  "advance": {
+   "fps": 10,
+   "loop": true,
+   "frames": 6
   }
  }
 }
