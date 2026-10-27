@@ -1,0 +1,15 @@
+LODESTONE TILE KIT SHEET (game-ready, one zone per picture)
+
+Use this once a zone from the zone sheet is chosen. Image 1 = the chosen zone panel (look to match). Image 2 = the zone palette card if there is one.
+
+Make ONE zone only: [ZONE]. Aspect 1:1, plain cream paper background (#eae8d6), no title, no labels, no text anywhere.
+Layout: a 5 x 5 grid of equal square cells with a clear cream gap between cells. Nothing crosses a cell edge.
+   row 1 (tops, straight down, seamless edge to edge, NO objects): main ground, ground variant, path or road, hard floor, rough rock
+   row 2 (tops, straight down, seamless, NO objects): water or liquid, hazard ground, floor variant, overgrown ground, special ground
+   row 3 (sides, straight on, exactly 4 equal horizontal stone courses filling the cell): cliff, built wall, waterfall or liquid, cliff variant, hazard side
+   row 4 (one prop per cell, 2:1 dimetric 3/4 view, base centred at the bottom of the cell, cream around it): bush, boulder, crate or barrel, light source, small detail
+   row 5 (one tall prop per cell, same view, base at bottom centre, may fill the cell height): tree, second tree, pillar, landmark, ruin or doorway
+
+Rules: tops and sides are flat and seamless so they can repeat; light is even on tops and sides (the game adds the shading); props are lit from the upper left. Flat fills, small hand-drawn marks one value step off the fill, warm dark plum-grey outlines (#373335) on props only, never black. Muted riso colours, one zone accent, no saturated red or blue outside that accent.
+
+Avoid: perspective on tops, shadows on tops, objects on tops, text, labels, borders around cells, 3d render, glossy, photo, characters, people, animals, watermark.

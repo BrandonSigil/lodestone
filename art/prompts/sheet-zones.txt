@@ -1,0 +1,20 @@
+LODESTONE TERRAIN ZONE SHEET (exploration, many zones on one page)
+
+Make a reference sheet in the same layout as the attached sheet: a short title at the top, then a grid of zone panels, 4 panels across and 2 down. Each panel has:
+1. A label plate with the zone name.
+2. One small floating island diorama of that zone, seen in a 2:1 dimetric game view (tile diamonds exactly twice as wide as tall, orthographic, no perspective). The island is about 5 by 5 tiles, built from chunky square blocks stacked in terraces of 1 to 3 steps, with cliff faces showing stacked stone courses, one course per step. Show one path or stair that connects the low and high ground, and 2 to 4 big props.
+3. Under it, a 5 x 5 grid of square swatches, same order in every panel:
+   row 1: main ground, ground variant, path or road, hard floor, rough rock (blank tops seen straight down, no objects on them)
+   row 2: water or liquid, hazard ground, second floor variant, overgrown ground, special ground (blank tops seen straight down)
+   row 3: cliff side, built wall side, waterfall or liquid side, cliff side variant, hazard side (seen straight on, 4 equal stone courses)
+   row 4: small props alone on cream: bush, boulder, crate or barrel, light source, small detail
+   row 5: tall props alone on cream: tree, second tree, pillar, landmark, ruin or doorway
+4. One line of small labels under row 5.
+
+Style: flat illustrated 2D game art, muted riso print colours, flat fills with small hand-drawn marks one value step off the fill, warm dark plum-grey outlines (#373335) never black, one soft sun from the upper left (tops brightest, left sides 75%, right sides 55%), plain cream paper background (#eae8d6). Few, big, readable shapes. Every zone uses the same block size and the same step height.
+
+Colour: each zone has one main colour family plus ONE accent (example: volcanic = ash greys plus ember orange; crystal = slate plus violet). Accents are small: lava channels, crystals, lanterns. No saturated red or blue anywhere else.
+
+Zones for this sheet: [LIST 8 ZONES HERE]
+
+Avoid: perspective, 3d render, photo, glossy highlights, gradients on ground, black outlines, characters, people, animals, skulls on every tile, busy clutter, watermark.
