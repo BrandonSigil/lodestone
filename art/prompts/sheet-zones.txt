@@ -1,31 +1,29 @@
 LODESTONE TERRAIN ZONE SHEET (exploration, many zones on one page)
 
-Make a reference sheet in the same layout as the attached sheet: a short title at the top, then a grid of zone panels, 4 panels across and 2 down. Each panel has:
+Make a reference sheet: a grid of zone panels, 4 panels across and 2 down. Each panel has:
 1. A label plate with the zone name.
-2. One small floating island diorama of that zone, seen in a 2:1 dimetric game view (tile diamonds exactly twice as wide as tall, orthographic, no perspective). The island is about 5 by 5 tiles, built from chunky square blocks stacked in terraces of 1 to 3 steps, with cliff faces showing stacked stone courses, one course per step. Show one path or stair that connects the low and high ground, and 2 to 4 big props.
+2. One small floating island diorama of that zone, seen in a 2:1 dimetric game view (tile diamonds exactly twice as wide as tall, orthographic, no perspective). The island is about 4 by 4 tiles, built from chunky square blocks stacked in terraces of 1 to 3 steps, each step one solid slab. Show one path or stair that connects the low and high ground, and 1 or 2 big props.
 3. Under it, a 5 x 5 grid of square swatches, same order in every panel:
    row 1: main ground, ground variant, path or road, hard floor, rough rock (blank tops seen straight down, no objects on them)
    row 2: water or liquid, hazard ground, second floor variant, overgrown ground, special ground (blank tops seen straight down)
-   row 3: cliff side, built wall side, waterfall or liquid side, cliff side variant, hazard side (seen straight on, 4 equal stone courses)
+   row 3: cliff side, built wall side, waterfall or liquid side, cliff side variant, hazard side (seen straight on, flat colour, 1 to 3 marks)
    row 4: small props alone on cream: bush, boulder, crate or barrel, light source, small detail
    row 5: tall props alone on cream: tree, second tree, pillar, landmark, ruin or doorway
 4. No other text: only the zone name on its label plate. No title, no taglines, no captions, no swatch labels.
 
-Style: hand-inked storybook game art (see FINISH below): simple and flat (see FINISH below): wobbly plum-grey (#373335) outlines on silhouettes only, flat gouache washes, chunky slightly crooked blocks, very few marks, one soft sun from the upper left (tops brightest, left sides 75%, right sides 55%), plain cream paper background (#eae8d6). Few, big, readable shapes: islands built from fewer, chunkier blocks rather than many small ones. Every zone uses the same block size and the same step height, but its OWN cliff material: root-tangled earth, cut masonry, ice shelf, layered sandstone, glassy rock and so on. Never the same grey stone blocks under every zone.
+Style: SIMPLE, flat, graphic storybook print, like a two- or three-colour risograph or a gouache picture book. Think big flat shapes first, detail last.
+- Flat colour fills: one flat colour per surface plus ONE flat shadow tone. No texture inside shapes except a light, even paper/print grain over the whole page.
+- Lines: few. A single medium-weight hand-drawn outline in warm dark plum-grey (#373335) around big shapes only. No interior lines, no stone joints drawn on every block, no outline on every little leaf or pebble.
+- Light: one soft sun from the upper left. Tops lightest, left sides one step darker, right sides two steps darker. That is the only shading.
+- Blocks: big and few. Each terrace is one solid slab, not many small bricks. Cliff faces are one flat colour with at most 2 or 3 marks to say the material.
+- Props: silhouettes. A tree is one blob of canopy on a trunk. A rock is one shape. No small leaves, cracks, grass tufts, flowers or pebbles scattered around.
+- Swatches: each swatch is one flat colour with at most one simple mark or pattern hint. Lots of empty flat colour.
+- Every zone uses the same block size and step height, but its OWN cliff colour and shape: root-tangled earth, cut masonry, ice shelf, layered sandstone, glassy rock and so on. Never the same grey stone under every zone.
 
-Colour: each zone has one main colour family plus ONE accent (example: volcanic = ash greys plus ember orange; crystal = slate plus violet). Accents are small: lava channels, crystals, lanterns. No saturated red or blue anywhere else.
+Colour: about 4 colours per zone plus cream paper: one main family plus ONE small accent (example: volcanic = ash greys plus ember orange; crystal = slate plus violet). Soft, slightly faded, printed-book colour. No saturated red or blue anywhere else.
 
-Images: image 1 = style picture (the forest hike illustration), match its line and paint. Never pass an earlier sheet as a reference (it gets copied).
+Images: image 1 = style picture (the forest hike illustration). Take its colour mood and hand-made feel, but draw SIMPLER and FLATTER than it: fewer marks, fewer lines, bigger shapes.
 
 Zones for this sheet: [LIST 8 ZONES HERE]
 
-Avoid: perspective, 3d render, photo, vector art, clean digital cel shading, mobile game asset look, glossy highlights, gradients on ground, black outlines, characters, people, animals, skulls on every tile, busy clutter, watermark.
-
-FINISH (hand-made and SIMPLE)
-Match the line and paint of the style picture if one is given (the forest hike illustration), but simpler: it wins over everything else about surface.
-Simplicity first: big flat shapes, few of them. Each surface is one flat colour plus at most one darker shade and 2 to 5 small hand-drawn marks. Leave most of every surface plain. No pebbles everywhere, no brick-by-brick stonework, no grass blades all over, no texture noise.
-Line: one warm dark plum-grey (#373335) outline, slightly wobbly brush-pen, on silhouettes and main edges only. Inner detail lines are rare. Never black, never clean vector strokes.
-Paint: flat gouache washes with a light mottle and paper grain; colour sometimes slips a little past the line. No gradients, no highlights, no airbrush.
-Shapes: chunky and slightly crooked, like hand-cut wooden blocks; tops still flat and walkable. Props are simple silhouettes a child could recognise: a tree is a trunk and 2 or 3 blobs.
-Colour: about 5 colours per zone, soft and earthy, faded like a printed storybook.
-Avoid: detailed, intricate, busy, cluttered, fine texture, many small stones, individual bricks, individual leaves, vector art, clean cel shading, mobile game asset look, perfect geometry, glossy, bevels, gradients, high saturation.
+Avoid: detail, texture, clutter, many small objects, grass tufts, stone joints on every block, wood grain, cracks everywhere, perspective, 3d render, photo, glossy vector art, gradients, bevels, highlights, black outlines, characters, people, animals, mobile game asset look, watermark, any text other than the zone names.
