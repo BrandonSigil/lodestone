@@ -1,0 +1,9 @@
+LODESTONE HOUSE STYLE: ENVIRONMENT BACKDROP AND WALLS
+Camera: 2:1 dimetric game view (pixel-art isometric): tile diamonds exactly twice as wide as tall, grid lines at 26.565 degrees, orthographic. No perspective, no vanishing point, no horizon line on the floor, no lens blur, no tilt-shift. Parallel edges stay parallel across the whole picture.
+If a layout picture is given (image 2), keep every floor cell, step, wall and water channel exactly where it is and at the same height. Only change the surface and what surrounds the floor.
+Look: simple handdrawn flat art matching image 1 exactly: one flat colour per surface plus one shadow tone, medium outlines in warm dark plum-grey (#373335) around big shapes only, silhouette props, no gradients on the ground. Never pure black.
+Light: one soft sun from the upper left. Tops brightest, left-facing faces one step darker, right-facing faces two steps darker.
+Backdrop: the floor is a stage inside a larger world. Around it, the set's landscape or architecture continues past the floor's edge and fades into a dark tint of the set's own colour at the outer edge. Nothing stands on the floor's edge. No horizon, no sky, no parallax.
+Walls and rim: built from repeating modules. Walls one level tall at the front, two levels tall at the back, stone courses one level tall. The rim of the floor drops into the dark; loose stones fall below it.
+Colour: the set's own main colour family plus one small accent. Muted and slightly faded. No saturated red or blue outside the accent.
+Avoid: perspective, fisheye, 3d render, photo, photorealism, depth of field, noise, grain, black, black outlines, text, letters, labels, watermark, logo, UI, people (unless the ask names them), high contrast, neon.

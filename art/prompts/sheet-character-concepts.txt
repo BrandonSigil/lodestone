@@ -1,0 +1,21 @@
+LODESTONE CHARACTER CONCEPT GRID (8 characters on one picture, to choose a design; not a game sprite)
+
+THIS RUN (edit freely; one numbered line per character, plain visual words only: no names, no backstory):
+1: [costume, colours, silhouette feature, size class]
+2: [costume, colours, silhouette feature, size class]
+3: [costume, colours, silhouette feature, size class]
+4: [costume, colours, silhouette feature, size class]
+5: [costume, colours, silhouette feature, size class]
+6: [costume, colours, silhouette feature, size class]
+7: [costume, colours, silhouette feature, size class]
+8: [costume, colours, silhouette feature, size class]
+
+Layout: aspect 3:2, plain flat cream paper (#eae8d6). Four columns by two rows of equal cells, read left to right, top row first. ONE character per cell, standing alone and fully inside its cell with clear empty cream around it. Every character the same size and on the same baseline across its row, as if they were all the same kind of board-game piece. No cell borders, no grid lines, no numbers, no labels, no text or letters anywhere.
+
+View: every character in the same direction: a three-quarter front view, turned toward the viewer's lower right. The viewer sees the face, the front of the body and the right side. Seen from a high orthographic game camera looking down about 30 degrees (2:1 dimetric, no perspective). This is the combat facing, so it must read clearly.
+
+Shape: a chibi board-game piece about 2.3 heads tall, big round head, small body, two dot eyes, one strong silhouette feature per character (hat, hood, hair, pack or weapon). Make the eight silhouettes different from each other at a glance.
+
+Style: simple flat graphic storybook print. One flat colour per material plus ONE flat shadow tone, soft light from the upper left (never rim light, never a cast shadow). Few lines: one medium warm dark plum-grey outline (#373335) around the whole silhouette, and only the inner lines the costume needs. Never black. Big flat shapes first, detail last. Soft, slightly faded printed-book colours, about four colours per character, with no saturated red or blue except as a small accent. No gradients, no texture inside shapes; a light even paper grain over the whole picture is fine.
+
+Avoid: floor, ground, tile, grass, shadow under the feet, scenery, props the character does not hold, extra characters, text, letters, numbers, watermark, perspective, low angle, 3d render, photo, busy detail, black outlines, a different facing from the others.

@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lodestone studio</title>
+<style>
+  :root {
+    --paper: #eae8d6; --panel: #f6f4e8; --ink: #373335; --muted: #7a7470;
+    --line: #cfc9b3; --accent: #5b7f5f; --warn: #a9482f; --done: #5b7f5f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #26262a; --panel: #2f2f35; --ink: #ece9dd; --muted: #a09b92;
+      --line: #4a4a52; --accent: #8fb692; --warn: #e08a6e; --done: #8fb692;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #26262a; --panel: #2f2f35; --ink: #ece9dd; --muted: #a09b92;
+    --line: #4a4a52; --accent: #8fb692; --warn: #e08a6e; --done: #8fb692;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  :root { color-scheme: light dark; }
+  select option { background: var(--panel); color: var(--ink); }
+  body { margin: 0; background: var(--paper); color: var(--ink);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { padding: 14px 20px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: baseline; }
+  header h1 { font-size: 18px; margin: 0; }
+  header .mode { color: var(--muted); font-size: 13px; }
+  .layout { display: grid; grid-template-columns: 330px 1fr; min-height: calc(100vh - 52px); }
+  aside { background: var(--panel); border-right: 1px solid var(--line); padding: 16px; }
+  main { padding: 20px 24px; min-width: 0; }
+  h2 { font-size: 16px; margin: 0 0 8px; }
+  h3 { font-size: 14px; margin: 18px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  input, select, textarea { width: 100%; font: inherit; color: var(--ink); background: var(--paper);
+          border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; }
+  textarea { resize: vertical; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--paper); color: var(--ink);
+           border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .45; cursor: default; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .err { color: var(--warn); font-size: 13px; margin-top: 8px; white-space: pre-wrap; }
+  ul.jobs { list-style: none; padding: 0; margin: 0; }
+  ul.jobs li { padding: 8px 10px; border-radius: 6px; cursor: pointer; margin-bottom: 4px; }
+  ul.jobs li:hover { background: var(--paper); }
+  ul.jobs li.on { background: var(--paper); outline: 1px solid var(--accent); }
+  ul.jobs .meta { font-size: 12px; color: var(--muted); }
+  .steps { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 16px; padding: 0; list-style: none; }
+  .steps li { padding: 5px 11px; border-radius: 99px; border: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  .steps li.done { color: var(--done); border-color: var(--done); }
+  .steps li.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+  .status { display: flex; align-items: center; gap: 10px; font-size: 16px; margin-bottom: 10px; }
+  .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent);
+          animation: spin 0.9s linear infinite; display: none; }
+  .spin.on { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  pre.log { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+            font: 12.5px/1.5 ui-monospace, Menlo, monospace; max-height: 190px; overflow: auto; margin: 0 0 18px; white-space: pre-wrap; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 18px; }
+  .grid-img { width: 100%; max-width: 920px; display: block; border-radius: 6px; background: var(--paper); }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .tabs button { padding: 4px 10px; font-size: 13px; }
+  .tabs button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .actions { display: grid; grid-template-columns: auto 1fr; gap: 12px; margin-top: 12px; align-items: start; }
+  .figs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .fig { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 8px; text-align: center; }
+  .fig.picked { border-color: var(--done); box-shadow: 0 0 0 2px var(--done) inset; }
+  .fig img { width: 100%; image-rendering: pixelated; background: var(--panel); border-radius: 4px; min-height: 90px; object-fit: contain; }
+  .fig .cap { font-size: 12px; color: var(--muted); margin: 4px 0 6px; }
+  .sheet { width: 100%; image-rendering: pixelated; border-radius: 6px; background: var(--paper); }
+  .done-msg { font-size: 15px; }
+  code { font: 13px ui-monospace, Menlo, monospace; }
+  @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } aside { border-right: 0; border-bottom: 1px solid var(--line); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lodestone studio</h1>
+  <span class="mode" id="mode"></span>
+</header>
+<div class="layout">
+  <aside>
+    <h2>New asset</h2>
+    <label for="name">Character name (kept off the page's files; the working id is made from it)</label>
+    <input id="name" placeholder="character name" autocomplete="off">
+    <label for="pipeline">Pipeline</label>
+    <select id="pipeline"></select>
+    <label for="brief">Brief: one line per character, plain visual words</label>
+    <textarea id="brief" rows="11" placeholder="one line per option&#10;costume, colours, one silhouette feature, size"></textarea>
+    <div class="hint" id="count"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="primary" id="send">Send to concept grid</button>
+    </div>
+    <div class="err" id="formerr"></div>
+    <h3>Jobs</h3>
+    <ul class="jobs" id="jobs"></ul>
+  </aside>
+  <main>
+    <div id="empty" class="hint">Write a brief on the left and send it. Each round is one picture; you approve it or ask for edits.</div>
+    <section id="job" hidden>
+      <h2 id="title"></h2>
+      <ol class="steps" id="steps">
+        <li data-stage="brief">Brief</li>
+        <li data-stage="grid">Grid</li>
+        <li data-stage="review">Review</li>
+        <li data-stage="slicing">Slice</li>
+        <li data-stage="pick">Pick</li>
+        <li data-stage="added">Added</li>
+      </ol>
+      <div class="status"><span class="spin" id="spin"></span><span id="statustext"></span></div>
+      <div class="err" id="joberr"></div>
+      <div class="row" id="retryrow" hidden style="margin:6px 0 12px"><button id="retry">Retry this step</button></div>
+      <pre class="log" id="log"></pre>
+
+      <div class="panel" id="reviewpanel" hidden>
+        <div class="row tabs" id="roundtabs"></div>
+        <div style="margin-top:10px"><img class="grid-img" id="gridimg" alt="round grid"></div>
+        <div class="hint" id="roundinfo"></div>
+        <div class="actions" id="reviewactions" hidden>
+          <div><button class="primary" id="approve">Approve this round</button></div>
+          <div>
+            <textarea id="notes" rows="3" placeholder="What to change, e.g. make 3 a ranger with no hood; 6 is too busy; keep 1 as it is"></textarea>
+            <div class="row" style="margin-top:6px"><button id="askedits">Ask for edits (new round)</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="slicepanel" hidden>
+        <h3 style="margin-top:0">Check sheet, 48 px</h3>
+        <img class="sheet" id="sheet" alt="silhouette check sheet">
+        <h3>Figures</h3>
+        <div class="figs" id="figs"></div>
+      </div>
+
+      <div class="panel done-msg" id="addedpanel" hidden></div>
+    </section>
+  </main>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+const ORDER = ["brief", "grid", "review", "slicing", "pick", "added"];
+const BUSY_STAGES = ["grid", "slicing"];
+let state = { pipelines: {}, jobs: [], fake: false };
+let current = null;
+let tick = 0;
+
+async function api(path, body) {
+  const opts = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+  const r = await fetch(path, opts);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+
+function el(tag, props, text) {
+  const node = document.createElement(tag);
+  Object.assign(node, props || {});
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function briefCount() {
+  const n = $("#brief").value.split("\n").filter((l) => l.trim()).length;
+  const want = pipelineLines();
+  $("#count").textContent = n + " of " + want + " lines";
+  $("#count").style.color = n === want ? "var(--done)" : "var(--muted)";
+}
+
+function pipelineLines() {
+  const id = $("#pipeline").value;
+  return (state.pipelineLines && state.pipelineLines[id]) || 8;
+}
+
+async function refreshList() {
+  state = await api("/api/state");
+  $("#mode").textContent = state.fake ? "fake mode: no Picsart calls" : "Picsart on";
+  const select = $("#pipeline");
+  if (!select.options.length) {
+    for (const [id, label] of Object.entries(state.pipelines)) select.add(new Option(label, id));
+  }
+  const list = $("#jobs");
+  list.replaceChildren();
+  for (const j of state.jobs) {
+    const li = el("li", { className: j.id === current ? "on" : "" });
+    li.append(el("div", {}, j.asset));
+    const stage = j.busy ? j.stage + "…" : (j.error ? "stopped" : j.stage);
+    li.append(el("div", { className: "meta" }, stage + " · round " + j.rounds));
+    li.onclick = () => openJob(j.id);
+    list.append(li);
+  }
+}
+
+function openJob(id) {
+  current = id;
+  loadCurrent();
+  refreshList();
+}
+
+async function loadCurrent() {
+  if (!current) return;
+  try {
+    render(await api("/api/jobs/" + current));
+  } catch (err) {
+    $("#joberr").textContent = err.message;
+  }
+}
+
+function render(job) {
+  $("#empty").hidden = true;
+  $("#job").hidden = false;
+  $("#title").textContent = job.asset + " · " + (state.pipelines[job.pipeline] || job.pipeline);
+  const at = ORDER.indexOf(job.stage);
+  for (const li of document.querySelectorAll("#steps li")) {
+    const i = ORDER.indexOf(li.dataset.stage);
+    li.className = i < at || (job.stage === "added" && i <= at) ? "done" : i === at ? "active" : "";
+  }
+  const stageText = {
+    grid: "Round " + job.rounds.length + " is being drawn",
+    review: "Round " + job.rounds.length + " is ready. Approve it or ask for edits.",
+    slicing: "Cutting the approved grid into figures",
+    pick: "Pick the figure this character should be",
+    added: "Added to art/characters/" + job.asset + "/",
+  }[job.stage] || job.stage;
+  $("#statustext").textContent = job.error ? "Stopped" : stageText;
+  $("#spin").classList.toggle("on", job.busy);
+  $("#joberr").textContent = job.error || "";
+  $("#retryrow").hidden = !job.error || job.busy;
+
+  const log = $("#log");
+  const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 20;
+  log.textContent = job.log.join("\n");
+  if (atBottom) log.scrollTop = log.scrollHeight;
+
+  renderReview(job);
+  renderFigures(job);
+
+  const added = $("#addedpanel");
+  added.hidden = job.stage !== "added";
+  if (job.stage === "added") {
+    added.replaceChildren(
+      el("div", {}, "Figure " + job.picked + " is the reference for " + job.asset + "."),
+      el("div", { className: "hint" }, "Written: art/characters/" + job.asset + "/reference.png and brief.json. The game does not use it yet. Sprite sheets come next, as a separate paid step."),
+    );
+  }
+  $("#send").disabled = false;
+  tick = 0;
+}
+
+function renderReview(job) {
+  const withGrid = job.rounds.filter((r) => r.grid);
+  $("#reviewpanel").hidden = withGrid.length === 0;
+  if (!withGrid.length) return;
+  const shown = job.rounds.find((r) => r.grid && r.n === Number(shownRound(job))) || withGrid[withGrid.length - 1];
+  const tabs = $("#roundtabs");
+  tabs.replaceChildren();
+  for (const r of withGrid) {
+    const b = el("button", { className: r.n === shown.n ? "on" : "" }, "Round " + r.n);
+    b.onclick = () => { window.shownRoundPick = r.n; render(job); };
+    tabs.append(b);
+  }
+  $("#gridimg").src = "/files/" + job.id + "/" + shown.grid + "?t=" + job.updated;
+  const info = shown.n === job.rounds[job.rounds.length - 1].n ? "" : " (earlier round)";
+  const charged = shown.charged && !state.fake ? " · charged " + shown.charged : "";
+  const edits = shown.notes ? " · edits asked: " + shown.notes : "";
+  $("#roundinfo").textContent = "Round " + shown.n + info + charged + edits;
+  const canDecide = job.stage === "review" && !job.busy && shown.n === job.rounds[job.rounds.length - 1].n;
+  $("#reviewactions").hidden = !canDecide;
+  $("#approve").disabled = !canDecide;
+  $("#askedits").disabled = !canDecide;
+}
+
+function shownRound(job) {
+  return window.shownRoundPick || job.rounds[job.rounds.length - 1].n;
+}
+
+function renderFigures(job) {
+  const show = job.figures && job.figures.length > 0;
+  $("#slicepanel").hidden = !show;
+  if (!show) return;
+  $("#sheet").src = "/files/" + job.id + "/sheet.png?t=" + job.updated;
+  const box = $("#figs");
+  box.replaceChildren();
+  for (const f of job.figures) {
+    const card = el("div", { className: "fig" + (job.picked === f.n ? " picked" : "") });
+    if (f.ok) {
+      card.append(el("img", { src: "/files/" + job.id + "/figs/fig_" + f.n + ".png?t=" + job.updated, alt: "figure " + f.n }));
+      card.append(el("div", { className: "cap" }, "#" + f.n + " · " + f.w + "×" + f.h + " · ink " + f.ink + "%"));
+    } else {
+      card.append(el("div", { className: "cap" }, "#" + f.n + " · nothing found"));
+    }
+    if (f.ok && job.stage === "pick" && !job.busy) {
+      const b = el("button", { className: "primary" }, "Pick this one");
+      b.onclick = () => pick(f.n);
+      card.append(b);
+    }
+    if (job.picked === f.n) card.append(el("div", { className: "cap" }, "picked"));
+    box.append(card);
+  }
+}
+
+async function pick(n) {
+  try {
+    await api("/api/jobs/" + current + "/pick", { n });
+    loadCurrent(); refreshList();
+  } catch (err) { $("#joberr").textContent = err.message; }
+}
+
+async function decide(decision) {
+  try {
+    const notes = $("#notes").value;
+    window.shownRoundPick = null;
+    await api("/api/jobs/" + current + "/review", { decision, notes });
+    $("#notes").value = "";
+    loadCurrent(); refreshList();
+  } catch (err) { $("#joberr").textContent = err.message; }
+}
+
+$("#brief").addEventListener("input", briefCount);
+$("#pipeline").addEventListener("change", briefCount);
+$("#approve").onclick = () => decide("approve");
+$("#askedits").onclick = () => {
+  if (!$("#notes").value.trim()) { $("#joberr").textContent = "Say what to change first."; return; }
+  decide("edit");
+};
+$("#retry").onclick = async () => {
+  try { await api("/api/jobs/" + current + "/retry", {}); loadCurrent(); refreshList(); }
+  catch (err) { $("#joberr").textContent = err.message; }
+};
+$("#send").onclick = async () => {
+  $("#formerr").textContent = "";
+  try {
+    const job = await api("/api/jobs", {
+      name: $("#name").value.trim(),
+      pipeline: $("#pipeline").value,
+      brief: $("#brief").value,
+    });
+    window.shownRoundPick = null;
+    openJob(job.id);
+  } catch (err) { $("#formerr").textContent = err.message; }
+};
+
+setInterval(() => {
+  tick += 1;
+  if (current) loadCurrent();
+  if (tick % 3 === 0) refreshList();
+}, 1500);
+
+refreshList().then(() => {
+  if (state.jobs.length && !current) openJob(state.jobs[0].id);
+  briefCount();
+});
+</script>
+</body>
+</html>

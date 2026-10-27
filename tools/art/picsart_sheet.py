@@ -7,7 +7,7 @@ template to repaint: the images are style and layout references, in order.
 Usage:
   python tools/art/picsart_sheet.py --name zones --prompt-file art/prompts/sheet-zones.txt \
       --zones "forest, ruins, dungeon, ..." --ref docs/art/references/style-hike-illustration.png \
-      [--ref another.png] [--aspect 3:4] [--count 1] [--model flux-3-image] [--resolution 2k]
+      [--ref another.png] [--aspect 3:4] [--count 1] [--model gpt-image-2.5-sunburst] [--resolution 2k]
 
 Writes art/picsart/out/<name>_v<n>.png. The key is read as in picsart_render.py.
 """
@@ -28,7 +28,7 @@ def main():
     ap.add_argument("--prompt-file", required=True)
     ap.add_argument("--zones", help="fills [LIST 8 ZONES HERE] / [ZONE] in the prompt")
     ap.add_argument("--ref", action="append", default=[], help="reference image, in prompt order")
-    ap.add_argument("--model", default="flux-3-image")
+    ap.add_argument("--model", default="gpt-image-2.5-sunburst")
     ap.add_argument("--resolution", default="2k")
     ap.add_argument("--aspect", default="3:4", choices=sorted(ASPECTS))
     ap.add_argument("--count", type=int, default=1)
