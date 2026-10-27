@@ -369,3 +369,31 @@ func test_tall_map_round_trip() -> void:
 	eq(back.height_at(Vector2i(1, 0)), 8)
 	eq(back.terrain_at(Vector2i(2, 0)), CombatGrid.T.RUIN)
 	eq(back.terrain_at(Vector2i(0, 0)), CombatGrid.T.STAIRS)
+
+
+func test_void_cells_and_zones_round_trip() -> void:
+	var g := CombatGrid.flat(4, 3)
+	g.set_terrain(Vector2i(0, 0), CombatGrid.T.VOID)
+	g.set_zone(Vector2i(3, 2), "ruins")
+	g.set_zone(Vector2i(2, 2), "snow")
+	ok(not g.passable(Vector2i(0, 0)), "void is not walkable")
+	ok(not g.solid(Vector2i(0, 0)) and g.solid(Vector2i(1, 0)), "void is not ground")
+	var back := CombatGrid.from_dict(g.to_dict())
+	eq(back.terrain_at(Vector2i(0, 0)), CombatGrid.T.VOID)
+	eq(back.zone_at(Vector2i(3, 2)), "ruins")
+	eq(back.zone_at(Vector2i(2, 2)), "snow")
+	eq(back.zone_at(Vector2i(1, 1)), "")
+	ok(not CombatGrid.flat(2, 2).to_dict().has("zones"), "single-set maps save no zone rows")
+	ok(not back.deploy_cells(0).has(Vector2i(0, 0)), "nobody deploys on void")
+
+
+func test_blend_maps_load_and_connect() -> void:
+	for name in ["blend_forest_castle", "blend_mountain_marsh", "blend_farm_crypt", "blend_canyon_crystal"]:
+		var d: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/maps/%s.json" % name))
+		ok(d is Dictionary, name)
+		var g := CombatGrid.from_dict(d.map)
+		var zones := {}
+		for z in g.zones:
+			zones[z] = true
+		ok(zones.size() >= 2, "%s mixes tile sets" % name)
+		ok(g.terrain.has(CombatGrid.T.VOID), "%s has an island outline" % name)

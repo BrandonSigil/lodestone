@@ -45,14 +45,16 @@ static func _load() -> void:
 			_rows[NAMES[row.terrain]] = row
 
 
-## A texture by file stem, or null when the art isn't there yet.
-static func texture(stem: String, tile := false) -> Texture2D:
+## A texture by file stem from a tile set ("" = the active set), or null when the art isn't there yet.
+static func texture(stem: String, tile := false, from_set := "") -> Texture2D:
 	if stem == "":
 		return null
-	if _tex.has(stem):
-		return _tex[stem]
-	var path := DIR + art_set + "/" + stem + ".png"
-	if art_set == "" or not ResourceLoader.exists(path):
+	var set_name := from_set if from_set != "" else art_set
+	var key := set_name + "/" + stem
+	if _tex.has(key):
+		return _tex[key]
+	var path := DIR + set_name + "/" + stem + ".png"
+	if set_name == "" or not ResourceLoader.exists(path):
 		path = DIR + stem + ".png"
 	var tex: Texture2D = null
 	if ResourceLoader.exists(path):
@@ -64,27 +66,49 @@ static func texture(stem: String, tile := false) -> Texture2D:
 				img.resize(TEX_SIZE, TEX_SIZE, Image.INTERPOLATE_LANCZOS)
 				img.generate_mipmaps()
 				tex = ImageTexture.create_from_image(img)
-	_tex[stem] = tex
+	_tex[key] = tex
 	return tex
 
 
-static func top(t: int) -> Texture2D:
-	_load()
-	return texture(String(_rows.get(t, {}).get("top", "")), true)
+static var _avg := {}  # texture -> mean colour
 
 
-static func side(t: int) -> Texture2D:
+## Mean colour of a texture (cached): the island underside borrows its cliff art's colour.
+static func average(tex: Texture2D) -> Color:
+	if _avg.has(tex):
+		return _avg[tex]
+	var img := tex.get_image()
+	var sum := Color(0, 0, 0, 0)
+	var n := 0
+	if img != null:
+		img.decompress()
+		var step := maxi(1, img.get_width() / 16)
+		for y in range(0, img.get_height(), step):
+			for x in range(0, img.get_width(), step):
+				sum += img.get_pixel(x, y)
+				n += 1
+	var c := Color(sum.r / n, sum.g / n, sum.b / n, 1.0) if n > 0 else Color(0.5, 0.45, 0.4)
+	_avg[tex] = c
+	return c
+
+
+static func top(t: int, from_set := "") -> Texture2D:
 	_load()
-	return texture(String(_rows.get(t, {}).get("side", "")), true)
+	return texture(String(_rows.get(t, {}).get("top", "")), true, from_set)
+
+
+static func side(t: int, from_set := "") -> Texture2D:
+	_load()
+	return texture(String(_rows.get(t, {}).get("side", "")), true, from_set)
 
 
 ## The prop sprites that stand on this terrain, how tall they draw (in tile widths) and how many per cell.
-static func props(t: int) -> Dictionary:
+static func props(t: int, from_set := "") -> Dictionary:
 	_load()
 	var row: Dictionary = _rows.get(t, {})
 	var list: Array[Texture2D] = []
 	for stem in String(row.get("props", "")).split("|", false):
-		var tex := texture(stem)
+		var tex := texture(stem, false, from_set)
 		if tex != null:
 			list.append(tex)
 	return {"list": list, "height": float(row.get("prop_height", "0")), "count": int(row.get("prop_count", "0"))}

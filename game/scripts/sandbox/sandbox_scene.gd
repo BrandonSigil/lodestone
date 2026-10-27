@@ -13,10 +13,10 @@ const RIGHT_W := 270.0
 const BG := Color(0.13, 0.16, 0.16)
 const PANEL := Color(0.18, 0.22, 0.22)
 const INK := Color(0.9, 0.92, 0.87)
-const BRUSHES := ["GRASS", "FOREST", "WATER", "ROCK", "ROAD", "STONE", "STAIRS", "RUIN", "RAISE", "LOWER", "PARTY", "ENEMY", "ERASE"]
+const BRUSHES := ["GRASS", "FOREST", "WATER", "ROCK", "ROAD", "STONE", "STAIRS", "RUIN", "HOLE", "ZONE", "RAISE", "LOWER", "PARTY", "ENEMY", "ERASE"]
 const BRUSH_TERRAIN := {"GRASS": CombatGrid.T.GRASS, "FOREST": CombatGrid.T.FOREST, "WATER": CombatGrid.T.WATER,
 	"ROCK": CombatGrid.T.ROCK, "ROAD": CombatGrid.T.ROAD, "STONE": CombatGrid.T.STONE, "STAIRS": CombatGrid.T.STAIRS,
-	"RUIN": CombatGrid.T.RUIN}
+	"RUIN": CombatGrid.T.RUIN, "HOLE": CombatGrid.T.VOID}
 
 var setup: SandboxSetup
 var editing := true
@@ -33,6 +33,7 @@ var _mode_button: Button
 var _name_edit: LineEdit
 var _load_menu: OptionButton
 var _set_menu: OptionButton  ## battle tile set
+var _zone_pick: OptionButton  ## tile set the ZONE brush paints onto cells
 var _w_spin: SpinBox
 var _h_spin: SpinBox
 var _seed_spin: SpinBox
@@ -164,6 +165,15 @@ func _build_ui() -> void:
 		btn.toggle_mode = true
 		btn.custom_minimum_size = Vector2(100, 28)
 		_brush_buttons[b] = btn
+	_edit_panel.add_child(_small_label("zone brush paints"))
+	_zone_pick = OptionButton.new()
+	_zone_pick.add_item("map's tile set")
+	_zone_pick.set_item_metadata(0, "")
+	for name in BattleArt.sets():
+		_zone_pick.add_item(name)
+		_zone_pick.set_item_metadata(_zone_pick.item_count - 1, name)
+	_zone_pick.item_selected.connect(func(_i: int) -> void: _set_brush("ZONE"))
+	_edit_panel.add_child(_zone_pick)
 	_edit_panel.add_child(_small_label("party piece"))
 	_party_pick = OptionButton.new()
 	for d in Db.roster():
@@ -179,7 +189,7 @@ func _build_ui() -> void:
 	_enemy_pick.item_selected.connect(func(_i: int) -> void: _set_brush("ENEMY"))
 	_edit_panel.add_child(_enemy_pick)
 	_edit_panel.add_child(_small_label(
-		"left click / drag = paint\nright click = remove piece\nRAISE / LOWER = height 0-8\nSTAIRS climb +2 over Jump\nRUIN walls block sight\nrock / ruin remove pieces\n\nF1 play   R restart\nsaved maps live in data/maps", 11))
+		"left click / drag = paint\nright click = remove piece\nRAISE / LOWER = height 0-8\nSTAIRS climb +2 over Jump\nRUIN walls block sight\nHOLE cuts the island shape\nZONE mixes tile sets\nrock / ruin remove pieces\n\nF1 play   R restart\nsaved maps live in data/maps", 11))
 
 	_status = _small_label("", 11)
 	_status.add_theme_color_override("font_color", Color(0.75, 0.95, 0.75))
@@ -409,6 +419,8 @@ func _enter_edit() -> void:
 	_play_panel.visible = false
 	if preview == null:
 		preview = CombatBoard.new()
+		preview.backdrop = true
+		preview.edit_void = true
 		add_child(preview)
 		preview.cell_painted.connect(_on_paint)
 		preview.cell_hovered.connect(_on_preview_hover)
@@ -497,6 +509,8 @@ func _on_paint(c: Vector2i, right: bool) -> void:
 	elif BRUSH_TERRAIN.has(brush):
 		setup.grid.set_terrain(c, BRUSH_TERRAIN[brush])
 		setup.clean()
+	elif brush == "ZONE":
+		setup.grid.set_zone(c, _zone_pick.get_item_metadata(_zone_pick.selected))
 	elif brush == "RAISE" or brush == "LOWER":
 		var h := setup.grid.height_at(c) + (1 if brush == "RAISE" else -1)
 		setup.grid.set_height(c, clampi(h, 0, CombatGrid.MAX_HEIGHT))

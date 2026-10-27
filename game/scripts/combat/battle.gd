@@ -60,6 +60,7 @@ func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0
 		board = CombatBoard.new()
 		board.grid = grid
 		board.strangeness = strangeness
+		board.backdrop = true
 		add_child(board)
 	board.units = units
 	board.combat_stance = true  # weapons out while the fight lasts

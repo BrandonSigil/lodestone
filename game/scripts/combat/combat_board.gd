@@ -23,6 +23,7 @@ const TOP_COLORS := {
 	CombatGrid.T.STONE: Color(0.78, 0.73, 0.6),
 	CombatGrid.T.STAIRS: Color(0.74, 0.69, 0.57),
 	CombatGrid.T.RUIN: Color(0.66, 0.62, 0.53),
+	CombatGrid.T.VOID: Color(0.5, 0.5, 0.5),
 }
 ## Earth to Alien: the same board drifts toward these as strangeness rises.
 const ALIEN_COLORS := {
@@ -34,6 +35,7 @@ const ALIEN_COLORS := {
 	CombatGrid.T.STONE: Color(0.62, 0.58, 0.72),
 	CombatGrid.T.STAIRS: Color(0.58, 0.54, 0.7),
 	CombatGrid.T.RUIN: Color(0.45, 0.4, 0.58),
+	CombatGrid.T.VOID: Color(0.5, 0.5, 0.5),
 }
 const CLIFF := Color(0.62, 0.58, 0.49)  ## side faces of natural ground
 const ALIEN_CLIFF := Color(0.42, 0.36, 0.5)
@@ -48,6 +50,9 @@ var highlights := {}  # cell -> Color
 var danger := {}  # cell -> true, the enemy's reach next phase
 var area := {}  # cell -> true, cells a skill would hit
 var show_coords := false
+var edit_void := false  ## map editor: show VOID cells as faint outlines and let them be picked
+var island := true  ## rims hang ragged rock below the base, water spills off the edge
+var backdrop := false  ## a soft paper card behind the island (tester and fights; exploration draws its own world)
 var combat_stance := false  ## pieces stand ready (weapon drawn) instead of relaxed; Battle sets it
 var _fade := {}  ## cells whose props draw see-through this frame (a party piece stands behind them)
 var _covered := {}  ## units something in front hides this frame
@@ -166,7 +171,7 @@ func pick(local: Vector2) -> Vector2i:
 	var layers := _layers()
 	for i in range(layers.size() - 1, -1, -1):
 		for c: Vector2i in layers[i]:
-			if hidden(c):
+			if hidden(c) and not (edit_void and grid.terrain_at(c) == CombatGrid.T.VOID):
 				continue
 			if Geometry2D.is_point_in_polygon(local, _diamond(c, grid.height_at(c))):
 				return c
@@ -208,11 +213,15 @@ func _draw() -> void:
 	BattleArt.use_set(art_set)
 	if grid == null:
 		return
+	if backdrop:
+		_draw_backdrop()
 	var layers := _layers()
 	_find_cover()
 	for depth in layers.size():
 		for c: Vector2i in layers[depth]:
 			if hidden(c):
+				if edit_void and grid.terrain_at(c) == CombatGrid.T.VOID:
+					draw_polyline(_ring(_diamond(c, 0.0)), Color(1, 1, 1, 0.5 if c == hover else 0.14), 1.0, true)
 				continue
 			_draw_tile(c)
 			if fog_on and fog[c] == 1:
@@ -239,7 +248,15 @@ func _draw() -> void:
 
 
 ## Not drawn: never seen under fog of war, or off screen on a big map.
+static func _ring(pts: PackedVector2Array) -> PackedVector2Array:
+	var out := pts.duplicate()
+	out.append(pts[0])
+	return out
+
+
 func hidden(c: Vector2i) -> bool:
+	if grid.terrain_at(c) == CombatGrid.T.VOID:
+		return true
 	if fog_on and not fog.has(c):
 		return true
 	return cull.has_area() and not cull.has_point(cell_top(c))
@@ -283,8 +300,9 @@ func _draw_tile(c: Vector2i) -> void:
 	if t == CombatGrid.T.WATER:
 		face = MASONRY.lerp(ALIEN_CLIFF, strangeness)
 	var seed_v := _hash(c)
-	var top_tex := BattleArt.top(t)
-	var side_tex := BattleArt.side(t)
+	var zone := grid.zone_at(c)  # "" = the map's set
+	var top_tex := BattleArt.top(t, zone)
+	var side_tex := BattleArt.side(t, zone)
 	var tint := _tint(t)
 	# The two faces turned toward the camera: lit (lower-left) and shade (lower-right). Only the part
 	# above the neighbour shows, but painting down to it is fine because nearer cells paint over the rest.
@@ -292,17 +310,23 @@ func _draw_tile(c: Vector2i) -> void:
 	for shade in [false, true]:
 		var d := front_dir(shade)
 		var n := c + d
-		var nh := float(grid.height_at(n)) if grid.in_bounds(n) else BASE
+		var edge := not grid.solid(n)  # the island's rim: the face runs down to the base and hangs below it
+		var nh := BASE if edge else float(grid.height_at(n))
 		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
 		var col := face.darkened(0.32 if shade else 0.12)
 		# Painted sides keep the guide's values: lit 75% of the top (baked into the art), shade 55%.
 		var mod := Color(tint * (0.72 if shade else 1.0), 1.0)
 		_face(side[0], side[1], h, maxf(BASE, minf(nh, h)), col, seed_v + (7 if shade else 0), not built, false, side_tex, mod)
+		if edge and island:
+			var rock := BattleArt.average(side_tex) * mod if side_tex != null else col
+			_underside(side[0], side[1], Color(rock, 1.0) * (0.9 if shade else 1.0), seed_v + (3 if shade else 0), d)
 		if nh >= h:
 			continue
 		if t == CombatGrid.T.WATER:
 			_waterfall(side[0], side[1], h, nh, c)
-		elif not built and t != CombatGrid.T.ROAD and BattleArt.art_set == "":  # zone sets are flat: no grass drips
+			if edge and island:
+				_spill(side[0], side[1], c)
+		elif not built and t != CombatGrid.T.ROAD and side_tex == null:  # graybox only: the flat art has no drips
 			_drips(side[0], side[1], h, h - nh, moss.darkened(0.15 if shade else 0.0), seed_v + (11 if shade else 0))
 	var top := _diamond(c, h)
 	var tl := top[0]
@@ -348,12 +372,12 @@ func _draw_tile(c: Vector2i) -> void:
 	for shade in [false, true]:
 		var e: Array = shade_edge if shade else lit_edge
 		var n := c + front_dir(shade)
-		if show_grid or not grid.in_bounds(n) or grid.height_at(n) < h:
+		if show_grid or not grid.solid(n) or grid.height_at(n) < h:
 			draw_line(iso(e[0].x, e[0].y, h), iso(e[1].x, e[1].y, h), Color(top_col.lightened(0.35), 0.8), 1.5, true)
 	if danger.has(c):
 		draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(1.0, 0.5, 0.1, 0.7), 1.5, true)
 	var mid := cell_top(c)
-	if _props(c, h, t, seed_v, tint):
+	if _props(c, h, t, seed_v, tint, zone):
 		return
 	match t:
 		CombatGrid.T.FOREST:
@@ -390,8 +414,8 @@ static func _hash(c: Vector2i) -> int:
 
 
 ## Prop sprites standing on the cell (trees, boulders, pillars). False when this terrain has no art yet.
-func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color) -> bool:
-	var art := BattleArt.props(t)
+func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color, zone := "") -> bool:
+	var art := BattleArt.props(t, zone)
 	var list: Array = art.list
 	if list.is_empty() or art.count <= 0:
 		return false
@@ -466,6 +490,103 @@ func _drips(a: Vector2, b: Vector2, h: float, drop: float, col: Color, seed_v: i
 
 
 ## Water spilling off a ledge onto lower ground: a pale sheet, moving streaks and foam at the bottom.
+## Rough rock hanging under the island's rim (the floating-island look): two stacked columns per cell
+## edge, a wide block then a narrower chipped one, each a different depth and darker the deeper it goes,
+## in the colour of the cell's own cliff art. Below the deepest columns a few loose stones float.
+func _underside(a: Vector2, b: Vector2, col: Color, seed_v: int, out: Vector2i) -> void:
+	var ink := Color(0.216, 0.2, 0.208, 0.8)
+	var inward := -Vector2(out)
+	for k in 2:
+		var r := float((seed_v * (k + 3) * 31) % 97) / 97.0
+		var r2 := float((seed_v * (k + 5) * 17) % 89) / 89.0
+		var p0 := a.lerp(b, k * 0.5)
+		var p1 := a.lerp(b, k * 0.5 + 0.5)
+		var d1 := 0.7 + r * 0.9
+		var d2 := 0.5 + r2 * 1.3
+		var i0 := p0.lerp(p1, 0.06) + inward * 0.06
+		var i1 := p1.lerp(p0, 0.06) + inward * 0.06
+		var n0 := p0.lerp(p1, 0.2 + r2 * 0.1) + inward * 0.14
+		var n1 := p1.lerp(p0, 0.2 + r * 0.1) + inward * 0.14
+		var tip := n0.lerp(n1, 0.3 + r * 0.4) + inward * 0.05
+		var upper := PackedVector2Array([iso(p0.x, p0.y, BASE), iso(p1.x, p1.y, BASE),
+			iso(i1.x, i1.y, BASE - d1), iso(i0.x, i0.y, BASE - d1)])
+		var lower := PackedVector2Array([iso(n0.x, n0.y, BASE - d1), iso(n1.x, n1.y, BASE - d1),
+			iso(n1.x, n1.y, BASE - d1 - d2 * 0.75), iso(tip.x, tip.y, BASE - d1 - d2 - 0.35),
+			iso(n0.x, n0.y, BASE - d1 - d2 * (0.55 + r * 0.3))])
+		var c1 := col.darkened(0.12 + r * 0.08)
+		var c2 := c1.darkened(0.22)
+		draw_colored_polygon(upper, c1)
+		draw_colored_polygon(lower, c2)
+		draw_polyline(_ring(upper), ink, 1.2, true)
+		draw_polyline(_ring(lower), ink, 1.2, true)
+		if r2 > 0.55:  # one crack per column, like the flat tiles' couple of marks
+			var m := i0.lerp(i1, 0.5)
+			draw_line(iso(m.x, m.y, BASE - d1 * 0.25), iso(m.x, m.y, BASE - d1 * 0.7), Color(ink, 0.3), 1.0, true)
+		if seed_v % 7 == k:  # a stone that broke off and floats below
+			var stone := iso(tip.x, tip.y, BASE - d1 - d2 - 1.4 - r)
+			var bob := sin(_time * 1.3 + seed_v) * 2.0
+			_cube(stone + Vector2(0, bob), 4.0 + r * 3.0, 4.0 + r * 3.0, c1)
+
+
+## Water pouring off the island's rim keeps falling past the rock and thins out into mist.
+func _spill(a: Vector2, b: Vector2, c: Vector2i) -> void:
+	var a2 := a.lerp(b, 0.25)
+	var b2 := a.lerp(b, 0.75)
+	var sheet := FALL.lerp(ALIEN_COLORS[CombatGrid.T.WATER], strangeness * 0.7)
+	var drop := 3.5
+	var top := PackedVector2Array([iso(a2.x, a2.y, BASE), iso(b2.x, b2.y, BASE), iso(b2.x, b2.y, BASE - drop), iso(a2.x, a2.y, BASE - drop)])
+	var clear := Color(sheet, 0.0)
+	draw_polygon(top, PackedColorArray([Color(sheet, 0.95), Color(sheet, 0.95), clear, clear]))
+	for k in 3:
+		var p := a2.lerp(b2, 0.2 + k * 0.3)
+		var phase := fmod(_time * 1.2 + k * 0.41 + c.y * 0.13, 1.0)
+		var y0 := BASE - phase * drop
+		draw_line(iso(p.x, p.y, y0), iso(p.x, p.y, y0 - 0.7), Color(1, 1, 1, 0.6 * (1.0 - phase)), 1.5, true)
+	for k in 3:  # mist puffs where the stream gives out
+		var p := a2.lerp(b2, 0.15 + k * 0.35)
+		var puff := iso(p.x, p.y, BASE - drop + 0.3) + Vector2(0, sin(_time * 1.7 + k) * 1.5)
+		draw_circle(puff, 4.0 + k, Color(1, 1, 1, 0.18))
+
+
+## The soft card the island floats on: a rounded rectangle around the map with a vertical wash, a glow
+## behind the middle, a few light shafts and drifting motes. Colours drift toward lavender with strangeness.
+func _draw_backdrop() -> void:
+	var box := Rect2(iso(0, 0, 0), Vector2.ZERO)
+	for corner in [Vector2(0, 0), Vector2(grid.w, 0), Vector2(0, grid.h), Vector2(grid.w, grid.h)]:
+		box = box.expand(iso(corner.x, corner.y, grid.top_height() + 2.0))
+		box = box.expand(iso(corner.x, corner.y, BASE - 4.0))
+	box = box.grow(20.0)
+	var top_col := Color(0.86, 0.85, 0.8).lerp(Color(0.8, 0.76, 0.88), strangeness)
+	var low_col := Color(0.66, 0.7, 0.7).lerp(Color(0.5, 0.46, 0.64), strangeness)
+	var r := 28.0
+	var pts := PackedVector2Array()
+	var cols := PackedColorArray()
+	for i in 4:
+		var cx := box.end.x - r if i == 0 or i == 3 else box.position.x + r
+		var cy := box.end.y - r if i < 2 else box.position.y + r
+		var a0: float = [0.0, PI * 0.5, PI, PI * 1.5][i]
+		for k in 7:
+			var ang: float = a0 + k * PI / 12.0
+			var p := Vector2(cx + cos(ang) * r, cy + sin(ang) * r)
+			pts.append(p)
+			cols.append(top_col.lerp(low_col, (p.y - box.position.y) / box.size.y))
+	draw_polygon(pts, cols)
+	var mid := box.get_center()
+	for k in 5:  # glow: stacked soft ellipses
+		Pawn.ellipse(self, mid, box.size.x * (0.42 - k * 0.07), box.size.y * (0.36 - k * 0.06), Color(1, 1, 0.95, 0.05), true)
+	for k in 3:  # light shafts from the upper left
+		var x := box.position.x + box.size.x * (0.18 + k * 0.22)
+		var wv := 26.0 + k * 10.0
+		var shaft := PackedVector2Array([Vector2(x, box.position.y), Vector2(x + wv, box.position.y),
+			Vector2(x + wv + box.size.y * 0.45, box.end.y), Vector2(x + box.size.y * 0.45, box.end.y)])
+		draw_colored_polygon(shaft, Color(1, 1, 1, 0.05))
+	for k in 18:  # motes drifting up
+		var fx := fmod(k * 0.618, 1.0)
+		var fy := 1.0 - fmod(_time * 0.02 + k * 0.137, 1.0)
+		var p := box.position + Vector2(fx * box.size.x + sin(_time * 0.5 + k) * 6.0, fy * box.size.y)
+		draw_circle(p, 1.2 + (k % 3) * 0.6, Color(1, 1, 1, 0.35 * sin(fy * PI)))
+
+
 func _waterfall(a: Vector2, b: Vector2, h: float, hb: float, c: Vector2i) -> void:
 	var a2 := a.lerp(b, 0.12)
 	var b2 := a.lerp(b, 0.88)
@@ -572,7 +693,7 @@ func _ruin(c: Vector2i, h: float, seed_v: int) -> void:  # graybox; a prop_pilla
 	# Ragged crown: a broken block on top.
 	var k0 := Vector2(c.x + 0.25 + (seed_v % 5) * 0.06, c.y + 0.3)
 	_block(k0, k0 + Vector2(0.3, 0.3), top_h, top_h + 0.5, col.lightened(0.04), seed_v, true)
-	if seed_v % 4 == 0 and BattleArt.art_set == "":
+	if seed_v % 4 == 0 and BattleArt.side(CombatGrid.T.RUIN, grid.zone_at(c)) == null:
 		_drips(lit[0], lit[1], top_h, rise, _terrain_color(CombatGrid.T.GRASS).darkened(0.05), seed_v)
 
 
@@ -614,7 +735,7 @@ func _find_cover() -> void:
 					continue
 				var h := float(grid.height_at(c))
 				var mid := cell_top(c)
-				var art := BattleArt.props(grid.terrain_at(c))
+				var art := BattleArt.props(grid.terrain_at(c), grid.zone_at(c))
 				if not art.list.is_empty() and art.count > 0:
 					var ph: float = art.height * TW * 1.1
 					var prop := Rect2(mid.x - TW * 0.45, mid.y - ph, TW * 0.9, ph)
