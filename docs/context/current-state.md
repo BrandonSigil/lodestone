@@ -25,7 +25,7 @@
 - CLAUDE.md still says "never generate, paint or edit art files". Brandon has been asked to edit it to point at `docs/art-pipeline.md`; Claude sessions are blocked from changing that rule themselves.
 
 ## Open items waiting on Brandon
-- Empty village premise (`docs/design/empty-village.md`, draft 2 after his first answers): is a survivor's kind (settler or companion) fixed per character or chosen once by the player; which roster characters survive and as which kind.
+- Empty village premise (`docs/design/empty-village.md`, draft 2 after his first answers): is a survivor's kind (settler or companion) fixed per character or chosen once by the player; which roster characters survive and as which kind; draft 3 job system (levels kept through recall? one smithy weapon? the three-tier tree and branch names).
 - Pick the bottom frame: A embroidered band (current default), B quilt row, C foreground ridge, or a mix.
 - Retag `[AI]` lines he agrees with in `docs/decisions.md` as `[USER]`.
 - Fill in `docs/style-bible.md` where it still has blanks.

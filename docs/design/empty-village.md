@@ -1,6 +1,6 @@
 # Empty village premise: what changes in the systems
 
-Status: draft 2, 2026-10-27. Brandon answered the first round of questions; his answers are `[USER]` in
+Status: draft 3, 2026-10-27. Draft 3 adds the nobody start and the job system (sections 7 and 8). Brandon answered the first round of questions; his answers are `[USER]` in
 `docs/decisions.md`. Everything else here is `[AI]` until he retags it.
 Story, names, lore and copy are Brandon's. This doc only covers mechanics; all text examples are placeholders.
 
@@ -137,6 +137,75 @@ Brandon: the hero unearths it early, and on their first death they realize its p
   blacksmith early enough that gold matters by the second or third run.
 - Party slots stay at 4 (plus the corgi). Lewith & Flark still take 2.
 
+## 7. The opening: a nobody in an empty village
+Brandon: you're a nobody. You leave your house at the start; a couple of weapons sit at the blacksmith's,
+and a hidden item waits in a house for players patient enough to dig around.
+
+- **The village is the first explore map.** It uses the exploration system already on main (fog, walking,
+  things with options): the hero's house is the start cell, the ruined houses are rooms, the gate is the
+  exit to the trail. No enemies on it. Data: `data/explore/village.json` (built later, see build order).
+- **The empty smithy (before any blacksmith settles):** a weapon rack thing with 2 to 3 weapons, one per
+  starting weapon type (sword, bow, book). Take one. The others stay on the rack; you can swap at the rack
+  between runs. A weapon is gear, not a possession you carry in the pack, so it survives a recall.
+  When the blacksmith settler arrives later, the same building becomes the forge.
+- **The hidden item:** a thing with no "!" marker. It only shows when the hero stands next to it, or when
+  the corgi sniffs it out (his 3-tile SNIFF radius from section 1). So it rewards poking around, and the dog
+  helps. One per house is too many; one or two in the whole village. What it is, is Brandon's; mechanically
+  a small trinket (one stat or one check bonus) or a little gold.
+- New thing kind for the explore data: `hidden` (no marker, shown when adjacent or sniffed).
+
+## 8. Jobs: develop your class as you go
+Brandon: like Fire Emblem's job system, the hero and NPCs have one or two choices for how to develop.
+
+### Levels and XP
+- Every party member (hero, companions, corgi) has a level, 1 to 10 per job tier.
+- XP, Fire Emblem style, for doing your job in fights: land a hit 10, down a foe 30, heal or buff an ally
+  10, take a hit and survive 5. Plus trail XP: winning a check you rolled for the party 10 (the hunter
+  earns from hunting, the mage from wayfinding). 100 XP a level. All numbers in a data table.
+- **Level up:** each stat rolls its job's growth rate (Fire Emblem growths, e.g. HP 70%, attack 40%).
+  At least one stat always goes up, so no empty level.
+- **Levels stay through a recall.** They belong to the character, not the pack, and "everyone lives" is
+  the rule. The pressure comes from the road getting harder, not from losing levels.
+
+### The tree
+Three tiers, two choices at each fork, like the reference chart:
+
+| Tier | Hero | How you reach it |
+| --- | --- | --- |
+| 0 | nobody | Start. Weak stats, no class skills, uses whatever weapon it picked up. |
+| 1 | fighter (sword), archer (bow), mage (book) | Level 5 as a nobody. Offers the jobs for weapons the hero has used in a fight, so the smithy pick steers it. |
+| 2 | two branches per tier 1 job | Level 10 in the tier 1 job, pick one of two. |
+
+Proposed tier 2 branches, using the jobs that already exist so combat data carries over (ids only; job
+names are Brandon's):
+| Tier 1 | Branch A | Branch B |
+| --- | --- | --- |
+| fighter | knight: tank, shield_wall, persuade and nerve | a mobile striker: move and damage, sneak |
+| archer | hunter: steady_aim, big hunt bonus | a scout: wayfind and sneak, longer sight on explore maps |
+| mage | wizard: fire spells, scholar, books fill pack slots | a healer: fix and buff spells, heal checks |
+
+- **Each job sets combat stats, growths, abilities, traits and trail skills.** That's how a job reaches into
+  the whole game, as Brandon first asked: the hunter feeds the party, the scout keeps it from getting lost,
+  the wizard's books cost pack room.
+- **What a character keeps across jobs:** their off-class skills, perks and deficiency (Brandon's
+  personality layer), and one skill from each earlier job (the knight-from-fighter still has the fighter's
+  shove). Stats carry over and the new job adds a one-time bonus.
+- **Companions:** each starts in a set job, at tier 1 or 2, with their own one or two choices at their next
+  fork. A companion's branch can be unique to them (Stardrop's moon line is his own, not the generic mage's).
+  The corgi levels too but has one fixed line: his choices, if any, are tricks (better SNIFF or a stronger
+  BARK), one pick at level 5.
+- **Settlers** don't fight, so they don't take jobs. Their equivalent fork: each building's second upgrade
+  is a pick of one of two specialties (e.g. the forge leans toward blades or bows). Same "one or two
+  choices" feel, on the village side.
+- **No re-classing for now.** A pick is final. A way back (Fire Emblem's reclass seal) can come later if
+  players feel trapped.
+
+### Data
+- `ClassDef` gains `tier`, `promotes_to` (one or two job ids), `growths` (stat to percent), `weapon`
+  (sword, bow, book, none). Character runtime state gains `job`, `level`, `xp`, `stats` and `weapon`, saved
+  in meta per character.
+- XP rewards and level thresholds: `data/xp.csv`.
+
 ## Build order
 1. **Data and meta:** `role` and `found_at` on `CharacterDef`; corgi `.tres`; `meta.survivors`,
    `meta.buildings`, `meta.salvage`, `meta.gold`, `has_lodestone`, `lodestone_revealed`. Migration for old
@@ -149,6 +218,12 @@ Brandon: the hero unearths it early, and on their first death they realize its p
    lord's gold.
 5. **Survivors in the world:** recruit events in `events.csv`, landmarks on the world map. Explore-map
    interacts are a hook for the exploration work, not built here.
+6. **Levels and XP:** per-character level, XP and stats in meta; XP from fights and checks; growth rolls;
+   level-up popup. Tests on the growth math (pure `JobRules` script).
+7. **Jobs and the tree:** nobody, the three tier 1 jobs, six tier 2 branches as `ClassDef` rows; promotion
+   choice at level 5 and 10; skills kept across jobs. Existing roster characters move onto the tree.
+8. **The village opening:** `village.json` explore map with the smithy weapon rack, the `hidden` thing kind
+   and the gate to the trail. Needs the exploration work's map tools.
 
 Each step is playable and testable on its own.
 
@@ -156,3 +231,7 @@ Each step is playable and testable on its own.
 1. Is a survivor's kind (settler or companion) fixed by the character, as assumed here, or does the player
    choose once at recruitment?
 2. Which roster characters survive, and as which kind?
+3. Do levels stay through a recall (assumed yes)?
+4. At the smithy, does the hero take one weapon (assumed) or all of them?
+5. Is the three-tier tree right (nobody, then three jobs, then two branches each), and do you want to name
+   or redraw the branches?
