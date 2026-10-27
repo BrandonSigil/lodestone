@@ -21,6 +21,7 @@ const SKY_SCALE := 1.9  ## skyline width as a multiple of the floor's footprint
 const SKY_LOW := 0.6  ## how much of the skyline's height sits above the board's centre
 const SCENERY_RINGS := 2  ## empty cells this many steps out from the floor carry scenery
 const LOWLAND_DROP := 1.6  ## with a skyline, the floor's cliffs drop this far below the base to the lowland
+const TIER_DROP := 2.6  ## each further ring of lowland sits this far below the one before (a stepped descent)
 const NONE := Vector2i(-1, -1)
 
 const TOP_COLORS := {
@@ -243,6 +244,8 @@ func _draw() -> void:
 				# The outer ring in front of the floor goes dark, with treeline silhouettes, so the foreground frames the floor.
 				var in_front: bool = rings[c] == SCENERY_RINGS and depth_of(c.x, c.y) > front
 				_ring_ground(c, rings[c], in_front)
+				if rings[c] == 1:
+					_ring_faces(c, rings)
 				_scenery(c, rings[c], in_front)
 				continue
 			if hidden(c):
@@ -711,7 +714,28 @@ func _ring_ground(c: Vector2i, ring_i: int, dark := false) -> void:
 	if dark:  # the foreground dissolves into the dark blue ground below
 		grass = grass.lerp(Color(0.1, 0.14, 0.26), 0.9)
 	grass.a = 1.0 if ring_i == 1 else 0.55
-	draw_colored_polygon(_diamond(c, _floor_base), grass)
+	draw_colored_polygon(_diamond(c, _ring_height(ring_i)), grass)
+
+
+## The height of a lowland ring: ring 1 at the base, each ring after it a tier lower.
+func _ring_height(ring_i: int) -> float:
+	return _floor_base - TIER_DROP * (ring_i - 1)
+
+
+## Cliff faces from the first lowland ring down to the second, where the second ring is lower.
+func _ring_faces(c: Vector2i, rings: Dictionary) -> void:
+	var side_tex := BattleArt.side(CombatGrid.T.GRASS, "")
+	var col := _terrain_color(CombatGrid.T.GRASS).darkened(0.35)
+	var top := _ring_height(1)
+	var bottom := _ring_height(2)
+	for shade in [false, true]:
+		var d := front_dir(shade)
+		var n := c + d
+		if rings.get(n, 0) != 2:
+			continue
+		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
+		var mod := Color(_tint(CombatGrid.T.GRASS) * (0.72 if shade else 1.0), 1.0)
+		_face(side[0], side[1], top, bottom, col, _hash(c) + (7 if shade else 0), false, false, side_tex, mod)
 
 
 ## Scenery on the empty ground around the floor: rocks and bushes on ring 1, pines and rocks on ring 2,
@@ -722,11 +746,12 @@ func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 		var fg_tex := BattleArt.texture("prop_pine_2" if seed_v % 2 == 0 else "prop_pine_1")
 		if fg_tex == null:
 			return
-		var fg_base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _floor_base)
-		var fg_tall := TW * (0.9 + 0.3 * float(seed_v % 7) / 6.0)
-		var fg_wide := fg_tall * fg_tex.get_width() / float(fg_tex.get_height())
-		Pawn.ellipse(self, fg_base, fg_wide * 0.36, fg_wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
-		draw_texture_rect(fg_tex, Rect2(fg_base.x - fg_wide * 0.5, fg_base.y - fg_tall, fg_wide, fg_tall), false, FG_TREE_TINT)
+		for k in 2:  # two trees per front cell, so the row overlaps like the reference's bottom trees
+			var fg_base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06 + (k - 0.5) * 0.45, c.y + 0.5 + k * 0.2, _ring_height(ring_i))
+			var fg_tall := TW * (0.9 + 0.3 * float((seed_v + k * 3) % 7) / 6.0)
+			var fg_wide := fg_tall * fg_tex.get_width() / float(fg_tex.get_height())
+			Pawn.ellipse(self, fg_base, fg_wide * 0.36, fg_wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
+			draw_texture_rect(fg_tex, Rect2(fg_base.x - fg_wide * 0.5, fg_base.y - fg_tall, fg_wide, fg_tall), false, FG_TREE_TINT)
 		return
 	var pick := (seed_v + ring_i) % 5
 	var sprite := ""
@@ -741,7 +766,7 @@ func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 		return
 	var tall := TW * (0.9 if sprite.begins_with("prop_pine") else 0.5)
 	var wide := tall * tex.get_width() / float(tex.get_height())
-	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _floor_base)
+	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _ring_height(ring_i))
 	Pawn.ellipse(self, base, wide * 0.36, wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
 	draw_texture_rect(tex, Rect2(base.x - wide * 0.5, base.y - tall, wide, tall), false)
 
