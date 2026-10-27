@@ -256,7 +256,7 @@ TRAIT_PACK_DESC,friend next to prey: DMG +1
 TRAIT_FLAMMABLE,BURNY
 TRAIT_FLAMMABLE_DESC,fire DMG +2 on me
 UI_EX_TITLE,WALK lorem ipsum
-UI_EX_HELP,click ground = walk. click thing = use. F = use near thing. Q = turn look. arrows or right drag = look. wheel = zoom
+UI_EX_HELP,WASD or click ground = walk. click thing = use. F = use near thing. Q = turn look. arrows or right drag = look. wheel = zoom
 UI_EX_WIN,IT WORK. lorem.
 UI_EX_LOSE,IT NO WORK. lorem.
 UI_EX_NOISE,LOUD! SOMETHING HEAR. lorem.

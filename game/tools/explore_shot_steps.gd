@@ -27,6 +27,17 @@ func run(s: Node, f: int, step: String) -> bool:
 				var p: Array[Vector2i] = ExploreRules.find_path(s.grid, s.leader().cell, Vector2i(26, 21), s.leader().jump, s._blocked(), s.seen)
 				s.walk(p)
 			return f == 120
+		"wasd":
+			# Hold W, then W + A: the leader walks up the screen, then up-left, a cell at a time.
+			if f in [5, 40, 70]:
+				var keys := {5: [KEY_W], 40: [KEY_W, KEY_A], 70: []}
+				for k in [KEY_W, KEY_A]:
+					var ev := InputEventKey.new()
+					ev.keycode = k
+					ev.physical_keycode = k
+					ev.pressed = k in keys[f]
+					Input.parse_input_event(ev)
+			return f == 90
 		"door":
 			if f == 5:
 				_put(s, Vector2i(26, 19))
