@@ -1,0 +1,24 @@
+LODESTONE FLAT TERRAIN STYLE (portable: paste into any image model, attach the reference picture as the ONLY image)
+
+Reference image: a small forest island diorama (style-flat-forest.png). Match its look, line, paint and level of detail exactly. It is already as simple as we want; do not add detail. Use its look, not its layout. Do not attach any other sheet or picture: models copy references, detail and all.
+
+CAMERA
+2:1 dimetric game view (isometric pixel-art angle): tile diamonds exactly twice as wide as tall, orthographic, no perspective, no vanishing point. Plain cream paper background (#eae8d6).
+
+THE LOOK
+- Ground tops: ONE solid colour, with at most 3 to 5 tiny dots or specks of a slightly different shade. No blotches, clumps, patterns or grass blades.
+- Cliff and block sides: ONE solid colour, a shade darker than the top, with 1 or 2 soft vertical smudges. Nothing else.
+- Shading: three flat values only. One soft sun from the upper left: tops lightest, left faces mid, right faces darkest. No gradients, no highlights, no cast shadows.
+- Blocks: big, chunky, few. Each terrace is one solid slab, not bricks. Tops are flat.
+- Trees: pines are 2 or 3 stacked soft triangles on a stub trunk; round trees are one soft cloud blob on a stub trunk. One green plus one darker green. No leaves or needles.
+- Rocks and bushes: one rounded shape, two flat tones.
+- Line: one soft dark plum-grey outline (#373335, never black) around each whole object or block. No inner lines.
+- Paper: very light, even print grain over the whole picture.
+- Colour: about 4 colours per zone plus the cream paper, soft and slightly faded like a printed storybook. One small accent at most.
+
+THIS RUN
+[Describe the zone and what to draw here, e.g. "snowy highlands: white snow ground, grey-blue stone path, pale ice shelf cliffs, snowy pines, frozen pond".]
+Each zone gets its own cliff material and colour (earth, ice shelf, sandstone, cut masonry, glassy rock), never the same grey stone everywhere.
+
+AVOID
+Detail, texture, clutter, blotches or patches on the ground, moss drips, roots, stone joints, bricks, wood grain, cracks, pebbles, grass tufts, flowers, small leaves, perspective, 3d render, photo, vector gloss, gradients, bevels, black outlines, text, labels, characters, people, animals, watermark.
