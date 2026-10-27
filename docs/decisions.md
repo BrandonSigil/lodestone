@@ -140,6 +140,7 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-27 Paint pieces with ten key ramps taken from Brandon's swatches (`art/templates/characters/lodestone-characters.gpl`); the engine recolours by swapping ramps.
 - [AI] 2026-10-27 First character sprites in battle: the lead's SE and NE sheets were generated from the reference sheet (gpt-image-2.5-sunburst) and cut into C28 strips; idle, walk, attack, cast and hurt play from those, not from a paper doll yet. Placeholder art until Brandon draws or approves it.
 - [AI] 2026-10-27 The lead now has S, E and N sheets too (same prompts and model, one facing per sheet, 57 cents for six sheets), so roaming shows all eight facings. The cutter pins idle, walk, ready and advance frames on the body's centre instead of the feet; feet pinning made the walk lurch about 22 art px sideways each step.
+- [AI] 2026-10-27 Character sheets generate at 1K by default (`tools/art/char_sheet.py`): 5.5 cents against 9.5 at 2K, and side by side on the lead's S facing the cut sprites look the same at game size (1K is only a little softer blown up 3x). Asked for by Brandon; tile kits and maps stay at 2K.
 
 ## Exploration maps
 - [USER] 2026-10-27 Big isometric maps the party walks freely, with fog of war past the party's eyesight. Events stop the walk: enemies that spot you start a fight right there on the map; things like a locked door show an interact icon and open a text box whose options depend on the party (Brandon). His multi-level reference is for layout only, not style.

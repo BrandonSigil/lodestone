@@ -17,7 +17,8 @@ The first finished character is `lead` (`game/art/source/characters/lead/`). Cop
 | `art/prompts/sheet-character-stance.txt` | Image-model prompt: one facing in combat stance, weapon drawn (ready 4, advance 6). |
 | `art/prompts/style-character.txt`, `ask-character.txt` | House-style block and per-run ask for Picsart canvases. |
 | `docs/art/references/picsart/anim-lead-*.png`, `stance-lead-*.png` | The raw generated sheets `lead` was cut from (examples of a good sheet). |
-| `tools/art/picsart_sheet.py` | Sends a prompt file plus reference images to the Picsart API and saves the picture. |
+| `tools/art/char_sheet.py` | Generates one facing of a character sheet with the house defaults (model, 1K, 3:2, reference sheet, facing words); `--cut` also cuts it into the game. |
+| `tools/art/picsart_sheet.py` | Lower level: sends any prompt file plus reference images to the Picsart API and saves the picture. |
 | `tools/art/anim_sheet_cut.py` | Cuts a generated sheet into the game's strips and writes `<id>.json`. |
 | `tools/art/char_art.py` | Krita path: exports model sheets, parts and sprite sheets from `.psd`/`.ora`, packs Krita animation renders, locks colours to the palette, imports single Picsart views. Also rebuilds the templates. |
 | `game/art/source/characters/<id>/` | What the game reads: `<id>.json` plus one horizontal strip per animation and facing. |
@@ -29,7 +30,7 @@ The first finished character is `lead` (`game/art/source/characters/lead/`). Cop
 
 - Godot 4.4 or newer (the project runs in 4.4 to 4.7).
 - Python 3 with `pillow numpy requests psd-tools`. On a Mac with Homebrew Python, use a venv: `python3 -m venv ~/.lodestone/venv && source ~/.lodestone/venv/bin/activate && pip install pillow numpy requests psd-tools`.
-- For generated art only: a Picsart API key in `~/.lodestone/picsart-api-key` (or the env var `PICSART_API_KEY`). It never goes in the repo; `.gitignore` blocks the usual names. Picsart bills in dollars; a sheet costs about 10 cents.
+- For generated art only: a Picsart API key in `~/.lodestone/picsart-api-key` (or the env var `PICSART_API_KEY`). It never goes in the repo; `.gitignore` blocks the usual names. Picsart bills in dollars; a character sheet costs about 5.5 cents at 1K (9.5 at 2K).
 - Run every command from the repo root.
 
 ## 3. The contract the game reads
@@ -64,21 +65,20 @@ The first finished character is `lead` (`game/art/source/characters/lead/`). Cop
 ## 4. Path A: generate with an image model (how `lead` was made)
 
 1. **Identity.** Have a reference picture of the character (a sheet like `00-reference-sheet.png`). For a new character, copy `sheet-character-anim.txt` and `sheet-character-stance.txt` to a new name and replace the lead's look paragraph ("Image 1 = ...") with the new character's look and the path to its reference. Describe looks only; names and story come from Brandon (C29, CLAUDE.md).
-2. **One sheet per facing.** Combat needs `se` and `ne`. Roaming also wants `s`, `e` and `n`. `--zones` fills the facing line in the prompt (wording is an example; say the facing plainly):
+2. **One sheet per facing.** Combat needs `se` and `ne`. Roaming also wants `s`, `e` and `n` (`sw`, `w` and `nw` are mirrors, never drawn). Two sheets per facing: the animation sheet and the stance sheet.
    ```
-   python3 tools/art/picsart_sheet.py --name anim-<id>-se --prompt-file art/prompts/sheet-character-anim.txt \
-     --ref docs/art/characters/00-reference-sheet.png \
-     --zones "SE: three-quarter front view, the character faces toward the lower right of the picture" \
-     --model gpt-image-2.5-sunburst --resolution 2K --aspect 3:2
+   python3 tools/art/char_sheet.py --id <id> --dir se --dry-run              # check the prompt, spends nothing
+   python3 tools/art/char_sheet.py --id <id> --dir se                        # animation sheet
+   python3 tools/art/char_sheet.py --id <id> --dir se --sheet stance         # weapon-drawn stance sheet
    ```
-   Other facings: `NE: three-quarter back view, faces toward the upper right (we see the back and the pack)`, `S: straight front view, faces the viewer`, `E: side view, faces right`, `N: straight back view, faces away`. Output lands in `art/picsart/out/`. Resolution must be uppercase `2K` for GPT models. Only attach the character's own reference sheet: models copy any other sheet you attach, detail and all.
+   Defaults: `gpt-image-2.5-sunburst`, **1K**, 3:2, `docs/art/characters/00-reference-sheet.png` as the only image, the facing words from `FACINGS` in the script. 1K is the default because the cutter shrinks every sheet to sprite size anyway: a 1K and a 2K sheet of the same facing look the same in game, and 1K costs about 40% less (tested 2026-10-27 on the lead's S facing). Pass `--resolution 2K` only for a sheet you also want as a big reference picture. For a new character pass `--prompt-file` (your copy from step 1), `--ref` (its reference sheet) and, if the lead's facing words don't fit, `--facing "..."`. Output lands in `art/picsart/out/<sheet>-<id>-<dir>_v<n>.png` at the next free version. Only attach the character's own reference sheet: models copy any other sheet you attach, detail and all.
 3. **Look before you cut.** Every row needs the right number of separate figures on clean cream, same facing in every frame, no floor or text. Regenerate a bad sheet rather than fixing it in the cutter.
 4. **Cut it into the game:**
    ```
    python3 tools/art/anim_sheet_cut.py art/picsart/out/anim-<id>-se_v1.png --id <id> --dir se
    python3 tools/art/anim_sheet_cut.py art/picsart/out/stance-<id>-se_v1.png --id <id> --dir se --rows ready:4,advance:6
    ```
-   It keys out the paper, finds rows and figures, scales the whole sheet once so the idle body is hero height, puts the feet on the anchor, writes the strips and updates `<id>.json` (adds the facing to `dirs`). It prints a frame count per row; a row that comes out short is still written with its own count.
+   Or add `--cut` to the `char_sheet.py` command to generate and cut in one go. The cutter keys out the paper, finds rows and figures (and splits two rows a sword tip or spark joins), scales the whole sheet once so the idle body is hero height, lines frames up (walk, idle, ready and advance on the body's centre so the walk doesn't lurch; swing, cast and hurt on the feet so a lunge travels), writes the strips and updates `<id>.json` (adds the facing to `dirs`). It prints a frame count per row; a row that comes out short is still written with its own count.
 5. **Keep the raw sheets** you used in `docs/art/references/picsart/` (that folder is plain git, not LFS), so the next person can re-cut them.
 
 ## 5. Path B: draw it in Krita
@@ -100,11 +100,10 @@ The first finished character is `lead` (`game/art/source/characters/lead/`). Cop
 Built:
 - Sprite drawing in battle and explore, facing from movement and attacks, camera turns respected.
 - Animations: idle, walk, attack and cast (hit frame synced), hurt, combat stance (ready, advance). SW, W and NW mirror SE, E and NE.
-- Any drawn facing in `dirs` is used when the piece faces that way; S, E and N fall back to the nearest of SE / NE until drawn.
+- Any drawn facing in `dirs` is used when the piece faces that way; a facing that isn't drawn falls back to the nearest of SE / NE. `lead` draws all five (S, SE, E, NE, N), so it shows every facing while roaming.
 - See-through props and an x-ray outline for hidden party pieces.
 
 Not built yet:
-- **Roaming facings**: no character has S, E or N drawn yet (`lead` has SE and NE only). Battles only face diagonals, so these matter for walking around outside fights.
 - **down** is in the files but unused: downed pieces still vanish.
 - **Paper doll** (parts animated in code, C15) and the **recolour shader** (ramp swap, C12): not built, so each character needs its own full strips for now.
 - **Multi-cell units** (2x2 large, 3x3 boss): rules exist, engine support does not.

@@ -27,6 +27,7 @@
 
 ## The art recipe that works now
 - Model: GPT image (`gpt-image-2.5-sunburst`) through the Picsart API on the MacBook, about 10¢ per sheet at 2K. Flux is cheaper but copies references too literally.
+- Character sheets default to **1K** (5.5¢) through `tools/art/char_sheet.py`: the cutter shrinks every sheet to sprite size, so 1K and 2K look the same in game (tested on the lead's S facing). A hero's five facings times two sheets is about 55¢; a combat-only enemy (SE, NE) 11 to 22¢. Tile kits, maps and village art stay at 2K.
 - Look: Brandon loves the SIMPLE flat style: near-solid grass with a few dots, two-tone blob trees, three flat values, plain one-colour cliffs. "Too detailed" is his recurring complaint.
 - Reference images: his approved flat forest panel (`docs/art/references/style-flat-forest.png`) plus its tile-row crop for tile kits. Attach only those. Never feed a result back in as a reference; detail compounds.
 - Picsart's credits endpoint reads 0 even when the dollar wallet has money; `picsart_sheet.py` no longer stops on it.
