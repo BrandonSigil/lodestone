@@ -119,9 +119,27 @@ for x, y in [(30, 13), (30, 16)]:
 for x, y in [(29, 7), (31, 7), (29, 9), (31, 9)]:
     height[y][x] = 4
 
+# Tile sets: the map is ruins (plaza, graveyard, throne); the yard, meadow, water channel and west
+# terrace are outdoors (forest, the base set); the corridor, side crypt and cave are dungeon.
+# Later rects win. Rock walls take the set of the rect they sit in.
+zones = [["-"] * W for _ in range(H)]
+ZONE_KEY = {"f": "forest", "d": "dungeon"}  # "-" = the map's own set (ruins)
+
+
+def zone(x0, y0, x1, y1, z):
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            zones[y][x] = z
+
+
+zone(11, 19, W - 1, H - 1, "f")  # yard and meadow
+zone(0, 8, 11, H - 1, "f")  # channel and west terrace
+zone(0, 14, 4, 24, "d")  # cave room
+zone(24, 11, W - 1, 21, "d")  # corridor and side crypt
+
 data = {
     "name": "crypt",
-    "art_set": "",
+    "art_set": "ruins",
     "strangeness": 0.0,
     "view": 0,
     "grid": {
@@ -129,6 +147,8 @@ data = {
         "h": H,
         "terrain": ["".join(row) for row in terrain],
         "heights": ["".join(str(v) for v in row) for row in height],
+        "zones": ["".join(row) for row in zones],
+        "zone_key": ZONE_KEY,
     },
     "start": [[27, 26], [28, 27], [26, 27]],
     "groups": [

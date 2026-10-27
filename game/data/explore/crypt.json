@@ -1,6 +1,6 @@
 {
  "name": "crypt",
- "art_set": "",
+ "art_set": "ruins",
  "strangeness": 0.0,
  "view": 0,
  "grid": {
@@ -69,7 +69,43 @@
    "0000200000011111111111111111111130",
    "0000200000033333333331111111111130",
    "0000222222220000000033333333333330"
-  ]
+  ],
+  "zones": [
+   "----------------------------------",
+   "----------------------------------",
+   "----------------------------------",
+   "----------------------------------",
+   "----------------------------------",
+   "----------------------------------",
+   "----------------------------------",
+   "----------------------------------",
+   "ffffffffffff----------------------",
+   "ffffffffffff----------------------",
+   "ffffffffffff----------------------",
+   "ffffffffffff------------dddddddddd",
+   "ffffffffffff------------dddddddddd",
+   "ffffffffffff------------dddddddddd",
+   "dddddfffffff------------dddddddddd",
+   "dddddfffffff------------dddddddddd",
+   "dddddfffffff------------dddddddddd",
+   "dddddfffffff------------dddddddddd",
+   "dddddfffffff------------dddddddddd",
+   "dddddfffffffffffffffffffdddddddddd",
+   "dddddfffffffffffffffffffdddddddddd",
+   "dddddfffffffffffffffffffdddddddddd",
+   "dddddfffffffffffffffffffffffffffff",
+   "dddddfffffffffffffffffffffffffffff",
+   "dddddfffffffffffffffffffffffffffff",
+   "ffffffffffffffffffffffffffffffffff",
+   "ffffffffffffffffffffffffffffffffff",
+   "ffffffffffffffffffffffffffffffffff",
+   "ffffffffffffffffffffffffffffffffff",
+   "ffffffffffffffffffffffffffffffffff"
+  ],
+  "zone_key": {
+   "f": "forest",
+   "d": "dungeon"
+  }
  },
  "start": [
   [
