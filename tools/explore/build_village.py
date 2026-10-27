@@ -104,9 +104,12 @@ V.fill(3, 0, 4, 37, "w", 0)  # the stream
 V.fill(2, 0, 2, 37, "g", 1)  # its bank
 V.fill(3, 21, 4, 21, "s", 1)  # footbridge on the west lane
 V.fill(0, 0, 1, 37, "f", 1)
+# A ridge above the stream, level 3: the smithy and a home stand on its cliff top. Stairs take the
+# ridge down to the lane (row 20) and to the square (row 15).
+V.fill(5, 8, 11, 19, "g", 3)
 
 # The bluff in the north-east: a flat top at level 3, reached by a two-high stair from the east lane.
-V.fill(30, 3, 37, 11, "g", 3)
+V.fill(30, 3, 37, 11, "g", 4)
 V.fill(28, 7, 29, 9, "t", 2)  # stairs up from the lane to the bluff
 V.fill(30, 6, 30, 8, "d")  # up-top path from the stairs (keeps level 3)
 V.fill(31, 6, 35, 6, "d")  # along the front of the two bluff homes
@@ -139,8 +142,8 @@ V.fill(27, 19, 36, 20, "d")  # east lane past the tavern
 V.fill(27, 9, 27, 13, "d")  # north lane up to the bluff stairs
 
 # Town hall on a raised terrace at the back (level 2), a stair down to the square.
-V.fill(14, 3, 25, 11, "g", 2)
-V.fill(17, 10, 23, 11, "s", 2)
+V.fill(14, 3, 25, 11, "g", 3)
+V.fill(17, 10, 23, 11, "s", 3)
 V.fill(19, 12, 22, 12, "t", 2)
 hall_door = V.building("b_townhall", 17, 5, 5, 5, 3)
 V.prop("prop_board", 23, 10, tall=1.0)
@@ -148,10 +151,11 @@ V.prop("prop_tree", 15, 4, tall=1.6, sight=1.0)
 V.prop("prop_tree", 24, 4, tall=1.6, sight=1.0)
 V.prop("prop_planter", 16, 10, tall=0.8)
 
-# Smithy on the river bank: the stream is two cells west of it, and its yard opens onto the square.
+# Smithy on the river ridge: the stream is two cells west, and the yard drops to the square by stairs.
 smithy_door = V.building("b_smithy", 6, 10, 3, 4, 1)
 V.fill(9, 10, 11, 14, "s")
-V.fill(7, 15, 11, 15, "d")  # from the smithy door along the yard to the square
+V.fill(7, 15, 8, 15, "d")  # from the smithy door down toward the square
+V.fill(9, 15, 11, 15, "t", 2)  # stairs from the yard down to the square
 V.prop("prop_grindstone", 9, 10, tall=0.85)
 V.prop("prop_rack", 10, 12, tall=1.0)
 V.prop("prop_anvil", 10, 14, tall=0.75)
@@ -175,6 +179,7 @@ V.prop("prop_stump", 9, 25, tall=0.5)
 
 # More homes on the west bank and in the south-east (doors stuck for now).
 west_door = V.building("b_home_a", 6, 17, 3, 3, 1)
+V.fill(5, 20, 11, 20, "t", 2)  # stairs up the ridge from the west lane
 south_east_door = V.building("b_home_b", 29, 24, 4, 3, 2)
 V.fill(23, 27, 31, 27, "d")  # lane from the south road to the south-east home
 far_door = V.building("b_home_a", 31, 30, 3, 3, 1)

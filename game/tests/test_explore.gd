@@ -236,6 +236,8 @@ func test_village_maps_link_up() -> void:
 	var quiet: Dictionary = v.things.filter(func(t: Dictionary) -> bool: return t.id == "quiet_house")[0]
 	ok(not ExploreRules.find_path(v.grid, v.start[0], quiet.cell, 1).is_empty(),
 		"the bluff house is reachable from the start on jump 1")
+	ok(not ExploreRules.find_path(v.grid, v.start[0], rack[0].cell + Vector2i(-1, 0), 1).is_empty(),
+		"the weapon rack is reachable from the start on jump 1")
 	var q := ExploreMap.load_named("house_ne")
 	var book: Array = q.things.filter(func(t: Dictionary) -> bool: return t.kind == "hidden")
 	eq(book.size(), 1, "one hidden book")
