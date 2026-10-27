@@ -12,6 +12,10 @@ const TW := 64.0  ## tile width on screen
 const TH := 32.0  ## tile height on screen
 const HS := 16.0  ## pixels per height level
 const BASE := -0.6  ## how far below height 0 the block sides go
+const PLATE_SCALE := 1.35  ## backdrop plate width as a multiple of the floor's footprint
+const FADE_RINGS := 4  ## empty cells this far out from the floor fade into the dark
+const FADE_DARK := Color(0.1, 0.15, 0.2)
+const COBBLE_ALPHA := 0.32  ## the faint cobble hairlines on some tops
 const NONE := Vector2i(-1, -1)
 
 const TOP_COLORS := {
@@ -52,7 +56,7 @@ var area := {}  # cell -> true, cells a skill would hit
 var show_coords := false
 var edit_void := false  ## map editor: show VOID cells as faint outlines and let them be picked
 var island := true  ## rims hang ragged rock below the base, water spills off the edge
-var backdrop := false  ## a soft paper card behind the island (tester and fights; exploration draws its own world)
+var backdrop := false  ## a soft paper card behind the island (tester and fights); a set's backdrop plate draws either way
 var combat_stance := false  ## pieces stand ready (weapon drawn) instead of relaxed; Battle sets it
 var _fade := {}  ## cells whose props draw see-through this frame (a party piece stands behind them)
 var _covered := {}  ## units something in front hides this frame
@@ -216,7 +220,7 @@ func _draw() -> void:
 	BattleArt.use_set(art_set)
 	if grid == null:
 		return
-	if backdrop:
+	if backdrop or BattleArt.texture("backdrop", false, art_set) != null:
 		_draw_backdrop()
 	var layers := _layers()
 	_find_cover()
@@ -329,8 +333,9 @@ func _draw_tile(c: Vector2i) -> void:
 			_waterfall(side[0], side[1], h, nh, c)
 			if edge and island:
 				_spill(side[0], side[1], c)
-		elif not built and t != CombatGrid.T.ROAD and side_tex == null:  # graybox only: the flat art has no drips
-			_drips(side[0], side[1], h, h - nh, moss.darkened(0.15 if shade else 0.0), seed_v + (11 if shade else 0))
+		elif t != CombatGrid.T.ROAD and (edge or (not built and side_tex == null)):  # the rim always drips
+			var drip := moss.darkened(0.15 if shade else 0.0) if side_tex == null else (BattleArt.average(side_tex) * mod).lightened(0.1)
+			_drips(side[0], side[1], h, h - nh, drip, seed_v + (11 if shade else 0))
 	var top := _diamond(c, h)
 	var tl := top[0]
 	var tr := top[1]
@@ -356,6 +361,8 @@ func _draw_tile(c: Vector2i) -> void:
 					draw_line(iso(c.x + 0.2, c.y + 0.6, h), iso(c.x + 0.35, c.y + 0.85, h), line, 1.0, true)
 		CombatGrid.T.STAIRS:
 			_stairs(c, h, top_col)
+	if t != CombatGrid.T.WATER and t != CombatGrid.T.STAIRS:
+		_cobble(top, top_col.darkened(0.35), seed_v)
 	_contact_shadow(c, h)
 	if danger.has(c):
 		draw_colored_polygon(top, Color(1.0, 0.55, 0.15, 0.22))
@@ -549,18 +556,25 @@ func _face(a: Vector2, b: Vector2, h: float, hb: float, col: Color, seed_v: int,
 	draw_line(iso(a.x, a.y, hb), iso(b.x, b.y, hb), col.darkened(0.4), 1.0, true)
 
 
-## Moss hanging over a ledge.
+## Moss or ice hanging over a ledge. Each drip grows out of the rim, hangs, then a bead falls off and
+## fades. The cycle is staggered per drip so the rim never moves in step.
 func _drips(a: Vector2, b: Vector2, h: float, drop: float, col: Color, seed_v: int) -> void:
-	for i in 3:
+	for i in 4:
 		var r := ((seed_v * (i + 3)) % 97) / 97.0
-		if r < 0.35:
+		if r < 0.3:
 			continue
-		var f := 0.15 + 0.7 * (((seed_v + i * 31) % 89) / 89.0)
-		var p := a.lerp(b, f)
-		var drop_px := minf(drop, 0.3 + r * 0.8) * HS
-		var top_p := iso(p.x, p.y, h)
-		draw_rect(Rect2(top_p + Vector2(-3, 0), Vector2(6, drop_px)), col)
-		draw_circle(top_p + Vector2(0, drop_px), 3.0, col)
+		var f := 0.12 + 0.76 * (((seed_v + i * 31) % 89) / 89.0)
+		var top_p := iso(lerpf(a.x, b.x, f), lerpf(a.y, b.y, f), h)
+		var full := minf(drop, 0.3 + r * 0.6) * HS
+		var t := fmod(_time / (3.0 + r * 3.0) + f * 1.7 + i * 0.37, 1.0)
+		var grow := minf(t / 0.5, 1.0)
+		var fall := clampf((t - 0.7) / 0.3, 0.0, 1.0)
+		var tint := Color(col, 1.0 - fall)
+		var drop_px := full * grow * (1.0 - fall)
+		if drop_px > 0.5:
+			draw_rect(Rect2(top_p + Vector2(-2, 0), Vector2(4, drop_px)), tint)
+		if grow > 0.0:
+			draw_circle(top_p + Vector2(0, full * grow + fall * HS * 0.6), 3.0, tint)
 
 
 ## Water spilling off a ledge onto lower ground: a pale sheet, moving streaks and foam at the bottom.
@@ -622,9 +636,68 @@ func _spill(a: Vector2, b: Vector2, c: Vector2i) -> void:
 		draw_circle(puff, 4.0 + k, Color(1, 1, 1, 0.18))
 
 
+## A backdrop plate: one picture per art set, centred on the floor and scaled to its footprint.
+func _draw_plate(plate: Texture2D) -> void:
+	var centre := board_origin() + board_size() * 0.5
+	var width := board_size().x * PLATE_SCALE
+	var height := width * plate.get_height() / plate.get_width()
+	draw_texture_rect(plate, Rect2(centre - Vector2(width, height) * 0.5, Vector2(width, height)), false)
+	_draw_outline_fade()
+
+
+## The dark tint around the floor: rings of empty cells out from the outline, strongest next to it, so the
+## fade follows the floor's real shape. It is drawn under the tiles, so the rim covers its inner edge.
+func _draw_outline_fade() -> void:
+	var dist := {}
+	var queue: Array[Vector2i] = []
+	for y in int(grid.h):
+		for x in int(grid.w):
+			var c := Vector2i(x, y)
+			if grid.terrain_at(c) != CombatGrid.T.VOID:
+				dist[c] = 0
+				queue.append(c)
+	var i := 0
+	while i < queue.size():
+		var c: Vector2i = queue[i]
+		i += 1
+		if dist[c] >= FADE_RINGS:
+			continue
+		for step in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n: Vector2i = c + step
+			if dist.has(n) or n.x < -FADE_RINGS or n.y < -FADE_RINGS or n.x > grid.w + FADE_RINGS or n.y > grid.h + FADE_RINGS:
+				continue
+			dist[n] = dist[c] + 1
+			queue.append(n)
+	for n in dist:
+		var ring: int = dist[n]
+		if ring == 0:
+			continue
+		var a := 0.45 * (1.0 - float(ring - 1) / FADE_RINGS)
+		draw_colored_polygon(_diamond(n, 0.0), Color(FADE_DARK, a))
+
+
+## Sparse hairlines along one edge of some tops: the natural cobble joints that show the grid, not every cell.
+func _cobble(top: PackedVector2Array, col: Color, seed_v: int) -> void:
+	if seed_v % 3 != 0:
+		return
+	var e := (seed_v >> 2) % 4
+	var a := top[e]
+	var b := top[(e + 1) % 4]
+	var s := 0.15 + 0.2 * float((seed_v >> 4) % 5) / 4.0
+	var t := 0.6 + 0.25 * float((seed_v >> 7) % 4) / 3.0
+	draw_line(a.lerp(b, s), a.lerp(b, t), Color(col, COBBLE_ALPHA), 1.0, true)
+
+
 ## The soft card the island floats on: a rounded rectangle around the map with a vertical wash, a glow
 ## behind the middle, a few light shafts and drifting motes. Colours drift toward lavender with strangeness.
+## A set with a backdrop plate draws that instead.
 func _draw_backdrop() -> void:
+	var plate := BattleArt.texture("backdrop", false, art_set)
+	if plate != null:
+		_draw_plate(plate)
+		return
+	if not backdrop:
+		return
 	var box := Rect2(iso(0, 0, 0), Vector2.ZERO)
 	for corner in [Vector2(0, 0), Vector2(grid.w, 0), Vector2(0, grid.h), Vector2(grid.w, grid.h)]:
 		box = box.expand(iso(corner.x, corner.y, grid.top_height() + 2.0))
