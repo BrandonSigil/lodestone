@@ -44,8 +44,8 @@ static func flat(width: int, height: int) -> CombatGrid:
 	return g
 
 
-## Seeded map. Retries until the two deploy zones connect for a jump-1 unit. outline = irregular floor edge.
-static func generate(seed_value: int, width := 10, height := 8, strangeness := 0.0, outline := false) -> CombatGrid:
+## Seeded map. Retries until the two deploy zones connect for a jump-1 unit. outline = irregular floor edge (IslandShape); false gives a plain rectangle.
+static func generate(seed_value: int, width := 10, height := 8, strangeness := 0.0, outline := true) -> CombatGrid:
 	for attempt in 20:
 		var s := seed_value + attempt * 7919
 		var g := _try(s, width, height, strangeness)

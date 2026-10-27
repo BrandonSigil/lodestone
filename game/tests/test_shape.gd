@@ -31,11 +31,20 @@ func test_outline_is_not_a_rectangle() -> void:
 	ok(void_seen >= 20, "most seeds cut the corners off (%d of 24)" % void_seen)
 
 
-func test_plain_generate_is_unchanged() -> void:
-	var g := CombatGrid.generate(5, 10, 8, 0.0)
+func test_plain_generate_is_still_available() -> void:
+	var g := CombatGrid.generate(5, 10, 8, 0.0, false)
 	var none := true
 	for y in g.h:
 		for x in g.w:
 			if g.terrain_at(Vector2i(x, y)) == CombatGrid.T.VOID:
 				none = false
-	ok(none, "the default generator still makes no void cells")
+	ok(none, "outline = false still gives a plain rectangle")
+
+
+func test_default_generate_is_irregular() -> void:
+	var cut := false
+	for s in range(1, 25):
+		var g := CombatGrid.generate(s, 10, 8)
+		if g.terrain_at(Vector2i(0, 0)) == CombatGrid.T.VOID or g.terrain_at(Vector2i(9, 7)) == CombatGrid.T.VOID:
+			cut = true
+	ok(cut, "the default generator cuts corners for some seeds")
