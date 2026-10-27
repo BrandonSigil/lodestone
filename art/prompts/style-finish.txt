@@ -1,8 +1,8 @@
-FINISH (hand-made, not polished)
-Match the line and paint of the style picture if one is given (the forest hike illustration): it wins over everything else about surface.
-Line: thick, wobbly brush-pen ink with uneven weight, slightly broken in places, warm dark plum-grey (#373335), never black, never clean vector strokes.
-Paint: flat gouache or watercolour washes with mottled, blotchy texture and visible paper grain; colour sometimes slips a little past the line; no smooth gradients, no glossy highlights, no airbrush.
-Marks: short dashes and ticks for grass, cracks and stone joints, drawn by hand, a few per surface, not a pattern.
-Shapes: chunky and slightly crooked, like hand-cut wooden blocks: edges not perfectly straight but tops still flat and walkable, big simple masses, few small details.
-Colour: few colours per zone (about 6), soft and earthy, a bit faded like a printed storybook.
-Avoid: vector art, clean digital cel shading, mobile game asset store look, perfect geometry, uniform line weight, glossy, shiny, bevels, gradients, high saturation, tiny detail everywhere.
+FINISH (hand-made and SIMPLE)
+Match the line and paint of the style picture if one is given (the forest hike illustration), but simpler: it wins over everything else about surface.
+Simplicity first: big flat shapes, few of them. Each surface is one flat colour plus at most one darker shade and 2 to 5 small hand-drawn marks. Leave most of every surface plain. No pebbles everywhere, no brick-by-brick stonework, no grass blades all over, no texture noise.
+Line: one warm dark plum-grey (#373335) outline, slightly wobbly brush-pen, on silhouettes and main edges only. Inner detail lines are rare. Never black, never clean vector strokes.
+Paint: flat gouache washes with a light mottle and paper grain; colour sometimes slips a little past the line. No gradients, no highlights, no airbrush.
+Shapes: chunky and slightly crooked, like hand-cut wooden blocks; tops still flat and walkable. Props are simple silhouettes a child could recognise: a tree is a trunk and 2 or 3 blobs.
+Colour: about 5 colours per zone, soft and earthy, faded like a printed storybook.
+Avoid: detailed, intricate, busy, cluttered, fine texture, many small stones, individual bricks, individual leaves, vector art, clean cel shading, mobile game asset look, perfect geometry, glossy, bevels, gradients, high saturation.
