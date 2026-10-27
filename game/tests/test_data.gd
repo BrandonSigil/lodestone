@@ -54,3 +54,22 @@ func test_encounters_valid() -> void:
 		for id in row.units.split("|"):
 			ok(ResourceLoader.exists("res://data/classes/%s.tres" % id), "%s unit %s" % [row.id, id])
 		_check_effects(row.loot, row.id)
+
+
+## Character sprites (docs/art/characters.md 5.10): every anim's strip exists in every drawn facing and is
+## exactly frames x frame wide, and combat's two facings are drawn.
+func test_character_sprites_match_json() -> void:
+	for id in Db.ROSTER:
+		var m: Variant = CharacterArt.meta(id)
+		if m == null:
+			continue
+		ok(m.dirs.has("se") and m.dirs.has("ne"), "%s draws se and ne" % id)
+		for anim in m.anims:
+			for dir in m.dirs:
+				var path := "res://art/source/characters/%s/%s_%s_%s.png" % [id, id, anim, dir]
+				var tex: Texture2D = load(path) if ResourceLoader.exists(path) else null
+				ok(tex != null, "%s exists" % path)
+				if tex != null:
+					ok(tex.get_width() >= int(m.anims[anim].frames) * int(m.frame), "%s has %d frames" % [path, m.anims[anim].frames])
+		var f := CharacterArt.frame(id, "attack", "sw", 0.0)
+		ok(not f.is_empty() and f.flip, "%s mirrors se for sw" % id)

@@ -1,0 +1,16 @@
+LODESTONE CHARACTER ANIMATION SHEET (one facing per picture; --zones fills the facing below)
+
+Image 1 = the character sheet (docs/art/characters/00-reference-sheet.png). Draw THIS character and nobody else: same messy brown hair over the eyes, green hooded cloak with a round gold clasp, blue tunic, cream undershirt, brown belt and pouches, dark trousers, brown boots, a sword in a sheath on the back and a rolled pack. Same chibi proportions (about 2.3 heads tall), same flat colours, same soft dark outline, same simple shading. Copy the drawing style of image 1 exactly; do not add detail.
+
+FACING for every frame on this sheet: [ZONE]
+Every frame shows the character from this same direction, seen from the high game camera of image 1 (2:1 dimetric, looking down about 30 degrees, no perspective).
+
+LAYOUT: a sprite sheet on plain flat cream paper (#eae8d6). Five rows, frames evenly spaced left to right, each figure fully separate from its neighbours with clear empty cream between them. Every figure is the same size and stands on the same invisible baseline within its row, feet in the same place, as if the frames will be played over each other.
+   row 1 IDLE, 4 frames: standing relaxed, breathing; the cloak sways a little.
+   row 2 WALK, 6 frames: a walk cycle in place (contact, down, pass, up, then the other leg), arms swinging, cloak swinging.
+   row 3 SWING, 6 frames: draws the sword over the shoulder and slashes in the facing direction: wind up, wind up, STRIKE (sword fully swung out in front), follow through, recover, back to standing with the sword out.
+   row 4 CAST, 6 frames: gathers both hands, raises one hand, a small round blue spark appears above the raised hand on frame 4, holds, settles.
+   row 5 HURT and DOWN, 4 frames: flinch backwards, recoil, then sitting down on the ground dazed, then the same sitting pose.
+
+Rules: no text, no labels, no numbers, no frame borders, no grid lines, no floor, no tiles, no ground shadow, no grass, no scenery, no extra characters. Only the spark in the cast row is an effect; nothing else glows. Keep every frame clean and simple so it reads at small size.
+Avoid: perspective, different camera angles between frames, a different facing in any frame, extra detail, texture, black outlines, 3d render, photo, motion blur, speed lines, text.
