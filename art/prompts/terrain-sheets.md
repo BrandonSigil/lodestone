@@ -45,3 +45,7 @@ Toward the alien side (for the Earth to Alien shift): glassed desert, biolumines
 ## Feeding a sheet back in
 
 Save the kit sheet as `art/paintings/<zone>-kit.png` and say "kit in". The cut-up script is not built yet; I'll build it on the first real sheet so it matches what Sunburst actually draws.
+
+## Into the game
+
+`python3 tools/art/kit_cut.py <kit>.png --set <zone>` cuts a kit into `game/art/source/battle/<zone>/` with the engine's file names (tops and sides 512 square, props keyed off the paper at 256 tall). Pick the set in the battle sandbox's "tile set" menu. Slots the engine doesn't read yet (`_b`, hazard, special, detail, landmark, ruin) are written for later. Godot makes the `.import` files the first time the editor opens the project.
