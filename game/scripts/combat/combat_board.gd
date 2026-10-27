@@ -16,6 +16,7 @@ const PLATE_SCALE := 1.35  ## backdrop plate width as a multiple of the floor's 
 const FADE_RINGS := 4  ## empty cells this far out from the floor fade into the dark
 const FADE_DARK := Color(0.1, 0.15, 0.2)
 const COBBLE_ALPHA := 0.32  ## the faint cobble hairlines on some tops
+const FG_TREE_TINT := Color(0.55, 0.6, 0.72)  ## the front treeline: regular pines, about halfway toward navy
 const SKY_SCALE := 1.9  ## skyline width as a multiple of the floor's footprint
 const SKY_LOW := 0.6  ## how much of the skyline's height sits above the board's centre
 const SCENERY_RINGS := 2  ## empty cells this many steps out from the floor carry scenery
@@ -717,9 +718,15 @@ func _ring_ground(c: Vector2i, ring_i: int, dark := false) -> void:
 ## with some cells left bare.
 func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 	var seed_v := _hash(c)
-	if dark:  # the foreground treeline: flat navy pines, like the bottom trees of the skyline
+	if dark:  # the foreground treeline: the regular pines, tinted halfway toward navy
+		var fg_tex := BattleArt.texture("prop_pine_2" if seed_v % 2 == 0 else "prop_pine_1")
+		if fg_tex == null:
+			return
 		var fg_base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _floor_base)
-		_pine_silhouette(fg_base, TW * (0.75 + 0.35 * float(seed_v % 7) / 6.0), Color(0.09, 0.12, 0.22))
+		var fg_tall := TW * (0.9 + 0.3 * float(seed_v % 7) / 6.0)
+		var fg_wide := fg_tall * fg_tex.get_width() / float(fg_tex.get_height())
+		Pawn.ellipse(self, fg_base, fg_wide * 0.36, fg_wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
+		draw_texture_rect(fg_tex, Rect2(fg_base.x - fg_wide * 0.5, fg_base.y - fg_tall, fg_wide, fg_tall), false, FG_TREE_TINT)
 		return
 	var pick := (seed_v + ring_i) % 5
 	var sprite := ""
@@ -737,16 +744,6 @@ func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _floor_base)
 	Pawn.ellipse(self, base, wide * 0.36, wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
 	draw_texture_rect(tex, Rect2(base.x - wide * 0.5, base.y - tall, wide, tall), false)
-
-
-## A flat pine silhouette standing on base: three stacked tiers, no outline, one colour.
-func _pine_silhouette(base: Vector2, tall: float, col: Color) -> void:
-	var half := tall * 0.34
-	for k in 3:
-		var apex := base + Vector2(0, -tall * (0.55 + 0.22 * k))
-		var bottom := base + Vector2(0, -tall * (0.05 + 0.1 * k))
-		var hw := half * (1.3 - 0.3 * k)
-		draw_colored_polygon(PackedVector2Array([apex, bottom + Vector2(hw, 0), bottom + Vector2(-hw, 0)]), col)
 
 
 ## The deepest depth of any floor cell, so scenery beyond it sits in front of the floor.
