@@ -1,0 +1,8 @@
+THE LOOK (Brandon's pick, docs/art/references/style-flat-forest.png; copy this exactly)
+- Ground tops: ONE solid colour. At most 3 to 5 tiny dots or specks of a slightly different shade. No blotches, no clumps, no patterns, no grass blades.
+- Cliff and block sides: ONE solid colour, a shade darker than the top, with 1 or 2 soft vertical smudges. Nothing else.
+- Shading: three flat values only. Top lightest, left face mid, right face darkest. No gradients, no cast shadows.
+- Trees: pines are 2 or 3 stacked soft triangles on a stub trunk; round trees are one soft cloud blob on a stub trunk. One green plus one darker green. No leaves, no needles.
+- Rocks and bushes: one rounded shape, two flat tones.
+- Line: one thin-to-medium soft dark outline around each whole object or block. No inner lines.
+- Paper: very light even grain over the whole picture.

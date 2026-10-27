@@ -8,6 +8,7 @@ Paste a style block once into a Text node in a Picsart workflow (or keep it as a
 | `style-tiles.txt` | Single tile textures (tops, cliff strips) |
 | `style-props.txt` | Single props (trees, rocks, ruins, campfires) |
 | `style-character.txt` | Characters, monsters and bosses (pair with a mannequin view, the key view and `art/palettes/characters.png`) |
+| `style-look.txt` | The exact traits of the chosen flat look (solid tops with tiny dots, three flat values, blob trees). Appended to the sheet and kit prompts |
 | `style-finish.txt` | The hand-made finish (wobbly ink, mottled paint, chunky crooked blocks). Add it under any block when results look too polished; pair with `docs/art/references/style-hike-illustration.png` as a style image |
 | `sheet-zones.txt` | Many zones (flat simple style) on one reference sheet (diorama plus 5 x 5 swatches each), to explore looks |
 | `sheet-tile-kit.txt` | One zone as a game-ready 5 x 5 kit (tops, sides, props) with no text; see `terrain-sheets.md` |
