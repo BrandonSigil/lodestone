@@ -53,6 +53,7 @@
 
 ## Gotchas for Claude sessions
 - Godot in the cloud rewrites every art `.import` file; `git checkout -- game/art` before committing. Godot 4.7 on Brandon's machines edits project files too; don't commit those edits.
+- The MacBook has no git-lfs (PNGs go in as plain blobs) and a big art push dies with "unexpected disconnect"; push with `git -c http.postBuffer=524288000 push`. Godot there is `/Applications/Godot.app/Contents/MacOS/Godot` (4.7.2).
 - Picsart (picsart.io) is blocked from the cloud container, so API runs happen on the MacBook through Remote Control.
 - `save_psd` in `tools/art/battle_art.py` must build an RGBA PSD, or psd-tools hides strokes behind a layer mask.
 - GDScript errors on type inference from Variant; use explicit types or `int()`.
