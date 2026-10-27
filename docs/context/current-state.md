@@ -15,6 +15,7 @@
 - Terrain pass: heights 0 to 8, stairs, ruin walls, line of sight, camera rotate (Q), temple and cliffs maps.
 - Character traits and caster spell picks (2 slots).
 - Painted battle terrain and props from Picsart, wired through `BattleArt` and `game/data/battle_art.csv`, graybox fallback.
+- Character sprite kit (2026-10-27): spec `docs/art/characters.md`, Krita templates for hero / small / large / boss in `art/templates/characters/`, exporter `tools/art/char_art.py` writing to `game/art/source/characters/<id>/`. The engine side (sprite node, facings, anim states, paper doll, 2x2 and 3x3 units, free roaming) is planned in that doc, not built.
 
 ## Superseded notes (memory lines that are out of date)
 - "Brandon draws every final mark / no AI image gen" (tech direction, 2026-10-25): replaced 2026-10-26 [USER]. AI-generated art is allowed, directed by Brandon, made on top of templates. See `docs/art-pipeline.md`.
@@ -30,8 +31,10 @@
 - Top up Picsart credits before more API renders (balance was 0). Never batch background removal: about 1 credit per call.
 - New Picsart Flow art: save as `<name>_raw.png` in `art/picsart/kit/raw/`, then run `python tools/art/picsart_kit.py --process-only`. Pines, grass and cliff are the weakest assets.
 - Optional: godot-mcp setup on the PC (needs Node.js).
+- Character sprites: mark rules C1 to C29 his or change them; design the first character on the hero model sheet (Krita AI on the MacBook) and save it in `art/characters/<id>/`.
 
 ## Gotchas for Claude sessions
+- `save_psd` in `tools/art/battle_art.py` must build an RGBA PSD. With an RGB document psd-tools stores layer alpha as a layer mask over black, so strokes on an "empty" paint layer stay hidden. Fixed and all templates regenerated 2026-10-27.
 - Cloud sessions can't upload LFS objects (403) and the auto-mode classifier blocks running a downloaded Godot there, so Godot tests and screenshots usually run through a Remote Control session on the PC. Don't commit Godot 4.7's edits to existing project files.
 - GDScript errors on type inference from Variant; use explicit types or `int()`.
 - Autoloads don't `_ready` before a `-s` test script; tests call `Db.reload()`. A `-s` script that names game classes fails to compile; load a helper at runtime (see `tools/sandbox_shot.gd`).

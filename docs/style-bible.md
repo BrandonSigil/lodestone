@@ -31,7 +31,7 @@ Brandon adopted the style lab draft 1 look on 2026-10-26 for the village hub and
 - Proposed (AI): no outlines on scenery. Keylines only on UI panels and on buildings, in the region's dark, never black.
 | Scale | Brush | Weight at 1x | Line color rule |
 |---|---|---|---|
-| Pieces (characters) | TODO | TODO px | TODO |
+| Pieces (characters) | proposed: ink pen | 3 px outer, 2 px inner at art size (C10) | ink #373335, never black (see `docs/art/characters.md`) |
 | Props | TODO | TODO px | TODO |
 | Mid scenery | none (proposed) | 0 | — |
 | Far scenery | none (proposed) | 0 | — |
@@ -68,6 +68,7 @@ Pieces, fixed everywhere: red #c8363c, ochre #e0a03a, cream #f3ead2, indigo #3a3
 - Faces, hats and silhouettes by hand: TODO
 - Part slots and anchor points: base / head / top / hand / back / quirk. Changes: TODO
 - Size on the grid tile (graybox pawn is about 40 px tall on a 64 px tile): TODO
+- Proposed (AI) 2026-10-27, from Brandon's character sheet: full sprite spec in `docs/art/characters.md` (rules C1 to C29). People stand 3 levels (96 art px, 48 engine px) on a 192 px frame with feet at (96, 160); five drawn facings plus mirrors; parts and key ramps for recolouring; templates in `art/templates/characters/`.
 
 ## 9. Motion
 - Move: TODO (graybox: hop per tile)

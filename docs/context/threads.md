@@ -55,5 +55,10 @@ One entry per thread in Brandon's Claude project, oldest first. Each says what w
 - Ask: keep everything in the repo so the MacBook and another account have it.
 - Output: commit 72c977f on main. Picsart work in `art/picsart/`, screenshots in `art/screens/`, empty Krita folders, scripts and `docs/art-pipeline.md` updated. API key moved to `~/.lodestone/picsart-api-key`.
 
+## Build the character sprite template and Krita guide (Oct 27)
+- Ask: use Brandon's chibi character sheet as the template for all characters, add front / back / left / right views for free roaming, and write a detailed Krita guide for characters, monsters and bosses that fits the iso maps.
+- Output: `docs/art/characters.md` (rules C1 to C29, sizes, export names, engine plan), diagrams in `docs/art/characters/`, templates in `art/templates/characters/` (model sheet with 3D mannequins and control PNGs per view, paper-doll parts front/back, anim canvas, sprite sheet, palette, layout.json) built by `tools/art/char_art.py`, which also exports painted files to `game/art/source/characters/<id>/`. Character Guide page (`artifacts/character-guide.html`). Fixed `save_psd` writing layer alpha as masks and regenerated the battle-map PSDs.
+- Open: Brandon's sign-off on C1 to C29; engine work (sprite node, facing, anim states, paper doll, recolour, multi-cell units, free roaming).
+
 ## Export project context into the repo (Oct 27)
 - This export: `docs/context/`.

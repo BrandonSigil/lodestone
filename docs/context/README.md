@@ -20,6 +20,7 @@ Exported 2026-10-27. The repo is the single source of truth from here on: when a
 | `memory/` | Verbatim copy of the project memory files (`MEMORY.md` is the index). Some lines are out of date; `current-state.md` says which. |
 | `artifacts/studio-playbook.html` | "Lodestone Studio Playbook" page: pipeline plan, session map, style bible approach, first six weeks. |
 | `artifacts/style-lab.html` | "Lodestone Style Lab" page, latest published version (newer than `docs/style-lab/`). |
+| `artifacts/character-guide.html` | "Lodestone Character Guide" page: character / monster / boss sprite spec, templates and the Krita AI workflow. Rules text also lives in `docs/art/characters.md`; rebuilt by `python3 tools/art/char_art.py guide`. |
 | `artifacts/battle-map-guide.html` | "Lodestone Battle Map Guide" page, including the Picsart Flow recipe. Rules text also lives in `docs/art/battle-maps.md`. |
 
 Open the HTML files in a browser. They are self-contained except for Google Fonts.
@@ -28,6 +29,7 @@ Published originals (Brandon's account only):
 - Studio Playbook: https://claude.ai/artifact/YLjyZGiFGzjF819zwAyJTy
 - Style Lab: https://claude.ai/artifact/Q3D7yYdUAeS9eEs7cS5XsK
 - Battle Map Guide: https://claude.ai/artifact/JjxHePXisJfFFTxoddXjYB
+- Character Guide: https://claude.ai/artifact/WWYopuEueYemwfe3qZuVp5
 
 ## Never in the repo
 - The Picsart API key. It lives at `~/.lodestone/picsart-api-key` (or env `PICSART_API_KEY`) on each machine.
