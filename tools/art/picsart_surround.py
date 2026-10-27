@@ -30,6 +30,9 @@ EX_CRYPT = REFS / "surround-crypt-example.png"
 
 CAMERA = ("Isometric game backdrop, 2:1 dimetric camera (tile diamonds exactly twice as wide as tall), "
           "orthographic, no perspective, no horizon line, no sky, no moon, no tilt-shift, no depth of field. ")
+# The town plates with a sky and horizon drop the rule against them (docs/art/environments.md, Q8).
+CAMERA_SKY = ("Isometric game backdrop, 2:1 dimetric camera (tile diamonds exactly twice as wide as tall), "
+              "orthographic, no perspective, no tilt-shift, no depth of field. ")
 LOOK = ("Painted pixel-art look like the first reference image: chunky shapes, thick dark plum-grey outlines "
         "(#373335, never pure black) around the big shapes, one soft light from the upper left, flat colour "
         "fields with a few clear value steps. ")
@@ -41,7 +44,15 @@ EDGE = ("The world continues past the floor's edge: the surround fades into deep
 AVOID = ("No text, no letters, no labels, no UI, no watermark, no logo, no people, no animals, no photorealism, "
          "no 3D render, no fisheye, no neon, no grain.")
 
+# Wide strips that are not plates: the skyline behind the whole board (docs/art/environments.md, section 8).
+ASPECT = {"skyline_village": "16:9"}
+
 JOBS = {
+    "skyline_village": (
+        "A wide horizon strip, no ground and no floor: a pale blue sky with a few soft clouds at the top, "
+        "snow-capped blue-grey mountains across the whole width, and dark pine forest silhouettes along the bottom "
+        "edge fading into deep blue. Flat painted colours, big flat shapes, few details. No text, no watermark.",
+        [EX_SNOW]),
     "surround_snow": (CAMERA + LOOK + FLOOR +
         "Snowy rock platform: grey stone blocks with snow caps, packed snow tops, a few snow-covered pines and "
         "shrubs on the outer ground, a frozen stream on one side. Around it, rock outcrops and snow-covered pine "
@@ -63,12 +74,46 @@ JOBS = {
         "floor's edge the ground drops into a dark violet-grey void, plain and empty. Few details, big flat "
         "fields, one small accent of faded brick red. " + EDGE + AVOID,
         [EX_SNOW]),
+    "surround_town_interior": (CAMERA + LOOK +
+        "A plain town hall room at ground level: the floor is flat honey-brown wood planks, flush on the ground, "
+        "with a bare, empty centre and no furniture on the floor. Low plaster walls with a dark timber band at the "
+        "back, one level tall, a doorway and a shuttered window. Any furniture only against the walls, never on "
+        "the floor. Past the floor's edge the ground drops into a dark violet-grey void, plain and empty. Few "
+        "details, big flat fields, one small accent of faded brick red. " + EDGE + AVOID,
+        [EX_SNOW]),
+    "surround_forest": (CAMERA + LOOK + FLOOR +
+        "A forest clearing floor: flat grass tops with a few packed dirt paths and mossy stones. Around it, pines "
+        "and round trees, bushes, boulders and a fallen log, and far behind them dark pine silhouettes fading into "
+        "deep green-teal dusk. Green palette with one warm accent. Big flat fields, few details. " + EDGE + AVOID,
+        [EX_SNOW]),
+    "surround_dungeon_inner": (CAMERA + LOOK + FLOOR +
+        "An inner dungeon chamber of cold dark stone: a flagstone floor of big calm slabs, low walls of rough block "
+        "courses, one iron brazier with a small warm flame, a shallow drain channel. Around it the walls and pillars "
+        "continue into slate-blue gloom, with far faint archways fading into deep indigo. Muted slate and blue-grey "
+        "stone, one warm ember accent. Big flat fields, few details. " + EDGE + AVOID,
+        [EX_SNOW]),
+    # Town test: bigger cliffs and a mountain range from the user's town sample, in our flat look. Two
+    # versions: one with a sky and horizon, one that fades into dark like the other plates.
+    "surround_village_sky": (CAMERA_SKY + LOOK + FLOOR +
+        "A grassy plateau with dirt paths and stone steps. Around it, tall cliffs of layered grey rock with green "
+        "grass tops drop into a blue river, with one waterfall on the side and pine trees on the cliff tops. Far "
+        "behind, a range of blue-grey mountains with snow caps, and a pale blue sky with a few soft clouds fills "
+        "the top of the frame, with a clear horizon line where the mountains meet the sky. Flat painted colours, "
+        "one warm accent, big flat fields, few details. " + AVOID,
+        [EX_SNOW]),
+    "surround_village_dark": (CAMERA + LOOK + FLOOR +
+        "A grassy plateau with dirt paths and stone steps. Around it, tall cliffs of layered grey rock with green "
+        "grass tops drop into a blue river, with one waterfall on the side and pine trees on the cliff tops. Far "
+        "behind, mountain silhouettes and pine forest fading into deep navy dusk toward the frame edges. Flat painted "
+        "colours, one warm accent, big flat fields, few details. " + EDGE + AVOID,
+        [EX_SNOW]),
 }
 
 
 def run(key, name, prompt, refs):
     urls = [upload(key, Image.open(p).convert("RGB")) for p in refs]
-    params = {"prompt": prompt, "aspectRatio": "3:2", "resolution": "2K", "count": 1, "imageUrls": urls}
+    aspect = ASPECT.get(name, "3:2")
+    params = {"prompt": prompt, "aspectRatio": aspect, "resolution": "2K", "count": 1, "imageUrls": urls}
     for attempt in range(3):
         try:
             got, charged = generate(key, MODEL, params)

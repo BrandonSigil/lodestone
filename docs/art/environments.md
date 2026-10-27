@@ -75,4 +75,6 @@ Cost reference: a 1K or 2K Picsart image costs about $0.05 to $0.07 (the concept
 - **Fade:** `CombatBoard._draw_outline_fade` tints empty cells within `FADE_RINGS` of the floor, following the real outline.
 - **Rim:** `CombatBoard._drips` animates on every rim face.
 - **Hairlines:** `CombatBoard._cobble` draws sparse cobble joints on tops.
+- **Skyline (prototype):** `game/art/source/battle/village/skyline.png`, a wide horizon strip (sky, clouds, snowy mountains, pine band) drawn behind the whole board, wider than the floor (`CombatBoard._draw_skyline`). It replaces the paper card and the plate's fade on sets that have one. The sky breaks the no-sky rule in section 1 for this set only.
+- **Outer ring (prototype):** empty cells two steps out from the floor (`SCENERY_RINGS`) get a flat lowland patch and scenery from the existing prop art: rocks and bushes on ring 1, pines and rocks on ring 2 (`CombatBoard._ring_cells`, `_ring_ground`, `_scenery`). It follows the floor's outline, and cells beyond the grid join the depth order. Open: the lowland is flat, so it lacks the cliff drop in the reference, and the ring 2 edge is a hard line.
 - **Still open:** Q4 (turns: the plate does not rotate with the camera, so check each quarter turn), Q2, Q3, and Q7 (the interior furniture is baked into its plate).

@@ -16,6 +16,9 @@ const PLATE_SCALE := 1.35  ## backdrop plate width as a multiple of the floor's 
 const FADE_RINGS := 4  ## empty cells this far out from the floor fade into the dark
 const FADE_DARK := Color(0.1, 0.15, 0.2)
 const COBBLE_ALPHA := 0.32  ## the faint cobble hairlines on some tops
+const SKY_SCALE := 1.9  ## skyline width as a multiple of the floor's footprint
+const SKY_LOW := 0.6  ## how much of the skyline's height sits above the board's centre
+const SCENERY_RINGS := 2  ## empty cells this many steps out from the floor carry scenery
 const NONE := Vector2i(-1, -1)
 
 const TOP_COLORS := {
@@ -220,12 +223,21 @@ func _draw() -> void:
 	BattleArt.use_set(art_set)
 	if grid == null:
 		return
-	if backdrop or BattleArt.texture("backdrop", false, art_set) != null:
+	var has_sky := BattleArt.texture("skyline", false, art_set) != null
+	if backdrop or has_sky or BattleArt.texture("backdrop", false, art_set) != null:
 		_draw_backdrop()
+	var rings := _ring_cells() if has_sky else {}
 	var layers := _layers()
+	for c: Vector2i in rings:
+		if not grid.in_bounds(c):  # scenery beyond the grid joins the depth order too
+			layers[clampi(depth_of(c.x, c.y), 0, layers.size() - 1)].append(c)
 	_find_cover()
 	for depth in layers.size():
 		for c: Vector2i in layers[depth]:
+			if rings.has(c):
+				_ring_ground(c)
+				_scenery(c, rings[c])
+				continue
 			if hidden(c):
 				if edit_void and grid.terrain_at(c) == CombatGrid.T.VOID:
 					draw_polyline(_ring(_diamond(c, 0.0)), Color(1, 1, 1, 0.5 if c == hover else 0.14), 1.0, true)
@@ -636,6 +648,70 @@ func _spill(a: Vector2, b: Vector2, c: Vector2i) -> void:
 		draw_circle(puff, 4.0 + k, Color(1, 1, 1, 0.18))
 
 
+## The skyline: a horizon strip behind the whole board, wider than the floor so it reads as far away.
+func _draw_skyline(sky: Texture2D) -> void:
+	var width := board_size().x * SKY_SCALE
+	var height := width * sky.get_height() / sky.get_width()
+	var centre := board_origin() + board_size() * 0.5
+	draw_texture_rect(sky, Rect2(Vector2(centre.x - width * 0.5, centre.y - height * SKY_LOW), Vector2(width, height)), false)
+
+
+## Empty cells within SCENERY_RINGS steps of the floor, mapped to their ring (1 is next to the floor).
+func _ring_cells() -> Dictionary:
+	var dist := {}
+	var queue: Array[Vector2i] = []
+	for y in int(grid.h):
+		for x in int(grid.w):
+			var c := Vector2i(x, y)
+			if grid.terrain_at(c) != CombatGrid.T.VOID:
+				dist[c] = 0
+				queue.append(c)
+	var i := 0
+	while i < queue.size():
+		var c: Vector2i = queue[i]
+		i += 1
+		if dist[c] >= SCENERY_RINGS:
+			continue
+		for step in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n: Vector2i = c + step
+			if not dist.has(n):
+				dist[n] = dist[c] + 1
+				queue.append(n)
+	var out := {}
+	for n in dist:
+		if dist[n] > 0:
+			out[n] = dist[n]
+	return out
+
+
+## Flat lowland under the outer ring, below the floor's cliffs, so the scenery stands on ground.
+func _ring_ground(c: Vector2i) -> void:
+	var grass := _terrain_color(CombatGrid.T.GRASS).darkened(0.05 + 0.04 * float(_hash(c) % 3))
+	draw_colored_polygon(_diamond(c, BASE), grass)
+
+
+## Scenery on the empty ground around the floor: rocks and bushes on ring 1, pines and rocks on ring 2,
+## with some cells left bare.
+func _scenery(c: Vector2i, ring_i: int) -> void:
+	var seed_v := _hash(c)
+	var pick := (seed_v + ring_i) % 5
+	var sprite := ""
+	if ring_i == 1:
+		sprite = ["prop_boulder", "prop_bush", "prop_bush"][pick % 3] if pick < 3 else ""
+	else:
+		sprite = ["prop_pine_1", "prop_pine_2", "prop_pine_1", "prop_boulder"][pick % 4] if pick < 4 else ""
+	if sprite == "":
+		return
+	var tex := BattleArt.texture(sprite)
+	if tex == null:
+		return
+	var tall := TW * (0.9 if sprite.begins_with("prop_pine") else 0.5)
+	var wide := tall * tex.get_width() / float(tex.get_height())
+	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, 0.0)
+	Pawn.ellipse(self, base, wide * 0.36, wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
+	draw_texture_rect(tex, Rect2(base.x - wide * 0.5, base.y - tall, wide, tall), false)
+
+
 ## A backdrop plate: one picture per art set, centred on the floor and scaled to its footprint.
 func _draw_plate(plate: Texture2D) -> void:
 	var centre := board_origin() + board_size() * 0.5
@@ -692,11 +768,14 @@ func _cobble(top: PackedVector2Array, col: Color, seed_v: int) -> void:
 ## behind the middle, a few light shafts and drifting motes. Colours drift toward lavender with strangeness.
 ## A set with a backdrop plate draws that instead.
 func _draw_backdrop() -> void:
+	var sky := BattleArt.texture("skyline", false, art_set)
+	if sky != null:
+		_draw_skyline(sky)
 	var plate := BattleArt.texture("backdrop", false, art_set)
 	if plate != null:
 		_draw_plate(plate)
 		return
-	if not backdrop:
+	if sky != null or not backdrop:  # a skyline replaces the paper card
 		return
 	var box := Rect2(iso(0, 0, 0), Vector2.ZERO)
 	for corner in [Vector2(0, 0), Vector2(grid.w, 0), Vector2(0, grid.h), Vector2(grid.w, grid.h)]:
