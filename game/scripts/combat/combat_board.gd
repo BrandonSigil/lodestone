@@ -717,11 +717,13 @@ func _ring_ground(c: Vector2i, ring_i: int, dark := false) -> void:
 ## with some cells left bare.
 func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 	var seed_v := _hash(c)
+	if dark:  # the foreground treeline: flat navy pines, like the bottom trees of the skyline
+		var fg_base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _floor_base)
+		_pine_silhouette(fg_base, TW * (0.75 + 0.35 * float(seed_v % 7) / 6.0), Color(0.09, 0.12, 0.22))
+		return
 	var pick := (seed_v + ring_i) % 5
 	var sprite := ""
-	if dark:  # the foreground treeline: tall navy pines, every cell
-		sprite = "prop_pine_2" if pick % 2 == 0 else "prop_pine_1"
-	elif ring_i == 1:
+	if ring_i == 1:
 		sprite = ["prop_boulder", "prop_bush", "prop_bush"][pick % 3] if pick < 3 else ""
 	else:
 		sprite = ["prop_pine_1", "prop_pine_2", "prop_pine_1", "prop_boulder"][pick % 4] if pick < 4 else ""
@@ -730,12 +732,21 @@ func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 	var tex := BattleArt.texture(sprite)
 	if tex == null:
 		return
-	var tall := TW * (1.5 if dark else (0.9 if sprite.begins_with("prop_pine") else 0.5))
+	var tall := TW * (0.9 if sprite.begins_with("prop_pine") else 0.5)
 	var wide := tall * tex.get_width() / float(tex.get_height())
 	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _floor_base)
 	Pawn.ellipse(self, base, wide * 0.36, wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
-	var tint := Color(0.14, 0.18, 0.3) if dark else Color.WHITE
-	draw_texture_rect(tex, Rect2(base.x - wide * 0.5, base.y - tall, wide, tall), false, tint)
+	draw_texture_rect(tex, Rect2(base.x - wide * 0.5, base.y - tall, wide, tall), false)
+
+
+## A flat pine silhouette standing on base: three stacked tiers, no outline, one colour.
+func _pine_silhouette(base: Vector2, tall: float, col: Color) -> void:
+	var half := tall * 0.34
+	for k in 3:
+		var apex := base + Vector2(0, -tall * (0.55 + 0.22 * k))
+		var bottom := base + Vector2(0, -tall * (0.05 + 0.1 * k))
+		var hw := half * (1.3 - 0.3 * k)
+		draw_colored_polygon(PackedVector2Array([apex, bottom + Vector2(hw, 0), bottom + Vector2(-hw, 0)]), col)
 
 
 ## The deepest depth of any floor cell, so scenery beyond it sits in front of the floor.
