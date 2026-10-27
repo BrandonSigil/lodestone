@@ -13,6 +13,8 @@ Paste `style-terrain.txt` above either one if the tool takes one prompt only. Th
 
 The v2 zone sheet (`docs/art/references/terrain-zones-sheet-v2.png`) got the layout right (sides row, props split out) but drifted to clean vector, even lines and bright fills. Brandon prefers the rougher, chunkier finish of `tomb-build-steps-v1.png` and the hike illustration `style-hike-illustration.png`. Fix: `style-finish.txt` is now part of `sheet-zones.txt`, and the hike illustration goes in as a style image. Words alone pull models back to clean; the style image does most of the work.
 
+v3 (`terrain-zones-sheet-v3.png`) with the finish block: this is the look. Wobbly ink, mottled paint, paper grain, muted colours, chunky blocks, and the swatch order held. The tile kit prompt now carries the same finish block.
+
 ## What the reference needs to work in the game
 
 | In the reference | What the game needs | Why |

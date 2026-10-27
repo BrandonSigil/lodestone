@@ -2,6 +2,8 @@ LODESTONE TILE KIT SHEET (game-ready, one zone per picture)
 
 Use this once a zone from the zone sheet is chosen. Image 1 = the chosen zone panel (look to match). Image 2 = the zone palette card if there is one.
 
+Image 3 (optional) = the style picture (docs/art/references/style-hike-illustration.png): match its line and paint.
+
 Make ONE zone only: [ZONE]. Aspect 1:1, plain cream paper background (#eae8d6), no title, no labels, no text anywhere.
 Layout: a 5 x 5 grid of equal square cells with a clear cream gap between cells. Nothing crosses a cell edge.
    row 1 (tops, straight down, seamless edge to edge, NO objects): main ground, ground variant, path or road, hard floor, rough rock
@@ -13,3 +15,12 @@ Layout: a 5 x 5 grid of equal square cells with a clear cream gap between cells.
 Rules: tops and sides are flat and seamless so they can repeat; light is even on tops and sides (the game adds the shading); props are lit from the upper left. Flat fills, small hand-drawn marks one value step off the fill, warm dark plum-grey outlines (#373335) on props only, never black. Muted riso colours, one zone accent, no saturated red or blue outside that accent.
 
 Avoid: perspective on tops, shadows on tops, objects on tops, text, labels, borders around cells, 3d render, glossy, photo, characters, people, animals, watermark.
+
+FINISH (hand-made, not polished)
+Match the line and paint of the style picture if one is given (the forest hike illustration): it wins over everything else about surface.
+Line: thick, wobbly brush-pen ink with uneven weight, slightly broken in places, warm dark plum-grey (#373335), never black, never clean vector strokes.
+Paint: flat gouache or watercolour washes with mottled, blotchy texture and visible paper grain; colour sometimes slips a little past the line; no smooth gradients, no glossy highlights, no airbrush.
+Marks: short dashes and ticks for grass, cracks and stone joints, drawn by hand, a few per surface, not a pattern.
+Shapes: chunky and slightly crooked, like hand-cut wooden blocks: edges not perfectly straight but tops still flat and walkable, big simple masses, few small details.
+Colour: few colours per zone (about 6), soft and earthy, a bit faded like a printed storybook.
+Avoid: vector art, clean digital cel shading, mobile game asset store look, perfect geometry, uniform line weight, glossy, shiny, bevels, gradients, high saturation, tiny detail everywhere.
