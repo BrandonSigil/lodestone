@@ -15,6 +15,10 @@ The v2 zone sheet (`docs/art/references/terrain-zones-sheet-v2.png`) got the lay
 
 v3 (`terrain-zones-sheet-v3.png`) with the finish block: this is the look. Wobbly ink, mottled paint, paper grain, muted colours, chunky blocks, and the swatch order held. The tile kit prompt now carries the same finish block.
 
+## Model tests (2026-10-27)
+
+All in `docs/art/references/picsart/`. Flux (5.5¢) and GPT image `gpt-image-2.5-sunburst` (10¢ a sheet, resolution 1K/2K/4K uppercase) via `tools/art/picsart_sheet.py`. Any earlier sheet passed as a reference gets copied, so pass only the hike illustration. Best so far: `zones-gpt-simple_v1.png` (flat style, now `sheet-zones.txt` and `style-finish.txt`). `kit-forest_v1.png` got the kit layout right but was too detailed under the old finish.
+
 ## What the reference needs to work in the game
 
 | In the reference | What the game needs | Why |
