@@ -5,3 +5,8 @@ game/export_presets.cfg
 # local
 screenshots/
 .DS_Store
+__pycache__/
+# secrets: the Picsart key lives in ~/.lodestone/, never here
+.api-key
+*.api-key
+picsart-api-key

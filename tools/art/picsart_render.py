@@ -4,11 +4,11 @@
 Usage:
   python tools/art/picsart_render.py INPUT.png --name temple --prompt-file p.txt \
       [--negative-file n.txt] [--count 2] [--model flux-3-image] [--resolution 1k] \
-      [--out-dir C:/Users/Brand/Claude/lodestone-art/picsart/out]
+      [--out-dir art/picsart/out]
   python tools/art/picsart_render.py --balance
 
-The key comes from env PICSART_API_KEY, else from lodestone-art/picsart/.api-key
-next to the repo. It is never printed or written anywhere.
+The key comes from env PICSART_API_KEY, else from ~/.lodestone/picsart-api-key
+(outside the repo, never committed). It is never printed or written anywhere.
 
 Per result it writes <name>_v<n>_raw.png (model output as returned),
 <name>_v<n>_clipped.png (resized to the input and clipped to the input's
@@ -28,8 +28,8 @@ import requests
 from PIL import Image, ImageChops, ImageFilter
 
 REPO = Path(__file__).resolve().parents[2]
-KEY_FILE = REPO.parent / "lodestone-art" / "picsart" / ".api-key"
-DEFAULT_OUT = REPO.parent / "lodestone-art" / "picsart" / "out"
+KEY_FILE = Path.home() / ".lodestone" / "picsart-api-key"
+DEFAULT_OUT = REPO / "art" / "picsart" / "out"
 
 GENAI = "https://api.picsart.com"
 TOOLS = "https://api.picsart.io/tools/1.0"

@@ -7,11 +7,11 @@ Usage:
   python tools/art/picsart_kit.py --process-only  # rebuild finals from saved raws
 
 Assets and prompts live in tools/art/picsart_kit.json. Raw model output (and
-background-removed cutouts) go to lodestone-art/picsart/kit/raw next to the
-repo, never into git. Finals go to game/art/source/battle/:
+background-removed cutouts) go to art/picsart/kit/raw (git LFS, so the game
+never loads them). Finals go to game/art/source/battle/:
   textures: 512 x 512 RGB, seamless, mean colour matched to the target hex
   props:    RGBA, trimmed, max 256 px tall, base contact point at bottom centre
-A contact sheet goes to lodestone-art/picsart/kit_contact.png and a downscaled
+A contact sheet goes to art/picsart/kit_contact.png and a downscaled
 copy to docs/art/battle-maps/kit-contact.png.
 """
 
@@ -29,7 +29,7 @@ import picsart_render as pr  # noqa: E402
 
 REPO = pr.REPO
 KIT_JSON = Path(__file__).with_suffix(".json")
-ART = REPO.parent / "lodestone-art" / "picsart"
+ART = REPO / "art" / "picsart"
 RAW = ART / "kit" / "raw"
 FINAL = REPO / "game" / "art" / "source" / "battle"
 CONTACT = ART / "kit_contact.png"

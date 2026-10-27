@@ -6,6 +6,16 @@ The idea: Brandon draws a small set of samples in his style, we train a style mo
 
 Never train on other artists' work. The reference artists (Yvan Duque, Natalie Andrewson and the thread images) are mood references only.
 
+## Where art lives
+Everything is in the repo so it follows you to any machine. PNG, PSD, KRA and audio go through Git LFS, so run `git lfs install` once on a new machine before cloning.
+- `art/templates/` battle-map templates (plain git, rebuilt by `tools/art/battle_art.py`)
+- `art/picsart/` Picsart runs: `out/` map renders, `kit/raw/` kit raws and cutouts, `prompts/`, `kit_contact.png`
+- `art/screens/` progress screenshots, one folder per feature
+- `art/tests/`, `art/samples/`, `art/training/` Krita tests, style samples and the LoRA training set
+- `game/art/source/` finished art the game loads
+
+The Picsart API key is not in the repo. Put it in `~/.lodestone/picsart-api-key` (on Windows `C:\Users\<you>\.lodestone\picsart-api-key`) or set `PICSART_API_KEY`.
+
 ## Step 1. Install (Brandon, about 30 minutes, mostly downloads)
 1. Install Krita 5.2 or newer from https://krita.org.
 2. Download the latest `krita_ai_diffusion-*.zip` from https://github.com/Acly/krita-ai-diffusion/releases. Do not unzip it.
@@ -22,7 +32,7 @@ Help: https://docs.interstice.cloud/installation and https://docs.interstice.clo
 3. Type a short description, e.g. `flat folk-art illustration, snowy village at dusk, gumdrop mountains, warm lit windows`.
 4. Paint big flat color shapes: sky, mountains, ground, a few dark house blocks. Watch the right side update.
 5. Play with the strength slider: low keeps your shapes, high lets the model invent.
-6. Save anything interesting to `C:\Users\Brand\Claude\lodestone-art\tests\`. Claude can read that folder.
+6. Save anything interesting to `art/tests/` in the repo and push it. Claude can read that folder.
 
 This test uses the default model, so it will look generic. That is fine; it is a test of control, not style.
 
@@ -34,10 +44,10 @@ Draw 20 to 30 images in the Lodestone style, all in the same hand. Rough is fine
 - 3 to 4 close-ups of texture and marks (grass fans, stamped dots, a cloud)
 - 2 to 3 frame and ornament pieces (border stamps, a quilt square)
 
-Save them as PNG, at least 1024 px on the long side, in `C:\Users\Brand\Claude\lodestone-art\samples\`.
+Save them as PNG, at least 1024 px on the long side, in `art/samples/` in the repo.
 
 ## Step 4. Training set (Claude)
-Claude reads the samples, crops and resizes them to 1024 px, and writes one short caption per image starting with the trigger word `lodestonestyle` (e.g. `lodestonestyle, a cottage with a straw roof, dusk`). Output goes to `lodestone-art\training\`.
+Claude reads the samples, crops and resizes them to 1024 px, and writes one short caption per image starting with the trigger word `lodestonestyle` (e.g. `lodestonestyle, a cottage with a straw roof, dusk`). Output goes to `art/training/`.
 
 ## Step 5. Train the style model (Brandon runs, Claude sets up)
 - Free, local: OneTrainer (https://github.com/Nerogar/OneTrainer) with an SDXL LoRA preset for 8 GB cards. Expect a few hours; run it overnight. Claude writes the config.
