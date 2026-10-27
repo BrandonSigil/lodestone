@@ -1,6 +1,6 @@
 extends SceneTree
 ## Drives the explore scene into a state and saves a PNG, so the walkable map can be checked headless.
-## Args after "--": <png path> <step>. Steps: start, walk, door, spot, deploy, fight (see explore_shot_steps.gd).
+## Args after "--": <png path> <step>. Steps: start, walk, wasd, door, spot, deploy, fight (see explore_shot_steps.gd).
 
 var _frames := 0
 var _out := ""

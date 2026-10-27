@@ -183,3 +183,21 @@ func test_auto_deploy_gives_each_member_a_free_spot() -> void:
 		ok(not used.has(spots[u]), "no two on one cell")
 		used[spots[u]] = true
 		ok(spots[u] != Vector2i(5, 4), "not on a blocked cell")
+
+
+func test_wasd_diagonals_dont_cut_corners() -> void:
+	var g := CombatGrid.flat(5, 5)
+	ok(ExploreRules.can_step_dir(g, Vector2i(2, 2), Vector2i(1, 1), 1), "open ground: diagonal ok")
+	g.set_terrain(Vector2i(3, 2), CombatGrid.T.ROCK)
+	ok(not ExploreRules.can_step_dir(g, Vector2i(2, 2), Vector2i(1, 1), 1), "a wall beside it blocks the diagonal")
+	ok(ExploreRules.can_step_dir(g, Vector2i(2, 2), Vector2i(0, 1), 1), "straight still fine")
+	g.set_height(Vector2i(2, 1), 3)
+	ok(not ExploreRules.can_step_dir(g, Vector2i(2, 2), Vector2i(0, -1), 1), "no climbing a cliff")
+
+
+func test_wasd_picks_the_screen_direction() -> void:
+	# Camera turn 0: grid (-1, -1) is straight up the screen, (1, -1) is right.
+	var screen_of := func(d: Vector2i) -> Vector2: return Vector2((d.x - d.y) * 32.0, (d.x + d.y) * 16.0)
+	eq(ExploreRules.steps_toward(Vector2(0, -1), screen_of)[0], Vector2i(-1, -1), "W goes up")
+	eq(ExploreRules.steps_toward(Vector2(1, 0), screen_of)[0], Vector2i(1, -1), "D goes right")
+	ok(not ExploreRules.steps_toward(Vector2(0, -1), screen_of).has(Vector2i(1, 1)), "never backwards")

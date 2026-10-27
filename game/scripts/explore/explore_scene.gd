@@ -6,7 +6,7 @@ extends Node2D
 ## further out, heavy ones at the leader's side), then the same board becomes the battlefield.
 ## F6 on explore.tscn, or F10 from any screen. The map is Game.explore_map (data/explore/<name>.json).
 ##
-## Controls: click ground = walk there. Click a thing = walk up and use it.
+## Controls: WASD or click ground = walk. Click a thing = walk up and use it.
 ## F = use the nearest lit thing. Q = turn the camera. Arrows or right drag = look around, wheel = zoom,
 ## Space = back to the leader. Hover an enemy to see what it can see.
 
@@ -47,6 +47,7 @@ var _dialog: PanelContainer
 var _info: Label
 var _log_label: Label
 var _phase: Label
+var _keys_walking := false  ## the leader is walking on WASD
 ## Deploying: the fight waiting to start, the member being placed and the cells it may take.
 var _pending := {}
 var _placing: CombatUnit = null
@@ -63,6 +64,7 @@ func _ready() -> void:
 	board.art_set = map.art_set
 	board.rot = map.view
 	board.fog_on = true
+	board.show_grid = false
 	add_child(board)
 	overlay = ExploreOverlay.new()
 	overlay.scene = self
@@ -178,6 +180,7 @@ func _process(delta: float) -> void:
 	if board == null:
 		return
 	var pan := Vector2.ZERO
+	_wasd()
 	if Input.is_key_pressed(KEY_LEFT):
 		pan.x -= 1
 	if Input.is_key_pressed(KEY_RIGHT):
@@ -194,6 +197,48 @@ func _process(delta: float) -> void:
 		var target := board.iso(lead.vis.x + 0.5, lead.vis.y + 0.5, lead.vis_h)
 		focus = focus.lerp(target, minf(1.0, delta * 8.0))
 	_apply_camera()
+
+
+## WASD walks the leader one cell at a time toward the held screen direction (W = up the screen).
+## Blocked straight ahead, it slides along the wall if a nearby direction is open.
+func _wasd() -> void:
+	var want := Vector2.ZERO
+	if mode == M.WALK:
+		if Input.is_key_pressed(KEY_W):
+			want.y -= 1
+		if Input.is_key_pressed(KEY_S):
+			want.y += 1
+		if Input.is_key_pressed(KEY_A):
+			want.x -= 1
+		if Input.is_key_pressed(KEY_D):
+			want.x += 1
+	if want == Vector2.ZERO:
+		if _keys_walking and not _stepping:
+			_keys_walking = false
+			board.play_anim(leader(), "idle")
+		return
+	if _stepping:
+		return
+	_walk_token += 1  # keys take over from a clicked path
+	walking_now = false
+	var lead := leader()
+	var blocked := _blocked()
+	var screen_of := func(d: Vector2i) -> Vector2: return board.iso(1.0 + d.x, 1.0 + d.y, 0.0) - board.iso(1.0, 1.0, 0.0)
+	for d in ExploreRules.steps_toward(want, screen_of):
+		if ExploreRules.can_step_dir(grid, lead.cell, d, lead.jump, blocked):
+			_key_step(lead.cell + d)
+			return
+
+
+func _key_step(next: Vector2i) -> void:
+	var lead := leader()
+	if not _keys_walking:
+		_keys_walking = true
+		board.play_anim(lead, "walk")
+	follow = true
+	board.highlights = {}
+	await _step_all([lead], [next])
+	_after_step()
 
 
 func _apply_camera() -> void:
@@ -648,6 +693,7 @@ func start_fight(g: Dictionary, how: String) -> void:
 	_pending = {"how": how, "foes": foes, "enemies": enemies, "spots": ExploreRules.auto_deploy(grid, party, how, _blocked())}
 	mode = M.DEPLOY
 	board.highlights = {}
+	board.show_grid = true  # the grid is for fights only
 	_reveal_around(enemies.map(func(u: CombatUnit) -> Vector2i: return u.cell), 1)
 	_reveal_around([leader().cell], 4)
 	for u: CombatUnit in party:
@@ -769,6 +815,7 @@ func _end_fight() -> void:
 	board.danger = {}
 	board.area = {}
 	board.selected = null
+	board.show_grid = false
 	for u: CombatUnit in party:
 		u.moved = false
 		u.acted = false

@@ -97,6 +97,42 @@ static func _open(grid: CombatGrid, c: Vector2i, blocked: Dictionary, known: Dic
 	return grid.passable(c) and not blocked.has(c) and (known.is_empty() or known.has(c))
 
 
+## WASD walking: the eight grid steps (diagonals too, so W is straight up the screen).
+const STEPS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
+	Vector2i(1, 1), Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1)]
+
+
+## Can the leader take one step from `from` along d? A diagonal can't cut a corner: both cells beside it
+## must be walkable on the way.
+static func can_step_dir(grid: CombatGrid, from: Vector2i, d: Vector2i, jump: int, blocked := {}, known := {}) -> bool:
+	var to := from + d
+	if not _open(grid, to, blocked, known):
+		return false
+	if d.x == 0 or d.y == 0:
+		return grid.can_step(from, to, jump)
+	for side: Vector2i in [Vector2i(d.x, 0), Vector2i(0, d.y)]:
+		var mid := from + side
+		if not _open(grid, mid, blocked, known) or not grid.can_step(from, mid, jump) or not grid.can_step(mid, to, jump):
+			return false
+	return true
+
+
+## Grid steps ordered by how well they match a screen direction (`screen_of` maps a step to its screen vector).
+## Only steps within 60 degrees count, so a key never walks the leader sideways.
+static func steps_toward(want: Vector2, screen_of: Callable) -> Array[Vector2i]:
+	var scored: Array = []
+	for d in STEPS:
+		var v: Vector2 = screen_of.call(d)
+		var dot := v.normalized().dot(want.normalized())
+		if dot > 0.5:
+			scored.append([dot, d])
+	scored.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0])
+	var out: Array[Vector2i] = []
+	for s in scored:
+		out.append(s[1])
+	return out
+
+
 ## Can someone standing at `at` use the thing at `thing`? Next to it (diagonals count) and not a cliff apart.
 static func can_use_from(grid: CombatGrid, at: Vector2i, thing: Vector2i) -> bool:
 	if maxi(absi(at.x - thing.x), absi(at.y - thing.y)) > 1 or at == thing:

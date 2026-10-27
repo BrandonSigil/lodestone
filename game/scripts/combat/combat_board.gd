@@ -59,6 +59,7 @@ var rot := 0  ## camera quarter turns, 0-3 (Q turns it)
 var fog := {}
 var fog_on := false
 var cull := Rect2()  ## board-local area worth drawing (big maps); empty draws everything
+var show_grid := true  ## cell outlines; off, only real ledges keep their rim (exploration hides the grid)
 
 
 func _ready() -> void:
@@ -335,9 +336,13 @@ func _draw_tile(c: Vector2i) -> void:
 	if c == hover:
 		draw_colored_polygon(top, Color(1, 1, 1, 0.18))
 	var edge := top_col.darkened(0.55)
-	draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(edge, 0.5 if top_tex == null else 0.2), 1.0, true)
-	for e in [lit_edge, shade_edge]:
-		draw_line(iso(e[0].x, e[0].y, h), iso(e[1].x, e[1].y, h), Color(top_col.lightened(0.35), 0.8), 1.5, true)
+	if show_grid:
+		draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(edge, 0.5 if top_tex == null else 0.2), 1.0, true)
+	for shade in [false, true]:
+		var e: Array = shade_edge if shade else lit_edge
+		var n := c + front_dir(shade)
+		if show_grid or not grid.in_bounds(n) or grid.height_at(n) < h:
+			draw_line(iso(e[0].x, e[0].y, h), iso(e[1].x, e[1].y, h), Color(top_col.lightened(0.35), 0.8), 1.5, true)
 	if danger.has(c):
 		draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(1.0, 0.5, 0.1, 0.7), 1.5, true)
 	var mid := cell_top(c)
