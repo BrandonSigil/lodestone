@@ -11,5 +11,7 @@ The standing instructions set in Brandon's Claude project, copied 2026-10-27.
 ## The game in one paragraph (systems only)
 A Fire Emblem / Final Fantasy Tactics style grid tactics RPG fused with Oregon Trail travel survival, in a high fantasy setting. A fixed roster of characters unlocks through play; each has a class, 1 to 3 off-class skills, perks and a deficiency. Classes matter both in combat and on the trail (a star-reading mage who can wayfind, a hunter who feeds the party, a wizard whose books take inventory slots). D&D-style success checks for talking past or sneaking up on threats. Isometric maps where terrain, height and positioning matter. Minigames for fishing, hunting and herb finding. The Lodestone is the party's map and meta-progression: on a wipe it recalls everyone home, loot is lost, and the player re-picks a party. Visually the world shifts from familiar ("Earth") to strange ("Alien") the farther past the Wall the party travels. UI sits in a decorative frame around the scene.
 
+Premise update 2026-10-27 (Brandon): the hero starts alone with their corgi in an empty, decayed village. Survivors met in the world either settle and help rebuild the village or join the party. See `docs/design/empty-village.md`; the old scout / King / lord framing is kept on file in `docs/decisions.md`.
+
 ## Placeholder text style
 `BANDIT COME. lorem ipsum. [ FIGHT ] [ TALK ]`. All of it lives in `game/text/placeholder.csv`.

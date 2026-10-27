@@ -15,6 +15,11 @@ Every design call goes here, newest at the bottom of its section.
 - [USER] 2026-10-25 The UI is framed by a border that shows party and items.
 - [AI] 2026-10-25 Compatibility (OpenGL) renderer, 1280x720 base, canvas_items stretch. Lightest option for 2D and runs on old laptops.
 
+## Premise
+- [USER] 2026-10-25 Original framing (project brief): a scout brings the Lodestone home from dead elves found past the Wall, the King sends you into their lands, and the lord can't give a blank check but backs you more if you prove the trip worthwhile. SUPERSEDED 2026-10-27 by the line below; kept on file.
+- [USER] 2026-10-27 New premise: the hero finds everyone they knew gone, the village empty and decayed as if about 50 years passed. Just the hero and their corgi. Out in the world they meet a few predetermined survivors; each can be recruited back to the village as a settler to rebuild it, or as an adventuring party member. Old plans stay on file; new work follows this.
+- [AI] 2026-10-27 Systems for the new premise are proposed in `docs/design/empty-village.md`: corgi companion (free slot, never lost, trail passives, BARK in combat), survivors at fixed spots with a SETTLE / JOIN choice swappable between runs, village rebuilding with salvage and settler-run buildings replacing the lord's gold, a GO HOME recall that banks the pack, and a build order.
+
 ## Roster and characters
 - [USER] 2026-10-25 Set roster of characters that unlock through play. Main character is a default for now; customization later.
 - [USER] 2026-10-25 Each character has a class, 1 to 3 off-class skills, perks and one deficiency.
@@ -24,6 +29,7 @@ Every design call goes here, newest at the bottom of its section.
 - [USER] 2026-10-25 Skeleton Archer needs no food, warmth or shelter but harshes the vibe. Bushberry is a flammable bush that makes 1 ration a day. Lewith & Flark take 2 slots but act as 1.
 - [AI] 2026-10-25 Party has 4 slots. Lewith & Flark fill 2 of them.
 - [AI] 2026-10-25 Unlock conditions (graybox): Wizard after the first recall, Lewith & Flark after the second, Bushberry from its trail event, Skeleton Archer on reaching the Wall.
+- [AI] 2026-10-27 Under the new premise, unlocks become "met_<id>" flags set when a survivor is won over, replacing the run-count unlocks above. The roster is the survivor list; who survives is Brandon's call.
 - [AI] 2026-10-25 Stardrop's "skittish": at the start of each player phase, if an enemy is within 3 tiles, he rolls d20 + Nerve vs 11. On a fail he is SPOOKED that phase: -3 to hit and -2 move.
 - [AI] 2026-10-25 Wizard's books take 3 of the 12 inventory slots.
 - [AI] 2026-10-25 Hunter's deficiency (placeholder, from the "afraid of rodents" example): 20% of hunts he leads fail outright.
@@ -99,6 +105,7 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-26 The lord's backing is gold, not free food: 30 starting gold plus 5 per 50 leagues of best distance. This replaces the "+5 starting food per 50 leagues" line. Leftover gold goes on the trip.
 - [AI] 2026-10-26 Shop (graybox prices): food bit 1 cell 5 food 2G, food sack 2 cells 12 food 4G, dry meat T 4 cells 30 food 7G, food box 2x2 36 food 9G, goop 1 cell 2 medicine 4G, herb bag L 3 cells 8 medicine 9G. Selling in town refunds the full price.
 - [AI] 2026-10-26 The mayor offers side jobs from `data/quests.csv`. Taking one is saved across recalls. Completing them is not built yet.
+- [AI] 2026-10-27 Under the new premise the village is empty: the mayor, the lord's gold bonus and the gold shop are superseded (kept in code until replaced). Proposed: build board instead of the mayor, storehouse instead of the shop, side jobs become survivor asks. See `docs/design/empty-village.md`.
 - [AI] 2026-10-26 The Lodestone medallion and the MAP tab open the world map scene (owned by the world map work). Head out still goes straight to the trail.
 - [USER] 2026-10-26 Brandon doesn't like how the game looks yet and wants better drawings.
 - [AI] 2026-10-26 Style lab draft 2 names six gaps against the references (F1 machine-perfect edges, F2 no single light, F3 one grain on every surface, F4 everything on one horizon, F5 pieces without charm, F6 UI louder than the picture) and shows a code-drawn village fixing them. Next step depends on Brandon's pick: richer code only, a hybrid where he draws a small kit, or hand-painted scene plates.

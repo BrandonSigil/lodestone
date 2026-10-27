@@ -18,12 +18,14 @@
 - Character sprite kit (2026-10-27): spec `docs/art/characters.md`, Krita templates for hero / small / large / boss in `art/templates/characters/`, exporter `tools/art/char_art.py` writing to `game/art/source/characters/<id>/`. The engine side (sprite node, facings, anim states, paper doll, 2x2 and 3x3 units, free roaming) is planned in that doc, not built.
 
 ## Superseded notes (memory lines that are out of date)
+- 2026-10-27 [USER] New premise: the hero and their corgi in an empty, decayed village; survivors met in the world become settlers or party members. This supersedes the old framing (scout returns with the Lodestone, the King sends you past the Wall, the lord/mayor backs you with gold for proving the trip worthwhile) and the run-count roster unlocks. The old framing stays on file in `docs/decisions.md` and the mayor, gold shop and lord's gold bonus stay in code until replaced. Systems proposal and build order: `docs/design/empty-village.md`.
 - "Brandon draws every final mark / no AI image gen" (tech direction, 2026-10-25): replaced 2026-10-26 [USER]. AI-generated art is allowed, directed by Brandon, made on top of templates. See `docs/art-pipeline.md`.
 - 2026-10-27: Brandon is back on Krita (MacBook M4 Max, Krita AI Diffusion). Maps are built in Godot (sandbox editor); Krita makes tile textures and props into tile sets `game/art/source/battle/<set>/`. Each look starts with a painted concept map that gets broken out into tiles; in-game map plates are shelved. Picsart (API + Flow) still works for the kit.
 - Paths under `lodestone-art\...` (API key, Picsart outputs, kit raws): moved into the repo's `art/` and `~/.lodestone/` on 2026-10-27.
 - CLAUDE.md still says "never generate, paint or edit art files". Brandon has been asked to edit it to point at `docs/art-pipeline.md`; Claude sessions are blocked from changing that rule themselves.
 
 ## Open items waiting on Brandon
+- Empty village premise (`docs/design/empty-village.md`): can survivors switch between settler and party member between runs; does the corgi fight on the grid; drop gold and the shop for now; which roster characters survive; is the Lodestone and the Wall still in the story.
 - Pick the bottom frame: A embroidered band (current default), B quilt row, C foreground ridge, or a mix.
 - Retag `[AI]` lines he agrees with in `docs/decisions.md` as `[USER]`.
 - Fill in `docs/style-bible.md` where it still has blanks.
