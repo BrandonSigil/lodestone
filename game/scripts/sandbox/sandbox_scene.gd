@@ -31,6 +31,7 @@ var _ui: CanvasLayer
 var _mode_button: Button
 var _name_edit: LineEdit
 var _load_menu: OptionButton
+var _set_menu: OptionButton  ## battle tile set
 var _w_spin: SpinBox
 var _h_spin: SpinBox
 var _seed_spin: SpinBox
@@ -242,6 +243,16 @@ func _build_ui() -> void:
 		if not _syncing:
 			setup.strangeness = v
 			_changed())
+	_set_menu = OptionButton.new()
+	_set_menu.add_theme_font_size_override("font_size", 12)
+	_set_menu.add_item("tile set: base")
+	for name in BattleArt.sets():
+		_set_menu.add_item(name)
+	_set_menu.item_selected.connect(func(i: int) -> void:
+		if not _syncing:
+			setup.art_set = "" if i == 0 else _set_menu.get_item_text(i)
+			_changed())
+	rb.add_child(_set_menu)
 	_counter_check = _check(rb, "counterattacks", func(on: bool) -> void: setup.counters = on)
 	_mercy_check = _check(rb, "party luck after misses", func(on: bool) -> void: setup.mercy = on)
 	_dice_check = _check(rb, "new dice on restart", func(on: bool) -> void: random_dice = on)
@@ -356,6 +367,10 @@ func _sync_controls() -> void:
 	_med_spin.value = setup.supplies.medicine
 	_food_spin.value = setup.supplies.food
 	_strange_spin.value = setup.strangeness
+	_set_menu.select(0)
+	for i in _set_menu.item_count:
+		if i > 0 and _set_menu.get_item_text(i) == setup.art_set:
+			_set_menu.select(i)
 	_counter_check.button_pressed = setup.counters
 	_mercy_check.button_pressed = setup.mercy
 	_dice_check.button_pressed = random_dice
@@ -419,6 +434,7 @@ func _restart() -> void:
 	add_child(battle)
 	var fight_seed := randi() if random_dice else setup.seed_value
 	battle.setup(setup.grid.resized(setup.grid.w, setup.grid.h), units, fight_seed, setup.strangeness, setup.supplies.duplicate())
+	battle.board.art_set = setup.art_set
 	if preview:
 		battle.board.rot = preview.rot
 	battle.log_line.connect(_log)
@@ -502,6 +518,7 @@ func _refresh_preview() -> void:
 		return
 	preview.grid = setup.grid
 	preview.strangeness = setup.strangeness
+	preview.art_set = setup.art_set
 	preview.units = setup.build_units()
 	var zone := {}
 	for c in setup.grid.deploy_cells(1):
