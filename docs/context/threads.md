@@ -65,7 +65,9 @@ Started as "Build the character sprite template and Krita guide" and grew into t
 - Terrain sheets: Sunburst prompts for a zone sheet and a game-ready tile kit (PR #21), rougher then simpler finishes (PRs #22, #29), Flux vs GPT image tests through the Picsart API on the Mac (PRs #23 to #30). GPT image with a single style reference won. Brandon loved the flat forest panel, so it became the only style reference (PRs #31 to #35, including `art/prompts/flat-style-portable.txt` for other agents). Flat forest and snow kits (PR #36), cut into game tile sets by `tools/art/kit_cut.py` (PR #37), then six more zones: 8 sets in all (PR #38).
 - Hero sprites: GPT animation sheets for SE and NE cut into game strips by `tools/art/anim_sheet_cut.py`; the `lead` hero idles, walks, swings, casts and flinches in battle (PR #39). Previews in project files `character-art/lead/`.
 - Brandon's playtest notes (after PR #39): show units behind trees and pillars, grid toggle, combat stance with weapon drawn, floating-island map shapes with rough stepped undersides and drips (the "Lich King tomb" sheet is the reference), drop the old base tile set, blended-zone maps. Two were done on the MacBook but not pushed when the session stalled.
-- Open: the rest of those notes; roaming views (S, E, N); other characters; Brandon's sign-off on C1 to C29.
+- All six playtest notes merged in PR #47: prop fade and x-ray, grid checkbox, lead combat stance sheets, void cells (HOLE tool) with hanging rock rims and spill-off water, per-cell zone tile sets (ZONE brush), 4 `blend_` maps from `tools/maps/build_blend_maps.py`, forest default. Rough edges: code-drawn underside rock, hard zone seams. The crypt explore map uses the new tile sets (PR #48).
+- Contributor how-to for adding character sprites (PR #50), so a friend can add characters.
+- Open: roaming views (S, E, N); other characters; Brandon's sign-off on C1 to C29.
 
 ## Export project context into the repo (Oct 27, done)
 - First export of `docs/context/` (PR #12).
@@ -81,9 +83,10 @@ Started as "Build the character sprite template and Krita guide" and grew into t
 - Output: `docs/design/empty-village.md` (corgi, survivors, village rebuilding with salvage and settler buildings, GO HOME recall, roster unlocks as `met_<id>`, build order, open questions). Premise in `docs/decisions.md`. PR #40. No game code changed.
 - Brandon answered: settlers are NPCs between runs (no swapping), the corgi fights and sniffs ("ears perk up... or a squirrel"), gold and the shop come with a blacksmith or merchant, the Lodestone is unearthed early and revealed on the first death, the Wall stays. Draft 2 follows these (PR #41).
 - Brandon added: the hero is a nobody who leaves their house, picks from a couple of weapons at the blacksmith, may find a hidden item, and grows a class Fire Emblem style. Draft 3 adds the village opening (section 7) and the job tree with levels and XP (section 8), PR #44.
-- Open: survivor kind fixed per character or chosen; who survives. Then build steps 1 to 3.
+- Brandon: levels persist; the smithy has sword, daggers and bow (knight, rogue, archer). Draft 3.1, PR #46.
+- Brandon: one smithy weapon, final (respec maybe later); a hidden book on a shelf in a home unlocks a mage path at level 5 (wizard / healer). Draft 3.2, PR #49.
+- Starting village prototype, PR #51 (merged 2026-10-27 16:25 UTC on Brandon's go): `tools/explore/build_village.py` builds `home` (the hero's cottage, where F10 now starts), `village` (40x38: square, town hall, tavern, smithy, five homes, stream, gate to the trail) and interiors `house_ne` and `tavern`. Smithy rack (TAKE SWORD / DAGGERS / BOW, sets `weapon_*`), hidden book (kind `hidden`, sets `found_book`), placed props and whole-building sprites (`CombatGrid.props`), doors between explore maps, `once` flags. Picsart art (about $1.57): tile sets `village` and `village_in`, two prop sheets, seven buildings. 107 tests.
+- Open: survivor kind fixed per character or chosen; who survives; tier 2 job names. Corgi sniff not wired.
 
 ## Refresh project context in the repo (Oct 27, done)
-- Brandon asked whether everything from the night was in the repo so a friend on another account could help. Refreshed `docs/context/` (memory copy, this file, `current-state.md`, latest Character Guide and Battle Map Guide HTML) and the newcomer pointer in `CLAUDE.md`.
-- Brandon: levels persist; the smithy has sword, daggers and bow (knight, rogue, archer). Draft 3.1 follows.
-- Brandon: one smithy weapon, the rest locked (respec maybe later); a hidden magic path via a book on a shelf in a home. Draft 3.2 follows and says where the book sits for the village map.
+- Brandon asked whether everything from the night was in the repo so a friend on another account could help. Refreshed (PR #45, then again after PRs #46 to #51) `docs/context/` (memory copy, this file, `current-state.md`, latest Character Guide and Battle Map Guide HTML) and the newcomer pointer in `CLAUDE.md`.
