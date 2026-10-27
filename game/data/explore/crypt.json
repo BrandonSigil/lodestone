@@ -1,0 +1,260 @@
+{
+ "name": "crypt",
+ "art_set": "",
+ "strangeness": 0.0,
+ "view": 0,
+ "grid": {
+  "w": 34,
+  "h": 30,
+  "terrain": [
+   "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+   "rrrrrrrrrrrrssssssussssssrrrrrrrrr",
+   "rrrrrrrrrrrrssusssssssussrrrrrrrrr",
+   "rrrrrrrrrrrrsssssssssssssrrrfgssgr",
+   "rrrrrrrrrrrrssusssssssussrrrgtssgr",
+   "rrrrrrrrrrrrsssssssssssssrrrggggfr",
+   "rrrrrrrrrrrrrrrrrtttrrrrrrrrgggggr",
+   "rrrrrrrrrrrrrrrrrtttrrrrrrrrgrgrgr",
+   "rgggggggggggssssssssssssssssgggggr",
+   "rgfgggfgggggssussssssusssusstrgrgr",
+   "rgggggggggggssssswwssssssssstggggr",
+   "rggfggggggggssssswwsssssssssrrrrrr",
+   "rggggggggfggssussssssusssussrssssr",
+   "rgggrrrrrrrrssssssssssssssssrsrssr",
+   "rrurrwwwwwwrrrrrrrrrrrrrrtttrssssr",
+   "rgggfwwwwwwrrrrrrrrrrrrrrdddussssr",
+   "rfgggwwwwwwrrrrrrrrrrrrrrdddrsrssr",
+   "rggggwwwwwwrrrrrrrrrrrrrrdddrssssr",
+   "rggggwwwwwwrrrrrrrrrrrrrruuurrrrrr",
+   "rggggwwwwwwgrrrrrrrrrrrrrdddrrrrrr",
+   "rggggssssssgrrrrrrrrrrrrrdddrrrrrr",
+   "rggggwwwwwwgrrrrrrrrrrrrrdddrrrrrr",
+   "rfgggwwwwwwgrrrrrrrrrgggggggggggrr",
+   "rgfggwwwwwwgggggggggggggggggggfgrr",
+   "rggggwwwwwwgggggfggggggggggggggfrr",
+   "rrrrrwwwwwwgggggggggggggggggggggrr",
+   "rrrrrwwwwwwggfggggggggggggggggggrr",
+   "rrrrrwwwwwwgggfgggggggfgggggggggrr",
+   "rrrrrwwwwwwrrrrrrrrrrggfgggggggfrr",
+   "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+  ],
+  "heights": [
+   "0000000000088888888888888800000000",
+   "0000000000086666666666666800000000",
+   "0000000000086666666666666806688886",
+   "0000000000086666666666666806446646",
+   "0000000000086666666666666806456646",
+   "0000000000086666666666666806444446",
+   "0000000000088888855588888806444446",
+   "6666666666666555744475555556444446",
+   "6444444444443333333333333333444446",
+   "6444444444443333333333333333444446",
+   "6444444444443333322333333333444446",
+   "6444444444443333322333333333666666",
+   "6444444444443333333333333333511113",
+   "6444666666663333333333333333511113",
+   "6636622222255555555555555222511113",
+   "4222222222240000000000004111111113",
+   "4222222222240000000000003111311113",
+   "4222200000040000000000003111311113",
+   "4222200000033000000000003111333333",
+   "4222200000013000000000003111300000",
+   "4222222222213000000000003111300000",
+   "4222200000013000000033333111333330",
+   "4222200000013333333331111111111130",
+   "4222200000011111111111111111111130",
+   "4222200000011111111111111111111130",
+   "4444400000011111111111111111111130",
+   "0000200000011111111111111111111130",
+   "0000200000011111111111111111111130",
+   "0000200000033333333331111111111130",
+   "0000222222220000000033333333333330"
+  ]
+ },
+ "start": [
+  [
+   27,
+   26
+  ],
+  [
+   28,
+   27
+  ],
+  [
+   26,
+   27
+  ]
+ ],
+ "groups": [
+  {
+   "id": "plaza",
+   "event": "spot_people",
+   "sight": 4,
+   "loot": "food:+6;gold:+10",
+   "units": [
+    {
+     "id": "bandit",
+     "cell": [
+      19,
+      9
+     ]
+    },
+    {
+     "id": "bandit",
+     "cell": [
+      20,
+      12
+     ]
+    },
+    {
+     "id": "bandit_archer",
+     "cell": [
+      16,
+      8
+     ]
+    }
+   ]
+  },
+  {
+   "id": "cave",
+   "event": "spot_beasts",
+   "sight": 4,
+   "loot": "food:+10",
+   "units": [
+    {
+     "id": "wolf",
+     "cell": [
+      2,
+      18
+     ]
+    },
+    {
+     "id": "wolf",
+     "cell": [
+      3,
+      20
+     ]
+    }
+   ]
+  },
+  {
+   "id": "tower",
+   "event": "spot_people",
+   "sight": 5,
+   "loot": "medicine:+2",
+   "units": [
+    {
+     "id": "bandit_archer",
+     "cell": [
+      30,
+      3
+     ]
+    },
+    {
+     "id": "bandit",
+     "cell": [
+      30,
+      8
+     ]
+    }
+   ]
+  },
+  {
+   "id": "throne",
+   "event": "spot_strange",
+   "sight": 4,
+   "loot": "medicine:+3;gold:+20",
+   "units": [
+    {
+     "id": "strange_thing",
+     "cell": [
+      18,
+      2
+     ]
+    },
+    {
+     "id": "strange_thing",
+     "cell": [
+      16,
+      4
+     ]
+    },
+    {
+     "id": "wolf",
+     "cell": [
+      20,
+      4
+     ]
+    }
+   ]
+  }
+ ],
+ "things": [
+  {
+   "id": "gate",
+   "kind": "door",
+   "event": "locked_door",
+   "cell": [
+    26,
+    18
+   ],
+   "floor": "d"
+  },
+  {
+   "id": "crypt_door",
+   "kind": "door",
+   "event": "sealed_door",
+   "cell": [
+    28,
+    15
+   ],
+   "floor": "s"
+  },
+  {
+   "id": "crypt_chest",
+   "kind": "chest",
+   "event": "chest",
+   "cell": [
+    31,
+    14
+   ]
+  },
+  {
+   "id": "yard_stone",
+   "kind": "shrine",
+   "event": "shrine",
+   "cell": [
+    24,
+    24
+   ]
+  },
+  {
+   "id": "cave_rubble",
+   "kind": "rubble",
+   "event": "rubble",
+   "cell": [
+    2,
+    14
+   ],
+   "floor": "t"
+  },
+  {
+   "id": "tower_chest",
+   "kind": "chest",
+   "event": "chest",
+   "cell": [
+    31,
+    3
+   ]
+  },
+  {
+   "id": "way_out",
+   "kind": "exit",
+   "event": "exit",
+   "cell": [
+    13,
+    2
+   ]
+  }
+ ]
+}

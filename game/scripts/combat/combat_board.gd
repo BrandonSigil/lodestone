@@ -54,6 +54,11 @@ var selected: CombatUnit = null
 var _floaters: Array[Dictionary] = []  # {"text", "pos", "t", "color"}
 var _time := 0.0
 var rot := 0  ## camera quarter turns, 0-3 (Q turns it)
+## Fog of war for exploration maps: cell -> 1 (seen before, drawn dim) or 2 (in sight now).
+## With fog_on, cells missing from it are not drawn or picked at all.
+var fog := {}
+var fog_on := false
+var cull := Rect2()  ## board-local area worth drawing (big maps); empty draws everything
 
 
 func _ready() -> void:
@@ -157,6 +162,8 @@ func pick(local: Vector2) -> Vector2i:
 	var layers := _layers()
 	for i in range(layers.size() - 1, -1, -1):
 		for c: Vector2i in layers[i]:
+			if hidden(c):
+				continue
 			if Geometry2D.is_point_in_polygon(local, _diamond(c, grid.height_at(c))):
 				return c
 	return NONE
@@ -200,7 +207,11 @@ func _draw() -> void:
 	var layers := _layers()
 	for depth in layers.size():
 		for c: Vector2i in layers[depth]:
+			if hidden(c):
+				continue
 			_draw_tile(c)
+			if fog_on and fog[c] == 1:
+				_veil(c)
 		for u: CombatUnit in units:
 			if u.shown_hp > 0 and clampi(depth_of(u.vis.x, u.vis.y), 0, layers.size() - 1) == depth:
 				_draw_unit(u)
@@ -217,6 +228,31 @@ func _draw() -> void:
 		var a := clampf(f.t, 0.0, 1.0)
 		draw_string_outline(font, f.pos, f.text, HORIZONTAL_ALIGNMENT_CENTER, 120, 16, 4, Color(0, 0, 0, a))
 		draw_string(font, f.pos, f.text, HORIZONTAL_ALIGNMENT_CENTER, 120, 16, Color(f.color, a))
+
+
+## Not drawn: never seen under fog of war, or off screen on a big map.
+func hidden(c: Vector2i) -> bool:
+	if fog_on and not fog.has(c):
+		return true
+	return cull.has_area() and not cull.has_point(cell_top(c))
+
+
+## Remembered but out of sight: a dark wash over the top and the two faces toward the camera.
+func _veil(c: Vector2i) -> void:
+	var h := float(grid.height_at(c))
+	var col := Color(0.06, 0.07, 0.1, 0.55)
+	draw_colored_polygon(_diamond(c, h), col)
+	for shade in [false, true]:
+		var d := front_dir(shade)
+		var n := c + d
+		var nh := float(grid.height_at(n)) if grid.in_bounds(n) else BASE
+		var low := maxf(BASE, minf(nh, h))
+		if low >= h:
+			continue
+		var e := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
+		var a: Vector2 = e[0]
+		var b: Vector2 = e[1]
+		draw_colored_polygon(PackedVector2Array([iso(a.x, a.y, h), iso(b.x, b.y, h), iso(b.x, b.y, low), iso(a.x, a.y, low)]), col)
 
 
 func _terrain_color(t: int) -> Color:

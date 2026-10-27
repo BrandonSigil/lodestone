@@ -41,20 +41,27 @@ var _forecast: PanelContainer
 var _forecast_label: Label
 var _banner: Label
 var _rect := Rect2()
+var _fit_board := true  ## false when the host owns the board's camera (exploration maps)
 
 
-func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0.0, p_supplies := {}) -> void:
+## p_board: fight on a board the host already shows (a fight that breaks out on an exploration map).
+## The host keeps owning it, its camera and its fog; the battle only borrows its input and highlights.
+func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0.0, p_supplies := {}, p_board: CombatBoard = null) -> void:
 	grid = p_grid
 	units = p_units
 	rng.seed = seed_value
 	supplies = p_supplies
 	for u: CombatUnit in units:
 		u.sync_view()
-	board = CombatBoard.new()
-	board.grid = grid
+	if p_board != null:
+		board = p_board
+		_fit_board = false
+	else:
+		board = CombatBoard.new()
+		board.grid = grid
+		board.strangeness = strangeness
+		add_child(board)
 	board.units = units
-	board.strangeness = strangeness
-	add_child(board)
 	board.cell_clicked.connect(_on_cell_clicked)
 	board.cell_hovered.connect(_on_cell_hovered)
 	board.rotated.connect(_on_rotated)
@@ -98,18 +105,20 @@ static func _panel_style(bg: Color) -> StyleBoxFlat:
 	return sb
 
 
-## Centre the board in a screen rect at a scale that fits.
+## Centre the board in a screen rect at a scale that fits (a borrowed board only places the menus).
 func layout(r: Rect2) -> void:
 	if board == null:
 		return
 	_rect = r
+	_forecast.position = r.position + Vector2(8, 8)
+	_banner.position = r.position + Vector2(r.size.x * 0.5 - 90, r.size.y - 48)
+	if not _fit_board:
+		return
 	var bs := board.board_size()
 	var s := minf(r.size.x / bs.x, r.size.y / bs.y) * 0.95
 	s = clampf(s, 0.5, 1.6)
 	board.scale = Vector2.ONE * s
 	board.position = r.position + (r.size - bs * s) * 0.5 - board.board_origin() * s
-	_forecast.position = r.position + Vector2(8, 8)
-	_banner.position = r.position + Vector2(r.size.x * 0.5 - 90, r.size.y - 48)
 
 
 func _on_rotated() -> void:
@@ -118,9 +127,13 @@ func _on_rotated() -> void:
 		_place_menu()
 
 
-func start() -> void:
+## enemy_first: the party was caught (spotted on an exploration map), so the enemy moves before round 1.
+func start(enemy_first := false) -> void:
 	round_no = 0
-	_start_player_phase()
+	if enemy_first:
+		_enemy_phase()
+	else:
+		_start_player_phase()
 
 
 func is_player_turn() -> bool:

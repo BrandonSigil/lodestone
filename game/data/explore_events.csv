@@ -1,0 +1,10 @@
+id,text_key,opt1_key,opt1_need,opt1_check,opt1_dc,opt1_win,opt1_lose,opt2_key,opt2_need,opt2_check,opt2_dc,opt2_win,opt2_lose,opt3_key,opt3_need,opt3_check,opt3_dc,opt3_win,opt3_lose,opt4_key,opt4_need,opt4_check,opt4_dc,opt4_win,opt4_lose
+locked_door,EX_LOCKED_DOOR,OPT_PICK_LOCK,skill:sneak,sneak,13,open,noise,OPT_MOON_OPEN,class:mage,none,0,open,,OPT_BASH,,nerve,14,open;noise,hp_one:-2;noise,OPT_LEAVE,,none,0,,
+sealed_door,EX_SEALED_DOOR,OPT_FIX_STONE,skill:masonry,masonry,11,open,hp_one:-2,OPT_READ_MARKS,skill:wayfind,wayfind,12,open,morale:-5,OPT_BASH,,nerve,15,open;noise,hp_one:-3;noise,OPT_LEAVE,,none,0,,
+chest,EX_CHEST,OPT_OPEN,,none,0,hp_one:-2;food:+4;gold:+10;remove,,OPT_DISARM,skill:sneak,sneak,11,medicine:+2;food:+4;gold:+10;remove,hp_one:-3;food:+4;remove,OPT_LEAVE,,none,0,,,,,,,,
+shrine,EX_SHRINE,OPT_TOUCH,,nerve,12,hp_all:+3;remove,morale:-10;remove,OPT_READ_STARS,class:mage,wayfind,10,reveal;remove,morale:-5,OPT_LEAVE,,none,0,,,,,,,,
+rubble,EX_RUBBLE,OPT_CLEAR,skill:masonry,masonry,10,open,hp_one:-2,OPT_BASH,,nerve,13,open;noise,hp_one:-2;noise,OPT_LEAVE,,none,0,,,,,,,,
+exit,EX_EXIT,OPT_GO_ON,,none,0,exit,,OPT_STAY,,none,0,,,,,,,,,,,,,,
+spot_people,EX_SPOT_PEOPLE,OPT_FIGHT,,none,0,fight,,OPT_SNEAK_HIT,skill:sneak,sneak,13,sneak_attack,ambushed,OPT_TALK,skill:persuade,persuade,13,pacify,ambushed,OPT_BACK_OFF,,none,0,,
+spot_beasts,EX_SPOT_BEASTS,OPT_FIGHT,,none,0,fight,,OPT_SNEAK_HIT,skill:sneak,sneak,12,sneak_attack,ambushed,OPT_CALM,skill:tame,tame,12,pacify,ambushed,OPT_BACK_OFF,,none,0,,
+spot_strange,EX_SPOT_STRANGE,OPT_FIGHT,,none,0,fight,,OPT_SNEAK_HIT,skill:sneak,sneak,14,sneak_attack,ambushed,OPT_HIDE_LIGHT,class:mage,nerve,12,sneak_attack,ambushed,OPT_BACK_OFF,,none,0,,

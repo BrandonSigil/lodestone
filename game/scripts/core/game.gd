@@ -9,6 +9,7 @@ const TRAIL := "res://scenes/trail.tscn"
 const COMBAT := "res://scenes/combat.tscn"
 const WORLD_MAP := "res://scenes/world_map.tscn"
 const SANDBOX := "res://scenes/combat_sandbox.tscn"  ## developer tool, F9 from any screen
+const EXPLORE := "res://scenes/explore.tscn"  ## walkable map, F10 from any screen for now
 
 var meta := {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": []}
 var run: RunState = null
@@ -18,6 +19,7 @@ var pending_lines: PackedStringArray = []  ## shown by the next screen
 ## Village prep that survives a trip to the world map and back. Cleared on departure.
 var outfit: Outfit = null
 var village_party: Array[StringName] = []
+var explore_map := "crypt"  ## which data/explore map the explore scene opens
 
 
 func _ready() -> void:
@@ -25,10 +27,12 @@ func _ready() -> void:
 	load_meta()
 
 
-## Developer shortcut: F9 opens the combat sandbox from anywhere.
+## Developer shortcuts: F9 opens the combat sandbox, F10 the walkable map, from anywhere.
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.pressed and not event.is_echo() and event.keycode == KEY_F9:
 		go(SANDBOX)
+	elif event.pressed and not event.is_echo() and event.keycode == KEY_F10:
+		go(EXPLORE)
 
 
 # --- meta ---------------------------------------------------------------
