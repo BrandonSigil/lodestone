@@ -9,9 +9,9 @@ Make a reference sheet in the same layout as the attached sheet: a short title a
    row 3: cliff side, built wall side, waterfall or liquid side, cliff side variant, hazard side (seen straight on, 4 equal stone courses)
    row 4: small props alone on cream: bush, boulder, crate or barrel, light source, small detail
    row 5: tall props alone on cream: tree, second tree, pillar, landmark, ruin or doorway
-4. One line of small labels under row 5.
+4. No other text: only the zone name on its label plate. No title, no taglines, no captions, no swatch labels.
 
-Style: hand-inked storybook game art (see FINISH below): thick wobbly brush-pen outlines in warm dark plum-grey (#373335) never black, mottled gouache washes with paper grain, chunky slightly crooked blocks, a few hand-drawn dash marks, one soft sun from the upper left (tops brightest, left sides 75%, right sides 55%), plain cream paper background (#eae8d6). Few, big, readable shapes: islands built from fewer, chunkier blocks rather than many small ones. Every zone uses the same block size and the same step height.
+Style: hand-inked storybook game art (see FINISH below): thick wobbly brush-pen outlines in warm dark plum-grey (#373335) never black, mottled gouache washes with paper grain, chunky slightly crooked blocks, a few hand-drawn dash marks, one soft sun from the upper left (tops brightest, left sides 75%, right sides 55%), plain cream paper background (#eae8d6). Few, big, readable shapes: islands built from fewer, chunkier blocks rather than many small ones. Every zone uses the same block size and the same step height, but its OWN cliff material: root-tangled earth, cut masonry, ice shelf, layered sandstone, glassy rock and so on. Never the same grey stone blocks under every zone.
 
 Colour: each zone has one main colour family plus ONE accent (example: volcanic = ash greys plus ember orange; crystal = slate plus violet). Accents are small: lava channels, crystals, lanterns. No saturated red or blue anywhere else.
 
