@@ -19,7 +19,10 @@ var pending_lines: PackedStringArray = []  ## shown by the next screen
 ## Village prep that survives a trip to the world map and back. Cleared on departure.
 var outfit: Outfit = null
 var village_party: Array[StringName] = []
-var explore_map := "crypt"  ## which data/explore map the explore scene opens
+var explore_map := "home"  ## which data/explore map the explore scene opens (the hero's home starts the village)
+var explore_entry := Vector2i(-1, -1)  ## where the leader arrives through a door; (-1, -1) = the map's start
+## Explore maps the party walked out of and may walk back into: map -> {"seen": cells, "done": thing ids}.
+var explore_memory := {}
 
 
 func _ready() -> void:

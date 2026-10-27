@@ -68,6 +68,7 @@ var fog := {}
 var fog_on := false
 var cull := Rect2()  ## board-local area worth drawing (big maps); empty draws everything
 var show_grid := true  ## cell outlines; off, only real ledges keep their rim (exploration hides the grid)
+var can_turn := true  ## false on maps whose building sprites only read from the front
 
 
 func _ready() -> void:
@@ -129,6 +130,8 @@ func front_dir(shade: bool) -> Vector2i:
 
 
 func turn(steps := 1) -> void:
+	if not can_turn:
+		return
 	rot = posmod(rot + steps, 4)
 	hover = NONE
 	rotated.emit()
@@ -377,6 +380,9 @@ func _draw_tile(c: Vector2i) -> void:
 	if danger.has(c):
 		draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(1.0, 0.5, 0.1, 0.7), 1.5, true)
 	var mid := cell_top(c)
+	if grid.prop_anchor(c) != CombatGrid.NONE_CELL:
+		_placed(c)
+		return
 	if _props(c, h, t, seed_v, tint, zone):
 		return
 	match t:
@@ -387,6 +393,8 @@ func _draw_tile(c: Vector2i) -> void:
 				draw_line(p, p + Vector2(0, -7), Color(0.4, 0.3, 0.22), 2.0)
 				_cube(p + Vector2(0, -7), 7.0, 9.0, top_col.lightened(0.05))
 		CombatGrid.T.ROCK:
+			if top_tex != null:
+				return  # a painted set without boulder art (house walls): the texture is the wall top
 			draw_colored_polygon(PackedVector2Array([mid + Vector2(-14, 4), mid + Vector2(-8, -14), mid + Vector2(6, -18), mid + Vector2(15, 2)]), top_col.darkened(0.25))
 			draw_colored_polygon(PackedVector2Array([mid + Vector2(-8, -14), mid + Vector2(6, -18), mid + Vector2(2, -8)]), top_col.lightened(0.1))
 		CombatGrid.T.WATER:
@@ -435,6 +443,72 @@ func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color, zone := "")
 		var a := 0.35 if _fade.has(c) else 1.0  # see-through while a piece stands behind it
 		draw_texture_rect(tex, Rect2(base.x - pw * 0.5, base.y - ph, pw, ph), false, Color(tint, a))
 	return true
+
+
+## The footprint cell nearest the camera: a placed prop draws with that cell, so pieces behind it go first.
+func _prop_front(a: Vector2i, p: Dictionary) -> Vector2i:
+	var best := a
+	for dy in p.foot.y:
+		for dx in p.foot.x:
+			var c := a + Vector2i(dx, dy)
+			if depth_of(c.x, c.y) > depth_of(best.x, best.y):
+				best = c
+	return best
+
+
+## Screen rect of a placed prop. Buildings (tall 0) span their footprint with the image's bottom on its
+## front corner; small props stand `tall` tile widths high on the middle of their footprint.
+func _prop_rect(a: Vector2i, p: Dictionary, tex: Texture2D) -> Rect2:
+	var h := float(grid.height_at(a))
+	var foot: Vector2i = p.foot
+	var pts := [iso(a.x, a.y, h), iso(a.x + foot.x, a.y, h), iso(a.x + p.foot.x, a.y + p.foot.y, h), iso(a.x, a.y + p.foot.y, h)]
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for q: Vector2 in pts:
+		lo = lo.min(q)
+		hi = hi.max(q)
+	var span := hi.x - lo.x
+	var aspect := tex.get_width() / float(tex.get_height())
+	if p.tall <= 0.0:
+		return Rect2(lo.x, hi.y - span / aspect, span, span / aspect)
+	var ph: float = p.tall * TW
+	var pw := ph * aspect
+	if pw > span * 0.95:
+		pw = span * 0.95
+		ph = pw / aspect
+	var base := (lo + hi) * 0.5
+	return Rect2(base.x - pw * 0.5, base.y + (hi.y - lo.y) * 0.18 - ph, pw, ph)
+
+
+## A placed prop (well, bed, a whole house), drawn from its front cell. Graybox block until its art exists.
+func _placed(c: Vector2i) -> void:
+	var a := grid.prop_anchor(c)
+	var p: Dictionary = grid.props[a]
+	if _prop_front(a, p) != c:
+		return
+	var tex := BattleArt.texture(String(p.sprite), false, grid.zone_at(a))
+	var col := Color.WHITE
+	if fog_on and fog.get(c, 2) == 1:
+		col = Color(0.45, 0.46, 0.52)  # remembered, out of sight: same wash as the veil
+	if _fade.has(a):
+		col.a = 0.35
+	if tex == null:
+		var h := float(grid.height_at(a))
+		var tall: float = p.tall
+		var top: float = h + (tall * 2.0 if tall > 0.0 else 3.0)
+		var lo := Vector2(a)
+		var hi: Vector2 = lo + Vector2(p.foot)
+		for shade in [false, true]:
+			var e: Array = _side(lo, hi, front_dir(shade))
+			var q := PackedVector2Array([iso(e[0].x, e[0].y, top), iso(e[1].x, e[1].y, top), iso(e[1].x, e[1].y, h), iso(e[0].x, e[0].y, h)])
+			draw_colored_polygon(q, MASONRY.darkened(0.3 if shade else 0.12) * col)
+		draw_colored_polygon(PackedVector2Array([iso(lo.x, lo.y, top), iso(hi.x, lo.y, top), iso(hi.x, hi.y, top), iso(lo.x, hi.y, top)]), MASONRY.lightened(0.1) * col)
+		return
+	var r := _prop_rect(a, p, tex)
+	if p.tall > 0.0 and not p.walk:
+		var b := Vector2(r.get_center().x, r.end.y)
+		Pawn.ellipse(self, b, r.size.x * 0.36, r.size.x * 0.13, Color(0.1, 0.1, 0.12, 0.22 * col.a), true)
+	draw_texture_rect(tex, r, false, col)
 
 
 ## One side face between grid corners a and b, from height h down to hb, with stone courses.
@@ -728,8 +802,8 @@ func _find_cover() -> void:
 		var box := _unit_box(u)
 		var d := depth_of(u.vis.x, u.vis.y)
 		var uc := Vector2i(roundi(u.vis.x), roundi(u.vis.y))
-		for dy in range(-4, 5):
-			for dx in range(-4, 5):
+		for dy in range(-6, 7):  # a house in front can reach this far
+			for dx in range(-6, 7):
 				var c := uc + Vector2i(dx, dy)
 				if not grid.in_bounds(c) or depth_of(c.x, c.y) <= d or hidden(c):
 					continue
@@ -741,6 +815,13 @@ func _find_cover() -> void:
 					var prop := Rect2(mid.x - TW * 0.45, mid.y - ph, TW * 0.9, ph)
 					if _overlap(box, prop) > 0.2:
 						_fade[c] = true
+						if u.team == 0:
+							_covered[u] = true
+				var a := grid.prop_anchor(c)
+				if a != CombatGrid.NONE_CELL and _prop_front(a, grid.props[a]) == c:
+					var tex := BattleArt.texture(String(grid.props[a].sprite), false, grid.zone_at(a))
+					if tex != null and _overlap(box, _prop_rect(a, grid.props[a], tex)) > 0.2:
+						_fade[a] = true
 						if u.team == 0:
 							_covered[u] = true
 				if h > u.vis_h + 0.5:

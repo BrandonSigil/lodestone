@@ -1,6 +1,7 @@
 extends SceneTree
 ## Drives the explore scene into a state and saves a PNG, so the walkable map can be checked headless.
-## Args after "--": <png path> <step>. Steps: start, walk, wasd, door, spot, deploy, fight (see explore_shot_steps.gd).
+## Args after "--": <png path> <step> [map]. Steps: start, walk, wasd, door, spot, deploy, fight (crypt),
+## overview, near:<x>,<y>, use:<thing id> (any map). The map defaults to crypt. See explore_shot_steps.gd.
 
 var _frames := 0
 var _out := ""
@@ -12,6 +13,7 @@ func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
 	_out = args[0]
 	_step = args[1] if args.size() > 1 else "start"
+	root.get_node("Game").set("explore_map", args[2] if args.size() > 2 else "crypt")
 	change_scene_to_file("res://scenes/explore.tscn")
 
 

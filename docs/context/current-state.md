@@ -22,6 +22,7 @@
 - Battle tile sets: 8 flat zone sets in `game/art/source/battle/<zone>/` (forest, snow, ruins, dungeon, farmland, marsh, canyon, crystal; PRs #37, #38), picked from the sandbox "tile set" dropdown (under SUPPLIES AND RULES) and saved with the map. Cut from Picsart GPT-image tile kits by `tools/art/kit_cut.py`. The older painted base set and graybox fallback still exist on main.
 - Hero sprites (PR #39): character id `lead`, idle / walk / attack / cast / hurt in SE and NE (SW and NW are mirrors), faces its move or attack target, hit lands on the strike frame, survives camera turns. Loader `game/scripts/combat/character_art.gd`. Other characters are still pawns. Placeholder art until Brandon approves.
 - Walkable exploration (PRs #42, #43): F10 opens the 34x30 `crypt` test map. Only the leader walks (click or WASD, grid hidden outside fights), fog of war on line of sight, enemy groups that spot you or get spotted, fights start in place with a deploy ring around the leader (ring = move - 3, min 1; +1 on a sneak attack; 1 when ambushed), "!" interactables with party-gated options and dice checks. See `docs/systems/explore.md`.
+- Starting village prototype (thread "Prototype the starting village map"): F10 opens the hero's cottage (`home`); out the door is the `village` explore map (square, well, town hall on a terrace, tavern, smithy with the weapon rack, five homes, stream, gate to the trail), plus walk-in `house_ne` (hidden book in the inner room) and `tavern`. Placed props and whole-building sprites on the grid (`CombatGrid.props`), doors between maps, `hidden` things, once flags, per-set `battle_art_<set>.csv`. Art from Picsart: tile sets `village` and `village_in`, props and buildings (`tools/art/picsart_village.py`, `village_cut.py`). Builder `tools/explore/build_village.py`. The crypt test map is still in `data/explore/` (set `Game.explore_map`).
 - Art pipeline docs and tools: battle map rules B1 to B32 (`docs/art/battle-maps.md`), character rules C1 to C29 (`docs/art/characters.md`), Krita templates, `tools/art/battle_art.py`, `char_art.py`, `break_out.py`, `picsart_sheet.py`, `anim_sheet_cut.py`, zone palette cards, and house-style prompts in `art/prompts/` (see `art/prompts/README.md` and `flat-style-portable.txt`).
 
 ## The art recipe that works now
@@ -52,6 +53,7 @@
 
 ## Gotchas for Claude sessions
 - Godot in the cloud rewrites every art `.import` file; `git checkout -- game/art` before committing. Godot 4.7 on Brandon's machines edits project files too; don't commit those edits.
+- The MacBook has no git-lfs (PNGs go in as plain blobs) and a big art push dies with "unexpected disconnect"; push with `git -c http.postBuffer=524288000 push`. Godot there is `/Applications/Godot.app/Contents/MacOS/Godot` (4.7.2).
 - Picsart (picsart.io) is blocked from the cloud container, so API runs happen on the MacBook through Remote Control.
 - `save_psd` in `tools/art/battle_art.py` must build an RGBA PSD, or psd-tools hides strokes behind a layer mask.
 - GDScript errors on type inference from Variant; use explicit types or `int()`.

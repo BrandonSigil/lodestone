@@ -1,0 +1,13 @@
+LODESTONE PROP SHEET (game-ready props, one set per picture)
+
+Image 1 = the style picture (docs/art/references/style-flat-forest.png, Brandon's pick): match its line, paint and level of detail exactly; it is already as simple as we want. Use its look, not its layout: it is a diorama, this picture is a grid of separate props. Image 2 = docs/art/references/style-flat-forest-tiles.png: the target detail level for every prop.
+
+Aspect 1:1, plain cream paper background (#eae8d6), no title, no labels, no text, no letters or signs with writing anywhere.
+Layout: a 4 x 4 grid of 16 equal square cells with a wide clear cream gap between cells. ONE prop per cell, standing alone, nothing crosses a cell edge, nothing touches another prop. No ground tile, no grass patch, no floor under a prop, no cast shadow.
+View: every prop in 2:1 dimetric three-quarter view from above (orthographic camera turned 45 degrees, looking down 30 degrees), base centred at the bottom of its cell, as if standing on one map tile.
+Setting: [ZONE]
+The 16 props, row by row, left to right: [LIST]
+
+Light from the upper left: top lightest, left faces mid, right faces darkest. Outlines (#373335) around each whole prop only, never black.
+
+Avoid: text, letters, runes, labels, numbers, borders around cells, ground under props, cast shadows, perspective, 3d render, glossy, photo, characters, people, animals, watermark, busy detail, wood grain lines on every plank, moss drips.
