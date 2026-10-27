@@ -12,6 +12,10 @@ template's exact size, and this cuts it back into the pieces the game draws:
     python3 tools/art/break_out.py art/paintings/sampler-forest.png --map sampler --set forest
     python3 tools/art/break_out.py painting.png --map sampler --set forest --props sampler-forest-props.png
 
+It first checks how well the painting kept the grid (share of the template blocking's edges with a painted
+edge nearby) and marks drifted cells. --check does only that. A 3:2 image of another size (1536 x 1024 from an
+image model) is scaled to the template size first.
+
 Writes game/art/source/battle/<set>/ (top_*.png, side_*.png, prop_<n>.png) and a contact sheet
 art/paintings/<painting>-breakout.png showing every piece and where it was cut. Existing files in the
 set are only replaced with --force, so hand-cleaned tiles are safe.
@@ -215,6 +219,41 @@ def cut_prop(layer: Image.Image, box) -> Image.Image:
     return out
 
 
+# --- grid check ---------------------------------------------------------------------------------
+
+def edge_map(src: Image.Image, reach=6) -> np.ndarray:
+    """Where the painting has a visible edge, grown by `reach` px so small wobble still counts."""
+    g = np.asarray(src.convert("L"), dtype=np.int16)
+    mag = np.zeros_like(g)
+    mag[:, 1:] = np.abs(np.diff(g, axis=1))
+    mag[1:, :] = np.maximum(mag[1:, :], np.abs(np.diff(g, axis=0)))
+    edge = mag > 14
+    grown = edge.copy()
+    for _ in range(reach):
+        e = grown.copy()
+        e[1:, :] |= grown[:-1, :]
+        e[:-1, :] |= grown[1:, :]
+        e[:, 1:] |= grown[:, :-1]
+        e[:, :-1] |= grown[:, 1:]
+        grown = e
+    return grown
+
+
+def grid_check(src, heights, terrain, iso: ba.Iso, block=80):
+    """How well the painting kept the map: the share of the template blocking's own edges (block outlines,
+    colour changes, height steps) that have a painted edge nearby. Returns (overall 0..1, weak boxes)."""
+    want = edge_map(Image.alpha_composite(ba.paper(ba.CANVAS), ba.render_blocking(ba.map_faces(heights, terrain, iso), ba.CANVAS, iso)), reach=0)
+    got = edge_map(src)
+    hit = want & got
+    weak = []
+    for y0 in range(0, want.shape[0], block):
+        for x0 in range(0, want.shape[1], block):
+            n = want[y0:y0 + block, x0:x0 + block].sum()
+            if n >= block // 2 and hit[y0:y0 + block, x0:x0 + block].sum() / n < 0.6:
+                weak.append([(x0, y0), (x0 + block, y0), (x0 + block, y0 + block), (x0, y0 + block)])
+    return (hit.sum() / max(1, want.sum())), weak
+
+
 # --- main ---------------------------------------------------------------------------------------
 
 def save(img: Image.Image, path: Path, force: bool, written: list, skipped: list):
@@ -225,9 +264,11 @@ def save(img: Image.Image, path: Path, force: bool, written: list, skipped: list
     written.append(path.name)
 
 
-def contact_sheet(src, cuts, pieces, out_path: Path):
+def contact_sheet(src, cuts, pieces, out_path: Path, weak=()):
     marked = src.convert("RGB").copy()
     dr = ImageDraw.Draw(marked)
+    for poly in weak:  # cells whose outline the painting lost
+        dr.polygon(poly, outline=(230, 120, 20), width=6)
     for name, poly in cuts:
         dr.polygon(poly, outline=(200, 40, 120), width=4)
         dr.text((poly[0][0] + 6, poly[0][1] + 4), name, fill=(200, 40, 120))
@@ -256,13 +297,26 @@ def main(argv=None):
     ap.add_argument("--set", required=True, help="tile set folder to write (game/art/source/battle/<set>/)")
     ap.add_argument("--props", type=Path, help="the exported 'paint 3 props' layer (transparent PNG)")
     ap.add_argument("--force", action="store_true", help="overwrite files already in the set")
+    ap.add_argument("--check", action="store_true", help="only check how well the painting kept the grid; write nothing")
     args = ap.parse_args(argv)
 
     src = Image.open(args.painting).convert("RGBA")
+    if src.size != ba.CANVAS and abs(src.width / src.height - ba.CANVAS[0] / ba.CANVAS[1]) < 0.01:
+        print(f"scaling {src.width} x {src.height} up to {ba.CANVAS[0]} x {ba.CANVAS[1]} (same 3:2 shape)")
+        src = src.resize(ba.CANVAS, Image.LANCZOS)
     if src.size != ba.CANVAS:
         sys.exit(f"{args.painting} is {src.size[0]} x {src.size[1]}; it must be {ba.CANVAS[0]} x {ba.CANVAS[1]} "
                  "(export the whole canvas, don't crop or resize)")
     heights, terrain, iso = load_map(args.map)
+    fit, weak = grid_check(src, heights, terrain, iso)
+    print(f"grid fit {fit:.0%} (share of the map's edges the painting kept; 85%+ is good)")
+    if weak:
+        print(f"{len(weak)} spot(s) drifted, marked orange on the sheet")
+    if args.check:
+        sheet = args.painting.with_name(args.painting.stem + "-gridcheck.png")
+        contact_sheet(src, [], [], sheet, weak)
+        print("grid check sheet:", sheet)
+        return
     out = SETS / args.set
     out.mkdir(parents=True, exist_ok=True)
     written, skipped, cuts, pieces, notes = [], [], [], [], []
@@ -303,7 +357,7 @@ def main(argv=None):
             pieces.append((stem, img))
 
     sheet = args.painting.with_name(args.painting.stem + "-breakout.png")
-    contact_sheet(src, cuts, pieces, sheet)
+    contact_sheet(src, cuts, pieces, sheet, weak)
     print(f"set {args.set}: wrote {len(written)} file(s) to {out.relative_to(ROOT)}")
     for n in written:
         print("  +", n)

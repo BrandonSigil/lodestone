@@ -477,6 +477,8 @@ def map_template(path: Path):
         im = paper(size)
         im.alpha_composite(with_palette(pal, lambda: render_blocking(faces, size, iso)))
         im.convert("RGB").save(out / f"control-blocking-{zone}.png")
+        im.alpha_composite(line_layer)  # with outlines: the input picture for image models (GPT, Flux)
+        im.convert("RGB").save(out / f"preview-{zone}.png")
     return out / "preview.png"
 
 
