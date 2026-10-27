@@ -56,7 +56,7 @@ ol.steps li::marker{font-family:var(--mono);color:var(--pink)}
 <h1>Lodestone characters</h1>
 <p class="lede">How your character sheet becomes the template for every person, monster and boss: the exact frame the game expects, Krita templates that sit on the battle-map grid, and a step-by-step Krita AI workflow for turnarounds, paper-doll parts and animation. Every rule here is a proposal until you mark it yours.</p>
 <ul class="facts"><li>2:1 dimetric, same as maps</li><li>frame 192 × 192 per cell</li><li>feet at (96, 160)</li><li>head at 3 levels = 96 px</li><li>draw 5 views, mirror 3</li><li>ink #373335</li><li>model sheet 768 / view</li></ul>
-<nav class="toc"><a href="#sheet">Your sheet</a><a href="#frame">The frame</a><a href="#dirs">Directions</a><a href="#templates">Templates</a><a href="#setup">Krita setup</a><a href="#character">New character</a><a href="#anim">Animation</a><a href="#monsters">Monsters and bosses</a><a href="#export">Export</a><a href="#rules">Rules</a><a href="#engine">Engine work</a><a href="#fixes">When it goes wrong</a></nav>
+<nav class="toc"><a href="#sheet">Your sheet</a><a href="#frame">The frame</a><a href="#dirs">Directions</a><a href="#templates">Templates</a><a href="#setup">Krita setup</a><a href="#character">New character</a><a href="#anim">Animation</a><a href="#picsart">Picsart</a><a href="#monsters">Monsters and bosses</a><a href="#export">Export</a><a href="#rules">Rules</a><a href="#engine">Engine work</a><a href="#fixes">When it goes wrong</a></nav>
 
 <h2 id="sheet">Your sheet, as a template</h2>
 <figure><img src="{{IMG:docs/art/characters/00-reference-sheet.png:1400}}" alt="Brandon's sheet: a chibi hero in a green hooded cloak and blue tunic, five iso views on tile diamonds, idle, walk, attack, cast and hurt poses, sword and cloak parts, eight swatches"><figcaption>The sheet you posted. It already has the right ingredients: views on tile footprints, a pose row, separate parts and a locked palette.</figcaption></figure>
@@ -207,6 +207,101 @@ down: sitting on the ground, slumped, dazed</pre><button type="button">Copy</but
 </ol>
 <div class="note">Small fixes are often quicker straight in <code>hero-sheet.psd</code> at shipping size: every frame has its diamond, anchor and label, and the export picks up only the frames you painted. The Krita AI plugin's Animation workspace can refine every keyframe with one setting, which is worth a test once a character's style is set.</div>
 
+
+<h2 id="picsart">Picsart: consistent characters step by step</h2>
+<p>The same pipeline without Krita AI. Picsart's Flux model can't use control layers, but it does take <b>reference images</b>, and that is enough: one picture fixes the pose and camera, one fixes who the character is, one fixes the colours. A new import step then puts whatever Picsart makes back on the grid.</p>
+<div class="knobs">
+<div class="knob"><b>Image 1 · pose</b><span>the mannequin view</span></div>
+<div class="knob"><b>Image 2 · identity</b><span>your sketch or the key view</span></div>
+<div class="knob"><b>Image 3 · colours</b><span>the palette card</span></div>
+<div class="knob"><b>Then</b><span>char_art.py import</span></div>
+</div>
+<figure><img src="{{IMG:art/palettes/characters.png:1200}}" alt="Character palette card: ten shaded balls and their light, mid and dark swatches on cream, ink and glint at the end, no text"><figcaption>The palette card, <code>art/palettes/characters.png</code>. No text on it, so the model reads it as colours only. <code>characters-labeled.png</code> has the hex codes for you.</figcaption></figure>
+
+<h3>Once: the files and two Flows</h3>
+<ol class="steps">
+<li><b>Gather the reference images</b> in a Picsart folder (or upload as you go). From the repo, for the class you're making (hero shown):
+<ul>
+<li><code>art/templates/characters/hero/views/se-blocking.png</code>, and the same for <code>s</code>, <code>e</code>, <code>ne</code>, <code>n</code>: the mannequin in each view, 768 square, on cream.</li>
+<li><code>art/templates/characters/hero/control-blocking.png</code>: all five mannequins on one 3:2 sheet.</li>
+<li><code>art/palettes/characters.png</code>: the palette card.</li>
+<li>Your character sheet or a sketch of the new character, to set the look for the first view.</li>
+</ul></li>
+<li><b>Flow "Lodestone character view"</b>: picsart.com/create/workflows › Create new workflow. Input steps: three images (pose, identity, colours) and a text prompt. Generate step: <b>Flux 3 Image</b> with all three images connected as references, aspect <b>1:1</b>, 1 image, highest resolution. Output: PNG. Save.</li>
+<li><b>Flow "Lodestone turnaround"</b>: duplicate it and set the aspect to <b>3:2</b>. Everything else stays the same.</li>
+<li>Optional: a Remove background step before Output. The import step removes the plain cream background for free, so only add it if a character has cream on its outline.</li>
+</ol>
+<div class="note">If your Flow's Generate step takes only one reference image, use the pose image there and paste the identity and colour words into the prompt. Results drift more, so lean on step 3 below (one view at a time, best of several) and the cleanup.</div>
+
+<h3>1. The key view (SE)</h3>
+<ol class="steps">
+<li>Run <b>Lodestone character view</b> with image 1 = <code>views/se-blocking.png</code>, image 2 = your sheet or sketch, image 3 = the palette card, and the prompt below with your costume words in the brackets.</li>
+<li>Run it 4 to 6 times and keep the best. Judge three things: it faces the same way as the mannequin, the feet are about where the mannequin's are, and it looks like your character.</li>
+<li>Save it as <code>art/characters/hero/picsart/hero-se-1.png</code>. That folder keeps every raw Picsart picture, so you can go back.</li>
+<li>Bring it in:
+<div class="prompt"><div class="lab">Terminal</div><pre>python3 tools/art/char_art.py import art/characters/hero/picsart/hero-se-1.png --id hero --dir se</pre><button type="button">Copy</button></div>
+It removes the cream background, moves the figure so its feet sit on the anchor, and prints its height against the mannequin ("98%, ok"). If it says too small or too tall and that isn't a hat, add <code>--fit</code>. Out come <code>art/characters/hero/hero-model.ora</code> (a layered model sheet with your view in the SE slot) and <code>hero_stand_se.png</code> for the game.</li>
+<li>From now on this cleaned SE view is the <b>key view</b>: save a copy as <code>art/characters/hero/hero-key.png</code>. It's image 2 for everything that follows.</li>
+</ol>
+<div class="prompt"><div class="lab">Character view prompt · swap the [view words] and [costume words]</div><pre>Redraw the grey mannequin in image 1 as the character shown in image 2. Keep exactly the camera angle, the facing direction, the pose, the size and the position of the mannequin in image 1: [VIEW WORDS], feet on the same spot, top of the head at the same height. It is the same character as image 2: identical face, hair, costume, colours and props: [COSTUME WORDS]. Use only the colours shown in image 3. Chibi board game piece character about 2.3 heads tall, big round head, small body, two dot eyes. Flat illustrated 2D game sprite: flat fills, one lighter and one darker tone per material, soft light from directly above, warm dark plum-grey outline around the silhouette, thinner inner lines. Plain flat cream background (#eae8d6), nothing else in the picture. High orthographic camera looking down at 30 degrees, 2:1 dimetric game view, no perspective. Avoid: perspective, low angle, light from the side, rim light, cast shadow, floor, ground, grass, tile, scenery, text, letters, watermark, black outlines, 3d render, photo, extra characters, extra limbs.</pre><button type="button">Copy</button></div>
+<div class="prompt"><div class="lab">View words</div><pre>S:  front view, facing the viewer
+SE: three-quarter front view, turned to the viewer's right
+E:  side view, profile facing right
+NE: three-quarter back view, turned away to the upper right, face hidden
+N:  back view, facing away from the viewer, face hidden</pre><button type="button">Copy</button></div>
+
+<h3>2. The other four views</h3>
+<p>Two ways. Try A first; if a view comes out garbled, redo just that view with B.</p>
+<ol class="steps">
+<li><b>A, whole turnaround in one go:</b> run <b>Lodestone turnaround</b> with image 1 = <code>control-blocking.png</code>, image 2 = <code>hero-key.png</code>, image 3 = the palette card, and the turnaround prompt below. Seeing all the views together helps them match. Save as <code>picsart/hero-turnaround-1.png</code> and import it the same way, without <code>--dir</code>: a 3:2 picture is read as the whole sheet, S, SE, E on top and NE, N below.</li>
+<li><b>B, one view at a time:</b> run <b>Lodestone character view</b> with image 1 = that view's <code>views/&lt;dir&gt;-blocking.png</code>, image 2 = <code>hero-key.png</code>, and that view's words. Import with <code>--dir ne</code> (and so on). Each import adds its view to <code>hero-model.ora</code> and keeps the others.</li>
+<li>Do NE and N one after the other and compare the backs: same cloak shape, same pack, same weapon on the same shoulder.</li>
+<li>Check the mirror: flip each of SE, E and NE horizontally in any viewer. If something important swaps sides (a sling, an eyepatch), make SW, W and NW too with B (view words "turned to the viewer's left" and so on) and <code>--dir sw</code>.</li>
+</ol>
+<div class="prompt"><div class="lab">Turnaround prompt</div><pre>Image 1 is a sheet of five grey mannequins on cream in a 3 by 2 grid: top row front view, three-quarter front view turned right, side view facing right; bottom row three-quarter back view turned to the upper right, back view; the sixth space is empty. Redraw every mannequin as the character shown in image 2, keeping each mannequin's exact position, facing direction, pose and size, feet on the same spots. The same character in all five views: identical face, hair, costume, colours and props: [COSTUME WORDS]. Leave the sixth space empty cream. Use only the colours in image 3. Chibi board game piece, about 2.3 heads tall, flat illustrated 2D game sprites, flat fills with one lighter and one darker tone, light from directly above, warm dark plum-grey outlines. Plain flat cream background, no floor, no shadows, no text, no labels. High orthographic camera looking down at 30 degrees, no perspective. Avoid: perspective, different characters, changing costume between views, cast shadow, ground, text, letters, black outlines, 3d render, photo.</pre><button type="button">Copy</button></div>
+
+<h3>3. Clean up and export</h3>
+<ol class="steps">
+<li>Open <code>art/characters/hero/hero-model.ora</code> in Krita (or any editor that keeps layers) and fix what's off: stray lines, a different buckle, a mismatched boot. Small fixes beat another roll.</li>
+<li>Check it at 25% and 12.5% zoom (art size and the game at 720p). If the face or the silhouette feature disappears, make it bigger.</li>
+<li>Export with the palette lock, which also snaps Picsart's near-miss colours onto the key ramps:
+<div class="prompt"><div class="lab">Terminal</div><pre>python3 tools/art/char_art.py export art/characters/hero/hero-model.ora --id hero --lock</pre><button type="button">Copy</button></div></li>
+<li>No Python on hand? Push the raw pictures in <code>art/characters/hero/picsart/</code> and tell me "picsart art in". I'll run the import and export.</li>
+</ol>
+
+<h3>4. Key poses (attack, cast, hurt, down)</h3>
+<ol class="steps">
+<li>Make a pose picture for image 1: open <code>hero-anim-canvas.psd</code>, sketch the pose roughly over the SE mannequin (a stick figure is enough), hide the GUIDE layers and export a 768 PNG. Without a sketch, use <code>views/se-blocking.png</code> and describe the pose in words; it will drift more.</li>
+<li>Run <b>Lodestone character view</b> with image 1 = the pose sketch, image 2 = <code>hero-key.png</code>, image 3 = the palette card, the SE view words and the action words from the animation section. Swap "Keep exactly … the pose" for "Use the pose of the stick figure in image 1".</li>
+<li>Import it as a frame of an animation:
+<div class="prompt"><div class="lab">Terminal · the hit frame of the attack, facing SE</div><pre>python3 tools/art/char_art.py import art/characters/hero/picsart/attack-hit.png --id hero --dir se --anim attack --frame 2 --fit</pre><button type="button">Copy</button></div>
+Frames count from 0, so <code>--frame 2</code> is the third frame, the one where the hit lands. It writes <code>art/characters/hero/renders/hero_attack_se_0002.png</code>.</li>
+<li>Make the other key poses the same way. Draw the in-betweens by hand on the timeline (Animation section) into the same folder, then <code>pack</code> them into the strip.</li>
+<li>Repeat for NE using the NE view words. The mirrors cover SW and NW.</li>
+</ol>
+
+<h3>5. The paper doll</h3>
+<p>Picsart can't cut parts. Paste each finished view from <code>hero-model.ora</code> into the parts file and split it there, as in "Cut the paper doll" above. That's about 20 minutes per character, and it pays for idle and walk in every direction.</p>
+
+<h3>Monsters and bosses in Picsart</h3>
+<ul>
+<li>Use the class's own files: <code>small/</code>, <code>large/</code> or <code>boss/</code> views and blocking, and <code>--class large</code> (or <code>small</code>, <code>boss</code>) on every import and export.</li>
+<li>Swap "Chibi board game piece character about 2.3 heads tall" for a one-line body plan ("a heavy four-legged beast, low head, thick legs"). Keep the camera, outline, light and background sentences word for word: they keep a monster on the same board as the party.</li>
+<li>If a monster isn't meant to use the party's colours, swap the palette card for your own swatch picture and export without <code>--lock</code>.</li>
+<li>Bosses: make the key view and the NE view, then the telegraph poses. Bosses don't roam, so skip S, E and N.</li>
+</ul>
+
+<h3>When Picsart fights you</h3>
+<div class="tbl"><table>
+<tr><th>Problem</th><th>Fix</th></tr>
+<tr><td>Wrong facing (the SE comes out facing S).</td><td>Put the view words first in the prompt, and add "the face is turned to the viewer's right, we see the left cheek and one eye less" for SE.</td></tr>
+<tr><td>Views don't match each other.</td><td>Always use the cleaned <code>hero-key.png</code> as image 2, never the raw roll. Do one view at a time (B) and keep the costume words identical across runs.</td></tr>
+<tr><td>It draws a floor, a tile or a shadow.</td><td>Most of it is cut with the background. Erase the rest in the model sheet before exporting.</td></tr>
+<tr><td>Import says the figure is 70% or 140%.</td><td>Re-roll, or add <code>--fit</code>. The game needs every person the same height.</td></tr>
+<tr><td>Outlines come out black or too thin.</td><td>Keep "warm dark plum-grey outline" in the prompt; <code>--lock</code> turns near-black into ink. Thicken thin lines in Krita (Stroke layer style, 12 px).</td></tr>
+<tr><td>Colours drift between runs.</td><td>Keep the palette card as image 3 every time, and export with <code>--lock</code>.</td></tr>
+</table></div>
+
 <h2 id="monsters">Monsters and bosses</h2>
 <h3>Monsters (small and large)</h3>
 <ul>
@@ -297,6 +392,7 @@ python3 tools/art/char_art.py pack art/characters/hero/renders --id hero --class
 <tr><td>Lines go thin or grey after the scale-down.</td><td>Outline at 12 px on the model sheet (Stroke layer style), not thinner; lock the palette after the stroke.</td></tr>
 <tr><td>A mirrored view looks wrong.</td><td>The character is lopsided: draw its own SW, W, NW (row 1 of the sprite sheet has slots for them).</td></tr>
 <tr><td>A part rotates and leaves a hole.</td><td>Paint further under the joint on the part beneath (C22).</td></tr>
+<tr><td>Import cuts into the figure.</td><td>The figure has cream on its outline edge: add a Remove background step in the Flow (the import keeps a cut-out picture as it is).</td></tr>
 <tr><td>Exported frames are empty.</td><td>The paint is on a layer whose name doesn't start with <code>paint</code> or <code>part NN</code>, or the layer is hidden.</td></tr>
 <tr><td>Krita shows a layer mask on every layer of an older battle-map PSD.</td><td>Those files were saved before a fix on 2026-10-27; pull the repo for the regenerated templates (or use the .ora).</td></tr>
 </table></div>

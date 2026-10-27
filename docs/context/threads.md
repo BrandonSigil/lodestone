@@ -58,6 +58,7 @@ One entry per thread in Brandon's Claude project, oldest first. Each says what w
 ## Build the character sprite template and Krita guide (Oct 27)
 - Ask: use Brandon's chibi character sheet as the template for all characters, add front / back / left / right views for free roaming, and write a detailed Krita guide for characters, monsters and bosses that fits the iso maps.
 - Output: `docs/art/characters.md` (rules C1 to C29, sizes, export names, engine plan), diagrams in `docs/art/characters/`, templates in `art/templates/characters/` (model sheet with 3D mannequins and control PNGs per view, paper-doll parts front/back, anim canvas, sprite sheet, palette, layout.json) built by `tools/art/char_art.py`, which also exports painted files to `game/art/source/characters/<id>/`. Character Guide page (`artifacts/character-guide.html`). Fixed `save_psd` writing layer alpha as masks and regenerated the battle-map PSDs.
+- Follow-up: Picsart section in the guide (three reference images: mannequin view, key view, palette card `art/palettes/characters.png`; Flows "Lodestone character view" 1:1 and "Lodestone turnaround" 3:2) and `char_art.py import`, which keys out the background, re-anchors the feet and writes the model sheet.
 - Open: Brandon's sign-off on C1 to C29; engine work (sprite node, facing, anim states, paper doll, recolour, multi-cell units, free roaming).
 
 ## Export project context into the repo (Oct 27)
