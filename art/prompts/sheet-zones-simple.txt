@@ -1,0 +1,29 @@
+LODESTONE TERRAIN ZONE SHEET (exploration, many zones on one page)
+
+Make a reference sheet: a grid of zone panels, 4 panels across and 2 down. Each panel has:
+1. A label plate with the zone name.
+2. One small floating island diorama of that zone, seen in a 2:1 dimetric game view (tile diamonds exactly twice as wide as tall, orthographic, no perspective). The island is about 4 by 4 tiles, built from chunky square blocks stacked in terraces of 1 to 3 steps, each step one solid slab. Show one path or stair that connects the low and high ground, and 1 or 2 big props.
+3. Under it, a 5 x 5 grid of square swatches, same order in every panel:
+   row 1: main ground, ground variant, path or road, hard floor, rough rock (blank tops seen straight down, no objects on them)
+   row 2: water or liquid, hazard ground, second floor variant, overgrown ground, special ground (blank tops seen straight down)
+   row 3: cliff side, built wall side, waterfall or liquid side, cliff side variant, hazard side (seen straight on, flat colour, 1 to 3 marks)
+   row 4: small props alone on cream: bush, boulder, crate or barrel, light source, small detail
+   row 5: tall props alone on cream: tree, second tree, pillar, landmark, ruin or doorway
+4. No other text: only the zone name on its label plate. No title, no taglines, no captions, no swatch labels.
+
+Style: SIMPLE, flat, graphic storybook print, like a two- or three-colour risograph or a gouache picture book. Think big flat shapes first, detail last.
+- Flat colour fills: one flat colour per surface plus ONE flat shadow tone. No texture inside shapes except a light, even paper/print grain over the whole page.
+- Lines: few. A single medium-weight hand-drawn outline in warm dark plum-grey (#373335) around big shapes only. No interior lines, no stone joints drawn on every block, no outline on every little leaf or pebble.
+- Light: one soft sun from the upper left. Tops lightest, left sides one step darker, right sides two steps darker. That is the only shading.
+- Blocks: big and few. Each terrace is one solid slab, not many small bricks. Cliff faces are one flat colour with at most 2 or 3 marks to say the material.
+- Props: silhouettes. A tree is one blob of canopy on a trunk. A rock is one shape. No small leaves, cracks, grass tufts, flowers or pebbles scattered around.
+- Swatches: each swatch is one flat colour with at most one simple mark or pattern hint. Lots of empty flat colour.
+- Every zone uses the same block size and step height, but its OWN cliff colour and shape: root-tangled earth, cut masonry, ice shelf, layered sandstone, glassy rock and so on. Never the same grey stone under every zone.
+
+Colour: about 4 colours per zone plus cream paper: one main family plus ONE small accent (example: volcanic = ash greys plus ember orange; crystal = slate plus violet). Soft, slightly faded, printed-book colour. No saturated red or blue anywhere else.
+
+Images: image 1 = style picture (the forest hike illustration). Take its colour mood and hand-made feel, but draw SIMPLER and FLATTER than it: fewer marks, fewer lines, bigger shapes.
+
+Zones for this sheet: [LIST 8 ZONES HERE]
+
+Avoid: detail, texture, clutter, many small objects, grass tufts, stone joints on every block, wood grain, cracks everywhere, perspective, 3d render, photo, glossy vector art, gradients, bevels, highlights, black outlines, characters, people, animals, mobile game asset look, watermark, any text other than the zone names.
