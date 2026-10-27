@@ -18,7 +18,7 @@
 
 ## Superseded notes (memory lines that are out of date)
 - "Brandon draws every final mark / no AI image gen" (tech direction, 2026-10-25): replaced 2026-10-26 [USER]. AI-generated art is allowed, directed by Brandon, made on top of templates. See `docs/art-pipeline.md`.
-- 2026-10-27: Brandon is back on Krita (MacBook M4 Max, Krita AI Diffusion). Maps are built in Godot (sandbox editor); Krita makes tile textures and props into tile sets `game/art/source/battle/<set>/`. Whole-map paintings / map plates are shelved. Picsart (API + Flow) still works for the kit.
+- 2026-10-27: Brandon is back on Krita (MacBook M4 Max, Krita AI Diffusion). Maps are built in Godot (sandbox editor); Krita makes tile textures and props into tile sets `game/art/source/battle/<set>/`. Each look starts with a painted concept map that gets broken out into tiles; in-game map plates are shelved. Picsart (API + Flow) still works for the kit.
 - Paths under `lodestone-art\...` (API key, Picsart outputs, kit raws): moved into the repo's `art/` and `~/.lodestone/` on 2026-10-27.
 - CLAUDE.md still says "never generate, paint or edit art files". Brandon has been asked to edit it to point at `docs/art-pipeline.md`; Claude sessions are blocked from changing that rule themselves.
 
