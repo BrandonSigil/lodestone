@@ -140,6 +140,8 @@ Words that pin the camera for any image model: *"2:1 dimetric (pixel-art isometr
 
 **1. Prototype the zone in Krita.** Open `maps/sampler/sampler.ora` (or any map template). The sampler map has every ground type on a 2 x 2 patch, cliff and masonry faces over 4 levels tall, a stepped stream, stairs, ruins and open ground for key items. Import a starting picture (`control-blocking-<zone>.png`: snow, desert, dungeon, forest; `SNOW` / `DESERT` / `DUNGEON` / `FOREST` in `tools/art/battle_art.py`) or scribble colours over the blocking, add Control Layers (Line Art -> `control-lineart.png` 80%, Depth -> `control-depth.png` 55%), prompt the zone and Refine at 60-85%. Paint key items (campfire, fallen tree, ruins) on `paint 3 props`. On the MacBook (MPS) set Performance > Resolution multiplier to 0.5 or the full 2400 x 1600 pass fails ("tensor dims larger than INT_MAX").
 
+**Palette cards.** `art/palettes/<zone>.png` (home, forest, snow, desert, dungeon; built by `tools/art/palette_cards.py` from the zone colours in `battle_art.py`) shows one iso block per material in its top / lit / shade values plus flat swatches, with no text, so it can go into Picsart, GPT or Krita as an extra reference image. `<zone>-labeled.png` adds names and hex codes; `lodestone-zones.gpl` is the same colours as Krita swatches. Every zone's stone lit / shade sits at 75% / 55% of the top (B11); the script prints the check.
+
 **2. Break it out.** Export the painting with `paint 3 props` hidden as `art/paintings/<map>-<zone>.png` and the props layer alone as `<map>-<zone>-props.png` (both full canvas), then:
 ```
 python3 tools/art/break_out.py art/paintings/sampler-desert.png --map sampler --set desert --props art/paintings/sampler-desert-props.png

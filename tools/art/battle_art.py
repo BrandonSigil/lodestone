@@ -158,7 +158,7 @@ SNOW = {
     "grass_light": "#eef3f2", "grass": "#e4ecec", "moss": "#d3dedf", "moss_dark": "#a9bcc2",
     "pine": "#2f5560", "path": "#d9d6c6",
     "stone_top": "#e3e6e1", "stone_mid": "#d2d7d3", "stone_pale": "#c3cacb",
-    "stone_lit": "#8e98a3", "stone_shade": "#5f6b7a", "stone_deep": "#3a4558",
+    "stone_lit": "#a2adba", "stone_shade": "#718092", "stone_deep": "#3a4558",
     "water": "#a9d3dc", "water_deep": "#7fb4c6",
 }
 
@@ -176,7 +176,7 @@ DUNGEON = {
     "grass_light": "#8e8a7c", "grass": "#858174", "moss": "#6f7a64", "moss_dark": "#59634f",
     "pine": "#3f5a55", "path": "#9a8f78",
     "stone_top": "#a39d8c", "stone_mid": "#958f7f", "stone_pale": "#8a8475",
-    "stone_lit": "#6e6a63", "stone_shade": "#4e4c4c", "stone_deep": "#373335",
+    "stone_lit": "#7a756e", "stone_shade": "#585656", "stone_deep": "#373335",
     "water": "#4f7f86", "water_deep": "#3d6670",
 }
 FOREST = {
