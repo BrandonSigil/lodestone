@@ -22,7 +22,7 @@ Style: SIMPLE, flat, graphic storybook print, like a two- or three-colour risogr
 
 Colour: about 4 colours per zone plus cream paper: one main family plus ONE small accent (example: volcanic = ash greys plus ember orange; crystal = slate plus violet). Soft, slightly faded, printed-book colour. No saturated red or blue anywhere else.
 
-Images: image 1 = style picture (the forest hike illustration). Take its colour mood and hand-made feel, but draw SIMPLER and FLATTER than it: fewer marks, fewer lines, bigger shapes.
+Images: image 1 = style picture (docs/art/references/style-flat-forest.png, Brandon's pick). Match its line, paint and level of detail exactly; it is already as simple as we want. Use its look, not its layout.
 
 Zones for this sheet: [LIST 8 ZONES HERE]
 
