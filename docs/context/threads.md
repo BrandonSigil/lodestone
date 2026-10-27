@@ -45,28 +45,43 @@ One entry per thread in Brandon's Claude project, oldest first. Each says what w
 - PR #7 traits and spell picks: one combat trait per roster character (in `data/characters/*.tres`, rules in `CombatRules`), casters pick 2 spells from a class pool (`spell_pool`, `spell_slots`), SPELLS picker in the sandbox, `tools/spell_report.gd`. 85 tests.
 - Watch: the moon mage's area blast makes bunched enemies on the default map too easy.
 
-## Build battle map art into the game (Oct 26, done)
+## Build battle map art into the game (Oct 26 to 27, done)
 - Ask: use Brandon's isometric reference image to set the battle map look, write exact rules for an "art team", give prompt-ready ratios and grid references, and a template to draw maps on a tablet.
 - Output: the Battle Map Guide page (`artifacts/battle-map-guide.html`) and `docs/art/battle-maps.md`, rules B1 to B32 (2:1 dimetric, art at 2x engine with 128x64 tiles and 32 px per level, sun fixed upper left, top/lit/shade values 100/75/55, outline #373335). Templates in `art/templates/battle-maps/` (PSD and ORA, blank 16x16, one per sandbox map, tile kit sheet, control PNGs) built by `tools/art/battle_art.py`. PR #8.
 - Picsart: Brandon chose the Picsart API (PR #9 test renders; temple held the grid). Then 9 textures and 7 props generated (`tools/art/picsart_kit.py` and `.json`, finals in `game/art/source/battle/`) and wired into the combat board with graybox fallback (PR #10). Background removal drained the credits to 0. Sharper prompts for pines, grass and cliff (PR #11). The guide gained a Picsart Flow recipe for the $20 app plan, since Flow can't import workflow files.
-- Open: top up credits; regenerate the weak assets; engine work for full painted tiles listed in `docs/art/battle-maps.md` is not all built.
+- Oct 27, Krita on the MacBook: Krita AI Diffusion walkthrough and snowy-cliffs blocking (PR #13). Brandon corrected the plan: maps are built in Godot, and each zone look starts as a painted concept map broken out into a tile set. Built tile sets per zone with a sandbox "tile set" menu (PR #14), a sampler map, zone starting pictures and the break-out tool (PR #16), a grid-fit check and 3:2 inputs for image models (PR #17), and zone palette cards to use as a reference image in Picsart (PR #18).
+- Krita at full-map scale came out flat and sloppy, so concept maps moved to image models (Picsart / GPT). Krita is now for touch-ups.
+- Superseded by the flat zone tile sets made in the next thread.
 
 ## Move all Lodestone files into the repo (Oct 27, done)
 - Ask: keep everything in the repo so the MacBook and another account have it.
 - Output: commit 72c977f on main. Picsart work in `art/picsart/`, screenshots in `art/screens/`, empty Krita folders, scripts and `docs/art-pipeline.md` updated. API key moved to `~/.lodestone/picsart-api-key`.
 
-## Build the character sprite template and Krita guide (Oct 27)
-- Ask: use Brandon's chibi character sheet as the template for all characters, add front / back / left / right views for free roaming, and write a detailed Krita guide for characters, monsters and bosses that fits the iso maps.
-- Output: `docs/art/characters.md` (rules C1 to C29, sizes, export names, engine plan), diagrams in `docs/art/characters/`, templates in `art/templates/characters/` (model sheet with 3D mannequins and control PNGs per view, paper-doll parts front/back, anim canvas, sprite sheet, palette, layout.json) built by `tools/art/char_art.py`, which also exports painted files to `game/art/source/characters/<id>/`. Character Guide page (`artifacts/character-guide.html`). Fixed `save_psd` writing layer alpha as masks and regenerated the battle-map PSDs.
-- Follow-up: Picsart section in the guide (three reference images: mannequin view, key view, palette card `art/palettes/characters.png`; Flows "Lodestone character view" 1:1 and "Lodestone turnaround" 3:2) and `char_art.py import`, which keys out the background, re-anchors the feet and writes the model sheet.
-- Open: Brandon's sign-off on C1 to C29; engine work (sprite node, facing, anim states, paper doll, recolour, multi-cell units, free roaming).
+## Build character templates and flat terrain sets (Oct 27, open)
+Started as "Build the character sprite template and Krita guide" and grew into the main art thread of the night.
+- Character template: Brandon's chibi sheet became the template for every character, monster and boss. `docs/art/characters.md` (rules C1 to C29), Krita templates in `art/templates/characters/` built by `tools/art/char_art.py`, and the Character Guide page (`artifacts/character-guide.html`). PR #15. A 3D (Blender) route was discussed; Claude suggested testing it on one hero, nothing decided.
+- Picsart for characters: three reference images (mannequin view, cleaned key view, palette card), Flows "Lodestone character view" and "Lodestone turnaround", and `char_art.py import`. PR #19.
+- House-style prompt blocks for Picsart canvases (`art/prompts/style-*.txt`, PR #20). Brandon saved his Picsart key at `~/.lodestone/picsart-api-key` on the Mac; a venv at `~/.lodestone/venv` runs the art scripts.
+- Terrain sheets: Sunburst prompts for a zone sheet and a game-ready tile kit (PR #21), rougher then simpler finishes (PRs #22, #29), Flux vs GPT image tests through the Picsart API on the Mac (PRs #23 to #30). GPT image with a single style reference won. Brandon loved the flat forest panel, so it became the only style reference (PRs #31 to #35, including `art/prompts/flat-style-portable.txt` for other agents). Flat forest and snow kits (PR #36), cut into game tile sets by `tools/art/kit_cut.py` (PR #37), then six more zones: 8 sets in all (PR #38).
+- Hero sprites: GPT animation sheets for SE and NE cut into game strips by `tools/art/anim_sheet_cut.py`; the `lead` hero idles, walks, swings, casts and flinches in battle (PR #39). Previews in project files `character-art/lead/`.
+- Brandon's playtest notes (after PR #39): show units behind trees and pillars, grid toggle, combat stance with weapon drawn, floating-island map shapes with rough stepped undersides and drips (the "Lich King tomb" sheet is the reference), drop the old base tile set, blended-zone maps. Two were done on the MacBook but not pushed when the session stalled.
+- Open: the rest of those notes; roaming views (S, E, N); other characters; Brandon's sign-off on C1 to C29.
 
-## Export project context into the repo (Oct 27)
-- This export: `docs/context/`.
+## Export project context into the repo (Oct 27, done)
+- First export of `docs/context/` (PR #12).
 
-## Rework systems for the empty village premise (Oct 27)
+## Build walkable exploration maps (Oct 27, done)
+- Ask: big isometric maps the party roams with fog of war, where spotting enemies starts combat right there and doors or chests pop an "interact" box with options based on the party. Brandon's reference images set layout only, not style. Then [USER]: only the main character walks; when combat starts you place the party around the leader, quick characters further out.
+- Output: PR #42. `scenes/explore.tscn` (F10), `game/scripts/explore/`, `data/explore/crypt.json` (from `tools/explore/build_crypt.py`), `data/explore_events.csv`, `docs/systems/explore.md`. Fog on line of sight, spotting and ambush, in-place fights with a deploy ring (move - 3), skill-gated options with dice checks. 101 tests.
+- PR #43: WASD walking (screen-relative, slides along walls) and no grid lines outside fights (`CombatBoard.show_grid`).
+- Open: Brandon to try it and tune ring size and WASD speed; roaming sprite views; hooking explore maps into the trail.
+
+## Rework systems for the empty village premise (Oct 27, open)
 - Ask: Brandon set a new premise (everyone gone, empty decayed village, hero and corgi, survivors become settlers or party members). Record it and work out the systems side; keep the old plans on file.
-- Output: `docs/design/empty-village.md` (corgi, survivors and the SETTLE / JOIN choice, village rebuilding with salvage and settler buildings, GO HOME recall, roster unlocks as `met_<id>`, build order, open questions). Premise section in `docs/decisions.md`; context files updated. No game code changed.
-- Brandon answered: settlers are NPCs between runs (no swapping), the corgi fights and sniffs, gold and the shop come with a blacksmith or merchant, the Lodestone is unearthed early and revealed on the first death, the Wall stays. Draft 2 of the doc follows these.
-- Open: settler vs companion fixed per character or chosen once; who survives. Then build steps 1 to 3.
-- Brandon added: the hero is a nobody who leaves their house, picks from a couple of weapons at the blacksmith, may find a hidden item, and grows a class Fire Emblem style. Draft 3 adds the village opening (section 7) and the job tree with levels and XP (section 8).
+- Output: `docs/design/empty-village.md` (corgi, survivors, village rebuilding with salvage and settler buildings, GO HOME recall, roster unlocks as `met_<id>`, build order, open questions). Premise in `docs/decisions.md`. PR #40. No game code changed.
+- Brandon answered: settlers are NPCs between runs (no swapping), the corgi fights and sniffs ("ears perk up... or a squirrel"), gold and the shop come with a blacksmith or merchant, the Lodestone is unearthed early and revealed on the first death, the Wall stays. Draft 2 follows these (PR #41).
+- Brandon added: the hero is a nobody who leaves their house, picks from a couple of weapons at the blacksmith, may find a hidden item, and grows a class Fire Emblem style. Draft 3 adds the village opening (section 7) and the job tree with levels and XP (section 8), PR #44.
+- Open: survivor kind fixed per character or chosen; who survives. Then build steps 1 to 3.
+
+## Refresh project context in the repo (Oct 27, done)
+- Brandon asked whether everything from the night was in the repo so a friend on another account could help. Refreshed `docs/context/` (memory copy, this file, `current-state.md`, latest Character Guide and Battle Map Guide HTML) and the newcomer pointer in `CLAUDE.md`.
