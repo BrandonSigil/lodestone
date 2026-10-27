@@ -13,6 +13,7 @@ Paste a style block once into a Text node in a Picsart workflow (or keep it as a
 | `style-finish.txt` | The flat, simple finish rules (one colour plus one shadow tone, outlines on big shapes only, silhouette props). Part of the sheet and kit prompts |
 | `sheet-zones.txt` | Many zones (flat simple style) on one reference sheet (diorama plus 5 x 5 swatches each), to explore looks |
 | `sheet-tile-kit.txt` | One zone as a game-ready 5 x 5 kit (tops, sides, props) with no text; see `terrain-sheets.md` |
+| `sheet-character-anim.txt` | One facing of a character as a 5-row animation sheet (idle 4, walk 6, swing 6, cast 6, hurt 2 + down 2); attach `docs/art/characters/00-reference-sheet.png`, fill the facing with `--zones`, cut with `tools/art/anim_sheet_cut.py` |
 | `ask-*.txt` | Example asks in caveman-free plain words, to copy and edit |
 
 Rules behind every block: `docs/art/battle-maps.md` (B1 to B32) and `docs/art/characters.md` (C1 to C29). If a rule changes there, change the block here too.

@@ -40,6 +40,10 @@ var vis := Vector2.ZERO  ## fractional grid position
 var vis_h := 0.0
 var hop := 0.0
 var offset := Vector2.ZERO
+var sprite: StringName = &""  ## character art id (CharacterArt); "" draws the graybox Pawn
+var facing := Vector2i(1, 0)  ## grid direction the piece looks along; the board turns it to screen space
+var anim := "idle"  ## sprite anim playing (idle, walk, attack, cast, hurt)
+var anim_start := 0.0  ## board time the anim started
 var shown_hp := 1  ## HP the board draws; trails hp while hits animate
 
 
@@ -103,6 +107,8 @@ static func from_def(d: CharacterDef, mods: Dictionary = {}, spell_ids: Variant 
 	u.hp = u.max_hp
 	u.shown_hp = u.hp
 	u.tint = d.tint
+	if CharacterArt.has_art(d.id):
+		u.sprite = d.id
 	u.deficiency = d.deficiency
 	for k in d.class_def.skills:
 		u.skills[k] = d.skill(k)
@@ -124,6 +130,7 @@ static func enemy(c: ClassDef, mods: Dictionary = {}) -> CombatUnit:
 	u.name_key = c.name_key
 	u.apply_class(c, mods)
 	u.team = 1
+	u.facing = Vector2i(-1, 0)
 	u.hp = u.max_hp
 	u.shown_hp = u.hp
 	u.tint = Color(0.72, 0.36, 0.33)

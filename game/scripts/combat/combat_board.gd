@@ -211,7 +211,8 @@ func _draw() -> void:
 			var base := iso(u.vis.x + 0.5, u.vis.y + 0.5, u.vis_h) + u.offset - Vector2(0, u.hop)
 			var ring := Color(0.4, 0.7, 1.0) if u.team == 0 else Color(1.0, 0.4, 0.35)
 			Pawn.ellipse(self, base, 26.0 * 0.62, 26.0 * 0.22, Color(ring, 0.45), false, 1.5)
-			draw_arc(base + Vector2(0, -26.0 * 1.22), 26.0 * 0.3, 0, TAU, 20, Color(ring, 0.35), 1.5, true)
+			if not CharacterArt.has_art(u.sprite):  # the head ghost is pawn-shaped; sprites keep the foot ring
+				draw_arc(base + Vector2(0, -26.0 * 1.22), 26.0 * 0.3, 0, TAU, 20, Color(ring, 0.35), 1.5, true)
 	for f in _floaters:
 		var a := clampf(f.t, 0.0, 1.0)
 		draw_string_outline(font, f.pos, f.text, HORIZONTAL_ALIGNMENT_CENTER, 120, 16, 4, Color(0, 0, 0, a))
@@ -548,10 +549,14 @@ func _draw_unit(u: CombatUnit) -> void:
 	var ring := Color(0.4, 0.7, 1.0) if u.team == 0 else Color(1.0, 0.4, 0.35)
 	if u == selected:
 		ring = Color(1.0, 0.9, 0.4)
-	Pawn.draw(self, base, 26.0 * breathe, col, ring)
+	var top := 48.0
+	if CharacterArt.has_art(u.sprite):
+		top = _draw_sprite(u, base, col, ring)
+	else:
+		Pawn.draw(self, base, 26.0 * breathe, col, ring)
 	# HP pips
 	var w := 34.0
-	var p := base + Vector2(-w * 0.5, -48)
+	var p := base + Vector2(-w * 0.5, -top)
 	draw_rect(Rect2(p, Vector2(w, 4)), Color(0, 0, 0, 0.6))
 	draw_rect(Rect2(p, Vector2(w * clampf(float(u.shown_hp) / u.max_hp, 0.0, 1.0), 4)), ring)
 	var tags := ""
@@ -565,6 +570,45 @@ func _draw_unit(u: CombatUnit) -> void:
 		draw_string(font, p + Vector2(-23, -4), tags.strip_edges(), HORIZONTAL_ALIGNMENT_CENTER, 80, 10, Color(1, 0.95, 0.7))
 
 
+## A character sprite standing on base: contact shadow and team ring like the Pawn, then the anim frame.
+## Returns how far above base the HP pips go.
+func _draw_sprite(u: CombatUnit, base: Vector2, col: Color, ring: Color) -> float:
+	Pawn.ellipse(self, base + Vector2(0, 2), 15.0, 5.0, Color(0, 0, 0, 0.25))
+	Pawn.ellipse(self, base, 16.0, 5.7, ring, false, 2.5)
+	var d := Vector2(u.facing)
+	var dir := CharacterArt.screen_dir(iso(1.0 + d.x, 1.0 + d.y, 0.0) - iso(1.0, 1.0, 0.0))
+	var f := CharacterArt.frame(u.sprite, u.anim, dir, _time - u.anim_start)
+	if f.is_empty():
+		return 48.0
+	var s: float = f.scale
+	var mod := Color.WHITE if col == u.tint else Color(0.65, 0.65, 0.65)  # done pieces dim like the pawn
+	draw_set_transform(base, 0.0, Vector2(-s if f.flip else s, s))
+	draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, mod)
+	draw_set_transform(Vector2.ZERO)
+	return f.anchor.y * s * 0.72
+
+
+## Start a sprite anim from its first frame. Non-looping anims fall back to idle when done.
+func play_anim(u: CombatUnit, anim: String) -> void:
+	if not CharacterArt.has_art(u.sprite):
+		return
+	u.anim = anim
+	u.anim_start = _time
+	if anim != "idle" and anim != "walk":
+		var start := u.anim_start
+		get_tree().create_timer(CharacterArt.length(u.sprite, anim) + 0.15).timeout.connect(func() -> void:
+			if u.anim == anim and u.anim_start == start:
+				u.anim = "idle")
+
+
+## Turn a piece toward a cell (the dominant grid axis, since pieces face the four grid directions).
+func face(u: CombatUnit, toward: Vector2i) -> void:
+	var v := toward - u.cell
+	if v == Vector2i.ZERO:
+		return
+	u.facing = Vector2i(signi(v.x), 0) if absi(v.x) >= absi(v.y) else Vector2i(0, signi(v.y))
+
+
 func float_text(c: Vector2i, text: String, color := Color.WHITE) -> void:
 	_floaters.append({"text": text, "pos": cell_top(c) + Vector2(-60, -56), "t": 1.2, "color": color})
 
@@ -573,12 +617,17 @@ func float_text(c: Vector2i, text: String, color := Color.WHITE) -> void:
 
 ## Hop along a path like a piece lifted off the board, one tile at a time.
 func animate_move(u: CombatUnit, path: Array[Vector2i]) -> void:
+	var walker := CharacterArt.has_art(u.sprite)
+	if walker and path.size() > 1:
+		play_anim(u, "walk")
 	for i in range(1, path.size()):
 		var a := Vector2(path[i - 1])
 		var b := Vector2(path[i])
 		var ha := float(grid.height_at(path[i - 1]))
 		var hb := float(grid.height_at(path[i]))
-		var lift := 10.0 + absf(hb - ha) * HS * 0.6
+		u.facing = path[i] - path[i - 1]
+		# Sprites walk, so they only hop to climb; pawns hop every tile like a lifted piece.
+		var lift := (2.0 if walker else 10.0) + absf(hb - ha) * HS * 0.6
 		var step := func(t: float) -> void:
 			u.vis = a.lerp(b, t)
 			u.vis_h = lerpf(ha, hb, t)
@@ -587,6 +636,8 @@ func animate_move(u: CombatUnit, path: Array[Vector2i]) -> void:
 		tw.tween_method(step, 0.0, 1.0, 0.16)
 		await tw.finished
 	u.hop = 0.0
+	if walker:
+		play_anim(u, "idle")
 
 
 ## Slide without a hop: shoved, not walking.
@@ -610,12 +661,21 @@ func cell_screen_pos(c: Vector2i) -> Vector2:
 
 
 func animate_attack(att: CombatUnit, tgt: CombatUnit, hit: bool) -> void:
-	var dir := (cell_top(tgt.cell) - cell_top(att.cell)).normalized() * 10.0
-	var tw := create_tween()
-	tw.tween_property(att, "offset", dir, 0.08)
-	tw.tween_property(att, "offset", Vector2.ZERO, 0.12)
-	await tw.finished
+	face(att, tgt.cell)
+	if CharacterArt.has_art(att.sprite):
+		# Swing or cast, and land the hit on the anim's hit frame (C17).
+		var anim := "cast" if att.magic else "attack"
+		play_anim(att, anim)
+		await get_tree().create_timer(CharacterArt.hit_time(att.sprite, anim)).timeout
+	else:
+		var dir := (cell_top(tgt.cell) - cell_top(att.cell)).normalized() * 10.0
+		var tw := create_tween()
+		tw.tween_property(att, "offset", dir, 0.08)
+		tw.tween_property(att, "offset", Vector2.ZERO, 0.12)
+		await tw.finished
 	if hit:
+		face(tgt, att.cell)
+		play_anim(tgt, "hurt")
 		var shake := create_tween()
 		for i in 4:
 			shake.tween_property(tgt, "offset", Vector2(4 if i % 2 == 0 else -4, 0), 0.04)

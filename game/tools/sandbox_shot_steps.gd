@@ -17,6 +17,24 @@ func run(s: Node, _frames: int, _step: String) -> void:
 		if _frames in [30, 50]:
 			s.battle.end_player_phase()
 		return
+	if _frames == 10 and _step.begins_with("anim_"):
+		# anim_<anim>[_ne]: the first piece stands next to the nearest foe and plays <anim> facing SE (or NE),
+		# caught 14 frames in (the hit frame of the swing).
+		var b: Battle = s.battle
+		var u: CombatUnit = b.units[0]
+		var parts := _step.split("_")
+		var foe: CombatUnit = null
+		for o: CombatUnit in b.units:
+			if o.team == 1 and (foe == null or CombatRules.dist(o.cell, u.cell) < CombatRules.dist(foe.cell, u.cell)):
+				foe = o
+		for d: Vector2i in [Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 0)]:
+			var c := foe.cell + d
+			if b.grid.passable(c) and CombatRules.unit_at(b.units, c) == null:
+				u.place(c, b.grid.height_at(c))
+				break
+		u.facing = Vector2i(0, -1) if parts.size() > 2 and parts[2] == "ne" else Vector2i(1, 0)
+		b.board.play_anim(u, parts[1])
+		return
 	if _frames == 10 and _step != "edit":
 		var b: Battle = s.battle
 		var u: CombatUnit = b.units[0]
