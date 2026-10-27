@@ -43,10 +43,9 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
 
     key = api_key()
-    before = balance(key)
-    print("credits before:", before)
-    if not before:
-        raise SystemExit("No credits left.")
+    # The old credits balance can read 0 on accounts billed in dollars, so it is
+    # only reported here; the generate call itself refuses when funds run out.
+    print("credits before:", balance(key))
 
     params = {"prompt": prompt, "aspectRatio": args.aspect,
               "resolution": args.resolution, "count": args.count}
