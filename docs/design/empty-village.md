@@ -1,6 +1,6 @@
 # Empty village premise: what changes in the systems
 
-Status: draft 3.1, 2026-10-27. Draft 3.1 sets the smithy weapons to sword, daggers and bow (knight, rogue, archer) and keeps levels through a recall, per Brandon. Draft 3 added the nobody start and the job system (sections 7 and 8). Brandon answered the first round of questions; his answers are `[USER]` in
+Status: draft 3.2, 2026-10-27. Draft 3.2: the smithy pick is final and the hidden item is a book that opens a magic path, per Brandon. Draft 3.1 set the smithy weapons to sword, daggers and bow (knight, rogue, archer) and keeps levels through a recall, per Brandon. Draft 3 added the nobody start and the job system (sections 7 and 8). Brandon answered the first round of questions; his answers are `[USER]` in
 `docs/decisions.md`. Everything else here is `[AI]` until he retags it.
 Story, names, lore and copy are Brandon's. This doc only covers mechanics; all text examples are placeholders.
 
@@ -145,13 +145,19 @@ and a hidden item waits in a house for players patient enough to dig around.
   things with options): the hero's house is the start cell, the ruined houses are rooms, the gate is the
   exit to the trail. No enemies on it. Data: `data/explore/village.json` (built later, see build order).
 - **The empty smithy (before any blacksmith settles):** a weapon rack thing with 3 weapons: sword, daggers
-  and bow (Brandon). Each leads to a job: knight, rogue, archer. Take one. The others stay on the rack; you can swap at the rack
-  between runs. A weapon is gear, not a possession you carry in the pack, so it survives a recall.
+  and bow (Brandon). Each leads to a job: knight, rogue, archer. Take one. The pick is final (Brandon): the other two stay on the
+  rack but can't be taken. A respec may come later. A weapon is gear, not a possession you carry in the pack, so it survives a recall.
   When the blacksmith settler arrives later, the same building becomes the forge.
-- **The hidden item:** a thing with no "!" marker. It only shows when the hero stands next to it, or when
-  the corgi sniffs it out (his 3-tile SNIFF radius from section 1). So it rewards poking around, and the dog
-  helps. One per house is too many; one or two in the whole village. What it is, is Brandon's; mechanically
-  a small trinket (one stat or one check bonus) or a little gold.
+- **The hidden item is a book: the hidden magic path (Brandon).** A player who explores town, enters a
+  home and spots a book on a shelf finds an alternate route into magic. It is a thing with no "!" marker,
+  shown only when the hero stands next to it or the corgi sniffs it out (his 3-tile SNIFF radius from
+  section 1). Taking it gives the hero a book as a second weapon (it doesn't replace the smithy pick and
+  takes no pack space). Only one in the village. What the book is, is Brandon's.
+- **Where the book sits (note for the village map):** in one of the ordinary homes, not the hero's own
+  house, the smithy, the tavern or the town hall. Put it on a shelf against the back wall of an inner room,
+  out of line of sight from the door, so the player has to walk in and look around. Pick a home a little
+  off the town square so a player heading straight for the smithy and the gate walks past it. The thing
+  needs: kind `hidden`, an event that gives the book, and a once flag so it's gone on later visits.
 - New thing kind for the explore data: `hidden` (no marker, shown when adjacent or sniffed).
 
 ## 8. Jobs: develop your class as you go
@@ -172,8 +178,8 @@ Three tiers, two choices at each fork, like the reference chart:
 
 | Tier | Hero | How you reach it |
 | --- | --- | --- |
-| 0 | nobody | Start. Weak stats, no class skills, uses whatever weapon it picked up. |
-| 1 | knight (sword), rogue (daggers), archer (bow) | Level 5 as a nobody. Offers the jobs for weapons the hero has used in a fight, so the smithy pick steers it. |
+| 0 | nobody | Start. Weak stats, no class skills, uses the smithy weapon (and the book, if found). |
+| 1 | knight (sword), rogue (daggers), archer (bow), mage (hidden book) | Level 5 as a nobody. Offers the job for the smithy weapon, plus mage if the hero found the book and has cast from it in a fight. |
 | 2 | two branches per tier 1 job | Level 10 in the tier 1 job, pick one of two. |
 
 Proposed tier 2 branches (roles only; job names are Brandon's):
@@ -182,9 +188,10 @@ Proposed tier 2 branches (roles only; job names are Brandon's):
 | knight: sword, shove, shield_wall, persuade and nerve | a guardian: more defense, Guard covers an adjacent ally | a vanguard: more move, charges and pushes |
 | rogue: daggers, two weak hits, sneak | an assassin: big damage from behind or on a flanked foe | a thief: locks, traps and stealing loot; best sneak on explore maps |
 | archer: bow, steady_aim, height range | the hunter (existing job): big hunt bonus, feeds the party | a sharpshooter: longer range and line-of-sight tricks, wayfind |
+| mage: book, one weak spell, wayfind | the wizard (existing job): fire spells, scholar, books fill pack slots | a healer: fix and buff spells, heal checks |
 
-- **Magic is not on the hero's tree.** Spells stay with companions (Stardrop's moon line, the Wizard), so
-  recruiting them is how the party gets magic. A caster branch for the hero can come later if Brandon wants it.
+- **Magic is the hidden route.** The hero only reaches mage through the book. Otherwise spells come from
+  companions (Stardrop's moon line, the Wizard).
 - **Each job sets combat stats, growths, abilities, traits and trail skills.** That's how a job reaches into
   the whole game, as Brandon first asked: the hunter feeds the party, the thief opens locked doors on explore
   maps, the companion wizard's books cost pack room.
@@ -197,7 +204,7 @@ Proposed tier 2 branches (roles only; job names are Brandon's):
 - **Settlers** don't fight, so they don't take jobs. Their equivalent fork: each building's second upgrade
   is a pick of one of two specialties (e.g. the forge leans toward blades or bows). Same "one or two
   choices" feel, on the village side.
-- **No re-classing for now.** A pick is final. A way back (Fire Emblem's reclass seal) can come later if
+- **No re-classing for now.** A pick is final, the smithy pick included. A way back (Fire Emblem's reclass seal) can come later if
   players feel trapped.
 
 ### Data
@@ -222,7 +229,7 @@ Proposed tier 2 branches (roles only; job names are Brandon's):
    level-up popup. Tests on the growth math (pure `JobRules` script).
 7. **Jobs and the tree:** nobody, the three tier 1 jobs, six tier 2 branches as `ClassDef` rows; promotion
    choice at level 5 and 10; skills kept across jobs. Existing roster characters move onto the tree.
-8. **The village opening:** `village.json` explore map with the smithy weapon rack, the `hidden` thing kind
+8. **The village opening:** `village.json` explore map with the smithy weapon rack, the hidden book (`hidden` thing kind)
    and the gate to the trail. Needs the exploration work's map tools.
 
 Each step is playable and testable on its own.
@@ -231,5 +238,4 @@ Each step is playable and testable on its own.
 1. Is a survivor's kind (settler or companion) fixed by the character, as assumed here, or does the player
    choose once at recruitment?
 2. Which roster characters survive, and as which kind?
-3. At the smithy, does the hero take one of the three weapons (assumed) or all of them?
-4. Are the tier 2 branch roles right, and do you want to name them? Should the hero ever get a magic path?
+3. Are the tier 2 branch roles right, and do you want to name them?

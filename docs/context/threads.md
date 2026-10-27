@@ -86,3 +86,4 @@ Started as "Build the character sprite template and Krita guide" and grew into t
 ## Refresh project context in the repo (Oct 27, done)
 - Brandon asked whether everything from the night was in the repo so a friend on another account could help. Refreshed `docs/context/` (memory copy, this file, `current-state.md`, latest Character Guide and Battle Map Guide HTML) and the newcomer pointer in `CLAUDE.md`.
 - Brandon: levels persist; the smithy has sword, daggers and bow (knight, rogue, archer). Draft 3.1 follows.
+- Brandon: one smithy weapon, the rest locked (respec maybe later); a hidden magic path via a book on a shelf in a home. Draft 3.2 follows and says where the book sits for the village map.
