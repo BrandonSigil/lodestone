@@ -125,4 +125,5 @@ Facing and back attacks, overwatch, charge-time spells with a countdown, fire on
 - Tops: a texture spans 2 x 2 cells, UV-mapped on the iso diamond so it reads the same in every camera turn. Sides: a texture spans 2 cells across and 4 height levels down (one stone row per level); shade faces draw at 72% of lit (the guide's 55 / 75).
 - Props stand on the cell's top centre, back to front, with a soft contact shadow. A ruin's pillar sprite replaces the graybox wall.
 - Strangeness multiplies the art toward the alien colours. Any missing file falls back to the graybox drawing, so art can arrive one terrain at a time.
+- Tile sets: a subfolder of `art/source/battle/` (`snow/`, `dungeon/`...) holds a region's versions under the same file names. `BattleArt.use_set()` switches; each file missing from the set falls back to the base one. The board's `art_set` picks it; the sandbox has a "tile set" menu and saves it with the map. The trail doesn't pick a set yet.
 - Art rules: `docs/art/battle-maps.md`.

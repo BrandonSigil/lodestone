@@ -2,6 +2,8 @@ class_name BattleArt
 extends RefCounted
 ## Painted battle map art: terrain textures and prop sprites from art/source/battle/, wired by
 ## data/battle_art.csv. Any missing file falls back to the graybox drawing in CombatBoard.
+## Tile sets: a subfolder of DIR (snow/, dungeon/...) holds a region's versions of the same file names.
+## A file missing from the set falls back to the base one, so a set can be filled in one texture at a time.
 ## Rules for the art itself: docs/art/battle-maps.md.
 
 const DIR := "res://art/source/battle/"
@@ -18,6 +20,20 @@ const NAMES := {
 static var _rows := {}  # terrain -> row
 static var _tex := {}  # file name -> Texture2D or null
 static var _loaded := false
+static var art_set := ""  ## the active tile set: a subfolder of DIR, or "" for the base art
+
+
+## Switch tile sets (cached textures are dropped when it changes).
+static func use_set(name: String) -> void:
+	if name != art_set:
+		art_set = name
+		_tex.clear()
+
+
+## The tile sets on disk: every subfolder of DIR.
+static func sets() -> PackedStringArray:
+	var d := DirAccess.open(DIR)
+	return d.get_directories() if d != null else PackedStringArray()
 
 
 static func _load() -> void:
@@ -35,7 +51,9 @@ static func texture(stem: String, tile := false) -> Texture2D:
 		return null
 	if _tex.has(stem):
 		return _tex[stem]
-	var path := DIR + stem + ".png"
+	var path := DIR + art_set + "/" + stem + ".png"
+	if art_set == "" or not ResourceLoader.exists(path):
+		path = DIR + stem + ".png"
 	var tex: Texture2D = null
 	if ResourceLoader.exists(path):
 		tex = load(path)
