@@ -17,7 +17,7 @@ v3 (`terrain-zones-sheet-v3.png`) with the finish block: this is the look. Wobbl
 
 ## Model tests (2026-10-27)
 
-All in `docs/art/references/picsart/`. Flux (5.5¢) and GPT image `gpt-image-2.5-sunburst` (10¢ a sheet, resolution 1K/2K/4K uppercase) via `tools/art/picsart_sheet.py`. Any earlier sheet passed as a reference gets copied, so pass only the hike illustration. Best so far: `zones-gpt-simple_v1.png` (flat style, now `sheet-zones.txt` and `style-finish.txt`). `kit-forest_v1.png` got the kit layout right but was too detailed under the old finish.
+All in `docs/art/references/picsart/`. Flux (5.5¢) and GPT image `gpt-image-2.5-sunburst` (10¢ a sheet, resolution 1K/2K/4K uppercase) via `tools/art/picsart_sheet.py`. Any earlier sheet passed as a reference gets copied, so pass only one style picture: now `docs/art/references/style-flat-forest.png` (the forest diorama Brandon picked from the simple sheet; replaces the hike illustration). Best so far: `zones-gpt-simple_v1.png` (flat style, now `sheet-zones.txt` and `style-finish.txt`). `kit-forest_v1.png` got the kit layout right but was too detailed under the old finish.
 
 ## What the reference needs to work in the game
 
