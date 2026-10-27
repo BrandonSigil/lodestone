@@ -1,0 +1,482 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lodestone Studio Playbook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column framed like a game border; one live parallax diorama up top, one live paper-doll tray mid-page. */
+:root {
+  --paper: #e9ece4;      /* birch-bark ground, cool */
+  --panel: #f6f7f2;
+  --ink: #1f2a2b;        /* slate ink */
+  --ink-soft: #4d5a58;
+  --rule: #c3cbc2;
+  --pine: #2f5a50;       /* Earle pine */
+  --ochre: #b5762a;      /* lantern ochre accent */
+  --wall: #6b4a86;       /* past-the-Wall violet */
+  --code-bg: #dfe4dc;
+  --frame: #2c3a37;
+  --f-display: "IM Fell English SC", "Iowan Old Style", Georgia, serif;
+  --f-body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #141b1d; --panel: #1b2427; --ink: #e3e7df; --ink-soft: #a6b1ab; --rule: #33413f;
+  --pine: #7fb4a3; --ochre: #e0a35a; --wall: #b493d4; --code-bg: #10171a; --frame: #0c1112; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #141b1d; --panel: #1b2427; --ink: #e3e7df; --ink-soft: #a6b1ab; --rule: #33413f;
+  --pine: #7fb4a3; --ochre: #e0a35a; --wall: #b493d4; --code-bg: #10171a; --frame: #0c1112; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-body); font-size: 17px; line-height: 1.6; }
+.wrap { max-width: 980px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3.2rem); }
+h2 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); }
+h3 { font-size: 1.3rem; color: var(--pine); }
+p, li { max-width: 68ch; }
+p { margin: 0; }
+a { color: var(--pine); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--ochre); outline-offset: 3px; }
+code { font-family: var(--f-mono); font-size: .86em; background: var(--code-bg); padding: 1px 5px; border-radius: 3px; }
+pre { font-family: var(--f-mono); font-size: 13.5px; line-height: 1.55; background: var(--code-bg); padding: 14px 16px; border-radius: 4px; overflow-x: auto; margin: 0; }
+pre code { background: none; padding: 0; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); }
+
+/* frame: the game-border idea, used on the whole page */
+.frame { border: 3px solid var(--frame); outline: 1px solid var(--frame); outline-offset: 4px; border-radius: 2px; background: var(--panel); }
+.hero { overflow: hidden; }
+.hero canvas { display: block; width: 100%; height: clamp(240px, 42vw, 400px); }
+.hero-body { padding: 22px 24px 24px; display: grid; gap: 14px; }
+.hero-body p { color: var(--ink-soft); }
+.dial { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; font-family: var(--f-mono); font-size: 13px; }
+.dial input { flex: 1 1 220px; accent-color: var(--wall); }
+.dial output { min-width: 9ch; font-variant-numeric: tabular-nums; color: var(--wall); }
+
+section { display: grid; gap: 18px; margin-top: 56px; }
+.part { border-top: 1px solid var(--rule); padding-top: 28px; }
+.lede { font-size: 1.12rem; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+
+.calls { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.call { border-left: 3px solid var(--pine); padding: 4px 0 4px 14px; min-width: 0; }
+.call b { display: block; font-size: 1.02rem; }
+.call span { color: var(--ink-soft); font-size: .96rem; }
+
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; min-width: 560px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pill { display: inline-block; font-family: var(--f-mono); font-size: 11px; padding: 1px 7px; border-radius: 99px; border: 1px solid currentColor; }
+.lo { color: var(--pine); } .mid { color: var(--ochre); } .hi { color: var(--wall); }
+
+.skip { display: grid; gap: 10px; }
+.skip div { display: grid; grid-template-columns: minmax(130px, 220px) 1fr; gap: 4px 16px; padding-bottom: 10px; border-bottom: 1px dashed var(--rule); }
+.skip s { color: var(--ink-soft); }
+@media (max-width: 560px) { .skip div { grid-template-columns: 1fr; } }
+
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+.two > * { min-width: 0; }
+
+.tray { padding: 18px; display: grid; gap: 14px; }
+.tray canvas { width: 100%; height: 230px; display: block; }
+.tray-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+button { font-family: var(--f-display); font-size: 1.05rem; background: var(--frame); color: var(--paper); border: 0; padding: 8px 18px; border-radius: 2px; cursor: pointer; }
+button:hover { background: var(--pine); }
+.tray small { color: var(--ink-soft); font-family: var(--f-mono); font-size: 12px; }
+
+.caveman { font-family: var(--f-mono); font-size: 14px; border: 2px dashed var(--ochre); padding: 12px 14px; color: var(--ink); }
+.note { color: var(--ink-soft); font-size: .95rem; }
+ol.steps { gap: 14px; }
+ol.steps li b { display: block; }
+.sources { font-size: .92rem; columns: 2 280px; column-gap: 28px; }
+.sources li { break-inside: avoid; margin-bottom: 6px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="frame hero">
+  <canvas id="diorama" aria-label="Layered parallax diorama of a caravan of board-game pieces crossing a pine valley. The slider shifts it from familiar to alien."></canvas>
+  <div class="hero-body">
+    <div class="eyebrow">Lodestone · pipeline and art direction</div>
+    <h1>Build it cheap, make it look hand-made</h1>
+    <p>A plan for a near-free Godot pipeline around your Claude plan, and an art system that keeps every mark yours. The scene above is a working example of the layered parallax and the Earth-to-Alien dial described below. Move your pointer over it, then drag the slider.</p>
+    <label class="dial" for="strange">
+      <span>Distance past the Wall</span>
+      <input id="strange" type="range" min="0" max="100" value="0">
+      <output id="strangeOut">0.00</output>
+    </label>
+  </div>
+</header>
+
+<section>
+  <div class="eyebrow">The short answer</div>
+  <h2>Five calls that decide most of this</h2>
+  <div class="calls">
+    <div class="call"><b>Claude makes tools. You make marks.</b><span>No AI-generated sprites anywhere. Claude writes shaders, palette swaps, assemblers and placement tools that multiply your drawings.</span></div>
+    <div class="call"><b>Godot 4, 2D, GDScript.</b><span>Skip Unreal and Blender. Godot's 2D lights, CanvasItem shaders and Skeleton2D cover the Banner Saga look for free.</span></div>
+    <div class="call"><b>One manager, a few system sessions.</b><span>This project already works that way: the project chat is the manager and each thread owns one system.</span></div>
+    <div class="call"><b>decisions.md with owner tags.</b><span>Every design call tagged [USER] or [AI]. Yours always win. It stops the agent "remembering" choices you never made.</span></div>
+    <div class="call"><b>A style bible before the first sprite.</b><span>Palette ramps, line weight, shape language and the Strangeness dial written down once, so 300 assets drawn over two years still match.</span></div>
+  </div>
+</section>
+
+<!-- ============ PART 1 ============ -->
+<section class="part">
+  <div class="eyebrow">Part one</div>
+  <h2>The agent studio</h2>
+  <p class="lede">The Reddit dev spent about $800 over 11 weeks, and $600 of it was Claude Max. Everything else was paid generators you will not need, because you are the artist. Your real cost is your Claude plan plus maybe $40 of optional tools.</p>
+
+  <h3>What to drop from the pasted setup</h3>
+  <div class="skip">
+    <div><s>Unreal Engine 5</s><span>Built for 3D. Godot's 2D renderer is lighter, free, and its text-based scene files (<code>.tscn</code>) are easy for Claude to read and edit.</span></div>
+    <div><s>Blender + AI 3D models</s><span>Not needed for a flat, hand-drawn look. If you ever want a reference pose, a free mannequin in Blender is enough.</span></div>
+    <div><s>GPT image / Higgsfield art</s><span>This is the slop risk. Use image tools only for private mood boards you never ship, or skip them.</span></div>
+    <div><s>"extra" and "ultra code" effort</s><span>Those names don't match Claude Code. Its effort levels are low, medium, high, xhigh and max. Pick per session, as in the table below.</span></div>
+    <div><s>Orca / Codex side-agents</s><span>Not needed. Claude Code subagents and project threads already split work in parallel.</span></div>
+  </div>
+
+  <h3>Session map</h3>
+  <p>Each session owns one folder and one doc. You talk to the manager. It hands tasks to the others and keeps <code>decisions.md</code> current. Narrow sessions compact less and cost less.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Session</th><th>Owns</th><th>Effort</th></tr></thead>
+    <tbody>
+      <tr><td>Manager</td><td>Roadmap, decisions.md, hands out tasks, reviews merges</td><td><span class="pill mid">high</span></td></tr>
+      <tr><td>Combat grid</td><td>Iso grid, height, pathing, turn order, dice checks, AI enemies</td><td><span class="pill hi">xhigh</span></td></tr>
+      <tr><td>Trail and survival</td><td>Travel days, food, morale, health, events (caveman text only)</td><td><span class="pill mid">high</span></td></tr>
+      <tr><td>Roster and classes</td><td>Character Resources, perks, deficiencies, off-class skills, unlocks</td><td><span class="pill lo">medium</span></td></tr>
+      <tr><td>Minigames</td><td>Fishing, hunting, herb finding, each a self-contained scene</td><td><span class="pill mid">high</span></td></tr>
+      <tr><td>Look and shaders</td><td>Parallax, lights, palette swap, Strangeness dial, paper-doll rig</td><td><span class="pill hi">xhigh</span></td></tr>
+      <tr><td>UI frame</td><td>Border, party strip, inventory slots, Theme resource</td><td><span class="pill lo">medium</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Start with just Manager, Combat and Look. Add the rest as the graybox needs them.</p>
+
+  <div class="two">
+    <div style="display:grid;gap:10px">
+      <h3>decisions.md format</h3>
+<pre><code>## Combat
+- [USER] 2026-10-25 Height gives +1 hit
+  and +1 damage per level, max 2.
+- [AI] 2026-10-25 Flanking = +15% hit.
+  Proposed, not confirmed.
+- [USER] 2026-10-26 Overrides above:
+  flanking is +10%.
+
+Rule: [USER] beats [AI]. An [AI] line
+stays "proposed" until you retag it.</code></pre>
+    </div>
+    <div style="display:grid;gap:10px">
+      <h3>Repo skeleton</h3>
+<pre><code>lodestone/
+  CLAUDE.md          rules every session reads
+  docs/
+    decisions.md
+    style-bible.md
+    systems/combat.md ...
+  game/              the Godot project
+    data/            .tres Resources:
+                     classes, perks, items
+    art/             your source + exports
+    shaders/
+    scenes/
+    text/placeholder.csv
+  tools/             import + check scripts</code></pre>
+    </div>
+  </div>
+
+  <h3>What goes in CLAUDE.md</h3>
+<pre><code>- Never write story, dialogue, names or flavor text.
+  All player-facing text lives in text/placeholder.csv as caveman speak.
+- Never generate or edit art files. Art comes only from art/source.
+- Read docs/decisions.md before any design change. [USER] wins.
+- Game data lives in data/*.tres, not hardcoded in scripts.
+- After a change: run tools/check.sh (headless import + tests) and fix errors.</code></pre>
+  <div class="caveman">BANDIT COME. lorem ipsum ipsum. &nbsp;[ FIGHT ] &nbsp;[ TALK ] &nbsp;[ SNEAK ]<br><span class="note">This is what every event screen looks like until you write it. The CSV gives your copy one drop-in spot.</span></div>
+
+  <h3>Godot tooling that lets Claude see its own work</h3>
+  <ul>
+    <li><b>godot-mcp by Coding-Solo</b> (free, MIT). It launches the editor, runs the project, reads console errors and creates scenes and nodes. The Summer Engine roundup rates it the best free option for stock Godot. GDAI MCP ($19 one-time) adds screenshots and simulated input if you want them later.</li>
+    <li><b>Headless CLI</b>. <code>godot --headless --path game --import</code> and a test run catch broken scripts without opening the editor. Put both in <code>tools/check.sh</code> so every session runs it.</li>
+    <li><b>Tests</b>. GUT or gdUnit4 for the rules code: dice math, food math, pathing. Your feel tests stay manual.</li>
+    <li><b>Screenshot harness</b>. A tiny debug scene that loads a level, waits two frames and saves <code>get_viewport().get_texture().get_image()</code> to PNG. Claude can then look at its shader work instead of guessing.</li>
+    <li><b>Git + GitHub</b> (free). Commit every working state. Use Git LFS for big art files.</li>
+  </ul>
+
+  <h3>Budget</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Need</th><th>Free pick</th><th>Optional paid</th></tr></thead>
+    <tbody>
+      <tr><td>Engine</td><td>Godot 4</td><td>none</td></tr>
+      <tr><td>Drawing and painting</td><td>Krita</td><td>Aseprite, about $20, only if you go pixel</td></tr>
+      <tr><td>Frame animation</td><td>Krita timeline, OpenToonz, Blender Grease Pencil</td><td>none</td></tr>
+      <tr><td>Cutout rigs</td><td>Godot Skeleton2D and Polygon2D</td><td>Spine, about $69, not needed</td></tr>
+      <tr><td>Normal maps from your art</td><td>Laigter</td><td>none</td></tr>
+      <tr><td>Sound effects</td><td>jsfxr, ChipTone, Audacity, CC0 packs on freesound.org</td><td>none</td></tr>
+      <tr><td>Music</td><td>LMMS, or commission a composer later</td><td>a composer is the one spend worth making</td></tr>
+      <tr><td>Agent bridge</td><td>godot-mcp (Coding-Solo)</td><td>GDAI MCP, $19</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Habits that stretch your plan</h3>
+  <ul>
+    <li>Graybox first. Colored squares on a grid until combat is fun. Art goes on top of a game you already like playing.</li>
+    <li>One task per message to a system session, with the doc it should read. Vague asks burn the most usage.</li>
+    <li>Use medium effort for data entry and UI, and save xhigh for combat rules and shaders.</li>
+    <li>When a procedure repeats (adding a class, importing an art batch), turn it into a skill so it runs the same way every time.</li>
+    <li>Watch out for the Reddit dev's trap. His game got called a Dredge clone because one recognizable mechanic was copied whole. Your Oregon Trail and tactics mix is distinct. Keep each borrowed system bent toward your own rules.</li>
+  </ul>
+</section>
+
+<!-- ============ PART 2 ============ -->
+<section class="part">
+  <div class="eyebrow">Part two</div>
+  <h2>Beautiful, cohesive, and yours</h2>
+  <p class="lede">AI slop looks like slop because nothing holds it together: no fixed palette, no fixed line, no fixed shape rules. The Banner Saga looks expensive for the opposite reason. Arnie Jorgensen picked one master influence, Eyvind Earle's <i>Sleeping Beauty</i> backgrounds, tested it by cutting an Earle painting into parallax layers, and then drew everything with simple line art and flat fills. You can work the same way.</p>
+
+  <h3>Style bible, one page, before any sprite</h3>
+  <ul>
+    <li><b>Line.</b> One brush, one weight per scale (pieces 3px, props 2px, far scenery none). Line color is a dark of the fill, never black.</li>
+    <li><b>Fill.</b> Flat color plus one shade step and one optional texture overlay. No soft airbrush gradients on characters.</li>
+    <li><b>Palette.</b> A master palette of about 24 swatches arranged as ramps. Each region uses 5 to 7 of them plus one accent. Shaders handle time of day, so you never repaint.</li>
+    <li><b>Shape language.</b> Earth: tall verticals and stacked horizontals, Earle's pines and banded hills. Past the Wall: curves, bulbs, things floating, wrong scale.</li>
+    <li><b>Texture.</b> One paper grain overlay over the whole screen, applied by a shader. It ties every asset together for free.</li>
+    <li><b>Value plan.</b> Far layers are light and low contrast. The play layer has the darkest darks. Players read depth before they read color.</li>
+    <li><b>Do and don't sheet.</b> Five of your drawings that are on-model, five that aren't. Every session gets this file as a reference.</li>
+  </ul>
+
+  <h3>Board-game pieces as paper dolls</h3>
+  <p>Each character is a stack of small drawings snapped to the same anchor points. You draw each part once in grayscale. A palette-swap shader maps the grays to any color ramp. Two pawn bodies, eight hats, six held items, three face sets and four capes give you thousands of distinct pieces. The tray below rolls a random party from that kind of kit.</p>
+  <div class="frame tray">
+    <canvas id="tray" aria-label="A row of randomly assembled board-game piece characters"></canvas>
+    <div class="tray-bar">
+      <small id="trayInfo">6 pieces</small>
+      <button id="roll" type="button">Roll a party</button>
+    </div>
+  </div>
+  <div class="two">
+    <div style="display:grid;gap:8px">
+      <h3>Parts list per piece</h3>
+      <ul>
+        <li>Base: pawn or meeple silhouette with a round foot disc</li>
+        <li>Head: circle, with a face layer of dot eyes plus one mark</li>
+        <li>Top: hood, hat, helm, leaf crown, or bush for Bushberry</li>
+        <li>Hand: staff, bow, blade, book, lantern</li>
+        <li>Back: cape, quiver, book bag (the Wizard's slot cost, shown)</li>
+        <li>Quirk: one tiny prop that says who they are, like a feather or a patch</li>
+      </ul>
+    </div>
+    <div style="display:grid;gap:8px">
+      <h3>Animation without frames</h3>
+      <ul>
+        <li>Move is a hop, like lifting a piece off the board: squash, rise, land, wobble. One Tween, every character.</li>
+        <li>Idle is a slow breathing scale of 2%, plus a blink swap every few seconds.</li>
+        <li>Hit is a tilt and a shake. Spooked (Stardrop) is a fast jitter and wider eyes.</li>
+        <li>Personality comes from timing, not detail. A frail piece hops lower, a big one lands harder.</li>
+        <li>Use hand-drawn frames only for hero moments like a spell or a death, the way Banner Saga saved full animation for key beats.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Screenshot moments: the layer stack</h3>
+  <p>Every travel and camp scene is built from the same seven layers. Each one is cheap on its own. Together they produce the "stop and screenshot" frame.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>What you draw</th><th>What Godot adds</th></tr></thead>
+    <tbody>
+      <tr><td>Sky</td><td>nothing</td><td>Gradient shader driven by time of day and Strangeness</td></tr>
+      <tr><td>Far range</td><td>one silhouette strip</td><td>Parallax2D at 0.1, tinted toward sky color for haze</td></tr>
+      <tr><td>Mid forest</td><td>8 to 12 tree stamps</td><td>Procedural placement from a seed, wind sway shader</td></tr>
+      <tr><td>Play layer</td><td>ground, props, pieces</td><td>PointLight2D with Laigter normal maps for lantern and spell light</td></tr>
+      <tr><td>Foreground</td><td>3 or 4 dark framing shapes</td><td>Parallax at 1.3, slight blur, frames the shot like Earle</td></tr>
+      <tr><td>Atmosphere</td><td>a few particle textures</td><td>GPUParticles2D for snow, pollen, embers, spores</td></tr>
+      <tr><td>Grade</td><td>paper grain texture</td><td>Full-screen shader: grain, vignette, color LUT per region</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Add a photo mode early: hide the frame UI, freeze time, let the player nudge the camera. Players who screenshot are your marketing.</p>
+
+  <h3>Earth to Alien: one number</h3>
+  <p>Give every region a Strangeness value from 0 to 1, and let every visual system read it. The slider in the header shows this working. Line weight, paper grain and the piece style never change, so the world stays recognizably one game while everything else drifts.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>System</th><th>At 0 (home)</th><th>At 0.5 (the Wall)</th><th>At 1 (deep)</th></tr></thead>
+    <tbody>
+      <tr><td>Palette LUT</td><td>greens, slate, ochre</td><td>desaturated, one wrong hue creeps in</td><td>violet, teal, glowing accents</td></tr>
+      <tr><td>Tree stamps</td><td>pines</td><td>a few bulb-stalks mixed in</td><td>mostly bulbs and floating things</td></tr>
+      <tr><td>Creature parts</td><td>deer, wolf, boar kits</td><td>familiar bodies, wrong heads</td><td>new part library, unreadable at first</td></tr>
+      <tr><td>Food UI</td><td>items show their name and value</td><td>some show "?"</td><td>must be tested by the herbalist or by eating</td></tr>
+      <tr><td>Sound</td><td>birds, wind</td><td>birds stop</td><td>tones and hums</td></tr>
+    </tbody>
+  </table></div>
+  <p>Because one number drives it, the twist arrives gradually on the trail, and you only draw the new part libraries, not new versions of everything.</p>
+
+  <h3>The framed border</h3>
+  <ul>
+    <li>Draw the border once as a 9-slice (NinePatchRect) so it scales to any screen.</li>
+    <li>Make the party strip from the same paper-doll pieces as the board. The piece you grow attached to is literally always on screen.</li>
+    <li>Show inventory as physical slots. The Wizard's books sit there taking up room, and Bushberry adds one ration icon each day.</li>
+    <li>Let the border react: frost creeps in when cold, vines grow past the Wall. One shader with a mask you paint.</li>
+    <li>Build all of it on a single Godot Theme resource, so fonts and colors change in one place.</li>
+  </ul>
+</section>
+
+<section class="part">
+  <div class="eyebrow">Order of work</div>
+  <h2>First six weeks</h2>
+  <ol class="steps">
+    <li><b>Week 0: set up.</b> Repo, CLAUDE.md, decisions.md, godot-mcp, check script. Write the one-page style bible and pick the master palette.</li>
+    <li><b>Weeks 1 and 2: graybox combat.</b> Iso grid with height, three test units, dice checks, one enemy type. No art.</li>
+    <li><b>Week 3: graybox trail.</b> Travel days, food and morale ticking, one caveman event with fight, talk and sneak.</li>
+    <li><b>Week 4: one beautiful screen.</b> A single camp scene with all seven layers and your art. This is the vertical slice of the look.</li>
+    <li><b>Week 5: paper-doll rig.</b> Your first parts kit, the palette-swap shader, and the hop and idle tweens on the combat board.</li>
+    <li><b>Week 6: the frame.</b> Border, party strip and inventory slots wired to real data, then a playtest loop from village to fight to camp and back.</li>
+  </ol>
+  <p class="note">Each step ends with something you can play or screenshot. If a step drags past its week, cut scope inside it instead of starting the next.</p>
+</section>
+
+<section class="part">
+  <div class="eyebrow">Sources</div>
+  <ul class="sources">
+    <li><a href="https://www.reddit.com/r/ClaudeAI/comments/1x3ttzl/week_11_of_making_my_fishing_game_with_the_help/">Week 11 fishing game devlog, r/ClaudeAI</a> (manager sessions, decisions.md, costs)</li>
+    <li><a href="https://www.youtube.com/watch?v=mfSM2BSHb2I">Your reference video</a></li>
+    <li><a href="https://www.summerengine.com/blog/best-godot-mcp-server">Best Godot MCP server in 2026, Summer Engine</a></li>
+    <li><a href="https://www.pocketgamer.biz/feature/60429/the-making-of-the-banner-saga/">The making of The Banner Saga, PocketGamer.biz</a></li>
+    <li><a href="https://www.gamebanshee.com/xqr8">Banner Saga update #36: animation process</a></li>
+    <li><a href="https://docs.godotengine.org/en/4.5/tutorials/2d/2d_lights_and_shadows.html">Godot docs: 2D lights and shadows</a></li>
+    <li><a href="https://gdquest.com/tutorial/godot/2d/lighting-with-normal-maps/">GDQuest: 2D lighting with normal maps</a></li>
+    <li><a href="https://docs.godotengine.org/de/4.5/tutorials/animation/cutout_animation.html">Godot docs: cutout animation</a></li>
+    <li><a href="https://corymogk.itch.io/crush-crush-flower/devlog/669954/setting-up-2d-skeletons-in-godot-4">Setting up 2D skeletons in Godot 4</a></li>
+    <li><a href="https://godotshaders.com/shader/2d-wind-sway/">Godot Shaders: 2D wind sway</a></li>
+    <li><a href="https://gtstu.com/free-sound-effects-indie-game/">Free sound effects for indie games</a></li>
+    <li><a href="https://tembo.io/blog/claude-code-subagents">Claude Code subagents: a practical guide</a></li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+(function () {
+  function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function hex(h) { return [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)]; }
+  function mix(a, b, t) { var x = hex(a), y = hex(b); return "rgb(" + x.map(function (v, i) { return Math.round(v + (y[i] - v) * t); }).join(",") + ")"; }
+
+  var EARTH = { top:"#9fbccb", bot:"#ece4c6", sun:"#f3d58c", far:"#8ea8b2", mid:"#55786f", near:"#2f4b40", ground:"#3b3d2d", fg:"#1b2620" };
+  var ALIEN = { top:"#2a1842", bot:"#e2808c", sun:"#bff3d6", far:"#6d4180", mid:"#2c8079", near:"#16384a", ground:"#1f1b31", fg:"#0d0a18" };
+
+  var cv = document.getElementById("diorama"), ctx = cv.getContext("2d");
+  var slider = document.getElementById("strange"), out = document.getElementById("strangeOut");
+  var S = 0, px = 0.5, W = 0, H = 0;
+
+  function size(c, g) { var r = c.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2); c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); g.setTransform(d, 0, 0, d, 0, 0); return [r.width, r.height]; }
+  function col(k) { return mix(EARTH[k], ALIEN[k], S); }
+
+  function pine(x, base, h, c) {
+    ctx.fillStyle = c; var w = h * 0.28;
+    for (var i = 0; i < 4; i++) { var y0 = base - h * (i / 4.2), tw = w * (1 - i * 0.18); ctx.beginPath(); ctx.moveTo(x - tw, y0); ctx.lineTo(x, y0 - h * 0.42); ctx.lineTo(x + tw, y0); ctx.closePath(); ctx.fill(); }
+    ctx.fillRect(x - w * 0.08, base - h * 0.05, w * 0.16, h * 0.08);
+  }
+  function bulb(x, base, h, c, glow) {
+    ctx.strokeStyle = c; ctx.lineWidth = Math.max(2, h * 0.05); ctx.beginPath(); ctx.moveTo(x, base); ctx.quadraticCurveTo(x + h * 0.25, base - h * 0.5, x, base - h * 0.8); ctx.stroke();
+    ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, base - h * 0.85, h * 0.2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(x - h * 0.05, base - h * 0.9, h * 0.06, 0, Math.PI * 2); ctx.fill();
+  }
+  function ridge(seed, baseY, amp, c, off) {
+    var r = rng(seed); ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(-60, H);
+    var pts = 14; for (var i = 0; i <= pts; i++) { var x = -60 + (W + 120) * i / pts + off; var y = baseY - r() * amp - Math.sin(i * 1.3 + seed) * amp * 0.3 - S * Math.sin(i * 2.7) * amp * 0.5; ctx.lineTo(x, y); }
+    ctx.lineTo(W + 60, H); ctx.closePath(); ctx.fill();
+  }
+  function forest(seed, n, baseY, hMin, hMax, c, off) {
+    var r = rng(seed), glow = col("sun");
+    for (var i = 0; i < n; i++) { var x = r() * (W + 120) - 60 + off, h = hMin + r() * (hMax - hMin), alien = r() < S * 1.1 - 0.05, by = baseY + r() * 10;
+      if (alien) bulb(x, by, h * 0.9, c, glow); else pine(x, by, h, c); }
+  }
+  function piece(x, y, s, body, head) {
+    ctx.fillStyle = "rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(x, y + 2, s * 0.55, s * 0.16, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = body; ctx.beginPath(); ctx.moveTo(x - s * 0.45, y); ctx.lineTo(x - s * 0.22, y - s * 0.95); ctx.lineTo(x + s * 0.22, y - s * 0.95); ctx.lineTo(x + s * 0.45, y); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = head; ctx.beginPath(); ctx.arc(x, y - s * 1.2, s * 0.3, 0, Math.PI * 2); ctx.fill();
+  }
+  function draw() {
+    var g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, col("top")); g.addColorStop(1, col("bot")); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    var d = (px - 0.5);
+    ctx.fillStyle = col("sun"); ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.arc(W * 0.72 - d * 6, H * 0.26, Math.min(W, H) * 0.09, 0, Math.PI * 2); ctx.fill();
+    if (S > 0.35) { ctx.globalAlpha = (S - 0.35) * 1.2; ctx.beginPath(); ctx.arc(W * 0.6 - d * 8, H * 0.14, Math.min(W, H) * 0.035, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    ridge(3, H * 0.55, H * 0.18, col("far"), -d * 10);
+    forest(11, Math.round(W / 22), H * 0.66, H * 0.12, H * 0.2, col("mid"), -d * 24);
+    ridge(7, H * 0.78, H * 0.06, col("near"), -d * 36);
+    forest(19, Math.round(W / 55), H * 0.8, H * 0.2, H * 0.32, col("near"), -d * 40);
+    ctx.fillStyle = col("ground"); ctx.fillRect(0, H * 0.84, W, H * 0.16);
+    var cx = W * 0.3 - d * 48, gy = H * 0.9, ps = Math.max(14, H * 0.07);
+    var bodies = ["#c9874a", "#6f8fb0", "#a65b5b", "#d9c48a"];
+    for (var i = 0; i < 4; i++) piece(cx + i * ps * 1.4, gy, ps, bodies[i], "#efe2c4");
+    ctx.fillStyle = "#6a4d33"; ctx.fillRect(cx + 4 * ps * 1.4, gy - ps * 1.1, ps * 1.9, ps * 0.8);
+    ctx.fillStyle = "#2a1f17"; ctx.beginPath(); ctx.arc(cx + 4.25 * ps * 1.4, gy - ps * 0.2, ps * 0.22, 0, 7); ctx.arc(cx + 5.2 * ps * 1.4, gy - ps * 0.2, ps * 0.22, 0, 7); ctx.fill();
+    ctx.fillStyle = col("fg");
+    ctx.beginPath(); ctx.moveTo(-20 - d * 70, H); ctx.quadraticCurveTo(W * 0.06 - d * 70, H * 0.45, W * 0.13 - d * 70, H); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(W * 0.86 - d * 70, H); ctx.quadraticCurveTo(W * 0.95 - d * 70, H * 0.55, W + 30 - d * 70, H); ctx.fill();
+    var r = rng(5); ctx.fillStyle = "rgba(0,0,0,.05)"; for (var k = 0; k < W * H / 260; k++) ctx.fillRect(r() * W, r() * H, 1, 1);
+  }
+  var queued = false; function req() { if (!queued) { queued = true; requestAnimationFrame(function () { queued = false; draw(); }); } }
+  function resize() { var s = size(cv, ctx); W = s[0]; H = s[1]; req(); trayResize(); }
+  slider.addEventListener("input", function () { S = slider.value / 100; out.value = S.toFixed(2); req(); });
+  cv.addEventListener("pointermove", function (e) { var r = cv.getBoundingClientRect(); px = (e.clientX - r.left) / r.width; req(); });
+  cv.addEventListener("pointerleave", function () { px = 0.5; req(); });
+
+  /* ---------- paper-doll tray ---------- */
+  var tv = document.getElementById("tray"), tx = tv.getContext("2d"), TW = 0, TH = 0, party = [], seedN = 42;
+  var RAMPS = [["#3e5e55","#5f8a7c"],["#7b3f3f","#b06464"],["#3f4f7b","#6d82b8"],["#8a6a2a","#c9a04d"],["#4f3a63","#81639c"],["#5b5b4a","#8c8c74"],["#2f6a74","#56a3ad"]];
+  var TOPS = ["none","hood","wizard","helm","leaf","bush"], HANDS = ["none","staff","bow","blade","book","lantern"], FACES = ["dots","sleepy","wide"], BACKS = ["none","cape","quiver","books"];
+  var CLASSES = ["Mage","Hunter","Knight","Herbalist","Chef","Wizard","Rogue"];
+  function roll() { var r = rng(seedN++ * 7919); party = []; for (var i = 0; i < 6; i++) party.push({ ramp: RAMPS[Math.floor(r() * RAMPS.length)], top: TOPS[Math.floor(r() * TOPS.length)], hand: HANDS[Math.floor(r() * HANDS.length)], face: FACES[Math.floor(r() * FACES.length)], back: BACKS[Math.floor(r() * BACKS.length)], tall: 0.9 + r() * 0.25, lean: (r() - 0.5) * 0.12, cls: CLASSES[Math.floor(r() * CLASSES.length)] }); drawTray(); }
+  function drawPiece(p, x, base, s) {
+    var c = tx, dark = p.ramp[0], light = p.ramp[1], ink = "#1f2a2b", skin = "#efe2c4";
+    c.save(); c.translate(x, base); c.rotate(p.lean); c.scale(1, p.tall);
+    c.fillStyle = "rgba(0,0,0,.18)"; c.beginPath(); c.ellipse(0, 0, s * 0.62, s * 0.15, 0, 0, 7); c.fill();
+    c.fillStyle = dark; c.beginPath(); c.ellipse(0, -s * 0.06, s * 0.55, s * 0.16, 0, 0, 7); c.fill();
+    if (p.back === "cape") { c.fillStyle = dark; c.beginPath(); c.moveTo(-s * 0.3, -s * 1.0); c.lineTo(-s * 0.58, -s * 0.12); c.lineTo(s * 0.58, -s * 0.12); c.lineTo(s * 0.3, -s * 1.0); c.fill(); }
+    if (p.back === "quiver") { c.fillStyle = "#6a4d33"; c.fillRect(s * 0.22, -s * 1.15, s * 0.16, s * 0.6); }
+    if (p.back === "books") { c.fillStyle = "#8a3b2f"; c.fillRect(-s * 0.62, -s * 0.8, s * 0.3, s * 0.18); c.fillStyle = "#2f5a50"; c.fillRect(-s * 0.6, -s * 0.98, s * 0.26, s * 0.18); }
+    c.fillStyle = light; c.strokeStyle = dark; c.lineWidth = 2.5; c.beginPath(); c.moveTo(-s * 0.45, -s * 0.1); c.lineTo(-s * 0.2, -s * 1.0); c.lineTo(s * 0.2, -s * 1.0); c.lineTo(s * 0.45, -s * 0.1); c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = skin; c.beginPath(); c.arc(0, -s * 1.28, s * 0.32, 0, 7); c.fill(); c.stroke();
+    c.fillStyle = ink; c.strokeStyle = ink; c.lineWidth = 2;
+    if (p.face === "dots") { c.beginPath(); c.arc(-s * 0.11, -s * 1.28, s * 0.04, 0, 7); c.arc(s * 0.11, -s * 1.28, s * 0.04, 0, 7); c.fill(); }
+    if (p.face === "sleepy") { c.beginPath(); c.moveTo(-s * 0.17, -s * 1.27); c.lineTo(-s * 0.05, -s * 1.27); c.moveTo(s * 0.05, -s * 1.27); c.lineTo(s * 0.17, -s * 1.27); c.stroke(); }
+    if (p.face === "wide") { c.fillStyle = "#fff"; c.beginPath(); c.arc(-s * 0.11, -s * 1.29, s * 0.075, 0, 7); c.arc(s * 0.11, -s * 1.29, s * 0.075, 0, 7); c.fill(); c.fillStyle = ink; c.beginPath(); c.arc(-s * 0.11, -s * 1.29, s * 0.035, 0, 7); c.arc(s * 0.11, -s * 1.29, s * 0.035, 0, 7); c.fill(); }
+    c.fillStyle = dark;
+    if (p.top === "hood") { c.beginPath(); c.arc(0, -s * 1.3, s * 0.38, Math.PI * 1.05, Math.PI * 1.95); c.lineTo(s * 0.3, -s * 1.1); c.lineTo(s * 0.36, -s * 1.3); c.closePath(); c.fill(); }
+    if (p.top === "wizard") { c.beginPath(); c.moveTo(-s * 0.42, -s * 1.5); c.lineTo(s * 0.1, -s * 2.25); c.lineTo(s * 0.42, -s * 1.5); c.closePath(); c.fill(); c.fillStyle = "#e0c46a"; c.beginPath(); c.arc(s * 0.02, -s * 1.8, s * 0.05, 0, 7); c.fill(); }
+    if (p.top === "helm") { c.fillStyle = "#8d989a"; c.beginPath(); c.arc(0, -s * 1.34, s * 0.34, Math.PI, 0); c.fill(); c.fillRect(-s * 0.04, -s * 1.7, s * 0.08, s * 0.14); }
+    if (p.top === "leaf") { c.fillStyle = "#5a8a4a"; for (var k = -2; k <= 2; k++) { c.beginPath(); c.ellipse(k * s * 0.13, -s * 1.6, s * 0.06, s * 0.14, k * 0.3, 0, 7); c.fill(); } }
+    if (p.top === "bush") { c.fillStyle = "#4f7d3e"; [[-0.2,-1.55],[0.2,-1.55],[0,-1.7],[-0.32,-1.38],[0.32,-1.38]].forEach(function (q) { c.beginPath(); c.arc(q[0] * s, q[1] * s, s * 0.17, 0, 7); c.fill(); }); c.fillStyle = "#b8324a"; c.beginPath(); c.arc(-s * 0.1, -s * 1.62, s * 0.04, 0, 7); c.arc(s * 0.16, -s * 1.5, s * 0.04, 0, 7); c.fill(); }
+    var hx = s * 0.55;
+    if (p.hand === "staff") { c.strokeStyle = "#6a4d33"; c.lineWidth = 3; c.beginPath(); c.moveTo(hx, -s * 0.05); c.lineTo(hx, -s * 1.7); c.stroke(); c.fillStyle = "#cfe3f4"; c.beginPath(); c.arc(hx, -s * 1.75, s * 0.09, 0, 7); c.fill(); }
+    if (p.hand === "bow") { c.strokeStyle = "#6a4d33"; c.lineWidth = 3; c.beginPath(); c.arc(hx - s * 0.1, -s * 0.75, s * 0.42, -1.2, 1.2); c.stroke(); c.strokeStyle = ink; c.lineWidth = 1; c.beginPath(); c.moveTo(hx + s * 0.05, -s * 1.14); c.lineTo(hx + s * 0.05, -s * 0.36); c.stroke(); }
+    if (p.hand === "blade") { c.strokeStyle = "#a9b4b6"; c.lineWidth = 4; c.beginPath(); c.moveTo(hx, -s * 0.5); c.lineTo(hx + s * 0.08, -s * 1.4); c.stroke(); c.strokeStyle = "#6a4d33"; c.beginPath(); c.moveTo(hx - s * 0.12, -s * 0.55); c.lineTo(hx + s * 0.12, -s * 0.55); c.stroke(); }
+    if (p.hand === "book") { c.fillStyle = "#8a3b2f"; c.fillRect(hx - s * 0.14, -s * 0.85, s * 0.28, s * 0.34); c.fillStyle = "#efe2c4"; c.fillRect(hx - s * 0.1, -s * 0.81, s * 0.04, s * 0.26); }
+    if (p.hand === "lantern") { c.strokeStyle = ink; c.lineWidth = 1.5; c.beginPath(); c.moveTo(hx, -s * 0.9); c.lineTo(hx, -s * 0.72); c.stroke(); c.fillStyle = "#f3c76a"; c.fillRect(hx - s * 0.1, -s * 0.72, s * 0.2, s * 0.24); }
+    c.restore();
+  }
+  function drawTray() {
+    var css = getComputedStyle(document.documentElement);
+    tx.clearRect(0, 0, TW, TH);
+    tx.fillStyle = css.getPropertyValue("--code-bg").trim() || "#dfe4dc"; tx.fillRect(0, TH * 0.78, TW, TH * 0.22);
+    var n = party.length, s = Math.min(TH * 0.24, TW / n * 0.36), step = TW / n;
+    party.forEach(function (p, i) {
+      drawPiece(p, step * (i + 0.5), TH * 0.8, s);
+      tx.fillStyle = css.getPropertyValue("--ink-soft").trim() || "#4d5a58"; tx.font = "12px " + (css.getPropertyValue("--f-mono") || "monospace"); tx.textAlign = "center";
+      tx.fillText(p.cls.toUpperCase(), step * (i + 0.5), TH * 0.96);
+    });
+    document.getElementById("trayInfo").textContent = "6 pieces · " + RAMPS.length + " ramps × " + TOPS.length + " tops × " + HANDS.length + " hands × " + FACES.length + " faces × " + BACKS.length + " backs";
+  }
+  function trayResize() { var s = size(tv, tx); TW = s[0]; TH = s[1]; if (party.length) drawTray(); }
+  document.getElementById("roll").addEventListener("click", roll);
+  if (window.matchMedia) { var mq = window.matchMedia("(prefers-color-scheme: dark)"); if (mq.addEventListener) mq.addEventListener("change", function () { drawTray(); }); }
+
+  window.addEventListener("resize", resize);
+  resize(); roll();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { drawTray(); });
+})();
+</script>
+
+</body></html>

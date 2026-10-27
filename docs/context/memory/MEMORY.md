@@ -1,0 +1,11 @@
+# Lodestone
+- Goal: tactics RPG (Fire Emblem/FFT-style grid combat) fused with Oregon Trail travel survival, high fantasy, "Earth to Alien" visual shift past the Wall.
+- Brandon is story designer and writer. Claude is systems/game designer only. NEVER write story or copy; use caveman placeholders ("Bandits spotted lorem ipsum. Fight / Persuade").
+- Visuals: simple board-game-piece characters, easy to randomize and animate. Refs: Yvan Duque, Natalie Andrewson, flat folk-art/riso landscapes with decorative borders. UI tucked into a decorative bottom frame (party, items, Lodestone).
+- 2026-10-26 [USER]: Brandon wants AI to build much of the visual work while he directs and shapes it (supersedes "Brandon draws everything"). Code-drawn art, iterated in thread "Shape the Lodestone visual language" via the Style Lab artifact https://claude.ai/artifact/Q3D7yYdUAeS9eEs7cS5XsK. CLAUDE.md in repo still says never generate art; Brandon must edit it.
+- Core systems: roster with unlock conditions, class plus 1-3 off-class skills, perks and a deficiency per character, dice-style success checks, Lodestone map and meta-progression (party recalled on death, loot lost), minigames for fishing, hunting and herbs.
+- Engine: Godot 4, 2D. See [[lodestone-tech-direction]]. Brandon's PC (Windows, "Gamer") has Godot 4.7.2 and the repo at C:\Users\Brand\Claude\lodestone.
+- Repo: github.com/BrandonSigil/lodestone (main). Week 1 graybox pushed 2026-10-25. See [[lodestone-repo]]. 2026-10-26 [USER] Claude may push and merge on GitHub without asking for now (fast iteration; tighten later).
+- 2026-10-27 [USER]: Keep ALL Lodestone files inside the repo (no side folders like lodestone-art); secrets like the Picsart key stay out of git (gitignored). Brandon also works from a MacBook and possibly another Claude account, so the repo is the single source of truth.
+- Battle maps: Brandon's iso reference sets the look; rules, templates and guide artifact in [[lodestone-battle-map-art]].
+- 2026-10-26 [USER]: Brandon stopped using Krita for now and uses a Picsart subscription instead. No Picsart connector exists; the Krita-based style LoRA plan is on hold. Write art workflows for Picsart.
