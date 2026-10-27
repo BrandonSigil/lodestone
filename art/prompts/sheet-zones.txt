@@ -11,10 +11,21 @@ Make a reference sheet in the same layout as the attached sheet: a short title a
    row 5: tall props alone on cream: tree, second tree, pillar, landmark, ruin or doorway
 4. One line of small labels under row 5.
 
-Style: flat illustrated 2D game art, muted riso print colours, flat fills with small hand-drawn marks one value step off the fill, warm dark plum-grey outlines (#373335) never black, one soft sun from the upper left (tops brightest, left sides 75%, right sides 55%), plain cream paper background (#eae8d6). Few, big, readable shapes. Every zone uses the same block size and the same step height.
+Style: hand-inked storybook game art (see FINISH below): thick wobbly brush-pen outlines in warm dark plum-grey (#373335) never black, mottled gouache washes with paper grain, chunky slightly crooked blocks, a few hand-drawn dash marks, one soft sun from the upper left (tops brightest, left sides 75%, right sides 55%), plain cream paper background (#eae8d6). Few, big, readable shapes: islands built from fewer, chunkier blocks rather than many small ones. Every zone uses the same block size and the same step height.
 
 Colour: each zone has one main colour family plus ONE accent (example: volcanic = ash greys plus ember orange; crystal = slate plus violet). Accents are small: lava channels, crystals, lanterns. No saturated red or blue anywhere else.
 
+Images: image 1 = style picture (the forest hike illustration), match its line and paint. Image 2 (optional) = an earlier sheet, match its layout only.
+
 Zones for this sheet: [LIST 8 ZONES HERE]
 
-Avoid: perspective, 3d render, photo, glossy highlights, gradients on ground, black outlines, characters, people, animals, skulls on every tile, busy clutter, watermark.
+Avoid: perspective, 3d render, photo, vector art, clean digital cel shading, mobile game asset look, glossy highlights, gradients on ground, black outlines, characters, people, animals, skulls on every tile, busy clutter, watermark.
+
+FINISH (hand-made, not polished)
+Match the line and paint of the style picture if one is given (the forest hike illustration): it wins over everything else about surface.
+Line: thick, wobbly brush-pen ink with uneven weight, slightly broken in places, warm dark plum-grey (#373335), never black, never clean vector strokes.
+Paint: flat gouache or watercolour washes with mottled, blotchy texture and visible paper grain; colour sometimes slips a little past the line; no smooth gradients, no glossy highlights, no airbrush.
+Marks: short dashes and ticks for grass, cracks and stone joints, drawn by hand, a few per surface, not a pattern.
+Shapes: chunky and slightly crooked, like hand-cut wooden blocks: edges not perfectly straight but tops still flat and walkable, big simple masses, few small details.
+Colour: few colours per zone (about 6), soft and earthy, a bit faded like a printed storybook.
+Avoid: vector art, clean digital cel shading, mobile game asset store look, perfect geometry, uniform line weight, glossy, shiny, bevels, gradients, high saturation, tiny detail everywhere.
