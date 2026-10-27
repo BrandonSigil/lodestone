@@ -177,10 +177,28 @@ ol.steps{padding-left:1.3em}
 <div class="note"><b>Recommendation on generating tiles.</b> The art pipeline doc said never generate tile grids. I'd loosen that to: generate tiles only on top of these templates, with line art and depth as control, clipped to the masks and hand-fixed. Never ask for a tileset freehand; it won't hold 2:1, the pivots or the seams. Animation frames stay hand-made or code-made.</div>
 
 
-<h2>How the pieces fit</h2>
-<div class="note"><b>Maps are built in Godot. Krita makes the tiles.</b> You shape a battlefield's ground, water and heights in the combat sandbox (the F1 map editor) and save it. Krita makes small square textures and cut-out props. The game wraps those textures onto every block of every map, and a <b>tile set</b> (snow, dungeon, forest…) swaps the whole look of a map without touching its shape. Each new look starts with a <b>concept map</b>: build a test map in the sandbox (high and low ground, water, stairs), paint it on its template in Krita with the terrain's key items (campfire, fallen tree, ruins) on <b>paint 3 props</b>, and export it as <code>art/paintings/&lt;map&gt;-concept.png</code>. That painting is the target; it then gets broken out into the tile set's textures and props below.</div>
+<h2>The zone pipeline</h2>
+<div class="note"><b>Maps are built in Godot. Krita makes the look.</b> Every zone (forest, desert, dungeon, snow…) goes through three stages.</div>
+<h3>1. Prototype the zone in Krita</h3>
+<ol class="steps">
+<li>Open <code>art/templates/battle-maps/maps/sampler/sampler.ora</code>. It's a test map built for this: every ground type, tall cliff and stone walls, a stepped stream, stairs, ruins, and open ground for key items.</li>
+<li>Hide <b>CONTROL line art</b> and the GUIDE layers. Import <code>control-lineart.png</code> and <code>control-depth.png</code> as hidden layers, and add them as Control Layers in the AI docker (Line Art 80%, Depth 55%).</li>
+<li>Pick a starting picture: import <code>control-blocking-desert.png</code>, <code>-dungeon</code>, <code>-forest</code> or <code>-snow</code> and hide the original blocking. No brushing needed. (Scribbling your own colours on top works too.)</li>
+<li>Prompt the zone (for example "desert mesa, sandstone cliffs, dry shrubs, campfire") and click <b>Refine</b> at 60–85%. Higher strength follows the prompt more; the control layers keep the grid either way. Try a few, keep the best, change the prompt, try again.</li>
+<li>Paint or refine the key items (campfire, fallen tree, ruins) on <b>paint 3 props</b>.</li>
+</ol>
+<div class="note"><b>On the MacBook:</b> if Refine fails with "MPSGraph does not support tensor dims larger than INT_MAX", open the docker's gear, <b>Performance</b>, and set <b>Resolution multiplier</b> to 0.5 (0.4 if it still fails). The full canvas is too big for one pass on MPS.</div>
+<h3>2. Break it out</h3>
+<ol class="steps">
+<li>Hide <b>paint 3 props</b> and the CONTROL/GUIDE layers, then <b>File &gt; Export</b> the whole canvas as <code>art/paintings/sampler-desert.png</code>.</li>
+<li>Show only <b>paint 3 props</b> and export it as <code>art/paintings/sampler-desert-props.png</code> (transparent, full canvas).</li>
+<li>Tell me "concept in", or run it yourself:<br><code>python3 tools/art/break_out.py art/paintings/sampler-desert.png --map sampler --set desert --props art/paintings/sampler-desert-props.png</code></li>
+<li>It writes every top texture, side strip and prop into <code>game/art/source/battle/desert/</code>, plus <code>sampler-desert-breakout.png</code> showing each piece and where it was cut.</li>
+</ol>
+<h3>3. Clean up and play</h3>
+<p>Open the cut pieces in Krita and tidy them (steps below): make textures seamless, paint the trees out of <code>top_forest</code>, rename props to the game's names. Then pick <b>tile set: desert</b> in the sandbox.</p>
 
-<h2>Make a tile set in Krita, step by step</h2>
+<h2>Making or cleaning tiles in Krita</h2>
 <p>This assumes Krita AI Diffusion with the Local Managed Server (SDXL, ZavyChroma XL) on the MacBook and the repo cloned. Button names match plugin 1.5x.</p>
 
 <h3>What a tile set is</h3>
