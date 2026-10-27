@@ -14,5 +14,6 @@ Brandon is the story designer, writer and artist. Claude is the systems designer
 - `docs/decisions.md`: every design call, tagged and dated.
 - `docs/style-bible.md`: Brandon's art rules. Read it before touching shaders or visuals.
 - `docs/systems/*.md`: how each system works now.
+- `docs/context/`: project memory, thread history and published pages exported from the Claude project. Start with its README.
 - `game/`: the Godot 4 project (GDScript, 2D, Compatibility renderer).
 - `tools/`: check and screenshot scripts.

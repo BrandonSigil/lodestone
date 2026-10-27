@@ -19,5 +19,5 @@ The flow is village, trail, fight, back to the trail, and back to the village wh
 - `docs/research/tactical-combat.md`: what makes tactics combat fun and how to balance it, with sources.
 
 ## For Claude sessions
-Read `CLAUDE.md` first. Run `tools/check.sh` after every change (set `GODOT` to the Godot binary).
+Read `CLAUDE.md` first, then `docs/context/README.md` (project memory, thread history and published pages exported from the Claude project). Run `tools/check.sh` after every change (set `GODOT` to the Godot binary).
 `tools/screenshot.sh` saves a PNG of each screen to `screenshots/`.
