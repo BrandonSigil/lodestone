@@ -257,7 +257,7 @@ func _draw_tile(c: Vector2i) -> void:
 			continue
 		if t == CombatGrid.T.WATER:
 			_waterfall(side[0], side[1], h, nh, c)
-		elif not built and t != CombatGrid.T.ROAD:
+		elif not built and t != CombatGrid.T.ROAD and BattleArt.art_set == "":  # zone sets are flat: no grass drips
 			_drips(side[0], side[1], h, h - nh, moss.darkened(0.15 if shade else 0.0), seed_v + (11 if shade else 0))
 	var top := _diamond(c, h)
 	var tl := top[0]
@@ -522,7 +522,7 @@ func _ruin(c: Vector2i, h: float, seed_v: int) -> void:  # graybox; a prop_pilla
 	# Ragged crown: a broken block on top.
 	var k0 := Vector2(c.x + 0.25 + (seed_v % 5) * 0.06, c.y + 0.3)
 	_block(k0, k0 + Vector2(0.3, 0.3), top_h, top_h + 0.5, col.lightened(0.04), seed_v, true)
-	if seed_v % 4 == 0:
+	if seed_v % 4 == 0 and BattleArt.art_set == "":
 		_drips(lit[0], lit[1], top_h, rise, _terrain_color(CombatGrid.T.GRASS).darkened(0.05), seed_v)
 
 

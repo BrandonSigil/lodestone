@@ -1,6 +1,6 @@
 extends SceneTree
 ## Drives the combat sandbox into a state and saves a PNG, so visual work can be checked headless.
-## Args after "--": <png path> <step> [map name in data/maps]
+## Args after "--": <png path> <step> [map name in data/maps] [tile set, a subfolder of art/source/battle]
 ## Steps: edit, menu (select first party piece), aim (aim its first skill at the nearest foe),
 ## danger (danger zone on), moved (walk the first piece forward, then open its menu)
 
@@ -28,6 +28,8 @@ func _process(_delta: float) -> bool:
 	if _frames == 3 and args.size() > 2:
 		var s: Node = current_scene
 		s.set("setup", load("res://scripts/sandbox/sandbox_setup.gd").load_file("res://data/maps/%s.json" % args[2]))
+		if args.size() > 3:
+			s.get("setup").art_set = args[3]
 		s.call("_sync_controls")
 		s.call("_enter_edit")
 	_steps.call("run", current_scene, _frames, _step)
