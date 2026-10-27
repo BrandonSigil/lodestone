@@ -39,10 +39,10 @@
 
 ## In flight (2026-10-27)
 - Combat polish from Brandon's playtest notes (thread "Build character templates and flat terrain sets"): see-through props or outlines for hidden units, grid toggle, combat stance with weapon drawn, floating-island map shapes with rough stepped undersides and drips, remove the old base tile set (forest default), blended-zone maps. The grid toggle and base set removal were done on the MacBook but NOT pushed; check `~/lodestone` there first and use `CombatBoard.show_grid` from PR #43.
-- Empty village design (thread "Rework systems for the empty village premise"): draft 3 (PR #44) adds the nobody start (the village as the first explore map, a smithy weapon rack, a hidden item) and a three-tier Fire Emblem style job tree with levels, XP and growths. Draft 3.1: levels persist, smithy has sword / daggers / bow for knight / rogue / archer. Docs only so far.
+- Empty village design (thread "Rework systems for the empty village premise"): draft 3 (PR #44) adds the nobody start (the village as the first explore map, a smithy weapon rack, a hidden item) and a three-tier Fire Emblem style job tree with levels, XP and growths. Draft 3.1: levels persist, smithy has sword / daggers / bow for knight / rogue / archer. Draft 3.2: one weapon, final; a hidden book in a home opens a mage path. Docs only so far.
 
 ## Open items waiting on Brandon
-- Empty village: is a survivor settler-or-party-member by who they are (Claude's assumption)? Who survives, and which kind? Job system: take one smithy weapon or all three; tier 2 branch roles and names; any magic path for the hero.
+- Empty village: is a survivor settler-or-party-member by who they are (Claude's assumption)? Who survives, and which kind? Job system: tier 2 branch roles and names.
 - Pick the bottom frame: A embroidered band (current), B quilt row, C foreground ridge, or a mix.
 - Retag `[AI]` lines he agrees with in `docs/decisions.md` as `[USER]`; mark rules B1 to B32 and C1 to C29 his or change them.
 - Fill in `docs/style-bible.md`; edit the art rule in CLAUDE.md.
