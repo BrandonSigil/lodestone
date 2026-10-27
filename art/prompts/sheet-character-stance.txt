@@ -1,0 +1,14 @@
+LODESTONE CHARACTER COMBAT STANCE SHEET (one facing per picture; --zones fills the facing below)
+
+Image 1 = the character sheet (docs/art/characters/00-reference-sheet.png). Draw THIS character and nobody else: same messy brown hair over the eyes, green hooded cloak with a round gold clasp, blue tunic, cream undershirt, brown belt and pouches, dark trousers, brown boots, a sword in a sheath on the back and a rolled pack. Same chibi proportions (about 2.3 heads tall), same flat colours, same soft dark outline, same simple shading. Copy the drawing style of image 1 exactly; do not add detail.
+
+FACING for every frame on this sheet: [ZONE]
+Every frame shows the character from this same direction, seen from the high game camera of image 1 (2:1 dimetric, looking down about 30 degrees, no perspective).
+
+LAYOUT: a sprite sheet on plain flat cream paper (#eae8d6). Two rows, frames evenly spaced left to right, each figure fully separate from its neighbours with clear empty cream between them. Every figure is the same size and stands on the same invisible baseline within its row, feet in the same place, as if the frames will be played over each other.
+The character is IN COMBAT on every frame: the sword is DRAWN and held in the right hand, the empty sheath stays on the back, knees slightly bent, weight forward, ready to fight.
+   row 1 READY, 4 frames: a guard stance holding the sword up in front at an angle, breathing; the cloak sways a little. Small movement only.
+   row 2 ADVANCE, 6 frames: a careful walk cycle in place (contact, down, pass, up, then the other leg) while keeping the sword up and ready; the cloak swings.
+
+Rules: no text, no labels, no numbers, no frame borders, no grid lines, no floor, no tiles, no ground shadow, no grass, no scenery, no extra characters. Keep every frame clean and simple so it reads at small size.
+Avoid: perspective, different camera angles between frames, a different facing in any frame, extra detail, texture, black outlines, 3d render, photo, motion blur, speed lines, text.

@@ -4,13 +4,14 @@ extends RefCounted
 
 ## STONE is paved ruin floor. STAIRS let pieces climb STAIRS_CLIMB more levels than their Jump.
 ## RUIN is a broken wall or pillar: impassable, and it stands RUIN_RISE levels above its cell for line of sight.
-enum T { GRASS, FOREST, WATER, ROCK, ROAD, STONE, STAIRS, RUIN }
+## VOID is no ground at all: the island's outline. Nothing stands on it, nothing is drawn, sight passes over it.
+enum T { GRASS, FOREST, WATER, ROCK, ROAD, STONE, STAIRS, RUIN, VOID }
 
 const BLOCKED := 999
-const STEP_COST := {T.GRASS: 1, T.FOREST: 2, T.WATER: 3, T.ROCK: BLOCKED, T.ROAD: 1, T.STONE: 1, T.STAIRS: 1, T.RUIN: BLOCKED}
-const COVER := {T.GRASS: 0, T.FOREST: 2, T.WATER: -2, T.ROCK: 0, T.ROAD: 0, T.STONE: 0, T.STAIRS: 0, T.RUIN: 0}
+const STEP_COST := {T.GRASS: 1, T.FOREST: 2, T.WATER: 3, T.ROCK: BLOCKED, T.ROAD: 1, T.STONE: 1, T.STAIRS: 1, T.RUIN: BLOCKED, T.VOID: BLOCKED}
+const COVER := {T.GRASS: 0, T.FOREST: 2, T.WATER: -2, T.ROCK: 0, T.ROAD: 0, T.STONE: 0, T.STAIRS: 0, T.RUIN: 0, T.VOID: 0}
 ## How far above the ground each terrain blocks sight (trees and boulders block a little, ruins a lot).
-const SIGHT_BLOCK := {T.GRASS: 0.0, T.FOREST: 0.8, T.WATER: 0.0, T.ROCK: 1.0, T.ROAD: 0.0, T.STONE: 0.0, T.STAIRS: 0.0, T.RUIN: 2.0}
+const SIGHT_BLOCK := {T.GRASS: 0.0, T.FOREST: 0.8, T.WATER: 0.0, T.ROCK: 1.0, T.ROAD: 0.0, T.STONE: 0.0, T.STAIRS: 0.0, T.RUIN: 2.0, T.VOID: 0.0}
 const RUIN_RISE := 2
 const STAIRS_CLIMB := 2
 const MAX_HEIGHT := 8  ## editor and saved maps
@@ -21,6 +22,7 @@ var w := 0
 var h := 0
 var heights := PackedInt32Array()
 var terrain := PackedInt32Array()
+var zones := PackedStringArray()  ## per-cell tile set (BattleArt set name); "" = the map's own set
 var _sight := {}  ## line of sight cache, cleared on any edit
 
 
@@ -32,6 +34,7 @@ static func flat(width: int, height: int) -> CombatGrid:
 	g.terrain.resize(width * height)
 	g.heights.fill(0)
 	g.terrain.fill(T.GRASS)
+	g.zones.resize(width * height)
 	return g
 
 
@@ -110,6 +113,19 @@ func set_terrain(c: Vector2i, t: int) -> void:
 	_sight.clear()
 
 
+## Is there ground here? False off the map and on VOID cells.
+func solid(c: Vector2i) -> bool:
+	return in_bounds(c) and terrain_at(c) != T.VOID
+
+
+func zone_at(c: Vector2i) -> String:
+	return zones[idx(c)]
+
+
+func set_zone(c: Vector2i, z: String) -> void:
+	zones[idx(c)] = z
+
+
 ## A copy at a new size. Cells that still fit keep their height and terrain; new cells are flat grass.
 func resized(width: int, height: int) -> CombatGrid:
 	var g := flat(width, height)
@@ -118,13 +134,14 @@ func resized(width: int, height: int) -> CombatGrid:
 			var c := Vector2i(x, y)
 			g.set_height(c, height_at(c))
 			g.set_terrain(c, terrain_at(c))
+			g.set_zone(c, zone_at(c))
 	return g
 
 
 ## Saved maps store terrain as letters, one string per row: g grass, f forest, w water, r rock, d road,
-## s stone, t stairs, u ruin.
+## s stone, t stairs, u ruin, . void (no ground).
 ## Heights are digits 0-8, one string per row. Easy to read and hand-edit in the JSON.
-const LETTERS := {T.GRASS: "g", T.FOREST: "f", T.WATER: "w", T.ROCK: "r", T.ROAD: "d", T.STONE: "s", T.STAIRS: "t", T.RUIN: "u"}
+const LETTERS := {T.GRASS: "g", T.FOREST: "f", T.WATER: "w", T.ROCK: "r", T.ROAD: "d", T.STONE: "s", T.STAIRS: "t", T.RUIN: "u", T.VOID: "."}
 
 
 func to_dict() -> Dictionary:
@@ -138,7 +155,26 @@ func to_dict() -> Dictionary:
 			hr += str(height_at(Vector2i(x, y)))
 		t_rows.append(tr)
 		h_rows.append(hr)
-	return {"w": w, "h": h, "terrain": t_rows, "heights": h_rows}
+	var d := {"w": w, "h": h, "terrain": t_rows, "heights": h_rows}
+	# Zones (only when a map mixes tile sets): one letter per cell, a-z mapped to set names, "-" = the map's set.
+	var names: Array[String] = []
+	for z in zones:
+		if z != "" and not names.has(z):
+			names.append(z)
+	if not names.is_empty():
+		var z_rows: Array[String] = []
+		for y in h:
+			var zr := ""
+			for x in w:
+				var z := zone_at(Vector2i(x, y))
+				zr += "-" if z == "" else String.chr(97 + names.find(z))
+			z_rows.append(zr)
+		var key := {}
+		for i in names.size():
+			key[String.chr(97 + i)] = names[i]
+		d["zones"] = z_rows
+		d["zone_key"] = key
+	return d
 
 
 static func from_dict(d: Dictionary) -> CombatGrid:
@@ -155,6 +191,11 @@ static func from_dict(d: Dictionary) -> CombatGrid:
 				g.set_terrain(c, from_letter.get(String(t_rows[y])[x], T.GRASS))
 			if y < h_rows.size() and x < String(h_rows[y]).length():
 				g.set_height(c, clampi(int(String(h_rows[y])[x]), 0, MAX_HEIGHT))
+	var z_rows: Array = d.get("zones", [])
+	var key: Dictionary = d.get("zone_key", {})
+	for y in mini(g.h, z_rows.size()):
+		for x in mini(g.w, String(z_rows[y]).length()):
+			g.set_zone(Vector2i(x, y), String(key.get(String(z_rows[y])[x], "")))
 	return g
 
 

@@ -27,6 +27,11 @@ static func has_art(id: StringName) -> bool:
 	return meta(id) != null
 
 
+static func has_anim(id: StringName, anim: String) -> bool:
+	var m: Variant = meta(id)
+	return m != null and m.anims.has(anim)
+
+
 ## Seconds an anim takes to play once.
 static func length(id: StringName, anim: String) -> float:
 	var a: Dictionary = meta(id).anims.get(anim, {})

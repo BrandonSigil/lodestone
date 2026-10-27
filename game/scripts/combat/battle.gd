@@ -60,8 +60,10 @@ func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0
 		board = CombatBoard.new()
 		board.grid = grid
 		board.strangeness = strangeness
+		board.backdrop = true
 		add_child(board)
 	board.units = units
+	board.combat_stance = true  # weapons out while the fight lasts
 	board.cell_clicked.connect(_on_cell_clicked)
 	board.cell_hovered.connect(_on_cell_hovered)
 	board.rotated.connect(_on_rotated)
@@ -273,6 +275,7 @@ func _check_end() -> bool:
 	state = S.OVER
 	_deselect()
 	board.danger = {}
+	board.combat_stance = false
 	_banner.text = Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT")
 	changed.emit()
 	finished.emit(won)
