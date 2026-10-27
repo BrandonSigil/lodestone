@@ -620,7 +620,7 @@ func _resize() -> void:
 
 
 func _generate() -> void:
-	var g := CombatGrid.generate(int(_seed_spin.value), int(_w_spin.value), int(_h_spin.value), setup.strangeness)
+	var g := CombatGrid.generate(int(_seed_spin.value), int(_w_spin.value), int(_h_spin.value), setup.strangeness, true)
 	setup.grid = g
 	setup.clean()
 	# Keep the same pieces, moved onto the new deploy zones.
