@@ -6,6 +6,7 @@ func test_setup_round_trip() -> void:
 	s.apply_preset("HARD")
 	s.party_mods.damage = 2
 	s.mercy = false
+	s.art_set = "snow"
 	var back := SandboxSetup.from_dict(JSON.parse_string(JSON.stringify(s.to_dict())))
 	eq(back.party.size(), s.party.size())
 	eq(back.enemies[0].cell, s.enemies[0].cell)
@@ -13,6 +14,7 @@ func test_setup_round_trip() -> void:
 	eq(back.party_mods.damage, 2)
 	eq(back.extra_enemies, s.extra_enemies)
 	eq(back.mercy, false)
+	eq(back.art_set, "snow")
 	eq(back.grid.heights, s.grid.heights)
 
 
@@ -51,3 +53,10 @@ func test_saved_maps_load() -> void:
 		ok(s != null and s.grid.w > 0, p)
 		if s:
 			ok(not s.build_units().is_empty(), "units in " + p)
+
+
+func test_missing_tile_set_falls_back_to_base_art() -> void:
+	var base := BattleArt.top(CombatGrid.T.GRASS)
+	BattleArt.use_set("no_such_set")
+	eq(BattleArt.top(CombatGrid.T.GRASS) != null, base != null)
+	BattleArt.use_set("")

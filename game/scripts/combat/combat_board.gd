@@ -43,6 +43,7 @@ const FALL := Color(0.62, 0.9, 0.86)  ## waterfall sheets
 var grid: CombatGrid
 var units: Array = []
 var strangeness := 0.0
+var art_set := ""  ## tile set subfolder (see BattleArt); "" = base art
 var highlights := {}  # cell -> Color
 var danger := {}  # cell -> true, the enemy's reach next phase
 var area := {}  # cell -> true, cells a skill would hit
@@ -193,6 +194,7 @@ func _unhandled_input(event: InputEvent) -> void:
 # --- drawing ------------------------------------------------------------------
 
 func _draw() -> void:
+	BattleArt.use_set(art_set)
 	if grid == null:
 		return
 	var layers := _layers()

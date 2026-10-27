@@ -24,6 +24,7 @@ var extra_enemies := 0  ## copies of the listed enemies added on the right edge 
 var supplies := {"medicine": 3, "food": 10}
 var seed_value := 1
 var strangeness := 0.0
+var art_set := ""  ## battle tile set (a subfolder of BattleArt.DIR), "" = base art
 var counters := true
 var mercy := true
 var view := 0  ## camera quarter turns the map opens with
@@ -221,7 +222,7 @@ func to_dict() -> Dictionary:
 	return {
 		"name": map_name, "map": grid.to_dict(), "party": cells.call(party), "enemies": cells.call(enemies),
 		"party_mods": party_mods, "enemy_mods": enemy_mods, "extra_enemies": extra_enemies,
-		"supplies": supplies, "seed": seed_value, "strangeness": strangeness,
+		"supplies": supplies, "seed": seed_value, "strangeness": strangeness, "art_set": art_set,
 		"counters": counters, "mercy": mercy, "view": view,
 	}
 
@@ -245,6 +246,7 @@ static func from_dict(d: Dictionary) -> SandboxSetup:
 	s.supplies = {"medicine": int(sup.get("medicine", 3)), "food": int(sup.get("food", 10))}
 	s.seed_value = int(d.get("seed", 1))
 	s.strangeness = float(d.get("strangeness", 0.0))
+	s.art_set = String(d.get("art_set", ""))
 	s.counters = bool(d.get("counters", true))
 	s.mercy = bool(d.get("mercy", true))
 	s.view = int(d.get("view", 0)) % 4
