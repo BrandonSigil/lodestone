@@ -230,6 +230,7 @@ func _draw() -> void:
 		_draw_backdrop()
 	_floor_base = BASE - LOWLAND_DROP if has_sky else BASE
 	var rings := _ring_cells() if has_sky else {}
+	var front := _front_depth() if has_sky else -1
 	var layers := _layers()
 	for c: Vector2i in rings:
 		if not grid.in_bounds(c):  # scenery beyond the grid joins the depth order too
@@ -238,8 +239,10 @@ func _draw() -> void:
 	for depth in layers.size():
 		for c: Vector2i in layers[depth]:
 			if rings.has(c):
-				_ring_ground(c, rings[c])
-				_scenery(c, rings[c])
+				# The outer ring in front of the floor goes dark, with treeline silhouettes, so the foreground frames the floor.
+				var in_front: bool = rings[c] == SCENERY_RINGS and depth_of(c.x, c.y) > front
+				_ring_ground(c, rings[c], in_front)
+				_scenery(c, rings[c], in_front)
 				continue
 			if hidden(c):
 				if edit_void and grid.terrain_at(c) == CombatGrid.T.VOID:
@@ -652,11 +655,24 @@ func _spill(a: Vector2, b: Vector2, c: Vector2i) -> void:
 
 
 ## The skyline: a horizon strip behind the whole board, wider than the floor so it reads as far away.
-func _draw_skyline(sky: Texture2D) -> void:
+func _draw_skyline(sky: Texture2D) -> float:
 	var width := board_size().x * SKY_SCALE
 	var height := width * sky.get_height() / sky.get_width()
 	var centre := board_origin() + board_size() * 0.5
-	draw_texture_rect(sky, Rect2(Vector2(centre.x - width * 0.5, centre.y - height * SKY_LOW), Vector2(width, height)), false)
+	var top := centre.y - height * SKY_LOW
+	draw_texture_rect(sky, Rect2(Vector2(centre.x - width * 0.5, top), Vector2(width, height)), false)
+	return top + height
+
+
+## Dark blue ground below the skyline, running down past the bottom of the view so the treeline reads as foreground.
+func _draw_ground_fade(top_y: float) -> void:
+	var top_col := Color(0.12, 0.17, 0.3)
+	var low_col := Color(0.05, 0.08, 0.16)
+	var left := board_origin().x - 2000.0
+	var right := board_origin().x + board_size().x + 2000.0
+	var bottom := board_origin().y + board_size().y + 2000.0
+	draw_polygon(PackedVector2Array([Vector2(left, top_y), Vector2(right, top_y), Vector2(right, bottom), Vector2(left, bottom)]),
+		PackedColorArray([top_col, top_col, low_col, low_col]))
 
 
 ## Empty cells within SCENERY_RINGS steps of the floor, mapped to their ring (1 is next to the floor).
@@ -689,19 +705,23 @@ func _ring_cells() -> Dictionary:
 
 ## Flat lowland under the outer ring, below the floor's cliffs, so the scenery stands on ground.
 ## The outer ring fades a little (ring 2 is see-through), so its edge against the skyline is softer.
-func _ring_ground(c: Vector2i, ring_i: int) -> void:
+func _ring_ground(c: Vector2i, ring_i: int, dark := false) -> void:
 	var grass := _terrain_color(CombatGrid.T.GRASS).darkened(0.05 + 0.04 * float(_hash(c) % 3))
+	if dark:  # the foreground dissolves into the dark blue ground below
+		grass = grass.lerp(Color(0.1, 0.14, 0.26), 0.9)
 	grass.a = 1.0 if ring_i == 1 else 0.55
 	draw_colored_polygon(_diamond(c, _floor_base), grass)
 
 
 ## Scenery on the empty ground around the floor: rocks and bushes on ring 1, pines and rocks on ring 2,
 ## with some cells left bare.
-func _scenery(c: Vector2i, ring_i: int) -> void:
+func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 	var seed_v := _hash(c)
 	var pick := (seed_v + ring_i) % 5
 	var sprite := ""
-	if ring_i == 1:
+	if dark:  # the foreground treeline: tall navy pines, every cell
+		sprite = "prop_pine_2" if pick % 2 == 0 else "prop_pine_1"
+	elif ring_i == 1:
 		sprite = ["prop_boulder", "prop_bush", "prop_bush"][pick % 3] if pick < 3 else ""
 	else:
 		sprite = ["prop_pine_1", "prop_pine_2", "prop_pine_1", "prop_boulder"][pick % 4] if pick < 4 else ""
@@ -710,11 +730,22 @@ func _scenery(c: Vector2i, ring_i: int) -> void:
 	var tex := BattleArt.texture(sprite)
 	if tex == null:
 		return
-	var tall := TW * (0.9 if sprite.begins_with("prop_pine") else 0.5)
+	var tall := TW * (1.5 if dark else (0.9 if sprite.begins_with("prop_pine") else 0.5))
 	var wide := tall * tex.get_width() / float(tex.get_height())
 	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _floor_base)
 	Pawn.ellipse(self, base, wide * 0.36, wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
-	draw_texture_rect(tex, Rect2(base.x - wide * 0.5, base.y - tall, wide, tall), false)
+	var tint := Color(0.14, 0.18, 0.3) if dark else Color.WHITE
+	draw_texture_rect(tex, Rect2(base.x - wide * 0.5, base.y - tall, wide, tall), false, tint)
+
+
+## The deepest depth of any floor cell, so scenery beyond it sits in front of the floor.
+func _front_depth() -> int:
+	var deepest := -1
+	for y in int(grid.h):
+		for x in int(grid.w):
+			if grid.terrain_at(Vector2i(x, y)) != CombatGrid.T.VOID:
+				deepest = maxi(deepest, depth_of(x, y))
+	return deepest
 
 
 ## A backdrop plate: one picture per art set, centred on the floor and scaled to its footprint.
@@ -775,7 +806,7 @@ func _cobble(top: PackedVector2Array, col: Color, seed_v: int) -> void:
 func _draw_backdrop() -> void:
 	var sky := BattleArt.texture("skyline", false, art_set)
 	if sky != null:
-		_draw_skyline(sky)
+		_draw_ground_fade(_draw_skyline(sky))
 	var plate := BattleArt.texture("backdrop", false, art_set)
 	if plate != null:
 		_draw_plate(plate)
