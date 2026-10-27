@@ -1,145 +1,158 @@
 # Empty village premise: what changes in the systems
 
-Status: proposal, 2026-10-27. Every rule here is `[AI]` until Brandon retags it in `docs/decisions.md`.
+Status: draft 2, 2026-10-27. Brandon answered the first round of questions; his answers are `[USER]` in
+`docs/decisions.md`. Everything else here is `[AI]` until he retags it.
 Story, names, lore and copy are Brandon's. This doc only covers mechanics; all text examples are placeholders.
 
 ## The premise (Brandon, 2026-10-27)
 The hero finds everyone they knew gone. The village is empty and decayed, as if about 50 years passed.
-Only the hero and their corgi are left. Out in the world they meet a few predetermined survivors. Each
-survivor can either go back to the village as a settler and help rebuild, or join the hero as a party member.
+Only the hero and their corgi are left. Out in the world they meet a few predetermined survivors. Some come
+back to the village as settlers and help rebuild it; others join the hero as party members.
+
+Early on the hero unearths the Lodestone, and on their first death they learn what it does. The Wall is
+still there; the elves past it may have survived, or an elvish prophecy foretold this, which is why the hero
+pushes all the way over.
 
 The old framing (a scout brings the Lodestone home, the King sends you past the Wall, the lord backs you
 with gold if you prove the trip is worthwhile) is superseded but kept on file in `docs/decisions.md`.
 
 ## The loop in one paragraph
-Leave the empty village with the hero, the corgi and whoever has joined. Travel, fight and explore.
-Find survivors at fixed places on the map and win them over. Bring home salvage to repair the village.
-Each repaired building, run by a settler, makes the next trip start stronger. The Lodestone still pulls
-the party home on a wipe; the village, its settlers and the map always survive a recall.
+Leave the empty village with the hero, the corgi and whoever has joined. Travel, fight and explore toward
+the Wall. Find survivors at fixed places and win them over. Bring home salvage (and, later, gold) to repair
+the village. Settlers live there as NPCs you visit between runs; each one runs a building that makes the
+next trip start stronger. The Lodestone pulls the party home on a wipe; the village, its settlers and the
+map always survive a recall.
 
 ## 1. The corgi
-The hero's first companion, there from the very first screen. It is the Lone Wolf start Brandon wanted
-("create your character and just head out") with a dog, as he also wanted.
+There from the very first screen. Brandon: he fights, and has simple foraging and sniffing skills.
 
 - **Always in the party, never takes a slot.** Party is 4 slots plus the corgi. It cannot be left home.
 - **Never lost.** At 0 HP in combat it runs off the board and comes back after the fight with 1 HP. It does
-  not count toward a party wipe. No permadeath, so no feel-bad moment that ends a run.
-- **Trail (one passive each):**
-  - SNIFF: +2 to the party's hunt and forage checks.
-  - ALERT: the party can't be ambushed. Events tagged `ambush` fall back to their normal option list.
-  - BUDDY: +2 morale a day while morale is under 50 (a floor, not a free buff).
-  - Eats 0 food. Keeps the opening run fair when the hero is alone.
+  not count toward a party wipe.
+- **Eats 0 food.** Keeps the opening run fair when the hero is alone.
+- **SNIFF:** +2 to the party's hunt and forage checks.
+- **PERK UP (the ears):** on a travel day where an event is about to fire, the corgi's ears perk up first
+  and the player picks GO ON or GO AROUND. GO AROUND skips the event and costs half the day's distance.
+  On 15% of quiet days the ears perk up anyway: a false alarm (a squirrel). So the warning is useful but
+  never certain, and going around every time is slow. Odds and costs in data, tunable.
+  - Placeholder: `DOG EARS UP. danger maybe. or squirrel. [ GO ON ] [ GO AROUND ]`. Brandon writes the real line.
+  - An event the party walks into after a perk-up can't be an ambush (no surprise round).
 - **Combat:** a small 1x1 piece, 6 HP, move 5, jump 2, weak bite (2 damage). One skill, BARK (hex, range 1):
   the target loses its counterattack and gets -2 to hit until its next turn. Enemies never prefer it as a
-  target over a party member. It is a support piece that rewards positioning, not a damage dealer.
-- **Exploration:** it sniffs out interactables (herbs, salvage, hidden survivors) within 3 tiles through
-  fog. That hook belongs to the exploration work; this doc only asks for the flag.
-- **Village:** pet it. No mechanic. Brandon may want a moment there.
-- Growth: later, the corgi could learn one trick per village building (fetch from the kennel, etc.). Not
-  for the first slice.
+  target over a party member. A support piece that rewards positioning, not a damage dealer.
+- **Exploration:** sniffs out interactables (herbs, salvage, hidden survivors) within 3 tiles through fog.
+  That hook belongs to the exploration work; this doc only asks for the flag.
 
 ## 2. Survivors
-The existing roster becomes the survivor list. Each is a predetermined character with a fixed place in
-the world, not an unlock flag that fires after N recalls.
+The roster becomes the survivor list: predetermined characters, each with a fixed place in the world,
+instead of unlock flags that fire after N recalls.
 
+- **Two kinds, fixed per character.** Brandon: settlers are simply NPCs you interact with between runs.
+  So a survivor is either a **settler** (an NPC in the village, never a piece on the grid) or a
+  **companion** (joins the roster and is pickable at the hearth). The kind is set in data, `role` on
+  `CharacterDef`, and never changes.
+  - Reading taken: the kind is decided by the character, not picked by the player. If Brandon wants the
+    player to choose once, permanently, it is one extra prompt at the recruit event; the rest holds.
 - **Where:** each survivor has a home spot: a world map landmark, an event, or an interact on an explore
-  map. Data: `found_at` on `CharacterDef` (landmark id or event id).
-- **Meeting:** a survivor scene is a normal event with checks. Typical shapes, all placeholder:
-  `STRANGER HERE. lorem. [ TALK ] [ HELP ] [ LEAVE ]`. Some will want something first (bring medicine,
-  clear the wolves, come back after the Wall). The old mayor side jobs (`quests.csv`) become these asks.
-- **The choice:** once won over, the player picks SETTLE or JOIN.
-  - SETTLE: the survivor walks home (no trip needed; the Lodestone marks them). From the next village
-    visit they work a building.
-  - JOIN: they join the party on the spot, mid-run, and are pickable at the hearth from then on.
-- **Recommended: the choice can change at the village, between runs.** A settler can be pulled into the
-  party and a party member can settle. While a settler is out adventuring, their building goes idle.
-  This turns "who do I take" into a real cost every run (take the herbalist and the apothecary makes
-  nothing) and nobody can lock themselves out of a character forever.
-- **A survivor met but not won over** stays at their spot and can be tried again on a later run.
+  map. Data: `found_at` (landmark or event id).
+- **Meeting:** a survivor scene is a normal event with checks, e.g. placeholder
+  `STRANGER HERE. lorem. [ TALK ] [ HELP ] [ LEAVE ]`. Some want something first (bring medicine, clear the
+  wolves, come back after the Wall). The old mayor side jobs (`quests.csv`) become these asks.
+- **Won over:** a companion joins the party on the spot, mid-run. A settler heads home (no trip needed) and
+  is in the village from the next visit.
+- **Not won over:** they stay at their spot; try again on a later run.
 - A wipe never loses a survivor. Met and won-over survivors live in meta.
-- The off-class skills that already exist (persuade, tame, masonry, fish, heal...) decide what each one
-  is good at as a settler. A knight with masonry repairs walls faster. That keeps Brandon's "skills that
-  aren't your class" idea doing double duty.
 
-## 3. The village: rebuilding
-The village starts as ruins. Every building is a slot with a state: RUIN, REPAIRED, then up to two upgrades.
+## 3. The village: settlers and rebuilding
+The village starts as ruins. Each settler moves into one building and runs it.
 
-- **New run resource: salvage.** Found on the trail (events, forage on old sites) and in explore maps.
+- **Visiting settlers between runs.** Each settler is a place on the hub. Clicking it opens their panel:
+  their service (shop, upgrade, outfit), any ask they have, and Brandon's dialogue. This replaces the single
+  mayor panel with one panel per settler.
+- **Salvage**, a new run resource, found on the trail (events, forage on old sites) and in explore maps.
   Takes pack space (bulky shapes in the Tetris pack), so it fights food for room.
-- **Repair** = salvage + a settler with the right skill + time (counted in runs, since the village only
-  moves forward when you come home). Data table `game/data/buildings.csv`: id, needs_skill, salvage cost
-  per level, runs per level, effect per level.
-- **What buildings give (meta-progression, replacing the lord's gold):**
-  | Building (placeholder id) | Settler skill | Effect |
-  | --- | --- | --- |
-  | storehouse | any | Holds food and medicine between runs. Unlocks outfitting from stock. |
-  | smokehouse | hunt or fish | +N starting food each run |
-  | herb garden | heal or forage | +N starting medicine each run |
-  | workshop | masonry | Repairs cost less salvage. Bigger pack (4x3 to 5x3). |
-  | pen | tame | A pack animal: more slots on the trail, needs food |
-  | lodestone shrine | wayfind or magic | Lodestone upgrades: send salvage home, see further through fog |
-  These rows are mechanics only. Building names, looks and who settles where are Brandon's.
-- **Settler work runs on its own.** Each time the party comes home, each staffed building adds its output
-  and advances any repair. No micromanagement in the first slice.
+- **Repair:** a settler's building starts as a ruin. Salvage spent at their panel repairs it, then upgrades
+  it (up to two levels). Data: `game/data/buildings.csv`: id, settler id, salvage cost per level, effect
+  per level. No timers in the first slice; spending is instant.
+- **What settlers give (meta-progression, replacing the lord's gold bonus).** Mechanics only; which
+  survivor runs what, and the building names, are Brandon's:
+  | Service | Effect |
+  | --- | --- |
+  | Shop (traveling merchant) | Buy and sell supplies for gold. The current shop, unlocked. |
+  | Forge (blacksmith) | Buy and upgrade gear for gold; also turns on gold as a currency. |
+  | Food (hunter, fisher, farmer) | +N starting food each run, more per level |
+  | Medicine (herbalist) | +N starting medicine each run |
+  | Storehouse | Keeps leftover food and medicine between runs |
+  | Workshop (mason) | Repairs cost less salvage; bigger pack (4x3 to 5x3) |
+  | Pen (animal tamer) | A pack animal: more trail slots, eats food |
+  | Lodestone shrine | Lodestone upgrades: send salvage home, see further through fog |
 
-### How the hub panels change
+### Gold and the shop
+Brandon: keep them, but they arrive only once the blacksmith or a traveling merchant settles in the town.
+- Until then the shop and the gold counter are hidden. Starting supplies come from settler output and the
+  storehouse, plus a fixed small starting pack.
+- Gold found before then is still picked up and kept in meta (it's coin from the old world), so the first
+  visit to the merchant has something to spend. Gold carried on a run is lost on a wipe like everything
+  else in the pack.
+- The lord's starting gold and its distance bonus are retired; there is no lord.
+
+### How the hub changes
 | Today | Under the new premise |
 | --- | --- |
-| Friend fire (hearth): pick the party | Same, plus each card shows SETTLE / JOIN and which building idles if taken. The corgi is always there. |
-| Stuff hut (shop, gold) | Storehouse: outfit from what the village made and what you brought home. No gold. Closed until repaired. |
-| Big man house (mayor, lore, jobs) | Build board: every ruin, its cost, who works it. Survivor asks move to the survivors themselves. |
+| Friend fire (hearth): pick the party | Same, companions only. The corgi is always there. |
+| Stuff hut (shop, gold) | Locked until the merchant or blacksmith settles. |
+| Big man house (mayor, lore, jobs) | Gone. Each settler has their own place and panel. |
 | Go out (gate) | Same. |
-| Bottom frame: party, Lodestone, pack | Same, plus a salvage count. |
+| Bottom frame: party, Lodestone, pack | Same, plus salvage; gold shows once unlocked. Lodestone medallion hidden until it's found. |
 
-**Recommended: drop gold for now.** With nobody left there is nobody to buy from. If Brandon wants a trader
-later, a survivor who settles in the storehouse can reopen buying and selling. Gold stays in the code,
-unused, until then.
+Each building has a ruin and a repaired look; the hub reads its state from meta. Light, smoke and lit
+windows come back as buildings are repaired, so rebuilding shows from the hub.
 
-### Visuals of decay
-The village view already draws each house in code. Each building gets a ruin and a repaired look; the scene
-reads its state from meta. Brandon's art sets how decayed. Light, smoke and lit windows return as buildings
-are repaired, so rebuilding is visible from the hub.
+## 4. The Lodestone
+Brandon: the hero unearths it early, and on their first death they realize its power.
 
-## 4. Lodestone, recall and runs
-- **Wipe:** unchanged. The Lodestone pulls everyone home, the pack is lost.
-- **New: GO HOME on the trail.** The player can recall on purpose at any time. The pack comes home intact,
-  salvage is banked, the run ends. Recommended cost: it takes a day and the party arrives tired (-10
-  morale, which recovers at home). This is the push-your-luck at the heart of the loop: go further for
-  better salvage and new survivors, or bank what you have.
-- The Lodestone shrine upgrade (above) can later send a little salvage home each night, so a wipe deep in
-  strange lands isn't a total loss.
-- What persists through any recall: the map and its discovery, met and won-over survivors, settler
-  assignments, buildings and repair progress, storehouse stock, deaths and best distance.
-- Why the Lodestone recalls the party, and what it is, is now Brandon's to decide with the new story. The
-  system works the same either way.
+- **Found at a fixed early spot** on the first run, close to the village. Meta flag `has_lodestone`.
+- **Before it's found** the map UI is missing: no Lodestone strip on the trail, no medallion or world map
+  in the village. Finding it switches them on, so the first thing the Lodestone does is give you a map.
+  The stretch before it holds no lethal fights, so the player can't die without it.
+- **First death:** the normal recall plus a one-time scene (Brandon's), flag `lodestone_revealed`. From
+  then on recalls are routine.
+- **Wipe:** unchanged. Everyone is pulled home, the pack is lost.
+- **New: GO HOME on the trail** (once the Lodestone is revealed). Recall on purpose: the pack comes home
+  intact, salvage and gold are banked, the run ends. Cost: a day and -10 morale on arrival. This is the
+  push-your-luck at the heart of the loop: go further for salvage and survivors, or bank what you have.
+- What persists through any recall: the map and its discovery, survivors, buildings, storehouse stock,
+  banked gold and salvage, deaths and best distance.
 
-## 5. Roster and unlocks
-- The `unlock` field on `CharacterDef` changes from a run-count flag ("wizard after the first recall") to
-  `met_<id>`, set when the survivor is won over. The old graybox unlock rules are superseded.
-- Who survives, how many, and where is story. Systems suggestion for a first slice: 4 to 6 survivors before
-  the Wall, 2 to 3 past it, so both halves of the map pull the player out.
+## 5. The Wall and the goal
+- The Wall stays, and the route still runs 300 leagues with the Wall at 150 and strangeness rising past it.
+- The run's goal becomes reaching the elves past the Wall. The end of the route (league 300) is that place.
+  What's there is story.
+
+## 6. Roster and unlocks
+- The `unlock` field changes from a run-count flag ("wizard after the first recall") to `met_<id>`, set when
+  a survivor is won over. The old graybox unlock rules are superseded.
+- Which roster characters survive, and as settler or companion, is Brandon's call. Systems suggestion for a
+  first slice: 4 companions and 4 settlers, split across both sides of the Wall, with the merchant or
+  blacksmith early enough that gold matters by the second or third run.
 - Party slots stay at 4 (plus the corgi). Lewith & Flark still take 2.
-- The Wizard's books still take pack space when he joins; as a settler they could stock a library
-  building instead. Brandon's call whether that is a thing.
 
 ## Build order
-1. **Data and meta:** `found_at`, `settler_skill` and role on `CharacterDef`; corgi `.tres`; `meta.survivors`
-   (id to SETTLE / JOIN), `meta.buildings`, `meta.salvage`, `meta.store`. Migration for old saves. Tests.
-2. **Corgi:** free slot, trail passives (SNIFF, ALERT, BUDDY), combat piece with BARK, run-off at 0 HP.
-3. **GO HOME and salvage** on the trail, salvage pack shapes, banked on return.
-4. **Village rebuild:** `buildings.csv`, build board panel replacing the mayor, storehouse replacing the shop,
-   settler output on return, ruin and repaired looks. Retire the lord's gold bonus.
-5. **Survivors in the world:** recruit events in `events.csv`, landmarks on the world map, the SETTLE / JOIN
-   choice. Explore-map interacts are a hook for the exploration work, not built here.
-6. **Hearth swap:** reassign settlers and party members between runs, idle buildings shown on the cards.
+1. **Data and meta:** `role` and `found_at` on `CharacterDef`; corgi `.tres`; `meta.survivors`,
+   `meta.buildings`, `meta.salvage`, `meta.gold`, `has_lodestone`, `lodestone_revealed`. Migration for old
+   saves. Tests.
+2. **Corgi:** free slot, SNIFF and PERK UP on the trail, combat piece with BARK, run-off at 0 HP.
+3. **Lodestone beat and GO HOME:** map UI hidden until found, first-death flag, voluntary recall, salvage
+   items in the pack, banked on return.
+4. **Settlers in the village:** one place and panel per settler, `buildings.csv`, repair with salvage,
+   ruin and repaired looks. Shop and gold locked behind the merchant or blacksmith. Retire the mayor and the
+   lord's gold.
+5. **Survivors in the world:** recruit events in `events.csv`, landmarks on the world map. Explore-map
+   interacts are a hook for the exploration work, not built here.
 
-Each step is playable and testable on its own. Steps 1 to 3 can land before Brandon answers the open
-questions; steps 4 and 5 depend on them.
+Each step is playable and testable on its own.
 
-## Open questions for Brandon
-1. Can a survivor switch between settler and party member between runs (recommended), or is the choice
-   permanent for more story weight?
-2. Does the corgi fight on the grid (recommended) or stay off the board as a helper?
-3. Drop gold and the shop for now (recommended), or keep a trader?
-4. Which existing roster characters survive, and is the Lodestone still in the story?
-5. Is there still a Wall, and is it still the line where things turn strange? (The systems assume yes.)
+## Still open for Brandon
+1. Is a survivor's kind (settler or companion) fixed by the character, as assumed here, or does the player
+   choose once at recruitment?
+2. Which roster characters survive, and as which kind?
