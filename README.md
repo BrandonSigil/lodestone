@@ -11,6 +11,7 @@ The flow is village, trail, fight, back to the trail, and back to the village wh
 
 ## For Brandon
 - `docs/decisions.md`: every rule so far. Lines tagged `[AI]` are my proposals. Retag the ones you agree with as `[USER]`, or add a `[USER]` line to override.
+- `docs/art/adding-characters.md`: how to add a character sprite with all its facings and animations.
 - `docs/style-bible.md`: the template to fill in before the first sprite.
 - `game/text/placeholder.csv`: every word the player sees. Replace the caveman text whenever you like.
 - `game/data/events.csv`: trail events. See `docs/systems/trail.md` to add one without code.

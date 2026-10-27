@@ -20,3 +20,4 @@ metadata:
 **Why:** consistent pieces that drop onto the iso board, cheap to animate and randomize.
 **How to apply:** follow C1-C29 for any character art or engine sprite work; related [[lodestone-battle-map-art]], [[lodestone-visual-language]].
 - 2026-10-27 PR #39 merged: first sprites in battle, id `lead`. GPT anim sheets per facing (SE, NE; prompt art/prompts/sheet-character-anim.txt, ~$0.095 each) cut by tools/art/anim_sheet_cut.py into C28 strips; CharacterArt loader (game/scripts/combat/character_art.gd) + combat_board/combat_unit play idle/walk/attack/cast/hurt, face move/attack target, mirror SW/NW, hit on strike frame. No S/E/N roaming views, no paper doll/recolour, down pose unused. Placeholder until Brandon approves.
+- Contributor how-to: docs/art/adding-characters.md (paths, json contract, Picsart and Krita paths, built vs not built). Stance sheets via art/prompts/sheet-character-stance.txt + anim_sheet_cut.py --rows ready:4,advance:6.
