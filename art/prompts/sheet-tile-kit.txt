@@ -6,7 +6,7 @@ Make ONE zone only: [ZONE]. Give it its own cliff material. Aspect 1:1, plain cr
 Layout: a 5 x 5 grid of equal square cells with a clear cream gap between cells. Nothing crosses a cell edge.
    row 1 (tops, straight down, seamless edge to edge, NO objects): main ground, ground variant, path or road, hard floor, rough rock
    row 2 (tops, straight down, seamless, NO objects): water or liquid, hazard ground, floor variant, overgrown ground, special ground
-   row 3 (sides, straight on, exactly 4 equal horizontal stone courses filling the cell): cliff, built wall, waterfall or liquid, cliff variant, hazard side
+   row 3 (sides, straight on, one flat colour filling the cell, 2 or 3 marks to say the material): cliff, built wall, waterfall or liquid, cliff variant, hazard side
    row 4 (one prop per cell, 2:1 dimetric 3/4 view, base centred at the bottom of the cell, cream around it): bush, boulder, crate or barrel, light source, small detail
    row 5 (one tall prop per cell, same view, base at bottom centre, may fill the cell height): tree, second tree, pillar, landmark, ruin or doorway
 
