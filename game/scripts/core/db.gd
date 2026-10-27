@@ -13,6 +13,7 @@ var items: Dictionary = {}  # id -> row of data/items.csv
 var quests: Array[Dictionary] = []  # rows of data/quests.csv
 var abilities: Dictionary = {}  # id -> Ability, from data/abilities.csv
 var combat_items: Dictionary = {}  # id -> Ability, from data/combat_items.csv
+var explore_events: Dictionary = {}  # id -> event, from data/explore_events.csv (see ExploreRules.parse_events)
 
 
 func _ready() -> void:
@@ -37,6 +38,7 @@ func reload() -> void:
 	combat_items.clear()
 	for row in CsvTable.load_rows("res://data/combat_items.csv"):
 		combat_items[row.id] = Ability.from_item_row(row)
+	explore_events = ExploreRules.parse_events(CsvTable.load_rows("res://data/explore_events.csv"))
 
 
 ## Items the village shop sells, in table order.
