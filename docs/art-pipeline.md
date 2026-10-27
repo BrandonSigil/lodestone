@@ -8,7 +8,8 @@ Never train on other artists' work. The reference artists (Yvan Duque, Natalie A
 
 ## Where art lives
 Everything is in the repo so it follows you to any machine. PNG, PSD, KRA and audio go through Git LFS, so run `git lfs install` once on a new machine before cloning.
-- `art/templates/` battle-map templates (plain git, rebuilt by `tools/art/battle_art.py`)
+- `art/templates/` battle-map and character templates (plain git, rebuilt by `tools/art/battle_art.py` and `tools/art/char_art.py`)
+- `art/characters/<id>/` character working files (`.kra` in LFS; `.psd`, `.ora` and renders in plain git so Claude can export them)
 - `art/picsart/` Picsart runs: `out/` map renders, `kit/raw/` kit raws and cutouts, `prompts/`, `kit_contact.png`
 - `art/screens/` progress screenshots, one folder per feature
 - `art/tests/`, `art/samples/`, `art/training/` Krita tests, style samples and the LoRA training set
@@ -58,7 +59,7 @@ Claude reads the samples, crops and resizes them to 1024 px, and writes one shor
 - In Krita, make a Style preset that uses the SDXL model plus the Lodestone LoRA and the trigger word.
 - Scenes: sketch flat shapes in Live mode, regenerate until it reads, then paint over by hand.
 - Pieces: draw each part (head, hat, body, pack, prop) on its own layer on a flat background, so code can assemble and recolor them.
-- Never generate animation frames. Code animates the cut-out parts.
+- Characters, monsters and bosses: follow `docs/art/characters.md` and its templates in `art/templates/characters/` (turnaround on the model sheet, paper-doll parts, key poses). Code animates the cut-out parts; only key poses for attack, cast, hurt and down are drawn (they may be generated with pose and reference control, then hand-finished). Never generate in-between frames.
 - Battle map tiles: generate only on top of the templates in `art/templates/battle-maps/` with their line art and depth as control layers, then clip and paint over (proposed, see `docs/art/battle-maps.md`). Never a freehand tileset.
 
 ## Step 7. Into the game (Claude)

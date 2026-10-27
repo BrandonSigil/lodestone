@@ -1,0 +1,36 @@
+GIMP Palette
+Name: Lodestone characters
+Columns: 3
+#
+156 190 155	cloth_a light
+108 143 116	cloth_a mid
+ 79 107  90	cloth_a dark
+ 93 169 203	cloth_b light
+ 68 140 170	cloth_b mid
+ 53 107 134	cloth_b dark
+226 234 217	cloth_c light
+191 211 214	cloth_c mid
+151 170 176	cloth_c dark
+122 135 131	trousers light
+ 85  98  96	trousers mid
+ 63  71  73	trousers dark
+184 159 131	leather light
+130 114  98	leather mid
+ 95  83  73	leather dark
+168 139 114	hair light
+135 109  89	hair mid
+100  80  63	hair dark
+246 226 204	skin light
+238 208 180	skin mid
+211 169 140	skin dark
+223 229 225	metal light
+180 195 196	metal mid
+136 151 155	metal dark
+223 145 120	accent_r light
+204 109  85	accent_r mid
+161  79  63	accent_r dark
+232 212 156	accent_y light
+215 189 120	accent_y mid
+173 148  88	accent_y dark
+ 55  51  53	ink
+242 241 226	glint

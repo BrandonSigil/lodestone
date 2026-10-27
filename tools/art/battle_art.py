@@ -333,11 +333,12 @@ def save_psd(path: Path, size, layers):
     for _, img, visible in layers:
         if visible:
             comp.alpha_composite(img.convert("RGBA"))
-    psd = PSDImage.frompil(comp.convert("RGB"))
+    # An RGBA document makes psd-tools store each layer's alpha as real transparency. An RGB one
+    # turns alpha into a layer mask over black pixels, and strokes painted there stay hidden.
+    psd = PSDImage.frompil(comp)
     for name, img, visible in layers:
         layer = PixelLayer.frompil(img.convert("RGBA"), psd, name, compression=Compression.ZIP)
         layer.visible = visible
-        psd.append(layer)
     psd.save(str(path))
     save_ora(path.with_suffix(".ora"), size, layers, comp)
 

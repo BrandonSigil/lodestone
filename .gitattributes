@@ -13,3 +13,8 @@ game/art/source/battle/** -filter -diff -merge binary
 docs/art/battle-maps/** -filter -diff -merge binary
 # Exported map paintings stay plain git so cloud sessions can read them (.kra working files stay LFS).
 art/paintings/*.png -filter -diff -merge binary
+# Character working exports and game sprites stay plain git so cloud sessions can export and read them (.kra stays LFS).
+art/characters/**/*.psd -filter -diff -merge binary
+art/characters/**/*.ora -filter -diff -merge binary
+art/characters/**/*.png -filter -diff -merge binary
+game/art/source/characters/** -filter -diff -merge binary

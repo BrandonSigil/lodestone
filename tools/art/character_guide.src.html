@@ -1,0 +1,313 @@
+<title>Lodestone Character Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: one reading column of rule sheets with wide plates for diagrams, same paper-and-ink system as the Battle Map Guide. */
+:root{
+  --paper:#eae8d6; --card:#f4f2e4; --ink:#373335; --muted:#6b6660; --line:#cfcab3;
+  --moss:#708f6a; --teal:#3f8794; --pink:#b0446e; --blue:#3c6eaa;
+  --display:"Young Serif", Georgia, serif; --body:"Figtree", system-ui, sans-serif; --mono:"JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--paper:#1f1d1f;--card:#2a2729;--ink:#ece8d8;--muted:#aaa392;--line:#454045;--moss:#9fbf8f;--teal:#7cc3cd;--pink:#e07aa3;--blue:#8db4e6;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#1f1d1f;--card:#2a2729;--ink:#ece8d8;--muted:#aaa392;--line:#454045;--moss:#9fbf8f;--teal:#7cc3cd;--pink:#e07aa3;--blue:#8db4e6;color-scheme:dark}
+body{background:var(--paper);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 80px}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(2rem,5vw,3.2rem);margin:0 0 .3em}
+h2{font-size:1.7rem;margin:2.4em 0 .5em;padding-top:.6em;border-top:2px solid var(--ink)}
+h3{font-size:1.2rem;margin:1.6em 0 .4em}
+p,li{max-width:70ch}
+.lede{font-size:1.15rem;color:var(--muted)}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 0;padding:0;list-style:none}
+.facts li{font-family:var(--mono);font-size:.85rem;border:1.5px solid var(--ink);border-radius:3px;padding:4px 10px}
+nav.toc{margin:24px 0 0;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.95rem}
+nav.toc a{color:var(--teal)}
+figure{margin:20px 0}
+figure img{display:block;width:100%;border-radius:6px;border:1.5px solid var(--line);background:#eae8d6}
+figcaption{font-size:.9rem;color:var(--muted);margin-top:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.two>*{min-width:0}
+@media (max-width:700px){.two{grid-template-columns:1fr}}
+.rules{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.rules li{display:grid;grid-template-columns:3.2em 1fr;gap:8px;max-width:none}
+.rules b{font-family:var(--mono);font-weight:400;color:var(--pink)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600}
+code{font-family:var(--mono);font-size:.85em}
+.prompt{position:relative;background:var(--card);border:1.5px solid var(--line);border-radius:6px;padding:14px 16px;margin:10px 0}
+.prompt .lab{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;padding-right:70px}
+.prompt pre{margin:0;white-space:pre-wrap;font:13.5px/1.55 var(--mono);overflow-wrap:anywhere}
+.prompt button{position:absolute;top:10px;right:10px;font:600 .8rem var(--body);background:var(--ink);color:var(--paper);border:0;border-radius:3px;padding:5px 10px;cursor:pointer}
+.prompt button:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.note{border-left:4px solid var(--moss);padding:4px 0 4px 14px;margin:16px 0}
+.warn{border-left-color:var(--pink)}
+ol.steps{padding-left:1.4em;display:grid;gap:10px}
+ol.steps li::marker{font-family:var(--mono);color:var(--pink)}
+.knobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0}
+.knob{border:1.5px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--card)}
+.knob b{display:block;font-family:var(--mono);font-weight:400;font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.knob span{font-family:var(--mono);font-size:1rem}
+</style>
+
+<div class="wrap">
+<h1>Lodestone characters</h1>
+<p class="lede">How your character sheet becomes the template for every person, monster and boss: the exact frame the game expects, Krita templates that sit on the battle-map grid, and a step-by-step Krita AI workflow for turnarounds, paper-doll parts and animation. Every rule here is a proposal until you mark it yours.</p>
+<ul class="facts"><li>2:1 dimetric, same as maps</li><li>frame 192 × 192 per cell</li><li>feet at (96, 160)</li><li>head at 3 levels = 96 px</li><li>draw 5 views, mirror 3</li><li>ink #373335</li><li>model sheet 768 / view</li></ul>
+<nav class="toc"><a href="#sheet">Your sheet</a><a href="#frame">The frame</a><a href="#dirs">Directions</a><a href="#templates">Templates</a><a href="#setup">Krita setup</a><a href="#character">New character</a><a href="#anim">Animation</a><a href="#monsters">Monsters and bosses</a><a href="#export">Export</a><a href="#rules">Rules</a><a href="#engine">Engine work</a><a href="#fixes">When it goes wrong</a></nav>
+
+<h2 id="sheet">Your sheet, as a template</h2>
+<figure><img src="{{IMG:docs/art/characters/00-reference-sheet.png:1400}}" alt="Brandon's sheet: a chibi hero in a green hooded cloak and blue tunic, five iso views on tile diamonds, idle, walk, attack, cast and hurt poses, sword and cloak parts, eight swatches"><figcaption>The sheet you posted. It already has the right ingredients: views on tile footprints, a pose row, separate parts and a locked palette.</figcaption></figure>
+<p>What the template keeps from it: the chibi build (about 2.3 heads tall), the five turnaround views, one diamond under every figure, the idle / walk / attack / cast / hurt set, parts drawn on their own, and the eight swatches, which become the colour keys the game recolours.</p>
+<p>What the template pins down, so every character lands on the board the same way:</p>
+<ul>
+<li><b>The diamond is exact.</b> 128 × 64 per cell at the same 2:1 angle as the battle maps, and the feet sit on its centre. On the sheet the diamonds are hand-drawn and a little different in each view.</li>
+<li><b>The views are exact.</b> S, SE, E, NE and N, rendered from the board's own camera. Your top row is close to SE, SE-ish, E, N and NE; the template names them so the game knows which is which.</li>
+<li><b>The size is fixed.</b> Every person's head reaches 3 levels (96 px at art size), so a party reads as a set and a 2-level cliff hides two thirds of a piece behind it.</li>
+<li><b>Light comes from above</b>, not from one side, so a view can be mirrored and still look lit by the maps' upper-left sun.</li>
+<li><b>Most motion is cut-out.</b> Walking and idling in eight directions come from moving your parts. Drawn frames are only for the big combat beats.</li>
+</ul>
+
+<h2 id="frame">The frame</h2>
+<figure><img src="{{IMG:docs/art/characters/01-sizes.png:1600}}" alt="Four size classes on their footprints: small 1x1 critter, hero 1x1, large 2x2 beast, boss 3x3 giant, with a level ruler"><figcaption>Size classes. The pink dash is the target head height. The dummies are mannequins, not designs.</figcaption></figure>
+<div class="two">
+<figure><img src="{{IMG:docs/art/characters/03-frame-anatomy.png:1100}}" alt="One 192 by 192 frame with the foot anchor, footprint diamond, plumb line, level ticks, head band and joint pivots"></figure>
+<div>
+<div class="tbl"><table>
+<tr><th>Class</th><th>Footprint</th><th>Frame</th><th>Anchor</th><th>Head</th></tr>
+<tr><td>small</td><td>1 × 1</td><td>192</td><td>96, 160</td><td>~1.5 levels</td></tr>
+<tr><td>hero (all people)</td><td>1 × 1</td><td>192</td><td>96, 160</td><td>3 levels</td></tr>
+<tr><td>large</td><td>2 × 2</td><td>384</td><td>192, 320</td><td>~4 levels</td></tr>
+<tr><td>boss</td><td>3 × 3</td><td>576</td><td>288, 480</td><td>6 to 10</td></tr>
+</table></div>
+<p>The rule behind the table: an n × n piece has a 192n square frame with its feet at (96n, 160n). The diamond fills the bottom of the frame and the rest is headroom for hats, raised swords and spells. The engine draws everything at half size on a 720p screen, exactly like the tiles.</p>
+<p>Never paint ground, a base or a shadow into a frame. The engine adds the contact shadow, the team ring and the board-game base.</p>
+</div></div>
+
+<h2 id="dirs">Eight directions, five drawings</h2>
+<figure><img src="{{IMG:docs/art/characters/02-directions.png:1300}}" alt="The hero mannequin facing all eight directions around a tile, marked draw or mirror, combat or roaming"></figure>
+<p>Facings are named by where the piece looks <em>on screen</em>. On this grid a step from cell to cell runs along the diamond's edges, so in a fight a piece only ever faces <b>SE, SW, NE or NW</b>. Free roaming adds the straight <b>S, E, N, W</b>.</p>
+<ul>
+<li>Draw <b>S, SE, E, NE, N</b>. The game mirrors SE into SW, E into W and NE into NW.</li>
+<li>Do <b>SE and NE first</b>: with their mirrors they cover every fight.</li>
+<li>If a character is lopsided (sling on one shoulder, an eyepatch), draw its SW, W and NW too; the game prefers a drawn view over a mirror.</li>
+<li>Turning the camera (Q) just changes which view shows. Nothing extra to draw.</li>
+</ul>
+
+<h2 id="templates">The templates</h2>
+<p>All in the repo at <code>art/templates/characters/&lt;class&gt;/</code> for hero, small, large and boss. Every file is a <code>.psd</code> and an <code>.ora</code>; Krita opens both. Each has a hidden layer called <code>TEMPLATE …</code> that tells the exporter what it is, so keep it.</p>
+<div class="tbl"><table>
+<tr><th>File</th><th>Use it for</th></tr>
+<tr><td><code>&lt;class&gt;-model-sheet</code><br>2304 × 1536</td><td>Designing the character at 4× (768 px per view) with Krita AI. Slots S, SE, E / NE, N, and KEY for the approved view. Mannequin blocking is visible; line art and depth are hidden CONTROL layers.</td></tr>
+<tr><td><code>control-*.png</code>, <code>views/&lt;dir&gt;-lineart|depth|blocking.png</code></td><td>The same mannequins as images, for Krita AI control layers: whole sheet or one view at a time.</td></tr>
+<tr><td><code>&lt;class&gt;-parts-front</code>, <code>-parts-back</code></td><td>The paper doll. Front file: S, SE, E. Back file: NE, N. One empty layer per part in draw order, joint pivots marked.</td></tr>
+<tr><td><code>&lt;class&gt;-anim-canvas</code><br>768 × 768</td><td>One view at model scale for Krita's animation timeline (key poses).</td></tr>
+<tr><td><code>&lt;class&gt;-sheet</code></td><td>The shipping-size sprite sheet: stand in all eight facings, then SE and NE rows for idle, walk, attack, cast, hurt and down, then walk S, E, N. Every frame shows its diamond, anchor, level ticks and head band.</td></tr>
+<tr><td><code>lodestone-characters.gpl</code></td><td>Your eight swatches as ten three-step ramps plus ink. The game recolours by swapping these exact colours.</td></tr>
+<tr><td><code>layout.json</code></td><td>Every number here, for the game and the exporter.</td></tr>
+</table></div>
+<div class="two">
+<figure><img src="{{IMG:art/templates/characters/hero/preview-model-sheet.png:1200}}" alt="Hero model sheet: mannequin in S, SE, E, NE, N with footprints, level ticks and joint pivots, plus an empty KEY slot"><figcaption>Hero model sheet. The mannequin gives pose, size and direction; the costume is yours.</figcaption></figure>
+<figure><img src="{{IMG:docs/art/characters/04-palette.png:1200}}" alt="Ten key ramps of three swatches each: cloth_a green, cloth_b blue, cloth_c pale, trousers, leather, hair, skin, metal, accent red, accent yellow"><figcaption>Key ramps, taken from your swatches and the sheet. Light / mid / dark per material.</figcaption></figure>
+</div>
+<figure><img src="{{IMG:art/templates/characters/hero/preview-sheet.png:900}}" alt="Hero sprite sheet layout: 14 rows of 192 px frames with labels such as SE idle 1, SE walk 3, NE attack 2, S walk 1"><figcaption>Hero sprite sheet, shown with the hidden mannequin ghosts turned on.</figcaption></figure>
+
+<h2 id="setup">Krita setup (once, on the MacBook)</h2>
+<p>You already have Krita AI Diffusion running with ZavyChroma XL for the battle maps. Characters need three more things.</p>
+<ol class="steps">
+<li><b>Control models.</b> Docker gear › Connection › the managed server's package list. Make sure the SDXL control packages are installed: <b>Line Art</b>, <b>Depth</b>, <b>Pose</b> and the <b>Reference (IP-Adapter)</b> package. Restart the server if you add any.</li>
+<li><b>A style called "Lodestone piece".</b> Docker gear › Styles › duplicate "Lodestone battle", rename it, keep ZavyChroma XL, and paste the style prompt and negative below. Leave sampler and steps at their defaults. Turn on <b>Fixed seed</b> while you work on one character so changes come from your edits, not the dice.</li>
+<li><b>The palette.</b> Palette docker › Import resource › <code>art/templates/characters/lodestone-characters.gpl</code>. It shows up as "Lodestone characters".</li>
+<li><b>A grid for clean slot copies.</b> Grid and Guides docker: Rectangle, spacing <b>768 × 768</b> for model sheets and parts, <b>192 × 192</b> for hero sprite sheets (384 large, 576 boss). Turn on View › Snap To › Grid when you select a slot.</li>
+<li><b>Python for the exporter</b> (Terminal, once): <code>python3 -m pip install --user pillow numpy psd-tools</code>. Or skip it: push the <code>.ora</code> and ask Claude to export.</li>
+</ol>
+<div class="prompt"><div class="lab">Style prompt · Lodestone piece</div><pre>{prompt}, chibi board game piece character, big round head, small body, flat illustrated 2D game sprite, flat fills with small hand-drawn marks, warm dark outlines, muted riso print colours, soft light from above, plain cream paper background, full body, feet visible, high orthographic camera looking down at 30 degrees</pre><button type="button">Copy</button></div>
+<div class="prompt"><div class="lab">Negative · Lodestone piece</div><pre>perspective, foreshortening, fisheye, low angle, dramatic lighting, rim light, cast shadow, floor, ground, grass, scenery, background objects, text, letters, watermark, logo, black outlines, photo, 3d render, realistic, noisy texture, gradient background, cropped feet, extra limbs, extra fingers</pre><button type="button">Copy</button></div>
+
+<h2 id="character">A new character, step by step</h2>
+<p>Example: the hero from your sheet. You decide the look and the id; the steps are the same for every person on the roster. Save working files in <code>art/characters/&lt;id&gt;/</code>.</p>
+
+<h3>1. Rough the key view (SE)</h3>
+<ol class="steps">
+<li>Open <code>hero/hero-model-sheet.psd</code>, save it as <code>art/characters/hero/hero-model.kra</code>.</li>
+<li>On <code>paint 1 generated</code>, rough the costume over the SE mannequin with flat palette colours: cloak shape, tunic, boots, hair, the sword on the back. Ugly is fine. Shapes and colours are what the model follows; the mannequin only fixes size, angle and where the feet go.</li>
+<li>Select the SE slot (snap to the 768 grid) so generation stays inside it.</li>
+<li>Add control layers: <b>Depth</b> from <code>views/se-depth.png</code> at <b>50–60%</b>, and <b>Line Art</b> from <code>views/se-lineart.png</code> at <b>30–45%</b> (low, because the mannequin has no costume). Import the PNGs as hidden layers first and point the control layers at them.</li>
+<li>Prompt with the view words plus your costume words, and <b>Refine</b> at <b>55–70%</b>. Over bare mannequin blocking with no rough, go 75–90%.</li>
+<li>Generate a batch, keep the best, paint over what's wrong. When you're happy, copy it into the <b>KEY</b> slot.</li>
+</ol>
+<div class="prompt"><div class="lab">Key view (SE) · replace the bracketed words with your design</div><pre>three-quarter front view, turned to the right, [green hooded cloak with round clasp, blue tunic, leather belt with pouches, brown boots, messy brown hair, sword on the back, rolled bedroll]</pre><button type="button">Copy</button></div>
+
+<h3>2. Turn it around (S, E, NE, N)</h3>
+<ol class="steps">
+<li>Put a copy of the KEY view on its own layer named <code>REF key</code> (hidden). Add a <b>Reference</b> control layer pointing at it, <b>60–80%</b>. This is what keeps the same face, cloak and colours in every view.</li>
+<li>For each empty slot: rough the costume over that slot's mannequin (copying shapes from the key view helps a lot), select the slot, set Depth to that view's <code>views/&lt;dir&gt;-depth.png</code> at 50–60%, swap the view words, Refine at <b>50–65%</b>. Same seed.</li>
+<li>Do NE and N next to each other so the back of the cloak and the pack match.</li>
+<li>Check details that must stay on one side (the clasp, the sword grip over a shoulder) against the key view. View › Mirror View (M) shows what the mirrored SW, W and NW will look like.</li>
+</ol>
+<div class="prompt"><div class="lab">View words · swap into the prompt per slot</div><pre>S:  front view, facing the viewer, symmetrical pose
+SE: three-quarter front view, turned to the right
+E:  side view, profile facing right
+NE: three-quarter back view, turned away to the upper right, face hidden
+N:  back view, facing away from the viewer, face hidden</pre><button type="button">Copy</button></div>
+<div class="note">Faster option once a design is settled: select all five slots and Refine the whole sheet at once with this prompt, the whole-sheet <code>control-depth.png</code> and the Reference layer. One pass sees every view together, which helps consistency, then fix single slots as above.</div>
+<div class="prompt"><div class="lab">Whole-sheet turnaround</div><pre>character turnaround sheet, the same character shown five times in a grid, front view, three-quarter front, side profile, three-quarter back, back view, identical costume and colours in every view, [costume words]</pre><button type="button">Copy</button></div>
+
+<h3>3. Clean up for the game</h3>
+<ol class="steps">
+<li><b>Values:</b> flatten each material to light / mid / dark. Light on top, dark under the chin, under the hem and down the far side. No side light, no rim light.</li>
+<li><b>Outline:</b> merge a copy of the figure, then Layer › Layer Style › Stroke: <b>12 px, outside, #373335</b>. That is exactly 3 px after the 4× scale-down. Inner lines by hand at about 8 px in the same ink.</li>
+<li><b>Palette lock:</b> Filter › Map › Palettize with "Lodestone characters", no dithering. Or let the exporter do it with <code>--lock</code>.</li>
+<li><b>Read test:</b> zoom to 25% (art size) and 12.5% (the game at 720p). If the face or the silhouette feature disappears, push it bigger.</li>
+<li>Export a copy: File › Export › <code>hero-model.ora</code>. Then <code>python3 tools/art/char_art.py export art/characters/hero/hero-model.ora --id hero --lock</code> writes <code>hero_stand_s|se|e|ne|n.png</code>.</li>
+</ol>
+
+<h3>4. Cut the paper doll</h3>
+<figure><img src="{{IMG:docs/art/characters/05-parts.png:1400}}" alt="Front stack and back stack part order with the SE and NE mannequins and their joint pivots"><figcaption>Parts and their order. Front stack for S, SE, E (and mirrors); back stack for NE, N (and NW).</figcaption></figure>
+<ol class="steps">
+<li>Open <code>hero-parts-front.psd</code> (and later <code>-back</code>), save as <code>art/characters/hero/hero-parts-front.kra</code>.</li>
+<li>Copy each finished view from the model sheet (snap-select the slot) and paste it into the same slot of the parts file. The feet must land on the pink dot.</li>
+<li>Split it onto the part layers: Similar Colour Selection or Freehand Selection, then Cut and Paste into the part layer. Parts keep their place; never move them.</li>
+<li>Paint what hides under each moving part: torso under the near arm, hips under the tunic, cloak lining behind the arm. The pink circles are the pivots the game rotates around, so draw a little past each joint.</li>
+<li>Variations for random recruits: duplicate a part layer and rename it <code>part 08 hair or hat 2</code>. Each variant exports as its own file.</li>
+<li>Export a copy and run <code>char_art.py export … --id hero --lock</code>. Out come <code>parts/se/torso.png</code> and friends.</li>
+</ol>
+
+<h2 id="anim">Animation</h2>
+<p>Two kinds, on purpose. <b>Cut-out</b> covers walking and idling in all eight directions for free; you draw nothing more. <b>Key frames</b> cover what cut-out can't sell: attack, cast, hurt and down, only in SE and NE.</p>
+<div class="tbl"><table>
+<tr><th>Anim</th><th>Frames</th><th>fps</th><th>How</th></tr>
+<tr><td>idle</td><td>4</td><td>6</td><td>cut-out (or 4 drawn frames for a showy character)</td></tr>
+<tr><td>walk</td><td>6</td><td>10</td><td>cut-out; draw only if the gait needs it</td></tr>
+<tr><td>attack</td><td>6</td><td>12</td><td>drawn; damage lands on frame 3</td></tr>
+<tr><td>cast</td><td>6</td><td>10</td><td>drawn; the spell releases on frame 4, glow on the fx layer</td></tr>
+<tr><td>hurt</td><td>2</td><td>8</td><td>drawn (flinch, recoil)</td></tr>
+<tr><td>down</td><td>2</td><td>6</td><td>drawn; holds the last frame</td></tr>
+</table></div>
+<h3>Key poses with Krita AI</h3>
+<ol class="steps">
+<li>Open <code>hero-anim-canvas.psd</code> (one 768 view, same anchor). Rough the pose on <code>paint 1 pose</code>: a stick figure or a quick gesture over the SE mannequin.</li>
+<li>Add a <b>Pose</b> control layer and build the skeleton from your rough (the button next to the layer), then drag joints until the pose reads. 60–80%.</li>
+<li>Add the <b>Reference</b> layer with the KEY view at 60–75%. Prompt with the view words and the action, Refine at 60–75%.</li>
+<li>Clean up exactly as in step 3. Keep the feet on the pink dot unless the pose lunges, and even then the back foot stays on it.</li>
+</ol>
+<div class="prompt"><div class="lab">Action words · add to the SE or NE prompt</div><pre>attack wind-up: winding up a sword swing over the shoulder, weight on the back foot
+attack hit: mid sword swing, blade extended forward, cloak flaring behind
+cast: one arm raised, finger pointing up, small glowing swirl above the hand
+hurt: flinching backwards, eyes shut, arms pulled in
+down: sitting on the ground, slumped, dazed</pre><button type="button">Copy</button></div>
+<h3>In-betweens on the timeline</h3>
+<ol class="steps">
+<li>Window › Workspace › Animation. Set the fps from the table. Make <code>paint 1 pose</code> an animated layer and place your key poses on their frames (attack: wind-up on 1–2, hit on 3).</li>
+<li>Turn on Onion Skins and draw the frames between. Keep them simple; at 48 px tall two strong poses and a smear read better than smooth motion.</li>
+<li>Hide the GUIDE layers. File › Render Animation › Image Sequence, folder <code>art/characters/hero/renders/</code>, base name <code>hero_attack_se_</code>.</li>
+<li><code>python3 tools/art/char_art.py pack art/characters/hero/renders --id hero --class hero --lock</code> turns it into <code>hero_attack_se.png</code> at game size.</li>
+</ol>
+<div class="note">Small fixes are often quicker straight in <code>hero-sheet.psd</code> at shipping size: every frame has its diamond, anchor and label, and the export picks up only the frames you painted. The Krita AI plugin's Animation workspace can refine every keyframe with one setting, which is worth a test once a character's style is set.</div>
+
+<h2 id="monsters">Monsters and bosses</h2>
+<h3>Monsters (small and large)</h3>
+<ul>
+<li>Pick the class by footprint, not by look: 1 × 1 is <code>small</code> (or <code>hero</code> for anything person-sized), 2 × 2 is <code>large</code>.</li>
+<li>The mannequin is a dummy quadruped. Ignore its anatomy, keep its footprint, height band and facing. Beasts that walk on two legs can use the hero templates.</li>
+<li>Facing must read in SE and NE alone: eyes, mouth, horns or weapon point along the facing.</li>
+<li>Monsters may bring their own ramps (export with <code>--palette</code> or without <code>--lock</code>), but leave saturated red and blue to the team rings.</li>
+<li>Earth to Alien: past the Wall, anatomy can get as strange as you like. The camera, ink, light and frame never change, so strange creatures still stand on the same board.</li>
+<li>Quadruped parts: tail, legs far, body, legs near, head, ears or horns. Large walks are worth drawing when the gait is the creature's personality.</li>
+</ul>
+<h3>Bosses (3 × 3)</h3>
+<ul>
+<li>Build parts first: head, arms, core, and a weak point if the fight has one. A phase change can then swap one part (<code>part 05 head phase 2</code>) instead of a redraw.</li>
+<li>One clear telegraph pose per attack (the wind-up frames). The player has to read it from across the board.</li>
+<li>Frame 576, feet at (288, 480), head between 6 and 10 levels. The model sheet works at 1.33× for bosses, so paint big shapes and few details.</li>
+<li>Bosses don't roam: the template has no S, E, N walks, and adds <code>move</code> and <code>special</code> rows.</li>
+<li>Tall bosses hide terrain behind them. Keep the silhouette broad at the bottom and narrow at the top so tiles behind stay readable.</li>
+</ul>
+
+<h2 id="export">Export and file names</h2>
+<p>All game files land in <code>game/art/source/characters/&lt;id&gt;/</code>, which the game reads and cloud sessions can read too.</p>
+<div class="tbl"><table>
+<tr><th>File</th><th>What</th></tr>
+<tr><td><code>hero_stand_se.png</code></td><td>One 192 frame per drawn view (from the model sheet or row 1 of the sprite sheet).</td></tr>
+<tr><td><code>hero_attack_se.png</code></td><td>Horizontal strip, one frame per 192 px (1152 × 192 for six frames).</td></tr>
+<tr><td><code>hero_cast_se_fx.png</code></td><td>The fx layer's strip, when it has paint.</td></tr>
+<tr><td><code>parts/se/torso.png</code></td><td>One part, one frame, drawn in place.</td></tr>
+<tr><td><code>hero.json</code></td><td>Class, frame, anchor, mirror table, each anim's frames, fps, loop and hit frame, the views and parts it has.</td></tr>
+</table></div>
+<div class="prompt"><div class="lab">Terminal, from the repo folder</div><pre>python3 tools/art/char_art.py export art/characters/hero/hero-model.ora --id hero --lock
+python3 tools/art/char_art.py export art/characters/hero/hero-parts-front.ora --id hero --lock
+python3 tools/art/char_art.py export art/characters/hero/hero-parts-back.ora --id hero --lock
+python3 tools/art/char_art.py export art/characters/hero/hero-sheet.ora --id hero --lock
+python3 tools/art/char_art.py pack art/characters/hero/renders --id hero --class hero --lock</pre><button type="button">Copy</button></div>
+<p>Keep the template's layer names when you save: the exporter reads layers starting with <code>paint</code> (fx separately) and <code>part NN</code>, and the hidden <code>TEMPLATE</code> layer. Hidden paint layers are skipped, which is handy for alternate takes.</p>
+
+<h2 id="rules">The rules, short</h2>
+<ul class="rules">
+<li><b>C1</b><span>Same camera as the maps: 2:1 dimetric, orthographic, tile 128 × 64, level 32 px.</span></li>
+<li><b>C2</b><span>Frame 192n square for an n × n footprint, feet at (96n, 160n).</span></li>
+<li><b>C3</b><span>Heads: small ~1.5 levels, people 3, large ~4, bosses 6 to 10.</span></li>
+<li><b>C4</b><span>Bodies inside the footprint; heads, tails and weapons may overhang half a cell.</span></li>
+<li><b>C5</b><span>No ground, base or shadow in the frame.</span></li>
+<li><b>C6</b><span>Eight facings by screen direction; combat uses the diagonals.</span></li>
+<li><b>C7</b><span>Draw S, SE, E, NE, N; SW, W, NW mirror unless lopsided.</span></li>
+<li><b>C8</b><span>Light from above and in front, never one side, so mirrors stay true.</span></li>
+<li><b>C9</b><span>SE and NE first; S, E, N for roaming.</span></li>
+<li><b>C10</b><span>Ink #373335: 3 px outside, 2 px inside at game size (12 / 8 on the model sheet).</span></li>
+<li><b>C11</b><span>Flat fills, one light and one dark per material, no texture.</span></li>
+<li><b>C12</b><span>Only the key ramp colours, so the game can recolour.</span></li>
+<li><b>C13</b><span>Pieces are the warmest, brightest thing on the map; red and blue belong to team rings.</span></li>
+<li><b>C14</b><span>Big head, two dot eyes, one strong silhouette feature.</span></li>
+<li><b>C15</b><span>Idle and walk are cut-out from parts.</span></li>
+<li><b>C16</b><span>Drawn frames for attack, cast, hurt, down in SE and NE.</span></li>
+<li><b>C17</b><span>Hit on attack frame 3, release on cast frame 4.</span></li>
+<li><b>C18</b><span>Feet stay on the anchor; the engine moves pieces between cells.</span></li>
+<li><b>C19</b><span>Glows, dust and trails on the fx layer.</span></li>
+<li><b>C20</b><span>Parts drawn in place; assembly is stacking.</span></li>
+<li><b>C21</b><span>Front stack for S, SE, E; back stack for NE, N.</span></li>
+<li><b>C22</b><span>Paint what hides under every moving part.</span></li>
+<li><b>C23</b><span>Variants are extra part layers with a number.</span></li>
+<li><b>C24</b><span>Monsters: same camera and rules; quad or biped part set.</span></li>
+<li><b>C25</b><span>A monster's facing reads in SE and NE alone.</span></li>
+<li><b>C26</b><span>Bosses are parts first; they don't roam.</span></li>
+<li><b>C27</b><span>Working files in <code>art/characters/&lt;id&gt;/</code>.</span></li>
+<li><b>C28</b><span>Game files in <code>game/art/source/characters/&lt;id&gt;/</code>, named <code>&lt;id&gt;_&lt;anim&gt;_&lt;dir&gt;.png</code>.</span></li>
+<li><b>C29</b><span>Ids are your placeholders, lower_snake.</span></li>
+</ul>
+
+<h2 id="engine">What the game still needs</h2>
+<p>None of this is built yet. In order of usefulness:</p>
+<ol class="steps">
+<li><b>Sprite node.</b> Reads <code>hero.json</code>, builds the animations from the strips, puts the anchor on the cell, draws at half size. Falls back to today's pawn when art is missing, so characters can arrive one at a time.</li>
+<li><b>Facing.</b> Pieces remember which way they last stepped and turn toward whoever they act on. The camera turn (Q) is applied, then a drawn view or a mirror is picked.</li>
+<li><b>Animation states.</b> idle, walk, attack, cast, hurt, down hooked into the existing move hops and attack lunges. Damage numbers wait for the hit frame.</li>
+<li><b>Paper doll and recolour.</b> Stacks parts in the right order per facing, swings them around the pivots for idle and walk, and swaps the key ramps per character so one set of parts covers the roster and random recruits.</li>
+<li><b>Big footprints.</b> 2 × 2 and 3 × 3 units in the combat grid: occupancy, paths, targeting any covered cell, pushes, draw order.</li>
+<li><b>Free roaming.</b> A walk-around mode on the same iso board: WASD or click-to-move, eight facings, step up one level at most, camera follow, party followers, event cards on interaction.</li>
+<li><b>Polish.</b> Contact shadow and team base under sprites, HP pips at the head band, ghost outline from the sprite's silhouette, a test that every character has its SE and NE.</li>
+</ol>
+
+<h2 id="fixes">When it goes wrong</h2>
+<div class="tbl"><table>
+<tr><th>Problem</th><th>Fix</th></tr>
+<tr><td>The camera drifts to a low or side angle.</td><td>Raise Depth to 65–70%; keep "high orthographic camera looking down at 30 degrees" in the style prompt.</td></tr>
+<tr><td>Views don't look like the same character.</td><td>Raise Reference to 80%, rough each view's colours by copying from the key view, keep the seed fixed, and try the whole-sheet pass.</td></tr>
+<tr><td>The model adds a floor, grass or shadow.</td><td>It's in the negative already; select only the figure's area when refining, then erase anything below the feet.</td></tr>
+<tr><td>Lines go thin or grey after the scale-down.</td><td>Outline at 12 px on the model sheet (Stroke layer style), not thinner; lock the palette after the stroke.</td></tr>
+<tr><td>A mirrored view looks wrong.</td><td>The character is lopsided: draw its own SW, W, NW (row 1 of the sprite sheet has slots for them).</td></tr>
+<tr><td>A part rotates and leaves a hole.</td><td>Paint further under the joint on the part beneath (C22).</td></tr>
+<tr><td>Exported frames are empty.</td><td>The paint is on a layer whose name doesn't start with <code>paint</code> or <code>part NN</code>, or the layer is hidden.</td></tr>
+<tr><td>Krita shows a layer mask on every layer of an older battle-map PSD.</td><td>Those files were saved before a fix on 2026-10-27; pull the repo for the regenerated templates (or use the .ora).</td></tr>
+</table></div>
+</div>
+<script>
+document.querySelectorAll('.prompt button').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=b.parentElement.querySelector('pre').textContent;
+    var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1400)};
+    try{navigator.clipboard.writeText(t).then(done,function(){sel(b)})}catch(e){sel(b)}
+  });
+});
+function sel(b){var r=document.createRange();r.selectNodeContents(b.parentElement.querySelector('pre'));var s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected';}
+</script>

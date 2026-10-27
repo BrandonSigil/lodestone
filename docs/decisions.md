@@ -112,3 +112,10 @@ Every design call goes here, newest at the bottom of its section.
 - [USER] 2026-10-27 Battle map topography is built in Godot (the sandbox map editor) and tile art is applied there. Krita makes tile textures and props; whole-map "map plates" in the game are shelved (Brandon).
 - [USER] 2026-10-27 Each look starts with a painted proof-of-concept map: a sandbox map with varied heights and key items for the terrain (campfire, fallen tree, dungeon ruins), painted in Krita on its template to check the art holds together. That painting is then broken out into the tile set's textures and props (Brandon).
 - [AI] 2026-10-27 Tile sets per region: subfolders of `game/art/source/battle/` (snow, dungeon, forest...) with the base file names, each missing file falling back to the base art; a map picks its set.
+
+## Character sprites
+- [USER] 2026-10-27 Brandon's character sheet (chibi hero, five iso views on tile footprints, idle / walk / attack / cast / hurt, sword and cloak parts, swatches) is the template for all characters. Characters need front, back, left and right views too so the party can move freely on maps outside combat.
+- [AI] 2026-10-27 Sprite spec C1 to C29 in `docs/art/characters.md`: battle-map camera, frame 192n square with feet at (96n, 160n) for an n x n footprint; people 3 levels tall; size classes small 1x1, hero 1x1, large 2x2, boss 3x3.
+- [AI] 2026-10-27 Eight facings by screen direction. Draw S, SE, E, NE, N; SW, W, NW are mirrors unless a piece is lopsided. Combat only needs SE and NE (plus mirrors). Pieces are lit from above, not from the side, so mirrors stay correct.
+- [AI] 2026-10-27 Idle and walk are cut-out animation from paper-doll parts in every facing. Attack, cast, hurt and down get drawn key frames in SE and NE only; key poses may be generated with Krita AI (pose and reference control) and hand-finished. This loosens "never generate animation frames" in `docs/art-pipeline.md` to key poses only; in-betweens stay hand-made or code-made.
+- [AI] 2026-10-27 Paint pieces with ten key ramps taken from Brandon's swatches (`art/templates/characters/lodestone-characters.gpl`); the engine recolours by swapping ramps.
