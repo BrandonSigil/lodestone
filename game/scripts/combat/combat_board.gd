@@ -19,6 +19,7 @@ const COBBLE_ALPHA := 0.32  ## the faint cobble hairlines on some tops
 const SKY_SCALE := 1.9  ## skyline width as a multiple of the floor's footprint
 const SKY_LOW := 0.6  ## how much of the skyline's height sits above the board's centre
 const SCENERY_RINGS := 2  ## empty cells this many steps out from the floor carry scenery
+const LOWLAND_DROP := 1.6  ## with a skyline, the floor's cliffs drop this far below the base to the lowland
 const NONE := Vector2i(-1, -1)
 
 const TOP_COLORS := {
@@ -62,6 +63,7 @@ var island := true  ## rims hang ragged rock below the base, water spills off th
 var backdrop := false  ## a soft paper card behind the island (tester and fights); a set's backdrop plate draws either way
 var combat_stance := false  ## pieces stand ready (weapon drawn) instead of relaxed; Battle sets it
 var _fade := {}  ## cells whose props draw see-through this frame (a party piece stands behind them)
+var _floor_base := BASE  ## how far the floor's cliffs drop: BASE, or lower when the lowland is drawn
 var _covered := {}  ## units something in front hides this frame
 var _paint_button := 0
 var hover := NONE
@@ -226,6 +228,7 @@ func _draw() -> void:
 	var has_sky := BattleArt.texture("skyline", false, art_set) != null
 	if backdrop or has_sky or BattleArt.texture("backdrop", false, art_set) != null:
 		_draw_backdrop()
+	_floor_base = BASE - LOWLAND_DROP if has_sky else BASE
 	var rings := _ring_cells() if has_sky else {}
 	var layers := _layers()
 	for c: Vector2i in rings:
@@ -235,7 +238,7 @@ func _draw() -> void:
 	for depth in layers.size():
 		for c: Vector2i in layers[depth]:
 			if rings.has(c):
-				_ring_ground(c)
+				_ring_ground(c, rings[c])
 				_scenery(c, rings[c])
 				continue
 			if hidden(c):
@@ -330,12 +333,12 @@ func _draw_tile(c: Vector2i) -> void:
 		var d := front_dir(shade)
 		var n := c + d
 		var edge := not grid.solid(n)  # the island's rim: the face runs down to the base and hangs below it
-		var nh := BASE if edge else float(grid.height_at(n))
+		var nh := _floor_base if edge else float(grid.height_at(n))
 		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
 		var col := face.darkened(0.32 if shade else 0.12)
 		# Painted sides keep the guide's values: lit 75% of the top (baked into the art), shade 55%.
 		var mod := Color(tint * (0.72 if shade else 1.0), 1.0)
-		_face(side[0], side[1], h, maxf(BASE, minf(nh, h)), col, seed_v + (7 if shade else 0), not built, false, side_tex, mod)
+		_face(side[0], side[1], h, maxf(_floor_base, minf(nh, h)), col, seed_v + (7 if shade else 0), not built, false, side_tex, mod)
 		if edge and island:
 			var rock := BattleArt.average(side_tex) * mod if side_tex != null else col
 			_underside(side[0], side[1], Color(rock, 1.0) * (0.9 if shade else 1.0), seed_v + (3 if shade else 0), d)
@@ -685,9 +688,11 @@ func _ring_cells() -> Dictionary:
 
 
 ## Flat lowland under the outer ring, below the floor's cliffs, so the scenery stands on ground.
-func _ring_ground(c: Vector2i) -> void:
+## The outer ring fades a little (ring 2 is see-through), so its edge against the skyline is softer.
+func _ring_ground(c: Vector2i, ring_i: int) -> void:
 	var grass := _terrain_color(CombatGrid.T.GRASS).darkened(0.05 + 0.04 * float(_hash(c) % 3))
-	draw_colored_polygon(_diamond(c, BASE), grass)
+	grass.a = 1.0 if ring_i == 1 else 0.55
+	draw_colored_polygon(_diamond(c, _floor_base), grass)
 
 
 ## Scenery on the empty ground around the floor: rocks and bushes on ring 1, pines and rocks on ring 2,
@@ -707,7 +712,7 @@ func _scenery(c: Vector2i, ring_i: int) -> void:
 		return
 	var tall := TW * (0.9 if sprite.begins_with("prop_pine") else 0.5)
 	var wide := tall * tex.get_width() / float(tex.get_height())
-	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, 0.0)
+	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _floor_base)
 	Pawn.ellipse(self, base, wide * 0.36, wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
 	draw_texture_rect(tex, Rect2(base.x - wide * 0.5, base.y - tall, wide, tall), false)
 
