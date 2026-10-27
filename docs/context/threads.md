@@ -63,3 +63,8 @@ One entry per thread in Brandon's Claude project, oldest first. Each says what w
 
 ## Export project context into the repo (Oct 27)
 - This export: `docs/context/`.
+
+## Rework systems for the empty village premise (Oct 27)
+- Ask: Brandon set a new premise (everyone gone, empty decayed village, hero and corgi, survivors become settlers or party members). Record it and work out the systems side; keep the old plans on file.
+- Output: `docs/design/empty-village.md` (corgi, survivors and the SETTLE / JOIN choice, village rebuilding with salvage and settler buildings, GO HOME recall, roster unlocks as `met_<id>`, build order, open questions). Premise section in `docs/decisions.md`; context files updated. No game code changed.
+- Open: Brandon's answers to the open questions; then build steps 1 to 3 (data and meta, corgi, GO HOME and salvage).
