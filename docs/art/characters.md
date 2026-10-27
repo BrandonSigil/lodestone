@@ -103,6 +103,17 @@ python3 tools/art/char_art.py pack art/characters/hero/renders --id hero --class
 
 Rebuild the templates with `python3 tools/art/char_art.py` (about two minutes).
 
+## 4b. Picsart (or any image model without control layers)
+Flux in Picsart takes reference images instead of control layers, so a character is made from three pictures: the mannequin view for pose and camera (`views/<dir>-blocking.png`, or the 3:2 `control-blocking.png` for a whole turnaround), the identity (a sketch first, then the cleaned key view `art/characters/<id>/<id>-key.png`), and the colours (`art/palettes/characters.png`, no text; `characters-labeled.png` has the hex codes). Two Flows: "Lodestone character view" (1:1) and "Lodestone turnaround" (3:2). Prompts and the full steps are in the Character Guide's Picsart section.
+
+Raw pictures go in `art/characters/<id>/picsart/`. Bring each one in with:
+```
+python3 tools/art/char_art.py import art/characters/hero/picsart/hero-se-1.png --id hero --dir se      # one view
+python3 tools/art/char_art.py import art/characters/hero/picsart/hero-turnaround-1.png --id hero       # 3:2 sheet
+python3 tools/art/char_art.py import art/characters/hero/picsart/attack-hit.png --id hero --dir se --anim attack --frame 2 --fit
+```
+`import` removes the plain background (flood from the edges, stopped by the ink outline; a picture that already has transparency is kept), moves each figure so its feet match the mannequin's feet, prints its height against the mannequin (`--fit` scales it to match), and writes `art/characters/<id>/<id>-model.ora` (layered, views in their slots, kept across imports) plus stand frames. With `--anim` it writes a 768 frame into `art/characters/<id>/renders/` for `pack`. Then fix the model sheet by hand and `export --lock` it.
+
 ## 5. Engine work to use these sprites
 Not built yet; this is the plan.
 1. **CharacterSprite node** that reads `<id>.json` and builds `SpriteFrames` from the strips (frame size from the class, offset so the anchor sits on the node origin, drawn at 0.5 scale like the tiles). Missing art falls back to today's graybox `Pawn`, so characters can arrive one at a time.

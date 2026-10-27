@@ -9,6 +9,7 @@ footprint, so every frame drops onto the board with one fixed offset.
     python3 tools/art/char_art.py export FILE --id ID     # painted sheet / model / parts file -> game sprites
     python3 tools/art/char_art.py pack DIR --id ID        # Krita animation render (ID_anim_dir_0000.png) -> strips
     python3 tools/art/char_art.py lock IN.png [OUT.png]   # snap colours to the character palette
+    python3 tools/art/char_art.py import PIC.png --id ID  # Picsart picture (3:2 sheet or 1:1 view) -> model.ora + frames
     python3 tools/art/char_art.py guide                   # rebuild docs/context/artifacts/character-guide.html
 
 Needs Pillow, numpy and psd-tools (pip install pillow numpy psd-tools).
@@ -1022,6 +1023,190 @@ def pack(folder: Path, sid: str, cls: str, out: Path | None, lock: bool):
     update_meta(out, sid, cls, anims=anims)
 
 
+def palette_card(labeled: bool) -> Image.Image:
+    """3:2 card of the key ramps on paper: a shaded ball and three swatches per ramp, ink and glint last.
+    The unlabeled one is a reference image for Picsart / GPT; the labeled one is for people."""
+    W, H = 1536, 1024
+    im = Image.new("RGBA", (W, H), PAPER + (255,))
+    dr = ImageDraw.Draw(im)
+    ramps = list(RAMPS.items())
+    cw = W // (len(ramps) + 1)
+    for i, (name, ramp) in enumerate(ramps):
+        x = i * cw + cw // 2
+        light, mid, dark = (hexrgb(c) for c in ramp)
+        # a ball lit from above: dark base, mid body, light cap, inked
+        r = cw * 0.36
+        cy = 250
+        dr.ellipse([x - r, cy - r, x + r, cy + r], fill=dark)
+        dr.ellipse([x - r * 0.92, cy - r, x + r * 0.92, cy + r * 0.62], fill=mid)
+        dr.ellipse([x - r * 0.6, cy - r * 0.86, x + r * 0.6, cy - r * 0.05], fill=light)
+        dr.ellipse([x - r, cy - r, x + r, cy + r], outline=INK, width=4)
+        for j, c in enumerate((light, mid, dark)):
+            y = 440 + j * 150
+            dr.rectangle([x - cw * 0.38, y, x + cw * 0.38, y + 130], fill=c, outline=INK, width=3)
+        if labeled:
+            dr.text((x, 920), name, fill=INK, font=font(17), anchor="mt")
+            for j, c in enumerate(ramp):
+                dr.text((x, 440 + j * 150 + 65), c, fill=INK if j < 2 else (240, 238, 228), font=font(14), anchor="mm")
+    x = len(ramps) * cw + cw // 2
+    for j, key in enumerate(("ink", "glint")):
+        y = 440 + j * 150
+        dr.rectangle([x - cw * 0.38, y, x + cw * 0.38, y + 130], fill=hexrgb(FIXED[key]), outline=INK, width=3)
+        if labeled:
+            dr.text((x, y + 65), FIXED[key], fill=(240, 238, 228) if key == "ink" else INK, font=font(14), anchor="mm")
+    return im.convert("RGB")
+
+
+def write_palette_cards():
+    out = ROOT / "art/palettes"
+    out.mkdir(parents=True, exist_ok=True)
+    palette_card(False).save(out / "characters.png", optimize=True)
+    palette_card(True).save(out / "characters-labeled.png", optimize=True)
+
+
+# --- importing pictures from an image model (Picsart, GPT) ------------------------------------
+def key_background(img: Image.Image, tol=38) -> Image.Image:
+    """Make the plain background transparent: flood from the picture's edges through pixels close to
+    the edge colour. The ink outline stops the flood, so cream inside the figure stays."""
+    a = np.asarray(img.convert("RGBA")).astype(np.int16)
+    if a[..., 3].min() < 250:  # already cut out (e.g. Picsart Remove background)
+        return img.convert("RGBA")
+    rgb = a[..., :3]
+    edge = np.concatenate([rgb[0], rgb[-1], rgb[:, 0], rgb[:, -1]])
+    bg = np.median(edge, axis=0)
+    near = (np.abs(rgb - bg).sum(-1) <= tol * 3) & (np.abs(rgb - bg).max(-1) <= tol)
+    fill = np.zeros(near.shape, bool)
+    fill[0], fill[-1], fill[:, 0], fill[:, -1] = near[0], near[-1], near[:, 0], near[:, -1]
+    while True:  # grow the flood one pixel at a time inside the near-background mask
+        grown = fill.copy()
+        grown[1:] |= fill[:-1]
+        grown[:-1] |= fill[1:]
+        grown[:, 1:] |= fill[:, :-1]
+        grown[:, :-1] |= fill[:, 1:]
+        grown &= near
+        if (grown == fill).all():
+            break
+        fill = grown
+    out = a.copy()
+    out[..., 3] = np.where(fill, 0, 255)
+    im = Image.fromarray(out.astype(np.uint8), "RGBA")
+    # soften the cut edge by one pixel so the figure doesn't look stamped out
+    alpha = im.getchannel("A").filter(ImageFilter.MinFilter(3)).filter(ImageFilter.BoxBlur(0.6))
+    im.putalpha(alpha)
+    return im
+
+
+def _ink_box(img: Image.Image):
+    a = np.asarray(img.getchannel("A")) > 40
+    # ignore specks: keep rows / columns with a few solid pixels
+    rows = np.nonzero(a.sum(1) >= 3)[0]
+    cols = np.nonzero(a.sum(0) >= 3)[0]
+    if not len(rows):
+        return None
+    return cols[0], rows[0], cols[-1], rows[-1]
+
+
+def reanchor(view: Image.Image, cls: str, d: str, fit=False):
+    """Move (and optionally scale) a 768 view so its feet sit where the mannequin's feet are.
+    Returns the new view and the figure's height as a share of the mannequin's."""
+    body = CLASSES[cls]["body"]
+    m = CLASSES[cls]["model"]
+    anc = model_anchor(cls)
+    man = render_mannequin(body, d, K * m, (SLOT, SLOT), anc, (2, 1))["blocking"]
+    mb, vb = _ink_box(man), _ink_box(view)
+    if vb is None:
+        return view, 0.0
+    m_h, v_h = mb[3] - mb[1], vb[3] - vb[1]
+    ratio = v_h / max(m_h, 1)
+    if fit and abs(ratio - 1) > 0.04:
+        s = 1 / ratio
+        view = view.resize((round(view.width * s), round(view.height * s)), Image.LANCZOS)
+        vb = _ink_box(view)
+    # feet: centre of the lowest band of the figure
+    a = np.asarray(view.getchannel("A")) > 40
+    band = a[max(vb[3] - 12, 0):vb[3] + 1]
+    xs = np.nonzero(band.any(0))[0]
+    fx = (xs[0] + xs[-1]) / 2 if len(xs) else (vb[0] + vb[2]) / 2
+    am = np.asarray(man.getchannel("A")) > 40
+    mband = am[mb[3] - 12:mb[3] + 1]
+    mxs = np.nonzero(mband.any(0))[0]
+    mfx = (mxs[0] + mxs[-1]) / 2
+    dx, dy = round(mfx - fx), round(mb[3] - vb[3])
+    out = empty((SLOT, SLOT))
+    out.alpha_composite(view, (max(dx, 0), max(dy, 0)), (max(-dx, 0), max(-dy, 0)))
+    return out, ratio
+
+
+def import_picture(path: Path, sid: str, cls: str, d: str | None, anim: str | None, frame: int,
+                   fit: bool, anchor: bool, lock: bool, out: Path | None):
+    """Bring a picture from Picsart (or any image model) into the pipeline.
+    3:2 picture = a whole model sheet (S, SE, E / NE, N, KEY). Square picture = one view (--dir)."""
+    src = Image.open(path)
+    work = ROOT / "art/characters" / sid
+    out = out or GAME / sid
+    ratio_wh = src.width / src.height
+    if abs(ratio_wh - 1.5) < 0.05:
+        sheet = key_background(src.convert("RGB").resize((SLOT * 3, SLOT * 2), Image.LANCZOS))
+        slots = [(d_, (i % 3) * SLOT, (i // 3) * SLOT) for i, d_ in enumerate(MODEL_SLOTS) if d_ != "KEY"]
+        views = {d_: sheet.crop((x, y, x + SLOT, y + SLOT)) for d_, x, y in slots}
+    elif abs(ratio_wh - 1) < 0.05:
+        if not d:
+            sys.exit("a square picture is one view: say which with --dir s|se|e|ne|n (or sw|w|nw)")
+        views = {d: key_background(src.convert("RGB").resize((SLOT, SLOT), Image.LANCZOS))}
+    else:
+        sys.exit(f"{path.name} is {src.width} x {src.height}: use 3:2 for a turnaround sheet or 1:1 for one view")
+    print(f"{path.name}: {cls}, {len(views)} view(s) -> {work}")
+    placed = {}
+    for d_, v in views.items():
+        if not has_ink(v):
+            print(f"   {d_.upper()}: empty, skipped")
+            continue
+        if anchor:
+            v, r = reanchor(v, cls, MIRROR.get(d_, d_), fit)
+            note = "ok" if 0.88 <= r <= 1.15 else ("too small, try --fit" if r < 0.88 else "too tall (hat? else --fit)")
+            print(f"   {d_.upper()}: height {r:.0%} of the mannequin, {note}")
+        placed[d_] = v
+    if anim:
+        for d_, v in placed.items():
+            dst = work / "renders" / f"{sid}_{anim}_{d_}_{frame:04d}.png"
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            v.save(dst, optimize=True)
+            print("  ", dst.relative_to(ROOT))
+        print(f"   then: python3 tools/art/char_art.py pack {(work / 'renders').relative_to(ROOT)} --id {sid} --class {cls}")
+        return
+    # keep a layered model sheet to fix in Krita, then export stand frames from it
+    model = work / f"{sid}-model.ora"
+    if model.exists():
+        size, layers = read_layers(model)
+        layers = [(n, im, v) for n, v, im in layers]
+    else:
+        size, layers = read_layers(TEMPLATES / cls / f"{cls}-model-sheet.ora")
+        layers = [(n, im, v) for n, v, im in layers]
+    idx = next(i for i, (n, _, _) in enumerate(layers) if n.lower().startswith("paint 1"))
+    name, paint, vis = layers[idx]
+    for d_, v in placed.items():
+        if d_ not in MODEL_SLOTS:
+            continue  # optional mirrors have no model-sheet slot; they still export below
+        i = MODEL_SLOTS.index(d_)
+        x0, y0 = (i % 3) * SLOT, (i // 3) * SLOT
+        paint.paste(empty((SLOT, SLOT)), (x0, y0))
+        paint.alpha_composite(v, (x0, y0))
+    layers[idx] = (name, paint, vis)
+    from battle_art import save_ora
+    comp = paper(size)
+    for _, im, v in layers:
+        if v:
+            comp.alpha_composite(im)
+    work.mkdir(parents=True, exist_ok=True)
+    save_ora(model, size, layers, comp)
+    print("  ", model.relative_to(ROOT), "(layered: fix it in Krita, then run export on it)")
+    stand = []
+    for d_, v in placed.items():
+        save_sprite(slot_to_frame(v, cls), out / f"{sid}_stand_{d_}.png", lock, None)
+        stand.append(d_)
+    update_meta(out, sid, cls, stand=stand)
+
+
 def build_guide():
     """Inline the diagrams into tools/art/character_guide.src.html -> docs/context/artifacts/character-guide.html."""
     import base64
@@ -1061,11 +1246,24 @@ def main():
     lk.add_argument("dst", type=Path, nargs="?")
     lk.add_argument("--palette", type=Path)
     sub.add_parser("guide", help="rebuild the character guide page with inlined diagrams")
+    im = sub.add_parser("import", help="bring a Picsart / image-model picture in: key out the background, put the feet on the anchor")
+    im.add_argument("picture", type=Path, help="3:2 turnaround sheet or 1:1 single view")
+    im.add_argument("--id", required=True)
+    im.add_argument("--class", dest="cls", default="hero", choices=list(CLASSES))
+    im.add_argument("--dir", choices=list(DIRS), help="which view a square picture is")
+    im.add_argument("--anim", help="a key pose: writes art/characters/<id>/renders/<id>_<anim>_<dir>_<frame>.png for pack")
+    im.add_argument("--frame", type=int, default=0, help="frame number for --anim (0 = first)")
+    im.add_argument("--fit", action="store_true", help="also scale the figure to the mannequin's height")
+    im.add_argument("--no-anchor", action="store_true", help="leave the figure where the model put it")
+    im.add_argument("--lock", action="store_true")
+    im.add_argument("--out", type=Path)
     a = ap.parse_args()
     if a.cmd == "export":
         export(a.file, a.id, a.out, a.lock, a.palette)
     elif a.cmd == "pack":
         pack(a.folder, a.id, a.cls, a.out, a.lock)
+    elif a.cmd == "import":
+        import_picture(a.picture, a.id, a.cls, a.dir, a.anim, a.frame, a.fit, not a.no_anchor, a.lock, a.out)
     elif a.cmd == "guide":
         build_guide()
     elif a.cmd == "lock":
@@ -1074,6 +1272,7 @@ def main():
     else:
         build_templates()
         build_diagrams()
+        write_palette_cards()
         print("wrote", TEMPLATES.relative_to(ROOT), "and", DOCS.relative_to(ROOT))
 
 
