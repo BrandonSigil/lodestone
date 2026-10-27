@@ -1,0 +1,13 @@
+LODESTONE BUILDING SPRITE (one building per picture)
+
+Image 1 = the style picture (docs/art/references/style-flat-forest.png, Brandon's pick): match its line, paint and level of detail exactly; it is already as simple as we want. Use its look, not its layout.
+
+Aspect 1:1, plain cream paper background (#eae8d6). ONE building alone in the middle, nothing else in frame: no ground, no grass, no path, no fence, no trees, no cast shadow. No text, no letters, no writing on signs.
+View: 2:1 dimetric three-quarter view from above (orthographic camera turned 45 degrees, looking down 30 degrees), like a board game piece. The building stands on a SQUARE footprint seen as a diamond: one corner points straight at the viewer at the bottom centre of the picture, the left and right walls run up and away at the same angle. The front door is in the middle of the LEFT front wall. The roof is fully on.
+The building: [ZONE]
+
+Light from the upper left: roof top lightest, left wall mid, right wall darkest. Three flat values only. Big flat shapes: walls are one flat colour with 2 or 3 marks, the roof is one flat colour with a few simple tile or thatch rows. One thin-to-medium soft dark outline (#373335) around the whole building and its big parts only.
+
+FINISH: SIMPLE, flat, graphic storybook print, like a risograph or gouache picture book. Muted, slightly faded colours; a quaint, cosy, slightly run-down village: a few missing roof tiles, a cracked shutter, a little ivy. Not a ruin.
+
+Avoid: perspective, vanishing point, 3d render, glossy, photo, ground, scenery, characters, text, letters, watermark, black outlines, busy detail, every brick drawn, saturated red, saturated blue.

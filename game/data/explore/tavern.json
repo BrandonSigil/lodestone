@@ -1,0 +1,300 @@
+{
+ "name": "tavern",
+ "art_set": "village_in",
+ "strangeness": 0.0,
+ "view": 0,
+ "turn": false,
+ "grid": {
+  "w": 12,
+  "h": 11,
+  "terrain": [
+   "rrrrrrrrrrrr",
+   "rssssssssssr",
+   "rssssssssssr",
+   "rssssssssssr",
+   "rssssssssssr",
+   "rssssssssssr",
+   "rssssssssssr",
+   "rssssssssssr",
+   "rssssssssssr",
+   "rssssssssssr",
+   "rrrsrrrrrrrr"
+  ],
+  "heights": [
+   "333333333332",
+   "311111111112",
+   "311111111112",
+   "311111111112",
+   "311111111112",
+   "311111111112",
+   "311111111112",
+   "311111111112",
+   "311111111112",
+   "311111111112",
+   "322122222222"
+  ],
+  "props": [
+   {
+    "sprite": "prop_bar",
+    "cell": [
+     2,
+     2
+    ],
+    "foot": [
+     2,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_bar",
+    "cell": [
+     4,
+     2
+    ],
+    "foot": [
+     2,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_ale_barrel",
+    "cell": [
+     1,
+     1
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_ale_barrel",
+    "cell": [
+     7,
+     1
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_jar_shelf",
+    "cell": [
+     4,
+     1
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.55,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_hearth",
+    "cell": [
+     10,
+     3
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.95,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_long_table",
+    "cell": [
+     3,
+     5
+    ],
+    "foot": [
+     2,
+     1
+    ],
+    "tall": 0.7,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_long_table",
+    "cell": [
+     7,
+     5
+    ],
+    "foot": [
+     2,
+     1
+    ],
+    "tall": 0.7,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_long_table",
+    "cell": [
+     7,
+     8
+    ],
+    "foot": [
+     2,
+     1
+    ],
+    "tall": 0.7,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_stool",
+    "cell": [
+     3,
+     6
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_stool",
+    "cell": [
+     4,
+     4
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_stool",
+    "cell": [
+     7,
+     4
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_stool",
+    "cell": [
+     8,
+     6
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_stool",
+    "cell": [
+     7,
+     7
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_stool",
+    "cell": [
+     9,
+     8
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_broken_chair",
+    "cell": [
+     5,
+     8
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.75,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_barrel",
+    "cell": [
+     10,
+     9
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.7,
+    "sight": 0.0,
+    "walk": false
+   }
+  ]
+ },
+ "start": [
+  [
+   3,
+   9
+  ]
+ ],
+ "groups": [],
+ "things": [
+  {
+   "id": "out",
+   "kind": "enter",
+   "event": "",
+   "cell": [
+    3,
+    10
+   ],
+   "to": "village",
+   "at": [
+    29,
+    18
+   ]
+  }
+ ]
+}

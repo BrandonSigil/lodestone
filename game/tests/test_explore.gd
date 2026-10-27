@@ -201,3 +201,40 @@ func test_wasd_picks_the_screen_direction() -> void:
 	eq(ExploreRules.steps_toward(Vector2(0, -1), screen_of)[0], Vector2i(-1, -1), "W goes up")
 	eq(ExploreRules.steps_toward(Vector2(1, 0), screen_of)[0], Vector2i(1, -1), "D goes right")
 	ok(not ExploreRules.steps_toward(Vector2(0, -1), screen_of).has(Vector2i(1, 1)), "never backwards")
+
+
+func test_placed_props_block_and_save() -> void:
+	var g := CombatGrid.flat(8, 8)
+	g.add_prop(Vector2i(2, 2), "b_tavern", Vector2i(3, 2), 0.0, 3.0)
+	g.add_prop(Vector2i(6, 6), "prop_rug", Vector2i.ONE, 0.45, 0.0, true)
+	ok(not g.passable(Vector2i(4, 3)), "a house blocks its whole footprint")
+	ok(g.passable(Vector2i(5, 3)) and g.passable(Vector2i(4, 4)), "but not past it")
+	ok(g.passable(Vector2i(6, 6)), "a rug can be walked on")
+	ok(not g.line_of_sight(Vector2i(0, 3), Vector2i(7, 3)), "a house blocks sight")
+	var back := CombatGrid.from_dict(g.to_dict())
+	ok(not back.passable(Vector2i(3, 2)), "props survive a save")
+	eq(back.prop_at(Vector2i(4, 3)).sprite, "b_tavern", "footprint cell finds its prop")
+
+
+func test_village_maps_link_up() -> void:
+	if Db.explore_events.is_empty():
+		Db.reload()
+	for n in ["home", "village", "house_ne", "tavern"]:
+		var m := ExploreMap.load_named(n)
+		ok(m != null and m.grid.passable(m.start[0]), "%s loads with a walkable start" % n)
+		ok(not m.turn, "%s keeps the camera fixed for its building art" % n)
+		for t in m.things:
+			if t.event != "":
+				ok(Db.explore_events.has(t.event), "%s/%s: event %s exists" % [n, t.id, t.event])
+			if t.to != "":
+				var there := ExploreMap.load_named(t.to)
+				ok(there != null and there.grid.passable(t.at), "%s/%s leads to a walkable cell in %s" % [n, t.id, t.to])
+	var v := ExploreMap.load_named("village")
+	var rack := v.things.filter(func(t: Dictionary) -> bool: return t.kind == "rack")
+	eq(rack.size(), 1, "one weapon rack at the smithy")
+	var q := ExploreMap.load_named("house_ne")
+	var book: Array = q.things.filter(func(t: Dictionary) -> bool: return t.kind == "hidden")
+	eq(book.size(), 1, "one hidden book")
+	var door: Dictionary = q.things.filter(func(t: Dictionary) -> bool: return t.kind == "enter")[0]
+	var inside: Vector2i = door.cell + Vector2i(0, -1)
+	ok(not q.grid.line_of_sight(inside, book[0].cell), "the book can't be seen from the door")

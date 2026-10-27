@@ -23,7 +23,7 @@ func _draw() -> void:
 	var lead: CombatUnit = scene.leader()
 	var font := ThemeDB.fallback_font
 	for t: Dictionary in scene.things:
-		if t.done:
+		if t.done or not scene.shown(t):
 			continue
 		var c: Vector2i = t.cell
 		var state: int = board.fog.get(c, 0)

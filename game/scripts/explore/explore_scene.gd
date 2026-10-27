@@ -63,6 +63,7 @@ func _ready() -> void:
 	board.strangeness = map.strangeness
 	board.art_set = map.art_set
 	board.rot = map.view
+	board.can_turn = map.turn
 	board.fog_on = true
 	board.show_grid = false
 	add_child(board)
@@ -87,11 +88,16 @@ func _ready() -> void:
 			u.place(e.cell, grid.height_at(e.cell))
 			units.append(u)
 		groups.append({"def": g, "units": units, "state": "idle"})
+	var memory: Dictionary = Game.explore_memory.get(map.map_name, {})
+	seen = memory.get("seen", {}).duplicate()
+	var done_before: Array = memory.get("done", [])
 	for t in map.things:
 		var copy := t.duplicate()
-		copy["done"] = false
+		copy["done"] = done_before.has(t.id) or _once_done(t)
 		things.append(copy)
-		if t.kind == "door" or t.kind == "rubble":
+		if copy.done and t.kind in ["door", "rubble"]:
+			grid.set_terrain(t.cell, _letter_terrain(String(t.floor)))
+		elif t.kind == "door" or t.kind == "rubble":
 			grid.set_terrain(t.cell, CombatGrid.T.RUIN)  # shut until opened
 
 	hud = FrameHud.new()
@@ -127,7 +133,7 @@ func party_cells() -> Array[Vector2i]:
 
 func thing_at(c: Vector2i) -> Dictionary:
 	for t in things:
-		if not t.done and t.cell == c:
+		if not t.done and t.cell == c and shown(t):
 			return t
 	return {}
 
@@ -165,6 +171,9 @@ func _blocked() -> Dictionary:
 
 func _free_start() -> Vector2i:
 	var from: Vector2i = map.start[0] if not map.start.is_empty() else Vector2i.ZERO
+	if grid.in_bounds(Game.explore_entry):
+		from = Game.explore_entry
+	Game.explore_entry = Vector2i(-1, -1)
 	for r in range(0, 6):
 		for dy in range(-r, r + 1):
 			for dx in range(-r, r + 1):
@@ -287,7 +296,7 @@ func _nearest_thing() -> Dictionary:
 	var best := {}
 	var best_d := INF
 	for t in things:
-		if t.done or not in_sight.has(t.cell):
+		if t.done or not in_sight.has(t.cell) or not shown(t):
 			continue
 		var d := ExploreRules.dist(lead.cell, t.cell)
 		if d <= ExploreRules.HINT_RANGE and d < best_d:
@@ -506,9 +515,45 @@ func _enemy_text(g: Dictionary) -> String:
 # --- things and choices -----------------------------------------------------------------------
 
 func _open_thing(t: Dictionary) -> void:
-	if t.done or mode != M.WALK:
+	if t.done or mode != M.WALK or not shown(t):
+		return
+	if t.kind == "enter" and String(t.event) == "":
+		_travel(t)  # a plain doorway: no box, just go through
 		return
 	open_event(String(t.event), {"thing": t})
+
+
+## A hidden thing shows (and can be used) only once the leader stands next to it.
+func shown(t: Dictionary) -> bool:
+	return t.kind != "hidden" or ExploreRules.dist(leader().cell, t.cell) <= 1.5
+
+
+## Gone for good: one of the thing's once flags is set (the book was taken, a smithy weapon was picked).
+func _once_done(t: Dictionary) -> bool:
+	for f in String(t.get("once", "")).split("|", false):
+		if Game.has_flag(f):
+			return true
+	return false
+
+
+func _letter_terrain(letter: String) -> int:
+	for key in CombatGrid.LETTERS:
+		if CombatGrid.LETTERS[key] == letter:
+			return key
+	return CombatGrid.T.STONE
+
+
+## Walk through a door into another map (a house, back out to the street). This map is remembered.
+func _travel(t: Dictionary) -> void:
+	var done: Array = []
+	for x in things:
+		if x.done:
+			done.append(x.id)
+	Game.explore_memory[map.map_name] = {"seen": seen.duplicate(), "done": done}
+	mode = M.OVER
+	Game.explore_map = String(t.to)
+	Game.explore_entry = t.at
+	Game.go(Game.EXPLORE)
 
 
 ## Show an event from data/explore_events.csv with the options this party has.
@@ -570,11 +615,7 @@ func _apply_map_fx(list: Array, ctx: Dictionary) -> void:
 	for k: String in list:
 		match k:
 			"open":
-				var floor_t: int = CombatGrid.T.STONE
-				for key in CombatGrid.LETTERS:
-					if CombatGrid.LETTERS[key] == t.floor:
-						floor_t = key
-				grid.set_terrain(t.cell, floor_t)
+				grid.set_terrain(t.cell, _letter_terrain(String(t.floor)))
 				t.done = true
 			"remove":
 				t.done = true
@@ -600,6 +641,8 @@ func _apply_map_fx(list: Array, ctx: Dictionary) -> void:
 					start_fight(near, "ambushed")
 			"exit":
 				_finish_map()
+			"travel":
+				_travel(t)
 	if mode == M.WALK:
 		_refresh_sight()
 		_refresh_units()
@@ -837,6 +880,7 @@ func _end_fight() -> void:
 
 func _finish_map() -> void:
 	mode = M.OVER
+	Game.explore_memory.clear()
 	var box := _new_dialog(Txt.t("UI_EX_DONE"))
 	_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.go(Game.TRAIL))
 
@@ -848,7 +892,8 @@ func _walk_side() -> void:
 	hud.top_label.text = "%s   %s" % [Txt.t("UI_EX_TITLE"), map.map_name.to_upper()]
 	_phase = null
 	_info = hud.add_side_label("", 14)
-	hud.add_button(Txt.t("UI_TURN_VIEW"), func() -> void: board.turn())
+	if map.turn:
+		hud.add_button(Txt.t("UI_TURN_VIEW"), func() -> void: board.turn())
 	hud.add_side_label(Txt.t("UI_EX_HELP"), 11)
 	_log_label = hud.add_side_label("", 12)
 

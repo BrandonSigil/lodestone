@@ -1,0 +1,166 @@
+{
+ "name": "home",
+ "art_set": "village_in",
+ "strangeness": 0.0,
+ "view": 0,
+ "turn": false,
+ "grid": {
+  "w": 8,
+  "h": 7,
+  "terrain": [
+   "rrrrrrrr",
+   "rssssssr",
+   "rssssssr",
+   "rssssssr",
+   "rssssssr",
+   "rssssssr",
+   "rrrsrrrr"
+  ],
+  "heights": [
+   "33333332",
+   "31111112",
+   "31111112",
+   "31111112",
+   "31111112",
+   "31111112",
+   "32212222"
+  ],
+  "props": [
+   {
+    "sprite": "prop_bed",
+    "cell": [
+     1,
+     1
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.75,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_hearth",
+    "cell": [
+     4,
+     1
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.95,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_cupboard",
+    "cell": [
+     6,
+     1
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.3,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_table",
+    "cell": [
+     4,
+     3
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.7,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_chair",
+    "cell": [
+     5,
+     3
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.75,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_rug",
+    "cell": [
+     2,
+     4
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.45,
+    "sight": 0.0,
+    "walk": true
+   },
+   {
+    "sprite": "prop_chest",
+    "cell": [
+     1,
+     3
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pots",
+    "cell": [
+     6,
+     4
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 0.0,
+    "walk": false
+   }
+  ]
+ },
+ "start": [
+  [
+   3,
+   4
+  ]
+ ],
+ "groups": [],
+ "things": [
+  {
+   "id": "out",
+   "kind": "enter",
+   "event": "",
+   "cell": [
+    3,
+    6
+   ],
+   "to": "village",
+   "at": [
+    11,
+    29
+   ]
+  }
+ ]
+}

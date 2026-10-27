@@ -18,6 +18,29 @@ func _thing(s: Node, id: String) -> Dictionary:
 
 
 func run(s: Node, f: int, step: String) -> bool:
+	if step == "overview":
+		# The whole map lit and zoomed out, to judge a layout.
+		if f == 5:
+			for y in s.grid.h:
+				for x in s.grid.w:
+					s.seen[Vector2i(x, y)] = true
+			s._refresh_sight()
+			for y in s.grid.h:
+				for x in s.grid.w:
+					s.board.fog[Vector2i(x, y)] = 2
+			s.zoom = clampf(26.0 / maxf(s.grid.w, s.grid.h), 0.55, 1.6)
+			s.follow = false
+			s.focus = s.board.iso(s.grid.w * 0.5, s.grid.h * 0.5, 1.0)
+			s._apply_camera()
+		return f == 30
+	if step.begins_with("near:") or step.begins_with("use:"):
+		if f == 5:
+			if step.begins_with("near:"):
+				var xy := step.substr(5).split(",")
+				_put(s, Vector2i(int(xy[0]), int(xy[1])))
+			else:
+				s._go_use(_thing(s, step.substr(4)))
+		return f == 90
 	match step:
 		"start":
 			return f == 20

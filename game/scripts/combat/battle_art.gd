@@ -4,6 +4,8 @@ extends RefCounted
 ## data/battle_art.csv. Any missing file falls back to the graybox drawing in CombatBoard.
 ## Tile sets: a subfolder of DIR (snow/, dungeon/...) holds a region's versions of the same file names.
 ## A file missing from the set falls back to the base one, so a set can be filled in one texture at a time.
+## A set may also bring its own data/battle_art_<set>.csv (same columns) to change which files a terrain
+## uses there, e.g. the village interior's rock is a plaster wall with no boulders on it.
 ## Rules for the art itself: docs/art/battle-maps.md.
 
 const DIR := "res://art/source/battle/"
@@ -18,6 +20,7 @@ const NAMES := {
 }
 
 static var _rows := {}  # terrain -> row
+static var _set_rows := {}  # set name -> {terrain -> row}, from data/battle_art_<set>.csv when there is one
 static var _tex := {}  # file name -> Texture2D or null
 static var _loaded := false
 static var art_set := ""  ## the active tile set: a subfolder of DIR, or "" for the base art
@@ -92,20 +95,32 @@ static func average(tex: Texture2D) -> Color:
 	return c
 
 
-static func top(t: int, from_set := "") -> Texture2D:
+## The CSV row for a terrain in a set: the set's own table when it has one, else the shared one.
+static func _row(t: int, from_set: String) -> Dictionary:
 	_load()
-	return texture(String(_rows.get(t, {}).get("top", "")), true, from_set)
+	var set_name := from_set if from_set != "" else art_set
+	if set_name != "" and not _set_rows.has(set_name):
+		var rows := {}
+		var path := "res://data/battle_art_%s.csv" % set_name
+		if FileAccess.file_exists(path):
+			for row in CsvTable.load_rows(path):
+				if NAMES.has(row.terrain):
+					rows[NAMES[row.terrain]] = row
+		_set_rows[set_name] = rows
+	return _set_rows.get(set_name, {}).get(t, _rows.get(t, {}))
+
+
+static func top(t: int, from_set := "") -> Texture2D:
+	return texture(String(_row(t, from_set).get("top", "")), true, from_set)
 
 
 static func side(t: int, from_set := "") -> Texture2D:
-	_load()
-	return texture(String(_rows.get(t, {}).get("side", "")), true, from_set)
+	return texture(String(_row(t, from_set).get("side", "")), true, from_set)
 
 
 ## The prop sprites that stand on this terrain, how tall they draw (in tile widths) and how many per cell.
 static func props(t: int, from_set := "") -> Dictionary:
-	_load()
-	var row: Dictionary = _rows.get(t, {})
+	var row := _row(t, from_set)
 	var list: Array[Texture2D] = []
 	for stem in String(row.get("props", "")).split("|", false):
 		var tex := texture(stem, false, from_set)
@@ -117,5 +132,6 @@ static func props(t: int, from_set := "") -> Dictionary:
 ## Drop cached textures (after new art is imported).
 static func reset() -> void:
 	_rows.clear()
+	_set_rows.clear()
 	_tex.clear()
 	_loaded = false

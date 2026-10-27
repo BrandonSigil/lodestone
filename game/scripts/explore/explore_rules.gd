@@ -12,7 +12,7 @@ const NOISE_RANGE := 12  ## a noisy failure draws the nearest group within this 
 const JOIN_RANGE := 3  ## other groups this close to a fight join it
 
 ## Effects the map handles itself. Anything else ("food:+3", "hp_one:-2") goes to TrailRules on the run.
-const MAP_EFFECTS := ["open", "remove", "noise", "reveal", "exit", "fight", "sneak_attack", "ambushed", "pacify"]
+const MAP_EFFECTS := ["open", "remove", "noise", "reveal", "exit", "fight", "sneak_attack", "ambushed", "pacify", "travel"]
 
 
 static func dist(a: Vector2i, b: Vector2i) -> float:

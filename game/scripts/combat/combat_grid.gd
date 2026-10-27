@@ -17,12 +17,18 @@ const STAIRS_CLIMB := 2
 const MAX_HEIGHT := 8  ## editor and saved maps
 const GEN_MAX_HEIGHT := 4  ## the random generator stays gentle; stairs keep it crossable
 const DEPLOY_COLS := 2  ## columns kept clear at each side for deployment
+const NONE_CELL := Vector2i(-999, -999)
 
 var w := 0
 var h := 0
 var heights := PackedInt32Array()
 var terrain := PackedInt32Array()
 var zones := PackedStringArray()  ## per-cell tile set (BattleArt set name); "" = the map's own set
+## Placed props (wells, carts, beds, whole buildings): anchor cell (back corner of the footprint) ->
+## {"sprite": file stem, "foot": Vector2i cells, "tall": draw height in tile widths (0 = fit the footprint),
+## "sight": levels it blocks sight above the ground, "walk": can pieces stand on it (rugs)}.
+var props := {}
+var _prop_at := {}  ## every footprint cell -> its anchor
 var _sight := {}  ## line of sight cache, cleared on any edit
 
 
@@ -126,6 +132,24 @@ func set_zone(c: Vector2i, z: String) -> void:
 	zones[idx(c)] = z
 
 
+## Stand a prop on the map. Its footprint runs from the anchor toward +x and +y.
+func add_prop(anchor: Vector2i, sprite: String, foot := Vector2i.ONE, tall := 0.0, sight := 1.0, walk := false) -> void:
+	props[anchor] = {"sprite": sprite, "foot": foot, "tall": tall, "sight": sight, "walk": walk}
+	for dy in foot.y:
+		for dx in foot.x:
+			_prop_at[anchor + Vector2i(dx, dy)] = anchor
+	_sight.clear()
+
+
+## The prop standing on this cell (any footprint cell), or {}.
+func prop_at(c: Vector2i) -> Dictionary:
+	return props.get(_prop_at.get(c, NONE_CELL), {})
+
+
+func prop_anchor(c: Vector2i) -> Vector2i:
+	return _prop_at.get(c, NONE_CELL)
+
+
 ## A copy at a new size. Cells that still fit keep their height and terrain; new cells are flat grass.
 func resized(width: int, height: int) -> CombatGrid:
 	var g := flat(width, height)
@@ -135,6 +159,10 @@ func resized(width: int, height: int) -> CombatGrid:
 			g.set_height(c, height_at(c))
 			g.set_terrain(c, terrain_at(c))
 			g.set_zone(c, zone_at(c))
+	for a: Vector2i in props:
+		var p: Dictionary = props[a]
+		if a.x + p.foot.x <= width and a.y + p.foot.y <= height:
+			g.add_prop(a, p.sprite, p.foot, p.tall, p.sight, p.walk)
 	return g
 
 
@@ -174,6 +202,12 @@ func to_dict() -> Dictionary:
 			key[String.chr(97 + i)] = names[i]
 		d["zones"] = z_rows
 		d["zone_key"] = key
+	if not props.is_empty():
+		var list: Array = []
+		for a: Vector2i in props:
+			var p: Dictionary = props[a]
+			list.append({"sprite": p.sprite, "cell": [a.x, a.y], "foot": [p.foot.x, p.foot.y], "tall": p.tall, "sight": p.sight, "walk": p.walk})
+		d["props"] = list
 	return d
 
 
@@ -196,6 +230,11 @@ static func from_dict(d: Dictionary) -> CombatGrid:
 	for y in mini(g.h, z_rows.size()):
 		for x in mini(g.w, String(z_rows[y]).length()):
 			g.set_zone(Vector2i(x, y), String(key.get(String(z_rows[y])[x], "")))
+	for p: Dictionary in d.get("props", []):
+		var cell: Array = p.get("cell", [0, 0])
+		var foot: Array = p.get("foot", [1, 1])
+		g.add_prop(Vector2i(int(cell[0]), int(cell[1])), String(p.get("sprite", "")), Vector2i(int(foot[0]), int(foot[1])),
+			float(p.get("tall", 0.0)), float(p.get("sight", 1.0)), bool(p.get("walk", false)))
 	return g
 
 
@@ -208,7 +247,10 @@ func cover(c: Vector2i) -> int:
 
 
 func passable(c: Vector2i) -> bool:
-	return in_bounds(c) and step_cost(c) < BLOCKED
+	if not in_bounds(c) or step_cost(c) >= BLOCKED:
+		return false
+	var p := prop_at(c)
+	return p.is_empty() or p.walk
 
 
 ## Can a piece with this Jump step between two neighbouring cells? Stairs on either end help it climb.
@@ -221,7 +263,8 @@ func can_step(a: Vector2i, b: Vector2i, jump: int) -> bool:
 
 ## Highest point of the cell for line of sight: ground plus whatever stands on it.
 func sight_top(c: Vector2i) -> float:
-	return height_at(c) + SIGHT_BLOCK[terrain_at(c)]
+	var p := prop_at(c)
+	return height_at(c) + maxf(SIGHT_BLOCK[terrain_at(c)], 0.0 if p.is_empty() else float(p.sight))
 
 
 func top_height() -> int:
