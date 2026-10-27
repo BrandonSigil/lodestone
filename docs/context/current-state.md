@@ -54,7 +54,7 @@
 - Pick the bottom frame: A embroidered band (current), B quilt row, C foreground ridge, or a mix.
 - Retag `[AI]` lines he agrees with in `docs/decisions.md` as `[USER]`; mark rules B1 to B32 and C1 to C29 his or change them.
 - Fill in `docs/style-bible.md`; edit the art rule in CLAUDE.md.
-- Approve or replace the generated `lead` sprite; roaming views (S, E, N) and the rest of the roster come after.
+- Approve or replace the generated `lead` sprite (now all five drawn views S, SE, E, NE, N with every anim; sheets in `art/picsart/out/anim-lead-<dir>_v1.png` and `stance-lead-<dir>_v1.png` on the MacBook); the rest of the roster comes after.
 - Tune the explore deploy ring (move - 3) and WASD speed after playing.
 - Rotate the Picsart key.
 

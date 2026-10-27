@@ -104,9 +104,24 @@ def feet_x(alpha, box):
     return x0 + (xs.mean() if xs.size else (x1 - x0) / 2)
 
 
-def place(rgba, alpha, box, scale):
+def body_x(alpha, box):
+    """Centre of the opaque pixels from the hair line to the hips (15% to 55% down the figure). Walk and
+    idle frames pin on this so the body holds still while the legs move; pinning on the feet made the
+    whole figure lurch sideways every step."""
     x0, y0, x1, y1 = box
-    fx = feet_x(alpha, box)
+    h = y1 - y0
+    xs = np.nonzero(alpha[y0 + int(h * 0.15):y0 + int(h * 0.55), x0:x1] > 128)[1]
+    return x0 + (xs.mean() if xs.size else (x1 - x0) / 2)
+
+
+# Rows that loop in place pin on the body; one-shot moves (swing, cast, hurt) pin on the feet so a lunge
+# still travels.
+PIN_BODY = {"idle", "walk", "ready", "advance"}
+
+
+def place(rgba, alpha, box, scale, pin=feet_x):
+    x0, y0, x1, y1 = box
+    fx = pin(alpha, box)
     crop = rgba.crop(box)
     w, h = max(1, round(crop.width * scale)), max(1, round(crop.height * scale))
     crop = crop.resize((w, h), Image.LANCZOS)
@@ -134,7 +149,15 @@ def main():
 
     rgba = key_background(Image.open(args.sheet).convert("RGB"))
     alpha = np.asarray(rgba.getchannel("A"))
-    rows = runs((alpha > 128).sum(axis=1) > 8, 40, min_gap=10)
+    profile = (alpha > 128).sum(axis=1)
+    rows = runs(profile > 8, 40, min_gap=10)
+    # A sword tip or spark can bridge two rows: split the tallest band at its thinnest line (middle half).
+    while 0 < len(rows) < len(rows_spec):
+        k = max(range(len(rows)), key=lambda i: rows[i][1] - rows[i][0])
+        y0, y1 = rows[k]
+        q = (y1 - y0) // 4
+        cut = y0 + q + int(np.argmin(profile[y0 + q:y1 - q]))
+        rows[k:k + 1] = [(y0, cut), (cut + 1, y1)]
     if len(rows) != len(rows_spec):
         sys.exit("found %d rows, expected %d: is this the right sheet for --rows?" % (len(rows), len(rows_spec)))
     boxes = [figures(alpha, y0, y1, want) for (y0, y1), (_, want) in zip(rows, rows_spec)]
@@ -162,7 +185,8 @@ def main():
         meta["anims"][anim] = spec
 
     for (anim, want), bx in zip(rows_spec, boxes):
-        frames = [place(rgba, alpha, b, scale) for b in bx]
+        pin = body_x if anim in PIN_BODY else feet_x
+        frames = [place(rgba, alpha, b, scale, pin) for b in bx]
         flag = "" if len(frames) == want else "  (expected %d)" % want
         print("  %s: %d frames%s" % (anim, len(frames), flag))
         if anim == "hurt_down":
