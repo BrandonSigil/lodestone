@@ -11,3 +11,5 @@ docs/art/*.md text eol=lf
 # Picsart battle kit finals stay in plain git (the cloud machine cannot fetch LFS).
 game/art/source/battle/** -filter -diff -merge binary
 docs/art/battle-maps/** -filter -diff -merge binary
+# Exported map paintings stay plain git so cloud sessions can read them (.kra working files stay LFS).
+art/paintings/*.png -filter -diff -merge binary

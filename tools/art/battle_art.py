@@ -153,6 +153,27 @@ def map_faces(heights, terrain, iso: Iso, base=BASE):
     return out
 
 
+# Snow pass variant (region strangeness 0.25 in the style bible): same values, cool hues.
+SNOW = {
+    "grass_light": "#eef3f2", "grass": "#e4ecec", "moss": "#d3dedf", "moss_dark": "#a9bcc2",
+    "pine": "#2f5560", "path": "#d9d6c6",
+    "stone_top": "#e3e6e1", "stone_mid": "#d2d7d3", "stone_pale": "#c3cacb",
+    "stone_lit": "#8e98a3", "stone_shade": "#5f6b7a", "stone_deep": "#3a4558",
+    "water": "#a9d3dc", "water_deep": "#7fb4c6",
+}
+
+
+def with_palette(over: dict, fn):
+    """Run fn with some palette colours swapped (for region variants of the blocking)."""
+    saved = dict(P)
+    P.update(over)
+    try:
+        return fn()
+    finally:
+        P.clear()
+        P.update(saved)
+
+
 def face_color(kind, t):
     if kind == "top":
         return rgb(TOP[t])
@@ -425,6 +446,9 @@ def map_template(path: Path):
     flat.convert("RGB").save(out / "control-blocking.png")
     flat.alpha_composite(line_layer)
     flat.convert("RGB").save(out / "preview.png")
+    snow = paper(size)
+    snow.alpha_composite(with_palette(SNOW, lambda: render_blocking(faces, size, iso)))
+    snow.convert("RGB").save(out / "control-blocking-snow.png")
     return out / "preview.png"
 
 
