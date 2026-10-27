@@ -178,7 +178,7 @@ ol.steps{padding-left:1.3em}
 
 
 <h2>How the pieces fit</h2>
-<div class="note"><b>Maps are built in Godot. Krita makes the tiles.</b> You shape a battlefield's ground, water and heights in the combat sandbox (the F1 map editor) and save it. Krita makes small square textures and cut-out props. The game wraps those textures onto every block of every map, and a <b>tile set</b> (snow, dungeon, forest…) swaps the whole look of a map without touching its shape. The map templates and whole-map paintings further up are optional, for a hand-painted showpiece map, and are shelved for now.</div>
+<div class="note"><b>Maps are built in Godot. Krita makes the tiles.</b> You shape a battlefield's ground, water and heights in the combat sandbox (the F1 map editor) and save it. Krita makes small square textures and cut-out props. The game wraps those textures onto every block of every map, and a <b>tile set</b> (snow, dungeon, forest…) swaps the whole look of a map without touching its shape. Each new look starts with a <b>concept map</b>: build a test map in the sandbox (high and low ground, water, stairs), paint it on its template in Krita with the terrain's key items (campfire, fallen tree, ruins) on <b>paint 3 props</b>, and export it as <code>art/paintings/&lt;map&gt;-concept.png</code>. That painting is the target; it then gets broken out into the tile set's textures and props below.</div>
 
 <h2>Make a tile set in Krita, step by step</h2>
 <p>This assumes Krita AI Diffusion with the Local Managed Server (SDXL, ZavyChroma XL) on the MacBook and the repo cloned. Button names match plugin 1.5x.</p>
