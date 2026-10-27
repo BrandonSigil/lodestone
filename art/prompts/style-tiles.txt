@@ -1,0 +1,6 @@
+LODESTONE HOUSE STYLE: TILE TEXTURE
+Seamless tileable game texture, perfectly flat orthographic view straight on, no perspective, no horizon, no vanishing point, even flat lighting, no cast shadows, no vignette.
+Flat illustrated 2D game art in muted riso print colours: flat fills with small hand-drawn marks one value step off the fill, low contrast, calm. Use only the colours in the palette card if one is given.
+Tops: seen straight down, fills the whole frame edge to edge. Cliff or wall strips: seen straight on, exactly four horizontal rows of equal height filling the frame top to bottom.
+No text, no letters, no border, no frame.
+Avoid: perspective, 3d render, photo, photorealistic, depth of field, shadows, vignette, objects, characters, text, watermark, high contrast, noise, saturated red, saturated blue.

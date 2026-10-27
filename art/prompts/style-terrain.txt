@@ -1,0 +1,9 @@
+LODESTONE HOUSE STYLE: BATTLE MAP
+Camera: 2:1 dimetric game view (pixel-art isometric): tile diamonds exactly twice as wide as tall, grid lines at 26.565 degrees from horizontal, orthographic camera turned 45 degrees and looking down 30 degrees. No perspective, no vanishing point, no horizon, no lens blur, no tilt-shift. Parallel edges stay parallel across the whole picture.
+If a layout picture is given (image 1): keep every block, step, cliff and water channel exactly where it is and at the same height. Only change the surface, never the shapes.
+Build: a small floating island diorama on plain cream paper (#eae8d6). Chunky square blocks stacked in terraces; every height step shows a cliff face; one height step is half a block. Tops are flat and walkable. Cliff faces show stacked stone courses, one course per step. The island ends in cliffs dropping into the paper with a few loose cubes falling away.
+Light: one soft sun from the upper left. Tops brightest, left-facing sides mid (75%), right-facing sides darkest (55%). Shadows lean cool grey-blue, lights lean warm. No painted cast shadows.
+Surface: flat illustrated 2D game art in muted riso print colours. Flat fills with at most one light band per face; texture comes from small hand-drawn marks one value step off the fill (grass tufts, stone joints, cracks, pebbles). Soft overhanging caps (moss, grass, snow, sand) drape over block edges. Calm, readable tops; detail lives on cliffs and props. Few, big props.
+Line: warm dark plum-grey outline (#373335), never black: thick on outer silhouettes, thinner on inner edges.
+Colour: use only the colours in the palette card (image 2 if given). Saturated red and saturated blue never appear in terrain.
+Avoid: perspective, fisheye, 3d render, photo, photorealism, depth of field, noise, grain, gradients on ground, black outlines, text, letters, labels, watermark, logo, UI, characters, people, animals, high contrast, neon.
