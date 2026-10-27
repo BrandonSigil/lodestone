@@ -10,7 +10,7 @@ Paste a style block once into a Text node in a Picsart workflow (or keep it as a
 | `style-character.txt` | Characters, monsters and bosses (pair with a mannequin view, the key view and `art/palettes/characters.png`) |
 | `flat-style-portable.txt` | The whole flat style in one paste for any image model or agent; attach `docs/art/references/style-flat-forest.png` as the only image |
 | `style-look.txt` | The exact traits of the chosen flat look (solid tops with tiny dots, three flat values, blob trees). Appended to the sheet and kit prompts |
-| `style-finish.txt` | The hand-made finish (wobbly ink, mottled paint, chunky crooked blocks). Add it under any block when results look too polished; pair with `docs/art/references/style-hike-illustration.png` as a style image |
+| `style-finish.txt` | The flat, simple finish rules (one colour plus one shadow tone, outlines on big shapes only, silhouette props). Part of the sheet and kit prompts |
 | `sheet-zones.txt` | Many zones (flat simple style) on one reference sheet (diorama plus 5 x 5 swatches each), to explore looks |
 | `sheet-tile-kit.txt` | One zone as a game-ready 5 x 5 kit (tops, sides, props) with no text; see `terrain-sheets.md` |
 | `ask-*.txt` | Example asks in caveman-free plain words, to copy and edit |
