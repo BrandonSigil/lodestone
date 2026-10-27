@@ -1,6 +1,6 @@
 LODESTONE TILE KIT SHEET (game-ready, one zone per picture)
 
-Image 1 = the style picture (docs/art/references/style-flat-forest.png, Brandon's pick): match its line, paint and level of detail exactly; it is already as simple as we want. Use its look, not its layout: it is a diorama, this picture is a grid. Do NOT pass an earlier sheet as a reference: the models copy it, polish and all. Describe the zone in words instead.
+Image 1 = the style picture (docs/art/references/style-flat-forest.png, Brandon's pick): match its line, paint and level of detail exactly; it is already as simple as we want. Use its look, not its layout: it is a diorama, this picture is a grid. Image 2 (optional) = docs/art/references/style-flat-forest-tiles.png, the tiles and props from the same sheet: the target detail level for every cell. Draw this zone's own tiles and props at exactly that level, in this zone's colours, not its forest things. Do NOT pass any other earlier sheet as a reference: the models copy it, polish and all. Describe the zone in words instead.
 
 Make ONE zone only: [ZONE]. Give it its own cliff material. Aspect 1:1, plain cream paper background (#eae8d6), no title, no labels, no text anywhere.
 Layout: a 5 x 5 grid of equal square cells with a clear cream gap between cells. Nothing crosses a cell edge.
