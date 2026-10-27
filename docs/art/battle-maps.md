@@ -135,12 +135,20 @@ The reference image is mood only: never put it (or any other artist's work) in a
 
 Words that pin the camera for any image model: *"2:1 dimetric (pixel-art isometric), tile diamonds twice as wide as tall, grid lines at 26.565 degrees from horizontal, orthographic camera 45 degrees around and 30 degrees down, no perspective."* Avoid the phrase "1:1 isometric 45 degrees" alone: models read "isometric" as true 30 degree iso.
 
-## 6b. Making tile sets in Krita (the main workflow)
-**Maps are built in Godot; Krita makes the tiles** ([USER] 2026-10-27). The sandbox (F1 editor) holds each map's shape. Krita makes square textures and cut-out props, and the board wraps them onto every block. Each look starts with a **concept map** ([USER] 2026-10-27): build a test map in the sandbox, paint it on its template in Krita with the terrain's key items (campfire, fallen tree, ruins) on `paint 3 props`, export `art/paintings/<map>-concept.png`, then break it out into the set's textures and props (break-out script: to build once the first painting exists). The game itself doesn't draw whole-map plates (shelved).
-- A **tile set** is a folder `game/art/source/battle/<set>/` (snow, dungeon, forest...) with the base file names: `top_grass|forest|road|stone|rock|water`, `side_cliff|masonry|water`, `prop_pine_1|pine_2|bush|boulder|pillar`. Missing files fall back to the base art. The sandbox's "tile set" menu picks it and saves it with the map.
-- Tops: straight down, seamless, one picture = 2 x 2 cells. Sides: straight on, seamless, exactly 4 stone rows (one per level). Props: transparent, feet at bottom centre. Any square size; the game downsizes to 256.
-- Krita: New 1024 x 1024, style "Lodestone battle" (ZavyChroma XL, style prompt `{prompt}, flat illustrated 2D game art, flat fills with small hand-drawn marks, warm dark outlines, muted riso print colours, clean readable shapes`), Generate at 100% with the texture prompts on the guide page. Seams: wrap-around mode (W), Layer > Transform > Offset by half, Refine a band over the seam cross at 40%.
-- Step by step and snow prompts: the guide page (https://claude.ai/artifact/JjxHePXisJfFFTxoddXjYB).
+## 6b. The zone pipeline: concept map, break-out, tile set
+**Maps are built in Godot; Krita makes the look** ([USER] 2026-10-27). Each zone (forest, desert, dungeon, snow...) goes through three stages.
+
+**1. Prototype the zone in Krita.** Open `maps/sampler/sampler.ora` (or any map template). The sampler map has every ground type on a 2 x 2 patch, cliff and masonry faces over 4 levels tall, a stepped stream, stairs, ruins and open ground for key items. Import a starting picture (`control-blocking-<zone>.png`: snow, desert, dungeon, forest; `SNOW` / `DESERT` / `DUNGEON` / `FOREST` in `tools/art/battle_art.py`) or scribble colours over the blocking, add Control Layers (Line Art -> `control-lineart.png` 80%, Depth -> `control-depth.png` 55%), prompt the zone and Refine at 60-85%. Paint key items (campfire, fallen tree, ruins) on `paint 3 props`. On the MacBook (MPS) set Performance > Resolution multiplier to 0.5 or the full 2400 x 1600 pass fails ("tensor dims larger than INT_MAX").
+
+**2. Break it out.** Export the painting with `paint 3 props` hidden as `art/paintings/<map>-<zone>.png` and the props layer alone as `<map>-<zone>-props.png` (both full canvas), then:
+```
+python3 tools/art/break_out.py art/paintings/sampler-desert.png --map sampler --set desert --props art/paintings/sampler-desert-props.png
+```
+It unwarps one 2 x 2 patch per terrain into a square top texture, a 2-cell x 4-level face run per material into a side strip (rolled so the rows sit on height levels, shade faces lifted to lit value), and each props blob into `prop_<n>.png` with the feet at the bottom centre. Output goes to `game/art/source/battle/<set>/`; existing files are kept unless `--force`. A contact sheet `<painting>-breakout.png` shows every piece and where it was cut.
+
+**3. Clean up and play.** In Krita: make each texture seamless (wrap-around mode W, Layer > Transform > Offset by half, Refine a band over the seam at 40%), paint trees out of `top_forest`, rename props to `prop_pine_1`, `prop_bush`... (the names in `data/battle_art.csv`). Pick the set in the sandbox ("tile set" menu).
+
+Tile set rules: tops straight down, seamless, 2 x 2 cells per picture; sides straight on, seamless, exactly 4 rows (one per level); props transparent, feet at bottom centre. Missing files fall back to the base art. In-game whole-map plates are shelved.
 
 ## 7. Recommendation: generating tiles
 `docs/art-pipeline.md` said never generate tile grids. Proposed change: **generate tiles only on top of these templates**, with line art and depth as control and the result clipped to the template's masks, then hand-fixed. Never ask a model for a tileset freehand; it will not hold 2:1, the pivots or the seams. Animation frames stay hand-made or code-made.

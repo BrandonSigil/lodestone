@@ -163,6 +163,32 @@ SNOW = {
 }
 
 
+# Zone starting pictures: the same three values per material (B11), recoloured per look, so a zone can be
+# prototyped by prompting alone. Kept muted: no saturated red or blue (B17).
+DESERT = {
+    "grass_light": "#e3c98f", "grass": "#d9bd82", "moss": "#b9a46a", "moss_dark": "#8f8a55",
+    "pine": "#6f7a4a", "path": "#d9b98a",
+    "stone_top": "#e6d2a8", "stone_mid": "#d6bf93", "stone_pale": "#c9ad80",
+    "stone_lit": "#c29a6b", "stone_shade": "#94705a", "stone_deep": "#6b5048",
+    "water": "#79b5a8", "water_deep": "#5f9a8e",
+}
+DUNGEON = {
+    "grass_light": "#8e8a7c", "grass": "#858174", "moss": "#6f7a64", "moss_dark": "#59634f",
+    "pine": "#3f5a55", "path": "#9a8f78",
+    "stone_top": "#a39d8c", "stone_mid": "#958f7f", "stone_pale": "#8a8475",
+    "stone_lit": "#6e6a63", "stone_shade": "#4e4c4c", "stone_deep": "#373335",
+    "water": "#4f7f86", "water_deep": "#3d6670",
+}
+FOREST = {
+    "grass_light": "#9fb46a", "grass": "#93a961", "moss": "#6f8a55", "moss_dark": "#55724f",
+    "pine": "#36615a", "path": "#b9a27a",
+    "stone_top": "#c4bd9f", "stone_mid": "#b3ad91", "stone_pale": "#a29f86",
+    "stone_lit": "#8c8a7a", "stone_shade": "#626b68", "stone_deep": "#474e4b",
+    "water": "#5ea7a8", "water_deep": "#468a99",
+}
+ZONES = {"snow": SNOW, "desert": DESERT, "dungeon": DUNGEON, "forest": FOREST}
+
+
 def with_palette(over: dict, fn):
     """Run fn with some palette colours swapped (for region variants of the blocking)."""
     saved = dict(P)
@@ -447,9 +473,10 @@ def map_template(path: Path):
     flat.convert("RGB").save(out / "control-blocking.png")
     flat.alpha_composite(line_layer)
     flat.convert("RGB").save(out / "preview.png")
-    snow = paper(size)
-    snow.alpha_composite(with_palette(SNOW, lambda: render_blocking(faces, size, iso)))
-    snow.convert("RGB").save(out / "control-blocking-snow.png")
+    for zone, pal in ZONES.items():
+        im = paper(size)
+        im.alpha_composite(with_palette(pal, lambda: render_blocking(faces, size, iso)))
+        im.convert("RGB").save(out / f"control-blocking-{zone}.png")
     return out / "preview.png"
 
 
