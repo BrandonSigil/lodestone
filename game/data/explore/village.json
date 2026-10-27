@@ -4,6 +4,7 @@
  "strangeness": 0.0,
  "view": 0,
  "turn": false,
+ "fog": false,
  "grid": {
   "w": 40,
   "h": 38,
@@ -13,30 +14,30 @@
    "ffgwwgggggggggggggggggggggggggggggggggff",
    "ffgwwgggggggggggggggggggggggggggggggggff",
    "ffgwwgggggggggggggggggggggggggggggggggff",
-   "ffgwwggggggggggggggggggggggggggggggggfff",
    "ffgwwgggggggggggggggggggggggggggggggggff",
-   "ffgwwgggggggggggggggggggggggggggggggggff",
-   "ffgwwggggggggggggggggggggggdddddggggggff",
-   "ffgwwggggggggggggggggggggggddgggggggggff",
-   "ffgwwggggggggggggsssssssgggddggggggggfff",
-   "ffgwwggggggggggggsssssssgggddgggggggggff",
-   "ffgwwggdgggggggggggttttggggddgggggggggff",
-   "ffgwwggdgggggggggggddddggggddgggggggggff",
-   "ffgwwggdggggsssssssssssssssgggggggggggff",
-   "ffgwwggdggggsssssssssssssssggggggggggfff",
-   "ffgwwggdggggsssssssssssssssgggggggggggff",
-   "ffgwwggdggggsssssssssssssssgggggggggggff",
-   "ffgwwggdggdgsssssssssssssssggdggggggggff",
-   "ffgwwggdggggsssssssssssssssddddddddddgff",
-   "ffgwwggdgggggggssssssssssssddddddddddfff",
-   "ffgssddddddddddssssssssssssgggggggggggff",
-   "ffgwwddddddddddssssssssssssgggggguudugff",
-   "ffgwwggggggggggssssssssssssgggggguuuugff",
-   "ffgwwggggggggggggggddddgggggggggggggggff",
-   "ffgwwddddggggggggggddddggggggggggggggfff",
+   "ffgwwgggggggggggggggggggggggggddddddggff",
+   "ffgwwgggggggggggggggggggggggttdgggggggff",
+   "ffgwwgggggggggggggggggggggggttdgggggggff",
+   "ffgwwggggggggggggggggggggggdttggggggggff",
+   "ffgwwggggsssgggggsssssssgggdggggggggggff",
+   "ffgwwggggsssgggggsssssssgggdggggggggggff",
+   "ffgwwggggsssgggggggttttggggdggggggggggff",
+   "ffgwwggggsssgggggggddddggggdggggggggggff",
+   "ffgwwggdgsssssssssssssssssssggggggggggff",
+   "ffgwwggdddddssssssssssssssssgggggggggfff",
+   "ffgwwgggggggssssssssssssssssggggggggggff",
+   "ffgwwgggggggssssssssssssssssggggggggggff",
+   "ffgwwgggggggssssssssssssssssggggggggggff",
+   "ffgwwgggggggsssssssssssssssddddddddddgff",
+   "ffgwwggdggggsssssssssssssssddddddddddfff",
+   "ffgssdddddddssssssssssssssssggggggggggff",
+   "ffgwwdddddddssssssssssssssssggggguudugff",
+   "ffgwwgggggggssssssssssssssssggggguuuugff",
+   "ffgwwgggggggssssssssssssssssggggggggggff",
+   "ffgwwddddgggssssssssssssssssgggggggggfff",
    "ffgwwddddggggggggggddddgggggggggggggggff",
+   "ffgwwddddggggggggggdddddddddddddggggggff",
    "ffgwwddddggggggggggddddgggggggggggggggff",
-   "ffgwwddddggggggggggdddddddddddggggggggff",
    "ffgwwggggggdgggggggddddgggggggggggggggff",
    "ffgwwggggggdgggggggddddggggggggggggggfff",
    "ffgwwggggggddddddddddddgugggggggggggggff",
@@ -51,15 +52,15 @@
    "1110011111111111111111111111111111111111",
    "1110011111111111111111111111111111111111",
    "1110011111111111111111111111111111111111",
-   "1110011111111122222222222211111111111111",
-   "1110011111111122222222222211111111111111",
-   "1110011111111122222222222211111111111111",
-   "1110011111111122222222222211111111111111",
-   "1110011111111122222222222211111111111111",
-   "1110011111111122222222222211111111111111",
-   "1110011111111122222222222211111111111111",
-   "1110011111111122222222222211111111111111",
-   "1110011111111122222222222211111111111111",
+   "1110011111111122222222222211113333333311",
+   "1110011111111122222222222211113333333311",
+   "1110011111111122222222222211113333333311",
+   "1110011111111122222222222211113333333311",
+   "1110011111111122222222222211223333333311",
+   "1110011111111122222222222211223333333311",
+   "1110011111111122222222222211223333333311",
+   "1110011111111122222222222211113333333311",
+   "1110011111111122222222222211113333333311",
    "1110011111111111111222211111111111111111",
    "1110011111111111111111111111111111111111",
    "1110011111111111111111111111111111111111",
@@ -89,10 +90,94 @@
   ],
   "props": [
    {
+    "sprite": "prop_fence",
+    "cell": [
+     34,
+     8
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_hay",
+    "cell": [
+     37,
+     7
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.65,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree",
+    "cell": [
+     36,
+     10
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree",
+    "cell": [
+     33,
+     10
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "b_home_c",
+    "cell": [
+     30,
+     3
+    ],
+    "foot": [
+     4,
+     3
+    ],
+    "tall": 0.0,
+    "sight": 3.0,
+    "walk": false
+   },
+   {
+    "sprite": "b_home_a",
+    "cell": [
+     34,
+     3
+    ],
+    "foot": [
+     3,
+     3
+    ],
+    "tall": 0.0,
+    "sight": 3.0,
+    "walk": false
+   },
+   {
     "sprite": "prop_well",
     "cell": [
      20,
-     18
+     19
     ],
     "foot": [
      1,
@@ -105,22 +190,8 @@
    {
     "sprite": "prop_stall",
     "cell": [
-     17,
+     14,
      15
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.2,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stall",
-    "cell": [
-     24,
-     21
     ],
     "foot": [
      1,
@@ -133,7 +204,7 @@
    {
     "sprite": "prop_crates",
     "cell": [
-     18,
+     15,
      15
     ],
     "foot": [
@@ -145,10 +216,24 @@
     "walk": false
    },
    {
-    "sprite": "prop_barrel",
+    "sprite": "prop_stall",
     "cell": [
      25,
-     21
+     23
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.2,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_barrel",
+    "cell": [
+     24,
+     23
     ],
     "foot": [
      1,
@@ -161,7 +246,7 @@
    {
     "sprite": "prop_lamp",
     "cell": [
-     15,
+     12,
      14
     ],
     "foot": [
@@ -175,7 +260,7 @@
    {
     "sprite": "prop_lamp",
     "cell": [
-     26,
+     27,
      14
     ],
     "foot": [
@@ -189,8 +274,8 @@
    {
     "sprite": "prop_lamp",
     "cell": [
-     15,
-     23
+     12,
+     25
     ],
     "foot": [
      1,
@@ -203,8 +288,8 @@
    {
     "sprite": "prop_lamp",
     "cell": [
-     26,
-     23
+     27,
+     25
     ],
     "foot": [
      1,
@@ -217,8 +302,22 @@
    {
     "sprite": "prop_bench",
     "cell": [
-     22,
-     16
+     16,
+     21
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_bench",
+    "cell": [
+     23,
+     17
     ],
     "foot": [
      1,
@@ -231,8 +330,8 @@
    {
     "sprite": "prop_planter",
     "cell": [
-     16,
-     20
+     17,
+     23
     ],
     "foot": [
      1,
@@ -245,8 +344,8 @@
    {
     "sprite": "prop_planter",
     "cell": [
-     25,
-     17
+     23,
+     21
     ],
     "foot": [
      1,
@@ -329,8 +428,8 @@
    {
     "sprite": "b_smithy",
     "cell": [
-     9,
-     14
+     6,
+     10
     ],
     "foot": [
      3,
@@ -341,10 +440,24 @@
     "walk": false
    },
    {
+    "sprite": "prop_grindstone",
+    "cell": [
+     9,
+     10
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.85,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
     "sprite": "prop_rack",
     "cell": [
-     13,
-     16
+     10,
+     12
     ],
     "foot": [
      1,
@@ -357,8 +470,8 @@
    {
     "sprite": "prop_anvil",
     "cell": [
-     13,
-     18
+     10,
+     14
     ],
     "foot": [
      1,
@@ -369,24 +482,10 @@
     "walk": false
    },
    {
-    "sprite": "prop_grindstone",
-    "cell": [
-     13,
-     14
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.85,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
     "sprite": "prop_barrel",
     "cell": [
-     12,
-     19
+     11,
+     10
     ],
     "foot": [
      1,
@@ -399,8 +498,8 @@
    {
     "sprite": "b_tavern",
     "cell": [
-     28,
-     14
+     29,
+     15
     ],
     "foot": [
      4,
@@ -413,7 +512,7 @@
    {
     "sprite": "prop_barrel",
     "cell": [
-     32,
+     33,
      16
     ],
     "foot": [
@@ -427,7 +526,7 @@
    {
     "sprite": "prop_barrel",
     "cell": [
-     32,
+     33,
      17
     ],
     "foot": [
@@ -441,7 +540,7 @@
    {
     "sprite": "prop_crates",
     "cell": [
-     33,
+     34,
      15
     ],
     "foot": [
@@ -455,8 +554,8 @@
    {
     "sprite": "prop_bench",
     "cell": [
-     27,
-     18
+     28,
+     17
     ],
     "foot": [
      1,
@@ -537,52 +636,10 @@
     "walk": false
    },
    {
-    "sprite": "b_home_c",
-    "cell": [
-     29,
-     5
-    ],
-    "foot": [
-     4,
-     3
-    ],
-    "tall": 0.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_hay",
-    "cell": [
-     34,
-     6
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.65,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_fence",
-    "cell": [
-     34,
-     8
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
     "sprite": "b_home_a",
     "cell": [
      6,
-     9
+     17
     ],
     "foot": [
      3,
@@ -595,8 +652,8 @@
    {
     "sprite": "b_home_b",
     "cell": [
-     27,
-     25
+     29,
+     24
     ],
     "foot": [
      4,
@@ -624,7 +681,7 @@
     "sprite": "prop_cart",
     "cell": [
      24,
-     27
+     29
     ],
     "foot": [
      1,
@@ -681,20 +738,6 @@
     "cell": [
      34,
      27
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree",
-    "cell": [
-     35,
-     11
     ],
     "foot": [
      1,
@@ -798,8 +841,8 @@
    "kind": "enter",
    "event": "",
    "cell": [
-    30,
-    8
+    31,
+    6
    ],
    "to": "house_ne",
    "at": [
@@ -812,8 +855,8 @@
    "kind": "enter",
    "event": "",
    "cell": [
-    29,
-    18
+    30,
+    19
    ],
    "to": "tavern",
    "at": [
@@ -835,8 +878,8 @@
    "kind": "enter",
    "event": "door_stuck",
    "cell": [
-    10,
-    18
+    7,
+    14
    ]
   },
   {
@@ -845,7 +888,7 @@
    "event": "door_stuck",
    "cell": [
     7,
-    12
+    20
    ]
   },
   {
@@ -853,8 +896,8 @@
    "kind": "enter",
    "event": "door_stuck",
    "cell": [
-    29,
-    28
+    31,
+    27
    ]
   },
   {
@@ -867,12 +910,21 @@
    ]
   },
   {
+   "id": "bluff_door",
+   "kind": "enter",
+   "event": "door_stuck",
+   "cell": [
+    35,
+    6
+   ]
+  },
+  {
    "id": "weapon_rack",
    "kind": "rack",
    "event": "smithy_rack",
    "cell": [
-    13,
-    16
+    10,
+    12
    ],
    "once": "weapon_sword|weapon_daggers|weapon_bow"
   }

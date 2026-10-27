@@ -64,7 +64,7 @@ func _ready() -> void:
 	board.art_set = map.art_set
 	board.rot = map.view
 	board.can_turn = map.turn
-	board.fog_on = true
+	board.fog_on = map.fog
 	board.show_grid = false
 	add_child(board)
 	overlay = ExploreOverlay.new()
@@ -310,12 +310,23 @@ func _nearest_thing() -> Dictionary:
 func _refresh_sight() -> void:
 	var eyes: Array = party_cells() if mode == M.FIGHT else [leader().cell]
 	in_sight = ExploreRules.sight(grid, eyes, ExploreRules.PARTY_SIGHT)
+	if not map.fog:
+		in_sight = _every_cell()
 	for c in in_sight:
 		seen[c] = true
 	var fog := {}
 	for c in seen:
 		fog[c] = 2 if in_sight.has(c) else 1
 	board.fog = fog
+
+
+## Every cell of the map, for maps without fog of war.
+func _every_cell() -> Dictionary:
+	var all := {}
+	for y in grid.h:
+		for x in grid.w:
+			all[Vector2i(x, y)] = true
+	return all
 
 
 ## Out of a fight the board shows the leader and the enemies in sight; in a fight, every fighter.
