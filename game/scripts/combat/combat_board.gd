@@ -15,7 +15,6 @@ const BASE := -0.6  ## how far below height 0 the block sides go
 const PLATE_SCALE := 1.35  ## backdrop plate width as a multiple of the floor's footprint
 const FADE_RINGS := 4  ## empty cells this far out from the floor fade into the dark
 const FADE_DARK := Color(0.1, 0.15, 0.2)
-const FRONT_BAND := 3  ## outer-ring cells within this many depth steps of the floor front get the front treeline
 const COBBLE_ALPHA := 0.32  ## the faint cobble hairlines on some tops
 const FG_TREE_TINT := Color(0.55, 0.6, 0.72)  ## the front treeline: regular pines, about halfway toward navy
 const SKY_SCALE := 1.9  ## skyline width as a multiple of the floor's footprint
@@ -236,7 +235,7 @@ func _draw() -> void:
 	_floor_base = BASE - LOWLAND_DROP if has_sky else BASE
 	var rings := _ring_cells() if has_sky else {}
 	_ring_map = rings
-	var front := _front_depth() if has_sky else -1
+	var front_y := _floor_mid_y() if has_sky else 0.0
 	var layers := _layers()
 	for c: Vector2i in rings:
 		if not grid.in_bounds(c):  # scenery beyond the grid joins the depth order too
@@ -246,7 +245,7 @@ func _draw() -> void:
 		for c: Vector2i in layers[depth]:
 			if rings.has(c):
 				# The outer ring in front of the floor goes dark, with treeline silhouettes, so the foreground frames the floor.
-				var in_front: bool = rings[c] == SCENERY_RINGS and depth_of(c.x, c.y) >= front - FRONT_BAND
+				var in_front: bool = rings[c] == SCENERY_RINGS and iso(c.x + 0.5, c.y + 0.5, 0.0).y >= front_y
 				_ring_ground(c, rings[c], in_front)
 				_ring_faces(c, rings)
 				_scenery(c, rings[c], in_front)
@@ -785,14 +784,17 @@ func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 	draw_texture_rect(tex, Rect2(base.x - wide * 0.5, base.y - tall, wide, tall), false)
 
 
-## The deepest depth of any floor cell, so scenery beyond it sits in front of the floor.
-func _front_depth() -> int:
-	var deepest := -1
+## The screen height halfway down the floor. Outer-ring cells below it are the front, which frames the bottom of the view.
+func _floor_mid_y() -> float:
+	var top := INF
+	var bottom := -INF
 	for y in int(grid.h):
 		for x in int(grid.w):
 			if grid.terrain_at(Vector2i(x, y)) != CombatGrid.T.VOID:
-				deepest = maxi(deepest, depth_of(x, y))
-	return deepest
+				var sy := iso(x + 0.5, y + 0.5, 0.0).y
+				top = minf(top, sy)
+				bottom = maxf(bottom, sy)
+	return (top + bottom) * 0.5
 
 
 ## A backdrop plate: one picture per art set, centred on the floor and scaled to its footprint.
