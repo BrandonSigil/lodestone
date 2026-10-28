@@ -1,0 +1,20 @@
+KEY ART SAMPLER for the Lodestone isometric game, v9: the v8 template with a new side character placed on each of the three terrains, as a vibe check. One picture, three panels side by side, separated by thin plum-grey rules, each panel with a narrow paper-white margin. No title, no text.
+
+TERRAIN AND PRINT (match v8 exactly across all three panels): heavy hand-inked outlines in warm plum-grey #373335 with a wobbly pen edge, never pure black. Soft watercolour wash with a light paper grain. Colour sits a little off register from the outlines. Bare paper shows in pale areas. Light from the upper left: tops brightest, left faces mid, right faces darkest, one flat shadow tone per surface. One colour family per panel plus one warm accent.
+
+TERRAIN SIMPLICITY: each panel has at most five large shapes: one platform, one arch, one column or tree, and at most two blocks. No rubble, no small stones, no leaves, no vines, no flowers, no bricks. Big calm surfaces with bare paper between them.
+
+CAMERA: strict isometric, 2:1 dimetric, orthographic. Ground planes are exact diamonds, tile edges at 26.565 degrees. No perspective, no horizon, no sea, no sky gradient. Panels fade to bare paper at the outer edges.
+
+SCALE (the most important rule): the character is about 2.5 heads tall and stands about the height of one stone block on the platform. He or she occupies roughly one twelfth of the panel height, never a third. Same scale in every panel.
+
+NEW CHARACTER (a squat, broad side character, clearly different from a hero): a broad, stout figure about one block tall, with a wide round body and short arms. A wide-brimmed brown hat, flat and round, with the brim drawn as one thick shape. A rust-red coat, long to the knee, with a cream scarf at the neck and a brown belt. A bent wooden walking staff held in the right hand, planted on the ground. Round stubby boots. No sword, no pack, no hair showing under the hat. Faces are blank with two dots for eyes. One thick outline per shape, one flat shadow tone per surface. Silhouette test: the hat, the staff and the coat's flared hem must read at a glance.
+
+PANELS:
+Panel 1, left, ruins: one tall column leaning slightly, one round arch with a chipped keystone, one stepped block. Coral, ochre and butter yellow with one cream accent. The new character stands on the platform, to the right of the column, between the column and the stepped block.
+
+Panel 2, centre, forest: the new character stands on a single round grass platform, one tree stub to the left and one arch behind, the same layout as the hero's panel in v8. Leaf green and sage, warm orange as the only accent. The character is not the hero: no green cloak, no spiky hair.
+
+Panel 3, right, canyon: one stone bridge across a dark gorge, one pale gap of sky in the cliff, two or three chunky cliff slabs with thick outlines. The new character stands at one end of the bridge, facing the gap. Ultramarine and cool teal, one pale accent.
+
+AVOID: photorealism, 3D render, gradients, cel shading, glossy highlights, hairline outlines, even uniform outlines, stipple texture, hatching, rubble, small stones, leaves, vines, flowers, bricks, a green cloak, spiky brown hair, a sword, a pack, more than one character per panel, a character larger than one block, a pointed hood, wide round heads, perspective, fisheye, horizon, sea, moon, neon, pure black, text, letters, numbers, labels, logos, watermarks, UI, frames with titles, speech bubbles, windows.

@@ -4,9 +4,10 @@ extends Node2D
 ## Hosts (the trail's combat scene, the sandbox) build the grid and units, call setup() and start(),
 ## lay it out in their play area, and listen to the signals.
 ##
-## Player controls: click a piece to open its menu. Blue tiles = move there. Pick ATTACK, a skill or an item,
-## then click a lit target (hover shows the forecast). Right click or Esc steps back (and undoes a move).
-## D shows the enemy's danger zone, Tab jumps to the next ready piece, E ends the turn, Q turns the camera.
+## Player controls: click a piece to open its menu. MOVE hides the menu and lights the tiles it can reach:
+## click one, or CANCEL. Pick ATTACK, a skill or an item, then click a lit target (hover shows the forecast).
+## Right click or Esc steps back (and undoes a move). D shows the enemy's danger zone, Tab jumps to the next
+## ready piece, E ends the turn, Q turns the camera. AUTO FIGHT (testing) plays the party's turns itself.
 
 signal log_line(text: String)
 signal info(text: String)
@@ -20,6 +21,8 @@ const MOVE_COLOR := Color(0.35, 0.6, 1.0, 0.35)
 const ENEMY_COLOR := Color(1.0, 0.3, 0.25, 0.45)
 const ALLY_COLOR := Color(0.35, 0.9, 0.45, 0.4)
 const AREA_COLOR := Color(1.0, 0.75, 0.3, 0.3)
+const CANCEL_SIZE := Vector2(120, 30)
+const AUTO_SIZE := Vector2(120, 28)
 
 var grid: CombatGrid
 var units: Array = []
@@ -42,6 +45,15 @@ var _forecast_label: Label
 var _banner: Label
 var _rect := Rect2()
 var _fit_board := true  ## false when the host owns the board's camera (exploration maps)
+var _moving := false  ## MOVE picked: the menu is hidden and the reachable tiles are lit
+var _cancel: Button
+var _auto: Button
+## Testing: the party plays its own turns. Kept across fights, so one click covers a whole dungeon.
+static var auto_fight := false
+const AUTO_PAUSE := 0.4  ## seconds between auto phases
+const AUTO_STALEMATE := 8  ## auto rounds in a row with no HP change: the fight ends as a win (the AI can't reach)
+var _auto_hp := -1
+var _auto_quiet := 0
 
 
 ## p_board: fight on a board the host already shows (a fight that breaks out on an exploration map).
@@ -95,6 +107,21 @@ func _build_ui() -> void:
 	_banner.add_theme_constant_override("outline_size", 6)
 	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ui.add_child(_banner)
+	_cancel = Button.new()
+	_cancel.text = Txt.t("UI_CANCEL")
+	_cancel.custom_minimum_size = Vector2(CANCEL_SIZE.x, CANCEL_SIZE.y)
+	_cancel.add_theme_font_size_override("font_size", 13)
+	_cancel.visible = false
+	_cancel.pressed.connect(_back)
+	_ui.add_child(_cancel)
+	_auto = Button.new()
+	_auto.text = Txt.t("UI_AUTO_FIGHT")
+	_auto.toggle_mode = true
+	_auto.button_pressed = auto_fight
+	_auto.custom_minimum_size = Vector2(AUTO_SIZE.x, AUTO_SIZE.y)
+	_auto.add_theme_font_size_override("font_size", 12)
+	_auto.toggled.connect(_on_auto_toggled)
+	_ui.add_child(_auto)
 
 
 static func _panel_style(bg: Color) -> StyleBoxFlat:
@@ -113,7 +140,9 @@ func layout(r: Rect2) -> void:
 		return
 	_rect = r
 	_forecast.position = r.position + Vector2(8, 8)
-	_banner.position = r.position + Vector2(r.size.x * 0.5 - 90, r.size.y - 48)
+	_banner.position = r.position + Vector2(r.size.x * 0.5 - 90, r.size.y - 84)
+	_cancel.position = r.position + Vector2(r.size.x * 0.5 - CANCEL_SIZE.x * 0.5, r.size.y - 44)
+	_auto.position = Vector2(r.end.x - AUTO_SIZE.x - 8, r.position.y + 8)
 	if not _fit_board:
 		return
 	var bs := board.board_size()
@@ -159,6 +188,8 @@ func _start_player_phase() -> void:
 	_refresh_danger()
 	phase_changed.emit(0)
 	changed.emit()
+	if auto_fight:
+		_auto_player_phase()
 
 
 func end_player_phase() -> void:
@@ -181,19 +212,57 @@ func _enemy_phase() -> void:
 		if e.has_status(CombatRules.STATUS_SLEEP):
 			board.float_text(e.cell, Txt.t("TAG_SLEEP"), Color(0.75, 0.85, 1.0))
 			continue
-		var plan := EnemyAi.plan(grid, e, units)
-		if plan.move != e.cell:
-			await board.animate_move(e, plan.path)
-			e.place(plan.move, grid.height_at(plan.move))
-		if plan.ability != null:
-			await _use(e, plan.ability, plan.aim)
-		elif plan.guard:
-			CombatRules.guard(e)
-			board.float_text(e.cell, Txt.t("TAG_GUARD"), Color(0.7, 0.85, 1.0))
+		await _ai_turn(e)
 		if _check_end():
 			return
 	CombatRules.end_phase(units, 1)
 	_start_player_phase()
+
+
+## Auto fight (testing): the party's living pieces play their turns, then the enemy phase runs.
+func _auto_player_phase() -> void:
+	state = S.BUSY
+	var total := 0
+	for u: CombatUnit in units:
+		total += u.hp
+	_auto_quiet = _auto_quiet + 1 if total == _auto_hp else 0
+	_auto_hp = total
+	await get_tree().create_timer(AUTO_PAUSE).timeout  # the board reads, and the phases don't recurse on the stack
+	if _auto_quiet >= AUTO_STALEMATE:
+		# The greedy AI can't reach the other side (a wall in the way): nobody has been hurt for a while.
+		log_line.emit(Txt.t("UI_AUTO_STALEMATE"))
+		_finish(true)
+		return
+	for u: CombatUnit in units:
+		if u.team != 0 or not u.alive() or u.done() or state == S.OVER:
+			continue
+		await _ai_turn(u)
+		u.moved = true
+		u.acted = true
+		if _check_end():
+			return
+	CombatRules.end_phase(units, 0)
+	_enemy_phase()
+
+
+## One piece's turn played by the AI: move, then use a skill or guard.
+func _ai_turn(u: CombatUnit) -> void:
+	var plan := EnemyAi.plan(grid, u, units, supplies)
+	if plan.move != u.cell:
+		await board.animate_move(u, plan.path)
+		u.place(plan.move, grid.height_at(plan.move))
+	if plan.ability != null:
+		await _use(u, plan.ability, plan.aim)
+	elif plan.guard:
+		CombatRules.guard(u)
+		board.float_text(u.cell, Txt.t("TAG_GUARD"), Color(0.7, 0.85, 1.0))
+
+
+func _on_auto_toggled(on: bool) -> void:
+	auto_fight = on
+	if on and is_player_turn():
+		_deselect()
+		_auto_player_phase()
 
 
 ## Regrowth and the like at the start of a phase: no animation, just numbers.
@@ -272,6 +341,11 @@ func _check_end() -> bool:
 	var lost := not CombatRules.team_alive(units, 0)
 	if not won and not lost:
 		return false
+	_finish(won)
+	return true
+
+
+func _finish(won: bool) -> void:
 	state = S.OVER
 	_deselect()
 	board.danger = {}
@@ -279,7 +353,6 @@ func _check_end() -> bool:
 	_banner.text = Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT")
 	changed.emit()
 	finished.emit(won)
-	return true
 
 
 # --- selection and the menu ----------------------------------------------------------
@@ -290,8 +363,9 @@ func _select(u: CombatUnit) -> void:
 	if not u.moved:
 		u.move_origin = u.cell
 	targeting = null
+	_moving = false
 	state = S.MENU
-	_show_move_tiles()
+	_show_attack_hints()
 	_open_menu()
 	info.emit(unit_text(u))
 
@@ -299,6 +373,7 @@ func _select(u: CombatUnit) -> void:
 func _deselect() -> void:
 	selected = null
 	targeting = null
+	_moving = false
 	if board:
 		board.selected = null
 		board.highlights = {}
@@ -309,28 +384,59 @@ func _deselect() -> void:
 		_forecast.visible = false
 	if state == S.MENU or state == S.TARGET:
 		state = S.IDLE
+	_refresh_cancel()
+
+
+## The menu's own hints: where the basic attack can land (the move tiles wait for MOVE).
+func _show_attack_hints() -> void:
+	board.highlights = {}
+	board.area = {}
+	reach = {}
+	if selected != null and not selected.acted:
+		for c in CombatRules.target_cells(grid, selected, selected.abilities[0], units, selected.cell):
+			board.highlights[c] = ENEMY_COLOR
+
+
+## MOVE: the menu hides and the tiles the piece can reach light up. CANCEL or Esc goes back to the menu.
+func _begin_move() -> void:
+	if selected == null or selected.moved:
+		return
+	_moving = true
+	_menu.visible = false
+	_show_move_tiles()
+	_refresh_cancel()
 
 
 func _show_move_tiles() -> void:
 	board.highlights = {}
 	board.area = {}
+	reach = CombatRules.reachable(grid, selected, units)
+	for c: Vector2i in reach.cost:
+		if c != selected.cell:
+			board.highlights[c] = MOVE_COLOR
+
+
+func _cancel_move() -> void:
+	_moving = false
 	reach = {}
-	if selected == null:
-		return
-	if not selected.moved:
-		reach = CombatRules.reachable(grid, selected, units)
-		for c: Vector2i in reach.cost:
-			if c != selected.cell:
-				board.highlights[c] = MOVE_COLOR
-	if not selected.acted:
-		for c in CombatRules.target_cells(grid, selected, selected.abilities[0], units, selected.cell):
-			board.highlights[c] = ENEMY_COLOR
+	_show_attack_hints()
+	_open_menu()
+	_refresh_cancel()
+
+
+## CANCEL shows only while a move or a target is being picked (the menu is hidden then).
+func _refresh_cancel() -> void:
+	if _cancel:
+		_cancel.visible = _moving or state == S.TARGET
 
 
 func _open_menu() -> void:
 	for c in _menu_box.get_children():
+		_menu_box.remove_child(c)  # gone now, so the menu's size comes from the new items only
 		c.queue_free()
 	var u := selected
+	if not u.moved and CombatRules.move_points(u) > 0:
+		_menu_item(Txt.t("ACT_MOVE"), true, _begin_move)
 	if not u.acted:
 		for a in u.abilities:
 			_menu_item(_ability_label(u, a), _has_targets(u, a) and u.can_use(a), _start_targeting.bind(a))
@@ -369,7 +475,7 @@ func _menu_item(text: String, enabled: bool, cb: Callable) -> void:
 	b.text = text
 	b.disabled = not enabled
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.custom_minimum_size = Vector2(150, 26)
+	b.custom_minimum_size = Vector2(96, 24)
 	b.add_theme_font_size_override("font_size", 13)
 	b.pressed.connect(cb)
 	_menu_box.add_child(b)
@@ -401,6 +507,7 @@ func _start_targeting(a: Ability) -> void:
 		col = AREA_COLOR
 	for c in CombatRules.target_cells(grid, selected, a, units, selected.cell):
 		board.highlights[c] = col
+	_refresh_cancel()
 	info.emit(Txt.t(a.name_key))
 
 
@@ -408,8 +515,9 @@ func _cancel_targeting() -> void:
 	targeting = null
 	state = S.MENU
 	_forecast.visible = false
-	_show_move_tiles()
+	_show_attack_hints()
 	_open_menu()
+	_refresh_cancel()
 
 
 func _on_guard() -> void:
@@ -483,7 +591,9 @@ func _back() -> void:
 		S.TARGET:
 			_cancel_targeting()
 		S.MENU:
-			if selected.moved and not selected.acted:
+			if _moving:
+				_cancel_move()
+			elif selected.moved and not selected.acted:
 				_undo_move()
 			else:
 				_deselect()
@@ -505,13 +615,14 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 			elif u:
 				info.emit(unit_text(u))
 		S.MENU:
-			if u and u.team != 0 and not selected.acted and board.highlights.get(c) == ENEMY_COLOR:
+			if _moving:
+				if u == null and reach.get("cost", {}).has(c):
+					_move_selected(c)
+			elif u and u.team != 0 and not selected.acted and board.highlights.get(c) == ENEMY_COLOR:
 				_start_targeting(selected.abilities[0])
 				_on_cell_hovered(c)
 			elif u and u.team == 0 and u != selected and not u.done() and (not selected.moved or selected.acted):
 				_select(u)
-			elif u == null and not selected.moved and reach.get("cost", {}).has(c):
-				_move_selected(c)
 		S.TARGET:
 			if board.highlights.has(c):
 				var who := selected
@@ -519,6 +630,7 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 				if a.target == "cell" and CombatRules.affected_units(grid, who, a, c, units, who.cell).is_empty():
 					return
 				_menu.visible = false
+				_cancel.visible = false
 				await _use(who, a, c)
 				if _check_end():
 					return
@@ -528,7 +640,9 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 func _move_selected(c: Vector2i) -> void:
 	var u := selected
 	state = S.BUSY
+	_moving = false
 	_menu.visible = false
+	_refresh_cancel()
 	board.highlights = {}
 	var path := CombatRules.path_to(reach.prev, u.cell, c)
 	await board.animate_move(u, path)

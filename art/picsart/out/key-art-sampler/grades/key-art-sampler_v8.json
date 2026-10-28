@@ -1,0 +1,20 @@
+{
+  "structure": 4,
+  "scale": 2,
+  "camera": 4,
+  "line": 4,
+  "finish": 4,
+  "personality": 5,
+  "fit": 3,
+  "evidence": {
+    "structure": "Visible head, tunic, belt, legs and boots; the cloak hides the arms.",
+    "scale": "About 28% of the panel height, roughly 2.5 blocks tall: taller than two blocks.",
+    "camera": "Arches, blocks and cliffs follow consistent isometric diagonals.",
+    "line": "Heavy dark outlines with a single-weight wobbly line.",
+    "finish": "Watercolour wash with paper grain and off-register colour.",
+    "personality": "Spiky hair, green hood and cloak, sword and shoulder bag make a nameable ranger silhouette that matches the key.",
+    "fit": "Only the centre panel has a figure, so the sheet reads as one character in three scenes."
+  },
+  "pass": false,
+  "source": "fresh reviewer, blind, rubric v2 (scale up to two blocks)"
+}

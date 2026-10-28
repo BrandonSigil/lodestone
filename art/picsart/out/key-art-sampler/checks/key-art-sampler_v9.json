@@ -1,0 +1,38 @@
+{
+  "image": "key-art-sampler_v9.png",
+  "panels": [
+    {
+      "panel": 1,
+      "iso": 0.17,
+      "ink": 2.0
+    },
+    {
+      "panel": 2,
+      "iso": 0.153,
+      "ink": 2.0
+    },
+    {
+      "panel": 3,
+      "iso": 0.161,
+      "ink": 2.0
+    }
+  ],
+  "overall": {
+    "iso": 0.161,
+    "ink": 2.0
+  },
+  "bands": {
+    "iso": [
+      0.17,
+      1.0
+    ],
+    "ink": [
+      4.0,
+      8.0
+    ]
+  },
+  "pass": {
+    "iso": false,
+    "ink": false
+  }
+}
