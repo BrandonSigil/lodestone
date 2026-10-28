@@ -1,0 +1,20 @@
+KEY ART SAMPLER for the Lodestone isometric game, v10. One picture, three panels side by side, separated by thin plum-grey rules, each panel with a narrow paper-white margin. No title, no text.
+
+REFERENCES: image 1 is the hero: use it only for the character's body structure and outline weight. Image 2 is the layout template: keep its three terrains, their platforms, arches, columns, bridge and camera exactly as drawn. Do not copy the hero's cloak, spiky hair or sword, and do not copy the floor grid or plain background of image 1.
+
+CAMERA (strict, do not drift): isometric, 2:1 dimetric, orthographic, exactly as image 2. Ground planes are exact diamonds, tile edges at 26.565 degrees. The platforms are seen from above and to the front, with no perspective, no horizon, no sea, no sky gradient. Panels fade to bare paper at the outer edges.
+
+TERRAIN AND PRINT (match image 2): heavy hand-inked outlines in warm plum-grey #373335, wobbly pen edge, never pure black. Soft watercolour wash with light paper grain. Light from the upper left: tops brightest, left faces mid, right faces darkest. One colour family per panel plus one warm accent. Each panel keeps at most five large shapes; no rubble, leaves, vines, flowers or bricks.
+
+CHARACTER STRUCTURE (the most important rule): a clear, jointed figure built like the hero in image 1, not a blob. Round head about one third of the figure's height with a clear chin. A visible neck. Shoulders with separate arms: each arm is a distinct shape with a visible elbow and a visible hand, the staff-hand holding the staff. A defined waist with a belt. Two separate legs with visible knees, ending in boots. The coat has a clear shoulder line and a hem that splits at the legs. No spherical body, no snowman or dough-shaped torso, no fused arms. The figure is about 2.5 heads tall and stands about the height of one stone block on the platform; in every panel it occupies about one twelfth of the panel height.
+
+NEW CHARACTER DESIGN: a broad-brimmed brown hat, flat and round, with the brim as one thick shape. A rust-red coat to the knee with a cream scarf at the neck. A brown belt with a buckle. A bent wooden walking staff in the right hand, planted on the ground. Brown boots. No sword, no pack, no hair under the hat. Faces are blank with two dots for eyes. One thick outline per shape, one flat shadow tone per surface.
+
+PANELS (as image 2):
+Panel 1, left, ruins: the tall leaning column, the round arch with the chipped keystone, and the stepped block. The character stands on the platform between the column and the stepped block.
+
+Panel 2, centre, forest: the single round grass platform, the tree stub to the left and the arch behind. The character stands on the platform in the middle. Leaf green and sage, warm orange as the only accent.
+
+Panel 3, right, canyon: the stone bridge across the dark gorge with the pale gap of sky. The character stands on the bridge at one end, facing the gap. Ultramarine and cool teal, one pale accent.
+
+AVOID: snowman or dough-boy bodies, round sphere torsos, fused limbs, missing arms or legs, the hero's green cloak, spiky brown hair or sword, perspective, fisheye, horizon, sea, moon, sky scenes, drift from the camera of image 2, photorealism, 3D render, gradients, cel shading, glossy highlights, hairline or even uniform outlines, stipple texture, hatching, rubble, leaves, vines, flowers, bricks, more than one character per panel, a character larger than one block, pure black, text, letters, numbers, labels, logos, watermarks, UI, frames with titles, speech bubbles, windows.

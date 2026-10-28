@@ -6,8 +6,12 @@
 
 A job is one asset going through one pipeline, one stage at a time:
   grid     Picsart draws a round. This is the only paid step; the page says what it costs.
-  review   you approve the round, or ask for edits. Edit notes go into the next round's prompt;
-           no picture is ever fed back in as a reference (detail compounds).
+           Every round is sent with the key art (docs/art/characters/00-reference-sheet.png) as
+           image 1, and the style lock is the last thing in the prompt so edits cannot break it.
+           An edit round also gets the round it changes as image 2.
+  review   you rate the round 1 to 5 against the key art, then approve it, ask for edits, or refine.
+           A round rated under 4 refines automatically when you send it (no notes needed).
+           Rounds stop at MAX_ROUNDS per job. Every round costs credits; nothing is drawn without a click.
   slicing  the approved grid is cut into one picture per figure, each shown at 48 px (automatic).
   pick     you choose the figure the asset should be.
   added    the pick is written to art/characters/<asset>/reference.png with brief.json.
@@ -36,6 +40,7 @@ from PIL import Image, ImageDraw
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "tools" / "art"))
 from silhouette_check import INK, PAPER, cells, compose, figure, shrink  # noqa: E402
+from sampler_check import BANDS, check as sampler_check  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 JOBS = REPO / "art" / "picsart" / "out" / "studio"
@@ -66,6 +71,16 @@ PIPELINES = {
     },
 }
 STAGES = ["grid", "review", "slicing", "pick", "added"]
+KEY_ART = REPO / "docs" / "art" / "characters" / "00-reference-sheet.png"
+MAX_ROUNDS = 4
+REFINE_BELOW = 4  # a round rated under this refines by itself when sent
+REFINE_NOTE = "Closer to the key art: fix the proportions, camera and flat print finish to match image 1."
+STYLE_LOCK = ("STYLE LOCK (applies to every round, after any edits): image 1 is the key art. Match its camera, "
+              "proportions and finish: a chibi figure about 2.3 heads tall, big round head, small body; 2:1 "
+              "dimetric orthographic camera looking down about 30 degrees, no perspective; flat simple print, one "
+              "flat colour per material plus one shadow tone, ink outline #373335, no gradients or painted texture; "
+              "cream paper #eae8d6, no floor, scenery or text. Edits change costume, colours, pose and details only. "
+              "Camera and proportion always follow image 1.")
 
 
 class StudioError(Exception):
@@ -122,7 +137,7 @@ def build_prompt(pipe, lines, notes):
     if notes:
         prompt += ("\n\nART DIRECTOR'S EDITS FOR THIS ROUND (apply them to the matching numbered lines above; "
                    "everything else stays as briefed): " + notes)
-    return prompt
+    return prompt + "\n\n" + STYLE_LOCK
 
 
 def fake_grid(pipe, lines):
@@ -162,11 +177,18 @@ def draw_round(job_id):
             img, charged = fake_grid(pipe, job["lines"]), 0
         else:
             import requests
-            from picsart_render import api_key, generate
-            update(job_id, lambda j: log(j, "Sending round %d to Picsart (%s, %s, %s). This takes a minute or two."
-                                         % (rnd["n"], pipe["model"], pipe["resolution"], pipe["aspect"])))
-            params = {"prompt": prompt, "aspectRatio": pipe["aspect"], "resolution": pipe["resolution"], "count": 1}
-            urls, charged = generate(api_key(), pipe["model"], params)
+            from picsart_render import api_key, generate, upload
+            key = api_key()
+            refs = [upload(key, Image.open(KEY_ART))]
+            if rnd.get("base"):
+                refs.append(upload(key, Image.open(folder / ("grid_v%d.png" % rnd["base"]))))
+            update(job_id, lambda j: log(j, "Sending round %d to Picsart (%s, %s, %s, %d reference%s). "
+                                         "This takes a minute or two."
+                                         % (rnd["n"], pipe["model"], pipe["resolution"], pipe["aspect"],
+                                            len(refs), "" if len(refs) == 1 else "s")))
+            params = {"prompt": prompt, "aspectRatio": pipe["aspect"], "resolution": pipe["resolution"],
+                      "count": 1, "imageUrls": refs}
+            urls, charged = generate(key, pipe["model"], params)
             img = Image.open(io.BytesIO(requests.get(urls[0], timeout=120).content))
         name = "grid_v%d.png" % rnd["n"]
         img.convert("RGB").save(folder / name)
@@ -261,6 +283,65 @@ def job_list():
     return sorted((summary(j) for j in jobs), key=lambda s: -s["updated"])
 
 
+SAMPLER_DIR = REPO / "art" / "picsart" / "out" / "key-art-sampler"
+SAMPLER_NAME = re.compile(r"^key-art-sampler_v\d+\.png$")
+GRADE_KEYS = ("structure", "scale", "camera", "line", "finish", "personality", "fit")
+GATE_KEYS = ("structure", "scale", "camera")  # the pass rule in art/prompts/sampler-grade-rubric.md
+
+
+def sampler_picture(name):
+    if not SAMPLER_NAME.match(name) or not (SAMPLER_DIR / name).is_file():
+        raise StudioError("No sampler picture called " + name, 404)
+    return SAMPLER_DIR / name
+
+
+def sampler_sidecar(name, kind):
+    return SAMPLER_DIR / kind / (name[:-len(".png")] + ".json")
+
+
+def read_sidecar(name, kind):
+    path = sampler_sidecar(name, kind)
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def sampler_check_run(name):
+    result = sampler_check(sampler_picture(name))
+    path = sampler_sidecar(name, "checks")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    return result
+
+
+def sampler_grade_save(name, body):
+    sampler_picture(name)
+    grade = {}
+    for key in GRADE_KEYS:
+        value = body.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 5:
+            raise StudioError("Score %s must be a whole number from 1 to 5" % key)
+        grade[key] = value
+    evidence = body.get("evidence") or {}
+    grade["evidence"] = {key: str(evidence.get(key, ""))[:400] for key in GRADE_KEYS}
+    grade["pass"] = all(grade[key] >= 4 for key in GATE_KEYS)
+    grade["source"] = str(body.get("source", "fresh reviewer"))[:80]
+    path = sampler_sidecar(name, "grades")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(grade, indent=2) + "\n", encoding="utf-8")
+    return grade
+
+
+def sampler_list():
+    names = sorted(SAMPLER_DIR.glob("key-art-sampler_v*.png"),
+                   key=lambda p: int(re.search(r"_v(\d+)", p.name).group(1)))
+    rows = []
+    for path in names:
+        checks, grade = read_sidecar(path.name, "checks"), read_sidecar(path.name, "grades")
+        checks_ok = bool(checks) and all(v is True for v in checks["pass"].values() if v is not None)
+        rows.append({"name": path.name, "checks": checks, "grade": grade,
+                     "ready": checks_ok and bool(grade and grade["pass"])})
+    return rows
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
@@ -285,10 +366,18 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path == "/":
                 return self.send_body(200, (HERE / "index.html").read_bytes(), "text/html; charset=utf-8")
+            if path == "/sampler":
+                return self.send_body(200, (HERE / "sampler.html").read_bytes(), "text/html; charset=utf-8")
+            if path == "/api/sampler":
+                return self.send_json(200, {"pictures": sampler_list(), "bands": BANDS, "gate": list(GATE_KEYS)})
+            if path.startswith("/sampler-img/"):
+                return self.send_body(200, sampler_picture(path.split("/")[2]).read_bytes(), "image/png")
             if path == "/api/state":
                 return self.send_json(200, {"pipelines": {k: v["label"] for k, v in PIPELINES.items()},
                                             "pipelineLines": {k: v["lines"] for k, v in PIPELINES.items()},
-                                            "jobs": job_list(), "fake": FAKE})
+                                            "jobs": job_list(), "fake": FAKE, "maxRounds": MAX_ROUNDS})
+            if path == "/key-art.png":
+                return self.send_body(200, KEY_ART.read_bytes(), "image/png")
             if path.startswith("/api/jobs/"):
                 return self.send_json(200, load_job(path.split("/")[3]))
             if path.startswith("/files/"):
@@ -303,6 +392,13 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             body = self.read_json()
+            if path.startswith("/api/sampler/"):
+                parts = path.split("/")  # ["", "api", "sampler", <name>, <action>]
+                if len(parts) == 5 and parts[4] == "check":
+                    return self.send_json(200, sampler_check_run(parts[3]))
+                if len(parts) == 5 and parts[4] == "grade":
+                    return self.send_json(200, sampler_grade_save(parts[3], body))
+                return self.send_json(404, {"error": "not found"})
             if path == "/api/jobs":
                 return self.send_json(200, create_job(body))
             parts = path.split("/")
@@ -315,6 +411,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self.send_json(200, load_job(job_id))
                 if action == "retry":
                     return self.send_json(200, retry(job_id))
+                if action == "rate":
+                    return self.send_json(200, rate(job_id, body))
             self.send_json(404, {"error": "not found"})
         except StudioError as err:
             self.send_json(err.code, {"error": str(err)})
@@ -344,13 +442,32 @@ def create_job(body):
     job_id = "%s-%s" % (asset, datetime.now().strftime("%Y%m%d-%H%M%S"))
     job_dir(job_id).mkdir(parents=True)
     job = {"id": job_id, "asset": asset, "pipeline": body["pipeline"], "lines": lines,
-           "rounds": [{"n": 1, "notes": "", "grid": None, "charged": None}],
+           "rounds": [{"n": 1, "notes": "", "grid": None, "charged": None, "match": None, "base": None}],
            "stage": "grid", "busy": True, "error": None, "figures": [], "picked": None,
            "log": [], "updated": time.time()}
     log(job, "Job started: %d characters, round 1" % len(lines))
     (job_dir(job_id) / "job.json").write_text(json.dumps(job, indent=2) + "\n", encoding="utf-8")
     start(draw_round, job_id)
     return job
+
+
+def rate(job_id, body):
+    """Rate a round 1 to 5 against the key art. The rating is the only input to the refine step."""
+    n, stars = int(body.get("n", 0)), int(body.get("stars", 0))
+    if not 1 <= stars <= 5:
+        raise StudioError("Rate the round from 1 to 5")
+    job = load_job(job_id)
+    if job["stage"] != "review" or job["busy"]:
+        raise StudioError("Rate a round while the job is waiting for a review", 409)
+    if not any(r["n"] == n and r["grid"] for r in job["rounds"]):
+        raise StudioError("Round %s has no picture to rate" % n)
+
+    def set_match(j):
+        for r in j["rounds"]:
+            if r["n"] == n:
+                r["match"] = stars
+        log(j, "Round %d rated %d of 5 against the key art" % (n, stars))
+    return update(job_id, set_match)
 
 
 def review(job_id, body):
@@ -361,15 +478,21 @@ def review(job_id, body):
         update(job_id, lambda j: (j.update(stage="slicing", busy=True), log(j, "Round %d approved" % j["rounds"][-1]["n"])))
         start(slice_grid, job_id)
     elif body.get("decision") == "edit":
+        if len(job["rounds"]) >= MAX_ROUNDS:
+            raise StudioError("This job has used its %d rounds. Approve the closest one, or start a new brief." % MAX_ROUNDS, 409)
+        last = job["rounds"][-1]
         notes = str(body.get("notes", "")).strip()
+        if last.get("match") is not None and last["match"] < REFINE_BELOW:
+            notes = (REFINE_NOTE + " " + notes).strip()
         if not notes:
-            raise StudioError("Say what to change before asking for edits")
+            raise StudioError("Rate the round, or say what to change, before asking for edits")
 
         def next_round(j):
             n = len(j["rounds"]) + 1
-            j["rounds"].append({"n": n, "notes": notes, "grid": None, "charged": None})
+            j["rounds"].append({"n": n, "notes": notes, "grid": None, "charged": None,
+                                "match": None, "base": last["n"]})
             j.update(stage="grid", busy=True)
-            log(j, "Edits asked for. Round %d will use them: %s" % (n, notes))
+            log(j, "Round %d will use round %d as image 2 and these edits: %s" % (n, last["n"], notes))
         update(job_id, next_round)
         start(draw_round, job_id)
     else:

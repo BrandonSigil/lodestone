@@ -1,0 +1,23 @@
+KEY ART SAMPLER for the Lodestone isometric game, v2: simpler and more abstract. One picture, three panels side by side, separated by thin plum-grey rules, each panel with a narrow paper-white margin. Same camera and same print style in all three. No title, no text.
+
+REDUCE, REDUCE: this is the main rule. Every object is a few big flat shapes, not a drawing of the real thing. Use at most three to five objects per panel. Trees are two or three simple blobs on a stub. Stone is big blocks with one or two courses, never brickwork. No leaves, no vines, no flowers, no windows counted, no bricks, no small props. Leave large areas of bare paper and open flat wash. Abstraction beats detail every time.
+
+CHARACTERS: reduced to simple shapes. A cloak is one triangle or bell, a head is one round shape with no face detail, the pack is one square. No hair strands, no buttons, no belts or straps, no faces.
+
+CAMERA: strict isometric, 2:1 dimetric, orthographic. Ground planes are exact diamonds, tile edges at 26.565 degrees. Parallel edges stay parallel. No perspective, no horizon line, no sea, no sky gradient, no distant landscape. Panels fade to bare paper at their outer edges, not to scenery. Light from the upper left: tops brightest, left faces mid, right faces darkest, as flat values.
+
+PRINT STYLE:
+- Hand-inked and lightly printed. Colour fields sit a little off register from their outline, as if two print passes missed each other by a hair.
+- Outlines: one dotted or dashed ink contour around each big shape only, plum-grey #373335, never black. No inner lines, no stipple texture on surfaces, no hatching.
+- Colour: flat wash, one value per surface plus one shadow tone. One colour family per panel plus one warm accent. Bare paper for highlights.
+- Mood: quiet, simple, a little wistful. Bright, never loud.
+
+PANELS:
+Panel 1, left, ruins: one tall bead-topped column, one round arch, two stepped stone blocks, a low wall. Coral, ochre and butter yellow, with one cream accent. Two or three tiny figures.
+
+Panel 2, centre, forest: the HERO stands front and centre on a single round grass terrace, about a third of the panel height. Behind him, one arch and two simple tree blobs on stubs. Leaf green and sage, with warm orange as the only accent. The hero is reduced to shapes:
+HERO: a compact adventurer of ordinary adult proportions, not chibi, head about one seventh of body height. A long green cloak as one bell shape, a blue tunic as one rectangle, a pale shirt collar, brown boots as two blocks, brown hair as one dark cap shape, a small square pack on the back. No hood, no sword, no face detail. Seen from the iso camera above and in front.
+
+Panel 3, right, canyon: a single stone bridge across a dark gorge, one pale gap of sky in the cliff, three tiny figures crossing. Ultramarine and cool teal, with one pale accent. Cliffs as simple slabs, no foliage.
+
+AVOID: detail of any kind, chibi or big-head proportions, clean vector lines, even outlines, gradients, cel shading, stipple or dot texture on surfaces, hatching, photorealism, 3D render, perspective, fisheye, horizon, sea, moon, sky scenes, neon, pure black, text, letters, numbers, labels, logos, watermarks, UI, frames with titles, speech bubbles, vines, leaves, flowers, bricks, windows, a sword, a hood.
