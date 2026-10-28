@@ -7,7 +7,8 @@ Read `docs/context/README.md` first, then `docs/context/current-state.md`. Toget
 
 ## Hard rules
 - Never write story, dialogue, character backstory, lore, names or flavor text. All player-facing text lives in `game/text/placeholder.csv` as caveman speak ("BANDIT COME. lorem ipsum. FIGHT / TALK"). Brandon replaces it.
-- Never generate, paint or edit art files. Art comes only from Brandon, in `game/art/source`. Until then everything is graybox shapes drawn in code.
+- Never paint or edit art files yourself. Art comes from Brandon, in `game/art/source`. Until then everything is graybox shapes drawn in code.
+- You may ask Brandon for permission to use our Picsart API to generate art. Ask before each batch, and only after he says yes for that batch. Prompts and references must come from the lookbook and style docs (`docs/style-bible.md`, `docs/art/`, `art/prompts/`, the approved look in `docs/art/references/style-flat-forest.png`). Generated art is a draft until Brandon approves it, and it goes to `game/art/source` only then. Never print or commit the key (see the secrets rule above).
 - Read `docs/decisions.md` before any design change. A `[USER]` line always beats an `[AI]` line. An `[AI]` line is a proposal until Brandon retags it `[USER]`.
 - Game data lives in `game/data/` (`.tres` Resources and `.csv` tables), not hardcoded in scripts.
 - Rules math lives in pure scripts (`CombatRules`, `TrailRules`, `Dice`) so tests can run it headless.
