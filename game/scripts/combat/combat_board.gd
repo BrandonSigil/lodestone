@@ -41,6 +41,11 @@ const CLIFF := Color(0.62, 0.58, 0.49)  ## side faces of natural ground
 const ALIEN_CLIFF := Color(0.42, 0.36, 0.5)
 const MASONRY := Color(0.7, 0.66, 0.55)  ## side faces of built stone
 const FALL := Color(0.62, 0.9, 0.86)  ## waterfall sheets
+## Which ground reaches onto which where they meet (higher over lower); others never blend.
+const BLEND_RANK := {CombatGrid.T.GRASS: 0, CombatGrid.T.FOREST: 1, CombatGrid.T.ROAD: 2, CombatGrid.T.STONE: 3}
+const BLEND_DEPTH := 0.34  ## how far (cells) a neighbour's ground reaches in, on average
+const BLEND_STEPS := 6
+const BLEND_ALPHA := 0.92
 const INK := Color(0.216, 0.2, 0.208)  ## the art's outline colour (#373335, B14), never black
 const WATER_INSET := 0.3  ## water sits this many levels below its banks, so the banks show a little earth
 
@@ -54,6 +59,7 @@ var area := {}  # cell -> true, cells a skill would hit
 var show_coords := false
 var edit_void := false  ## map editor: show VOID cells as faint outlines and let them be picked
 var island := true  ## rims hang ragged rock below the base, water spills off the edge
+var blend := true  ## ground fades into different neighbouring ground (see _fringe)
 var backdrop := false  ## a soft paper card behind the island (tester and fights; exploration draws its own world)
 var combat_stance := false  ## pieces stand ready (weapon drawn) instead of relaxed; Battle sets it
 var _fade := {}  ## cells whose props draw see-through this frame (a party piece stands behind them)
@@ -70,7 +76,9 @@ var fog := {}
 var fog_on := false
 var cull := Rect2()  ## board-local area worth drawing (big maps); empty draws everything
 var show_grid := true  ## cell outlines; off, only real ledges keep their rim (exploration hides the grid)
-var can_turn := true  ## false on maps whose building sprites only read from the front
+## Players never turn the view: every map is seen from its one approved angle ([USER] 2026-10-28, like Hades).
+## Only editors (the map maker, the sandbox's map editing) switch this on; a map's "view" is its angle.
+var can_turn := false
 ## Screen area the board is shown in (hosts set it from their layout); the valley backdrop fills it.
 ## Empty = the whole viewport.
 var view_rect := Rect2()
@@ -719,6 +727,8 @@ func _draw_ground(c: Vector2i) -> void:
 			_ci.draw_polygon(top, PackedColorArray([lift, lift, lift, lift]), uv, top_tex)
 		else:
 			_ci.draw_colored_polygon(top, top_col)
+		if blend:
+			_fringe(c, t, h, zone)
 	var lit_edge := _side(Vector2(c), Vector2(c) + Vector2.ONE, front_dir(false))
 	var shade_edge := _side(Vector2(c), Vector2(c) + Vector2.ONE, front_dir(true))
 	match t:
@@ -742,6 +752,57 @@ func _draw_ground(c: Vector2i) -> void:
 			var n := c + front_dir(shade)
 			if show_grid or not grid.solid(n) or _surf(n) < h:
 				_ci.draw_line(iso(e[0].x, e[0].y, h), iso(e[1].x, e[1].y, h), Color(top_col.lightened(0.35), 0.8), 1.5, true)
+
+
+## Ground that blends into its neighbours: where a higher-ranked ground (road over grass, stone over road)
+## or another tile set (ruins zone inside a forest) meets this cell at the same height, the neighbour's own
+## top texture reaches a ragged way onto this cell and fades out, so the seam isn't a hard line. Painted
+## transition tiles (docs/art/transitions.md) will replace this; it needs no art of its own.
+func _fringe(c: Vector2i, t: int, h: float, zone: String) -> void:
+	var rank: int = BLEND_RANK.get(t, -1)
+	if rank < 0:
+		return
+	for d: Vector2i in CombatRules.DIRS:
+		var n := c + d
+		if not grid.solid(n) or absf(_surf(n) - h) > 0.01:
+			continue
+		var tn := grid.terrain_at(n)
+		var zn := grid.zone_at(n)
+		var rn: int = BLEND_RANK.get(tn, -1)
+		if rn < 0 or (rn <= rank and zn == zone) or (tn == t and zn == zone):
+			continue
+		var depth := BLEND_DEPTH if rn > rank else BLEND_DEPTH * 0.55  # another zone of the same ground: half each way
+		var tex := BattleArt.top(tn, zn)
+		var col := _tint(tn) if tex != null else _terrain_color(tn)
+		# The shared edge in grid units, and the way into this cell.
+		var a := Vector2(c) + (Vector2(maxi(d.x, 0), maxi(d.y, 0)))
+		var along := Vector2(absi(d.y), absi(d.x))
+		var inward := -Vector2(d)
+		var pts: Array[Vector2] = []
+		var inner: Array[Vector2] = []
+		for i in BLEND_STEPS + 1:
+			var f := float(i) / BLEND_STEPS
+			var p := a + along * f
+			var k := _hash(Vector2i(roundi(p.x * 16.0), roundi(p.y * 16.0)))
+			var wob := 0.55 + 0.9 * float(k % 100) / 100.0
+			if i == 0 or i == BLEND_STEPS:
+				wob *= 0.5
+			pts.append(p)
+			inner.append(p + inward * depth * wob)
+		for i in BLEND_STEPS:
+			var quad := [pts[i], pts[i + 1], inner[i + 1], inner[i]]
+			var poly := PackedVector2Array()
+			var uv := PackedVector2Array()
+			for q: Vector2 in quad:
+				poly.append(iso(q.x, q.y, h))
+				uv.append(q / BattleArt.TOP_TILES)
+			var on := Color(col, BLEND_ALPHA)
+			var off := Color(col, 0.0)
+			var cols := PackedColorArray([on, on, off, off])
+			if tex != null:
+				_ci.draw_polygon(poly, cols, uv, tex)
+			else:
+				_ci.draw_polygon(poly, cols)
 
 
 ## Water pouring over the cell's front edges (LIVE slab: it scrolls).
@@ -899,12 +960,15 @@ func _placed(c: Vector2i) -> void:
 	var p: Dictionary = grid.props[a]
 	if _prop_front(a, p) != c:
 		return
-	var tex := BattleArt.texture(String(p.sprite), false, grid.zone_at(a))
+	var tex := prop_texture(p, grid.zone_at(a))
 	var col := Color.WHITE
 	if fog_on and fog.get(c, 2) == 1:
 		col = Color(0.45, 0.46, 0.52)  # remembered, out of sight: same wash as the veil
 	if _fade.has(a):
 		col.a = 0.35
+	if tex == null and p.get("blob", false):
+		_blob(a, p, col)
+		return
 	if tex == null:
 		var h := float(grid.height_at(a))
 		var tall: float = p.tall
@@ -921,7 +985,48 @@ func _placed(c: Vector2i) -> void:
 	if p.tall > 0.0 and not p.walk:
 		var b := Vector2(r.get_center().x, r.end.y)
 		Pawn.ellipse(_ci, b, r.size.x * 0.36, r.size.x * 0.13, Color(0.1, 0.1, 0.12, 0.22 * col.a), true)
-	_ci.draw_texture_rect(tex, r, false, col)
+	if p.get("flip", false):
+		_ci.draw_set_transform(Vector2(r.get_center().x * 2.0, 0.0), 0.0, Vector2(-1, 1))
+		_ci.draw_texture_rect(tex, r, false, col)
+		_ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	else:
+		_ci.draw_texture_rect(tex, r, false, col)
+
+
+## The sprite a placed prop draws with at the current camera turn: `<sprite>_r<n>` when that angle is
+## painted (n = the prop's face plus the camera's turn), else the sprite itself. null = no art yet.
+func prop_texture(p: Dictionary, zone := "") -> Texture2D:
+	var stem := String(p.sprite)
+	var v := posmod(int(p.get("face", 0)) + rot, 4)
+	if v != 0:
+		var turned := BattleArt.texture("%s_r%d" % [stem, v], false, zone)
+		if turned != null:
+			return turned
+	return BattleArt.texture(stem, false, zone)
+
+
+## The colour a placeholder blob is drawn in: picked from its name, so each named blob keeps its own.
+static func blob_color(blob_name: String) -> Color:
+	var hue := float(absi(blob_name.hash()) % 360) / 360.0
+	return Color.from_hsv(hue, 0.38, 0.86)
+
+
+## A named placeholder blob: a soft coloured block over its footprint, `tall` tile widths high, until art
+## named like it (its sprite, ph_<name>) is in art/source/battle/.
+func _blob(a: Vector2i, p: Dictionary, col: Color) -> void:
+	var h := float(grid.height_at(a))
+	var top: float = h + maxf(0.4, float(p.tall) * 2.0)
+	var lo := Vector2(a) + Vector2(0.08, 0.08)
+	var hi: Vector2 = Vector2(a) + Vector2(p.foot) - Vector2(0.08, 0.08)
+	var base := blob_color(String(p.get("name", p.sprite)))
+	for shade in [false, true]:
+		var e: Array = _side(lo, hi, front_dir(shade))
+		var q := PackedVector2Array([iso(e[0].x, e[0].y, top), iso(e[1].x, e[1].y, top), iso(e[1].x, e[1].y, h), iso(e[0].x, e[0].y, h)])
+		_ci.draw_colored_polygon(q, base.darkened(0.32 if shade else 0.16) * col)
+	var lid := PackedVector2Array([iso(lo.x, lo.y, top), iso(hi.x, lo.y, top), iso(hi.x, hi.y, top), iso(lo.x, hi.y, top)])
+	_ci.draw_colored_polygon(lid, base.lightened(0.12) * col)
+	lid.append(lid[0])
+	_ci.draw_polyline(lid, Color(INK, 0.55 * col.a), 1.5, true)
 
 
 ## One side face between grid corners a and b, from height h down to hb, with stone courses.
@@ -1430,7 +1535,7 @@ func _find_cover() -> void:
 							_covered[u] = true
 				var a := grid.prop_anchor(c)
 				if a != CombatGrid.NONE_CELL and _prop_front(a, grid.props[a]) == c:
-					var tex := BattleArt.texture(String(grid.props[a].sprite), false, grid.zone_at(a))
+					var tex := prop_texture(grid.props[a], grid.zone_at(a))
 					if tex != null and _overlap(box, _prop_rect(a, grid.props[a], tex)) > 0.2:
 						_fade[a] = true
 						if u.team == 0:

@@ -19,3 +19,4 @@
 - 2026-10-27: Project context exported to repo `docs/context/` (PR #12), refreshed in PR #45 and PR #52 (16:30 UTC, after village prototype PR #51 merged). Keep it in sync when memory changes in a lasting way.
 - 2026-10-27 Character sprites: spec C1-C29, templates, Character Guide in [[lodestone-character-sprites]]. Hero animated in battles (PR #39). 3D path offered as a one-hero test, not decided.
 - 2026-10-28 [USER] All maps get the valley look (sky, mountains, framing forest, grass lips, tall cliffs, stairs, waterfalls, irregular outline) and an in-game map maker is a main pillar. Built: looks, lips, map maker on F8, `highland` template, slab renderer (draw on `_ci`): [[lodestone-map-maker]].
+- 2026-10-28 [USER] No player map rotation: every map keeps one approved angle (like Hades); turning is editor-only. Map maker grown into a full editor (catalog, blobs, interactables with ids/notes, transitions list): [[lodestone-map-maker]].

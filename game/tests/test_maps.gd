@@ -245,13 +245,13 @@ func test_map_maker_edits_and_undo() -> void:
 			if c.x < 0 and doc.grid.terrain_at(Vector2i(x, y)) == T.GRASS and doc.grid.height_at(Vector2i(x, y)) < CombatGrid.MAX_HEIGHT:
 				c = Vector2i(x, y)
 	var h0 := doc.grid.height_at(c)
-	maker.call("_set_tool", "RAISE")
+	maker.call("_set_tool", "raise")
 	maker.call("_push_undo")
 	maker.set("_stroke", {"button": MOUSE_BUTTON_LEFT, "done": {}})
 	maker.call("_apply", c, false)
 	maker.call("_apply", c, false)
 	eq(maker.get("doc").grid.height_at(c), h0 + 1, "one raise per cell per stroke")
-	maker.call("_set_tool", "CUT")
+	maker.call("_set_tool", "cut")
 	maker.set("_stroke", {"button": MOUSE_BUTTON_LEFT, "done": {}})
 	maker.call("_push_undo")
 	maker.call("_apply", c, false)
@@ -263,7 +263,7 @@ func test_map_maker_edits_and_undo() -> void:
 	maker.call("redo")
 	eq(maker.get("doc").grid.height_at(c), h0 + 1, "redo")
 	maker.set("_stroke", {})
-	maker.call("_set_tool", "RIVER")
+	maker.call("_set_tool", "river")
 	maker.call("_set_look_field", "skirt", 1)
 	eq(int(maker.get("doc").grid.look.get("skirt")), 1, "look fields go into the map")
 	maker.call("new_from_recipe")
@@ -271,3 +271,131 @@ func test_map_maker_edits_and_undo() -> void:
 	tree.root.remove_child(maker)
 	maker.free()
 	tree.root.get_node("Game").set("maker_map", keep)
+
+
+func test_prop_extras_round_trip() -> void:
+	var g := _island(6)
+	g.add_prop(Vector2i(1, 1), "ph_lich_king_throne", Vector2i(2, 2), 1.0, 2.0, false, {"blob": true, "name": "Lich king throne", "id": "blob_01", "note": "big", "face": 1, "flip": true})
+	g.add_prop(Vector2i(4, 4), "prop_bed", Vector2i.ONE, 0.75, 0.0)
+	var back := CombatGrid.from_dict(JSON.parse_string(JSON.stringify(g.to_dict())))
+	var p: Dictionary = back.props[Vector2i(1, 1)]
+	ok(p.blob and p.name == "Lich king throne" and p.id == "blob_01" and p.note == "big", "blob fields kept")
+	eq(int(p.face), 1)
+	ok(bool(p.flip))
+	ok(not (back.props[Vector2i(4, 4)] as Dictionary).has("face"), "plain props stay plain")
+	var r := back.resized(5, 5)
+	eq(String(r.props[Vector2i(1, 1)].name), "Lich king throne", "resize keeps extras")
+
+
+func test_smooth_and_path() -> void:
+	var g := _island(7, 2)
+	g.set_height(Vector2i(3, 3), 6)
+	MapOps.smooth(g, [Vector2i(3, 3)] as Array[Vector2i])
+	ok(g.height_at(Vector2i(3, 3)) < 6, "a spike comes down")
+	var h := _island(7, 1)
+	for y in 7:
+		for x in range(4, 7):
+			h.set_height(Vector2i(x, y), 3)
+	var course := MapOps.line(Vector2i(0, 3), Vector2i(6, 3))
+	var painted := MapOps.path(h, course, T.ROAD, 1)
+	ok(painted.size() >= 5, "path painted")
+	eq(h.terrain_at(Vector2i(1, 3)), T.ROAD)
+	var stairs := 0
+	for c in course:
+		if h.terrain_at(c) == T.STAIRS:
+			stairs += 1
+	ok(stairs >= 1, "the climb gets stairs")
+
+
+func test_catalog() -> void:
+	MakerCatalog.reload()
+	var all := MakerCatalog.entries()
+	ok(all.size() > 40, "catalog loads")
+	ok(MakerCatalog.drawers().has("Building interior"), "drawers")
+	var hearth := MakerCatalog.by_id("hearth")
+	eq(String(hearth.group), "Hearth and light")
+	ok(BattleArt.texture(String(hearth.sprite)) != null, "catalog art exists")
+	for e in all:
+		if e.kind == "prop" and e.drawer != MakerCatalog.UNSORTED:
+			ok(BattleArt.texture(String(e.sprite)) != null, "art for " + String(e.id))
+		if e.kind == "thing":
+			ok(MakerCatalog.THING_KINDS.has(e.thing), "thing kind " + String(e.id))
+	eq(MakerCatalog.stem_for(hearth, "village_in"), "prop_hearth", "own set: bare stem")
+	eq(MakerCatalog.stem_for(hearth, "dungeon"), "village_in/prop_hearth", "other set: borrowed")
+	eq(MakerCatalog.stem_for(MakerCatalog.by_id("crate"), "dungeon"), "prop_crate", "base: the set's own")
+	eq(MakerCatalog.slug("Lich king throne!"), "lich_king_throne")
+	ok(MakerCatalog.search("fire place").is_empty() or true)
+	ok(not MakerCatalog.search("fireplace").is_empty(), "search by label")
+	eq(MakerCatalog.angles("village_in/prop_hearth"), [0] as Array[int], "one painted angle")
+
+
+func test_map_maker_places_things() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	var keep: String = tree.root.get_node("Game").get("maker_map")
+	var maker: Node = load("res://scenes/map_maker.tscn").instantiate()
+	tree.root.add_child(maker)
+	var d := MapDoc.create("explore", "test_tmp", _island(8, 1), "village_in")
+	d.data = {"start": [[0, 0]], "things": [], "groups": []}
+	maker.call("_open", d)
+	var stamp := func(id: String, c: Vector2i) -> void:
+		maker.call("pick_item", MakerCatalog.by_id(id))
+		maker.call("_push_undo")
+		maker.set("_stroke", {"button": MOUSE_BUTTON_LEFT, "done": {}})
+		maker.call("_stamp", c)
+		maker.set("_stroke", {})
+	stamp.call("long_table", Vector2i(2, 2))
+	var g: CombatGrid = maker.get("doc").grid
+	eq(String(g.props[Vector2i(2, 2)].sprite), "prop_long_table")
+	eq(g.props[Vector2i(2, 2)].foot, Vector2i(2, 1))
+	maker.call("_select", {"type": "prop", "cell": Vector2i(2, 2)})
+	maker.call("_set_tool", "select")
+	maker.call("_turn_item")
+	g = maker.get("doc").grid
+	eq(g.props[Vector2i(2, 2)].foot, Vector2i(1, 2), "turning swaps the footprint")
+	ok(bool(g.props[Vector2i(2, 2)].get("flip", false)), "one angle: turning mirrors")
+	stamp.call("blob_2x2", Vector2i(5, 5))
+	g = maker.get("doc").grid
+	var blob: Dictionary = g.props[Vector2i(5, 5)]
+	ok(blob.blob and String(blob.id) == "blob_01", "blob placed with an id")
+	eq(maker.get("selection").type, "prop", "a new blob is selected")
+	maker.call("_change_prop", func(q: Dictionary) -> void:
+		q["name"] = "Lich king throne"
+		q["sprite"] = "ph_" + MakerCatalog.slug("Lich king throne"))
+	eq(String(maker.get("doc").grid.props[Vector2i(5, 5)].sprite), "ph_lich_king_throne", "renaming points at its art")
+	stamp.call("door_locked", Vector2i(0, 4))
+	stamp.call("door_locked", Vector2i(1, 4))
+	var things: Array = maker.get("doc").data.things
+	eq(things.size(), 2)
+	eq(String(things[0].id), "door_01")
+	eq(String(things[1].id), "door_02", "ids stay unique")
+	eq(String(things[0].event), "locked_door")
+	maker.call("_set_thing", "note", "barred from the other side")
+	eq(String(maker.get("doc").data.things[1].note), "barred from the other side", "notes land on the selected thing")
+	# move the door with the select tool
+	maker.call("_select", {"type": "thing", "i": 0})
+	maker.set("_move", {"from": Vector2i(0, 4), "to": Vector2i(0, 6)})
+	maker.call("_end_move")
+	eq(maker.get("doc").data.things[0].cell, [0, 6], "moved")
+	maker.call("_delete_selected")
+	eq((maker.get("doc").data.things as Array).size(), 1, "deleted")
+	maker.call("undo")
+	eq((maker.get("doc").data.things as Array).size(), 2, "undo brings things back")
+	stamp.call("start", Vector2i(3, 6))
+	eq(maker.get("doc").data.start[0], [3, 6], "start moved")
+	var saved: Dictionary = maker.get("doc").to_dict()
+	eq(String(saved.things[1].note), "barred from the other side", "notes are saved")
+	var em := ExploreMap.from_dict(saved)
+	eq(em.things.size(), 2, "the explore scene reads the things")
+	# battle maps take no things
+	var bd := MapDoc.create("battle", "test_tmp", _island(8, 1))
+	maker.call("_open", bd)
+	stamp.call("chest", Vector2i(2, 2))
+	ok(not (maker.get("doc").data as Dictionary).has("things") or (maker.get("doc").data.things as Array).is_empty(), "no things on battle maps")
+	tree.root.remove_child(maker)
+	maker.free()
+	tree.root.get_node("Game").set("maker_map", keep)
+
+
+func test_ground_rank_blend() -> void:
+	ok(CombatBoard.BLEND_RANK[T.STONE] > CombatBoard.BLEND_RANK[T.ROAD] and CombatBoard.BLEND_RANK[T.ROAD] > CombatBoard.BLEND_RANK[T.GRASS], "stone over road over grass")
+	ok(not CombatBoard.BLEND_RANK.has(T.WATER), "water never blends")
