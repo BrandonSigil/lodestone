@@ -8,6 +8,7 @@ extends Node2D
 ## Tool labels are designer tool text, not player-facing copy, so they don't go through Txt.
 ## How to use it: docs/systems/map-maker.md. Design: docs/design/map-look.md. Research: docs/research/map-editors.md.
 
+const UI_SCALE := 0.8  ## the maker's bars, rail, panels and text draw at this share of their size; the map keeps its own
 const RAIL_W := 56.0
 const DOCK_W := 324.0
 const TOP_H := 48.0
@@ -331,9 +332,14 @@ func _map_area() -> Rect2:
 	var vs := get_viewport_rect().size
 	if hide_ui:
 		return Rect2(0, 0, vs.x, vs.y)
-	var x0 := GAP * 2 + RAIL_W
-	var y0 := TOP_H + GAP * 2 + OPT_H
-	return Rect2(x0, y0, vs.x - x0 - DOCK_W - GAP * 2, vs.y - y0 - BOTTOM_H - GAP)
+	var x0 := (GAP * 2 + RAIL_W) * UI_SCALE
+	var y0 := (TOP_H + GAP * 2 + OPT_H) * UI_SCALE
+	return Rect2(x0, y0, vs.x - x0 - (DOCK_W + GAP * 2) * UI_SCALE, vs.y - y0 - (BOTTOM_H + GAP) * UI_SCALE)
+
+
+## The UI root is scaled down, so it is sized to the window in its own units: it still fills the window.
+func _fit_root() -> void:
+	_root.size = get_viewport_rect().size / UI_SCALE
 
 
 func _fit_view() -> void:
@@ -1280,8 +1286,10 @@ func _build_ui() -> void:
 	_ui.layer = 2
 	add_child(_ui)
 	_root = Control.new()
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.scale = Vector2.ONE * UI_SCALE
+	_fit_root()
+	get_viewport().size_changed.connect(_fit_root)
 	_root.theme = MakerUI.make_theme()
 	_ui.add_child(_root)
 	_build_top()
