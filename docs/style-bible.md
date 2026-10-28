@@ -112,3 +112,4 @@ Notes: TODO
 ## 14. Battle maps (Proposed (AI), 2026-10-26)
 - Look: Brandon's isometric reference (stone terraces, moss lips, waterfalls, island on cream paper), with the Style Lab surface (grain, no black, marks).
 - Full rules B1 to B32, sprite sizes, templates and prompt snippets: `docs/art/battle-maps.md`.
+- Backdrop ring, walls and rim for every environment (2026-10-27, approach `[USER]`): `docs/art/environments.md`. The explore test asset list is `docs/art/explore-test-assets.md`.

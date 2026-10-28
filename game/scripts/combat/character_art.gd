@@ -5,6 +5,7 @@ extends RefCounted
 ## mirror table, then the nearest drawn facing. A character with no json draws as the graybox Pawn.
 
 const DIR := "res://art/source/characters/"
+const FALLBACK := &"dummy"  ## the general dummy: any unit with no art of its own draws with it
 const SCREEN_DIRS := ["e", "se", "s", "sw", "w", "nw", "n", "ne"]  ## clockwise from screen right
 
 static var _meta := {}  # id -> parsed json, or null when the character has no art
@@ -27,19 +28,28 @@ static func has_art(id: StringName) -> bool:
 	return meta(id) != null
 
 
+## Sprite a unit draws with: its own art when it has some, else the general dummy (tinted by team).
+static func sprite_for(id: StringName) -> StringName:
+	return id if has_art(id) else FALLBACK
+
+
 static func has_anim(id: StringName, anim: String) -> bool:
 	var m: Variant = meta(id)
 	return m != null and m.anims.has(anim)
 
 
-## Seconds an anim takes to play once.
+## Seconds an anim takes to play once. A character with no art uses the placeholder's timing.
 static func length(id: StringName, anim: String) -> float:
+	if meta(id) == null:
+		return PlaceholderFigure.length(anim)
 	var a: Dictionary = meta(id).anims.get(anim, {})
 	return float(a.get("frames", 1)) / float(a.get("fps", 10))
 
 
 ## Seconds from an anim's start to its hit or release frame (C17); 0 when it has none.
 static func hit_time(id: StringName, anim: String) -> float:
+	if meta(id) == null:
+		return PlaceholderFigure.hit_time(anim)
 	var a: Dictionary = meta(id).anims.get(anim, {})
 	return float(a.get("hit", 0)) / float(a.get("fps", 10))
 

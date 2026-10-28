@@ -1,0 +1,20 @@
+LODESTONE GENERAL DUMMY: ANIMATION SHEET (one facing per picture; the facing line below fills the [ZONE] slot)
+
+Image 1 = the character sheet (docs/art/characters/00-reference-sheet.png). Copy only its DRAWING STYLE from image 1: chibi proportions (about 2.3 heads tall), flat colour fills, one soft dark outline, simple shading. Do NOT copy the character in image 1. Draw a GENERIC, PLAIN DUMMY adventurer with no identity: no hair, no face detail beyond two dot eyes, no hood, no cloak, no clasp, no belt pouches, no pack, no coloured clothes.
+
+COLOUR (the game tints this figure, so the colour must be neutral): the whole body is one pale neutral grey-cream, about #d9d4c4, in flat fills, with one slightly darker grey-brown shade on the side away from the light. The sword is pale steel with a grey hilt. No other colour on the figure at all. The outline is warm dark plum-grey, about #373335, never pure black.
+
+Costume shape: a simple tunic to the knees, two stubby arms, two short legs, plain round head with no hair. In the swing rows the figure holds a plain short sword in its right hand. Nothing else is carried.
+
+FACING for every frame on this sheet: [ZONE]
+Every frame shows the dummy from this same direction, seen from the high game camera of image 1 (2:1 dimetric, looking down about 30 degrees, no perspective).
+
+LAYOUT: a sprite sheet on plain flat cream paper (#eae8d6). Five rows, frames evenly spaced left to right, each figure fully separate from its neighbours with clear empty cream between them. Every figure is the same size and stands on the same invisible baseline within its row, feet in the same place, as if the frames will be played over each other.
+   row 1 IDLE, 4 frames: standing relaxed, breathing; the body sways a little.
+   row 2 WALK, 6 frames: a walk cycle in place (contact, down, pass, up, then the other leg), arms swinging.
+   row 3 SWING, 6 frames: raises the sword over the shoulder and slashes in the facing direction: wind up, wind up, STRIKE (sword fully swung out in front), follow through, recover, back to standing with the sword out.
+   row 4 CAST, 6 frames: raises both hands, a small round pale spark appears above the raised hands on frame 4, holds, settles.
+   row 5 HURT and DOWN, 4 frames: flinch backwards, recoil, then sitting down on the ground dazed, then the same sitting pose.
+
+Rules: no text, no labels, no numbers, no frame borders, no grid lines, no floor, no tiles, no ground shadow, no grass, no scenery, no extra characters. Only the spark in the cast row is an effect. Keep every frame clean and simple so it reads at small size.
+Avoid: perspective, different camera angles between frames, a different facing in any frame, extra detail, texture, black outlines, colour on the body, 3d render, photo, motion blur, speed lines, text.

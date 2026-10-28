@@ -12,6 +12,7 @@ var art_set := ""
 var strangeness := 0.0
 var view := 0  ## camera quarter turns the map opens with
 var turn := true  ## false locks the camera (building sprites only read from the front)
+var fog := true  ## false shows every cell from the start (the village): no fog of war
 var start: Array[Vector2i] = []  ## party cells, leader first
 ## [{"id", "event", "sight", "loot", "units": [{"id": class id, "cell": Vector2i}]}]
 var groups: Array[Dictionary] = []
@@ -46,6 +47,7 @@ static func from_dict(d: Dictionary) -> ExploreMap:
 	m.strangeness = float(d.get("strangeness", 0.0))
 	m.view = int(d.get("view", 0))
 	m.turn = bool(d.get("turn", true))
+	m.fog = bool(d.get("fog", true))
 	for c in d.get("start", []):
 		m.start.append(_cell(c))
 	for g: Dictionary in d.get("groups", []):

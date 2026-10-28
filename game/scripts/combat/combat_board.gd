@@ -1494,7 +1494,6 @@ func _draw_unit(u: CombatUnit) -> void:
 	var base := _unit_base(u)
 	if u.spooked:
 		base += Vector2(sin(_time * 40.0) * 1.5, 0)
-	var breathe := 1.0 + sin(_time * 2.0 + u.vis.x) * 0.02
 	var col := u.tint
 	if u.team == 0 and u.done():
 		col = col.darkened(0.35)
@@ -1505,7 +1504,8 @@ func _draw_unit(u: CombatUnit) -> void:
 	if CharacterArt.has_art(u.sprite):
 		top = _draw_sprite(u, base, col, ring)
 	else:
-		Pawn.draw(_ci, base, 26.0 * breathe, col, ring)
+		top = PlaceholderFigure.draw(_ci, base, 26.0, u.figure, u.team, u.anim, _time - u.anim_start,
+			u.facing.x < 0, ring, u.team == 0 and u.done())
 	# HP pips
 	var w := 34.0
 	var p := base + Vector2(-w * 0.5, -top)
@@ -1528,7 +1528,14 @@ func _draw_sprite(u: CombatUnit, base: Vector2, col: Color, ring: Color) -> floa
 	Pawn.ellipse(_ci, base + Vector2(0, 2), 15.0, 5.0, Color(0, 0, 0, 0.25))
 	Pawn.ellipse(_ci, base, 16.0, 5.7, ring, false, 2.5)
 	var mod := Color.WHITE if col == u.tint else Color(0.65, 0.65, 0.65)  # done pieces dim like the pawn
-	return _draw_frame(u, base, mod)
+	if u.sprite == CharacterArt.FALLBACK:
+		# The general dummy is drawn neutral: the team colour tints it, and enemies get a glyph to tell them apart.
+		var body: Color = PlaceholderFigure.spec(u.figure, u.team).body
+		mod = body if col == u.tint else body.darkened(0.35)
+	var top := _draw_frame(u, base, mod)
+	if u.sprite == CharacterArt.FALLBACK:
+		PlaceholderFigure.glyph(_ci, PlaceholderFigure.spec(u.figure, u.team).glyph, base + Vector2(0, -top - 8), 6.0)
+	return top
 
 
 ## The anim to draw: in a fight, idle and walk become ready and advance (weapon out) when the art has them.
@@ -1556,8 +1563,6 @@ func _draw_frame(u: CombatUnit, base: Vector2, mod: Color) -> float:
 
 ## Start a sprite anim from its first frame. Non-looping anims fall back to idle when done.
 func play_anim(u: CombatUnit, anim: String) -> void:
-	if not CharacterArt.has_art(u.sprite):
-		return
 	u.anim = anim
 	u.anim_start = _time
 	if anim != "idle" and anim != "walk":
@@ -1584,7 +1589,7 @@ func float_text(c: Vector2i, text: String, color := Color.WHITE) -> void:
 ## Hop along a path like a piece lifted off the board, one tile at a time.
 func animate_move(u: CombatUnit, path: Array[Vector2i]) -> void:
 	var walker := CharacterArt.has_art(u.sprite)
-	if walker and path.size() > 1:
+	if path.size() > 1:
 		play_anim(u, "walk")
 	for i in range(1, path.size()):
 		var a := Vector2(path[i - 1])
@@ -1602,8 +1607,7 @@ func animate_move(u: CombatUnit, path: Array[Vector2i]) -> void:
 		tw.tween_method(step, 0.0, 1.0, 0.16)
 		await tw.finished
 	u.hop = 0.0
-	if walker:
-		play_anim(u, "idle")
+	play_anim(u, "idle")
 
 
 ## Slide without a hop: shoved, not walking.
@@ -1628,17 +1632,10 @@ func cell_screen_pos(c: Vector2i) -> Vector2:
 
 func animate_attack(att: CombatUnit, tgt: CombatUnit, hit: bool) -> void:
 	face(att, tgt.cell)
-	if CharacterArt.has_art(att.sprite):
-		# Swing or cast, and land the hit on the anim's hit frame (C17).
-		var anim := "cast" if att.magic else "attack"
-		play_anim(att, anim)
-		await get_tree().create_timer(CharacterArt.hit_time(att.sprite, anim)).timeout
-	else:
-		var dir := (cell_top(tgt.cell) - cell_top(att.cell)).normalized() * 10.0
-		var tw := create_tween()
-		tw.tween_property(att, "offset", dir, 0.08)
-		tw.tween_property(att, "offset", Vector2.ZERO, 0.12)
-		await tw.finished
+	# Swing or cast, and land the hit on the anim's hit frame (C17). Placeholders use the same timing.
+	var anim := "cast" if att.magic else "attack"
+	play_anim(att, anim)
+	await get_tree().create_timer(CharacterArt.hit_time(att.sprite, anim)).timeout
 	if hit:
 		face(tgt, att.cell)
 		play_anim(tgt, "hurt")

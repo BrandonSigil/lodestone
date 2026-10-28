@@ -2,6 +2,8 @@
 
 Status: **Proposed (AI), 2026-10-26.** Brandon's isometric reference (mossy stone cliff blocks, temple stair, waterfalls, pines, cream background) is the target look; that choice is his. Every numbered rule below is a proposal until he marks it his in `docs/decisions.md`.
 
+**Update 2026-10-27:** the cream-paper staging in section 1 is superseded by the backdrop ring (`docs/art/environments.md`). The camera, block, light and line rules below still hold.
+
 Diagrams: `docs/art/battle-maps/`. Templates: `art/templates/battle-maps/`. Both are rebuilt by `python3 tools/art/battle_art.py`, which uses the same iso math as `game/scripts/combat/combat_board.gd`, so anything drawn on a template lands on the game grid.
 
 ## 1. The look in one paragraph
