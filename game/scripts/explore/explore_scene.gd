@@ -63,7 +63,6 @@ func _ready() -> void:
 	board.strangeness = map.strangeness
 	board.art_set = map.art_set
 	board.rot = map.view
-	board.can_turn = map.turn
 	board.fog_on = map.fog
 	board.show_grid = false
 	board.backdrop = true  # the map's look: sky, mountains and forest for valley looks, a dark floor indoors
@@ -905,8 +904,6 @@ func _walk_side() -> void:
 	hud.top_label.text = "%s   %s" % [Txt.t("UI_EX_TITLE"), map.map_name.to_upper()]
 	_phase = null
 	_info = hud.add_side_label("", 14)
-	if map.turn:
-		hud.add_button(Txt.t("UI_TURN_VIEW"), func() -> void: board.turn())
 	hud.add_side_label(Txt.t("UI_EX_HELP"), 11)
 	_log_label = hud.add_side_label("", 12)
 
@@ -932,7 +929,6 @@ func _fight_side() -> void:
 	hud.add_button(Txt.t("UI_DANGER"), func() -> void:
 		battle.show_danger = not battle.show_danger
 		battle._refresh_danger())
-	hud.add_button(Txt.t("UI_TURN_VIEW"), func() -> void: board.turn())
 	hud.add_side_label(Txt.t("UI_HELP_COMBAT"), 11)
 	_log_label = hud.add_side_label("", 12)
 

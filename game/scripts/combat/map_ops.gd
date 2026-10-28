@@ -152,13 +152,58 @@ static func flight(grid: CombatGrid, a: Vector2i, b: Vector2i) -> void:
 
 
 ## Place a prop (a sprite stem from the tile set) with its footprint, replacing any it overlaps.
-static func add_prop(grid: CombatGrid, anchor: Vector2i, sprite: String, foot := Vector2i.ONE, tall := 0.9, sight := 1.0, walk := false) -> void:
+static func add_prop(grid: CombatGrid, anchor: Vector2i, sprite: String, foot := Vector2i.ONE, tall := 0.9, sight := 1.0, walk := false, extra := {}) -> void:
 	for dy in foot.y:
 		for dx in foot.x:
 			var a := grid.prop_anchor(anchor + Vector2i(dx, dy))
 			if a != CombatGrid.NONE_CELL:
 				remove_prop(grid, a)
-	grid.add_prop(anchor, sprite, foot, tall, sight, walk)
+	grid.add_prop(anchor, sprite, foot, tall, sight, walk, extra)
+
+
+## Soften ground: each cell takes the rounded mean height of itself and its ground neighbours.
+## Water, stairs and holes keep their height (they would break rivers and flights).
+static func smooth(grid: CombatGrid, cells: Array[Vector2i]) -> void:
+	var want := {}
+	for c in cells:
+		if not grid.solid(c) or grid.terrain_at(c) == T.WATER or grid.terrain_at(c) == T.STAIRS:
+			continue
+		var sum := grid.height_at(c)
+		var n := 1
+		for d: Vector2i in CombatRules.DIRS:
+			if grid.solid(c + d) and grid.terrain_at(c + d) != T.WATER:
+				sum += grid.height_at(c + d)
+				n += 1
+		want[c] = roundi(float(sum) / n)
+	for c: Vector2i in want:
+		grid.set_height(c, want[c])
+
+
+## A path (road, paved stone) along a dragged course, `width` cells wide. Where the course climbs more
+## than one level between two cells, stairs are cut so the path stays walkable. Water and holes are
+## left alone (a path stops at a river; bridge it with STONE). Returns the cells painted.
+static func path(grid: CombatGrid, course: Array[Vector2i], t: int, width := 1) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var seen := {}
+	for i in course.size():
+		var c: Vector2i = course[i]
+		for p in brush(grid, c, width - 1):
+			if seen.has(p) or not grid.solid(p):
+				continue
+			var pt := grid.terrain_at(p)
+			if pt == T.WATER or pt == T.STAIRS:
+				continue
+			seen[p] = true
+			var a := grid.prop_anchor(p)
+			if a != CombatGrid.NONE_CELL:
+				remove_prop(grid, a)
+			grid.set_terrain(p, t)
+			out.append(p)
+		if i > 0 and grid.solid(c) and grid.solid(course[i - 1]):
+			var lo: Vector2i = course[i - 1]
+			if absi(grid.height_at(c) - grid.height_at(lo)) > 1 and grid.terrain_at(c) != T.WATER:
+				stairs(grid, c if grid.height_at(c) < grid.height_at(lo) else lo)
+	return out
 
 
 static func remove_prop(grid: CombatGrid, anchor: Vector2i) -> void:

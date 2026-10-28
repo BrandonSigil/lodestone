@@ -46,7 +46,6 @@ func _ready() -> void:
 	info_label = hud.add_side_label("")
 	hud.add_button(Txt.t("UI_END_PHASE"), battle.end_player_phase)
 	hud.add_button(Txt.t("UI_DANGER"), _toggle_danger)
-	hud.add_button(Txt.t("UI_TURN_VIEW"), func() -> void: battle.board.turn())
 	hud.add_side_label(Txt.t("UI_HELP_COMBAT"), 11)
 	log_label = hud.add_side_label("", 12)
 	hud.top_label.text = Txt.t("GAME_TITLE")

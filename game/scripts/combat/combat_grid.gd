@@ -26,7 +26,8 @@ var terrain := PackedInt32Array()
 var zones := PackedStringArray()  ## per-cell tile set (BattleArt set name); "" = the map's own set
 ## Placed props (wells, carts, beds, whole buildings): anchor cell (back corner of the footprint) ->
 ## {"sprite": file stem, "foot": Vector2i cells, "tall": draw height in tile widths (0 = fit the footprint),
-## "sight": levels it blocks sight above the ground, "walk": can pieces stand on it (rugs)}.
+## "sight": levels it blocks sight above the ground, "walk": can pieces stand on it (rugs)}, plus the
+## optional PROP_EXTRA keys the map maker sets (facing, mirror, an id, a placeholder blob's name, a note).
 var props := {}
 ## How the map is staged (see MapLook and docs/design/map-look.md): {"id": a row of data/looks.csv, and
 ## optional "staging", "floor", "skirt" overrides}. Empty = the look named like the tile set.
@@ -138,9 +139,18 @@ func set_zone(c: Vector2i, z: String) -> void:
 	zones[idx(c)] = z
 
 
+## Optional prop keys, saved only when set: "face" (0-3, which drawn angle: `<sprite>_r1`.. `_r3`), "flip"
+## (mirrored), "id" (a name to script it by), "blob" (a named placeholder block: true, with "name"), "note"
+## (a designer note for Claude: what it should do or look like).
+const PROP_EXTRA := ["face", "flip", "id", "blob", "name", "note"]
+
+
 ## Stand a prop on the map. Its footprint runs from the anchor toward +x and +y.
-func add_prop(anchor: Vector2i, sprite: String, foot := Vector2i.ONE, tall := 0.0, sight := 1.0, walk := false) -> void:
+func add_prop(anchor: Vector2i, sprite: String, foot := Vector2i.ONE, tall := 0.0, sight := 1.0, walk := false, extra := {}) -> void:
 	props[anchor] = {"sprite": sprite, "foot": foot, "tall": tall, "sight": sight, "walk": walk}
+	for k in PROP_EXTRA:
+		if extra.has(k):
+			props[anchor][k] = extra[k]
 	version += 1
 	for dy in foot.y:
 		for dx in foot.x:
@@ -182,7 +192,7 @@ func resized(width: int, height: int) -> CombatGrid:
 	for a: Vector2i in props:
 		var p: Dictionary = props[a]
 		if a.x + p.foot.x <= width and a.y + p.foot.y <= height:
-			g.add_prop(a, p.sprite, p.foot, p.tall, p.sight, p.walk)
+			g.add_prop(a, p.sprite, p.foot, p.tall, p.sight, p.walk, p)
 	g.look = look.duplicate()
 	return g
 
@@ -227,7 +237,11 @@ func to_dict() -> Dictionary:
 		var list: Array = []
 		for a: Vector2i in props:
 			var p: Dictionary = props[a]
-			list.append({"sprite": p.sprite, "cell": [a.x, a.y], "foot": [p.foot.x, p.foot.y], "tall": p.tall, "sight": p.sight, "walk": p.walk})
+			var e := {"sprite": p.sprite, "cell": [a.x, a.y], "foot": [p.foot.x, p.foot.y], "tall": p.tall, "sight": p.sight, "walk": p.walk}
+			for k in PROP_EXTRA:
+				if p.has(k):
+					e[k] = p[k]
+			list.append(e)
 		d["props"] = list
 	if not look.is_empty():
 		d["look"] = look.duplicate()
@@ -257,9 +271,17 @@ static func from_dict(d: Dictionary) -> CombatGrid:
 		var cell: Array = p.get("cell", [0, 0])
 		var foot: Array = p.get("foot", [1, 1])
 		g.add_prop(Vector2i(int(cell[0]), int(cell[1])), String(p.get("sprite", "")), Vector2i(int(foot[0]), int(foot[1])),
-			float(p.get("tall", 0.0)), float(p.get("sight", 1.0)), bool(p.get("walk", false)))
+			float(p.get("tall", 0.0)), float(p.get("sight", 1.0)), bool(p.get("walk", false)), _extra(p))
 	g.look = (d.get("look", {}) as Dictionary).duplicate()
 	return g
+
+
+static func _extra(p: Dictionary) -> Dictionary:
+	var e := {}
+	for k in PROP_EXTRA:
+		if p.has(k):
+			e[k] = int(p[k]) if k == "face" else (bool(p[k]) if k == "flip" or k == "blob" else String(p[k]))
+	return e
 
 
 func step_cost(c: Vector2i) -> int:

@@ -1,99 +1,145 @@
 extends Node2D
 ## The map maker (F8 from any screen): build battle and exploration maps on the fly, seen the whole time in
-## their finished look (sky and mountains, the forest around the map, grass lips, tall cliffs, carved stairs,
-## waterfalls). Sculpt terraces, paint ground, dig rivers that fall down the terraces, cut stairs into
-## cliffs, shape the outline, stand props, pick the tile set and the look, start from a generated valley,
-## undo anything, save, and play the map straight away (battle maps open in the combat sandbox,
-## exploration maps in the explore scene).
+## their finished look. Sculpt terraces, paint ground, lay paths, dig rivers, cut stairs and the outline;
+## pick assets from a catalog sorted into drawers (Building interior > Furniture > fireplace) and drag them
+## onto the map, turned to any angle their art is painted from; place interactables (doors, chests, ways
+## out) with ids to script them by, named placeholder blobs that turn into art when it lands, and the
+## party start; select, move, turn and delete anything placed; undo anything, save, and play the map.
 ## Tool labels are designer tool text, not player-facing copy, so they don't go through Txt.
-## How to use it: docs/systems/map-maker.md. Design: docs/design/map-look.md.
+## How to use it: docs/systems/map-maker.md. Design: docs/design/map-look.md. Research: docs/research/map-editors.md.
 
-const LEFT_W := 196.0
-const RIGHT_W := 236.0
-const TOP_H := 40.0
-const BOTTOM_H := 28.0
-const PANEL := Color(0.12, 0.15, 0.17, 0.88)
-const INK := Color(0.92, 0.93, 0.88)
-const ACCENT := Color(0.98, 0.86, 0.5)
+const RAIL_W := 56.0
+const DOCK_W := 324.0
+const TOP_H := 48.0
+const OPT_H := 46.0
+const BOTTOM_H := 30.0
+const GAP := 10.0
 const ZOOM_MIN := 0.3
 const ZOOM_MAX := 2.5
 const PAN_SPEED := 800.0
-const UNDO_DEPTH := 60
+const UNDO_DEPTH := 80
 const MAX_SIZE := 48
+const RECENT_MAX := 10
 const FIRST_MAP := "maps/highland"  ## what the maker opens the first time
+const PREFS := "user://map_maker.cfg"
+const T := CombatGrid.T
 
-## Tool name -> [group, help line]
-const TOOLS := {
-	"RAISE": ["SCULPT", "click or drag: up one level (each cell once per stroke). Right: down."],
-	"LOWER": ["SCULPT", "click or drag: down one level. Right: up."],
-	"LEVEL": ["SCULPT", "drag: flatten into a terrace at the level height. Right click: take a cell's height."],
-	"GRASS": ["PAINT", "paint grass. Painting a hole fills it first. Right: grass."],
-	"FOREST": ["PAINT", "pines (cover, slow to cross). Right: grass."],
-	"ROAD": ["PAINT", "dirt road. Right: grass."],
-	"STONE": ["PAINT", "paved stone floor. Right: grass."],
-	"ROCK": ["PAINT", "boulder: blocks the way and a little sight. Right: grass."],
-	"RUIN": ["PAINT", "ruin pillar: blocks the way and sight. Right: grass."],
-	"WATER": ["PAINT", "still water at the cell's height. Right: grass."],
-	"RIVER": ["BUILD", "drag along the river's course from high ground down: it digs a channel that never runs uphill; every drop becomes a waterfall."],
-	"STAIRS": ["BUILD", "click a cell at a cliff: stairs that join both sides. Drag from the bottom to the top of a cliff: a flight."],
-	"PROP": ["BUILD", "click: stand the picked prop on a cell. Right: take it away."],
-	"CUT": ["SHAPE", "cut cells out of the map: the outline, chasms, pits. Right: fill them back."],
-	"FILL": ["SHAPE", "give holes ground again at the height around them. Right: cut."],
-	"ZONE": ["SHAPE", "paint another tile set onto cells (blend forest into ruins). Right: back to the map's set."],
-}
-const PAINT := {"GRASS": CombatGrid.T.GRASS, "FOREST": CombatGrid.T.FOREST, "ROAD": CombatGrid.T.ROAD,
-	"STONE": CombatGrid.T.STONE, "ROCK": CombatGrid.T.ROCK, "RUIN": CombatGrid.T.RUIN, "WATER": CombatGrid.T.WATER}
-## How tall a placed prop draws (tile widths) and how much sight it blocks, by sprite name.
-const PROP_TALL := {"prop_pine_1": [1.25, 1.0], "prop_pine_2": [1.25, 1.0], "prop_tree": [1.3, 1.0], "prop_bush": [0.55, 0.5],
-	"prop_boulder": [0.6, 1.0], "prop_pillar": [1.6, 2.0], "prop_ruin": [1.1, 1.5], "prop_landmark": [1.6, 2.0]}
+## [id, icon, key, name, help]; ["|"] separates groups on the rail.
+const TOOLS := [
+	["select", "select", "V", "Select", "click anything placed to select it, drag to move it. R turns, M mirrors, Del deletes, ctrl D copies it to the stamp. Alt click with any tool: pick up what's under the cursor."],
+	["stamp", "stamp", "B", "Place", "place the asset picked in the catalog (or drag a tile onto the map). Drag places a row of small props. R turns, M mirrors. Right click: back to select."],
+	["erase", "erase", "X", "Erase", "click or drag: take away props, blobs and things under the brush."],
+	["|"],
+	["raise", "raise", "1", "Raise", "click or drag: up one level (each cell once per stroke). Right: down."],
+	["lower", "lower", "2", "Lower", "click or drag: down one level. Right: up."],
+	["level", "level", "3", "Level", "drag: flatten into a terrace at the level height. Right click: take a cell's height."],
+	["smooth", "smooth", "4", "Smooth", "drag: soften bumps toward the ground around them."],
+	["|"],
+	["paint", "paint", "P", "Ground", "pick a ground type above, then drag to paint it. Painting a hole fills it first. Right: grass."],
+	["path", "path", "L", "Path", "drag a path's course; stairs are cut where it climbs. With 'follow ground' it finds the easiest walk from where you press to where you let go."],
+	["river", "river", "W", "River", "drag along the river's course from high ground down: it digs a channel that never runs uphill; every drop becomes a waterfall."],
+	["stairs", "stairs", "T", "Stairs", "click a cell at a cliff: stairs that join both sides. Drag from the bottom to the top of a cliff: a flight. Right drag: clear stairs."],
+	["|"],
+	["cut", "cut", "C", "Cut", "cut cells out of the map: the outline, chasms, pits. Right: fill them back."],
+	["fill", "fill", "F", "Fill", "give holes ground again at the height around them. Right: cut."],
+	["zone", "zone", "Z", "Zone", "paint another tile set onto cells (blend forest into ruins). Right: back to the map's set."],
+]
+const GROUNDS := [["grass", T.GRASS], ["forest", T.FOREST], ["road", T.ROAD], ["stone", T.STONE], ["rock", T.ROCK], ["ruin", T.RUIN], ["water", T.WATER]]
+const PATH_GROUNDS := [["road", T.ROAD], ["stone", T.STONE], ["grass", T.GRASS]]
+const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "paint", "path", "river", "cut", "fill", "zone"]
+const THING_COLOR := Color(0.98, 0.84, 0.48)
+const START_COLOR := Color(0.45, 0.72, 1.0)
+const FOE_COLOR := Color(1.0, 0.48, 0.42)
 
 var doc: MapDoc
 var board: CombatBoard
 var overlay: MakerOverlay
-var tool := "RAISE"
+var tool := "select"
 var radius := 0  ## brush size: 0 = one cell
 var square := false
 var level_h := 3  ## LEVEL tool height
+var paint_t: int = T.GRASS
+var path_t: int = T.ROAD
+var follow_ground := false
 var gen_seed := 1
 var zoom := 1.0
 var focus := Vector2.ZERO
 var hide_ui := false
+## The stamp: a catalog entry and how it's turned.
+var item := {}
+var item_face := 0
+var item_flip := false
+var item_foot := Vector2i.ONE
+## What's selected: {"type": "prop", "cell"} | {"type": "thing", "i"} | {"type": "start", "i"} |
+## {"type": "piece", "list": "party"/"enemies", "i"}; {} = nothing.
+var selection := {}
+var recent: Array[String] = []
 
 var _undo: Array[Dictionary] = []
 var _redo: Array[Dictionary] = []
 var _stroke := {}  ## {"button", "start", "last", "done": {}, "path": []} while a mouse stroke runs
+var _move := {}  ## {"from": cell, "to": cell} while the select tool drags something
+var _drag_item := false  ## a catalog tile is being dragged onto the map
 var _pan := false
 var _dirty := false
+var _closed := {}  ## drawer keys folded shut
+var _syncing := false
+var _hover_cell := CombatBoard.NONE
+
 var _ui: CanvasLayer
 var _root: Control
+var _panels: Array[Control] = []
+var _top: PanelContainer
+var _rail: PanelContainer
+var _opts: PanelContainer
+var _dock: PanelContainer
+var _bottom: PanelContainer
 var _tool_buttons := {}
+var _title: Label
+var _status: Label
+var _help: Label
+var _open_menu: PopupMenu
+var _view_buttons := {}
+# options bar
+var _opt_groups := {}
+var _radius_slider: HSlider
+var _radius_label: Label
+var _shape_buttons: Array[MakerUI.IconButton] = []
+var _level_spin: SpinBox
+var _ground_buttons := {}
+var _path_buttons := {}
+var _zone_pick: OptionButton
+var _stamp_label: Label
+var _stamp_angles: Label
+# dock
+var _tabs := {}
+var _pages := {}
+var _search: LineEdit
+var _recent_row: HFlowContainer
+var _cat_box: VBoxContainer
+var _tiles: Array[MakerUI.AssetTile] = []
+var _insp_box: VBoxContainer
+var _outline: ItemList
+var _outline_sel: Array[Dictionary] = []
+# map page
 var _name_edit: LineEdit
 var _kind_pick: OptionButton
-var _load_pick: OptionButton
 var _set_pick: OptionButton
 var _look_pick: OptionButton
-var _prop_pick: OptionButton
-var _zone_pick: OptionButton
 var _w_spin: SpinBox
 var _h_spin: SpinBox
 var _floor_spin: SpinBox
 var _skirt_spin: SpinBox
 var _strange_spin: SpinBox
-var _level_spin: SpinBox
-var _radius_spin: SpinBox
 var _seed_spin: SpinBox
 var _recipe_pick: OptionButton
-var _grid_check: CheckBox
-var _height_check: CheckBox
-var _status: Label
-var _help: Label
-var _title: Label
-var _syncing := false
 
 
 func _ready() -> void:
-	RenderingServer.set_default_clear_color(Color(0.1, 0.12, 0.14))
+	RenderingServer.set_default_clear_color(Color(0.2, 0.23, 0.25))
+	_load_prefs()
 	board = CombatBoard.new()
+	board.can_turn = true  # an editing aid; players never turn the view
 	board.backdrop = true
 	board.edit_void = true
 	board.show_grid = true
@@ -120,18 +166,21 @@ func _open(d: MapDoc) -> void:
 	_undo.clear()
 	_redo.clear()
 	_dirty = false
+	selection = {}
 	board.grid = doc.grid
 	board.art_set = doc.art_set
 	board.strangeness = doc.strangeness
 	board.rot = doc.view
 	Game.maker_map = doc.key()
 	_sync_ui()
+	_build_catalog()
 	_refresh_marks()
+	_build_inspector()
 	_fit_view()
 
 
 func _snapshot() -> Dictionary:
-	return {"grid": doc.grid.to_dict(), "set": doc.art_set, "strange": doc.strangeness}
+	return {"grid": doc.grid.to_dict(), "set": doc.art_set, "strange": doc.strangeness, "data": doc.data.duplicate(true), "view": doc.view}
 
 
 func _push_undo() -> void:
@@ -146,11 +195,16 @@ func _restore(s: Dictionary) -> void:
 	doc.grid = CombatGrid.from_dict(s.grid)
 	doc.art_set = s.set
 	doc.strangeness = s.strange
+	doc.data = s.data
+	doc.view = int(s.get("view", doc.view))
 	board.grid = doc.grid
 	board.art_set = doc.art_set
 	board.strangeness = doc.strangeness
+	if not _sel_valid():
+		selection = {}
 	_sync_ui()
 	_refresh_marks()
+	_build_inspector()
 
 
 func undo() -> void:
@@ -158,7 +212,7 @@ func undo() -> void:
 		return
 	_redo.append(_snapshot())
 	_restore(_undo.pop_back())
-	_status.text = "undo"
+	_say("undo")
 
 
 func redo() -> void:
@@ -166,18 +220,16 @@ func redo() -> void:
 		return
 	_undo.append(_snapshot())
 	_restore(_redo.pop_back())
-	_status.text = "redo"
+	_say("redo")
 
 
 func save() -> void:
 	doc.map_name = SandboxSetup.safe_name(_name_edit.text)
 	_name_edit.text = doc.map_name
-	doc.view = board.rot
 	var path := doc.save()
 	_dirty = false
 	Game.maker_map = doc.key()
-	_status.text = ("saved " + path) if path != "" else "save failed"
-	_refresh_load_menu()
+	_say(("saved " + path) if path != "" else "save failed")
 	_refresh_marks()
 
 
@@ -211,10 +263,9 @@ func new_valley() -> void:
 	board.art_set = doc.art_set
 	if doc.map_name == "untitled" or doc.map_name.begins_with("valley_"):
 		doc.map_name = "valley_%d" % gen_seed
-	_sync_ui()
-	_refresh_marks()
-	_fit_view()
-	_status.text = "new valley, seed %d" % gen_seed
+	selection = {}
+	_after_map_change()
+	_say("new valley, seed %d" % gen_seed)
 
 
 ## Replace the map with a hand-laid layout from MapRecipes (it keeps this map's name and kind).
@@ -231,10 +282,9 @@ func new_from_recipe() -> void:
 	board.art_set = doc.art_set
 	if doc.map_name == "untitled" or doc.map_name.begins_with("valley_"):
 		doc.map_name = recipe
-	_sync_ui()
-	_refresh_marks()
-	_fit_view()
-	_status.text = "template " + recipe
+	selection = {}
+	_after_map_change()
+	_say("template " + recipe)
 
 
 func new_blank() -> void:
@@ -246,30 +296,53 @@ func new_blank() -> void:
 	g.look = doc.grid.look.duplicate()
 	doc = MapDoc.create(doc.kind, "untitled", g, doc.art_set)
 	board.grid = g
-	_sync_ui()
-	_refresh_marks()
-	_fit_view()
+	selection = {}
+	_after_map_change()
 
 
 func _resize() -> void:
 	_push_undo()
 	doc.grid = doc.grid.resized(int(_w_spin.value), int(_h_spin.value))
 	board.grid = doc.grid
+	if not _sel_valid():
+		selection = {}
+	_after_map_change()
+
+
+func _after_map_change() -> void:
+	_sync_ui()
 	_refresh_marks()
+	_build_inspector()
 	_fit_view()
 
 
 # --- camera ---------------------------------------------------------------------------
 
+func _map_area() -> Rect2:
+	var vs := get_viewport_rect().size
+	if hide_ui:
+		return Rect2(0, 0, vs.x, vs.y)
+	var x0 := GAP * 2 + RAIL_W
+	var y0 := TOP_H + GAP * 2 + OPT_H
+	return Rect2(x0, y0, vs.x - x0 - DOCK_W - GAP * 2, vs.y - y0 - BOTTOM_H - GAP)
+
+
 func _fit_view() -> void:
 	if board == null or board.grid == null:
 		return
 	var vs := get_viewport_rect().size
-	var area := Rect2(0, 0, vs.x, vs.y) if hide_ui else Rect2(LEFT_W, TOP_H, vs.x - LEFT_W - RIGHT_W, vs.y - TOP_H - BOTTOM_H)
+	var area := _map_area()
 	var bs := board.board_size()
 	zoom = clampf(minf(area.size.x / bs.x, area.size.y / bs.y) * 0.9, ZOOM_MIN, ZOOM_MAX)
 	focus = board.board_origin() + bs * 0.5
 	focus += (Vector2(vs.x * 0.5, vs.y * 0.5) - area.get_center()) / zoom
+	_apply_camera()
+
+
+## Centre the map area on a cell (the outline list's click).
+func _look_at(c: Vector2i) -> void:
+	var vs := get_viewport_rect().size
+	focus = board.cell_top(c) + (vs * 0.5 - _map_area().get_center()) / zoom
 	_apply_camera()
 
 
@@ -304,12 +377,23 @@ func _process(delta: float) -> void:
 	if pan != Vector2.ZERO:
 		focus += pan.normalized() * PAN_SPEED * delta / zoom
 	_apply_camera()
-	_title.text = "MAP MAKER   %s%s   %s   %d x %d" % [doc.key(), " *" if _dirty else "", board.look.id, doc.grid.w, doc.grid.h]
+	_hover()
+	_title.text = "%s%s" % [doc.key(), "  *" if _dirty else ""]
 
 
 func _typing() -> bool:
 	var f := get_viewport().gui_get_focus_owner()
-	return f is LineEdit or f is SpinBox or (f != null and f.get_parent() is SpinBox)
+	return f is LineEdit or f is TextEdit or f is SpinBox or (f != null and f.get_parent() is SpinBox)
+
+
+## Is the screen point over one of the maker's panels?
+func _over_ui(p: Vector2) -> bool:
+	if hide_ui:
+		return false
+	for c in _panels:
+		if c.visible and c.get_global_rect().has_point(p):
+			return true
+	return false
 
 
 # --- input ------------------------------------------------------------------------------
@@ -324,8 +408,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif mb.button_index == MOUSE_BUTTON_MIDDLE or (mb.button_index == MOUSE_BUTTON_LEFT and mb.shift_pressed and _stroke.is_empty()):
 			_pan = mb.pressed
 		elif mb.button_index == MOUSE_BUTTON_LEFT or mb.button_index == MOUSE_BUTTON_RIGHT:
-			if mb.pressed and _stroke.is_empty() and not _pan:
-				_begin_stroke(mb.button_index)
+			if mb.pressed and mb.alt_pressed:
+				_eyedrop(_cell_under_mouse())
+			elif mb.pressed and _stroke.is_empty() and _move.is_empty() and not _pan:
+				_press(mb.button_index)
+			elif not mb.pressed and not _move.is_empty() and mb.button_index == MOUSE_BUTTON_LEFT:
+				_end_move()
 			elif not mb.pressed and not _stroke.is_empty() and _stroke.button == mb.button_index:
 				_end_stroke()
 	elif event is InputEventMouseMotion:
@@ -333,8 +421,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _pan:
 			focus -= mm.relative / zoom
 			_apply_camera()
-		else:
-			_hover()
 	elif event is InputEventPanGesture:
 		focus += (event as InputEventPanGesture).delta * 12.0 / zoom
 		_apply_camera()
@@ -344,34 +430,51 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var k := event as InputEventKey
-	if k == null or not k.pressed or k.is_echo():
+	if k == null or not k.pressed or k.is_echo() or _typing():
 		return
 	var cmd := k.ctrl_pressed or k.meta_pressed
-	match k.keycode:
-		KEY_Z:
-			if cmd:
+	if cmd:
+		match k.keycode:
+			KEY_Z:
 				if k.shift_pressed:
 					redo()
 				else:
 					undo()
-		KEY_Y:
-			if cmd:
+			KEY_Y:
 				redo()
-		KEY_S:
-			if cmd:
+			KEY_S:
 				save()
+			KEY_D:
+				_copy_to_stamp()
+		return
+	match k.keycode:
 		KEY_H:
 			hide_ui = not hide_ui
 			_root.visible = not hide_ui
 			_fit_view()
 		KEY_G:
-			_grid_check.button_pressed = not _grid_check.button_pressed
+			_toggle_view("grid")
 		KEY_BRACKETLEFT:
-			_radius_spin.value = maxi(0, radius - 1)
+			_set_radius(radius - 1)
 		KEY_BRACKETRIGHT:
-			_radius_spin.value = mini(4, radius + 1)
+			_set_radius(radius + 1)
 		KEY_SPACE:
 			_fit_view()
+		KEY_R:
+			_turn_item()
+		KEY_M:
+			_mirror_item()
+		KEY_DELETE, KEY_BACKSPACE:
+			_delete_selected()
+		KEY_ESCAPE:
+			selection = {}
+			_set_tool("select")
+			_refresh_marks()
+			_build_inspector()
+		_:
+			for t in TOOLS:
+				if t.size() > 1 and OS.find_keycode_from_string(String(t[2])) == k.keycode:
+					_set_tool(String(t[0]))
 
 
 func _cell_under_mouse() -> Vector2i:
@@ -379,41 +482,75 @@ func _cell_under_mouse() -> Vector2i:
 
 
 func _hover() -> void:
-	var c := _cell_under_mouse()
+	var mouse := get_viewport().get_mouse_position()
+	var over := _over_ui(mouse)
+	var c := CombatBoard.NONE if over else _cell_under_mouse()
 	if not _stroke.is_empty():
 		_stroke_to(c)
-	overlay.brush = _brush_cells(c) if c != CombatBoard.NONE and _stroke.get("button", 0) == 0 and not _path_tool() else ([] as Array[Vector2i])
+	if not _move.is_empty() and c != CombatBoard.NONE:
+		_move.to = c
+	overlay.brush = []
+	overlay.ghost = {}
+	overlay.hover_cells = []
+	if c != CombatBoard.NONE:
+		if not _move.is_empty():
+			overlay.ghost = _sel_ghost(_move.to)
+		elif tool == "stamp" and not item.is_empty() and (_stroke.is_empty() or _drag_item):
+			overlay.ghost = _item_ghost(c)
+		elif tool == "select":
+			overlay.hover_cells = _cells_of(_pick(c))
+		elif _stroke.get("button", 0) == 0 and not _path_tool():
+			overlay.brush = _brush_cells(c)
+	if c == _hover_cell:
+		return
+	_hover_cell = c
 	if c == CombatBoard.NONE:
 		_status.text = ""
 		return
 	var g := doc.grid
 	var zone := g.zone_at(c)
 	var p := g.prop_at(c)
-	_status.text = "(%d, %d)   %s   height %d%s%s" % [c.x, c.y, CombatGrid.T.keys()[g.terrain_at(c)], g.height_at(c),
-		("   zone " + zone) if zone != "" else "", ("   prop " + String(p.sprite)) if not p.is_empty() else ""]
+	var th := _thing_at(c)
+	_status.text = "(%d, %d)   %s   height %d%s%s%s" % [c.x, c.y, String(T.keys()[g.terrain_at(c)]).to_lower(), g.height_at(c),
+		("   zone " + zone) if zone != "" else "", ("   " + _prop_title(p)) if not p.is_empty() else "",
+		("   " + String(_things()[th].id)) if th >= 0 else ""]
 
 
 func _path_tool() -> bool:
-	return tool == "RIVER" or tool == "STAIRS"
+	return tool == "river" or tool == "stairs" or tool == "path"
 
 
 func _brush_cells(c: Vector2i) -> Array[Vector2i]:
 	if c == CombatBoard.NONE:
 		return []
-	if tool == "PROP" or tool == "STAIRS":
+	if tool == "stairs":
 		return [c]
 	return MapOps.brush(doc.grid, c, radius, square)
 
 
-func _begin_stroke(button: int) -> void:
+func _press(button: int) -> void:
 	var c := _cell_under_mouse()
 	if c == CombatBoard.NONE:
+		if tool == "select":
+			_select({})
+		return
+	if tool == "select":
+		if button == MOUSE_BUTTON_RIGHT:
+			_select({})
+			return
+		var sel := _pick(c)
+		_select(sel)
+		if not sel.is_empty():
+			_move = {"from": c, "to": c}
+		return
+	if tool == "stamp" and button == MOUSE_BUTTON_RIGHT:
+		_set_tool("select")
 		return
 	_push_undo()
 	_stroke = {"button": button, "start": c, "last": c, "done": {}, "path": [c] as Array[Vector2i]}
 	if _path_tool():
 		overlay.path = [c]
-		overlay.path_color = Color(0.45, 0.8, 1.0) if tool == "RIVER" else ACCENT
+		overlay.path_color = {"river": Color(0.45, 0.8, 1.0), "path": Color(0.92, 0.78, 0.55)}.get(tool, MakerUI.ACCENT)
 	else:
 		_apply(c, button == MOUSE_BUTTON_RIGHT)
 
@@ -427,7 +564,9 @@ func _stroke_to(c: Vector2i) -> void:
 		var path: Array[Vector2i] = _stroke.path
 		for p in cells.slice(1):
 			path.append(p)
-		overlay.path = path if tool == "RIVER" else MapOps.line(_stroke.start, c)
+		overlay.path = MapOps.line(_stroke.start, c) if tool == "stairs" or (tool == "path" and follow_ground) else path
+		return
+	if tool == "stamp" and not _row_item():
 		return
 	for p in cells.slice(1):
 		_apply(p, _stroke.button == MOUSE_BUTTON_RIGHT)
@@ -435,20 +574,28 @@ func _stroke_to(c: Vector2i) -> void:
 
 func _end_stroke() -> void:
 	var right: bool = _stroke.button == MOUSE_BUTTON_RIGHT
-	if tool == "RIVER" and not right:
-		MapOps.river(doc.grid, _stroke.path, 1, radius + 1)
-	elif tool == "STAIRS":
+	var g := doc.grid
+	if tool == "river" and not right:
+		MapOps.river(g, _stroke.path, 1, radius + 1)
+	elif tool == "path" and not right:
+		var course: Array[Vector2i] = _stroke.path
+		if follow_ground:
+			course = MapOps.road(g, _stroke.start, _stroke.last)
+			if course.is_empty():
+				_say("no walkable way between those cells")
+		MapOps.path(g, course, path_t, radius + 1)
+	elif tool == "stairs":
 		var a: Vector2i = _stroke.start
 		var b: Vector2i = _stroke.last
 		if right:
 			for c in MapOps.line(a, b):
-				if doc.grid.terrain_at(c) == CombatGrid.T.STAIRS:
-					doc.grid.set_terrain(c, CombatGrid.T.GRASS)
+				if g.terrain_at(c) == T.STAIRS:
+					g.set_terrain(c, T.GRASS)
 		elif a == b:
-			if not MapOps.stairs(doc.grid, a):
-				_status.text = "no cliff next to that cell to cut stairs into"
+			if not MapOps.stairs(g, a):
+				_say("no cliff next to that cell to cut stairs into")
 		else:
-			MapOps.flight(doc.grid, a, b)
+			MapOps.flight(g, a, b)
 	_stroke = {}
 	overlay.path = []
 	_refresh_marks()
@@ -457,6 +604,9 @@ func _end_stroke() -> void:
 ## One brush dab of the current tool at c (right = the tool's opposite).
 func _apply(c: Vector2i, right: bool) -> void:
 	var g := doc.grid
+	if tool == "stamp":
+		_stamp(c)
+		return
 	var done: Dictionary = _stroke.done
 	var cells: Array[Vector2i] = []
 	for p in _brush_cells(c):
@@ -466,65 +616,481 @@ func _apply(c: Vector2i, right: bool) -> void:
 	if cells.is_empty():
 		return
 	match tool:
-		"RAISE":
+		"raise":
 			MapOps.raise(g, cells, -1 if right else 1)
-		"LOWER":
+		"lower":
 			MapOps.raise(g, cells, 1 if right else -1)
-		"LEVEL":
+		"level":
 			if right:
 				if g.solid(c):
 					level_h = g.height_at(c)
 					_level_spin.value = level_h
 			else:
 				MapOps.level(g, cells, level_h)
-		"CUT":
+		"smooth":
+			MapOps.smooth(g, cells)
+		"cut":
 			if right:
 				MapOps.fill(g, cells)
 			else:
 				MapOps.cut(g, cells)
-		"FILL":
+		"fill":
 			if right:
 				MapOps.cut(g, cells)
 			else:
 				MapOps.fill(g, cells)
-		"PROP":
-			if right:
-				MapOps.remove_prop(g, g.prop_anchor(c))
-			elif g.passable(c) or not g.prop_at(c).is_empty():
-				var stem := _prop_pick.get_item_text(_prop_pick.selected) if _prop_pick.item_count > 0 else ""
-				if stem != "":
-					var spec: Array = PROP_TALL.get(stem.get_file(), [0.9, 1.0])
-					MapOps.add_prop(g, c, stem, Vector2i.ONE, spec[0], spec[1])
-		"ZONE":
+		"zone":
 			var z := "" if right else String(_zone_pick.get_item_metadata(_zone_pick.selected))
 			for p in cells:
 				if g.solid(p):
 					g.set_zone(p, z)
+		"paint":
+			MapOps.fill(g, cells)
+			MapOps.paint(g, cells, T.GRASS if right else paint_t)
+		"erase":
+			for p in cells:
+				var i := _thing_at(p)
+				if i >= 0:
+					_things().remove_at(i)
+				var a := g.prop_anchor(p)
+				if a != CombatGrid.NONE_CELL:
+					MapOps.remove_prop(g, a)
+			if not _sel_valid():
+				selection = {}
+				_build_inspector()
+			_refresh_marks()
+
+
+# --- placing ------------------------------------------------------------------------------
+
+## Pick a catalog entry for the stamp.
+func pick_item(e: Dictionary) -> void:
+	item = e
+	item_face = 0
+	item_flip = false
+	item_foot = e.foot
+	_set_tool("stamp")
+	_remember(String(e.id))
+	_mark_tiles()
+
+
+func _row_item() -> bool:
+	return item.get("kind", "") == "prop" and item_foot == Vector2i.ONE
+
+
+func _foot_cells(a: Vector2i, foot: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for dy in foot.y:
+		for dx in foot.x:
+			out.append(a + Vector2i(dx, dy))
+	return out
+
+
+func _fits(cells: Array[Vector2i]) -> bool:
+	for c in cells:
+		if not doc.grid.in_bounds(c) or not doc.grid.solid(c):
+			return false
+	return true
+
+
+## Can the stamp's kind go on this map? Things and the start live on explore maps only.
+func _kind_ok(kind: String) -> bool:
+	return doc.kind == "explore" or (kind != "thing" and kind != "start")
+
+
+func _item_ghost(c: Vector2i) -> Dictionary:
+	var kind := String(item.kind)
+	var cells := _foot_cells(c, item_foot) if kind == "prop" or kind == "blob" else ([c] as Array[Vector2i])
+	var gh := {"cells": cells, "ok": _fits(cells) and _kind_ok(kind)}
+	match kind:
+		"prop":
+			var p := {"sprite": MakerCatalog.stem_for(item, doc.art_set), "foot": item_foot, "tall": item.tall, "face": item_face}
+			var tex := board.prop_texture(p, doc.grid.zone_at(c)) if doc.grid.in_bounds(c) else null
+			if tex == null:
+				tex = BattleArt.texture(String(item.sprite))
+			if tex != null and doc.grid.in_bounds(c):
+				gh["tex"] = tex
+				gh["rect"] = board._prop_rect(c, p, tex)
+				gh["flip"] = item_flip
+		"blob":
+			gh["blob"] = Color(0.6, 0.7, 0.88)
+			gh["tall"] = item.tall
 		_:
-			if PAINT.has(tool):
-				var t: int = CombatGrid.T.GRASS if right else PAINT[tool]
-				MapOps.fill(g, cells)
-				MapOps.paint(g, cells, t)
+			gh["icon"] = MakerCatalog.icon_for(item)
+	return gh
 
 
-## Pieces, the party start, enemy groups and things from the file, as markers.
+## Place the stamp at c. Blobs and things are selected straight away, so they can be named.
+func _stamp(c: Vector2i) -> void:
+	if item.is_empty():
+		return
+	var g := doc.grid
+	var kind := String(item.kind)
+	if not _kind_ok(kind):
+		_say("interactables and the party start go on explore maps (MAP tab: kind)")
+		return
+	match kind:
+		"prop":
+			var cells := _foot_cells(c, item_foot)
+			if not _fits(cells) or _stroke.done.has(c):
+				return
+			for p in cells:
+				_stroke.done[p] = true
+			var extra := {}
+			if item_face != 0:
+				extra["face"] = item_face
+			if item_flip:
+				extra["flip"] = true
+			MapOps.add_prop(g, c, MakerCatalog.stem_for(item, doc.art_set), item_foot, item.tall, item.sight, item.walk, extra)
+		"blob":
+			var cells := _foot_cells(c, item_foot)
+			if not _fits(cells):
+				return
+			var id := _unique_id("blob")
+			MapOps.add_prop(g, c, "ph_" + id, item_foot, item.tall, item.sight, false, {"blob": true, "name": id, "id": id})
+			_select({"type": "prop", "cell": c}, true)
+		"thing":
+			if not g.solid(c):
+				return
+			var i := _thing_at(c)
+			if i >= 0:
+				_things().remove_at(i)
+			var th := {"id": _unique_id(String(item.thing)), "kind": item.thing, "event": item.event, "cell": [c.x, c.y]}
+			if item.thing == "door" or item.thing == "rubble":
+				th["floor"] = CombatGrid.LETTERS[g.terrain_at(c)] if g.terrain_at(c) != T.RUIN else "s"
+			if item.thing == "enter":
+				th["to"] = ""
+				th["at"] = [-1, -1]
+			_things().append(th)
+			_select({"type": "thing", "i": _things().size() - 1}, true)
+		"start":
+			if not g.passable(c):
+				return
+			var st: Array = doc.data.get("start", [])
+			if st.is_empty():
+				st.append([c.x, c.y])
+			else:
+				st[0] = [c.x, c.y]
+			doc.data["start"] = st
+	_refresh_marks()
+
+
+## A unique id on this map: kind_01, kind_02...
+func _unique_id(base: String) -> String:
+	var taken := {}
+	for t in _things():
+		taken[String(t.get("id", ""))] = true
+	for a: Vector2i in doc.grid.props:
+		taken[String(doc.grid.props[a].get("id", ""))] = true
+	var n := 1
+	while taken.has("%s_%02d" % [base, n]):
+		n += 1
+	return "%s_%02d" % [base, n]
+
+
+## Turn the stamp or the selected prop to its next painted angle; one angle only: mirror it instead.
+## An odd quarter turn swaps the footprint (2x1 becomes 1x2).
+func _turn_item() -> void:
+	if tool == "stamp" and not item.is_empty():
+		var r := _turned(String(item.get("sprite", "")), item_face, item_flip, item_foot)
+		item_face = r[0]
+		item_flip = r[1]
+		item_foot = r[2]
+		_sync_options()
+	elif selection.get("type", "") == "prop":
+		_change_prop(func(p: Dictionary) -> void:
+			var r := _turned(String(p.sprite), int(p.get("face", 0)), bool(p.get("flip", false)), p.foot)
+			p["face"] = r[0]
+			p["flip"] = r[1]
+			p["foot"] = r[2])
+
+
+func _mirror_item() -> void:
+	if tool == "stamp" and not item.is_empty():
+		item_flip = not item_flip
+		item_foot = Vector2i(item_foot.y, item_foot.x)
+		_sync_options()
+	elif selection.get("type", "") == "prop":
+		_change_prop(func(p: Dictionary) -> void:
+			p["flip"] = not bool(p.get("flip", false))
+			p["foot"] = Vector2i(p.foot.y, p.foot.x))
+
+
+func _turned(sprite: String, face: int, flip: bool, foot: Vector2i) -> Array:
+	var stem := sprite if sprite.contains("/") or doc.art_set == "" else doc.art_set + "/" + sprite
+	var angles := MakerCatalog.angles(stem)
+	if angles.size() <= 1:
+		return [face, not flip, Vector2i(foot.y, foot.x)]
+	var next: int = angles[(angles.find(face) + 1) % angles.size()]
+	var swap := absi(next - face) % 2 == 1
+	return [next, flip, Vector2i(foot.y, foot.x) if swap else foot]
+
+
+## Change the selected prop (turn, resize, fields) as one undo step; refused when it no longer fits.
+func _change_prop(change: Callable) -> void:
+	var a: Vector2i = selection.cell
+	var g := doc.grid
+	if not g.props.has(a):
+		return
+	_push_undo()
+	var p: Dictionary = (g.props[a] as Dictionary).duplicate()
+	change.call(p)
+	MapOps.remove_prop(g, a)
+	var cells := _foot_cells(a, p.foot)
+	var ok := _fits(cells)
+	if not ok:
+		_say("that doesn't fit there")
+		_restore(_undo.pop_back())
+		return
+	_readd(a, p)
+	_refresh_marks()
+	_build_inspector()
+
+
+func _readd(a: Vector2i, p: Dictionary) -> void:
+	if p.get("face", 0) == 0:
+		p.erase("face")
+	if not p.get("flip", false):
+		p.erase("flip")
+	MapOps.add_prop(doc.grid, a, String(p.sprite), p.foot, float(p.tall), float(p.sight), bool(p.walk), p)
+
+
+## Alt click: take what's under the cursor as the stamp (with its angle).
+func _eyedrop(c: Vector2i) -> void:
+	if c == CombatBoard.NONE:
+		return
+	var a := doc.grid.prop_anchor(c)
+	if a == CombatGrid.NONE_CELL:
+		return
+	selection = {"type": "prop", "cell": a}
+	_copy_to_stamp()
+
+
+## Ctrl D: the selected prop becomes the stamp, turned the same way.
+func _copy_to_stamp() -> void:
+	if selection.get("type", "") != "prop" or not doc.grid.props.has(selection.cell):
+		return
+	var p: Dictionary = doc.grid.props[selection.cell]
+	var e := _entry_for(p)
+	pick_item(e)
+	item_face = int(p.get("face", 0))
+	item_flip = bool(p.get("flip", false))
+	item_foot = p.foot
+	_sync_options()
+
+
+## The catalog entry a placed prop came from (or one made up for it).
+func _entry_for(p: Dictionary) -> Dictionary:
+	var stem := String(p.sprite)
+	if p.get("blob", false):
+		return MakerCatalog.by_id("blob_%dx%d" % [mini(p.foot.x, p.foot.y), maxi(p.foot.x, p.foot.y)]).merged({"foot": p.foot, "tall": p.tall}, true)
+	for e in MakerCatalog.entries():
+		if e.kind == "prop" and MakerCatalog.stem_for(e, doc.art_set) == stem:
+			return e
+	return {"id": stem, "drawer": MakerCatalog.UNSORTED, "group": "", "kind": "prop", "sprite": stem, "foot": p.foot,
+		"tall": p.tall, "sight": p.sight, "walk": p.walk, "thing": "", "event": "", "label": stem.get_file()}
+
+
+# --- selection ----------------------------------------------------------------------------
+
+func _things() -> Array:
+	if not doc.data.has("things"):
+		doc.data["things"] = []
+	return doc.data.things
+
+
+func _thing_at(c: Vector2i) -> int:
+	if doc.kind != "explore":
+		return -1
+	var list := _things()
+	for i in list.size():
+		var cell: Array = list[i].cell
+		if int(cell[0]) == c.x and int(cell[1]) == c.y:
+			return i
+	return -1
+
+
+## What the select tool picks at c: a thing first, then the start or a piece, then a prop.
+func _pick(c: Vector2i) -> Dictionary:
+	if c == CombatBoard.NONE:
+		return {}
+	var i := _thing_at(c)
+	if i >= 0:
+		return {"type": "thing", "i": i}
+	if doc.kind == "explore":
+		var st: Array = doc.data.get("start", [])
+		for j in st.size():
+			if int(st[j][0]) == c.x and int(st[j][1]) == c.y:
+				return {"type": "start", "i": j}
+	else:
+		for list in ["party", "enemies"]:
+			var arr: Array = doc.data.get(list, [])
+			for j in arr.size():
+				if int(arr[j].x) == c.x and int(arr[j].y) == c.y:
+					return {"type": "piece", "list": list, "i": j}
+	var a := doc.grid.prop_anchor(c)
+	if a != CombatGrid.NONE_CELL:
+		return {"type": "prop", "cell": a}
+	return {}
+
+
+func _sel_valid() -> bool:
+	match selection.get("type", ""):
+		"prop":
+			return doc.grid.props.has(selection.cell)
+		"thing":
+			return doc.kind == "explore" and int(selection.i) < _things().size()
+		"start":
+			return int(selection.i) < (doc.data.get("start", []) as Array).size()
+		"piece":
+			return int(selection.i) < (doc.data.get(selection.list, []) as Array).size()
+	return false
+
+
+func _sel_cell(sel: Dictionary) -> Vector2i:
+	match sel.get("type", ""):
+		"prop":
+			return sel.cell
+		"thing":
+			var cell: Array = _things()[sel.i].cell
+			return Vector2i(int(cell[0]), int(cell[1]))
+		"start":
+			var s: Array = doc.data.start[sel.i]
+			return Vector2i(int(s[0]), int(s[1]))
+		"piece":
+			var e: Dictionary = doc.data[sel.list][sel.i]
+			return Vector2i(int(e.x), int(e.y))
+	return CombatBoard.NONE
+
+
+func _cells_of(sel: Dictionary) -> Array[Vector2i]:
+	if sel.is_empty():
+		return []
+	if sel.type == "prop" and doc.grid.props.has(sel.cell):
+		return _foot_cells(sel.cell, doc.grid.props[sel.cell].foot)
+	return [_sel_cell(sel)]
+
+
+func _select(sel: Dictionary, show_inspector := false) -> void:
+	selection = sel
+	_refresh_marks()
+	_build_inspector()
+	if show_inspector and not sel.is_empty():
+		_show_page("inspect")
+
+
+## The ghost of the selection while it's dragged to `to`.
+func _sel_ghost(to: Vector2i) -> Dictionary:
+	var at: Vector2i = _sel_cell(selection) + (to - (_move.from as Vector2i))
+	if selection.type == "prop":
+		var p: Dictionary = doc.grid.props[selection.cell]
+		var cells := _foot_cells(at, p.foot)
+		var gh := {"cells": cells, "ok": _fits(cells)}
+		var tex := board.prop_texture(p)
+		if p.get("blob", false) and tex == null:
+			gh["blob"] = CombatBoard.blob_color(String(p.get("name", "")))
+			gh["tall"] = p.tall
+		elif tex != null and doc.grid.in_bounds(at):
+			gh["tex"] = tex
+			gh["rect"] = board._prop_rect(at, p, tex)
+			gh["flip"] = p.get("flip", false)
+		return gh
+	var ok: bool = doc.grid.in_bounds(at) and doc.grid.solid(at) and (selection.type == "thing" or doc.grid.passable(at))
+	return {"cells": [at] as Array[Vector2i], "ok": ok, "icon": "start" if selection.type != "thing" else
+		MakerCatalog.thing_icon(String(_things()[selection.i].kind), String(_things()[selection.i].event))}
+
+
+func _end_move() -> void:
+	var to: Vector2i = _move.to
+	var from: Vector2i = _move.from
+	if to == from or not _sel_valid():
+		_move = {}
+		return
+	var gh := _sel_ghost(to)
+	_move = {}
+	if not gh.ok:
+		_say("can't put it there")
+		return
+	var at: Vector2i = (gh.cells as Array)[0]
+	_push_undo()
+	var g := doc.grid
+	match selection.type:
+		"prop":
+			var p: Dictionary = (g.props[selection.cell] as Dictionary).duplicate()
+			MapOps.remove_prop(g, selection.cell)
+			_readd(at, p)
+			selection.cell = at
+		"thing":
+			var th: Dictionary = _things()[selection.i]
+			th.cell = [at.x, at.y]
+			if th.has("floor") and g.terrain_at(at) != T.RUIN:
+				th.floor = CombatGrid.LETTERS[g.terrain_at(at)]
+		"start":
+			doc.data.start[selection.i] = [at.x, at.y]
+		"piece":
+			doc.data[selection.list][selection.i].x = at.x
+			doc.data[selection.list][selection.i].y = at.y
+	_refresh_marks()
+	_build_inspector()
+
+
+func _delete_selected() -> void:
+	if not _sel_valid():
+		return
+	_push_undo()
+	match selection.type:
+		"prop":
+			MapOps.remove_prop(doc.grid, selection.cell)
+		"thing":
+			_things().remove_at(selection.i)
+		"start":
+			if (doc.data.start as Array).size() <= 1:
+				_say("an explore map needs a start; move it instead")
+				_undo.pop_back()
+				return
+			doc.data.start.remove_at(selection.i)
+		"piece":
+			doc.data[selection.list].remove_at(selection.i)
+	_select({})
+
+
+func _prop_title(p: Dictionary) -> String:
+	if p.get("blob", false):
+		return "blob \"%s\"" % String(p.get("name", ""))
+	var t := String(p.sprite).get_file().trim_prefix("prop_").trim_prefix("b_").replace("_", " ")
+	return t + ((" [%s]" % p.id) if String(p.get("id", "")) != "" else "")
+
+
+## Pieces, the party start, things and selection marks for the overlay.
 func _refresh_marks() -> void:
 	var marks: Array[Dictionary] = []
 	var d := doc.data
+	var sel_t := String(selection.get("type", ""))
 	if doc.kind == "battle":
-		for e in d.get("party", []):
-			marks.append({"cell": Vector2i(int(e.x), int(e.y)), "color": Color(0.4, 0.7, 1.0)})
-		for e in d.get("enemies", []):
-			marks.append({"cell": Vector2i(int(e.x), int(e.y)), "color": Color(1.0, 0.45, 0.4)})
+		for list in ["party", "enemies"]:
+			var arr: Array = d.get(list, [])
+			for i in arr.size():
+				var e: Dictionary = arr[i]
+				marks.append({"cell": Vector2i(int(e.x), int(e.y)), "color": START_COLOR if list == "party" else FOE_COLOR,
+					"icon": "start" if list == "party" else "rack", "label": "",
+					"selected": sel_t == "piece" and selection.list == list and int(selection.i) == i})
 	else:
-		for c in d.get("start", []):
-			marks.append({"cell": Vector2i(int(c[0]), int(c[1])), "color": Color(0.4, 0.7, 1.0)})
+		var st: Array = d.get("start", [])
+		for i in st.size():
+			marks.append({"cell": Vector2i(int(st[i][0]), int(st[i][1])), "color": START_COLOR, "icon": "start",
+				"label": "start" if i == 0 else "", "selected": sel_t == "start" and int(selection.i) == i})
 		for gr in d.get("groups", []):
 			for u in gr.get("units", []):
-				marks.append({"cell": Vector2i(int(u.cell[0]), int(u.cell[1])), "color": Color(1.0, 0.45, 0.4)})
-		for t in d.get("things", []):
-			marks.append({"cell": Vector2i(int(t.cell[0]), int(t.cell[1])), "color": ACCENT})
+				marks.append({"cell": Vector2i(int(u.cell[0]), int(u.cell[1])), "color": FOE_COLOR, "icon": "rack", "label": ""})
+		var things := _things()
+		for i in things.size():
+			var t: Dictionary = things[i]
+			marks.append({"cell": Vector2i(int(t.cell[0]), int(t.cell[1])), "color": THING_COLOR,
+				"icon": MakerCatalog.thing_icon(String(t.kind), String(t.get("event", ""))), "label": String(t.id),
+				"selected": sel_t == "thing" and int(selection.i) == i})
 	overlay.marks = marks
+	overlay.selected_cells = _cells_of(selection) if _sel_valid() else ([] as Array[Vector2i])
+	_refresh_outline()
 
 
 # --- settings ---------------------------------------------------------------------------
@@ -568,37 +1134,70 @@ func _sync_ui() -> void:
 	_skirt_spin.value = l.skirt
 	_strange_spin.value = doc.strangeness
 	_level_spin.value = level_h
-	_radius_spin.value = radius
-	_refresh_props()
 	_syncing = false
-
-
-func _refresh_props() -> void:
-	var keep := _prop_pick.get_item_text(_prop_pick.selected) if _prop_pick.selected >= 0 and _prop_pick.item_count > 0 else ""
-	_prop_pick.clear()
-	var stems := {}
-	for dir in [BattleArt.DIR, BattleArt.DIR + doc.art_set + "/"]:
-		if not DirAccess.dir_exists_absolute(dir):
-			continue
-		for f in DirAccess.get_files_at(dir):
-			if f.begins_with("prop_") and f.ends_with(".png"):
-				stems[f.get_basename()] = true
-	var names: Array = stems.keys()
-	names.sort()
-	for n in names:
-		_prop_pick.add_item(n)
-		if n == keep:
-			_prop_pick.select(_prop_pick.item_count - 1)
+	_sync_options()
 
 
 func _set_tool(t: String) -> void:
 	tool = t
 	for k in _tool_buttons:
 		_tool_buttons[k].set_pressed_no_signal(k == t)
-	_help.text = t + ": " + String(TOOLS[t][1])
-	_prop_pick.visible = t == "PROP"
-	_zone_pick.visible = t == "ZONE"
-	_level_spin.get_parent().visible = t == "LEVEL"
+		_tool_buttons[k].queue_redraw()
+	if t != "stamp":
+		_mark_tiles()
+	_sync_options()
+
+
+func _tool_row(id: String) -> Array:
+	for r in TOOLS:
+		if r.size() > 1 and r[0] == id:
+			return r
+	return []
+
+
+func _set_radius(r: int) -> void:
+	radius = clampi(r, 0, 4)
+	if _radius_slider != null:
+		_radius_slider.set_value_no_signal(radius)
+		_radius_label.text = "%d" % (radius * 2 + 1)
+
+
+func _say(text: String) -> void:
+	_status.text = text
+	_hover_cell = Vector2i(-77, -77)  # the next hover redraws the cell line
+
+
+func _toggle_view(key: String) -> void:
+	var b: MakerUI.IconButton = _view_buttons[key]
+	b.button_pressed = not b.button_pressed
+
+
+# --- prefs --------------------------------------------------------------------------------
+
+func _load_prefs() -> void:
+	var cf := ConfigFile.new()
+	if cf.load(PREFS) != OK:
+		return
+	for id in cf.get_value("catalog", "recent", []):
+		recent.append(String(id))
+	for k in cf.get_value("catalog", "closed", []):
+		_closed[String(k)] = true
+
+
+func _save_prefs() -> void:
+	var cf := ConfigFile.new()
+	cf.set_value("catalog", "recent", recent)
+	cf.set_value("catalog", "closed", _closed.keys())
+	cf.save(PREFS)
+
+
+func _remember(id: String) -> void:
+	recent.erase(id)
+	recent.push_front(id)
+	while recent.size() > RECENT_MAX:
+		recent.pop_back()
+	_save_prefs()
+	_build_recent()
 
 
 # --- UI -----------------------------------------------------------------------------------
@@ -610,122 +1209,758 @@ func _build_ui() -> void:
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var theme := Theme.new()
-	theme.default_font_size = 13
-	_root.theme = theme
+	_root.theme = MakerUI.make_theme()
 	_ui.add_child(_root)
+	_build_top()
+	_build_rail()
+	_build_options()
+	_build_dock()
+	_bottom = _card(0)
+	_bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_bottom.offset_top = -BOTTOM_H
+	var sb := HBoxContainer.new()
+	_bottom.add_child(sb)
+	_status = MakerUI.label("", 12, MakerUI.INK)
+	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sb.add_child(_status)
+	_help = MakerUI.label("", 12, MakerUI.DIM)
+	_help.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_help.size_flags_stretch_ratio = 2.0
+	_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	sb.add_child(_help)
+	_set_tool(tool)
+	_show_page("assets")
 
-	# Top bar: title, file and history.
-	var top := _panel(_root, 4)
-	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	top.offset_bottom = TOP_H
+
+func _card(radius := 10) -> PanelContainer:
+	var p := PanelContainer.new()
+	var sb := MakerUI.box(MakerUI.BG, radius, 8.0)
+	if radius == 0:
+		sb.content_margin_top = 4
+		sb.content_margin_bottom = 4
+		sb.content_margin_left = 12
+		sb.content_margin_right = 12
+	p.add_theme_stylebox_override("panel", sb)
+	_root.add_child(p)
+	_panels.append(p)
+	return p
+
+
+func _icon(parent: Control, id: String, tip: String, cb: Callable, px := 34.0, words := "") -> MakerUI.IconButton:
+	var b := MakerUI.IconButton.new(id, tip, px, words)
+	b.pressed.connect(cb)
+	parent.add_child(b)
+	return b
+
+
+func _build_top() -> void:
+	_top = _card(0)
+	_top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	_top.offset_bottom = TOP_H
 	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 6)
-	top.add_child(bar)
-	_title = _label("", 14, ACCENT)
-	_title.custom_minimum_size.x = 380
+	bar.add_theme_constant_override("separation", 4)
+	_top.add_child(bar)
+	var logo := MakerUI.label("Map maker", 17, MakerUI.ACCENT, true)
+	bar.add_child(logo)
+	bar.add_child(MakerUI.spacer(14))
+	_icon(bar, "new", "New blank map (size from the MAP tab)", new_blank)
+	var open := _icon(bar, "open", "Open a map", func() -> void: pass)
+	_open_menu = PopupMenu.new()
+	open.add_child(_open_menu)
+	_open_menu.id_pressed.connect(_on_open_menu)
+	open.pressed.connect(func() -> void:
+		_fill_open_menu()
+		_open_menu.position = Vector2i(open.get_screen_position() + Vector2(0, open.size.y + 4))
+		_open_menu.popup())
+	_icon(bar, "save", "Save  (ctrl S)", save)
+	bar.add_child(MakerUI.spacer(6))
+	bar.add_child(MakerUI.separator(true))
+	bar.add_child(MakerUI.spacer(6))
+	_icon(bar, "undo", "Undo  (ctrl Z)", undo)
+	_icon(bar, "redo", "Redo  (ctrl shift Z)", redo)
+	bar.add_child(MakerUI.spacer(14))
+	_title = MakerUI.label("", 14, MakerUI.INK)
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bar.add_child(_title)
-	_button(bar, "NEW", new_blank)
-	_load_pick = OptionButton.new()
-	_load_pick.custom_minimum_size.x = 150
-	_load_pick.item_selected.connect(_on_load)
-	bar.add_child(_load_pick)
-	_refresh_load_menu()
-	_button(bar, "SAVE", save)
-	_button(bar, "UNDO", undo)
-	_button(bar, "REDO", redo)
-	_button(bar, "TURN (Q)", func() -> void: board.turn())
-	var play := _button(bar, "PLAY TEST", play_test)
-	play.add_theme_color_override("font_color", ACCENT)
-
-	# Left: tools.
-	var left := _panel(_root)
-	left.anchor_bottom = 1.0
-	left.offset_top = TOP_H
-	left.offset_right = LEFT_W
-	left.offset_bottom = -BOTTOM_H
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	left.add_child(scroll)
-	var lb := VBoxContainer.new()
-	lb.custom_minimum_size.x = LEFT_W - 28
-	lb.add_theme_constant_override("separation", 3)
-	scroll.add_child(lb)
-	var group := ""
-	var row: HBoxContainer = null
-	for t in TOOLS:
-		if TOOLS[t][0] != group:
-			group = TOOLS[t][0]
-			lb.add_child(_label(group, 12, ACCENT))
-			row = null
-		if row == null or row.get_child_count() == 2:
-			row = HBoxContainer.new()
-			lb.add_child(row)
-		var b := Button.new()
-		b.text = t
+	for v in [["grid", "grid", "Grid lines  (G)", true], ["heights", "heights", "Height numbers", false], ["labels", "note", "Names over things and blobs", true]]:
+		var b := MakerUI.IconButton.new(v[1], v[2], 34.0)
 		b.toggle_mode = true
-		b.custom_minimum_size = Vector2((LEFT_W - 34) * 0.5, 26)
-		b.pressed.connect(_set_tool.bind(t))
-		row.add_child(b)
-		_tool_buttons[t] = b
-	_prop_pick = OptionButton.new()
-	lb.add_child(_prop_pick)
+		b.button_pressed = v[3]
+		var key: String = v[0]
+		b.toggled.connect(_on_view.bind(key))
+		bar.add_child(b)
+		_view_buttons[key] = b
+	_icon(bar, "turn", "Turn the view while editing  (Q). Players only ever see the map's own angle (MAP tab).", func() -> void: board.turn())
+	_icon(bar, "fit", "Fit the map  (space)", _fit_view)
+	_icon(bar, "eye", "Hide the panels  (H)", func() -> void:
+		hide_ui = true
+		_root.visible = false
+		_fit_view())
+	bar.add_child(MakerUI.spacer(8))
+	var play := _icon(bar, "play", "Save and play this map", play_test, 34.0, "Play test")
+	play.add_theme_color_override("font_color", MakerUI.ACCENT)
+
+
+func _on_view(on: bool, key: String) -> void:
+	match key:
+		"grid":
+			board.show_grid = on
+		"heights":
+			overlay.show_heights = on
+		"labels":
+			overlay.show_labels = on
+
+
+func _build_rail() -> void:
+	_rail = _card(12)
+	_rail.position = Vector2(GAP, TOP_H + GAP)
+	_rail.custom_minimum_size.x = RAIL_W
+	var sb: StyleBoxFlat = _rail.get_theme_stylebox("panel")
+	sb.set_content_margin_all(5)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 3)
+	_rail.add_child(col)
+	for r in TOOLS:
+		if r.size() == 1:
+			var s := MakerUI.separator()
+			s.custom_minimum_size = Vector2(36, 1)
+			col.add_child(MakerUI.spacer(0, 2))
+			col.add_child(s)
+			col.add_child(MakerUI.spacer(0, 2))
+			continue
+		var b := MakerUI.IconButton.new(r[1], "%s  (%s)\n%s" % [r[3], r[2], r[4]], 42.0)
+		b.toggle_mode = true
+		b.pressed.connect(_set_tool.bind(String(r[0])))
+		col.add_child(b)
+		_tool_buttons[r[0]] = b
+
+
+func _build_options() -> void:
+	_opts = _card(10)
+	_opts.position = Vector2(GAP * 2 + RAIL_W, TOP_H + GAP)
+	_opts.custom_minimum_size.y = OPT_H
+	var sb: StyleBoxFlat = _opts.get_theme_stylebox("panel")
+	sb.content_margin_top = 5
+	sb.content_margin_bottom = 5
+	sb.content_margin_left = 12
+	sb.content_margin_right = 12
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	_opts.add_child(row)
+	var name_l := MakerUI.label("", 14, MakerUI.ACCENT, true)
+	name_l.name = "ToolName"
+	row.add_child(name_l)
+	# brush size and shape
+	var brush := HBoxContainer.new()
+	brush.add_theme_constant_override("separation", 6)
+	brush.add_child(MakerUI.separator(true))
+	brush.add_child(MakerUI.label("brush", 12, MakerUI.DIM))
+	_radius_slider = HSlider.new()
+	_radius_slider.min_value = 0
+	_radius_slider.max_value = 4
+	_radius_slider.step = 1
+	_radius_slider.custom_minimum_size = Vector2(90, 20)
+	_radius_slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_radius_slider.tooltip_text = "Brush size  ([ and ])"
+	_radius_slider.focus_mode = Control.FOCUS_NONE
+	_radius_slider.value_changed.connect(func(v: float) -> void: _set_radius(int(v)))
+	brush.add_child(_radius_slider)
+	_radius_label = MakerUI.label("1", 12, MakerUI.INK)
+	_radius_label.custom_minimum_size.x = 14
+	brush.add_child(_radius_label)
+	for shp in [["diamond", false, "Round brush"], ["square", true, "Square brush"]]:
+		var b := MakerUI.IconButton.new(shp[0], shp[2], 30.0)
+		b.toggle_mode = true
+		b.button_pressed = shp[1] == square
+		var sq: bool = shp[1]
+		b.pressed.connect(func() -> void:
+			square = sq
+			for o in _shape_buttons:
+				o.set_pressed_no_signal(o.icon_id == ("square" if sq else "diamond"))
+				o.queue_redraw())
+		brush.add_child(b)
+		_shape_buttons.append(b)
+	row.add_child(brush)
+	_opt_groups["brush"] = brush
+	# level height
+	var lvl := HBoxContainer.new()
+	lvl.add_child(MakerUI.separator(true))
+	lvl.add_child(MakerUI.label("height", 12, MakerUI.DIM))
+	_level_spin = _spin(lvl, 0, CombatGrid.MAX_HEIGHT, 1, level_h)
+	_level_spin.value_changed.connect(func(v: float) -> void: level_h = int(v))
+	row.add_child(lvl)
+	_opt_groups["level"] = lvl
+	# ground swatches
+	var ground := HBoxContainer.new()
+	ground.add_theme_constant_override("separation", 3)
+	ground.add_child(MakerUI.separator(true))
+	for gnd in GROUNDS:
+		ground.add_child(_swatch(gnd[0], gnd[1], _ground_buttons, func(t: int) -> void: paint_t = t))
+	row.add_child(ground)
+	_opt_groups["paint"] = ground
+	var path := HBoxContainer.new()
+	path.add_theme_constant_override("separation", 3)
+	path.add_child(MakerUI.separator(true))
+	for gnd in PATH_GROUNDS:
+		path.add_child(_swatch(gnd[0], gnd[1], _path_buttons, func(t: int) -> void: path_t = t))
+	var follow := CheckBox.new()
+	follow.text = "follow ground"
+	follow.tooltip_text = "Find the easiest walk between where you press and where you let go"
+	follow.focus_mode = Control.FOCUS_NONE
+	follow.toggled.connect(func(on: bool) -> void: follow_ground = on)
+	path.add_child(follow)
+	row.add_child(path)
+	_opt_groups["path"] = path
+	var zone := HBoxContainer.new()
+	zone.add_child(MakerUI.separator(true))
+	zone.add_child(MakerUI.label("tile set", 12, MakerUI.DIM))
 	_zone_pick = OptionButton.new()
-	_zone_pick.add_item("map's tile set")
+	_zone_pick.add_item("map's own set")
 	_zone_pick.set_item_metadata(0, "")
 	for s in BattleArt.sets():
 		_zone_pick.add_item(s)
 		_zone_pick.set_item_metadata(_zone_pick.item_count - 1, s)
-	lb.add_child(_zone_pick)
-	_level_spin = _spin_row(lb, "level height", 0, CombatGrid.MAX_HEIGHT, 1, func(v: float) -> void: level_h = int(v))
-	_radius_spin = _spin_row(lb, "brush size", 0, 4, 1, func(v: float) -> void: radius = int(v))
-	var sq := CheckBox.new()
-	sq.text = "square brush"
-	sq.toggled.connect(func(on: bool) -> void: square = on)
-	lb.add_child(sq)
-	_help = _label("", 12, INK)
-	_help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_help.custom_minimum_size.x = LEFT_W - 28
-	lb.add_child(_help)
-	var keys := _label("drag = paint, right drag = the opposite\nshift drag, middle drag or two fingers = pan\nwheel or pinch = zoom, arrows = pan\nQ turn   [ ] brush   G grid\nH hide panels   space = fit\nctrl Z undo, ctrl shift Z redo, ctrl S save\nF8 comes back here after a play test", 11, Color(INK, 0.7))
-	keys.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	keys.custom_minimum_size.x = LEFT_W - 28
-	lb.add_child(keys)
+	_zone_pick.focus_mode = Control.FOCUS_NONE
+	zone.add_child(_zone_pick)
+	row.add_child(zone)
+	_opt_groups["zone"] = zone
+	var stamp := HBoxContainer.new()
+	stamp.add_theme_constant_override("separation", 6)
+	stamp.add_child(MakerUI.separator(true))
+	_stamp_label = MakerUI.label("", 13, MakerUI.INK)
+	stamp.add_child(_stamp_label)
+	_stamp_angles = MakerUI.label("", 12, MakerUI.DIM)
+	stamp.add_child(_stamp_angles)
+	_icon(stamp, "rotate", "Turn  (R): the next painted angle, or a mirror when there is only one", _turn_item, 30.0)
+	_icon(stamp, "mirror", "Mirror  (M)", _mirror_item, 30.0)
+	row.add_child(stamp)
+	_opt_groups["stamp"] = stamp
+	var sel := HBoxContainer.new()
+	sel.add_theme_constant_override("separation", 6)
+	sel.add_child(MakerUI.separator(true))
+	_icon(sel, "rotate", "Turn the selection  (R)", _turn_item, 30.0)
+	_icon(sel, "mirror", "Mirror the selection  (M)", _mirror_item, 30.0)
+	_icon(sel, "stamp", "Copy the selection to the stamp  (ctrl D)", _copy_to_stamp, 30.0)
+	_icon(sel, "trash", "Delete the selection  (Del)", _delete_selected, 30.0)
+	row.add_child(sel)
+	_opt_groups["select"] = sel
+	_set_radius(radius)
 
-	# Right: the map.
-	var right := _panel(_root)
-	right.anchor_left = 1.0
-	right.anchor_right = 1.0
-	right.anchor_bottom = 1.0
-	right.offset_left = -RIGHT_W
-	right.offset_top = TOP_H
-	right.offset_bottom = -BOTTOM_H
-	var rscroll := ScrollContainer.new()
-	rscroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	right.add_child(rscroll)
-	var rb := VBoxContainer.new()
-	rb.custom_minimum_size.x = RIGHT_W - 28
-	rb.add_theme_constant_override("separation", 4)
-	rscroll.add_child(rb)
-	rb.add_child(_label("MAP", 12, ACCENT))
+
+## A ground swatch: a little tile of the set's own ground texture.
+func _swatch(id: String, t: int, group: Dictionary, cb: Callable) -> Button:
+	var b := Button.new()
+	b.toggle_mode = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(36, 34)
+	b.tooltip_text = id
+	b.draw.connect(func() -> void:
+		var tex := BattleArt.top(t, doc.art_set if doc != null else "")
+		var c := b.size * 0.5 + Vector2(0, -1)
+		var hw := 13.0
+		var pts := PackedVector2Array([c + Vector2(0, -hw * 0.55), c + Vector2(hw, 0), c + Vector2(0, hw * 0.55), c + Vector2(-hw, 0)])
+		if tex != null:
+			b.draw_polygon(pts, PackedColorArray([Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE]),
+				PackedVector2Array([Vector2(0.5, 0), Vector2(1, 0.5), Vector2(0.5, 1), Vector2(0, 0.5)]), tex)
+		else:
+			b.draw_colored_polygon(pts, CombatBoard.TOP_COLORS.get(t, Color.GRAY))
+		pts.append(pts[0])
+		b.draw_polyline(pts, Color(0, 0, 0, 0.4), 1.0, true))
+	b.pressed.connect(func() -> void:
+		cb.call(t)
+		for k in group:
+			group[k].set_pressed_no_signal(k == id))
+	group[id] = b
+	b.button_pressed = (t == paint_t) if group == _ground_buttons else (t == path_t)
+	return b
+
+
+func _sync_options() -> void:
+	if _opts == null:
+		return
+	var row := _tool_row(tool)
+	(_opts.get_child(0).get_node("ToolName") as Label).text = String(row[3]) if not row.is_empty() else ""
+	_help.text = String(row[4]) if not row.is_empty() else ""
+	_opt_groups.brush.visible = BRUSH_TOOLS.has(tool)
+	_opt_groups.level.visible = tool == "level"
+	_opt_groups.paint.visible = tool == "paint"
+	_opt_groups.path.visible = tool == "path"
+	_opt_groups.zone.visible = tool == "zone"
+	_opt_groups.stamp.visible = tool == "stamp"
+	_opt_groups.select.visible = tool == "select" and not selection.is_empty()
+	for k in _ground_buttons:
+		_ground_buttons[k].queue_redraw()
+	for k in _path_buttons:
+		_path_buttons[k].queue_redraw()
+	if tool == "stamp":
+		if item.is_empty():
+			_stamp_label.text = "pick something in the catalog"
+			_stamp_angles.text = ""
+		else:
+			_stamp_label.text = "%s  %dx%d" % [item.label, item_foot.x, item_foot.y]
+			var n := MakerCatalog.angles(String(item.sprite)).size() if item.kind == "prop" else 1
+			_stamp_angles.text = ("%d angles" % n if n > 1 else "1 angle") + ("  mirrored" if item_flip else "")
+	_opts.reset_size()
+
+
+# --- dock -----------------------------------------------------------------------------------
+
+func _build_dock() -> void:
+	_dock = _card(12)
+	_dock.anchor_left = 1.0
+	_dock.anchor_right = 1.0
+	_dock.anchor_bottom = 1.0
+	_dock.offset_left = -DOCK_W - GAP
+	_dock.offset_right = -GAP
+	_dock.offset_top = TOP_H + GAP
+	_dock.offset_bottom = -BOTTOM_H - GAP
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	_dock.add_child(col)
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 4)
+	col.add_child(tabs)
+	for t in [["assets", "assets", "Assets"], ["inspect", "inspect", "Inspector"], ["map", "map", "Map"]]:
+		var b := MakerUI.IconButton.new(t[1], "", 32.0, t[2])
+		b.toggle_mode = true
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.pressed.connect(_show_page.bind(String(t[0])))
+		tabs.add_child(b)
+		_tabs[t[0]] = b
+		var page := ScrollContainer.new()
+		page.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		page.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		col.add_child(page)
+		var body := VBoxContainer.new()
+		body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		body.add_theme_constant_override("separation", 6)
+		page.add_child(body)
+		_pages[t[0]] = page
+	_build_assets_page(_pages.assets.get_child(0))
+	_insp_box = _pages.inspect.get_child(0)
+	_build_map_page(_pages.map.get_child(0))
+
+
+func _show_page(id: String) -> void:
+	for k in _pages:
+		_pages[k].visible = k == id
+		_tabs[k].set_pressed_no_signal(k == id)
+		_tabs[k].queue_redraw()
+
+
+func _build_assets_page(body: VBoxContainer) -> void:
+	var srow := HBoxContainer.new()
+	body.add_child(srow)
+	_search = LineEdit.new()
+	_search.placeholder_text = "search assets"
+	_search.clear_button_enabled = true
+	_search.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_search.text_changed.connect(func(_t: String) -> void: _build_catalog())
+	srow.add_child(_search)
+	body.add_child(MakerUI.label("RECENT", 11, MakerUI.DIM))
+	_recent_row = HFlowContainer.new()
+	_recent_row.add_theme_constant_override("h_separation", 4)
+	_recent_row.add_theme_constant_override("v_separation", 4)
+	body.add_child(_recent_row)
+	_cat_box = VBoxContainer.new()
+	_cat_box.add_theme_constant_override("separation", 6)
+	body.add_child(_cat_box)
+
+
+func _tile_for(e: Dictionary) -> MakerUI.AssetTile:
+	var tex: Texture2D = BattleArt.texture(String(e.sprite)) if e.kind == "prop" else null
+	var tip := "%s\n%s > %s\n%dx%d" % [e.label, e.drawer, e.group, e.foot.x, e.foot.y]
+	if e.kind == "prop":
+		var n := MakerCatalog.angles(String(e.sprite)).size()
+		tip += "   %d angle%s" % [n, "s" if n > 1 else ""]
+	elif e.kind == "thing":
+		tip += "   event " + (String(e.event) if e.event != "" else "(none)")
+	if not _kind_ok(e.kind):
+		tip += "\nexplore maps only"
+	var t := MakerUI.AssetTile.new(e, tex, tip)
+	t.disabled = not _kind_ok(e.kind)
+	t.picked.connect(pick_item)
+	t.drag_started.connect(func(en: Dictionary) -> void:
+		pick_item(en)
+		_drag_item = true)
+	t.drag_ended.connect(func(_en: Dictionary) -> void:
+		_drag_item = false
+		var mouse := get_viewport().get_mouse_position()
+		if _over_ui(mouse):
+			return
+		var c := _cell_under_mouse()
+		if c != CombatBoard.NONE:
+			_push_undo()
+			_stroke = {"button": MOUSE_BUTTON_LEFT, "done": {}}
+			_stamp(c)
+			_stroke = {})
+	t.button_pressed = not item.is_empty() and item.id == e.id and tool == "stamp"
+	_tiles.append(t)
+	return t
+
+
+func _build_catalog() -> void:
+	if _cat_box == null or doc == null:
+		return
+	for c in _cat_box.get_children():
+		c.queue_free()
+	_tiles.clear()
+	_build_recent()
+	var q := _search.text.strip_edges()
+	if q != "":
+		var hits := MakerCatalog.search(q)
+		_cat_box.add_child(MakerUI.label("%d found" % hits.size(), 11, MakerUI.DIM))
+		var flow := _flow()
+		for e in hits:
+			flow.add_child(_tile_for(e))
+		_cat_box.add_child(flow)
+		return
+	for dname in MakerCatalog.drawers():
+		var groups: Array[String] = []
+		var count := 0
+		for e in MakerCatalog.entries():
+			if e.drawer == dname:
+				count += 1
+				if not groups.has(e.group):
+					groups.append(e.group)
+		var drawer := MakerUI.Drawer.new(dname, dname, count, not _closed.has(dname))
+		drawer.toggled_open.connect(_on_drawer)
+		_cat_box.add_child(drawer)
+		for gname in groups:
+			var key := dname + "/" + gname
+			var sub := MakerUI.Drawer.new(key, gname, -1, not _closed.has(key), 12, true)
+			sub.toggled_open.connect(_on_drawer)
+			drawer.body.add_child(sub)
+			var flow := _flow()
+			for e in MakerCatalog.entries():
+				if e.drawer == dname and e.group == gname:
+					flow.add_child(_tile_for(e))
+			sub.body.add_child(flow)
+
+
+func _flow() -> HFlowContainer:
+	var f := HFlowContainer.new()
+	f.add_theme_constant_override("h_separation", 4)
+	f.add_theme_constant_override("v_separation", 4)
+	return f
+
+
+func _build_recent() -> void:
+	for c in _recent_row.get_children():
+		_recent_row.remove_child(c)
+		_tiles.erase(c)
+		c.queue_free()
+	for id in recent:
+		var e := MakerCatalog.by_id(id)
+		if not e.is_empty():
+			var t := _tile_for(e)
+			t.custom_minimum_size = Vector2(48, 54)
+			_recent_row.add_child(t)
+	_recent_row.get_parent().get_child(_recent_row.get_index() - 1).visible = not recent.is_empty()
+
+
+func _on_drawer(key: String, open: bool) -> void:
+	if open:
+		_closed.erase(key)
+	else:
+		_closed[key] = true
+	_save_prefs()
+
+
+func _mark_tiles() -> void:
+	for t in _tiles:
+		if is_instance_valid(t):
+			t.set_pressed_no_signal(tool == "stamp" and not item.is_empty() and t.entry.id == item.id)
+			t.queue_redraw()
+
+
+# --- inspector -----------------------------------------------------------------------------
+
+func _build_inspector() -> void:
+	if _insp_box == null:
+		return
+	for c in _insp_box.get_children():
+		_insp_box.remove_child(c)
+		c.queue_free()
+	_sync_options()
+	if not _sel_valid():
+		_insp_box.add_child(MakerUI.label("Nothing selected", 15, MakerUI.INK, true))
+		var hint := MakerUI.label("Pick the select tool (V) and click a prop, blob, door or the party start. Names and notes set here are what Claude reads when you ask for a door's behaviour or a blob's art.", 12, MakerUI.DIM)
+		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_insp_box.add_child(hint)
+	else:
+		match selection.type:
+			"prop":
+				_inspect_prop()
+			"thing":
+				_inspect_thing()
+			"start", "piece":
+				var c := _sel_cell(selection)
+				_insp_box.add_child(MakerUI.label("Party start" if selection.type == "start" else String(doc.data[selection.list][selection.i].id), 15, MakerUI.INK, true))
+				_insp_box.add_child(MakerUI.label("cell %d, %d  ·  drag it to move it" % [c.x, c.y], 12, MakerUI.DIM))
+	_insp_box.add_child(MakerUI.spacer(0, 6))
+	var d := MakerUI.Drawer.new("outline", "On this map", -1, true, 13)
+	_insp_box.add_child(d)
+	_outline = ItemList.new()
+	_outline.auto_height = true
+	_outline.focus_mode = Control.FOCUS_NONE
+	_outline.item_clicked.connect(func(i: int, _p: Vector2, _b: int) -> void:
+		var sel: Dictionary = _outline_sel[i]
+		_select(sel)
+		_look_at(_sel_cell(sel)))
+	d.body.add_child(_outline)
+	_refresh_outline()
+
+
+## The named things on the map: interactables, blobs and props with an id or a note.
+func _refresh_outline() -> void:
+	if _outline == null or not is_instance_valid(_outline):
+		return
+	_outline.clear()
+	_outline_sel.clear()
+	if doc.kind == "explore":
+		var things := _things()
+		for i in things.size():
+			var t: Dictionary = things[i]
+			_outline.add_item("%s   %s%s" % [t.id, t.kind, "   ✎" if String(t.get("note", "")) != "" else ""])
+			_outline_sel.append({"type": "thing", "i": i})
+	var anchors: Array = doc.grid.props.keys()
+	anchors.sort()
+	for a: Vector2i in anchors:
+		var p: Dictionary = doc.grid.props[a]
+		if p.get("blob", false) or String(p.get("id", "")) != "" or String(p.get("note", "")) != "":
+			_outline.add_item("%s%s" % [_prop_title(p), "   ✎" if String(p.get("note", "")) != "" else ""])
+			_outline_sel.append({"type": "prop", "cell": a})
+	if _outline.item_count == 0:
+		_outline.add_item("(no named things yet)")
+		_outline.set_item_disabled(0, true)
+		_outline_sel.append({})
+	for i in _outline_sel.size():
+		if _outline_sel[i] == selection and not selection.is_empty():
+			_outline.select(i)
+
+
+func _row(label: String, c: Control) -> Control:
+	var row := HBoxContainer.new()
+	var l := MakerUI.label(label, 12, MakerUI.DIM)
+	l.custom_minimum_size.x = 64
+	row.add_child(l)
+	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(c)
+	_insp_box.add_child(row)
+	return c
+
+
+func _line_field(label: String, value: String, placeholder: String, commit: Callable) -> LineEdit:
+	var e := LineEdit.new()
+	e.text = value
+	e.placeholder_text = placeholder
+	e.text_submitted.connect(func(t: String) -> void:
+		commit.call(t)
+		e.release_focus())
+	e.focus_exited.connect(func() -> void:
+		if e.text != value:
+			commit.call(e.text))
+	_row(label, e)
+	return e
+
+
+func _note_field(value: String, commit: Callable) -> void:
+	_insp_box.add_child(MakerUI.label("note for Claude", 12, MakerUI.DIM))
+	var t := TextEdit.new()
+	t.text = value
+	t.placeholder_text = "what it should do or look like, e.g. barred from the other side; a strong character can smash it"
+	t.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	t.custom_minimum_size.y = 84
+	t.focus_exited.connect(func() -> void:
+		if t.text != value:
+			commit.call(t.text))
+	_insp_box.add_child(t)
+
+
+func _num_field(label: String, value: float, lo: float, hi: float, step: float, commit: Callable) -> void:
+	var s := SpinBox.new()
+	s.min_value = lo
+	s.max_value = hi
+	s.step = step
+	s.value = value
+	s.value_changed.connect(func(v: float) -> void: commit.call(v))
+	_row(label, s)
+
+
+func _inspect_prop() -> void:
+	var a: Vector2i = selection.cell
+	var p: Dictionary = doc.grid.props[a]
+	var blob: bool = p.get("blob", false)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 8)
+	var sw := ColorRect.new()
+	sw.color = CombatBoard.blob_color(String(p.get("name", ""))) if blob else MakerUI.RAISED
+	sw.custom_minimum_size = Vector2(14, 14)
+	sw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	if blob:
+		head.add_child(sw)
+	head.add_child(MakerUI.label(("Blob  " + String(p.get("name", ""))) if blob else _prop_title(p), 15, MakerUI.INK, true))
+	_insp_box.add_child(head)
+	_insp_box.add_child(MakerUI.label("cell %d, %d  ·  %dx%d  ·  %s" % [a.x, a.y, p.foot.x, p.foot.y,
+		"placeholder" if blob else String(p.sprite)], 12, MakerUI.DIM))
+	if blob:
+		_line_field("name", String(p.get("name", "")), "e.g. what it stands for", func(t: String) -> void:
+			var n := t.strip_edges()
+			if n == "":
+				return
+			_change_prop(func(q: Dictionary) -> void:
+				q["name"] = n
+				q["sprite"] = "ph_" + MakerCatalog.slug(n)))
+		var stem := String(p.sprite)
+		var has_art := BattleArt.texture(stem) != null
+		var art := MakerUI.label(("art found: %s.png" if has_art else "art goes in art/source/battle/%s.png (then it replaces the blob)") % stem, 11,
+			MakerUI.GOOD if has_art else MakerUI.DIM)
+		art.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_insp_box.add_child(art)
+		_num_field("width", p.foot.x, 1, 8, 1, func(v: float) -> void:
+			_change_prop(func(q: Dictionary) -> void: q["foot"] = Vector2i(int(v), q.foot.y)))
+		_num_field("depth", p.foot.y, 1, 8, 1, func(v: float) -> void:
+			_change_prop(func(q: Dictionary) -> void: q["foot"] = Vector2i(q.foot.x, int(v))))
+	else:
+		var n := MakerCatalog.angles(String(p.sprite) if String(p.sprite).contains("/") or doc.art_set == "" else doc.art_set + "/" + String(p.sprite)).size()
+		_insp_box.add_child(MakerUI.label("angle %d of %d%s" % [int(p.get("face", 0)) + 1, n, "  ·  mirrored" if p.get("flip", false) else ""], 12, MakerUI.DIM))
+		_line_field("id", String(p.get("id", "")), "optional, to script it by", func(t: String) -> void:
+			var id := MakerCatalog.slug(t)
+			_change_prop(func(q: Dictionary) -> void:
+				if id == "":
+					q.erase("id")
+				else:
+					q["id"] = id))
+	_num_field("height", p.tall, 0, 4, 0.05, func(v: float) -> void:
+		_change_prop(func(q: Dictionary) -> void: q["tall"] = v))
+	_num_field("blocks sight", p.sight, 0, 4, 0.5, func(v: float) -> void:
+		_change_prop(func(q: Dictionary) -> void: q["sight"] = v))
+	var walk := CheckBox.new()
+	walk.text = "can be stood on (a rug)"
+	walk.button_pressed = p.walk
+	walk.toggled.connect(func(on: bool) -> void: _change_prop(func(q: Dictionary) -> void: q["walk"] = on))
+	_insp_box.add_child(walk)
+	_note_field(String(p.get("note", "")), func(t: String) -> void:
+		_change_prop(func(q: Dictionary) -> void:
+			if t.strip_edges() == "":
+				q.erase("note")
+			else:
+				q["note"] = t.strip_edges()))
+
+
+func _inspect_thing() -> void:
+	var th: Dictionary = _things()[selection.i]
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 8)
+	head.add_child(MakerUI.label(String(th.id), 15, MakerUI.INK, true))
+	_insp_box.add_child(head)
+	_insp_box.add_child(MakerUI.label("%s  ·  cell %d, %d  ·  on %s" % [th.kind, int(th.cell[0]), int(th.cell[1]), doc.map_name], 12, MakerUI.DIM))
+	_line_field("id", String(th.id), "unique on this map", func(t: String) -> void:
+		var id := MakerCatalog.slug(t)
+		if id == "" or id == th.id:
+			return
+		if _unique_id(id) != "%s_01" % id and _id_taken(id):
+			_say("another thing on this map is already called " + id)
+			_build_inspector()
+			return
+		_set_thing("id", id))
+	var kind := OptionButton.new()
+	for k in MakerCatalog.THING_KINDS:
+		kind.add_item(k)
+	kind.select(maxi(0, MakerCatalog.THING_KINDS.find(String(th.kind))))
+	kind.item_selected.connect(func(i: int) -> void: _set_thing("kind", MakerCatalog.THING_KINDS[i]))
+	_row("kind", kind)
+	var ev := OptionButton.new()
+	ev.add_item("(none)")
+	var ids := _event_ids()
+	for id in ids:
+		ev.add_item(id)
+		if id == String(th.get("event", "")):
+			ev.select(ev.item_count - 1)
+	ev.item_selected.connect(func(i: int) -> void: _set_thing("event", "" if i == 0 else ids[i - 1]))
+	_row("event", ev)
+	if th.kind == "enter":
+		var to := OptionButton.new()
+		to.add_item("(pick a map)")
+		var maps := ExploreMap.list_maps()
+		for m in maps:
+			to.add_item(m)
+			if m == String(th.get("to", "")):
+				to.select(to.item_count - 1)
+		to.item_selected.connect(func(i: int) -> void: _set_thing("to", "" if i == 0 else maps[i - 1]))
+		_row("leads to", to)
+		var at: Array = th.get("at", [-1, -1])
+		_num_field("arrive x", int(at[0]), -1, MAX_SIZE, 1, func(v: float) -> void: _set_thing("at", [int(v), int(th.get("at", [-1, -1])[1])]))
+		_num_field("arrive y", int(at[1]), -1, MAX_SIZE, 1, func(v: float) -> void: _set_thing("at", [int(th.get("at", [-1, -1])[0]), int(v)]))
+	_line_field("gone if", String(th.get("once", "")), "flags, a|b: once any is set it's gone", func(t: String) -> void: _set_thing("once", t.strip_edges()))
+	_note_field(String(th.get("note", "")), func(t: String) -> void: _set_thing("note", t.strip_edges()))
+
+
+func _id_taken(id: String) -> bool:
+	for t in _things():
+		if String(t.id) == id:
+			return true
+	for a: Vector2i in doc.grid.props:
+		if String(doc.grid.props[a].get("id", "")) == id:
+			return true
+	return false
+
+
+func _set_thing(key: String, value: Variant) -> void:
+	if not _sel_valid() or selection.type != "thing":
+		return
+	_push_undo()
+	var th: Dictionary = _things()[selection.i]
+	if (value is String and value == "" and key in ["note", "once"]):
+		th.erase(key)
+	else:
+		th[key] = value
+	_refresh_marks()
+	_build_inspector()
+
+
+func _event_ids() -> Array[String]:
+	var out: Array[String] = []
+	for row in CsvTable.load_rows("res://data/explore_events.csv"):
+		out.append(String(row.id))
+	return out
+
+
+# --- map page -----------------------------------------------------------------------------
+
+func _build_map_page(body: VBoxContainer) -> void:
+	var m := MakerUI.Drawer.new("map/file", "Map", -1, true, 14)
+	body.add_child(m)
 	_name_edit = LineEdit.new()
-	_name_edit.placeholder_text = "map name"
+	_name_edit.placeholder_text = "map name, e.g. goblin_cave_01"
 	_name_edit.text_changed.connect(func(t: String) -> void: if not _syncing: doc.map_name = t)
-	rb.add_child(_name_edit)
+	m.body.add_child(_name_edit)
 	_kind_pick = OptionButton.new()
 	_kind_pick.add_item("battle map (data/maps)")
 	_kind_pick.add_item("explore map (data/explore)")
 	_kind_pick.item_selected.connect(func(i: int) -> void:
 		if not _syncing:
 			doc.kind = MapDoc.KINDS[i]
-			_refresh_marks())
-	rb.add_child(_kind_pick)
+			selection = {}
+			_refresh_marks()
+			_build_inspector()
+			_build_catalog())
+	m.body.add_child(_kind_pick)
 	var size_row := HBoxContainer.new()
-	rb.add_child(size_row)
+	m.body.add_child(size_row)
+	size_row.add_child(MakerUI.label("size", 12, MakerUI.DIM))
 	_w_spin = _spin(size_row, 6, MAX_SIZE, 1, 22)
+	size_row.add_child(MakerUI.label("x", 12, MakerUI.DIM))
 	_h_spin = _spin(size_row, 6, MAX_SIZE, 1, 20)
-	_button(size_row, "RESIZE", _resize)
-	rb.add_child(_label("LOOK", 12, ACCENT))
+	var rs := Button.new()
+	rs.text = "Resize"
+	rs.pressed.connect(_resize)
+	size_row.add_child(rs)
+	var lk := MakerUI.Drawer.new("map/look", "Look", -1, true, 14)
+	body.add_child(lk)
 	_set_pick = OptionButton.new()
 	_set_pick.add_item("forest")
 	for s in BattleArt.sets():
@@ -737,106 +1972,93 @@ func _build_ui() -> void:
 		doc.art_set = "" if i == 0 else _set_pick.get_item_text(i)
 		board.art_set = doc.art_set
 		_sync_ui())
-	_labeled(rb, "tiles", _set_pick)
+	_labeled(lk.body, "tiles", _set_pick)
 	_look_pick = OptionButton.new()
 	_look_pick.add_item("as the tiles")
 	for id in MapLook.ids():
 		_look_pick.add_item(id)
 	_look_pick.item_selected.connect(func(i: int) -> void:
 		_set_look_field("id", null if i == 0 else _look_pick.get_item_text(i)))
-	_labeled(rb, "look", _look_pick)
-	_floor_spin = _spin_row(rb, "cliff depth", -12, -1, 1, func(v: float) -> void: _set_look_field("floor", int(v)))
-	_skirt_spin = _spin_row(rb, "forest rings", 0, 5, 1, func(v: float) -> void: _set_look_field("skirt", int(v)))
-	_strange_spin = _spin_row(rb, "strangeness", 0, 1, 0.05, func(v: float) -> void:
+	_labeled(lk.body, "look", _look_pick)
+	var vrow := HBoxContainer.new()
+	lk.body.add_child(vrow)
+	_text_button(vrow, "Use this view as the map's angle", func() -> void:
+		_push_undo()
+		doc.view = board.rot
+		_say("players see this map from this angle now (turn %d)" % doc.view))
+	_text_button(vrow, "Back to it", func() -> void: board.rot = doc.view)
+	_floor_spin = _spin_row(lk.body, "cliff depth", -12, -1, 1, func(v: float) -> void: _set_look_field("floor", int(v)))
+	_skirt_spin = _spin_row(lk.body, "forest rings", 0, 5, 1, func(v: float) -> void: _set_look_field("skirt", int(v)))
+	_strange_spin = _spin_row(lk.body, "strangeness", 0, 1, 0.05, func(v: float) -> void:
 		if _syncing:
 			return
 		doc.strangeness = v
 		board.strangeness = v)
-	rb.add_child(_label("GENERATE", 12, ACCENT))
-	_seed_spin = _spin_row(rb, "seed", 1, 99999, 1, func(_v: float) -> void: pass)
+	var gen := MakerUI.Drawer.new("map/gen", "Generate", -1, not _closed.has("map/gen"), 14)
+	gen.toggled_open.connect(_on_drawer)
+	body.add_child(gen)
+	_seed_spin = _spin_row(gen.body, "seed", 1, 99999, 1, func(_v: float) -> void: pass)
 	_seed_spin.value = gen_seed
-	_button(rb, "NEW VALLEY (W x H)", new_valley)
-	_button(rb, "NEXT SEED", func() -> void:
+	var grow := HBoxContainer.new()
+	gen.body.add_child(grow)
+	_text_button(grow, "New valley", new_valley)
+	_text_button(grow, "Next seed", func() -> void:
 		_seed_spin.value += 1
 		new_valley())
-	_button(rb, "ROUGHEN OUTLINE", func() -> void:
+	var grow2 := HBoxContainer.new()
+	gen.body.add_child(grow2)
+	_text_button(grow2, "Roughen outline", func() -> void:
 		_push_undo()
 		MapOps.roughen(doc.grid, int(_seed_spin.value) + 17, 0.45)
 		_refresh_marks())
-	_button(rb, "LINK WITH STAIRS", func() -> void:
+	_text_button(grow2, "Link with stairs", func() -> void:
 		_push_undo()
-		_status.text = "placed %d stairs" % MapOps.link(doc.grid, int(_seed_spin.value)))
+		_say("placed %d stairs" % MapOps.link(doc.grid, int(_seed_spin.value))))
 	var tpl_row := HBoxContainer.new()
-	rb.add_child(tpl_row)
+	gen.body.add_child(tpl_row)
 	_recipe_pick = OptionButton.new()
 	for r in MapRecipes.names():
 		_recipe_pick.add_item(r)
 	_recipe_pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tpl_row.add_child(_recipe_pick)
-	_button(tpl_row, "TEMPLATE", new_from_recipe)
-	rb.add_child(_label("VIEW", 12, ACCENT))
-	_grid_check = CheckBox.new()
-	_grid_check.text = "grid lines (G)"
-	_grid_check.button_pressed = true
-	_grid_check.toggled.connect(func(on: bool) -> void: board.show_grid = on)
-	rb.add_child(_grid_check)
-	_height_check = CheckBox.new()
-	_height_check.text = "height numbers"
-	_height_check.toggled.connect(func(on: bool) -> void: overlay.show_heights = on)
-	rb.add_child(_height_check)
-	_button(rb, "FIT VIEW (space)", _fit_view)
-
-	# Bottom: what's under the cursor.
-	var bottom := _panel(_root, 4)
-	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	bottom.offset_top = -BOTTOM_H
-	_status = _label("", 12, INK)
-	bottom.add_child(_status)
-	_set_tool(tool)
+	_text_button(tpl_row, "Template", new_from_recipe)
+	var keys := MakerUI.Drawer.new("map/keys", "Keys", -1, not _closed.has("map/keys"), 14)
+	keys.toggled_open.connect(_on_drawer)
+	body.add_child(keys)
+	var k := MakerUI.label("Drag paints, right drag does the opposite.\nShift drag, middle drag or two fingers: pan. Arrows pan too.\nWheel or pinch: zoom. Space: fit.\nV select, B place, X erase, 1-4 sculpt, P ground, L path, W river, T stairs, C cut, F fill, Z zone.\nR turn, M mirror, Del delete, Esc deselect, ctrl D copy to the stamp, alt click pick up.\n[ ] brush size, Q turn the view, G grid, H hide panels.\nctrl Z undo, ctrl shift Z redo, ctrl S save. F8 comes back here after a play test.", 12, MakerUI.DIM)
+	k.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	keys.body.add_child(k)
 
 
-func _refresh_load_menu() -> void:
-	_load_pick.clear()
-	_load_pick.add_item("OPEN MAP...")
-	for k in MapDoc.list_all():
-		_load_pick.add_item(k)
-	_load_pick.select(0)
+func _fill_open_menu() -> void:
+	_open_menu.clear()
+	var i := 0
+	var last := ""
+	for key in MapDoc.list_all():
+		var group := key.get_slice("/", 0)
+		if group != last:
+			_open_menu.add_separator("battle maps" if group == "maps" else "explore maps")
+			i += 1
+			last = group
+		_open_menu.add_item(key.get_slice("/", 1), i)
+		_open_menu.set_item_metadata(_open_menu.item_count - 1, key)
+		i += 1
 
 
-func _on_load(i: int) -> void:
-	if i <= 0:
-		return
-	var d := MapDoc.load_path(_load_pick.get_item_text(i))
-	_load_pick.select(0)
+func _on_open_menu(id: int) -> void:
+	var key := String(_open_menu.get_item_metadata(_open_menu.get_item_index(id)))
+	var d := MapDoc.load_path(key)
 	if d == null:
-		_status.text = "could not read that map"
+		_say("could not read that map")
 		return
 	_open(d)
-	_status.text = "opened " + d.key()
+	_say("opened " + d.key())
 
 
-func _panel(parent: Control, margin := 8.0) -> PanelContainer:
-	var p := PanelContainer.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = PANEL
-	sb.set_content_margin_all(margin)
-	sb.content_margin_left = 8
-	p.add_theme_stylebox_override("panel", sb)
-	parent.add_child(p)
-	return p
-
-
-func _label(text: String, size: int, col: Color) -> Label:
-	var l := Label.new()
-	l.text = text
-	l.add_theme_font_size_override("font_size", size)
-	l.add_theme_color_override("font_color", col)
-	return l
-
-
-func _button(parent: Control, text: String, cb: Callable) -> Button:
+func _text_button(parent: Control, text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.pressed.connect(cb)
 	parent.add_child(b)
 	return b
@@ -844,8 +2066,8 @@ func _button(parent: Control, text: String, cb: Callable) -> Button:
 
 func _labeled(parent: Control, text: String, c: Control) -> void:
 	var row := HBoxContainer.new()
-	var l := _label(text, 12, INK)
-	l.custom_minimum_size.x = 44
+	var l := MakerUI.label(text, 12, MakerUI.DIM)
+	l.custom_minimum_size.x = 50
 	row.add_child(l)
 	c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(c)
@@ -864,7 +2086,7 @@ func _spin(parent: Control, lo: float, hi: float, step: float, v: float) -> Spin
 
 func _spin_row(parent: Control, text: String, lo: float, hi: float, step: float, cb: Callable) -> SpinBox:
 	var row := HBoxContainer.new()
-	var l := _label(text, 12, INK)
+	var l := MakerUI.label(text, 12, MakerUI.DIM)
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(l)
 	var s := _spin(row, lo, hi, step, lo)

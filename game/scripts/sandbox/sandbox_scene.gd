@@ -425,6 +425,7 @@ func _enter_edit() -> void:
 	_play_panel.visible = false
 	if preview == null:
 		preview = CombatBoard.new()
+		preview.can_turn = true
 		preview.backdrop = true
 		preview.edit_void = true
 		add_child(preview)
@@ -477,9 +478,7 @@ func _restart() -> void:
 
 
 func _turn() -> void:
-	if battle:
-		battle.board.turn()
-	elif preview:
+	if preview and not battle:  # editing the map only; fights keep the map's one angle
 		preview.turn()
 
 
