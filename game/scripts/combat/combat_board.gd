@@ -15,13 +15,14 @@ const BASE := -0.6  ## how far below height 0 the block sides go
 const PLATE_SCALE := 1.35  ## backdrop plate width as a multiple of the floor's footprint
 const FADE_RINGS := 4  ## empty cells this far out from the floor fade into the dark
 const FADE_DARK := Color(0.1, 0.15, 0.2)
+const FRONT_BAND := 3  ## outer-ring cells within this many depth steps of the floor front get the front treeline
 const COBBLE_ALPHA := 0.32  ## the faint cobble hairlines on some tops
 const FG_TREE_TINT := Color(0.55, 0.6, 0.72)  ## the front treeline: regular pines, about halfway toward navy
 const SKY_SCALE := 1.9  ## skyline width as a multiple of the floor's footprint
 const SKY_LOW := 0.6  ## how much of the skyline's height sits above the board's centre
 const SCENERY_RINGS := 2  ## empty cells this many steps out from the floor carry scenery
 const LOWLAND_DROP := 1.6  ## with a skyline, the floor's cliffs drop this far below the base to the lowland
-const TIER_DROP := 2.6  ## each further ring of lowland sits this far below the one before (a stepped descent)
+const TIER_DROP := 3.4  ## each further ring of lowland sits this far below the one before (a stepped descent)
 const NONE := Vector2i(-1, -1)
 
 const TOP_COLORS := {
@@ -80,6 +81,7 @@ var fog := {}
 var fog_on := false
 var cull := Rect2()  ## board-local area worth drawing (big maps); empty draws everything
 var show_grid := true  ## cell outlines; off, only real ledges keep their rim (exploration hides the grid)
+var surround := true  ## the skyline, lowland and scenery around the floor; off draws the floor alone
 var can_turn := true  ## false on maps whose building sprites only read from the front
 
 
@@ -228,7 +230,7 @@ func _draw() -> void:
 	BattleArt.use_set(art_set)
 	if grid == null:
 		return
-	var has_sky := BattleArt.texture("skyline", false, art_set) != null
+	var has_sky := surround and BattleArt.texture("skyline", false, art_set) != null
 	if backdrop or has_sky or BattleArt.texture("backdrop", false, art_set) != null:
 		_draw_backdrop()
 	_floor_base = BASE - LOWLAND_DROP if has_sky else BASE
@@ -244,7 +246,7 @@ func _draw() -> void:
 		for c: Vector2i in layers[depth]:
 			if rings.has(c):
 				# The outer ring in front of the floor goes dark, with treeline silhouettes, so the foreground frames the floor.
-				var in_front: bool = rings[c] == SCENERY_RINGS and depth_of(c.x, c.y) > front
+				var in_front: bool = rings[c] == SCENERY_RINGS and depth_of(c.x, c.y) >= front - FRONT_BAND
 				_ring_ground(c, rings[c], in_front)
 				_ring_faces(c, rings)
 				_scenery(c, rings[c], in_front)
@@ -722,7 +724,7 @@ func _ring_ground(c: Vector2i, ring_i: int, dark := false) -> void:
 ## cell gets its own depth within that band, so the drops are uneven instead of a stack of even steps.
 func _ring_height(c: Vector2i, ring_i: int) -> float:
 	var v := float(_hash(c) % 7) / 6.0  # 0 to 1, fixed for the cell
-	return _floor_base - TIER_DROP * (ring_i - 1) - v * (0.5 + 1.2 * (ring_i - 1))
+	return _floor_base - TIER_DROP * (ring_i - 1) - v * (0.8 + 1.4 * (ring_i - 1))
 
 
 ## The height a floor cell's cliff drops to beside a lowland cell.
@@ -849,7 +851,7 @@ func _cobble(top: PackedVector2Array, col: Color, seed_v: int) -> void:
 ## behind the middle, a few light shafts and drifting motes. Colours drift toward lavender with strangeness.
 ## A set with a backdrop plate draws that instead.
 func _draw_backdrop() -> void:
-	var sky := BattleArt.texture("skyline", false, art_set)
+	var sky := BattleArt.texture("skyline", false, art_set) if surround else null
 	if sky != null:
 		_draw_ground_fade(_draw_skyline(sky))
 	var plate := BattleArt.texture("backdrop", false, art_set)
