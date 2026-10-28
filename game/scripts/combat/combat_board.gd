@@ -20,7 +20,7 @@ const FG_TREE_TINT := Color(0.55, 0.6, 0.72)  ## the front treeline: regular pin
 const SKY_SCALE := 1.9  ## skyline width as a multiple of the floor's footprint
 const SKY_LOW := 0.6  ## how much of the skyline's height sits above the board's centre
 const SCENERY_RINGS := 2  ## empty cells this many steps out from the floor carry scenery
-const LOWLAND_DROP := 1.6  ## with a skyline, the floor's cliffs drop this far below the base to the lowland
+const LOWLAND_DROP := 2.6  ## with a skyline, the floor's cliffs drop this far below the base to the lowland
 const TIER_DROP := 3.4  ## each further ring of lowland sits this far below the one before (a stepped descent)
 const NONE := Vector2i(-1, -1)
 
@@ -735,8 +735,9 @@ func _edge_height(n: Vector2i) -> float:
 
 ## Cliff faces from a lowland cell down to any lower lowland cell in front of it.
 func _ring_faces(c: Vector2i, rings: Dictionary) -> void:
-	var side_tex := BattleArt.side(CombatGrid.T.GRASS, "")
-	var col := _terrain_color(CombatGrid.T.GRASS).darkened(0.35)
+	# Grey rock, not earth: the lowland's cliffs read as the reference's stone drops, with grass only on the tops.
+	var side_tex := BattleArt.side(CombatGrid.T.ROCK, "")
+	var col := _terrain_color(CombatGrid.T.ROCK).darkened(0.35)
 	var top := _ring_height(c, rings[c])
 	for shade in [false, true]:
 		var d := front_dir(shade)
@@ -747,7 +748,7 @@ func _ring_faces(c: Vector2i, rings: Dictionary) -> void:
 		if bottom >= top:
 			continue
 		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
-		var mod := Color(_tint(CombatGrid.T.GRASS) * (0.72 if shade else 1.0), 1.0)
+		var mod := Color(_tint(CombatGrid.T.ROCK) * (0.72 if shade else 1.0), 1.0)
 		_face(side[0], side[1], top, bottom, col, _hash(c) + (7 if shade else 0), false, false, side_tex, mod)
 
 
@@ -769,7 +770,7 @@ func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 	var pick := (seed_v + ring_i) % 5
 	var sprite := ""
 	if ring_i == 1:
-		sprite = ["prop_boulder", "prop_bush", "prop_bush"][pick % 3] if pick < 3 else ""
+		sprite = ["prop_boulder", "prop_bush", "prop_boulder", "prop_pine_2", ""][pick]
 	else:
 		sprite = ["prop_pine_1", "prop_pine_2", "prop_pine_1", "prop_boulder"][pick % 4] if pick < 4 else ""
 	if sprite == "":
@@ -777,7 +778,7 @@ func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 	var tex := BattleArt.texture(sprite)
 	if tex == null:
 		return
-	var tall := TW * (0.9 if sprite.begins_with("prop_pine") else 0.5)
+	var tall := TW * (0.9 if sprite.begins_with("prop_pine") else 0.5 if sprite == "prop_bush" else 0.75)
 	var wide := tall * tex.get_width() / float(tex.get_height())
 	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _ring_height(c, ring_i))
 	Pawn.ellipse(self, base, wide * 0.36, wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
