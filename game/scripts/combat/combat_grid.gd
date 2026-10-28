@@ -16,6 +16,7 @@ const RUIN_RISE := 2
 const STAIRS_CLIMB := 2
 const MAX_HEIGHT := 8  ## editor and saved maps
 const GEN_MAX_HEIGHT := 4  ## the random generator stays gentle; stairs keep it crossable
+const PLATEAU_LEVEL := 4  ## the high floor of a plateau map (see _plateau)
 const DEPLOY_COLS := 2  ## columns kept clear at each side for deployment
 const NONE_CELL := Vector2i(-999, -999)
 
@@ -45,10 +46,10 @@ static func flat(width: int, height: int) -> CombatGrid:
 
 
 ## Seeded map. Retries until the two deploy zones connect for a jump-1 unit. outline = irregular floor edge (IslandShape); false gives a plain rectangle.
-static func generate(seed_value: int, width := 10, height := 8, strangeness := 0.0, outline := true, relief := 1.0) -> CombatGrid:
+static func generate(seed_value: int, width := 10, height := 8, strangeness := 0.0, outline := true, relief := 1.0, plateau := false) -> CombatGrid:
 	for attempt in 20:
 		var s := seed_value + attempt * 7919
-		var g := _try(s, width, height, strangeness)
+		var g := _plateau(s, width, height) if plateau else _try(s, width, height, strangeness)
 		if outline:  # an irregular floor outline (IslandShape), so the map is not a plain rectangle
 			IslandShape.carve(g, s, DEPLOY_COLS)
 		if g.connected(1):
@@ -99,6 +100,62 @@ static func _try(seed_value: int, width: int, height: int, strangeness: float) -
 			for d in CombatRules.DIRS:
 				var n: Vector2i = c + d
 				if g.in_bounds(n) and g.passable(n) and g.height_at(n) - g.height_at(c) == 2 and rng.randf() < 0.5:
+					g.set_terrain(c, T.STAIRS)
+					break
+	return g
+
+
+## A plateau map, the layout of the forest reference: one broad high floor in the middle, a terrace stepping
+## down to the lowland, a river cut through the terrace with fords left open, a few paths across the top, and stairs
+## wherever the ground jumps two levels.
+static func _plateau(seed_value: int, width: int, height: int) -> CombatGrid:
+	var g := flat(width, height)
+	var hn := FastNoiseLite.new()  # how far the ground rises: a lumpy ellipse
+	hn.seed = seed_value
+	hn.frequency = 0.2
+	var tn := FastNoiseLite.new()  # ground cover: forest patches and boulders
+	tn.seed = seed_value + 101
+	tn.frequency = 0.3
+	var rn := FastNoiseLite.new()  # the river's line
+	rn.seed = seed_value + 203
+	rn.frequency = 0.18
+	var pn := FastNoiseLite.new()  # the paths across the top
+	pn.seed = seed_value + 307
+	pn.frequency = 0.25
+	var cx := (width - 1) * 0.5
+	var cy := (height - 1) * 0.5
+	for y in height:
+		for x in width:
+			var c := Vector2i(x, y)
+			var edge := x < DEPLOY_COLS or x >= width - DEPLOY_COLS
+			var r := Vector2((x - cx) / cx, (y - cy) / cy).length()
+			var v := r + hn.get_noise_2d(x, y) * 0.25
+			var lvl := 0
+			if not edge and v < 0.7:
+				lvl = PLATEAU_LEVEL
+			elif not edge and v < 0.95:
+				lvl = PLATEAU_LEVEL - 2
+			g.set_height(c, lvl)
+			var tv := tn.get_noise_2d(x, y)
+			var t := T.GRASS
+			if lvl == PLATEAU_LEVEL - 2 and absf(rn.get_noise_2d(x, y)) < 0.09 and tv < 0.2:
+				t = T.WATER  # the river, with fords where the noise is high
+				g.set_height(c, 0)
+			elif lvl > 0 and tv > 0.35:
+				t = T.FOREST
+			elif lvl == PLATEAU_LEVEL and absf(pn.get_noise_2d(x, y)) < 0.07:
+				t = T.ROAD
+			g.terrain[g.idx(c)] = t
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for y in height:  # some two-level jumps get stairs; the rest stay cliffs, so the terraces read as drops
+		for x in width:
+			var c := Vector2i(x, y)
+			if g.terrain_at(c) != T.GRASS and g.terrain_at(c) != T.ROAD:
+				continue
+			for d in CombatRules.DIRS:
+				var n: Vector2i = c + d
+				if g.in_bounds(n) and g.passable(n) and g.height_at(n) - g.height_at(c) == 2 and rng.randf() < 0.3:
 					g.set_terrain(c, T.STAIRS)
 					break
 	return g

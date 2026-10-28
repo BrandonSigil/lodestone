@@ -58,6 +58,7 @@ var _mercy_check: CheckBox
 var _dice_check: CheckBox
 var _fights_spin: SpinBox
 var _relief_spin: SpinBox  ## height scale for generated maps, times ten (10 = normal)
+var _plateau_on := false  ## GENERATE makes a plateau map (CombatGrid._plateau) instead of noise hills
 var _sim_label: Label
 var _syncing := false
 
@@ -283,6 +284,7 @@ func _build_ui() -> void:
 	rb.add_child(_title("BALANCE"))
 	_relief_spin = _dial(rb, "generated relief (x10)", 10, 30, 5)
 	_relief_spin.value = 10
+	_check(rb, "plateau layout (generate)", func(on: bool) -> void: _plateau_on = on)
 	_fights_spin = _dial(rb, "fights to simulate", 10, 500, 10)
 	_fights_spin.value = 50
 	_button(rb, "RUN AI vs AI", _run_sim)
@@ -633,7 +635,7 @@ func _resize() -> void:
 
 
 func _generate() -> void:
-	var g := CombatGrid.generate(int(_seed_spin.value), int(_w_spin.value), int(_h_spin.value), setup.strangeness, true, _relief_spin.value / 10.0)
+	var g := CombatGrid.generate(int(_seed_spin.value), int(_w_spin.value), int(_h_spin.value), setup.strangeness, true, _relief_spin.value / 10.0, _plateau_on)
 	setup.grid = g
 	setup.clean()
 	# Keep the same pieces, moved onto the new deploy zones.

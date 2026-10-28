@@ -230,12 +230,15 @@ func _draw() -> void:
 	if grid == null:
 		return
 	var has_sky := surround and BattleArt.texture("skyline", false, art_set) != null
+	# The lowland, its scenery and the treeline frame go around the floor on the forest biome (the base art) and
+	# on any set with a skyline. The other sets stay on their own look until they're worked on.
+	var lowland := surround and (has_sky or art_set == "")
 	if backdrop or has_sky or BattleArt.texture("backdrop", false, art_set) != null:
 		_draw_backdrop()
-	_floor_base = BASE - LOWLAND_DROP if has_sky else BASE
-	var rings := _ring_cells() if has_sky else {}
+	_floor_base = BASE - LOWLAND_DROP if lowland else BASE
+	var rings := _ring_cells() if lowland else {}
 	_ring_map = rings
-	var front_y := _floor_mid_y() if has_sky else 0.0
+	var front_y := _floor_mid_y() if lowland else 0.0
 	var layers := _layers()
 	for c: Vector2i in rings:
 		if not grid.in_bounds(c):  # scenery beyond the grid joins the depth order too
