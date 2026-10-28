@@ -1,0 +1,23 @@
+LODESTONE SNOW PROPS, VARIANTS v1 (painterly, low detail, game-ready)
+
+Image 1 = the props to match: art/picsart/out/snow-batch-v5/snow-sides-props-v4_v1.png, rows 2 and 3. Same paint, same snow, same outline, same 2:1 view, same size per cell.
+Image 2 = the detail level: docs/art/references/style-flat-forest-tiles.png. A few big flat washes, two or three soft marks.
+Image 3 = the key art: docs/art/characters/00-reference-sheet.png.
+
+Aspect 3:2, plain cream paper background (#eae8d6), no title, no labels, no text anywhere.
+Layout: a 5 x 3 grid of equal cells with wide cream gaps. Each prop stands alone in the middle of its cell, base at the bottom centre. Nothing crosses a cell edge.
+   row 1: snow pine A, snow pine B (a little taller and thinner), snow pine C (shorter and rounder), snow pine D (leaning a little, fewer branches), young snow pine (small)
+   row 2: snow bush A, snow bush B (wider and lower), snow bush C (two clumps), snow-capped boulder A, snow-capped boulder B (flatter, two stones)
+   row 3: ice crystal cluster, snow-covered stone pillar, ice spire, snow-covered stone ruin arch, frozen tree stump with snow
+
+Variants: the four pines are clearly the same kind of tree, the same colours and the same paint, but each has its own silhouette, so a forest of them does not look copied. The same for the three bushes and the two boulders.
+
+NO GROUND (IMPORTANT): each prop stands directly on the cream paper. No ground patch, no snow pile, no white diamond, no shadow, no tile under it. The bottom of the trunk or rock touches the paper.
+
+OUTLINE ALL ROUND (IMPORTANT): a soft dark outline (#373335) goes all the way round every prop, including the snowy tip of every tree and the top of every snow cap. Leave clear cream paper above every tree tip and around every prop.
+
+Look: every prop in 2:1 isometric 3/4 view, the angle of the game floor. One clear silhouette, two flat tones, soft brush edges. Snow cool white with pale blue shadow; pine dark green; stone slate grey with a warm touch; ice pale teal-blue. One soft sun from the upper left. No black anywhere.
+
+Avoid: ground patches, snow piles under props, diamonds or tiles under props, cast shadows, benches, carts, planters, fences, lanterns, crates, flat-on views, speckle, small pebbles, fine detail, text, labels, borders around cells, 3d render, glossy, photo, characters, people, animals, watermark, saturated red or saturated blue.
+
+CELL TO GAME FILE: row 1 -> prop_pine_1, prop_pine_2, prop_pine_3, prop_pine_4, prop_pine_5; row 2 -> prop_bush, prop_bush_2, prop_bush_3, prop_boulder, prop_boulder_2; row 3 -> prop_detail (ice crystals), prop_pillar, prop_landmark (ice spire), prop_ruin, prop_stump.

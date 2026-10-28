@@ -8,6 +8,7 @@ extends Node2D
 ## Tool labels are designer tool text, not player-facing copy, so they don't go through Txt.
 ## How to use it: docs/systems/map-maker.md. Design: docs/design/map-look.md. Research: docs/research/map-editors.md.
 
+const UI_SCALE := 0.8  ## the maker's bars, rail, panels and text draw at this share of their size; the map keeps its own
 const RAIL_W := 56.0
 const DOCK_W := 324.0
 const TOP_H := 48.0
@@ -29,6 +30,8 @@ const TOOLS := [
 	["select", "select", "V", "Select", "click anything placed to select it, drag to move it. R turns, M mirrors, Del deletes, ctrl D copies it to the stamp. Alt click with any tool: pick up what's under the cursor."],
 	["stamp", "stamp", "B", "Place", "place the asset picked in the catalog (or drag a tile onto the map). Drag places a row of small props. R turns, M mirrors. Right click: back to select."],
 	["erase", "erase", "X", "Erase", "click or drag: take away props, blobs and things under the brush."],
+	["party", "party", "U", "Party", "click a walkable cell to stand the party member picked below there (replaces what stands there). Right click: remove what stands there. Battle maps only."],
+	["enemy", "enemy", "E", "Enemy", "click a walkable cell to place the enemy picked below there (replaces what stands there). Right click: remove what stands there. Battle maps only."],
 	["|"],
 	["raise", "raise", "1", "Raise", "click or drag: up one level (each cell once per stroke). Right: down."],
 	["lower", "lower", "2", "Lower", "click or drag: down one level. Right: up."],
@@ -44,6 +47,7 @@ const TOOLS := [
 	["fill", "fill", "F", "Fill", "give holes ground again at the height around them. Right: cut."],
 	["zone", "zone", "Z", "Zone", "paint another tile set onto cells (blend forest into ruins). Right: back to the map's set."],
 ]
+const FIGHT_LABELS := {"hp_pct": "hp %", "attack": "attack", "defense": "defense", "damage": "damage", "move": "move"}
 const GROUNDS := [["grass", T.GRASS], ["forest", T.FOREST], ["road", T.ROAD], ["stone", T.STONE], ["rock", T.ROCK], ["ruin", T.RUIN], ["water", T.WATER]]
 const PATH_GROUNDS := [["road", T.ROAD], ["stone", T.STONE], ["grass", T.GRASS]]
 const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "paint", "path", "river", "cut", "fill", "zone"]
@@ -126,6 +130,11 @@ var _name_edit: LineEdit
 var _kind_pick: OptionButton
 var _set_pick: OptionButton
 var _look_pick: OptionButton
+var _party_pick: OptionButton
+var _enemy_pick: OptionButton
+var _fight_drawer: MakerUI.Drawer
+var _fight_spins := {}  ## fight dials by "party.hp_pct", "enemy.move", "extra", "medicine", "food", "seed"
+var _fight_checks := {}  ## "counters", "mercy"
 var _w_spin: SpinBox
 var _h_spin: SpinBox
 var _floor_spin: SpinBox
@@ -141,6 +150,7 @@ func _ready() -> void:
 	board = CombatBoard.new()
 	board.can_turn = true  # an editing aid; players never turn the view
 	board.backdrop = true
+	board.wallpaper = true  # the newest look: skyline wallpaper, solid foreground band, silhouette trees
 	board.edit_void = true
 	board.show_grid = true
 	add_child(board)
@@ -154,7 +164,7 @@ func _ready() -> void:
 	if opened == null:
 		opened = MapDoc.load_path(FIRST_MAP)
 	if opened == null:
-		opened = MapDoc.create("battle", "valley_%d" % gen_seed, MapGen.valley(gen_seed), "alpine")
+		opened = MapDoc.create("battle", "valley_%d" % gen_seed, MapGen.valley(gen_seed), "snow")
 	_open(opened)
 	get_viewport().size_changed.connect(_fit_view)
 
@@ -242,7 +252,7 @@ func play_test() -> void:
 		if not FileAccess.file_exists(Game.sandbox_map):
 			Game.sandbox_map = SandboxSetup.USER_MAP_DIR + doc.map_name + ".json"
 		Game.sandbox_play = true
-		Game.go(Game.SANDBOX)
+		Game.go(Game.BATTLE)
 	else:
 		Game.ensure_run()
 		Game.explore_map = doc.map_name
@@ -255,10 +265,10 @@ func new_valley() -> void:
 	_push_undo()
 	gen_seed = int(_seed_spin.value)
 	var look_id := _look_id()
-	var g := MapGen.valley(gen_seed, int(_w_spin.value), int(_h_spin.value), look_id if look_id != "" else "alpine")
+	var g := MapGen.valley(gen_seed, int(_w_spin.value), int(_h_spin.value), look_id if look_id != "" else "snow")
 	doc.grid = g
-	if doc.art_set == "" and (look_id == "" or look_id == "alpine"):
-		doc.art_set = "alpine"
+	if doc.art_set == "" and (look_id == "" or look_id == "snow"):
+		doc.art_set = "snow"
 	board.grid = g
 	board.art_set = doc.art_set
 	if doc.map_name == "untitled" or doc.map_name.begins_with("valley_"):
@@ -277,7 +287,7 @@ func new_from_recipe() -> void:
 	_push_undo()
 	doc.grid = g
 	if doc.art_set == "":
-		doc.art_set = "alpine"
+		doc.art_set = "snow"
 	board.grid = g
 	board.art_set = doc.art_set
 	if doc.map_name == "untitled" or doc.map_name.begins_with("valley_"):
@@ -322,9 +332,14 @@ func _map_area() -> Rect2:
 	var vs := get_viewport_rect().size
 	if hide_ui:
 		return Rect2(0, 0, vs.x, vs.y)
-	var x0 := GAP * 2 + RAIL_W
-	var y0 := TOP_H + GAP * 2 + OPT_H
-	return Rect2(x0, y0, vs.x - x0 - DOCK_W - GAP * 2, vs.y - y0 - BOTTOM_H - GAP)
+	var x0 := (GAP * 2 + RAIL_W) * UI_SCALE
+	var y0 := (TOP_H + GAP * 2 + OPT_H) * UI_SCALE
+	return Rect2(x0, y0, vs.x - x0 - (DOCK_W + GAP * 2) * UI_SCALE, vs.y - y0 - (BOTTOM_H + GAP) * UI_SCALE)
+
+
+## The UI root is scaled down, so it is sized to the window in its own units: it still fills the window.
+func _fit_root() -> void:
+	_root.size = get_viewport_rect().size / UI_SCALE
 
 
 func _fit_view() -> void:
@@ -523,7 +538,7 @@ func _path_tool() -> bool:
 func _brush_cells(c: Vector2i) -> Array[Vector2i]:
 	if c == CombatBoard.NONE:
 		return []
-	if tool == "stairs":
+	if tool == "stairs" or tool == "party" or tool == "enemy":
 		return [c]
 	return MapOps.brush(doc.grid, c, radius, square)
 
@@ -606,6 +621,10 @@ func _apply(c: Vector2i, right: bool) -> void:
 	var g := doc.grid
 	if tool == "stamp":
 		_stamp(c)
+		return
+	if tool == "party" or tool == "enemy":
+		if c == _stroke.start:
+			_piece(c, right)
 		return
 	var done: Dictionary = _stroke.done
 	var cells: Array[Vector2i] = []
@@ -1114,6 +1133,65 @@ func _set_look_field(key: String, value: Variant) -> void:
 	_sync_ui()
 
 
+## Pieces edit the battle setup the map carries: the same data the combat sandbox read.
+func _setup() -> SandboxSetup:
+	var s := SandboxSetup.from_dict(doc.data) if doc.data.has("map") else SandboxSetup.new()
+	s.grid = doc.grid
+	return s
+
+
+func _store_setup(s: SandboxSetup) -> void:
+	doc.data = s.to_dict()
+
+
+func _piece(c: Vector2i, right: bool) -> void:
+	if doc.kind != "battle":
+		_say("party and enemies go on battle maps (MAP tab: kind)")
+		return
+	if not right and not doc.grid.passable(c):
+		_say("pieces stand on walkable ground")
+		return
+	var s := _setup()
+	if right:
+		s.remove_at(c)
+	elif tool == "party":
+		s.place_party(String(_party_pick.get_item_metadata(_party_pick.selected)), c)
+	else:
+		s.place_enemy(String(_enemy_pick.get_item_metadata(_enemy_pick.selected)), c)
+	_store_setup(s)
+	_refresh_marks()
+
+
+func _mods_of(s: SandboxSetup, side: String) -> Dictionary:
+	return s.party_mods if side == "party" else s.enemy_mods
+
+
+## Any fight dial change: one undo step, then the setup is written back to the map.
+func _fight_edit(edit: Callable) -> void:
+	if _syncing or doc.kind != "battle":
+		return
+	_push_undo()
+	var s := _setup()
+	edit.call(s)
+	_store_setup(s)
+
+
+func _sync_fight() -> void:
+	_fight_drawer.visible = doc.kind == "battle"
+	if doc.kind != "battle":
+		return
+	var s := _setup()
+	for key in SandboxSetup.MOD_KEYS:
+		_fight_spins["party.%s" % key].set_value_no_signal(s.party_mods[key])
+		_fight_spins["enemy.%s" % key].set_value_no_signal(s.enemy_mods[key])
+	_fight_spins["extra"].set_value_no_signal(s.extra_enemies)
+	_fight_spins["medicine"].set_value_no_signal(s.supplies["medicine"])
+	_fight_spins["food"].set_value_no_signal(s.supplies["food"])
+	_fight_spins["seed"].set_value_no_signal(s.seed_value)
+	_fight_checks["counters"].set_pressed_no_signal(s.counters)
+	_fight_checks["mercy"].set_pressed_no_signal(s.mercy)
+
+
 func _sync_ui() -> void:
 	_syncing = true
 	_name_edit.text = doc.map_name
@@ -1134,6 +1212,7 @@ func _sync_ui() -> void:
 	_skirt_spin.value = l.skirt
 	_strange_spin.value = doc.strangeness
 	_level_spin.value = level_h
+	_sync_fight()
 	_syncing = false
 	_sync_options()
 
@@ -1207,8 +1286,10 @@ func _build_ui() -> void:
 	_ui.layer = 2
 	add_child(_ui)
 	_root = Control.new()
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_root.scale = Vector2.ONE * UI_SCALE
+	_fit_root()
+	get_viewport().size_changed.connect(_fit_root)
 	_root.theme = MakerUI.make_theme()
 	_ui.add_child(_root)
 	_build_top()
@@ -1437,6 +1518,26 @@ func _build_options() -> void:
 	_icon(stamp, "mirror", "Mirror  (M)", _mirror_item, 30.0)
 	row.add_child(stamp)
 	_opt_groups["stamp"] = stamp
+	var party_row := HBoxContainer.new()
+	party_row.add_theme_constant_override("separation", 6)
+	party_row.add_child(MakerUI.label("who", 12, MakerUI.DIM))
+	_party_pick = OptionButton.new()
+	for d in Db.roster():
+		_party_pick.add_item(Txt.t(d.name_key))
+		_party_pick.set_item_metadata(_party_pick.item_count - 1, String(d.id))
+	party_row.add_child(_party_pick)
+	row.add_child(party_row)
+	_opt_groups["party"] = party_row
+	var foe_row := HBoxContainer.new()
+	foe_row.add_theme_constant_override("separation", 6)
+	foe_row.add_child(MakerUI.label("who", 12, MakerUI.DIM))
+	_enemy_pick = OptionButton.new()
+	for id in Db.class_ids():
+		_enemy_pick.add_item(id)
+		_enemy_pick.set_item_metadata(_enemy_pick.item_count - 1, id)
+	foe_row.add_child(_enemy_pick)
+	row.add_child(foe_row)
+	_opt_groups["enemy"] = foe_row
 	var sel := HBoxContainer.new()
 	sel.add_theme_constant_override("separation", 6)
 	sel.add_child(MakerUI.separator(true))
@@ -1489,6 +1590,8 @@ func _sync_options() -> void:
 	_opt_groups.path.visible = tool == "path"
 	_opt_groups.zone.visible = tool == "zone"
 	_opt_groups.stamp.visible = tool == "stamp"
+	_opt_groups.party.visible = tool == "party"
+	_opt_groups.enemy.visible = tool == "enemy"
 	_opt_groups.select.visible = tool == "select" and not selection.is_empty()
 	for k in _ground_buttons:
 		_ground_buttons[k].queue_redraw()
@@ -1980,6 +2083,11 @@ func _build_map_page(body: VBoxContainer) -> void:
 	_look_pick.item_selected.connect(func(i: int) -> void:
 		_set_look_field("id", null if i == 0 else _look_pick.get_item_text(i)))
 	_labeled(lk.body, "look", _look_pick)
+	var wall_check := CheckBox.new()
+	wall_check.text = "wallpaper and foreground"
+	wall_check.button_pressed = board.wallpaper
+	wall_check.toggled.connect(func(on: bool) -> void: board.wallpaper = on)
+	lk.body.add_child(wall_check)
 	var vrow := HBoxContainer.new()
 	lk.body.add_child(vrow)
 	_text_button(vrow, "Use this view as the map's angle", func() -> void:
@@ -1994,6 +2102,26 @@ func _build_map_page(body: VBoxContainer) -> void:
 			return
 		doc.strangeness = v
 		board.strangeness = v)
+	var fight := MakerUI.Drawer.new("map/fight", "Fight", -1, false, 14)
+	body.add_child(fight)
+	_fight_drawer = fight
+	for side in ["party", "enemy"]:
+		fight.body.add_child(MakerUI.label(side, 13, MakerUI.INK, true))
+		for key in SandboxSetup.MOD_KEYS:
+			var lo := 10.0 if key == "hp_pct" else -10.0
+			var hi := 300.0 if key == "hp_pct" else 20.0
+			_fight_spins["%s.%s" % [side, key]] = _spin_row(fight.body, FIGHT_LABELS[key], lo, hi, 1, func(v: float) -> void: _fight_edit(func(s: SandboxSetup) -> void: _mods_of(s, side)[key] = int(v)))
+	_fight_spins["extra"] = _spin_row(fight.body, "extra enemies", 0, 12, 1, func(v: float) -> void: _fight_edit(func(s: SandboxSetup) -> void: s.extra_enemies = int(v)))
+	_fight_spins["medicine"] = _spin_row(fight.body, "medicine", 0, 20, 1, func(v: float) -> void: _fight_edit(func(s: SandboxSetup) -> void: s.supplies["medicine"] = int(v)))
+	_fight_spins["food"] = _spin_row(fight.body, "food", 0, 60, 1, func(v: float) -> void: _fight_edit(func(s: SandboxSetup) -> void: s.supplies["food"] = int(v)))
+	_fight_spins["seed"] = _spin_row(fight.body, "dice seed", 1, 99999, 1, func(v: float) -> void: _fight_edit(func(s: SandboxSetup) -> void: s.seed_value = int(v)))
+	for pair in [["counters", "counterattacks"], ["mercy", "party luck after misses"]]:
+		var check := CheckBox.new()
+		check.text = pair[1]
+		var field: String = pair[0]
+		check.toggled.connect(func(on: bool) -> void: _fight_edit(func(s: SandboxSetup) -> void: s[field] = on))
+		fight.body.add_child(check)
+		_fight_checks[field] = check
 	var gen := MakerUI.Drawer.new("map/gen", "Generate", -1, not _closed.has("map/gen"), 14)
 	gen.toggled_open.connect(_on_drawer)
 	body.add_child(gen)

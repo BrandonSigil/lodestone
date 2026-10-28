@@ -38,7 +38,11 @@ var _w_spin: SpinBox
 var _h_spin: SpinBox
 var _seed_spin: SpinBox
 var _edit_panel: VBoxContainer
+var _play_only := false  ## launched from the map maker's Play test: the fight alone, editing stays in the maker
+var _right_panel: Control
+var _top_bar: HBoxContainer
 var _play_panel: VBoxContainer
+var _wallpaper_on := true  ## the newest look: every fight the sandbox starts shows the wallpaper, unless unticked
 var _spell_box: VBoxContainer  ## per-caster spell slot pickers, rebuilt when the party changes
 var _spell_sig := ""
 var _brush_buttons := {}
@@ -57,6 +61,8 @@ var _counter_check: CheckBox
 var _mercy_check: CheckBox
 var _dice_check: CheckBox
 var _fights_spin: SpinBox
+var _relief_spin: SpinBox  ## height scale for generated maps, times ten (10 = normal)
+var _plateau_on := false  ## GENERATE makes a plateau map (CombatGrid._plateau) instead of noise hills
 var _sim_label: Label
 var _syncing := false
 
@@ -78,7 +84,13 @@ func _ready() -> void:
 	_enter_edit()
 	if Game.sandbox_play:
 		Game.sandbox_play = false
+		_play_only = true
+		_mode_button.visible = false
+		_right_panel.visible = false
+		for item in _top_bar.get_children():  # only RESTART and TURN stay; the rest is editing
+			item.visible = item is Button and (item.text.begins_with("RESTART") or item.text.begins_with("TURN"))
 		_enter_play()
+		_layout()
 	get_viewport().size_changed.connect(_layout)
 
 
@@ -90,7 +102,8 @@ func _exit_tree() -> void:
 
 func play_rect() -> Rect2:
 	var vs := get_viewport_rect().size
-	return Rect2(LEFT_W, TOP_H, vs.x - LEFT_W - RIGHT_W, vs.y - TOP_H)
+	var right_w := 0.0 if _play_only else RIGHT_W
+	return Rect2(LEFT_W, TOP_H, vs.x - LEFT_W - right_w, vs.y - TOP_H)
 
 
 func _layout() -> void:
@@ -100,6 +113,7 @@ func _layout() -> void:
 		var s := clampf(minf(r.size.x / bs.x, r.size.y / bs.y) * 0.95, 0.4, 1.6)
 		preview.scale = Vector2.ONE * s
 		preview.position = r.position + (r.size - bs * s) * 0.5 - preview.board_origin() * s
+		preview.view_rect = r  # the wallpaper fills the play area, not the window
 	if battle:
 		battle.layout(r)
 
@@ -121,6 +135,7 @@ func _build_ui() -> void:
 	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	top.offset_bottom = TOP_H
 	var bar := HBoxContainer.new()
+	_top_bar = bar
 	bar.add_theme_constant_override("separation", 6)
 	top.add_child(bar)
 	_mode_button = _button(bar, "PLAY  (F1)", _toggle_mode)
@@ -228,6 +243,7 @@ func _build_ui() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	right.add_child(scroll)
+	_right_panel = right
 	var rb := VBoxContainer.new()
 	rb.add_theme_constant_override("separation", 3)
 	rb.custom_minimum_size.x = RIGHT_W - 20
@@ -277,10 +293,20 @@ func _build_ui() -> void:
 		if battle:
 			battle.board.show_grid = on)
 	grid_check.button_pressed = show_grid
+	var wall_check := _check(rb, "wallpaper and foreground", func(on: bool) -> void:
+		_wallpaper_on = on
+		if preview:
+			preview.wallpaper = on
+		if battle:
+			battle.board.wallpaper = on)
+	wall_check.button_pressed = _wallpaper_on
 	_counter_check = _check(rb, "counterattacks", func(on: bool) -> void: setup.counters = on)
 	_mercy_check = _check(rb, "party luck after misses", func(on: bool) -> void: setup.mercy = on)
 	_dice_check = _check(rb, "new dice on restart", func(on: bool) -> void: random_dice = on)
 	rb.add_child(_title("BALANCE"))
+	_relief_spin = _dial(rb, "generated relief (x10)", 10, 30, 5)
+	_relief_spin.value = 10
+	_check(rb, "plateau layout (generate)", func(on: bool) -> void: _plateau_on = on)
 	_fights_spin = _dial(rb, "fights to simulate", 10, 500, 10)
 	_fights_spin.value = 50
 	_button(rb, "RUN AI vs AI", _run_sim)
@@ -406,6 +432,8 @@ func _sync_controls() -> void:
 # --- modes ------------------------------------------------------------------------------
 
 func _toggle_mode() -> void:
+	if _play_only:
+		return
 	if editing:
 		_enter_play()
 	else:
@@ -427,6 +455,7 @@ func _enter_edit() -> void:
 		preview = CombatBoard.new()
 		preview.can_turn = true
 		preview.backdrop = true
+		preview.wallpaper = _wallpaper_on
 		preview.edit_void = true
 		add_child(preview)
 		preview.cell_painted.connect(_on_paint)
@@ -460,6 +489,7 @@ func _restart() -> void:
 	battle = Battle.new()
 	add_child(battle)
 	var fight_seed := randi() if random_dice else setup.seed_value
+	battle.wallpaper = _wallpaper_on
 	battle.setup(setup.grid.resized(setup.grid.w, setup.grid.h), units, fight_seed, setup.strangeness, setup.supplies.duplicate())
 	battle.board.art_set = setup.art_set
 	battle.board.show_grid = show_grid
@@ -538,7 +568,12 @@ func _on_preview_hover(c: Vector2i) -> void:
 	var who := ""
 	if not e.is_empty():
 		who = "   " + String(e[0][e[1]].id)
-	_status.text = "(%d,%d) %s H%d%s" % [c.x, c.y, CombatGrid.T.keys()[t], setup.grid.height_at(c), who]
+	var drop := 0
+	for d in CombatRules.DIRS:
+		var n: Vector2i = c + d
+		var below: int = setup.grid.height_at(n) if setup.grid.in_bounds(n) and setup.grid.terrain_at(n) != CombatGrid.T.VOID else 0
+		drop = maxi(drop, setup.grid.height_at(c) - below)
+	_status.text = "(%d,%d) %s H%d drop %d%s" % [c.x, c.y, CombatGrid.T.keys()[t], setup.grid.height_at(c), drop, who]
 
 
 func _refresh_preview() -> void:
@@ -625,7 +660,7 @@ func _resize() -> void:
 
 
 func _generate() -> void:
-	var g := CombatGrid.generate(int(_seed_spin.value), int(_w_spin.value), int(_h_spin.value), setup.strangeness)
+	var g := CombatGrid.generate(int(_seed_spin.value), int(_w_spin.value), int(_h_spin.value), setup.strangeness, true, _relief_spin.value / 10.0, _plateau_on)
 	setup.grid = g
 	setup.clean()
 	# Keep the same pieces, moved onto the new deploy zones.

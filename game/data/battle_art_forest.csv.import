@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://b4rv1fkmywokn"
+
+[deps]
+
+files=["res://data/battle_art_forest.top.translation", "res://data/battle_art_forest.side.translation", "res://data/battle_art_forest.props.translation", "res://data/battle_art_forest.prop.translation", "res://data/battle_art_forest.prop.translation"]
+
+source_file="res://data/battle_art_forest.csv"
+dest_files=["res://data/battle_art_forest.top.translation", "res://data/battle_art_forest.side.translation", "res://data/battle_art_forest.props.translation", "res://data/battle_art_forest.prop.translation", "res://data/battle_art_forest.prop.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

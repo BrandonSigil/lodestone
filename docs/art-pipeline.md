@@ -9,6 +9,7 @@ Never train on other artists' work. The reference artists (Yvan Duque, Natalie A
 ## Where art lives
 Everything is in the repo so it follows you to any machine. PNG, PSD, KRA and audio go through Git LFS, so run `git lfs install` once on a new machine before cloning.
 - `art/templates/` battle-map and character templates (plain git, rebuilt by `tools/art/battle_art.py` and `tools/art/char_art.py`)
+- `art/templates/procreate/` iPad templates (layered PSD) and `art/palettes/procreate/` palettes (`.ase`), rebuilt by `tools/art/procreate_art.py`; see its README
 - `art/characters/<id>/` character working files (`.kra` in LFS; `.psd`, `.ora` and renders in plain git so Claude can export them)
 - `art/picsart/` Picsart runs: `out/` map renders, `kit/raw/` kit raws and cutouts, `prompts/`, `kit_contact.png`
 - `art/screens/` progress screenshots, one folder per feature

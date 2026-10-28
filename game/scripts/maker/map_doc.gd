@@ -24,6 +24,11 @@ static func create(p_kind: String, p_name: String, p_grid: CombatGrid, p_set := 
 	d.map_name = p_name
 	d.grid = p_grid
 	d.art_set = p_set
+	if d.kind == "battle":  # a new battle map starts with a test party and a band of foes
+		var s := SandboxSetup.new()
+		s.grid = p_grid
+		d._place_pieces(s)
+		d.data = s.to_dict()
 	return d
 
 
@@ -88,8 +93,6 @@ func to_dict() -> Dictionary:
 		s.strangeness = strangeness
 		s.view = view
 		s.clean()
-		if s.party.is_empty() and s.enemies.is_empty():
-			_place_pieces(s)
 		return s.to_dict()
 	var out := data.duplicate(true)
 	out["name"] = SandboxSetup.safe_name(map_name)

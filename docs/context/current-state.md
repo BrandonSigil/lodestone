@@ -4,6 +4,7 @@
 - Repo: github.com/BrandonSigil/lodestone, branch `main`. Godot project in `game/`. The repo is the single source of truth: pull before work, push after.
 - Brandon's machines: Windows PC "Gamer" (Godot 4.7.2, repo at `C:\Users\Brand\Claude\lodestone`) and a MacBook Pro M4 Max (repo at `~/lodestone`, Godot in Applications, Krita AI Diffusion). Claude reaches both through Remote Control sessions. He may also use a second Claude account.
 - Run `git lfs install` before cloning. `.gitattributes` sends PNG, PSD, KRA, WAV and OGG to Git LFS except the plain-git paths listed there (art templates, docs art, battle and character game art, paintings, character working files). Cloud Claude sessions can't upload LFS objects (403), so new binary folders need the same exemption.
+- Art inventory, status and batch log: `docs/art/ART-LOG.md`. Read it first when asked what art exists.
 - Art working files: `art/` (prompts in `art/prompts/`, Picsart runs in `art/picsart/`, palettes in `art/palettes/`, templates in `art/templates/`, characters in `art/characters/<id>/`, paintings in `art/paintings/`, screenshots in `art/screens/`). Game-ready art: `game/art/source/`.
 - Secrets: the Picsart API key lives only at `~/.lodestone/picsart-api-key` (or env `PICSART_API_KEY`) on each machine, and is gitignored. Never paste it in chat, print it, log it or commit it. A key was once pasted in chat, so Brandon should rotate it. On the Mac, art scripts run in a venv at `~/.lodestone/venv` (`requests pillow numpy psd-tools`).
 
@@ -36,6 +37,12 @@
 - Reference images: his approved flat forest panel (`docs/art/references/style-flat-forest.png`) plus its tile-row crop for tile kits. Attach only those. Never feed a result back in as a reference; detail compounds.
 - Picsart's credits endpoint reads 0 even when the dollar wallet has money; `picsart_sheet.py` no longer stops on it.
 
+## Tucked away (2026-10-28 cleanup)
+- Newest look: the skyline wallpaper, a solid foreground band and silhouette trees (`CombatBoard.wallpaper`). It is on by default in the map maker and in fights (`Battle.wallpaper`). Snow is the default tile set for new maps in the map maker.
+- The combat sandbox (`scenes/combat_sandbox.tscn`) is archived: no menu button and no F9. Its file stays, so it still runs in the editor (F6). Fights now run in `scenes/battle_view.tscn` (`scripts/battle/battle_view.gd`): one map, no editing panels. The map maker's Play test, `check.sh`, `screenshot.sh` and `tools/battle_shot.gd` all use it. `tools/sandbox_shot.gd` is archived with the sandbox.
+- The island-picture plates (`snow`, `ruins`, `village_in` backdrop) moved to `art/picsart/archive/plates/`. They were drafts that the wallpaper replaces.
+- The old paper card and the painted-plate path in `CombatBoard` are still in code, reachable only with the wallpaper switch off.
+
 ## Superseded notes (older lines that are out of date)
 - 2026-10-27 [USER] New premise: the hero and their corgi in an empty, decayed village; predetermined survivors are met in the world. This supersedes the scout / King / lord framing and the run-count roster unlocks (kept on file in `docs/decisions.md`). Brandon's answers: settlers are NPCs between runs, the corgi fights and sniffs, gold and shop unlock with a blacksmith or merchant who settles, the Lodestone is unearthed early and its power revealed on the first death, the Wall stays (elves or an elvish prophecy). Systems doc: `docs/design/empty-village.md`.
 - "Brandon draws every final mark / no AI image gen" (2026-10-25): replaced 2026-10-26 [USER]. AI-generated art directed by Brandon is allowed. The CLAUDE.md art rule still says otherwise until Brandon edits it.
@@ -49,6 +56,7 @@
 - Job system decisions (PRs #46, #49): levels persist through recall; one smithy weapon, final: sword, daggers or bow to knight, rogue or archer; a hidden book in a home unlocks mage at level 5 (wizard / healer). Tier 2 names still open.
 - Starting village prototype (PR #51, merged): F10 now starts in the hero's cottage `home`, then `village` (square, town hall, tavern, smithy, homes, gate) and interiors `house_ne` and `tavern`. Smithy rack sets `weapon_sword` / `weapon_daggers` / `weapon_bow`; the hidden book sets `found_book`. Placed props and whole-building sprites, doors between maps. Picsart art (about $1.57), placeholder until Brandon approves.
 - Character sprite contributor how-to (PR #50) for adding new characters.
+- Backdrop plates (branch `backdrop-surround`, committed not pushed): snow, ruins and village_in plates in `game/art/source/battle/<set>/backdrop.png`, drawn behind the floor with an outline fade; animated rim drips; faint cobble hairlines. Raws and generator: `art/picsart/out/surround/` (untracked, local) and `tools/art/picsart_surround.py`. Open: Q4 turn check, the village set has no plate yet, and the interior furniture question in `docs/decisions.md`.
 
 ## Machines and worktrees
 - The MacBook now has Godot 4.5.1. Keep the project 4.4-compatible: don't commit `project.godot` version bumps or 4.5's `.import` rewrites.

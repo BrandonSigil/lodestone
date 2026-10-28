@@ -40,7 +40,7 @@ func _ready() -> void:
 	sections.add_child(card)
 
 	var hint := Label.new()
-	hint.text = "F7 back here   F8 map maker   F9 combat sandbox   F10 explore   F6 runs the open scene"
+	hint.text = "F7 back here   F8 map maker   F10 explore   F6 runs the open scene"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 13)
 	column.add_child(hint)
@@ -66,7 +66,6 @@ func _sections_row() -> HBoxContainer:
 		]],
 		["FIGHT", [
 			["Trail fight", "debug encounter", _trail_fight],
-			["Combat sandbox", "map painter and AI balance", _go.bind(Game.SANDBOX)],
 		]],
 		["+MAKE", [
 			["Map maker", "build or edit any map", _go.bind(Game.MAKER)],

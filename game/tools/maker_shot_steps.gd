@@ -12,6 +12,10 @@ func run(m: Node, script: String) -> void:
 				m.call("pick_item", MakerCatalog.by_id(a[1]))
 			"page":
 				m.call("_show_page", a[1])
+			"fight":
+				var fd: Object = m.get("_fight_drawer")
+				if not fd.get("open"):
+					fd.call("_flip")
 			"turn":
 				m.call("_turn_item")
 			"stamp":

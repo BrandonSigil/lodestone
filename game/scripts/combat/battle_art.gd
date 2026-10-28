@@ -5,7 +5,8 @@ extends RefCounted
 ## Tile sets: a subfolder of DIR (snow/, dungeon/...) holds a region's versions of the same file names.
 ## A file missing from the set falls back to the base one, so a set can be filled in one texture at a time.
 ## A set may also bring its own data/battle_art_<set>.csv (same columns) to change which files a terrain
-## uses there, e.g. the village interior's rock is a plaster wall with no boulders on it.
+## uses there, e.g. the village interior's rock is a plaster wall with no boulders on it. The base art (the forest
+## set) reads data/battle_art_forest.csv.
 ## Rules for the art itself: docs/art/battle-maps.md.
 
 const DIR := "res://art/source/battle/"
@@ -106,15 +107,16 @@ static func average(tex: Texture2D) -> Color:
 static func _row(t: int, from_set: String) -> Dictionary:
 	_load()
 	var set_name := from_set if from_set != "" else art_set
-	if set_name != "" and not _set_rows.has(set_name):
+	var table := "forest" if set_name == "" else set_name  # the base art is the forest set, with its own table
+	if not _set_rows.has(table):
 		var rows := {}
-		var path := "res://data/battle_art_%s.csv" % set_name
+		var path := "res://data/battle_art_%s.csv" % table
 		if FileAccess.file_exists(path):
 			for row in CsvTable.load_rows(path):
 				if NAMES.has(row.terrain):
 					rows[NAMES[row.terrain]] = row
-		_set_rows[set_name] = rows
-	return _set_rows.get(set_name, {}).get(t, _rows.get(t, {}))
+		_set_rows[table] = rows
+	return _set_rows.get(table, {}).get(t, _rows.get(t, {}))
 
 
 static func top(t: int, from_set := "") -> Texture2D:

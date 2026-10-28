@@ -10,3 +10,6 @@ __pycache__/
 .api-key
 *.api-key
 picsart-api-key
+
+# generated Picsart outputs: local to the Mac that made them (see docs/art/ART-LOG.md)
+art/picsart/out/

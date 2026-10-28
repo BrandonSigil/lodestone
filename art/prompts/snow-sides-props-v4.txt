@@ -1,0 +1,21 @@
+LODESTONE SNOW SIDES AND PROPS v4 (painterly, low detail, game-ready)
+
+Image 1 = the look: art/picsart/archive/plates/snow-backdrop.png. Copy the cliff faces and the soft snow caps: slate-grey stone, soft brush edges, the snow cap rolling over the lip. Take the look, not the layout.
+Image 2 = the detail level: docs/art/references/style-flat-forest-tiles.png. Keep every surface to a few big flat washes with two or three soft marks. No speckle, no small chips.
+Image 3 = the key art for props: docs/art/characters/00-reference-sheet.png.
+
+Aspect 3:2, plain cream paper background (#eae8d6), no title, no labels, no text anywhere.
+Layout: a 5 x 3 grid of equal cells with a clear cream gap between cells. Nothing crosses a cell edge.
+   row 1 (sides, straight on, filling the cell, the snow cap along the top edge): cliff of grey stone under a snow cap, cliff of blue ice under a snow cap, cliff of dark rock under a snow cap, ice fall under a snow cap, icicle-capped cliff
+   row 2 (props, 2:1 isometric 3/4 view, base centred at the bottom of the cell): snow bush, snow-capped boulder, lantern on a post, wooden crate, ice crystal cluster
+   row 3 (props, same view, base at bottom centre): snow pine, second snow pine, snow-covered pillar, ice spire, snow-covered ruin arch
+
+SIDES: each side is one flat cliff face with a soft snow cap along its top edge. The cap rolls over the lip with a gentle, irregular edge. No zigzag teeth, no regular icicle fringe, no repeated spikes. The face is one clear material with two or three soft vertical strokes, nothing finer.
+
+PROPS: every prop is 2:1 isometric, the same angle as the game floor. Nothing flat-on. One clear silhouette, two flat tones, a soft outline (#373335). No loose pebbles, no fine snow dots, no grass, no tiny detail.
+
+Colour: snow cool white with pale blue shadow; stone slate grey with a warm touch; ice pale teal-blue; shadows navy (#1f2d4f) on the right faces, mid blue on the left faces. One soft sun from the upper left. No black anywhere.
+
+Avoid: benches, carts, planters, fences, flat-on arches, any object not in 2:1 isometric view, zigzag or tooth-like snow edges, icicle fringes on every edge, speckle, small chips, fine detail, cast shadows, text, labels, borders around cells, 3d render, glossy, photo, characters, people, animals, watermark, saturated red or saturated blue.
+
+CELL TO GAME FILE: row 1 grey stone cliff -> side_cliff.png; blue ice cliff -> side_cliff_b.png; dark rock cliff -> side_masonry.png; ice fall -> side_water.png; icicle-capped cliff -> side_hazard.png; row 2 snow bush -> prop_bush.png; snow-capped boulder -> prop_boulder.png; lantern on a post -> prop_brazier.png (optional); wooden crate -> prop_crate.png (optional); ice crystal cluster -> prop_detail.png; row 3 snow pine -> prop_pine_1.png; second snow pine -> prop_pine_2.png; snow-covered pillar -> prop_pillar.png; ice spire -> prop_landmark.png; snow-covered ruin arch -> prop_ruin.png.

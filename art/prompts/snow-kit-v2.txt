@@ -1,0 +1,56 @@
+LODESTONE SNOW TILE KIT (painterly, game-ready, one biome per picture)
+
+Image 1 = the cliffs: the snow island scene (the painted snow island in art/picsart/archive/plates/snow-backdrop.png). Copy its cliff faces exactly: slate-grey stone under soft snow caps, blue-grey shadow on the right faces, soft brush edges, and the dark outline used on props. Use its look, not its layout: this picture is a grid of game tiles, not a diorama.
+Image 2 = the key art for props: docs/art/characters/00-reference-sheet.png.
+
+Make ONE biome only: snow. Aspect 1:1, plain cream paper background (#eae8d6), no title, no labels, no text anywhere.
+Layout: a 5 x 5 grid of equal square cells with a clear cream gap between cells. Nothing crosses a cell edge.
+   row 1 (tops): snow top, snow top with speckles, snow top with a faint path, frozen grey stone top, dark stone top
+   row 2 (tops): cracked ice, ice shard top, plain ice top, snow over forest floor, thin ice with sparkles
+   row 3 (sides, straight on, one flat colour filling the cell): cliff of grey stone under snow, cliff of blue ice, cliff of dark rock, ice fall (waterfall), icicle-capped cliff
+   row 4 (props, 2:1 dimetric 3/4 view, base centred at the bottom of the cell): snow bush, snow-capped boulder, lantern on a post, wooden crate, ice crystal cluster
+   row 5 (props, same view, base at bottom centre): snow pine, second snow pine, snow-covered pillar, ice spire, snow-covered ruin arch
+
+TOPS MUST REPEAT (IMPORTANT): every top tile must tile seamlessly. When four copies are placed in a 2 x 2 block, no seam may show: the left edge must match the right edge, and the top edge must match the bottom edge, in colour and in texture. Keep the texture even and low-contrast across the whole tile, so no feature sits near an edge. No drifts, no single bright spot, no shape that stops at the border.
+
+THE SNOW EDGE: where the snow meets a cliff, the edge is a soft painted drape that rolls over the lip. No zigzag teeth, no regular icicle fringe, no repeated spikes. The edge must be irregular and soft, like brush paint.
+
+Look: painterly. Soft brush strokes, a few loose marks, gentle colour shifts. Not photographic, not glossy. Snow is cool white with pale blue shadow; stone is slate grey with a warm touch; ice is pale teal-blue. Shadows are navy (#1f2d4f) on the right faces, mid blue on the left faces. One soft sun from the upper left. No black anywhere.
+
+Props: every prop is in 2:1 isometric dimetric 3/4 view, the same angle as the game's floor. Nothing flat-on or in perspective. Outlines (#373335) on props only, soft, never black.
+
+Avoid: benches, carts, planters, fences, arches seen flat-on, any object that is not a 2:1 isometric view, zigzag or tooth-like snow edges, icicle fringes on every edge, perspective on tops, cast shadows on tops, objects on tops, blotches on tops, edge-stopping features on tops, text, labels, borders around cells, 3d render, glossy, photo, characters, people, animals, watermark, saturated red or saturated blue.
+
+CELL TO GAME FILE (after the sheet is cut; file names must match the snow folder):
+   row 1  snow top                  -> top_grass.png
+   row 1  snow top with speckles    -> top_grass_b.png
+   row 1  snow top with path        -> top_road.png
+   row 1  frozen grey stone top     -> top_stone.png
+   row 1  dark stone top            -> top_stone_b.png
+   row 2  cracked ice               -> top_water.png
+   row 2  ice shard top             -> top_rock.png
+   row 2  plain ice top             -> top_special.png
+   row 2  snow over forest floor    -> top_forest.png
+   row 2  thin ice with sparkles    -> top_hazard.png
+   row 3  cliff of grey stone       -> side_cliff.png
+   row 3  cliff of blue ice         -> side_cliff_b.png
+   row 3  cliff of dark rock        -> side_masonry.png
+   row 3  ice fall                  -> side_water.png
+   row 3  icicle-capped cliff       -> side_hazard.png
+   row 4  snow bush                 -> prop_bush.png
+   row 4  snow-capped boulder       -> prop_boulder.png
+   row 4  lantern on a post         -> prop_brazier.png   (optional: a lantern is not a snow item; decide)
+   row 4  wooden crate              -> prop_crate.png     (optional: not a snow item; decide)
+   row 4  ice crystal cluster       -> prop_detail.png
+   row 5  snow pine                 -> prop_pine_1.png
+   row 5  second snow pine          -> prop_pine_2.png
+   row 5  snow-covered pillar       -> prop_pillar.png
+   row 5  ice spire                 -> prop_landmark.png
+   row 5  snow-covered ruin arch    -> prop_ruin.png (replaces the grey placeholder)
+
+AFTER THE CUT, before anything goes into the game:
+   ~/.lodestone/venv/bin/python3 tools/art/tile_seam_check.py game/art/source/battle/snow/top_*.png
+   Every top must print "repeats" (both ratios at or below 1.6). A "SEAM" result goes back for a redraw; it is not edited by hand.
+
+Cost: not recorded. Check Picsart's current price for one 2K sheet and write it here before running.
+Count: one sheet for the first pass (25 cells). More only after Brandon reviews it.
