@@ -18,6 +18,13 @@ Generation scripts live in `tools/art/` (`picsart_surround.py`, `picsart_village
 
 The generated outputs are not in git, so a second machine can't see them. The repo only holds what was cut into `game/art/source/` or referenced here. Google Drive is not set up; see "Backups" below.
 
+## Where the Picsart files are
+
+- **Generated outputs, one folder:** `art/picsart/out/` (137 files, about 320 MB). Every batch lands here. `art/picsart/out/INDEX.md` lists each file by batch, with size, date and whether git tracks it. Rebuild it with `python3 tools/art/index_picsart.py` after a batch.
+- **Inputs and tooling, tracked in git:** `art/picsart/kit/` (tile-kit raw sheets), `art/picsart/prompts/` (kit, map and negative prompts), `art/picsart/archive/` (archived plates), and the two contact sheets in `art/picsart/`. Tools read these paths, so they stay where they are.
+- **Cut pieces the game uses:** `game/art/source/`.
+- **Duplicate copy:** a second worktree at `~/lodestone-backdrop` (branch `backdrop-surround`) holds 44 of the same outputs. Every file there is already in `art/picsart/out/`, so the worktree can go.
+
 ## Status by piece
 
 | Piece | Where | Made with | Status | Notes |
