@@ -36,6 +36,12 @@
 - Reference images: his approved flat forest panel (`docs/art/references/style-flat-forest.png`) plus its tile-row crop for tile kits. Attach only those. Never feed a result back in as a reference; detail compounds.
 - Picsart's credits endpoint reads 0 even when the dollar wallet has money; `picsart_sheet.py` no longer stops on it.
 
+## Tucked away (2026-10-28 cleanup)
+- Newest look: the skyline wallpaper, a solid foreground band and silhouette trees (`CombatBoard.wallpaper`). It is on by default in the map maker and in fights (`Battle.wallpaper`). Snow is the default tile set for new maps in the map maker.
+- The combat sandbox (`scenes/combat_sandbox.tscn`) is archived: no menu button and no F9. Its file and tools stay, so it still runs in the editor (F6).
+- The island-picture plates (`snow`, `ruins`, `village_in` backdrop) moved to `art/picsart/archive/plates/`. They were drafts that the wallpaper replaces.
+- The old paper card and the painted-plate path in `CombatBoard` are still in code, reachable only with the wallpaper switch off.
+
 ## Superseded notes (older lines that are out of date)
 - 2026-10-27 [USER] New premise: the hero and their corgi in an empty, decayed village; predetermined survivors are met in the world. This supersedes the scout / King / lord framing and the run-count roster unlocks (kept on file in `docs/decisions.md`). Brandon's answers: settlers are NPCs between runs, the corgi fights and sniffs, gold and shop unlock with a blacksmith or merchant who settles, the Lodestone is unearthed early and its power revealed on the first death, the Wall stays (elves or an elvish prophecy). Systems doc: `docs/design/empty-village.md`.
 - "Brandon draws every final mark / no AI image gen" (2026-10-25): replaced 2026-10-26 [USER]. AI-generated art directed by Brandon is allowed. The CLAUDE.md art rule still says otherwise until Brandon edits it.

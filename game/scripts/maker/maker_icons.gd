@@ -70,6 +70,12 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 	_col = col
 	_w = maxf(1.5, side / 13.0)
 	match id:
+		"party":
+			_line([Vector2(0.4, 0.1), Vector2(0.6, 0.1), Vector2(0.6, 0.32), Vector2(0.4, 0.32)], true)
+			_line([Vector2(0.28, 0.92), Vector2(0.36, 0.46), Vector2(0.64, 0.46), Vector2(0.72, 0.92)], true)
+		"enemy":
+			_line([Vector2(0.5, 0.08), Vector2(0.92, 0.5), Vector2(0.5, 0.92), Vector2(0.08, 0.5)], true)
+			_line([Vector2(0.5, 0.36), Vector2(0.64, 0.5), Vector2(0.5, 0.64), Vector2(0.36, 0.5)], true)
 		"select":
 			_poly([Vector2(0.28, 0.14), Vector2(0.28, 0.8), Vector2(0.44, 0.64), Vector2(0.56, 0.88), Vector2(0.66, 0.83), Vector2(0.54, 0.6), Vector2(0.76, 0.6)])
 		"stamp":

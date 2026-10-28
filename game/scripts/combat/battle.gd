@@ -29,7 +29,7 @@ var units: Array = []
 var rng := RandomNumberGenerator.new()
 var supplies := {}  ## "medicine", "food": what items spend; hosts write it back to the run
 var board: CombatBoard
-var wallpaper := false  ## a board this battle creates shows the wallpaper and foreground band (the sandbox's test)
+var wallpaper := true  ## a board this battle creates shows the skyline wallpaper and foreground band (the newest look)
 var state := S.IDLE
 var selected: CombatUnit = null
 var targeting: Ability = null
