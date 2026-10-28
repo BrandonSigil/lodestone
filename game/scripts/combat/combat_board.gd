@@ -269,6 +269,18 @@ func _layers(with_skirt := false) -> Array:
 
 
 func pick(local: Vector2) -> Vector2i:
+	# A piece's body wins over the ground under it, so a piece behind a tree or a block (drawn over it) can be clicked.
+	var body := NONE
+	var body_depth := -INF
+	for u: CombatUnit in units:
+		if u.shown_hp <= 0 or hidden(u.cell) or not _unit_box(u).has_point(local):
+			continue
+		var d := depth_of(u.vis.x, u.vis.y)
+		if d > body_depth:
+			body_depth = d
+			body = u.cell
+	if body != NONE:
+		return body
 	# Front-most cells first so taller blocks in front win.
 	var layers := _layers()
 	for i in range(layers.size() - 1, -1, -1):

@@ -1,0 +1,21 @@
+KEY ART SAMPLER for the Lodestone isometric game. One picture, three panels side by side, separated by thin plum-grey rules, each panel with a narrow paper-white margin like a printed plate. Same camera and same print style in all three. No title, no text.
+
+CAMERA: isometric, 2:1 dimetric, orthographic. Tile diamonds exactly twice as wide as tall. Parallel edges stay parallel. No perspective, no vanishing point, no horizon line, no fisheye, no tilt-shift. Light from the upper left: tops brightest, left faces mid, right faces darkest.
+
+PRINT STYLE (copy this; the camera above is the only rule that overrides it):
+- Hand-inked and lightly printed. Colour fields sit a little off register from their line work, as if two print passes missed each other by a hair. Bare paper shows through the pale areas.
+- Linework is broken: dotted and dashed ink strokes, not solid outlines. Short dashes for stone courses and foliage, a few fine stipple dots for shadow. Outline the big shapes, not every detail. Ink is warm plum-grey #373335, never black.
+- Colour is soft watercolour wash: translucent, slightly blotchy edges, a light paper grain. One dominant colour family per panel plus one warm accent. Highlights stay as bare paper.
+- Architecture is ornate and worn: round arches, columns with bead-like tops, broken walls, moss on stone, stone blocks drawn as dotted courses.
+- Figures are small and simple, readable by silhouette and colour alone, with minimal faces.
+- Mood: quiet, lived-in, a little wistful, bright but never loud.
+
+PANELS:
+Panel 1, left, ruins: a stone town on stepped terraces at dusk. Coral, ochre and butter yellow, with one cream accent. Broken arches and a tall bead-topped column catch the last light. A few small figures on the lower terraces, one stone bridge.
+
+Panel 2, centre, forest: the HERO stands front and centre on a moss-covered terrace in an overgrown forest ruin. Leaf green and muted sage, with warm orange as the accent. Round trees and one broken arch behind, fading into mist at the top edge. The hero fills about a third of the panel height.
+HERO: a compact adventurer of ordinary adult proportions, not chibi and not big-headed. Head about one seventh of the body height. A hooded green cloak over a blue tunic and pale shirt. Brown spiky hair showing at the edge of the hood. Brown boots. A sword hilt over one shoulder and a pack on the back. Relaxed stance, seen from the iso camera above and in front.
+
+Panel 3, right, canyon: a narrow stone bridge over a dark gorge at night. Ultramarine and cool teal, with pale cloud-shaped gaps of sky in the high cliff above and a thin pale waterfall in the dark. Three tiny figures cross the bridge. One pale accent.
+
+AVOID: chibi or big-head proportions, 2.3-head figures, clean vector lines, even outlines, gradients, cel shading, glossy highlights, photorealism, 3D render, perspective, fisheye, neon, pure black, text, letters, numbers, labels, logos, watermarks, UI, frames with titles, speech bubbles.

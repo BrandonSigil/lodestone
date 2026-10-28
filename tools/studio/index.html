@@ -71,6 +71,12 @@
   .fig img { width: 100%; image-rendering: pixelated; background: var(--panel); border-radius: 4px; min-height: 90px; object-fit: contain; }
   .fig .cap { font-size: 12px; color: var(--muted); margin: 4px 0 6px; }
   .sheet { width: 100%; image-rendering: pixelated; border-radius: 6px; background: var(--paper); }
+  .compare { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; margin-top: 10px; }
+  .compare .grid-img { flex: 1 1 480px; max-width: 920px; }
+  .key { flex: 0 1 240px; }
+  .key img { width: 100%; display: block; border-radius: 6px; background: var(--paper); }
+  .rate { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .rate button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
   .done-msg { font-size: 15px; }
   code { font: 13px ui-monospace, Menlo, monospace; }
   @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } aside { border-right: 0; border-bottom: 1px solid var(--line); } }
@@ -117,12 +123,19 @@
 
       <div class="panel" id="reviewpanel" hidden>
         <div class="row tabs" id="roundtabs"></div>
-        <div style="margin-top:10px"><img class="grid-img" id="gridimg" alt="round grid"></div>
+        <div class="compare">
+          <img class="grid-img" id="gridimg" alt="round grid">
+          <div class="key">
+            <img id="keyimg" src="/key-art.png" alt="key art">
+            <div class="hint">Key art: the round has to match this</div>
+          </div>
+        </div>
         <div class="hint" id="roundinfo"></div>
+        <div class="rate" id="rate" hidden><span class="hint" style="margin:0 6px 0 0">Match to the key art:</span></div>
         <div class="actions" id="reviewactions" hidden>
           <div><button class="primary" id="approve">Approve this round</button></div>
           <div>
-            <textarea id="notes" rows="3" placeholder="What to change, e.g. make 3 a ranger with no hood; 6 is too busy; keep 1 as it is"></textarea>
+            <textarea id="notes" rows="3" placeholder="What to change, e.g. make 3 a ranger with no hood; keep 1 as it is"></textarea>
             <div class="row" style="margin-top:6px"><button id="askedits">Ask for edits (new round)</button></div>
           </div>
         </div>
@@ -143,9 +156,17 @@
 const $ = (s) => document.querySelector(s);
 const ORDER = ["brief", "grid", "review", "slicing", "pick", "added"];
 const BUSY_STAGES = ["grid", "slicing"];
-let state = { pipelines: {}, jobs: [], fake: false };
+let state = { pipelines: {}, jobs: [], fake: false, maxRounds: 4 };
 let current = null;
+let lastJob = null;
 let tick = 0;
+
+for (let i = 1; i <= 5; i++) {
+  const b = el("button", {}, String(i));
+  b.onclick = () => rate(i);
+  $("#rate").append(b);
+}
+$("#rate").append(el("span", { className: "hint" }, "1 = wrong camera or style, 5 = matches the key art"));
 
 async function api(path, body) {
   const opts = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
@@ -209,6 +230,7 @@ async function loadCurrent() {
 }
 
 function render(job) {
+  lastJob = job;
   $("#empty").hidden = true;
   $("#job").hidden = false;
   $("#title").textContent = job.asset + " · " + (state.pipelines[job.pipeline] || job.pipeline);
@@ -257,19 +279,39 @@ function renderReview(job) {
   const tabs = $("#roundtabs");
   tabs.replaceChildren();
   for (const r of withGrid) {
-    const b = el("button", { className: r.n === shown.n ? "on" : "" }, "Round " + r.n);
+    const label = "Round " + r.n + (r.match ? " · " + r.match + "/5" : "");
+    const b = el("button", { className: r.n === shown.n ? "on" : "" }, label);
     b.onclick = () => { window.shownRoundPick = r.n; render(job); };
     tabs.append(b);
   }
   $("#gridimg").src = "/files/" + job.id + "/" + shown.grid + "?t=" + job.updated;
-  const info = shown.n === job.rounds[job.rounds.length - 1].n ? "" : " (earlier round)";
+  const latest = job.rounds[job.rounds.length - 1];
+  const info = shown.n === latest.n ? "" : " (earlier round)";
   const charged = shown.charged && !state.fake ? " · charged " + shown.charged : "";
+  const spent = job.rounds.reduce((sum, r) => sum + (r.charged || 0), 0);
+  const total = spent && !state.fake ? " · job total " + spent.toFixed(5) : "";
   const edits = shown.notes ? " · edits asked: " + shown.notes : "";
-  $("#roundinfo").textContent = "Round " + shown.n + info + charged + edits;
-  const canDecide = job.stage === "review" && !job.busy && shown.n === job.rounds[job.rounds.length - 1].n;
+  $("#roundinfo").textContent = "Round " + shown.n + info + charged + total + edits;
+  const canDecide = job.stage === "review" && !job.busy && shown.n === latest.n;
+  const canRate = job.stage === "review" && !job.busy;
+  $("#rate").hidden = !canRate;
+  $("#rate").querySelectorAll("button").forEach((b, i) => b.classList.toggle("on", shown.match === i + 1));
   $("#reviewactions").hidden = !canDecide;
   $("#approve").disabled = !canDecide;
-  $("#askedits").disabled = !canDecide;
+  const weak = latest.match != null && latest.match < 4;
+  const full = job.rounds.length >= state.maxRounds;
+  $("#askedits").disabled = !canDecide || full;
+  $("#askedits").textContent = full ? "Round limit reached (" + state.maxRounds + ")" : (weak ? "Refine (new round)" : "Ask for edits (new round)");
+  $("#notes").placeholder = weak
+    ? "Optional: anything else to change. The refine step already pushes proportion, camera and finish back to the key art."
+    : "What to change, e.g. make 3 a ranger with no hood; keep 1 as it is";
+}
+
+async function rate(stars) {
+  try {
+    await api("/api/jobs/" + current + "/rate", { n: shownRound(lastJob), stars });
+    loadCurrent();
+  } catch (err) { $("#joberr").textContent = err.message; }
 }
 
 function shownRound(job) {
@@ -322,7 +364,9 @@ $("#brief").addEventListener("input", briefCount);
 $("#pipeline").addEventListener("change", briefCount);
 $("#approve").onclick = () => decide("approve");
 $("#askedits").onclick = () => {
-  if (!$("#notes").value.trim()) { $("#joberr").textContent = "Say what to change first."; return; }
+  const latest = lastJob && lastJob.rounds[lastJob.rounds.length - 1];
+  const weak = latest && latest.match != null && latest.match < 4;
+  if (!$("#notes").value.trim() && !weak) { $("#joberr").textContent = "Rate the round, or say what to change first."; return; }
   decide("edit");
 };
 $("#retry").onclick = async () => {

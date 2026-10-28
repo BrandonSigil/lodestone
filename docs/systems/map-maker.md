@@ -10,7 +10,7 @@ theme and widgets, `maker_icons.gd` the icons drawn in code, `maker_overlay.gd` 
 Catalog: `game/data/catalog.csv`. Scene: `scenes/map_maker.tscn`.
 
 ## Open it
-- **F8 from any screen**, or F6 on `scenes/map_maker.tscn` in the editor. It reopens the last map.
+- **F8 from any screen**, the launch menu's MAKE buttons (F7; "Edit the village" opens that map straight away), or F6 on `scenes/map_maker.tscn` in the editor. It reopens the last map.
 
 ## Screen
 - **Top bar** (icons, tooltips name them): new, open, save, undo, redo; the map's name (`*` unsaved); grid
