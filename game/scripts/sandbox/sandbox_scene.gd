@@ -57,6 +57,8 @@ var _counter_check: CheckBox
 var _mercy_check: CheckBox
 var _dice_check: CheckBox
 var _fights_spin: SpinBox
+var _relief_spin: SpinBox  ## height scale for generated maps, times ten (10 = normal)
+var _plateau_on := false  ## GENERATE makes a plateau map (CombatGrid._plateau) instead of noise hills
 var _sim_label: Label
 var _syncing := false
 
@@ -281,6 +283,9 @@ func _build_ui() -> void:
 	_mercy_check = _check(rb, "party luck after misses", func(on: bool) -> void: setup.mercy = on)
 	_dice_check = _check(rb, "new dice on restart", func(on: bool) -> void: random_dice = on)
 	rb.add_child(_title("BALANCE"))
+	_relief_spin = _dial(rb, "generated relief (x10)", 10, 30, 5)
+	_relief_spin.value = 10
+	_check(rb, "plateau layout (generate)", func(on: bool) -> void: _plateau_on = on)
 	_fights_spin = _dial(rb, "fights to simulate", 10, 500, 10)
 	_fights_spin.value = 50
 	_button(rb, "RUN AI vs AI", _run_sim)
@@ -538,7 +543,12 @@ func _on_preview_hover(c: Vector2i) -> void:
 	var who := ""
 	if not e.is_empty():
 		who = "   " + String(e[0][e[1]].id)
-	_status.text = "(%d,%d) %s H%d%s" % [c.x, c.y, CombatGrid.T.keys()[t], setup.grid.height_at(c), who]
+	var drop := 0
+	for d in CombatRules.DIRS:
+		var n: Vector2i = c + d
+		var below: int = setup.grid.height_at(n) if setup.grid.in_bounds(n) and setup.grid.terrain_at(n) != CombatGrid.T.VOID else 0
+		drop = maxi(drop, setup.grid.height_at(c) - below)
+	_status.text = "(%d,%d) %s H%d drop %d%s" % [c.x, c.y, CombatGrid.T.keys()[t], setup.grid.height_at(c), drop, who]
 
 
 func _refresh_preview() -> void:
@@ -625,7 +635,7 @@ func _resize() -> void:
 
 
 func _generate() -> void:
-	var g := CombatGrid.generate(int(_seed_spin.value), int(_w_spin.value), int(_h_spin.value), setup.strangeness)
+	var g := CombatGrid.generate(int(_seed_spin.value), int(_w_spin.value), int(_h_spin.value), setup.strangeness, true, _relief_spin.value / 10.0, _plateau_on)
 	setup.grid = g
 	setup.clean()
 	# Keep the same pieces, moved onto the new deploy zones.

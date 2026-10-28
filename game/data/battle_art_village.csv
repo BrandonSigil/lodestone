@@ -1,5 +1,5 @@
 terrain,top,side,props,prop_height,prop_count
-grass,top_grass,side_cliff,,0,0
+grass,top_grass,side_masonry,,0,0
 forest,top_forest,side_cliff,prop_pine_1|prop_pine_2|prop_bush,1.25,2
 water,top_water,side_masonry,,0,0
 rock,top_stone_b,side_masonry,,0,0

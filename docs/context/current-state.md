@@ -49,6 +49,7 @@
 - Job system decisions (PRs #46, #49): levels persist through recall; one smithy weapon, final: sword, daggers or bow to knight, rogue or archer; a hidden book in a home unlocks mage at level 5 (wizard / healer). Tier 2 names still open.
 - Starting village prototype (PR #51, merged): F10 now starts in the hero's cottage `home`, then `village` (square, town hall, tavern, smithy, homes, gate) and interiors `house_ne` and `tavern`. Smithy rack sets `weapon_sword` / `weapon_daggers` / `weapon_bow`; the hidden book sets `found_book`. Placed props and whole-building sprites, doors between maps. Picsart art (about $1.57), placeholder until Brandon approves.
 - Character sprite contributor how-to (PR #50) for adding new characters.
+- Backdrop plates (branch `backdrop-surround`, committed not pushed): snow, ruins and village_in plates in `game/art/source/battle/<set>/backdrop.png`, drawn behind the floor with an outline fade; animated rim drips; faint cobble hairlines. Raws and generator: `art/picsart/out/surround/` (untracked, local) and `tools/art/picsart_surround.py`. Open: Q4 turn check, the village set has no plate yet, and the interior furniture question in `docs/decisions.md`.
 
 ## Machines and worktrees
 - The MacBook now has Godot 4.5.1. Keep the project 4.4-compatible: don't commit `project.godot` version bumps or 4.5's `.import` rewrites.
