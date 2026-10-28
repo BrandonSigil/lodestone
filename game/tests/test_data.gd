@@ -73,3 +73,15 @@ func test_character_sprites_match_json() -> void:
 					ok(tex.get_width() >= int(m.anims[anim].frames) * int(m.frame), "%s has %d frames" % [path, m.anims[anim].frames])
 		var f := CharacterArt.frame(id, "attack", "sw", 0.0)
 		ok(not f.is_empty() and f.flip, "%s mirrors se for sw" % id)
+
+
+## The general dummy stands in for every unit with no art, so every screen facing must resolve to a drawn strip.
+func test_dummy_draws_every_facing() -> void:
+	var m: Variant = CharacterArt.meta(CharacterArt.FALLBACK)
+	ok(m != null, "dummy has json")
+	for dir in ["se", "ne", "s", "e", "n"]:
+		ok(m.dirs.has(dir), "dummy draws %s" % dir)
+	for dir in CharacterArt.SCREEN_DIRS:
+		for anim in ["idle", "walk", "attack", "cast", "hurt", "down"]:
+			var f := CharacterArt.frame(CharacterArt.FALLBACK, anim, dir, 0.0)
+			ok(not f.is_empty(), "dummy %s %s draws" % [anim, dir])

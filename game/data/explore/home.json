@@ -4,6 +4,7 @@
  "strangeness": 0.0,
  "view": 0,
  "turn": false,
+ "fog": true,
  "grid": {
   "w": 8,
   "h": 7,

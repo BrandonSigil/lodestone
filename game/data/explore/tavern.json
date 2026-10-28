@@ -4,6 +4,7 @@
  "strangeness": 0.0,
  "view": 0,
  "turn": false,
+ "fog": true,
  "grid": {
   "w": 12,
   "h": 11,
@@ -292,8 +293,8 @@
    ],
    "to": "village",
    "at": [
-    29,
-    18
+    30,
+    19
    ]
   }
  ]

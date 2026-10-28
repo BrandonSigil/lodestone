@@ -3,7 +3,7 @@
 
 Usage:
   python tools/art/picsart_render.py INPUT.png --name temple --prompt-file p.txt \
-      [--negative-file n.txt] [--count 2] [--model flux-3-image] [--resolution 1k] \
+      [--negative-file n.txt] [--count 2] [--model gpt-image-2.5-sunburst] [--resolution 1k] \
       [--out-dir art/picsart/out]
   python tools/art/picsart_render.py --balance
 
@@ -150,7 +150,7 @@ def main():
     ap.add_argument("--prompt-file")
     ap.add_argument("--negative", default="")
     ap.add_argument("--negative-file")
-    ap.add_argument("--model", default="flux-3-image")
+    ap.add_argument("--model", default="gpt-image-2.5-sunburst")
     ap.add_argument("--resolution", default="1k")
     ap.add_argument("--aspect", help="default: nearest supported ratio to the input")
     ap.add_argument("--count", type=int, default=1)

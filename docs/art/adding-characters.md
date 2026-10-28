@@ -2,7 +2,7 @@
 
 Everything you need to add a character with all its facings and animation frames is in this repo. You clone it, make or draw the art, cut it into strips, and the game picks it up with no code change. Rules live in `docs/art/characters.md` (C1 to C29). This page is the short practical path.
 
-The first finished character is `lead` (`game/art/source/characters/lead/`). Copy what it does.
+The first finished character is `lead` (`game/art/source/characters/lead/`). Copy what it does. Every unit without art of its own draws as the general dummy (`game/art/source/characters/dummy/`, section 7).
 
 ## 1. What is where
 
@@ -22,6 +22,7 @@ The first finished character is `lead` (`game/art/source/characters/lead/`). Cop
 | `tools/art/anim_sheet_cut.py` | Cuts a generated sheet into the game's strips and writes `<id>.json`. |
 | `tools/art/char_art.py` | Krita path: exports model sheets, parts and sprite sheets from `.psd`/`.ora`, packs Krita animation renders, locks colours to the palette, imports single Picsart views. Also rebuilds the templates. |
 | `game/art/source/characters/<id>/` | What the game reads: `<id>.json` plus one horizontal strip per animation and facing. |
+| `game/art/source/characters/dummy/`, `art/prompts/sheet-dummy-anim.txt` | The general dummy every unit without its own art draws with (`CharacterArt.FALLBACK`), and the prompt it was generated from. |
 | `game/scripts/combat/character_art.gd` | `CharacterArt`: loads the json and strips, picks facings and frames. |
 | `game/data/characters/<id>.tres` | The character's data. Its `id` must match the sprite folder name. |
 | `docs/context/artifacts/character-guide.html` | Offline copy of the Character Guide page (open in a browser). |
@@ -90,12 +91,12 @@ The first finished character is `lead` (`game/art/source/characters/lead/`). Cop
 
 ## 6. Hook it up and test
 
-1. Make sure `game/data/characters/<id>.tres` exists with `id = &"<id>"`. A character whose id has a sprite folder draws as a sprite automatically; everyone else stays a graybox pawn.
+1. Make sure `game/data/characters/<id>.tres` exists with `id = &"<id>"`. A character whose id has a sprite folder draws as a sprite automatically; everyone else draws as the general dummy, tinted by team.
 2. Run the checks: `GODOT=/path/to/godot tools/check.sh`. The test `test_character_sprites_match_json` checks every roster character's strips exist, are wide enough for their frame count, include `se` and `ne`, and mirror for `sw`. (It only covers ids in `Db.ROSTER`; enemies are not checked yet.)
 3. Look at it: open `game/scenes/combat_sandbox.tscn`, press F6, place the character, press F1 to play. Move to see walk and advance, attack to see the swing land on the hit frame, Q to turn the camera. The explore scene (`game/scenes/explore.tscn`) plays idle and walk while you walk around.
 4. Commit the strips, their `.import` files, the json and the raw sheets. Everything under `game/art/source/` and `docs/art/` is plain git.
 
-## 7. Built and not built (2026-10-27)
+## 7. Built and not built (2026-10-28)
 
 Built:
 - Sprite drawing in battle and explore, facing from movement and attacks, camera turns respected.
@@ -107,5 +108,5 @@ Not built yet:
 - **down** is in the files but unused: downed pieces still vanish.
 - **Paper doll** (parts animated in code, C15) and the **recolour shader** (ramp swap, C12): not built, so each character needs its own full strips for now.
 - **Multi-cell units** (2x2 large, 3x3 boss): rules exist, engine support does not.
-- Only `lead` has art. Everyone else, enemies included, is a graybox pawn.
+- Only `lead` has art of its own. Every other unit, enemies included, draws as the **general dummy** (`dummy`): one neutral figure drawn in five facings, S, SE, E, NE and N (SW, W and NW mirror SE, E and NE), with idle, walk, attack, cast, hurt and down but no stance (ready, advance). The board tints it by team (party green, blue, purple and so on; enemies red, with a glyph over the head to tell them apart). If the dummy art is missing, the code-drawn figure in `game/scripts/combat/placeholder_figure.gd` stands in. Its cut scales differ a little by facing (0.65 to 0.71) while `dummy.json` uses one scale of 0.5, so check the S, E and N views while roaming. Weapon variants per unit are still to do.
 - The `lead` art is generated placeholder art until Brandon draws or approves it.
