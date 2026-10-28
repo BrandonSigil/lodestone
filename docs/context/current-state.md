@@ -4,6 +4,7 @@
 - Repo: github.com/BrandonSigil/lodestone, branch `main`. Godot project in `game/`. The repo is the single source of truth: pull before work, push after.
 - Brandon's machines: Windows PC "Gamer" (Godot 4.7.2, repo at `C:\Users\Brand\Claude\lodestone`) and a MacBook Pro M4 Max (repo at `~/lodestone`, Godot in Applications, Krita AI Diffusion). Claude reaches both through Remote Control sessions. He may also use a second Claude account.
 - Run `git lfs install` before cloning. `.gitattributes` sends PNG, PSD, KRA, WAV and OGG to Git LFS except the plain-git paths listed there (art templates, docs art, battle and character game art, paintings, character working files). Cloud Claude sessions can't upload LFS objects (403), so new binary folders need the same exemption.
+- Art inventory, status and batch log: `docs/art/ART-LOG.md`. Read it first when asked what art exists.
 - Art working files: `art/` (prompts in `art/prompts/`, Picsart runs in `art/picsart/`, palettes in `art/palettes/`, templates in `art/templates/`, characters in `art/characters/<id>/`, paintings in `art/paintings/`, screenshots in `art/screens/`). Game-ready art: `game/art/source/`.
 - Secrets: the Picsart API key lives only at `~/.lodestone/picsart-api-key` (or env `PICSART_API_KEY`) on each machine, and is gitignored. Never paste it in chat, print it, log it or commit it. A key was once pasted in chat, so Brandon should rotate it. On the Mac, art scripts run in a venv at `~/.lodestone/venv` (`requests pillow numpy psd-tools`).
 
