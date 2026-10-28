@@ -10,6 +10,7 @@ const COMBAT := "res://scenes/combat.tscn"
 const WORLD_MAP := "res://scenes/world_map.tscn"
 const SANDBOX := "res://scenes/combat_sandbox.tscn"  ## developer tool, F9 from any screen
 const EXPLORE := "res://scenes/explore.tscn"  ## walkable map, F10 from any screen for now
+const LAUNCH := "res://scenes/launch.tscn"  ## the fast-travel menu the game opens on, F8 from any screen
 
 var meta := {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": []}
 var run: RunState = null
@@ -30,9 +31,11 @@ func _ready() -> void:
 	load_meta()
 
 
-## Developer shortcuts: F9 opens the combat sandbox, F10 the walkable map, from anywhere.
+## Developer shortcuts from anywhere: F8 the launch menu, F9 the combat sandbox, F10 the walkable map.
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event.pressed and not event.is_echo() and event.keycode == KEY_F9:
+	if event.pressed and not event.is_echo() and event.keycode == KEY_F8:
+		go(LAUNCH)
+	elif event.pressed and not event.is_echo() and event.keycode == KEY_F9:
 		go(SANDBOX)
 	elif event.pressed and not event.is_echo() and event.keycode == KEY_F10:
 		go(EXPLORE)

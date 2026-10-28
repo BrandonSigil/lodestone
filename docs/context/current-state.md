@@ -9,8 +9,8 @@
 
 ## How to run it
 1. Install Godot 4.4 or newer (4.7.2 works; don't commit Godot 4.7's rewrites of existing project files).
-2. Open `game/project.godot`. F5 starts the village.
-3. Anywhere in the game: **F9** combat sandbox, **F10** walkable exploration map. In the editor, F6 runs the open scene.
+2. Open `game/project.godot`. F5 opens the launch menu (`scenes/launch.tscn`): one button per built place. **Start game** is the hero's cottage; the rest fast-travel to the village hub, trail, world map, each explore map, the trail fight and the sandbox.
+3. Anywhere in the game: **F8** launch menu, **F9** combat sandbox, **F10** walkable exploration map. In the editor, F6 runs the open scene.
 4. Checks: `GODOT=/path/to/godot tools/check.sh` (headless import, about 100 unit tests, smoke runs of village, trail, combat, world_map, combat_sandbox and explore). Run it after every change.
 5. Screenshots headless: `tools/screenshot.sh`, `game/tools/explore_shot.gd`, `game/tools/sandbox_shot.gd` (in the cloud: `xvfb-run` and `--rendering-driver opengl3`).
 
