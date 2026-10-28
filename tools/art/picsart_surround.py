@@ -45,9 +45,18 @@ AVOID = ("No text, no letters, no labels, no UI, no watermark, no logo, no peopl
          "no 3D render, no fisheye, no neon, no grain.")
 
 # Wide strips that are not plates: the skyline behind the whole board (docs/art/environments.md, section 8).
-ASPECT = {"skyline_village": "16:9"}
+ASPECT = {"skyline_village": "16:9", "foreground_village": "16:9"}
 
 JOBS = {
+    # Foreground treeline for the village: dense flat navy pines along the bottom, fading into dark blue.
+    "foreground_village": (
+        "A wide foreground strip of a forest seen from above at the bottom of the picture: dense dark navy pine "
+        "tree silhouettes packed tightly along the bottom edge, overlapping in tiers, flat solid navy with no "
+        "outlines, no highlights and no detail. The top edge of the tree row is ragged and irregular. Below the "
+        "trees the colour fades smoothly into deep dark blue reaching the bottom edge of the picture. Colours: tree "
+        "navy #0f1830, fade from #1f2b4d at the top to #0d1429 at the bottom. Flat, simple, few details. No text, "
+        "no watermark.",
+        [EX_SNOW]),
     "skyline_village": (
         "A wide horizon strip, no ground and no floor: a pale blue sky with a few soft clouds at the top, "
         "snow-capped blue-grey mountains across the whole width, and dark pine forest silhouettes along the bottom "
