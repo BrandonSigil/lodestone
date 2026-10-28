@@ -66,6 +66,7 @@ var backdrop := false  ## a soft paper card behind the island (tester and fights
 var combat_stance := false  ## pieces stand ready (weapon drawn) instead of relaxed; Battle sets it
 var _fade := {}  ## cells whose props draw see-through this frame (a party piece stands behind them)
 var _floor_base := BASE  ## how far the floor's cliffs drop: BASE, or lower when the lowland is drawn
+var _ring_map := {}  ## this frame's lowland cells: cell -> ring number (1 next to the floor)
 var _covered := {}  ## units something in front hides this frame
 var _paint_button := 0
 var hover := NONE
@@ -232,6 +233,7 @@ func _draw() -> void:
 		_draw_backdrop()
 	_floor_base = BASE - LOWLAND_DROP if has_sky else BASE
 	var rings := _ring_cells() if has_sky else {}
+	_ring_map = rings
 	var front := _front_depth() if has_sky else -1
 	var layers := _layers()
 	for c: Vector2i in rings:
@@ -244,8 +246,7 @@ func _draw() -> void:
 				# The outer ring in front of the floor goes dark, with treeline silhouettes, so the foreground frames the floor.
 				var in_front: bool = rings[c] == SCENERY_RINGS and depth_of(c.x, c.y) > front
 				_ring_ground(c, rings[c], in_front)
-				if rings[c] == 1:
-					_ring_faces(c, rings)
+				_ring_faces(c, rings)
 				_scenery(c, rings[c], in_front)
 				continue
 			if hidden(c):
@@ -340,12 +341,12 @@ func _draw_tile(c: Vector2i) -> void:
 		var d := front_dir(shade)
 		var n := c + d
 		var edge := not grid.solid(n)  # the island's rim: the face runs down to the base and hangs below it
-		var nh := _floor_base if edge else float(grid.height_at(n))
+		var nh := _edge_height(n) if edge else float(grid.height_at(n))
 		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
 		var col := face.darkened(0.32 if shade else 0.12)
 		# Painted sides keep the guide's values: lit 75% of the top (baked into the art), shade 55%.
 		var mod := Color(tint * (0.72 if shade else 1.0), 1.0)
-		_face(side[0], side[1], h, maxf(_floor_base, minf(nh, h)), col, seed_v + (7 if shade else 0), not built, false, side_tex, mod)
+		_face(side[0], side[1], h, maxf(_floor_base - TIER_DROP * 2.0, minf(nh, h)), col, seed_v + (7 if shade else 0), not built, false, side_tex, mod)
 		if edge and island:
 			var rock := BattleArt.average(side_tex) * mod if side_tex != null else col
 			_underside(side[0], side[1], Color(rock, 1.0) * (0.9 if shade else 1.0), seed_v + (3 if shade else 0), d)
@@ -714,24 +715,35 @@ func _ring_ground(c: Vector2i, ring_i: int, dark := false) -> void:
 	if dark:  # the foreground dissolves into the dark blue ground below
 		grass = grass.lerp(Color(0.1, 0.14, 0.26), 0.9)
 	grass.a = 1.0 if ring_i == 1 else 0.55
-	draw_colored_polygon(_diamond(c, _ring_height(ring_i)), grass)
+	draw_colored_polygon(_diamond(c, _ring_height(c, ring_i)), grass)
 
 
-## The height of a lowland ring: ring 1 at the base, each ring after it a tier lower.
-func _ring_height(ring_i: int) -> float:
-	return _floor_base - TIER_DROP * (ring_i - 1)
+## The height of a lowland cell. Ring 1 sits near the base and each ring after it a tier lower, but every
+## cell gets its own depth within that band, so the drops are uneven instead of a stack of even steps.
+func _ring_height(c: Vector2i, ring_i: int) -> float:
+	var v := float(_hash(c) % 7) / 6.0  # 0 to 1, fixed for the cell
+	return _floor_base - TIER_DROP * (ring_i - 1) - v * (0.5 + 1.2 * (ring_i - 1))
 
 
-## Cliff faces from the first lowland ring down to the second, where the second ring is lower.
+## The height a floor cell's cliff drops to beside a lowland cell.
+func _edge_height(n: Vector2i) -> float:
+	if _ring_map.has(n):
+		return _ring_height(n, _ring_map[n])
+	return _floor_base
+
+
+## Cliff faces from a lowland cell down to any lower lowland cell in front of it.
 func _ring_faces(c: Vector2i, rings: Dictionary) -> void:
 	var side_tex := BattleArt.side(CombatGrid.T.GRASS, "")
 	var col := _terrain_color(CombatGrid.T.GRASS).darkened(0.35)
-	var top := _ring_height(1)
-	var bottom := _ring_height(2)
+	var top := _ring_height(c, rings[c])
 	for shade in [false, true]:
 		var d := front_dir(shade)
 		var n := c + d
-		if rings.get(n, 0) != 2:
+		if not rings.has(n):
+			continue
+		var bottom := _ring_height(n, rings[n])
+		if bottom >= top:
 			continue
 		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
 		var mod := Color(_tint(CombatGrid.T.GRASS) * (0.72 if shade else 1.0), 1.0)
@@ -747,7 +759,7 @@ func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 		if fg_tex == null:
 			return
 		for k in 2:  # two trees per front cell, so the row overlaps like the reference's bottom trees
-			var fg_base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06 + (k - 0.5) * 0.45, c.y + 0.5 + k * 0.2, _ring_height(ring_i))
+			var fg_base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06 + (k - 0.5) * 0.45, c.y + 0.5 + k * 0.2, _ring_height(c, ring_i))
 			var fg_tall := TW * (0.9 + 0.3 * float((seed_v + k * 3) % 7) / 6.0)
 			var fg_wide := fg_tall * fg_tex.get_width() / float(fg_tex.get_height())
 			Pawn.ellipse(self, fg_base, fg_wide * 0.36, fg_wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
@@ -766,7 +778,7 @@ func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 		return
 	var tall := TW * (0.9 if sprite.begins_with("prop_pine") else 0.5)
 	var wide := tall * tex.get_width() / float(tex.get_height())
-	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _ring_height(ring_i))
+	var base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06, c.y + 0.5, _ring_height(c, ring_i))
 	Pawn.ellipse(self, base, wide * 0.36, wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
 	draw_texture_rect(tex, Rect2(base.x - wide * 0.5, base.y - tall, wide, tall), false)
 
