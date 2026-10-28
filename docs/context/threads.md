@@ -90,3 +90,8 @@ Started as "Build the character sprite template and Krita guide" and grew into t
 
 ## Refresh project context in the repo (Oct 27, done)
 - Brandon asked whether everything from the night was in the repo so a friend on another account could help. Refreshed (PR #45, then again after PRs #46 to #51) `docs/context/` (memory copy, this file, `current-state.md`, latest Character Guide and Battle Map Guide HTML) and the newcomer pointer in `CLAUDE.md`.
+
+## Build a map maker for layered cliff maps (Oct 28, done)
+- Ask: Brandon shared a mountain valley reference (sky and snow peaks, a dark pine forest around the map, big foreground trees over the bottom edge, terraces with tall cliffs, stairs, waterfalls, an irregular outline, grass hanging over every cliff edge) and wants ALL maps set up like it, then: "work on this until we have a system IN GAME to create custom maps on the fly that look just like this. No shortcuts."
+- Output: looks (`data/looks.csv`, `MapLook`, `MapBackdrop`) with valley, island and plain staging; grass lips cut from the top texture (`MapDress.lip_profile`, `lip` column in `battle_art*.csv`); map operations (`MapOps`), the valley generator (`MapGen`) and code recipes (`MapRecipes`, `highland`); the map maker scene on F8 (`game/scripts/maker/`); the `alpine` mix-and-match tile set; slab rendering in `CombatBoard` (highland 340 to 87 ms a frame on the cloud's software renderer); `tools/map_shot.gd` and `tools/map_build.gd`; `tests/test_maps.gd` (122 tests in all). Docs: `docs/design/map-look.md`, `docs/systems/map-maker.md`.
+- Open: code backdrop or painted strips per look, backdrop parallax (the environments proposal on the open "Merge village-map" PR says none), closer battle camera on big maps.

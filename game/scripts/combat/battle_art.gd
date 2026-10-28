@@ -49,10 +49,17 @@ static func _load() -> void:
 
 
 ## A texture by file stem from a tile set ("" = the active set), or null when the art isn't there yet.
+## A stem may name another set: "snow/prop_pine_1" borrows the snow set's pine (mix-and-match sets).
 static func texture(stem: String, tile := false, from_set := "") -> Texture2D:
 	if stem == "":
 		return null
 	var set_name := from_set if from_set != "" else art_set
+	var slash := stem.find("/")
+	if slash > 0:  # "set/stem" borrows another set's art; "base/stem" the base art
+		set_name = stem.substr(0, slash)
+		stem = stem.substr(slash + 1)
+		if set_name == "base":
+			set_name = ""
 	var key := set_name + "/" + stem
 	if _tex.has(key):
 		return _tex[key]
@@ -127,6 +134,16 @@ static func props(t: int, from_set := "") -> Dictionary:
 		if tex != null:
 			list.append(tex)
 	return {"list": list, "height": float(row.get("prop_height", "0")), "count": int(row.get("prop_count", "0"))}
+
+
+## How far the top's grass (snow, sand...) hangs over a cliff edge, in height levels; 0 = a clean edge.
+## The set's own table may leave the column out, then the shared table's value holds.
+static func lip(t: int, from_set := "") -> float:
+	var row := _row(t, from_set)
+	if row.has("lip"):
+		return float(row.lip)
+	_load()
+	return float(_rows.get(t, {}).get("lip", "0"))
 
 
 ## Drop cached textures (after new art is imported).

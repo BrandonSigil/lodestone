@@ -66,6 +66,7 @@ func _ready() -> void:
 	board.can_turn = map.turn
 	board.fog_on = true
 	board.show_grid = false
+	board.backdrop = true  # the map's look: sky, mountains and forest for valley looks, a dark floor indoors
 	add_child(board)
 	overlay = ExploreOverlay.new()
 	overlay.scene = self
@@ -254,6 +255,7 @@ func _apply_camera() -> void:
 	var r := hud.center_rect()
 	board.scale = Vector2.ONE * zoom
 	board.position = r.get_center() - focus * zoom
+	board.view_rect = r
 	# Only cells near the play area get drawn; tall cells hang below their top, so the bottom margin is deep.
 	var local := Rect2((r.position - board.position) / zoom, r.size / zoom)
 	board.cull = local.grow_individual(CombatBoard.TW, CombatBoard.TH * 2, CombatBoard.TW, CombatBoard.HS * 10)

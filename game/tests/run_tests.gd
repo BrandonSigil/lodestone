@@ -11,10 +11,19 @@ const SUITES := [
 	"res://tests/test_sandbox.gd",
 	"res://tests/test_traits.gd",
 	"res://tests/test_explore.gd",
+	"res://tests/test_maps.gd",
 ]
 
 
-func _initialize() -> void:
+var _done := false
+
+
+## Runs on the first frame rather than in _initialize, so the root is in the tree and suites can stand
+## scenes up (their _ready runs when they are added).
+func _process(_delta: float) -> bool:
+	if _done:
+		return false
+	_done = true
 	var total := 0
 	var failed: Array[String] = []
 	for path in SUITES:
@@ -31,3 +40,4 @@ func _initialize() -> void:
 		printerr("FAIL ", f)
 	print("%d tests, %d failures" % [total, failed.size()])
 	quit(1 if failed.size() > 0 else 0)
+	return false

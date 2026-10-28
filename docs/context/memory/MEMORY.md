@@ -16,5 +16,6 @@
 - Battle maps: rules, templates and guide artifact in [[lodestone-battle-map-art]]. Topography built in Godot; tile sets per zone applied there.
 - 2026-10-27 [USER]: Terrain art via Picsart API on the MacBook (key ~/.lodestone/picsart-api-key, venv ~/.lodestone/venv). Best model: GPT image. Brandon loves the SIMPLE flat style; "too detailed" is his recurring complaint. His approved forest panel is the sole style reference; never attach older sheets. Prompts in art/prompts/. 8 zone tile sets in game (PR #38).
 - 2026-10-27: Free-roam exploration (fog of war, in-place combat, interact events) in thread "Build walkable exploration maps".
-- 2026-10-27: Project context exported to repo `docs/context/` (PR #12). Keep it in sync when memory changes in a lasting way.
+- 2026-10-27: Project context exported to repo `docs/context/` (PR #12), refreshed in PR #45 and PR #52 (16:30 UTC, after village prototype PR #51 merged). Keep it in sync when memory changes in a lasting way.
 - 2026-10-27 Character sprites: spec C1-C29, templates, Character Guide in [[lodestone-character-sprites]]. Hero animated in battles (PR #39). 3D path offered as a one-hero test, not decided.
+- 2026-10-28 [USER] All maps get the valley look (sky, mountains, framing forest, grass lips, tall cliffs, stairs, waterfalls, irregular outline) and an in-game map maker is a main pillar. Built: looks, lips, map maker on F8, `highland` template, slab renderer (draw on `_ci`): [[lodestone-map-maker]].

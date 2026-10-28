@@ -46,7 +46,7 @@ Numbers are art pixels. Art is authored at **2x the engine** (engine tile 64 x 3
 
 ### Line and edge
 - **B14** Outline colour **#373335** (the ink), never black. **3 px** on the outer silhouette, **2 px** on inner edges, 1 px for stone joints and grass ticks in a darker tint of the face.
-- **B15** Block edges are straight on the grid; the moss lip and props get the hand-cut wobble (Style Bible F1). Moss drapes **8 to 24 px** over a top edge and is painted with the top sprite.
+- **B15** Block edges are straight on the grid; the moss lip and props get the hand-cut wobble (Style Bible F1). Moss drapes **8 to 24 px** over a top edge and is painted with the top sprite. (2026-10-28: in the game the lip is now cut in code from the top texture and hung over every cliff edge with drips, so tops and sides no longer need painted moss; see `docs/design/map-look.md` section 4.)
 
 ### Surface and palette
 - **B16** Flat fills plus at most one light band per face. Texture comes from marks one value step off their fill: grass fans and tufts on tops, joint ticks and cracks on stone, a few flowers or pebbles. No noise brushes, no photo texture.
