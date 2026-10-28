@@ -38,8 +38,11 @@ var _w_spin: SpinBox
 var _h_spin: SpinBox
 var _seed_spin: SpinBox
 var _edit_panel: VBoxContainer
+var _play_only := false  ## launched from the map maker's Play test: the fight alone, editing stays in the maker
+var _right_panel: Control
+var _top_bar: HBoxContainer
 var _play_panel: VBoxContainer
-var _wallpaper_on := false  ## the wallpaper test switch, kept so every new fight board gets it
+var _wallpaper_on := true  ## the newest look: every fight the sandbox starts shows the wallpaper, unless unticked
 var _spell_box: VBoxContainer  ## per-caster spell slot pickers, rebuilt when the party changes
 var _spell_sig := ""
 var _brush_buttons := {}
@@ -81,7 +84,13 @@ func _ready() -> void:
 	_enter_edit()
 	if Game.sandbox_play:
 		Game.sandbox_play = false
+		_play_only = true
+		_mode_button.visible = false
+		_right_panel.visible = false
+		for item in _top_bar.get_children():  # only RESTART and TURN stay; the rest is editing
+			item.visible = item is Button and (item.text.begins_with("RESTART") or item.text.begins_with("TURN"))
 		_enter_play()
+		_layout()
 	get_viewport().size_changed.connect(_layout)
 
 
@@ -93,7 +102,8 @@ func _exit_tree() -> void:
 
 func play_rect() -> Rect2:
 	var vs := get_viewport_rect().size
-	return Rect2(LEFT_W, TOP_H, vs.x - LEFT_W - RIGHT_W, vs.y - TOP_H)
+	var right_w := 0.0 if _play_only else RIGHT_W
+	return Rect2(LEFT_W, TOP_H, vs.x - LEFT_W - right_w, vs.y - TOP_H)
 
 
 func _layout() -> void:
@@ -125,6 +135,7 @@ func _build_ui() -> void:
 	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	top.offset_bottom = TOP_H
 	var bar := HBoxContainer.new()
+	_top_bar = bar
 	bar.add_theme_constant_override("separation", 6)
 	top.add_child(bar)
 	_mode_button = _button(bar, "PLAY  (F1)", _toggle_mode)
@@ -232,6 +243,7 @@ func _build_ui() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	right.add_child(scroll)
+	_right_panel = right
 	var rb := VBoxContainer.new()
 	rb.add_theme_constant_override("separation", 3)
 	rb.custom_minimum_size.x = RIGHT_W - 20
@@ -281,12 +293,13 @@ func _build_ui() -> void:
 		if battle:
 			battle.board.show_grid = on)
 	grid_check.button_pressed = show_grid
-	_check(rb, "wallpaper and foreground (test)", func(on: bool) -> void:
+	var wall_check := _check(rb, "wallpaper and foreground", func(on: bool) -> void:
 		_wallpaper_on = on
 		if preview:
 			preview.wallpaper = on
 		if battle:
 			battle.board.wallpaper = on)
+	wall_check.button_pressed = _wallpaper_on
 	_counter_check = _check(rb, "counterattacks", func(on: bool) -> void: setup.counters = on)
 	_mercy_check = _check(rb, "party luck after misses", func(on: bool) -> void: setup.mercy = on)
 	_dice_check = _check(rb, "new dice on restart", func(on: bool) -> void: random_dice = on)
@@ -419,6 +432,8 @@ func _sync_controls() -> void:
 # --- modes ------------------------------------------------------------------------------
 
 func _toggle_mode() -> void:
+	if _play_only:
+		return
 	if editing:
 		_enter_play()
 	else:
@@ -440,6 +455,7 @@ func _enter_edit() -> void:
 		preview = CombatBoard.new()
 		preview.can_turn = true
 		preview.backdrop = true
+		preview.wallpaper = _wallpaper_on
 		preview.edit_void = true
 		add_child(preview)
 		preview.cell_painted.connect(_on_paint)

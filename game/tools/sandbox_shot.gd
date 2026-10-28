@@ -13,6 +13,8 @@ func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
 	_out = args[0]
 	_step = args[1] if args.size() > 1 else "edit"
+	if _step == "maker":  # as the map maker's Play test starts it: the fight alone
+		root.get_node("Game").set("sandbox_play", true)
 	change_scene_to_file("res://scenes/combat_sandbox.tscn")
 
 
