@@ -39,6 +39,7 @@ var _h_spin: SpinBox
 var _seed_spin: SpinBox
 var _edit_panel: VBoxContainer
 var _play_panel: VBoxContainer
+var _wallpaper_on := false  ## the wallpaper test switch, kept so every new fight board gets it
 var _spell_box: VBoxContainer  ## per-caster spell slot pickers, rebuilt when the party changes
 var _spell_sig := ""
 var _brush_buttons := {}
@@ -102,6 +103,7 @@ func _layout() -> void:
 		var s := clampf(minf(r.size.x / bs.x, r.size.y / bs.y) * 0.95, 0.4, 1.6)
 		preview.scale = Vector2.ONE * s
 		preview.position = r.position + (r.size - bs * s) * 0.5 - preview.board_origin() * s
+		preview.view_rect = r  # the wallpaper fills the play area, not the window
 	if battle:
 		battle.layout(r)
 
@@ -279,6 +281,12 @@ func _build_ui() -> void:
 		if battle:
 			battle.board.show_grid = on)
 	grid_check.button_pressed = show_grid
+	_check(rb, "wallpaper and foreground (test)", func(on: bool) -> void:
+		_wallpaper_on = on
+		if preview:
+			preview.wallpaper = on
+		if battle:
+			battle.board.wallpaper = on)
 	_counter_check = _check(rb, "counterattacks", func(on: bool) -> void: setup.counters = on)
 	_mercy_check = _check(rb, "party luck after misses", func(on: bool) -> void: setup.mercy = on)
 	_dice_check = _check(rb, "new dice on restart", func(on: bool) -> void: random_dice = on)
@@ -465,6 +473,7 @@ func _restart() -> void:
 	battle = Battle.new()
 	add_child(battle)
 	var fight_seed := randi() if random_dice else setup.seed_value
+	battle.wallpaper = _wallpaper_on
 	battle.setup(setup.grid.resized(setup.grid.w, setup.grid.h), units, fight_seed, setup.strangeness, setup.supplies.duplicate())
 	battle.board.art_set = setup.art_set
 	battle.board.show_grid = show_grid

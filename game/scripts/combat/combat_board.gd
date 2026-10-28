@@ -48,6 +48,11 @@ const BLEND_STEPS := 6
 const BLEND_ALPHA := 0.92
 const INK := Color(0.216, 0.2, 0.208)  ## the art's outline colour (#373335, B14), never black
 const WATER_INSET := 0.3  ## water sits this many levels below its banks, so the banks show a little earth
+const PLATE_SCALE := 1.35  ## a painted backdrop plate's width as a multiple of the board's footprint
+const FG_HEIGHT := 0.16  ## the solid foreground band's height as a share of the view
+const FG_FADE := 0.05  ## how far the band's top edge feathers up into the wallpaper, as a share of the view
+const WALL_SKY := 0.22  ## where the wallpaper's horizon sits, as a share of the view's height from the top
+const WALL_HORIZON := 0.38  ## where the picture's mountains start, as a share of the picture's height (the stand-in skyline)
 
 var grid: CombatGrid
 var units: Array = []
@@ -61,6 +66,7 @@ var edit_void := false  ## map editor: show VOID cells as faint outlines and let
 var island := true  ## rims hang ragged rock below the base, water spills off the edge
 var blend := true  ## ground fades into different neighbouring ground (see _fringe)
 var backdrop := false  ## a soft paper card behind the island (tester and fights; exploration draws its own world)
+var wallpaper := false  ## test: the set's skyline fills the view and stays put, a solid band sits under the board, and the outer trees sink into it
 var combat_stance := false  ## pieces stand ready (weapon drawn) instead of relaxed; Battle sets it
 var _fade := {}  ## cells whose props draw see-through this frame (a party piece stands behind them)
 var _covered := {}  ## units something in front hides this frame
@@ -128,6 +134,72 @@ func _process(delta: float) -> void:
 		f.pos.y -= 30.0 * delta
 	_floaters = _floaters.filter(func(f: Dictionary) -> bool: return f.t > 0.0)
 	_sync_slabs()
+
+
+## The wallpaper and foreground band, drawn behind the slabs so the board and its trees stand in front.
+func _draw() -> void:
+	var tex := _wall_tex()
+	if tex == null:
+		return
+	var r := _local_view()
+	var col := _wall_bottom(tex)
+	# The picture's mountains start WALL_HORIZON of the way down it, and sit WALL_SKY of the way down the view.
+	var s := maxf(r.size.x / tex.get_width(), r.size.y * WALL_SKY / WALL_HORIZON / tex.get_height())
+	var size := Vector2(tex.get_width(), tex.get_height()) * s
+	var pic_top := r.position.y + r.size.y * WALL_SKY - size.y * WALL_HORIZON
+	draw_texture_rect(tex, Rect2(Vector2(r.get_center().x - size.x * 0.5, pic_top), size), false)
+	var floor_y := pic_top + size.y
+	if floor_y < r.end.y:  # below the picture the wallpaper's bottom colour carries on
+		draw_rect(Rect2(r.position.x, floor_y, r.size.x, r.end.y - floor_y), col)
+	var top := r.end.y - r.size.y * FG_HEIGHT
+	var fade := r.size.y * FG_FADE
+	var clear := Color(col, 0.0)
+	draw_polygon(PackedVector2Array([Vector2(r.position.x, top - fade), Vector2(r.end.x, top - fade), Vector2(r.end.x, top), Vector2(r.position.x, top)]),
+		PackedColorArray([clear, clear, col, col]))
+	draw_rect(Rect2(r.position.x, top, r.size.x, r.end.y - top), col)
+
+
+func _wall_tex() -> Texture2D:
+	return BattleArt.texture("skyline") if wallpaper else null
+
+
+static var _wall_colours := {}  ## the average of each wallpaper's bottom rows, read once per texture
+
+
+func _wall_bottom(tex: Texture2D) -> Color:
+	var id := tex.get_instance_id()
+	if not _wall_colours.has(id):
+		var img := tex.get_image()
+		var sum := Color(0.0, 0.0, 0.0, 0.0)
+		var n := 0
+		for y in range(int(img.get_height() * 0.97), img.get_height()):
+			for x in range(0, img.get_width(), 8):
+				sum += img.get_pixel(x, y)
+				n += 1
+		_wall_colours[id] = sum / float(maxi(n, 1))
+	return _wall_colours[id]
+
+
+## The colour the outer trees sink into: the wallpaper's bottom when it is on, else the look's wood.
+func _sink_colour() -> Color:
+	var tex := _wall_tex()
+	return _wall_bottom(tex) if tex != null else look.color("wood")
+
+
+static var _silhouettes := {}  ## flat silhouettes made from the tree sprites, by sprite and colour
+
+
+## A tree sprite as a flat silhouette: its shape in one colour, hard edged, made once and kept.
+func _silhouette(tex: Texture2D, col: Color) -> Texture2D:
+	var key := "%d|%s" % [tex.get_instance_id(), col.to_html()]
+	if not _silhouettes.has(key):
+		var img := tex.get_image()
+		img.convert(Image.FORMAT_RGBA8)
+		for y in img.get_height():
+			for x in img.get_width():
+				img.set_pixel(x, y, Color(col, 1.0 if img.get_pixel(x, y).a > 0.5 else 0.0))
+		_silhouettes[key] = ImageTexture.create_from_image(img)
+	return _silhouettes[key]
 
 
 # --- coordinates ------------------------------------------------------------
@@ -361,13 +433,15 @@ func _sync_slabs() -> void:
 		_stack.visible = false
 		return
 	_stack.visible = true
+	if wallpaper:  # the wallpaper follows the view, so it repaints each frame
+		queue_redraw()
 	BattleArt.use_set(art_set)
 	_resolve_look()
 	var valley := _valley()
 	if valley:
 		_refresh_skirt()
-	var gkey := "%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s" % [grid.get_instance_id(), grid.w, grid.h, rot, art_set, look.key(),
-		strangeness, show_grid, backdrop, island, fog_on]
+	var gkey := "%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s" % [grid.get_instance_id(), grid.w, grid.h, rot, art_set, look.key(),
+		strangeness, show_grid, backdrop, island, fog_on, wallpaper]
 	var lkey := "%s|%s" % [gkey, _skirt_key if valley else ""]
 	if lkey != _layers_key:
 		_layers_key = lkey
@@ -587,7 +661,11 @@ func _paint(sl: Slab) -> void:
 
 
 func _paint_back() -> void:
-	if not backdrop:
+	if not backdrop or _wall_tex() != null:
+		return
+	var plate := BattleArt.texture("backdrop")
+	if plate != null:  # a set with a painted plate draws that instead of the code bands
+		_draw_plate(plate)
 		return
 	if _valley():
 		MapBackdrop.draw(_ci, self, look, _local_view())
@@ -1256,7 +1334,9 @@ func _draw_skirt(c: Vector2i) -> void:
 	var faint := _skirt_fade.has(c) or (edit_void and grid.in_bounds(c))
 	# The first ring keeps the trees' own colours (they belong to the map); further out they sink into the
 	# wood's colour like the reference's dark foreground.
-	var tint := look.color("tree").lerp(Color.WHITE, 0.6) if ring == 1 else look.color("tree").lerp(look.color("wood"), 0.3 * (ring - 1))
+	var sink := (0.75 if ring == 2 else 1.0) if wallpaper else 0.3 * (ring - 1)  ## with the wallpaper the outer rings go solid navy
+	var sil := _sink_colour().lerp(look.color("tree"), 0.25 if ring == 1 else 0.0)  ## the flat silhouette colour: front trees a shade lighter
+	var tint := look.color("tree").lerp(Color.WHITE, 0.6) if ring == 1 else look.color("tree").lerp(_sink_colour(), sink)
 	if fog_on and fog[src] == 1:
 		tint = tint.darkened(0.4)
 	var spots: Array = [Vector2.ZERO] if count == 1 else [Vector2(-0.2, -0.18), Vector2(0.2, 0.2)]
@@ -1264,6 +1344,9 @@ func _draw_skirt(c: Vector2i) -> void:
 		var r := float((seed_v * (i + 3)) % 97) / 97.0
 		var r2 := float((seed_v * (i + 7)) % 89) / 89.0
 		var tex := BattleArt.texture(look.trees[(seed_v + i * 5) % look.trees.size()], false)
+		if wallpaper and tex != null:  # with the wallpaper the skirt trees are flat silhouettes, like the reference's bottom edge
+			tex = _silhouette(tex, sil)
+			tint = Color.WHITE
 		var o: Vector2 = spots[i] + Vector2(r - 0.5, r2 - 0.5) * 0.22
 		var base := iso(c.x + 0.5 + o.x, c.y + 0.5 + o.y, fl)
 		var ph := look.tree_scale * TW * (0.72 + 0.6 * r) * (1.0 + 0.12 * (ring - 1)) * (1.15 if front else 0.9)
@@ -1335,6 +1418,14 @@ func _spill(a: Vector2, b: Vector2, c: Vector2i) -> void:
 
 ## The soft card the island floats on: a rounded rectangle around the map with a vertical wash, a glow
 ## behind the middle, a few light shafts and drifting motes. Colours drift toward lavender with strangeness.
+## A painted backdrop plate: one picture per art set, centred on the board and scaled to its footprint.
+func _draw_plate(plate: Texture2D) -> void:
+	var centre := board_origin() + board_size() * 0.5
+	var width := board_size().x * PLATE_SCALE
+	var height := width * plate.get_height() / plate.get_width()
+	_ci.draw_texture_rect(plate, Rect2(centre - Vector2(width, height) * 0.5, Vector2(width, height)), false)
+
+
 func _draw_backdrop() -> void:
 	var box := Rect2(iso(0, 0, 0), Vector2.ZERO)
 	for corner in [Vector2(0, 0), Vector2(grid.w, 0), Vector2(0, grid.h), Vector2(grid.w, grid.h)]:

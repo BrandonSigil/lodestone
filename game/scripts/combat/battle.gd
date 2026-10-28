@@ -29,6 +29,7 @@ var units: Array = []
 var rng := RandomNumberGenerator.new()
 var supplies := {}  ## "medicine", "food": what items spend; hosts write it back to the run
 var board: CombatBoard
+var wallpaper := false  ## a board this battle creates shows the wallpaper and foreground band (the sandbox's test)
 var state := S.IDLE
 var selected: CombatUnit = null
 var targeting: Ability = null
@@ -73,6 +74,7 @@ func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0
 		board.grid = grid
 		board.strangeness = strangeness
 		board.backdrop = true
+		board.wallpaper = wallpaper
 		add_child(board)
 	board.units = units
 	board.combat_stance = true  # weapons out while the fight lasts

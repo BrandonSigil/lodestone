@@ -3,11 +3,26 @@ extends RefCounted
 
 
 func run(s: Node, _frames: int, _step: String) -> void:
+	if (_step == "wall" or _step == "player") and _frames == 4:
+		s.preview.wallpaper = true
+		s._wallpaper_on = true
+	if _step == "player" and _frames == 12:
+		# The player's view: the fight board zoomed in on the lead piece, HUD hidden, about where the camera sits in play.
+		var board: CombatBoard = s.battle.board
+		var lead: CombatUnit = s.battle.units[0]
+		var k := 2.2
+		for child in s.battle.get_children():
+			if child != board:
+				child.visible = false
+		s._play_panel.visible = false
+		board.scale = Vector2.ONE * k
+		board.position = s.play_rect().get_center() - board.cell_top(lead.cell) * k
+		return
 	if _step.begins_with("turn"):
 		if _frames == 6:
 			s.preview.turn(int(_step.substr(4)))
 		return
-	if _frames == 5 and _step != "edit":
+	if _frames == 5 and _step != "edit" and _step != "wall":  # "player" enters play, so the lead piece exists
 		s._enter_play()
 	if _step == "restart_mid":
 		if _frames == 10:
@@ -35,7 +50,7 @@ func run(s: Node, _frames: int, _step: String) -> void:
 		u.facing = Vector2i(0, -1) if parts.size() > 2 and parts[2] == "ne" else Vector2i(1, 0)
 		b.board.play_anim(u, parts[1])
 		return
-	if _frames == 10 and _step != "edit":
+	if _frames == 10 and _step != "edit" and _step != "wall":
 		var b: Battle = s.battle
 		var u: CombatUnit = b.units[0]
 		match _step:
