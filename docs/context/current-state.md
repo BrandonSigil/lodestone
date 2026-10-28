@@ -1,4 +1,4 @@
-# Current state (2026-10-27, refreshed 16:30 UTC)
+# Current state (2026-10-28, refreshed after the map maker)
 
 ## Where things live
 - Repo: github.com/BrandonSigil/lodestone, branch `main`. Godot project in `game/`. The repo is the single source of truth: pull before work, push after.
@@ -10,9 +10,9 @@
 ## How to run it
 1. Install Godot 4.4 or newer (4.7.2 works; don't commit Godot 4.7's rewrites of existing project files).
 2. Open `game/project.godot`. F5 starts the village.
-3. Anywhere in the game: **F9** combat sandbox, **F10** walkable exploration map. In the editor, F6 runs the open scene.
-4. Checks: `GODOT=/path/to/godot tools/check.sh` (headless import, about 100 unit tests, smoke runs of village, trail, combat, world_map, combat_sandbox and explore). Run it after every change.
-5. Screenshots headless: `tools/screenshot.sh`, `game/tools/explore_shot.gd`, `game/tools/sandbox_shot.gd` (in the cloud: `xvfb-run` and `--rendering-driver opengl3`).
+3. Anywhere in the game: **F8** map maker, **F9** combat sandbox, **F10** walkable exploration map. In the editor, F6 runs the open scene.
+4. Checks: `GODOT=/path/to/godot tools/check.sh` (headless import, about 120 unit tests, smoke runs of village, trail, combat, world_map, combat_sandbox, explore and map_maker). Run it after every change.
+5. Screenshots headless: `tools/screenshot.sh`, `game/tools/explore_shot.gd`, `game/tools/sandbox_shot.gd`, `game/tools/map_shot.gd` (any map with its look; in the cloud: `xvfb-run` and `--rendering-driver opengl3`).
 
 ## What's built (all on main)
 - Week 1 graybox: iso grid combat with height and d20 checks, trail loop (days, food, morale, 12 slots, CSV events), village roster with unlocks, Lodestone recall save.
@@ -23,6 +23,7 @@
 - Hero sprites (PR #39): character id `lead`, idle / walk / attack / cast / hurt in SE and NE (SW and NW are mirrors), faces its move or attack target, hit lands on the strike frame, survives camera turns. Loader `game/scripts/combat/character_art.gd`. Other characters are still pawns. Placeholder art until Brandon approves.
 - Walkable exploration (PRs #42, #43): F10 opens the explore scene (since PR #51 it starts in the hero's cottage; the 34x30 `crypt` test map is still in `data/explore/`). Only the leader walks (click or WASD, grid hidden outside fights), fog of war on line of sight, enemy groups that spot you or get spotted, fights start in place with a deploy ring around the leader (ring = move - 3, min 1; +1 on a sneak attack; 1 when ambushed), "!" interactables with party-gated options and dice checks. See `docs/systems/explore.md`.
 - Starting village prototype (thread "Prototype the starting village map"): F10 opens the hero's cottage (`home`); out the door is the `village` explore map (square, well, town hall on a terrace, tavern, smithy with the weapon rack, five homes, stream, gate to the trail), plus walk-in `house_ne` (hidden book in the inner room) and `tavern`. Placed props and whole-building sprites on the grid (`CombatGrid.props`), doors between maps, `hidden` things, once flags, per-set `battle_art_<set>.csv`. Art from Picsart: tile sets `village` and `village_in`, props and buildings (`tools/art/picsart_village.py`, `village_cut.py`). Builder `tools/explore/build_village.py`. The crypt test map is still in `data/explore/` (set `Game.explore_map`).
+- Map look and map maker (thread "Build a map maker for layered cliff maps", 2026-10-28): every map is staged by a look from `data/looks.csv` (valley: sky, snow mountains, the forest it sits in, outer cliffs down to a deep floor, big skirt trees framing the front; island; plain for interiors). Grass lips with drips are cut from the top texture over every cliff edge. **F8** opens the map maker: sculpt, paint, rivers that fall down terraces, stairs and flights, outline cutting, props, zones, look settings, a seeded valley generator, the `highland` reference template, undo, save and play test. The board draws through cached depth slabs. See `docs/design/map-look.md` and `docs/systems/map-maker.md`.
 - Art pipeline docs and tools: battle map rules B1 to B32 (`docs/art/battle-maps.md`), character rules C1 to C29 (`docs/art/characters.md`), Krita templates, `tools/art/battle_art.py`, `char_art.py`, `break_out.py`, `picsart_sheet.py`, `anim_sheet_cut.py`, zone palette cards, and house-style prompts in `art/prompts/` (see `art/prompts/README.md` and `flat-style-portable.txt`).
 
 ## The art recipe that works now
@@ -51,6 +52,7 @@
 - Brandon plays clean main from the worktree `~/lodestone-main`. Claude threads on the Mac work in `~/lodestone` or their own worktrees and must commit and push; nothing should stay Mac-only.
 
 ## Open items waiting on Brandon
+- Map look: code backdrop bands or painted strips per look; keep or lock the backdrop parallax; zoom fights in on big maps (`docs/design/map-look.md` section 11).
 - Empty village: is a survivor settler-or-party-member by who they are (Claude's assumption)? Who survives, and which kind? Job system: tier 2 branch roles and names. Approve or replace the village prototype art.
 - Pick the bottom frame: A embroidered band (current), B quilt row, C foreground ridge, or a mix.
 - Retag `[AI]` lines he agrees with in `docs/decisions.md` as `[USER]`; mark rules B1 to B32 and C1 to C29 his or change them.
@@ -60,6 +62,7 @@
 - Rotate the Picsart key.
 
 ## Gotchas for Claude sessions
+- `CombatBoard` draws through child "slab" nodes; every draw helper paints on `_ci` (the slab being drawn). A `draw_*` call on `self` from those helpers fails. Ground and props are cached per depth row; `grid.version` and the fog tell the board what to redraw.
 - Godot in the cloud rewrites every art `.import` file; `git checkout -- game/art` before committing. Godot 4.7 on Brandon's machines edits project files too; don't commit those edits.
 - The MacBook has no git-lfs (PNGs go in as plain blobs) and a big art push dies with "unexpected disconnect"; push with `git -c http.postBuffer=524288000 push`. Godot there is `/Applications/Godot.app/Contents/MacOS/Godot` (4.7.2).
 - Picsart (picsart.io) is blocked from the cloud container, so API runs happen on the MacBook through Remote Control.

@@ -28,6 +28,10 @@ var zones := PackedStringArray()  ## per-cell tile set (BattleArt set name); "" 
 ## {"sprite": file stem, "foot": Vector2i cells, "tall": draw height in tile widths (0 = fit the footprint),
 ## "sight": levels it blocks sight above the ground, "walk": can pieces stand on it (rugs)}.
 var props := {}
+## How the map is staged (see MapLook and docs/design/map-look.md): {"id": a row of data/looks.csv, and
+## optional "staging", "floor", "skirt" overrides}. Empty = the look named like the tile set.
+var look := {}
+var version := 0  ## goes up on every height or terrain edit, so drawing caches know to rebuild
 var _prop_at := {}  ## every footprint cell -> its anchor
 var _sight := {}  ## line of sight cache, cleared on any edit
 
@@ -107,6 +111,7 @@ func height_at(c: Vector2i) -> int:
 
 func set_height(c: Vector2i, v: int) -> void:
 	heights[idx(c)] = v
+	version += 1
 	_sight.clear()
 
 
@@ -116,6 +121,7 @@ func terrain_at(c: Vector2i) -> int:
 
 func set_terrain(c: Vector2i, t: int) -> void:
 	terrain[idx(c)] = t
+	version += 1
 	_sight.clear()
 
 
@@ -135,9 +141,23 @@ func set_zone(c: Vector2i, z: String) -> void:
 ## Stand a prop on the map. Its footprint runs from the anchor toward +x and +y.
 func add_prop(anchor: Vector2i, sprite: String, foot := Vector2i.ONE, tall := 0.0, sight := 1.0, walk := false) -> void:
 	props[anchor] = {"sprite": sprite, "foot": foot, "tall": tall, "sight": sight, "walk": walk}
+	version += 1
 	for dy in foot.y:
 		for dx in foot.x:
 			_prop_at[anchor + Vector2i(dx, dy)] = anchor
+	_sight.clear()
+
+
+## Take a placed prop off the map (by its anchor).
+func remove_prop(anchor: Vector2i) -> void:
+	if not props.has(anchor):
+		return
+	var p: Dictionary = props[anchor]
+	props.erase(anchor)
+	for dy in p.foot.y:
+		for dx in p.foot.x:
+			_prop_at.erase(anchor + Vector2i(dx, dy))
+	version += 1
 	_sight.clear()
 
 
@@ -163,6 +183,7 @@ func resized(width: int, height: int) -> CombatGrid:
 		var p: Dictionary = props[a]
 		if a.x + p.foot.x <= width and a.y + p.foot.y <= height:
 			g.add_prop(a, p.sprite, p.foot, p.tall, p.sight, p.walk)
+	g.look = look.duplicate()
 	return g
 
 
@@ -208,6 +229,8 @@ func to_dict() -> Dictionary:
 			var p: Dictionary = props[a]
 			list.append({"sprite": p.sprite, "cell": [a.x, a.y], "foot": [p.foot.x, p.foot.y], "tall": p.tall, "sight": p.sight, "walk": p.walk})
 		d["props"] = list
+	if not look.is_empty():
+		d["look"] = look.duplicate()
 	return d
 
 
@@ -235,6 +258,7 @@ static func from_dict(d: Dictionary) -> CombatGrid:
 		var foot: Array = p.get("foot", [1, 1])
 		g.add_prop(Vector2i(int(cell[0]), int(cell[1])), String(p.get("sprite", "")), Vector2i(int(foot[0]), int(foot[1])),
 			float(p.get("tall", 0.0)), float(p.get("sight", 1.0)), bool(p.get("walk", false)))
+	g.look = (d.get("look", {}) as Dictionary).duplicate()
 	return g
 
 

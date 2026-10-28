@@ -10,6 +10,7 @@ const COMBAT := "res://scenes/combat.tscn"
 const WORLD_MAP := "res://scenes/world_map.tscn"
 const SANDBOX := "res://scenes/combat_sandbox.tscn"  ## developer tool, F9 from any screen
 const EXPLORE := "res://scenes/explore.tscn"  ## walkable map, F10 from any screen for now
+const MAKER := "res://scenes/map_maker.tscn"  ## the map maker, F8 from any screen
 
 var meta := {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": []}
 var run: RunState = null
@@ -23,6 +24,9 @@ var explore_map := "home"  ## which data/explore map the explore scene opens (th
 var explore_entry := Vector2i(-1, -1)  ## where the leader arrives through a door; (-1, -1) = the map's start
 ## Explore maps the party walked out of and may walk back into: map -> {"seen": cells, "done": thing ids}.
 var explore_memory := {}
+var maker_map := ""  ## the map file the map maker reopens (it comes back here after a play test)
+var sandbox_map := ""  ## a map file the combat sandbox opens instead of default.json (map maker play test)
+var sandbox_play := false  ## ...and starts the fight straight away
 
 
 func _ready() -> void:
@@ -30,12 +34,14 @@ func _ready() -> void:
 	load_meta()
 
 
-## Developer shortcuts: F9 opens the combat sandbox, F10 the walkable map, from anywhere.
+## Developer shortcuts: F8 opens the map maker, F9 the combat sandbox, F10 the walkable map, from anywhere.
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.pressed and not event.is_echo() and event.keycode == KEY_F9:
 		go(SANDBOX)
 	elif event.pressed and not event.is_echo() and event.keycode == KEY_F10:
 		go(EXPLORE)
+	elif event.pressed and not event.is_echo() and event.keycode == KEY_F8:
+		go(MAKER)
 
 
 # --- meta ---------------------------------------------------------------

@@ -63,16 +63,22 @@ var _syncing := false
 
 func _ready() -> void:
 	RenderingServer.set_default_clear_color(BG)
-	var maps := SandboxSetup.list_maps()
 	setup = null
-	for p in maps:
-		if p.get_file() == "default.json":
-			setup = SandboxSetup.load_file(p)
+	if Game.sandbox_map != "":  # a play test from the map maker
+		setup = SandboxSetup.load_file(Game.sandbox_map)
+		Game.sandbox_map = ""
+	if setup == null:
+		for p in SandboxSetup.list_maps():
+			if p.get_file() == "default.json":
+				setup = SandboxSetup.load_file(p)
 	if setup == null:
 		setup = SandboxSetup.default_setup()
 	_build_ui()
 	_sync_controls()
 	_enter_edit()
+	if Game.sandbox_play:
+		Game.sandbox_play = false
+		_enter_play()
 	get_viewport().size_changed.connect(_layout)
 
 
@@ -112,7 +118,7 @@ func _build_ui() -> void:
 
 	# Top bar
 	var top := _panel(root)
-	top.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	top.offset_bottom = TOP_H
 	var bar := HBoxContainer.new()
 	bar.add_theme_constant_override("separation", 6)
@@ -134,9 +140,9 @@ func _build_ui() -> void:
 	_refresh_load_menu()
 	bar.add_child(VSeparator.new())
 	bar.add_child(_bar_label("W"))
-	_w_spin = _spin(bar, 5, 16, 1, 10)
+	_w_spin = _spin(bar, 5, 48, 1, 10)
 	bar.add_child(_bar_label("H"))
-	_h_spin = _spin(bar, 5, 16, 1, 8)
+	_h_spin = _spin(bar, 5, 48, 1, 8)
 	_button(bar, "RESIZE", _resize)
 	bar.add_child(VSeparator.new())
 	bar.add_child(_bar_label("SEED"))

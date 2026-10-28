@@ -1,0 +1,130 @@
+{
+	"art_set": "alpine",
+	"counters": true,
+	"enemies": [
+		{
+			"id": "bandit",
+			"x": 25,
+			"y": 2
+		},
+		{
+			"id": "bandit",
+			"x": 23,
+			"y": 1
+		},
+		{
+			"id": "bandit_archer",
+			"x": 24,
+			"y": 2
+		},
+		{
+			"id": "wolf",
+			"x": 25,
+			"y": 3
+		}
+	],
+	"enemy_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"extra_enemies": 0,
+	"map": {
+		"h": 26,
+		"heights": [
+			"00000888888888887788888000",
+			"00008888888888887778888800",
+			"00000888888888888778888888",
+			"00080888888886888778888888",
+			"00866888888686668777888888",
+			"08866688888666667777788888",
+			"08886668888666667887778888",
+			"08888668866666666688777886",
+			"88888666666666666668877886",
+			"88888666666666666666655333",
+			"88888466666666666666622233",
+			"88886446666666666666632223",
+			"88866446666666555665544223",
+			"88664466666666665566663220",
+			"84464466666666666556666100",
+			"84444466666666666655666111",
+			"44444466666666666665561100",
+			"44442222666666666666551000",
+			"44444444456666666666650001",
+			"44444442226666666666600011",
+			"44444444222655366666100110",
+			"44444444422114433111001100",
+			"44444444444111331110001100",
+			"00444444444311131100011100",
+			"00044444443331111000111100",
+			"00044444443333110001110000"
+		],
+		"look": {
+			"id": "alpine"
+		},
+		"terrain": [
+			".....ggggggffggrwwddggg...",
+			"....ggfggggfgggfwwwdffff..",
+			".....fggggfgggggfwwdgffgfg",
+			".....ffffgggggfgdwwdgffggg",
+			"..fwwfffggggggggdwwwgggggg",
+			".rgwwwffffggggggttwwwggggg",
+			".gggwwwfffggggggtggwwwgggg",
+			".fffdwwffgggggggtgggwwwggg",
+			"ggffdwwgggggggggtggggwwffg",
+			"ggffdttgggggggggdggggwwggt",
+			"ffgggwttggggggggdggggwwwgf",
+			"fffgtwwttggggddddggggfwwwg",
+			"ffgggwwdtggggdwwwggttttwwr",
+			"ffggwwgdddddddggwwgggggwww",
+			"ggggwwgggdgggdgggwwgggggww",
+			"ggggwwgggdgggdggggwwgggggr",
+			"gggfwwgggdgggdgggggwwgggww",
+			"ggffwwwwgdgggdggggggwwgwww",
+			"ggffgdssssgggdgggggggwwwwr",
+			"gggggdfwwwggtdgggggggwwwgg",
+			"ggffgdggwwwgttdgggrggwwgg.",
+			"rgfffdggfwwwwttdggggwwgg..",
+			"gfgdddgggggwwwgdgggwwwgg..",
+			"..ggggggggggwwwdggwwwggg..",
+			"...rggffgggggwwwgwwwgggg..",
+			"...gggggfffffgwwwwwgrg...."
+		],
+		"w": 26
+	},
+	"mercy": true,
+	"name": "highland",
+	"party": [
+		{
+			"id": "lead",
+			"x": 0,
+			"y": 22
+		},
+		{
+			"id": "stardrop",
+			"x": 3,
+			"y": 25
+		},
+		{
+			"id": "hunter",
+			"x": 4,
+			"y": 25
+		}
+	],
+	"party_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"seed": 1,
+	"strangeness": 0.0,
+	"supplies": {
+		"food": 10,
+		"medicine": 3
+	},
+	"view": 0
+}
