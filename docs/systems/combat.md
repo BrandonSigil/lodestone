@@ -14,8 +14,10 @@ Code: `game/scripts/combat/`. Rules math is in `combat_rules.gd` (pure, no nodes
 
 ## How a turn works
 - Fire Emblem phases: the player moves every piece, then every enemy moves.
-- Click a piece to open its menu. Each piece gets **one move and one action, in either order** (so hit-and-run works). Blue tiles are where it can walk; red tiles are foes it can hit from where it stands.
-- Menu: **HIT** (basic attack), the class's **skills**, **items** (spend the run's medicine or food), **GUARD** (+3 defense until your next turn), **UNDO MOVE** (before acting), **WAIT** (end this piece).
+- Click a piece to open its menu. Each piece gets **one move and one action, in either order** (so hit-and-run works). Red tiles are foes it can hit from where it stands.
+- Menu: **MOVE** (hides the menu and lights the blue tiles it can walk to; click one, or **CANCEL** at the bottom to go back to the menu), **HIT** (basic attack), the class's **skills**, **items** (spend the run's medicine or food), **GUARD** (+3 defense until your next turn), **UNDO MOVE** (before acting), **WAIT** (end this piece).
+- Piece bodies can be clicked even when a tree or block hides their feet (the body is the pick).
+- **AUTO FIGHT (testing)**: the top-right button makes the party play its own turns with the same AI the enemies use (the setting is kept across fights). A fight where nobody is hurt for 8 rounds in a row ends as a party win, because the greedy AI can't path around walls yet. Off by default; exploration skips the deploy step while it is on.
 - Pick an action, then hover a lit target to see the forecast: hit chance, damage, HP before and after, every modifier ("ATK 4 HIGH +2 FLANK +2 vs DEF 11 COVER +2") and whether they will hit back. Click to commit.
 - Clicking a red-lit foe straight from the menu is a shortcut for HIT (first click aims and shows the forecast, second click swings).
 - Keys: Esc or right click = back / undo move, D = danger zone (every tile the enemy can hit next phase), Tab = next ready piece, E = end turn.

@@ -3,7 +3,7 @@
 Code: `game/scripts/explore/`. Scene: `scenes/explore.tscn` (F6 on it, or **F10 from any screen**). Rules math is in `explore_rules.gd` (pure, tested in `tests/test_explore.gd`). Decisions are under "Exploration maps" in `docs/decisions.md`.
 
 ## How it plays
-- The party leader is the one piece on the map; the rest of the party travels with them unseen. Click ground to walk there (the path previews on hover). Arrows or right drag move the camera, wheel zooms, Space snaps back to the leader, Q turns the view.
+- The party leader is the one piece on the map; the rest of the party travels with them unseen. Click ground to walk there (the path previews on hover). Arrows or right drag move the camera, wheel zooms, Space snaps back to the leader, Q turns the view about the party (the leader stays in the middle).
 - **Fog of war.** The leader sees 7 cells, blocked by the same line-of-sight rule as combat (walls, pillars, cliffs, trees). Never-seen cells are not drawn. Seen cells stay on the map, dimmed, once out of sight. The party can only path through cells it has seen. A map with `fog: false` (the village) shows every cell from the start.
 - **Enemies.** Groups stand on the map and are drawn only while in sight. Hover one to see the cells it watches (red).
   - You see them first: the walk stops and a box asks FIGHT, SNEAK HIT (sneak check: win = the group sleeps through its first phase and the party may deploy a step further out; lose = ambush), TALK or CALM (persuade or tame: win = they let you pass), BACK OFF.

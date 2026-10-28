@@ -8,7 +8,7 @@ extends Node2D
 ##
 ## Controls: WASD or click ground = walk. Click a thing = walk up and use it.
 ## F = use the nearest lit thing. Q = turn the camera. Arrows or right drag = look around, wheel = zoom,
-## Space = back to the leader. Hover an enemy to see what it can see.
+## Space = back to the leader (Q turns the view about the party). Hover an enemy to see what it can see.
 
 enum M { WALK, BUSY, DIALOG, DEPLOY, FIGHT, OVER }
 
@@ -35,7 +35,8 @@ var in_sight := {}  ## cells in sight now
 var mode := M.WALK
 var battle: Battle
 var zoom := 1.0
-var focus := Vector2.ZERO  ## board-local point the camera centres on
+var focus := Vector2.ZERO  ## grid point the camera centres on (unturned grid coords, so the camera turn keeps it)
+var focus_h := 0.0  ## height of that point
 var follow := true  ## the camera follows the leader until the player pans
 var walking_now := false
 
@@ -72,6 +73,7 @@ func _ready() -> void:
 	board.add_child(overlay)
 	board.cell_clicked.connect(_on_cell_clicked)
 	board.cell_hovered.connect(_on_cell_hovered)
+	board.rotated.connect(_on_rotated)
 
 	var start := _free_start()
 	for m in Game.run.alive():
@@ -111,7 +113,7 @@ func _ready() -> void:
 	_refresh_hud()
 	var lead := leader()
 	if lead:
-		focus = board.cell_top(lead.cell)
+		_snap_to(lead)
 
 
 # --- queries the overlay and tests use ------------------------------------------------
@@ -200,12 +202,36 @@ func _process(delta: float) -> void:
 		pan.y += 1
 	if pan != Vector2.ZERO:
 		follow = false
-		focus += pan.normalized() * PAN_SPEED * delta / zoom
+		focus += _screen_to_grid(pan.normalized() * PAN_SPEED * delta / zoom)
 	var lead := leader()
 	if follow and lead != null:
-		var target := board.iso(lead.vis.x + 0.5, lead.vis.y + 0.5, lead.vis_h)
-		focus = focus.lerp(target, minf(1.0, delta * 8.0))
+		var t := minf(1.0, delta * 8.0)
+		focus = focus.lerp(Vector2(lead.vis) + Vector2(0.5, 0.5), t)
+		focus_h = lerpf(focus_h, lead.vis_h, t)
 	_apply_camera()
+
+
+## Centre the camera on a unit's ground point at once (no glide).
+func _snap_to(u: CombatUnit) -> void:
+	focus = Vector2(u.vis) + Vector2(0.5, 0.5)
+	focus_h = u.vis_h
+
+
+## Q turns the view about the party: while the camera follows the leader, the leader stays in the middle.
+## Otherwise the turn keeps the same grid point in the middle (a fight, or after the player panned).
+func _on_rotated() -> void:
+	if mode == M.WALK and leader() != null:
+		follow = true
+		_snap_to(leader())
+
+
+## A screen move (pixels at zoom 1) as the same move across the grid at the current camera turn.
+func _screen_to_grid(d: Vector2) -> Vector2:
+	var o := board.iso(0.0, 0.0, 0.0)
+	var ex := board.iso(1.0, 0.0, 0.0) - o
+	var ey := board.iso(0.0, 1.0, 0.0) - o
+	var det := ex.x * ey.y - ey.x * ex.y
+	return Vector2((d.x * ey.y - ey.x * d.y) / det, (ex.x * d.y - ex.y * d.x) / det)
 
 
 ## WASD walks the leader one cell at a time toward the held screen direction (W = up the screen).
@@ -252,8 +278,9 @@ func _key_step(next: Vector2i) -> void:
 
 func _apply_camera() -> void:
 	var r := hud.center_rect()
+	var centre := board.iso(focus.x, focus.y, focus_h)
 	board.scale = Vector2.ONE * zoom
-	board.position = r.get_center() - focus * zoom
+	board.position = r.get_center() - centre * zoom
 	# Only cells near the play area get drawn; tall cells hang below their top, so the bottom margin is deep.
 	var local := Rect2((r.position - board.position) / zoom, r.size / zoom)
 	board.cull = local.grow_individual(CombatBoard.TW, CombatBoard.TH * 2, CombatBoard.TW, CombatBoard.HS * 10)
@@ -272,7 +299,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_drag = mb.pressed
 	elif event is InputEventMouseMotion and _drag:
 		follow = false
-		focus -= (event as InputEventMouseMotion).relative / zoom
+		focus -= _screen_to_grid((event as InputEventMouseMotion).relative / zoom)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -756,12 +783,18 @@ func start_fight(g: Dictionary, how: String) -> void:
 	_show_deployed()
 	follow = false
 	var sum := Vector2.ZERO
+	var heights := 0.0
 	var fighters := _deployed() + enemies
 	for u: CombatUnit in fighters:
-		sum += board.cell_top(u.cell)
+		sum += Vector2(u.cell) + Vector2(0.5, 0.5)
+		heights += grid.height_at(u.cell)
 	focus = sum / fighters.size()
+	focus_h = heights / fighters.size()
 	if how == "ambushed":
 		board.float_text(leader().cell, Txt.t("UI_EX_SPOTTED"), Color(1.0, 0.5, 0.4))
+	if Battle.auto_fight:
+		_begin_battle()  # testing: the auto placement stands and the fight plays itself
+		return
 	_deploy_side()
 	_pick_member(party[1] if party.size() > 1 else null)
 

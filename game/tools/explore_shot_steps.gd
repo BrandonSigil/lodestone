@@ -7,7 +7,8 @@ func _put(s: Node, c: Vector2i) -> void:
 	lead.place(c, s.grid.height_at(c))
 	s._refresh_sight()
 	s._refresh_units()
-	s.focus = s.board.cell_top(c)
+	s.focus = Vector2(c) + Vector2(0.5, 0.5)
+	s.focus_h = s.grid.height_at(c)
 
 
 func _thing(s: Node, id: String) -> Dictionary:
@@ -30,7 +31,8 @@ func run(s: Node, f: int, step: String) -> bool:
 					s.board.fog[Vector2i(x, y)] = 2
 			s.zoom = clampf(26.0 / maxf(s.grid.w, s.grid.h), 0.55, 1.6)
 			s.follow = false
-			s.focus = s.board.iso(s.grid.w * 0.5, s.grid.h * 0.5, 1.0)
+			s.focus = Vector2(s.grid.w, s.grid.h) * 0.5
+			s.focus_h = 1.0
 			s._apply_camera()
 		return f == 30
 	if step.begins_with("near:") or step.begins_with("use:"):
