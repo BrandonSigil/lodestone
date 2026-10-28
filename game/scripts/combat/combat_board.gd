@@ -758,8 +758,8 @@ func _scenery(c: Vector2i, ring_i: int, dark := false) -> void:
 		var fg_tex := BattleArt.texture("prop_pine_2" if seed_v % 2 == 0 else "prop_pine_1")
 		if fg_tex == null:
 			return
-		for k in 2:  # two trees per front cell, so the row overlaps like the reference's bottom trees
-			var fg_base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06 + (k - 0.5) * 0.45, c.y + 0.5 + k * 0.2, _ring_height(c, ring_i))
+		for k in 4:  # four staggered trees per front cell, so the row overlaps like the reference's bottom trees
+			var fg_base := iso(c.x + 0.5 + (seed_v % 5 - 2) * 0.06 + (k - 1.5) * 0.3, c.y + 0.5 + (k % 2) * 0.25, _ring_height(c, ring_i))
 			var fg_tall := TW * (0.9 + 0.3 * float((seed_v + k * 3) % 7) / 6.0)
 			var fg_wide := fg_tall * fg_tex.get_width() / float(fg_tex.get_height())
 			Pawn.ellipse(self, fg_base, fg_wide * 0.36, fg_wide * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
