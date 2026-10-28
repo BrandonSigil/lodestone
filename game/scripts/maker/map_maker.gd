@@ -252,7 +252,7 @@ func play_test() -> void:
 		if not FileAccess.file_exists(Game.sandbox_map):
 			Game.sandbox_map = SandboxSetup.USER_MAP_DIR + doc.map_name + ".json"
 		Game.sandbox_play = true
-		Game.go(Game.SANDBOX)
+		Game.go(Game.BATTLE)
 	else:
 		Game.ensure_run()
 		Game.explore_map = doc.map_name

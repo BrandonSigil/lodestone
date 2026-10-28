@@ -11,7 +11,7 @@ run=("$GODOT" --path . --rendering-driver opengl3)
 if [ -z "${DISPLAY:-}" ] && command -v xvfb-run >/dev/null; then
 	run=(xvfb-run -a -s "-screen 0 1280x720x24" "${run[@]}")
 fi
-for scene in village trail combat world_map combat_sandbox; do
+for scene in village trail combat world_map battle_view; do
 	"${run[@]}" -s res://tools/screenshot.gd -- "res://scenes/$scene.tscn" "$OUT/$scene.png"
 done
 echo "saved to $OUT"

@@ -84,8 +84,10 @@ Where to pick: in the sandbox, the right panel's SPELLS section has a picker per
 
 Adding a skill: add a row to `data/abilities.csv` and its name key to `text/placeholder.csv`, then list its id in the class's `abilities` array in the inspector. A new spell instead goes into a caster class's `spell_pool`. Columns: `kind` attack/hex/heal/buff, `target` enemy/ally/self/cell, `range_min/max` (0/0 = the unit's weapon range), `radius` (1 = plus shape), `power`, `hit`, `cooldown`, `push`, `status`, `status_turns`, `magic`, `element`.
 
-## Combat sandbox
-`scenes/combat_sandbox.tscn`. Open it and press F6, or press **F9 from any screen** while the game runs. Code in `game/scripts/sandbox/`.
+## Battle view and the archived sandbox
+Fights run in `scenes/battle_view.tscn` (code in `game/scripts/battle/battle_view.gd`): one map, the fight and a small HUD, no editing panels. The map maker's Play test opens it, and `check.sh`, `screenshot.sh` and `tools/battle_shot.gd` use it.
+
+The old combat sandbox (`scenes/combat_sandbox.tscn`, code in `game/scripts/sandbox/`) is archived: no menu button and no F9. Open it with F6 in the editor if you need its paint tools or balance runs.
 
 - **EDIT** (F1 toggles): paint terrain (grass, forest, water, rock, road, stone, stairs, ruin), RAISE / LOWER height (0 to 8), place party members (pick from the roster) and enemies (any class, including party classes for mirror matches). Left click and drag paints, right click removes a piece. The faint red tiles are the enemy deploy zone used by "extra enemies".
 - **PLAY**: the real fight controller on your map. **RESTART (R)** rebuilds the fight from the setup. "new dice on restart" off = the same rolls every time (useful to replay one exact situation), on = fresh rolls.

@@ -39,7 +39,7 @@
 
 ## Tucked away (2026-10-28 cleanup)
 - Newest look: the skyline wallpaper, a solid foreground band and silhouette trees (`CombatBoard.wallpaper`). It is on by default in the map maker and in fights (`Battle.wallpaper`). Snow is the default tile set for new maps in the map maker.
-- The combat sandbox (`scenes/combat_sandbox.tscn`) is archived: no menu button and no F9. Its file and tools stay, so it still runs in the editor (F6).
+- The combat sandbox (`scenes/combat_sandbox.tscn`) is archived: no menu button and no F9. Its file stays, so it still runs in the editor (F6). Fights now run in `scenes/battle_view.tscn` (`scripts/battle/battle_view.gd`): one map, no editing panels. The map maker's Play test, `check.sh`, `screenshot.sh` and `tools/battle_shot.gd` all use it. `tools/sandbox_shot.gd` is archived with the sandbox.
 - The island-picture plates (`snow`, `ruins`, `village_in` backdrop) moved to `art/picsart/archive/plates/`. They were drafts that the wallpaper replaces.
 - The old paper card and the painted-plate path in `CombatBoard` are still in code, reachable only with the wallpaper switch off.
 

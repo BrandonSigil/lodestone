@@ -1,0 +1,27 @@
+LODESTONE SNOW TILE KIT v3 (flat square tiles, low detail, game-ready)
+
+Image 1 = the flat look: docs/art/references/style-flat-forest-tiles.png. This sets the amount of detail. Match its flat fills and its few marks.
+Image 2 = the cliffs: art/picsart/archive/plates/snow-backdrop.png. Copy its cliff faces only: slate-grey stone under a soft snow cap, blue-grey shadow on the right faces, soft edges. Take the cliff look, not the layout.
+Image 3 = the key art for props: docs/art/characters/00-reference-sheet.png.
+
+Make ONE biome only: snow. Aspect 1:1, plain cream paper background (#eae8d6), no title, no labels, no text anywhere.
+Layout: a 5 x 5 grid of equal square cells with a clear cream gap between cells. Nothing crosses a cell edge.
+   row 1 (tops): snow top, snow top with a few speckles, snow top with a faint path, grey stone top, dark stone top
+   row 2 (tops): cracked ice, ice shard top, plain ice top, snow over forest floor, thin ice with sparkles
+   row 3 (sides, straight on, filling the cell): cliff of grey stone under snow, cliff of blue ice, cliff of dark rock, ice fall, icicle-capped cliff
+   row 4 (props, 2:1 isometric 3/4 view, base centred at the bottom of the cell): snow bush, snow-capped boulder, lantern on a post, wooden crate, ice crystal cluster
+   row 5 (props, same view, base at bottom centre): snow pine, second snow pine, snow-covered pillar, ice spire, snow-covered ruin arch
+
+TOPS ARE FLAT SQUARE TILES (IMPORTANT): each top fills its whole square, seen straight down. NOT a diamond, NOT an isometric shape, NOT a raised block, NOT a cube. Nothing shows at the cell's corners. Seamless: the left edge matches the right edge and the top matches the bottom, in colour and texture, so four copies tile with no seam.
+
+DETAIL BUDGET (IMPORTANT, Brandon's rule): flat fills first. Tops: one flat base colour with at most two or three soft marks per tile; no speckle field, no blotches, no crowd of small shapes. Sides: one flat colour with two or three soft vertical strokes; no small stones or chips. Props: one clear silhouette with two flat tones and a soft outline; no small pebbles, no fine snow dots, no grass. Keep every element big. If in doubt, remove detail.
+
+The snow edge: where snow meets a cliff, a soft rounded drape over the lip. No zigzag teeth, no regular icicle fringe.
+
+Colour: snow cool white with pale blue shadow; stone slate grey with a warm touch; ice pale teal-blue; shadows navy (#1f2d4f) on the right faces, mid blue on the left faces. One soft sun from the upper left. No black anywhere.
+
+Props: every prop is 2:1 isometric, the same angle as the game floor. Nothing flat-on. Outline (#373335) on props only, soft.
+
+Avoid: diamond or isometric tops, raised blocks on tops, benches, carts, planters, fences, flat-on arches, speckle fields, small pebbles, fine detail, zigzag edges, perspective on tops, cast shadows on tops, text, labels, borders around cells, 3d render, glossy, photo, characters, people, animals, watermark, saturated red or saturated blue.
+
+CELL TO GAME FILE: row 1 snow top -> top_grass.png; snow top with speckles -> top_grass_b.png; snow top with path -> top_road.png; grey stone top -> top_stone.png; dark stone top -> top_stone_b.png; row 2 cracked ice -> top_water.png; ice shard top -> top_rock.png; plain ice top -> top_special.png; snow over forest floor -> top_forest.png; thin ice with sparkles -> top_hazard.png; row 3 grey stone cliff -> side_cliff.png; blue ice cliff -> side_cliff_b.png; dark rock cliff -> side_masonry.png; ice fall -> side_water.png; icicle-capped cliff -> side_hazard.png; row 4 snow bush -> prop_bush.png; snow boulder -> prop_boulder.png; lantern -> prop_brazier.png (optional); crate -> prop_crate.png (optional); ice crystal -> prop_detail.png; row 5 snow pine -> prop_pine_1.png; second pine -> prop_pine_2.png; snow pillar -> prop_pillar.png; ice spire -> prop_landmark.png; ruin arch -> prop_ruin.png.
