@@ -132,7 +132,7 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 ### Batch 1 (posted 2026-10-29)
 | Card | Question | Answer |
 |---|---|---|
-| `design-pc-1-party` | How many pieces fight: 3, 4 or 6? | open |
+| `design-pc-1-party` | How many pieces fight: 3, 4, 6, or by fight size? | open |
 | `design-pc-2-skills` | Where a character's 3 or 4 skills come from: fixed, pick 4 of a bigger set before a trip, grown by level picks, or from jobs? | open |
 | `design-pc-3-levelpick` | What the pick every 4 or 5 levels grows into: stats, a new skill from two, or a passive perk? | open |
 | `design-pc-4-grind` | Grinding: let it be, XP shrinks on weak foes, or a level cap per region? | open |
