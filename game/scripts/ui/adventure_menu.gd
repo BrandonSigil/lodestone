@@ -59,6 +59,13 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	_label(box, Txt.t("UI_PACK_HELP_RUN"), 12)
 	var grid := PackView.new()
 	grid.setup_bag(run.pack, Db.items, Callable(), PACK_CELL)
+	# the belts in a row under the pack, one per member: what each can use in a fight
+	var belt_w := PACK_CELL * RunState.BELT_COLS + 24.0
+	var per_row := maxi(1, int(W / belt_w))
+	for k in run.members.size():
+		var m: Dictionary = run.members[k]
+		var at := Vector2((k % per_row) * belt_w, PACK_CELL * RunState.PACK_ROWS + 14.0 + floorf(float(k) / per_row) * (PACK_CELL + 30.0))
+		grid.add_area(m.belt, at, Txt.f("UI_BELT_OF", Txt.t((m.def as CharacterDef).name_key)))
 	grid.changed.connect(func() -> void:
 		Game.save_adventure()
 		if grid.flash == "":  # a refused move keeps the box up so its "no room" stays readable

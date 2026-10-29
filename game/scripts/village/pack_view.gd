@@ -3,21 +3,27 @@ extends Control
 ## The pack grid you arrange by hand: drag an item to move it, R or right-click turns it,
 ## and in the village drop it on the sell box to sell it. Gear bound to a member (the Wizard's
 ## books) can be moved and turned but not sold. Used for the village outfit and the run's pack.
+## The run's view also shows each member's belt as its own small grid: drag between them to fill a
+## belt from the pack. A stack dropped on a stack of the same thing tops it up.
 
 signal changed
 
 const CELL := 72.0
 const SELL_SIZE := Vector2(150, 110)
+const LABEL_H := 20.0  ## room above a labeled grid for its name
 
-var bag: InventoryGrid
+var bag: InventoryGrid  ## the first grid (the pack)
+var areas: Array[Dictionary] = []  ## {"bag": InventoryGrid, "at": Vector2 (top-left here), "label": String}
 var db: Dictionary = {}  ## item rows (Db.items)
 var sell := Callable()  ## index -> bool; empty means no sell box
 var cell := CELL
 var held := -1  ## index of the item being dragged
+var held_area := -1  ## which grid it's from
 var held_rot := 0
 var grab := Vector2i.ZERO  ## which cell of the rotated shape the mouse holds
 var mouse := Vector2.ZERO
-var flash := ""  ## text key shown under the grid after a refused action
+var flash := ""  ## text key shown under the grids after a refused action
+var label_color := Riso.CREAM  ## grid names; the run's box is dark
 
 
 func _init() -> void:
@@ -35,8 +41,28 @@ func setup_bag(grid: InventoryGrid, items_db: Dictionary, sell_cb := Callable(),
 	db = items_db
 	sell = sell_cb
 	cell = cell_size
-	var w := cell * bag.cols + (40 + SELL_SIZE.x if sell.is_valid() else 0.0)
-	custom_minimum_size = Vector2(w, cell * bag.rows + 30)
+	areas = [{"bag": grid, "at": Vector2.ZERO, "label": ""}]
+	_fit_size()
+
+
+## Another grid in the same view, its top-left at `at` (a label takes LABEL_H above it).
+func add_area(grid: InventoryGrid, at: Vector2, label := "") -> void:
+	areas.append({"bag": grid, "at": at + Vector2(0, LABEL_H if label != "" else 0.0), "label": label})
+	_fit_size()
+
+
+func _rect_of(a: Dictionary) -> Rect2:
+	var g: InventoryGrid = a.bag
+	return Rect2(a.at, Vector2(g.cols, g.rows) * cell)
+
+
+func _fit_size() -> void:
+	var end := Vector2.ZERO
+	for a in areas:
+		end = end.max(_rect_of(a).end)
+	if sell.is_valid():
+		end.x += 40 + SELL_SIZE.x
+	custom_minimum_size = end + Vector2(0, 30)
 	queue_redraw()
 
 
@@ -46,8 +72,17 @@ func _sell_rect() -> Rect2:
 	return Rect2(Vector2(cell * bag.cols + 40, cell * bag.rows - SELL_SIZE.y), SELL_SIZE)
 
 
-func _cell_at(pos: Vector2) -> Vector2i:
-	return Vector2i(floori(pos.x / cell), floori(pos.y / cell))
+func _area_at(pos: Vector2) -> int:
+	for k in areas.size():
+		if _rect_of(areas[k]).has_point(pos):
+			return k
+	return -1
+
+
+## The cell under pos in grid k's own coordinates (may be outside it).
+func _cell_in(k: int, pos: Vector2) -> Vector2i:
+	var at: Vector2 = areas[k].at
+	return Vector2i(floori((pos.x - at.x) / cell), floori((pos.y - at.y) / cell))
 
 
 func _gui_input(e: InputEvent) -> void:
@@ -73,14 +108,19 @@ func _gui_input(e: InputEvent) -> void:
 
 
 func _pick(pos: Vector2) -> void:
-	var i := bag.item_at(_cell_at(pos))
+	var k := _area_at(pos)
+	if k == -1:
+		return
+	var g: InventoryGrid = areas[k].bag
+	var i := g.item_at(_cell_in(k, pos))
 	if i == -1:
 		return
 	if is_inside_tree():
 		grab_focus()
 	held = i
-	held_rot = bag.items[i].rot
-	grab = _cell_at(pos) - (bag.items[i].pos as Vector2i)
+	held_area = k
+	held_rot = g.items[i].rot
+	grab = _cell_in(k, pos) - (g.items[i].pos as Vector2i)
 	flash = ""
 	queue_redraw()
 
@@ -89,14 +129,18 @@ func _turn(pos: Vector2) -> void:
 	if held != -1:
 		# turn the held cell offset with the shape so the item spins under the cursor
 		held_rot = (held_rot + 1) % 4
-		var shape: Array[Vector2i] = InventoryGrid.rotated(bag.items[held].shape, held_rot)
+		var shape: Array[Vector2i] = InventoryGrid.rotated(areas[held_area].bag.items[held].shape, held_rot)
 		grab = shape[0]
 		queue_redraw()
 		return
-	var i := bag.item_at(_cell_at(pos))
+	var k := _area_at(pos)
+	if k == -1:
+		return
+	var g: InventoryGrid = areas[k].bag
+	var i := g.item_at(_cell_in(k, pos))
 	if i != -1:
-		var it := bag.items[i]
-		if not bag.move(i, it.pos, (int(it.rot) + 1) % 4):
+		var it := g.items[i]
+		if not g.move(i, it.pos, (int(it.rot) + 1) % 4):
 			flash = "SHOP_NO_ROOM"
 		changed.emit()
 		queue_redraw()
@@ -106,20 +150,59 @@ func _drop(pos: Vector2) -> void:
 	if held == -1:
 		return
 	var i := held
+	var from := held_area
 	held = -1
-	if _sell_rect().has_point(pos):
+	held_area = -1
+	var k := _area_at(pos)
+	if from == 0 and _sell_rect().has_point(pos):
 		if not sell.call(i):
 			flash = "UI_BOUND"
-	elif not bag.move(i, _cell_at(pos) - grab, held_rot):
+	elif k == -1:
+		pass  # dropped outside every grid: it stays where it was
+	elif not _put_down(from, i, k, _cell_in(k, pos)):
 		flash = "SHOP_NO_ROOM"
 	changed.emit()
 	queue_redraw()
 
 
+## Moves item i of grid `from` to grid `to` with its held turn and grab, or tops up a stack of the same
+## thing under the cursor. Bound gear stays in its own grid. Returns false (nothing changed) if refused.
+func _put_down(from: int, i: int, to: int, under: Vector2i) -> bool:
+	var src: InventoryGrid = areas[from].bag
+	var dst: InventoryGrid = areas[to].bag
+	var it := src.items[i]
+	var pos := under - grab
+	if from == to and dst.move(i, pos, held_rot):
+		return true
+	if from != to and it.bound == "" and dst.fits(it.shape, held_rot, pos):
+		src.remove(i)
+		var j := dst.place(it.id, it.shape, held_rot, pos)
+		dst.items[j].n = int(it.get("n", 1))
+		return true
+	var o := dst.item_at(under)
+	if o == -1 or (from == to and o == i) or dst.items[o].id != it.id or it.bound != "":
+		return false
+	var room := maxi(1, int(db[it.id].get("stack", 1))) - int(dst.items[o].get("n", 1))
+	var k := mini(room, int(it.get("n", 1)))
+	if k <= 0:
+		return false
+	dst.items[o].n = int(dst.items[o].get("n", 1)) + k
+	it.n = int(it.get("n", 1)) - k
+	if it.n <= 0:
+		src.remove(i)
+	return true
+
+
 func _draw() -> void:
 	if bag == null:
 		return
-	draw_bag(self, bag, db, Vector2.ZERO, cell, true, held)
+	var bottom := 0.0
+	for k in areas.size():
+		var a := areas[k]
+		draw_bag(self, a.bag, db, a.at, cell, true, held if k == held_area else -1)
+		if a.label != "":
+			Riso.draw_label(self, a.label, a.at - Vector2(0, LABEL_H * 0.55), 13, label_color)
+		bottom = maxf(bottom, _rect_of(a).end.y)
 	var sr := _sell_rect()
 	if sell.is_valid():
 		var over := held != -1 and sr.has_point(mouse)
@@ -127,16 +210,18 @@ func _draw() -> void:
 		_dashed_rect(sr, Riso.RED)
 		Riso.draw_label(self, Txt.t("UI_SELL"), sr.get_center(), 20, Riso.RED, HORIZONTAL_ALIGNMENT_CENTER)
 	if flash != "":
-		Riso.draw_label(self, Txt.t(flash), Vector2(0, cell * bag.rows + 16), 14, Riso.RED)
+		Riso.draw_label(self, Txt.t(flash), Vector2(0, bottom + 16), 14, Riso.RED)
 	if held != -1:
-		var it := bag.items[held]
+		var it := (areas[held_area].bag as InventoryGrid).items[held]
 		var cells := InventoryGrid.rotated(it.shape, held_rot)
 		var top_left := mouse - (Vector2(grab) + Vector2(0.5, 0.5)) * cell
-		var target := _cell_at(mouse) - grab
-		var ok := bag.fits(it.shape, held_rot, target, held)
-		if not sr.has_point(mouse):
+		var k := _area_at(mouse)
+		if k != -1 and not sr.has_point(mouse):
+			var g: InventoryGrid = areas[k].bag
+			var target := _cell_in(k, mouse) - grab
+			var ok := g.fits(it.shape, held_rot, target, held if k == held_area else -1)
 			for c in cells:
-				var cr := Rect2(Vector2(c + target) * cell, Vector2(cell, cell))
+				var cr := Rect2(areas[k].at + Vector2(c + target) * cell, Vector2(cell, cell))
 				draw_rect(cr.grow(-4), Riso.alpha(Riso.INK if ok else Riso.RED, 0.18))
 		draw_item(self, it.id, db, cells, top_left, cell, it.bound != "", 0.85)
 		_draw_count(self, cells, top_left, cell, int(it.get("n", 1)))

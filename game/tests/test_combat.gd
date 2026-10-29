@@ -257,20 +257,22 @@ func test_area_hits_everyone_in_it() -> void:
 	ok(CombatRules.forecast(g, m, _ab("moonbeam"), Vector2i(3, 2), [m, e1, e2, ally], m.cell).counter.is_empty(), "no counter for area hits")
 
 
-func test_heal_item_spends_supplies() -> void:
+func test_heal_item_spends_from_the_belt() -> void:
 	var g := CombatGrid.flat(3, 1)
 	var k := _unit("knight", 0, Vector2i(0, 0), g)
 	k.hp = 5
 	var salve: Ability = Db.combat_items["salve"]
-	var sup := {"medicine": 1}
-	ok(CombatRules.usable(k, salve, sup))
-	CombatRules.resolve(RandomNumberGenerator.new(), g, k, salve, k.cell, [k], sup)
+	ok(not CombatRules.usable(k, salve), "no belt, no salve")
+	k.belt = InventoryGrid.create(2, 1)
+	k.belt.put(salve.spends, [Vector2i.ZERO] as Array[Vector2i], 1, 3)
+	ok(CombatRules.usable(k, salve))
+	CombatRules.resolve(RandomNumberGenerator.new(), g, k, salve, k.cell, [k])
 	eq(k.hp, 5 + salve.power)
-	eq(sup.medicine, 0)
-	ok(not CombatRules.usable(k, salve, sup), "out of medicine")
+	eq(k.belt.count(salve.spends), 0, "spent from the belt")
+	ok(not CombatRules.usable(k, salve), "belt empty")
 	k.hp = k.max_hp - 1
-	sup.medicine = 1
-	CombatRules.resolve(RandomNumberGenerator.new(), g, k, salve, k.cell, [k], sup)
+	k.belt.put(salve.spends, [Vector2i.ZERO] as Array[Vector2i], 1, 3)
+	CombatRules.resolve(RandomNumberGenerator.new(), g, k, salve, k.cell, [k])
 	eq(k.hp, k.max_hp, "heal caps at max")
 
 

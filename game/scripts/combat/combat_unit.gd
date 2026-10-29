@@ -12,6 +12,7 @@ var tint := Color.GRAY
 var deficiency: StringName = &""
 var skills: Dictionary = {}
 var member: Dictionary = {}  ## the RunState member this unit came from (party only)
+var belt: InventoryGrid = null  ## what this piece can use in a fight: its member's belt, spent in place
 
 # Combat stats after scaling.
 var max_hp := 1
@@ -126,7 +127,20 @@ static func from_member(m: Dictionary, mods: Dictionary = {}) -> CombatUnit:
 	u.hp = clampi(m.hp, 1, u.max_hp)
 	u.shown_hp = u.hp
 	u.member = m
+	u.belt = m.get("belt")
 	return u
+
+
+## Test benches (sandbox, map maker, sims) say what a fight has as counts. Each player piece without a
+## belt gets one packed from them: a cell of potions and a cell of meat, as much as each cell holds.
+static func pack_belts(units: Array, supplies: Dictionary) -> void:
+	for u: CombatUnit in units:
+		if u.team != 0 or u.belt != null:
+			continue
+		u.belt = InventoryGrid.create(RunState.BELT_COLS, RunState.BELT_ROWS)
+		for pair in [[RunState.MED_ITEM, int(supplies.get("medicine", 0))], [RunState.FOOD_ITEM, int(supplies.get("food", 0))]]:
+			if pair[1] > 0:
+				u.belt.put(pair[0], RunState.shape_of(pair[0]), mini(pair[1], RunState.stack_of(pair[0])), RunState.stack_of(pair[0]))
 
 
 static func enemy(c: ClassDef, mods: Dictionary = {}) -> CombatUnit:

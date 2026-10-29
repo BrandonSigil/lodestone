@@ -41,7 +41,7 @@ func _ready() -> void:
 
 	battle = Battle.new()
 	add_child(battle)
-	battle.setup(grid, units, setup.seed, setup.strangeness, {"medicine": Game.run.medicine, "food": Game.run.food})
+	battle.setup(grid, units, setup.seed, setup.strangeness)
 	if art_set != "":
 		battle.board.art_set = art_set
 		battle.board.show_grid = false
@@ -82,14 +82,7 @@ func _log(line: String) -> void:
 	log_label.text = "\n".join(lines.slice(-10))
 
 
-## Items spent in the fight come out of the run's real supplies.
-func _sync_supplies() -> void:
-	Game.run.medicine = int(battle.supplies.get("medicine", Game.run.medicine))
-	Game.run.food = int(battle.supplies.get("food", Game.run.food))
-
-
 func _refresh_hud() -> void:
-	_sync_supplies()
 	var entries := []
 	for u: CombatUnit in battle.units:
 		if u.team == 0:
@@ -100,7 +93,6 @@ func _refresh_hud() -> void:
 
 
 func _on_finished(won: bool) -> void:
-	_sync_supplies()
 	for u: CombatUnit in battle.units:
 		if u.team == 0:
 			u.member.hp = u.hp

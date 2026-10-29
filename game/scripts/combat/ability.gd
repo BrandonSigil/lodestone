@@ -18,8 +18,8 @@ var status := ""  ## rooted, veil, guard
 var status_turns := 0
 var magic := false  ## ignores cover
 var element := ""  ## fire, moon, frost or empty. Some traits care (flammable takes more from fire).
-## Items only: which supply it spends and how much.
-var resource := ""
+## Items only: the pack item it spends from the user's belt (data/items.csv id) and how many.
+var spends := ""
 var cost := 0
 
 
@@ -54,7 +54,7 @@ static func from_item_row(row: Dictionary) -> Ability:
 	a.power = int(row.heal)
 	a.status = row.status
 	a.status_turns = int(row.status_turns)
-	a.resource = row.resource
+	a.spends = row.item
 	a.cost = int(row.cost)
 	return a
 
@@ -64,7 +64,7 @@ func uses_weapon_range() -> bool:
 
 
 func is_item() -> bool:
-	return resource != ""
+	return spends != ""
 
 
 func hostile() -> bool:

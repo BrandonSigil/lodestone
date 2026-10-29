@@ -105,3 +105,88 @@ func test_old_saves_still_load() -> void:
 	Game.meta = saved
 	Game.save_enabled = was_on
 	Game.run = null
+
+
+# --- step 2: belts -------------------------------------------------------------------------
+
+func _party_run() -> RunState:
+	_db()
+	return RunState.create([Db.character(&"lead"), Db.character(&"dog")], 1, -40)
+
+
+func test_each_member_has_a_two_by_one_belt() -> void:
+	var r := _party_run()
+	for m in r.members:
+		eq(Vector2i(m.belt.cols, m.belt.rows), Vector2i(2, 1))
+	var b: InventoryGrid = r.members[0].belt
+	ok(b.place("rope", RunState.shape_of("rope"), 0, Vector2i.ZERO) != -1, "a 2-cell thing fills it")
+	eq(b.place("potion", RunState.shape_of("potion"), 0, Vector2i(1, 0)), -1, "then nothing else fits")
+	b.items.clear()
+	ok(b.place("potion", RunState.shape_of("potion"), 0, Vector2i(0, 0)) != -1)
+	ok(b.place("meat", RunState.shape_of("meat"), 0, Vector2i(1, 0)) != -1, "or two 1-cell things")
+
+
+func test_a_piece_uses_only_its_own_belt() -> void:
+	var r := _party_run()
+	var lead: Dictionary = r.members[0]
+	var dog: Dictionary = r.members[1]
+	lead.belt.put("potion", RunState.shape_of("potion"), 2, 3)
+	var salve: Ability = Db.combat_items["salve"]
+	var u_lead := CombatUnit.from_member(lead)
+	var u_dog := CombatUnit.from_member(dog)
+	ok(CombatRules.usable(u_lead, salve), "the potion is on the hero's belt")
+	ok(not CombatRules.usable(u_dog, salve), "the dog's belt is empty, whatever the pack holds")
+	eq(r.medicine, 5, "3 in the pack and 2 on the belt")
+	u_lead.hp = 1
+	CombatRules.resolve(RandomNumberGenerator.new(), CombatGrid.flat(2, 1), u_lead, salve, u_lead.cell, [u_lead])
+	eq(lead.belt.count("potion"), 1, "the fight spends the real belt")
+	eq(r.pack.count("potion"), 3, "and never the pack")
+
+
+func test_the_belt_menu_lists_only_belt_items() -> void:
+	var r := _party_run()
+	r.members[0].belt.put("meat", RunState.shape_of("meat"), 4, 10)
+	var u := CombatUnit.from_member(r.members[0])
+	var snack: Ability = Db.combat_items["snack"]
+	var salve: Ability = Db.combat_items["salve"]
+	ok(CombatRules.usable(u, snack), "4 meat covers a snack")
+	ok(not CombatRules.usable(u, salve), "no potion on this belt")
+
+
+func test_meals_eat_from_the_pack_first() -> void:
+	var r := _party_run()
+	r.food = 5
+	r.members[0].belt.put("meat", RunState.shape_of("meat"), 3, 10)
+	eq(r.food, 8)
+	r.food -= 6
+	eq(r.pack.count("meat"), 0, "the pack's 5 go first")
+	eq(r.members[0].belt.count("meat"), 2, "then the belt")
+
+
+func test_belts_are_kept_in_the_save() -> void:
+	var r := _party_run()
+	r.members[1].belt.put("potion", RunState.shape_of("potion"), 2, 3)
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(r.belts_save()))
+	var back := _party_run()
+	back.load_belts(saved)
+	eq(back.members[1].belt.count("potion"), 2)
+	eq(back.members[0].belt.count("potion"), 0)
+
+
+func test_drag_from_the_pack_to_a_belt() -> void:
+	var r := _party_run()
+	var pv := PackView.new()
+	pv.setup_bag(r.pack, Db.items, Callable(), 50.0)
+	pv.add_area(r.members[0].belt, Vector2(0, 200), "")
+	pv._pick(Vector2(0.5, 0.5) * 50.0)  # the potion stack at the pack's top-left
+	pv._drop(Vector2(1.5 * 50.0, 200 + 25.0))
+	eq(r.members[0].belt.count("potion"), 3, "the whole stack moved to the belt's second cell")
+	eq(r.members[0].belt.items[0].pos, Vector2i(1, 0))
+	eq(r.pack.count("potion"), 0)
+	r.pack.put("potion", RunState.shape_of("potion"), 2, 3)
+	r.members[0].belt.take("potion", 1)
+	pv._pick(Vector2(0.5, 0.5) * 50.0)
+	pv._drop(Vector2(1.5 * 50.0, 200 + 25.0))
+	eq(r.members[0].belt.count("potion"), 3, "dropped on the stack, it tops it up to 3")
+	eq(r.pack.count("potion"), 1, "and the rest stays behind")
+	pv.free()

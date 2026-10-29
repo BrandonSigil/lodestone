@@ -157,12 +157,13 @@ static func can_attack(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from:
 	return in_reach(grid, from, tgt.cell, ability_range(att, null))
 
 
-## Can this unit use this ability right now (cooldown, supplies)? Supplies only matter for items.
-static func usable(u: CombatUnit, a: Ability, supplies: Dictionary = {}) -> bool:
+## Can this unit use this ability right now (cooldown)? An item also has to be on the unit's own belt
+## ([USER] 2026-10-29: in a fight a piece uses only what is on its belt, and using it is its action).
+static func usable(u: CombatUnit, a: Ability) -> bool:
 	if not u.can_use(a):
 		return false
 	if a.is_item():
-		return int(supplies.get(a.resource, 0)) >= a.cost
+		return u.belt != null and u.belt.count(a.spends) >= a.cost
 	return true
 
 
@@ -366,13 +367,13 @@ static func forecast(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector
 
 ## Uses an ability (or item) and applies everything. Returns the events in order so the board can animate them:
 ## {"type": "hit"|"miss"|"heal"|"status"|"push"|"bump"|"fall"|"counter", "src", "unit", "amount", "roll", "path"}
-## Item costs are paid from `supplies` here.
-static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector2i, units: Array, supplies: Dictionary = {}, allow_counter := true) -> Array:
+## Item costs are paid from the user's belt here.
+static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector2i, units: Array, allow_counter := true) -> Array:
 	var events := []
 	if a.cooldown > 0:
 		u.cooldowns[a.id] = a.cooldown
 	if a.is_item():
-		supplies[a.resource] = int(supplies.get(a.resource, 0)) - a.cost
+		u.belt.take(a.spends, a.cost)
 	var hit_list := affected_units(grid, u, a, center, units, u.cell)
 	for t in hit_list:
 		match a.kind:
@@ -393,7 +394,7 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 		var t: CombatUnit = hit_list[0]
 		if u.alive() and counters_from(grid, u, t, u.cell):
 			events.append({"type": "counter", "src": t, "unit": u})
-			events.append_array(resolve(rng, grid, t, t.abilities[0], u.cell, units, supplies, false))
+			events.append_array(resolve(rng, grid, t, t.abilities[0], u.cell, units, false))
 	return events
 
 

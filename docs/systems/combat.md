@@ -4,7 +4,7 @@ Code: `game/scripts/combat/`. Rules math is in `combat_rules.gd` (pure, no nodes
 
 ## Files
 - `combat_rules.gd`: movement, reach, to-hit, damage, counters, pushes, statuses, the danger zone, and `resolve()`, which applies any skill or item and returns a list of events.
-- `ability.gd`: one skill or item. Skills come from `data/abilities.csv`, fight items from `data/combat_items.csv`.
+- `ability.gd`: one skill or item. Skills come from `data/abilities.csv`, fight items from `data/combat_items.csv` (column `item`: the pack item it spends, e.g. salve spends 1 potion, snack 3 meat).
 - `combat_unit.gd`: one piece. Stats are copied from its class and then scaled by the fight's difficulty dials.
 - `enemy_ai.gd`: scores every reachable tile times every ready skill times every target, picks the best.
 - `combat_sim.gd`: whole AI-vs-AI fights with no nodes, for the balance tool and tests.
@@ -15,7 +15,7 @@ Code: `game/scripts/combat/`. Rules math is in `combat_rules.gd` (pure, no nodes
 ## How a turn works
 - Fire Emblem phases: the player moves every piece, then every enemy moves.
 - Click a piece to open its menu. Each piece gets **one move and one action, in either order** (so hit-and-run works). Red tiles are foes it can hit from where it stands.
-- Menu: **MOVE** (hides the menu and lights the blue tiles it can walk to; click one, or **CANCEL** at the bottom to go back to the menu), **HIT** (basic attack), the class's **skills**, **items** (spend the run's medicine or food), **GUARD** (+3 defense until your next turn), **UNDO MOVE** (before acting), **WAIT** (end this piece).
+- Menu: **MOVE** (hides the menu and lights the blue tiles it can walk to; click one, or **CANCEL** at the bottom to go back to the menu), **HIT** (basic attack), the class's **skills**, **items** (only what's on this piece's own 2 x 1 belt, spent from it; using one is the action. [USER] 2026-10-29), **GUARD** (+3 defense until your next turn), **UNDO MOVE** (before acting), **WAIT** (end this piece).
 - Piece bodies can be clicked even when a tree or block hides their feet (the body is the pick).
 - **AUTO FIGHT (testing)**: the top-right button makes the party play its own turns with the same AI the enemies use (the setting is kept across fights). A fight where nobody is hurt for 8 rounds in a row ends as a party win, because the greedy AI can't path around walls yet. Off by default; exploration skips the deploy step while it is on.
 - Pick an action, then hover a lit target to see the forecast: hit chance, damage, HP before and after, every modifier ("ATK 4 HIGH +2 FLANK +2 vs DEF 11 COVER +2") and whether they will hit back. Click to commit.
@@ -41,7 +41,7 @@ Code: `game/scripts/combat/`. Rules math is in `combat_rules.gd` (pure, no nodes
 - Terrain types: grass, forest (cost 2, +2 cover), shallow water (cost 3, -2 defense), road, **stone** (paved ruin floor), **stairs**, rock and **ruin** (both impassable).
 - The camera turns in quarter steps (**Q**, Shift+Q back, or the TURN button), like FFT. Saved maps remember the angle they open at.
 - The look (graybox, all drawn in code): stone courses on cliff faces, moss hanging over grassy ledges, waterfalls wherever water meets a drop, stair treads, ruin walls with arches, contact shadows under tall neighbours, and a faint outline of any piece hidden behind a wall.
-- Win: loot from `data/encounters.csv`, downed members stand back up with 1 HP. Lose: the Lodestone recalls the party. Items used in a fight are gone from the run.
+- Win: loot from `data/encounters.csv`, downed members stand back up with 1 HP. Lose: the Lodestone recalls the party. Items used in a fight are gone from the belt they were on (`CombatUnit.belt` is the member's belt, spent in place).
 
 ## Character traits
 Every roster character has one combat trait (`traits` in their `.tres`), shown when you hover the piece. Enemy classes can have them too (`traits` on the class). Rules live in `combat_rules.gd` as `TRAIT_*` constants; names and one-line descriptions are `TRAIT_<ID>` and `TRAIT_<ID>_DESC` in `placeholder.csv`.
@@ -93,7 +93,7 @@ The old combat sandbox (`scenes/combat_sandbox.tscn`, code in `game/scripts/sand
 - **PLAY**: the real fight controller on your map. **RESTART (R)** rebuilds the fight from the setup. "new dice on restart" off = the same rolls every time (useful to replay one exact situation), on = fresh rolls.
 - **Map**: name it and SAVE (writes `game/data/maps/<name>.json`, readable and hand-editable), LOAD from the list, RESIZE (5 to 16 a side), or GENERATE a random map from a seed. `default.json` loads first.
 - **Difficulty dials** for each side: HP %, to-hit, defense, damage, move, plus "extra enemies" (copies of your enemies added in the deploy zone). Presets EASY / NORMAL / HARD / BRUTAL set the enemy dials. They scale four things separately (toughness, accuracy, damage, numbers) because those feel different in play.
-- **Supplies and rules**: medicine and food for items, strangeness (board colors), counterattacks on/off, party luck on/off.
+- **Supplies and rules**: medicine and food for items (each party piece gets a test belt packed from them: a cell of potions and a cell of meat, `CombatUnit.pack_belts`), strangeness (board colors), counterattacks on/off, party luck on/off.
 - **BALANCE**: RUN AI vs AI plays the setup N times with the AI on both sides and reports party win rate, rounds, party HP left and pieces downed per fight. The party AI is greedy and much weaker than a person, so read it as a floor. A good normal fight: party wins 60 to 85% (AI) and keeps 30 to 60% HP.
 - Headless: `godot --headless --path game -s res://tools/balance_report.gd -- 100` prints every saved map at every preset.
 

@@ -11,7 +11,7 @@ const GUARD_SCORE := 4.0  ## guard when hurt and nothing better to do
 
 ## Returns {"move": Vector2i, "ability": Ability or null, "aim": Vector2i, "path": Array[Vector2i], "guard": bool}.
 ## "target" is kept for the old single-strike callers: the unit at "aim" if any.
-static func plan(grid: CombatGrid, u: CombatUnit, units: Array, supplies: Dictionary = {}) -> Dictionary:
+static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var reach := CombatRules.reachable(grid, u, units)
 	var cost: Dictionary = reach.cost
 	var best_score := 0.0
@@ -20,7 +20,7 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array, supplies: Dictio
 	var best_aim := u.cell
 	for cell: Vector2i in cost:
 		for a in u.abilities:
-			if not CombatRules.usable(u, a, supplies):
+			if not CombatRules.usable(u, a):
 				continue
 			for aim in _aims(grid, u, a, units, cell):
 				var s := score(grid, u, a, aim, units, cell)

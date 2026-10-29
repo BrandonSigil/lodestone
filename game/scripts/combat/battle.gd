@@ -27,7 +27,6 @@ const AUTO_SIZE := Vector2(120, 28)
 var grid: CombatGrid
 var units: Array = []
 var rng := RandomNumberGenerator.new()
-var supplies := {}  ## "medicine", "food": what items spend; hosts write it back to the run
 var board: CombatBoard
 var wallpaper := true  ## a board this battle creates shows the skyline wallpaper and foreground band (the newest look)
 var state := S.IDLE
@@ -59,11 +58,13 @@ var _auto_quiet := 0
 
 ## p_board: fight on a board the host already shows (a fight that breaks out on an exploration map).
 ## The host keeps owning it, its camera and its fog; the battle only borrows its input and highlights.
+## p_supplies: a test bench's counts; party pieces with no belt get one packed from them. In the live
+## loop each piece brings its member's belt and items are spent from it in place.
 func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0.0, p_supplies := {}, p_board: CombatBoard = null) -> void:
 	grid = p_grid
 	units = p_units
 	rng.seed = seed_value
-	supplies = p_supplies
+	CombatUnit.pack_belts(p_units, p_supplies)
 	for u: CombatUnit in units:
 		u.sync_view()
 	if p_board != null:
@@ -249,7 +250,7 @@ func _auto_player_phase() -> void:
 
 ## One piece's turn played by the AI: move, then use a skill or guard.
 func _ai_turn(u: CombatUnit) -> void:
-	var plan := EnemyAi.plan(grid, u, units, supplies)
+	var plan := EnemyAi.plan(grid, u, units)
 	if plan.move != u.cell:
 		await board.animate_move(u, plan.path)
 		u.place(plan.move, grid.height_at(plan.move))
@@ -284,7 +285,7 @@ func _use(u: CombatUnit, a: Ability, aim: Vector2i) -> void:
 	board.highlights = {}
 	_forecast.visible = false
 	log_line.emit("%s: %s" % [Txt.t(u.name_key), Txt.t(a.name_key)])
-	var events := CombatRules.resolve(rng, grid, u, a, aim, units, supplies)
+	var events := CombatRules.resolve(rng, grid, u, a, aim, units)
 	# Pushed units are already moved in the rules; draw them where they started until the push plays.
 	for ev in events:
 		if ev.type == "push":
@@ -442,10 +443,13 @@ func _open_menu() -> void:
 	if not u.acted:
 		for a in u.abilities:
 			_menu_item(_ability_label(u, a), _has_targets(u, a) and u.can_use(a), _start_targeting.bind(a))
-		for id: String in Db.combat_items:
+		for id: String in Db.combat_items:  # only what's on this piece's own belt
 			var it: Ability = Db.combat_items[id]
-			var label := "%s  (%s %d)" % [Txt.t(it.name_key), Txt.t("RES_" + it.resource.to_upper()), int(supplies.get(it.resource, 0))]
-			_menu_item(label, CombatRules.usable(u, it, supplies) and _has_targets(u, it), _start_targeting.bind(it))
+			var have := u.belt.count(it.spends) if u.belt != null else 0
+			if have <= 0:
+				continue
+			var label := "%s  (%s %d)" % [Txt.t(it.name_key), Txt.t(String(Db.items[it.spends].name_key)), have]
+			_menu_item(label, CombatRules.usable(u, it) and _has_targets(u, it), _start_targeting.bind(it))
 		_menu_item(Txt.t("ACT_GUARD"), true, _on_guard)
 	if u.moved and not u.acted:
 		_menu_item(Txt.t("ACT_UNDO"), true, _undo_move)

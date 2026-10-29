@@ -155,7 +155,8 @@ UI_TAKES_SLOTS,take %d friend slot
 UI_TAKES_PACK,book take %d pack space
 UI_STATUS_TAB,GOLD %d · DEATHS %d · BEST %d
 UI_PACK_HELP,drag thing. R or right click = turn. drop on SELL = sell.
-UI_PACK_HELP_RUN,drag thing. R or right click = turn.
+UI_PACK_HELP_RUN,drag thing. R or right click = turn. thing on belt = use in fight.
+UI_BELT_OF,%s BELT
 UI_TEAM_HELP,PICK FRIEND. lorem ipsum.
 UI_BOUND,friend need this. no sell.
 UI_NO_MAP,MAP NOT MADE YET. lorem.

@@ -53,6 +53,10 @@ func run(s: Node, f: int, step: String) -> bool:
 				run.food = 34
 				run.medicine = 4
 				run.add_item("rope", 1)
+				var belt: InventoryGrid = run.members[0].belt
+				if belt.count("potion") == 0:
+					run.pack.take("potion", 2)
+					belt.put("potion", RunState.shape_of("potion"), 2, 3)
 				s._refresh_hud()
 				s._open_menu("pack")
 			return f == 30

@@ -967,7 +967,7 @@ func _begin_battle() -> void:
 	mode = M.FIGHT
 	battle = Battle.new()
 	add_child(battle)
-	battle.setup(grid, units, Game.run.rng.randi(), map.strangeness, {"medicine": Game.run.medicine, "food": Game.run.food}, board)
+	battle.setup(grid, units, Game.run.rng.randi(), map.strangeness, {}, board)
 	battle.log_line.connect(_log)
 	battle.info.connect(func(text: String) -> void: _info.text = text)
 	battle.phase_changed.connect(func(team: int) -> void:
@@ -982,8 +982,6 @@ func _begin_battle() -> void:
 func _on_fight_changed() -> void:
 	_refresh_sight()
 	_reveal_around(battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 1 and u.alive()).map(func(u: CombatUnit) -> Vector2i: return u.cell), 1)
-	Game.run.medicine = int(battle.supplies.get("medicine", Game.run.medicine))
-	Game.run.food = int(battle.supplies.get("food", Game.run.food))
 	_refresh_hud()
 
 

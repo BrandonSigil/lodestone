@@ -206,6 +206,7 @@ func start_adventure() -> void:
 				run.add_item(id, int(pack["items"][id]))
 	run.gold = int(pack.get("gold", 0))
 	refresh_party()
+	run.load_belts(pack.get("belts", {}))
 	var hp: Dictionary = pack.get("hp", {})
 	for m in run.members:
 		var id := String((m.def as CharacterDef).id)
@@ -295,7 +296,7 @@ func save_adventure() -> void:
 	var hp := {}
 	for m in run.members:
 		hp[String((m.def as CharacterDef).id)] = int(m.hp)
-	meta.pack = {"grid": run.pack.to_save(), "gold": run.gold, "hp": hp}
+	meta.pack = {"grid": run.pack.to_save(), "belts": run.belts_save(), "gold": run.gold, "hp": hp}
 	save_meta()
 
 

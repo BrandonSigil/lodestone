@@ -6,13 +6,13 @@ const MAX_ROUNDS := 40
 
 
 ## Runs one AI turn for unit u: move, then act or guard. Returns the plan plus the events.
-static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, units: Array, supplies: Dictionary) -> Dictionary:
-	var plan := EnemyAi.plan(grid, u, units, supplies)
+static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
+	var plan := EnemyAi.plan(grid, u, units)
 	u.place(plan.move, grid.height_at(plan.move))
 	u.moved = true
 	var events := []
 	if plan.ability != null:
-		events = CombatRules.resolve(rng, grid, u, plan.ability, plan.aim, units, supplies)
+		events = CombatRules.resolve(rng, grid, u, plan.ability, plan.aim, units)
 	elif plan.guard:
 		CombatRules.guard(u)
 	u.acted = true
@@ -21,7 +21,9 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 
 
 ## Fights until one side falls. Mutates the units. Returns {"winner": 0, 1 or -1 for a stall, "rounds": int}.
+## supplies: counts that pack belts for pieces without one (CombatUnit.pack_belts).
 static func fight(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, supplies: Dictionary = {}) -> Dictionary:
+	CombatUnit.pack_belts(units, supplies)
 	var rounds := 0
 	while rounds < MAX_ROUNDS:
 		rounds += 1
@@ -32,7 +34,7 @@ static func fight(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, su
 					CombatRules.skittish_check(rng, u, units)
 			for u: CombatUnit in units:
 				if u.team == team and u.alive() and not u.done():
-					take_turn(rng, grid, u, units, supplies)
+					take_turn(rng, grid, u, units)
 					if not CombatRules.team_alive(units, 1 - team):
 						return {"winner": team, "rounds": rounds}
 			CombatRules.end_phase(units, team)
