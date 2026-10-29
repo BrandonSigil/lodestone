@@ -38,23 +38,35 @@ The run and the village
 - **Nothing a trip earns grows the village yet.** With falling free and no village building decided, the "one more run" chain (X builds Y, Y unlocks Z) has no X. This is theme 3's main hole.
 - **Food and supplies have little bite.** Food drains, but a fall refills nothing and loses nothing, so scarcity only matters inside one trip. Ties to combat card 6 and theme 3.
 - **Grinding is open.** Foes come back on every new trip, every fight gives XP, and falls are free, so a player can level past the Lich King "skill check". Tactics Ogre's level caps and Fates Conquest's fixed fights are the two answers in the deck; asked in the choice theme.
-- **Turn order, dice, actions per turn and counters are all `[AI]`.** Built and balanced, but never Brandon's call; batch 1 asks.
+- **Actions per turn and counters are still `[AI]`.** Turn order and dice are now settled (see Combat).
 - **Party size.** 4 slots is `[AI]`; the playable party today is the hero and the dog. Asked in the choice theme.
 - **The level pick vs the job tree.** The pick (health, attack, magic) is `[USER]`; jobs at level 5 and 10 are an `[AI]` draft. How the two fit is asked in the choice theme.
 
 ## Combat
-### Batch 1 (posted 2026-10-29, open)
-| Card | Question | Today |
+### Decided in the grilling
+- **Turn order: Fire Emblem phases**, as built (c1). Speed matters only for movement and the deploy ring.
+- **Warning: the danger zone only** (c2). Foes show where they could hit, not who they'll go for. No telegraphed wind-ups or drawn intent, so the enemy phase keeps some surprise.
+- **Hits always land; damage wobbles by a point or two; crits can happen** (c3). Floating damage numbers pop on every blow, crits shown bigger. The d20 stays for checks outside fights.
+
+### Open from these answers (for batch 2)
+- **What the to-hit bonuses become.** With no roll to hit, the +2s from height, flanking and STAR POINT, cover and GUARD's defense, SPOOKED's -3, steady_aim, the luck streak and hexes (MOON NAP rolls to hit) have nothing to change. Each must turn into damage, crit chance or a sure effect, or go away. This decides what positioning is worth, so it's the first card of batch 2.
+- **How crits work.** A flat chance, or a chance raised by position (height, flanking)? Bigger crit chance from high ground would keep height worth climbing.
+- **How wide the wobble is**, and whether the forecast shows the range ("4-6") or the middle.
+- **Counters always land now**, so trading blows in melee is a sure cost. Check that "ranged picks at melee for free" still feels fair.
+- **Bosses** can't lean on telegraphs (c2), so boss shapes in batch 2 are fortress, objective, several parts or minions.
+
+### Batch 1 (posted 2026-10-29)
+| Card | Question | Answer |
 |---|---|---|
-| `design-c1-turn-order` | Phases, speed timeline, or one each back and forth? | FE phases |
-| `design-c2-intent` | Danger zone only, big foes telegraph, or every foe shows its move? | forecast + danger zone (D) |
-| `design-c3-luck` | Roll to hit, sure hits, or sure hits with a damage wobble? | d20 to hit, fixed damage, luck streak bonus |
-| `design-c4-combos` | Heart of a clever turn (pick 2): shoving, teamwork hits, reacting ground, party meter | pushes, flank +2, height, counters |
-| `design-c5-length` | Short and many, medium, long set pieces, or a mix? | ~4 rounds, 5 to 7 fights a trip |
-| `design-c6-down` | Out for the fight, bleeding out, hurt for the trip (last two combine)? | out, back at 1 HP after a win |
+| `design-c1-turn-order` | Phases, speed timeline, or one each back and forth? | Phases |
+| `design-c2-intent` | Danger zone only, big foes telegraph, or every foe shows its move? | Danger zone only |
+| `design-c3-luck` | Roll to hit, sure hits, or sure hits with a damage wobble? | Sure hits, damage wobble, plus crits and pop-up numbers |
+| `design-c4-combos` | Heart of a clever turn (pick 2): shoving, teamwork hits, reacting ground, party meter | open |
+| `design-c5-length` | Short and many, medium, long set pieces, or a mix? | open |
+| `design-c6-down` | Out for the fight, bleeding out, hurt for the trip (last two combine)? | open |
 
 ### Queued for batch 2
-Win conditions beyond "defeat all" (escape, protect, hold); how strong height should be; healing and skill economy (cooldowns, a pool, or items only); actions per turn (move + act, two actions, or points); foe types and behaviours (charger, guard, ambusher); boss shapes (fortress, telegraph, objective); a mercy rewind for misclicks.
+What the to-hit bonuses become and how crits work (see above); win conditions beyond "defeat all" (escape, protect, hold); how strong height should be; healing and skill economy (cooldowns, a pool, or items only); actions per turn (move + act, two actions, or points); foe types and behaviours (charger, guard, ambusher); boss shapes (fortress, objective, several parts, minions); a mercy rewind for misclicks.
 
 ## Player choice
 Not started. Queued: party size and who comes; how the level pick and the job tree fit; skill and gear builds (few slots and upgrades vs loot); route choice on the overworld; risk and reward (opt-in harder fights, Hades-style vows); sneak, talk or fight; grinding (level caps or not).
