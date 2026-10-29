@@ -53,6 +53,11 @@ const INK := Color(0.216, 0.2, 0.208)  ## the art's outline colour (#373335, B14
 const WATER_INSET := 0.3  ## water sits this many levels below its banks, so the banks show a little earth
 const PLATE_SCALE := 1.35  ## a painted backdrop plate's width as a multiple of the board's footprint
 const FG_HEIGHT := 0.16  ## the solid foreground band's height as a share of the view
+const WINDOW_R := 56.0  ## see-through window round a piece behind a prop: radius on screen
+const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
+const WINDOW_MIN := 0.12  ## the prop's alpha in the open middle
+const WINDOW_CELL := 8.0  ## mesh cell size the window's soft edge is drawn with
+const WINDOW_RING_ONLY := true  ## a piece only props hide gets its foot ring, not the tinted x-ray copy
 const FG_FADE := 0.05  ## how far the band's top edge feathers up into the wallpaper, as a share of the view
 const WALL_SKY := 0.22  ## where the wallpaper's horizon sits, as a share of the view's height from the top
 const WALL_HORIZON := 0.38  ## where the picture's mountains start, as a share of the picture's height (the stand-in skyline)
@@ -71,8 +76,8 @@ var blend := true  ## ground fades into different neighbouring ground (see _frin
 var backdrop := false  ## a soft paper card behind the island (tester and fights; exploration draws its own world)
 var wallpaper := false  ## test: the set's skyline fills the view and stays put, a solid band sits under the board, and the outer trees sink into it
 var combat_stance := false  ## pieces stand ready (weapon drawn) instead of relaxed; Battle sets it
-var _fade := {}  ## cells whose props draw see-through this frame (a party piece stands behind them)
-var _covered := {}  ## units something in front hides this frame
+var _fade := {}  ## cell -> window centres: its props draw see-through round a piece standing behind them
+var _covered := {}  ## units something in front hides this frame -> true when a cliff hides them, not just a windowed prop
 var _paint_button := 0
 var hover := NONE
 var selected: CombatUnit = null
@@ -513,7 +518,11 @@ func _sync_slabs() -> void:
 			_dirty_props[d] = true
 	# Props see-through for a piece behind them, skirt trees for a piece, the cursor or a highlight.
 	_find_cover()
-	for k: Vector2i in _changed(_fade, _fade_prev):
+	var moved := _changed(_fade, _fade_prev)
+	for k: Vector2i in _fade:
+		if _fade_prev.has(k) and _fade_prev[k] != _fade[k]:  # the piece moved: its window follows
+			moved.append(k)
+	for k: Vector2i in moved:
 		_dirty_props[_depth_at(_prop_front(k, grid.props[k]) if grid.props.has(k) else k)] = true
 		if grid.props.has(k) and grid.props[k].get("arch", false):  # its far pillar draws with its own cell
 			_dirty_props[_depth_at(k)] = true
@@ -746,6 +755,8 @@ func _paint_top() -> void:
 			var base := _unit_base(u)
 			var ring := Color(0.4, 0.7, 1.0) if u.team == 0 else Color(1.0, 0.4, 0.35)
 			Pawn.ellipse(_ci, base, 26.0 * 0.62, 26.0 * 0.22, Color(ring, 0.85), false, 2.0)
+			if not _covered[u] and WINDOW_RING_ONLY:
+				continue  # only props hide it, and their window shows the piece itself: the ring is enough
 			if CharacterArt.has_art(u.sprite):
 				_draw_frame(u, base, Color(ring.lightened(0.3), 0.55))
 			else:
@@ -1923,8 +1934,11 @@ func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color, zone := "")
 			Pawn.ellipse(_ci, base, pw * 0.3, pw * 0.1, Color(0.22, 0.3, 0.55, 0.14), true)
 		else:
 			Pawn.ellipse(_ci, base, pw * 0.36, pw * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
-		var a := 0.35 if _fade.has(c) else 1.0  # see-through while a piece stands behind it
-		_ci.draw_texture_rect(tex, Rect2(base.x - pw * 0.5, base.y - ph, pw, ph), false, Color(tint, a))
+		var dst := Rect2(base.x - pw * 0.5, base.y - ph, pw, ph)
+		if _fade.has(c):  # a soft window round a piece standing behind it
+			_draw_windowed(tex, dst, Color(tint, 1.0), _fade[c])
+		else:
+			_ci.draw_texture_rect(tex, dst, false, Color(tint, 1.0))
 	return true
 
 
@@ -1971,10 +1985,11 @@ func _placed(c: Vector2i) -> void:
 	var col := Color.WHITE
 	if fog_on and fog.get(c, 2) == 1:
 		col = Color(0.45, 0.46, 0.52)  # remembered, out of sight: same wash as the veil
-	if _fade.has(a):
-		col.a = 0.35
+	var holes: Array = _fade.get(a, [])
+	if not holes.is_empty() and tex == null:
+		col.a = 0.35  # a graybox block fades whole
 	if p.get("arch", false):
-		_arch(a, p, c, col, tex)
+		_arch(a, p, c, col, tex, holes)
 		return
 	if _prop_front(a, p) != c:
 		return
@@ -1990,12 +2005,42 @@ func _placed(c: Vector2i) -> void:
 	if p.tall > 0.0 and not p.walk:
 		var b := Vector2(r.get_center().x, r.end.y)
 		Pawn.ellipse(_ci, b, r.size.x * 0.36, r.size.x * 0.13, Color(0.1, 0.1, 0.12, 0.22 * col.a), true)
-	if p.get("flip", false):
+	if not holes.is_empty():
+		_draw_windowed(tex, r, col, holes, Rect2(0, 0, 1, 1), p.get("flip", false))
+	elif p.get("flip", false):
 		_ci.draw_set_transform(Vector2(r.get_center().x * 2.0, 0.0), 0.0, Vector2(-1, 1))
 		_ci.draw_texture_rect(tex, r, false, col)
 		_ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	else:
 		_ci.draw_texture_rect(tex, r, false, col)
+
+
+## A texture (its `uv` share) drawn into dst as a fine mesh whose alpha opens a soft window round each hole
+## (the middle of a piece standing behind it), so the prop stays solid everywhere else. Desk card
+## see-through-homes ([USER] 2026-10-29).
+func _draw_windowed(tex: Texture2D, dst: Rect2, col: Color, holes: Array, uv := Rect2(0, 0, 1, 1), flip := false) -> void:
+	var nx := clampi(ceili(dst.size.x / WINDOW_CELL), 4, 64)
+	var ny := clampi(ceili(dst.size.y / WINDOW_CELL), 4, 64)
+	var pts := PackedVector2Array()
+	var cols := PackedColorArray()
+	var uvs := PackedVector2Array()
+	for j in ny + 1:
+		for i in nx + 1:
+			var f := Vector2(i / float(nx), j / float(ny))
+			var q := dst.position + dst.size * f
+			var a := 1.0
+			for h: Vector2 in holes:
+				a = minf(a, lerpf(WINDOW_MIN, 1.0, smoothstep(WINDOW_R * WINDOW_CLEAR, WINDOW_R, q.distance_to(h))))
+			pts.append(q)
+			cols.append(Color(col, col.a * a))
+			uvs.append(uv.position + uv.size * Vector2(1.0 - f.x if flip else f.x, f.y))
+	var idx := PackedInt32Array()
+	for j in ny:
+		for i in nx:
+			var k := j * (nx + 1) + i
+			idx.append_array([k, k + 1, k + nx + 2, k, k + nx + 2, k + nx + 1])
+	RenderingServer.canvas_item_add_triangle_array(_ci.get_canvas_item(), idx, pts, cols, uvs,
+		PackedInt32Array(), PackedFloat32Array(), tex.get_rid())
 
 
 ## A graybox block over grid rect [lo, hi] from level z0 up to z1: its two camera-facing sides and its top.
@@ -2011,7 +2056,7 @@ func _box(lo: Vector2, hi: Vector2, z0: float, z1: float, col: Color) -> void:
 ## its own cell, the rest (lintel and near pillar) with the near pillar, over anyone in the gap. Painted, the
 ## sprite spans the footprint like a building and is cut at the far pillar's cell edge; a graybox until then.
 ## An arch goes see-through for a piece behind it, never for one standing in its gap.
-func _arch(a: Vector2i, p: Dictionary, c: Vector2i, col: Color, tex: Texture2D) -> void:
+func _arch(a: Vector2i, p: Dictionary, c: Vector2i, col: Color, tex: Texture2D, holes: Array) -> void:
 	if grid.under_arch(c):
 		return
 	var front := _prop_front(a, p)
@@ -2033,7 +2078,9 @@ func _arch(a: Vector2i, p: Dictionary, c: Vector2i, col: Color, tex: Texture2D) 
 			u1 = 1.0 - t
 		var src := Rect2(u0 * tex.get_width(), 0.0, (u1 - u0) * tex.get_width(), tex.get_height())
 		var dst := Rect2(x0, r.position.y, x1 - x0, r.size.y)
-		if flip:
+		if not holes.is_empty():
+			_draw_windowed(tex, dst, col, holes, Rect2(u0, 0.0, u1 - u0, 1.0), flip)
+		elif flip:
 			_ci.draw_set_transform(Vector2(dst.get_center().x * 2.0, 0.0), 0.0, Vector2(-1, 1))
 			_ci.draw_texture_rect_region(tex, dst, src, col)
 			_ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
@@ -2769,17 +2816,17 @@ func _find_cover() -> void:
 					var ph: float = art.height * TW * 1.1
 					var prop := Rect2(mid.x - TW * 0.45, mid.y - ph, TW * 0.9, ph)
 					if _overlap(box, prop) > 0.2:
-						_fade[c] = true
+						_fade[c] = _fade.get(c, []) + [box.get_center()]
 						if u.team == 0:
-							_covered[u] = true
+							_covered[u] = _covered.get(u, false)
 				var a := grid.prop_anchor(c)
 				if a != CombatGrid.NONE_CELL and _prop_front(a, grid.props[a]) == c and grid.prop_anchor(uc) != a:
 					var pr: Dictionary = grid.props[a]
 					var tex := prop_texture(pr, grid.zone_at(a))
 					if tex != null and _overlap(box, _prop_rect(a, pr.merged({"tall": 0.0}, true) if pr.get("arch", false) else pr, tex)) > 0.2:
-						_fade[a] = true
+						_fade[a] = _fade.get(a, []) + [box.get_center()]
 						if u.team == 0:
-							_covered[u] = true
+							_covered[u] = _covered.get(u, false)
 				if h > u.vis_h + 0.5:
 					var pts := _diamond(c, h)
 					var col := Rect2(pts[0], Vector2.ZERO)
