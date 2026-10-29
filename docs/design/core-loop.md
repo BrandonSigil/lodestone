@@ -7,6 +7,8 @@ Themes, in order:
 2. **Player choice**: meaningful choices in and between fights.
 3. **One more run**: what a trip earns, what the village builds with it, what that unlocks ("one more run gets me enough X to build Y, and Y finally gets me Z").
 
+Side theme, run alongside combat: **Inventory** (Brandon asked to ideate on it, 2026-10-29). It has its own section below.
+
 When all three are settled enough to build, one card proposes what the systems developer builds first, in order, with why.
 
 ## Already decided (before the grilling)
@@ -73,3 +75,30 @@ Not started. Queued: party size and who comes; how the level pick and the job tr
 
 ## One more run
 Not started. Queued: what a trip brings home (one material or several); what the village builds; what a building unlocks (classes, gear upgrades, new places, trip-only boons); what a fall costs, if anything, beyond the decided "nothing"; how long one run should be.
+
+## Inventory
+### Brandon's opening (2026-10-29)
+"A diablo/PoE inventory where various items are different shapes and you can move them around to fit better in your inventory. Maybe there's an upgrade path down the line to increase inventory size as you progress. Items should be able to be rotated too in a tetris like way."
+
+Settled by that: items have shapes, are packed by hand and can be turned. A way to grow the pack is a maybe.
+
+### What's on file and built
+- `[USER]` 2026-10-26: the village has a Tetris-like grid inventory.
+- `[AI]`, never confirmed: the pack is a 4 x 3 grid of turnable shapes (12 cells); 12 slots, food 10 a slot, medicine 5 a slot, overflow lost; the Wizard's books take 3 cells.
+- Built: `InventoryGrid` and `PackView` (`game/scripts/village/`) in the shelved village hub; shapes in `game/data/items.csv`. The live loop uses 12 plain slots (`RunState.CAPACITY`) on the explore ITEMS bar. In fights any piece can spend the pack's food or potions as its action (`data/combat_items.csv`).
+
+### The tension to solve
+Falling keeps every item (`[USER]` 2026-10-28), so a tight pack can't create fear of loss. The grid needs a job: what you bring home, what you bring out, the layout as a build, or just a satisfying tidy (card 4).
+
+### Batch 1 (posted 2026-10-29)
+| Card | Question | Answer |
+|---|---|---|
+| `design-inv-1-what` | Everything carried, materials in a pouch, or food and potions as counts too? | open |
+| `design-inv-2-who` | One party pack, a bag each, or a party pack plus a belt each? | open |
+| `design-inv-3-fight` | In a fight: anything usable, belt only, or no items? | open |
+| `design-inv-4-pressure` | What packing decides (pick 2): what you bring home, what you bring out, layout as build, just a tidy | open |
+| `design-inv-5-grow` | Bigger pack from a village build, the shop, or found on the map? | open |
+| `design-inv-6-full` | Full on the map: drop it and it stays, throw something away, or the dog takes it home? | open |
+
+### Queued for batch 2
+Starting size; auto-sort or hand-packing only; a village stash and how it relates to the pack; what a left-behind item costs; follow-ups on whatever card 4 picks (adjacency rules if "layout is the build").
