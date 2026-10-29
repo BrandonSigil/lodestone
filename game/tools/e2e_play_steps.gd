@@ -125,8 +125,14 @@ func _scene(name: String) -> Node:
 
 func _explore(map_name: String) -> Node:
 	var s: Node = await _scene("explore")
+	var waited := 0.0
 	while String(s.get("map").map_name) != map_name:
 		await tree.process_frame
+		waited += tree.root.get_process_delta_time()
+		if waited > SECONDS_CAP:
+			_check(false, "reached map " + map_name)
+			finished = true
+			await tree.create_timer(9999).timeout
 		s = await _scene("explore")
 	# Close the wake-up line if there is one.
 	if s.get("_dialog") != null:
@@ -292,9 +298,14 @@ func _fight_on_generated_map() -> bool:
 			_check(false, "road fight ended")
 			return false
 	await _frames(3)
-	var won: bool = not CombatRules.team_alive(c.get("battle").units, 1)
+	var units: Array = c.get("battle").units
+	var won: bool = not CombatRules.team_alive(units, 1)
 	if won:
 		_check(true, "won the road fight")
+	elif CombatRules.team_alive(units, 0):
+		# Auto's stalemate guard ends the fight as a win, so OK goes back to the road, not to the square.
+		_check(false, "the road fight ended in a stalemate (the AI couldn't reach)")
+		won = true
 	for b in c.get("hud").root.find_children("*", "Button", true, false):
 		if (b as Button).text == Txt.t("UI_CONTINUE"):
 			(b as Button).pressed.emit()
