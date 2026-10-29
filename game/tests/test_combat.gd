@@ -38,6 +38,22 @@ func test_melee_cant_reach_cliff() -> void:
 	ok(not CombatRules.can_attack(g, a, b, a.cell))
 
 
+
+## A probe fight (2026-10-29): a bandit on a stair 3 levels below the party's ledge held the only way down,
+## and neither side could swing at the other. Melee reaches over any step a piece could walk.
+func test_melee_reaches_over_a_stair() -> void:
+	var g := CombatGrid.flat(5, 5)
+	var a := _unit("knight", 0, Vector2i(1, 1), g)
+	var b := _unit("bandit", 1, Vector2i(2, 1), g)
+	g.set_height(Vector2i(1, 1), 3)
+	ok(not CombatRules.can_attack(g, a, b, a.cell), "a 3-level cliff: no swing")
+	g.set_terrain(Vector2i(2, 1), CombatGrid.T.STAIRS)
+	ok(CombatRules.can_attack(g, a, b, a.cell), "the same drop as a stair: down the stair")
+	ok(CombatRules.can_attack(g, b, a, b.cell), "and up it")
+	g.set_height(Vector2i(1, 1), 4)
+	ok(not CombatRules.can_attack(g, a, b, a.cell), "a stair can't be climbed past its reach either")
+
+
 func test_bow_range_grows_with_height() -> void:
 	var g := CombatGrid.flat(8, 3)
 	var a := _unit("hunter", 0, Vector2i(0, 1), g)

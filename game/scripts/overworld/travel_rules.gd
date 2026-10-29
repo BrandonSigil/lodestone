@@ -144,3 +144,42 @@ static func node_for_map(nodes: Dictionary, map_name: String) -> String:
 		if map_name in String(nodes[id].maps).split("|", false):
 			return id
 	return "town"
+
+
+## A place is cleared once its clear_flag is set (the pass: the Lich King beaten). [USER] 2026-10-29: a
+## cleared place shows as done on the big map and the place past it comes into view.
+static func cleared(node: Dictionary, flags: Array) -> bool:
+	var f := String(node.get("clear_flag", ""))
+	return f != "" and flags.has(f)
+
+
+## A place shows on the map unless it waits behind another one (after) that isn't cleared yet.
+static func visible(nodes: Dictionary, id: String, flags: Array) -> bool:
+	var after := String(nodes.get(id, {}).get("after", ""))
+	return nodes.has(id) and (after == "" or cleared(nodes.get(after, {}), flags))
+
+
+## The places to walk through, from a to b, both included ([] when there is no way). The party walks past
+## a place only when it is cleared or has nothing to clear (the town), like the paths between levels on an
+## old console map; it can always go in again by clicking it.
+static func route(paths: Array, nodes: Dictionary, a: String, b: String, flags: Array) -> Array[String]:
+	var prev := {a: ""}
+	var queue: Array[String] = [a]
+	while not queue.is_empty():
+		var c: String = queue.pop_front()
+		if c == b:
+			break
+		if c != a and String(nodes[c].get("clear_flag", "")) != "" and not cleared(nodes[c], flags):
+			continue  # can't walk past a place still to clear
+		for p: Dictionary in paths:
+			var n := String(p.to) if p.from == c else (String(p.from) if p.to == c else "")
+			if n == "" or prev.has(n) or not visible(nodes, n, flags) or String(nodes[n].open) != "1":
+				continue
+			prev[n] = c
+			queue.append(n)
+	if not prev.has(b) or a == b:
+		return []
+	var out: Array[String] = [b]
+	while out[0] != a:
+		out.push_front(String(prev[out[0]]))
+	return out

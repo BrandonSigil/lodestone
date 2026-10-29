@@ -317,3 +317,34 @@ func test_one_fight_at_a_time() -> void:
 	s.free()
 	Game.explore_memory.clear()
 	Game.explore_map = "home"
+
+
+## [USER] 2026-10-29 (the boss-skip card): once the Lich King is beaten the pass shows as done, the place past
+## it comes into view, and the party can walk past the pass to it without going in.
+func test_a_cleared_place_opens_the_road_past_it() -> void:
+	_db()
+	var nodes := Db.world_nodes
+	var paths := Db.world_paths
+	ok(not TravelRules.cleared(nodes.pass, []), "the pass isn't done before the boss")
+	ok(not TravelRules.visible(nodes, "beyond", []), "the place past it is hidden")
+	eq(TravelRules.route(paths, nodes, "town", "beyond", []), [] as Array[String], "no way there yet")
+	var flags := [String(nodes.pass.clear_flag)]
+	ok(TravelRules.cleared(nodes.pass, flags), "the boss flag clears the pass")
+	ok(TravelRules.visible(nodes, "beyond", flags), "and shows the place past it")
+	eq(TravelRules.route(paths, nodes, "town", "beyond", flags), ["town", "pass", "beyond"] as Array[String], "the road runs past the pass")
+	eq(TravelRules.route(paths, nodes, "beyond", "town", flags), ["beyond", "pass", "town"] as Array[String], "and back")
+	eq(TravelRules.route(paths, nodes, "town", "pass", flags), ["town", "pass"] as Array[String], "the pass can still be gone into")
+	eq(TravelRules.route(paths, nodes, "town", "prairie", flags), [] as Array[String], "shut places stay shut")
+	ok(TravelRules.visible(nodes, "town", []) and not TravelRules.cleared(nodes.town, flags), "the town has nothing to clear")
+
+
+func test_a_place_still_to_clear_blocks_the_road() -> void:
+	var nodes := {
+		"a": {"open": "1", "clear_flag": "", "after": ""},
+		"b": {"open": "1", "clear_flag": "beat_b", "after": ""},
+		"c": {"open": "1", "clear_flag": "", "after": ""},
+	}
+	var paths := [{"from": "a", "to": "b"}, {"from": "b", "to": "c"}]
+	eq(TravelRules.route(paths, nodes, "a", "c", []), [] as Array[String], "can't walk past b before it's done")
+	eq(TravelRules.route(paths, nodes, "a", "b", []), ["a", "b"] as Array[String], "but can walk to it")
+	eq(TravelRules.route(paths, nodes, "a", "c", ["beat_b"]), ["a", "b", "c"] as Array[String], "and past it once it's done")

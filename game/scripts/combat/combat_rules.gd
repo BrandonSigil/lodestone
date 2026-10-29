@@ -132,7 +132,9 @@ static func ability_range(u: CombatUnit, a: Ability) -> Vector2i:
 	return Vector2i(a.range_min, a.range_max)
 
 
-## Range 1 is melee: it can't cross more than MELEE_REACH levels. Longer reach gains +1 per level of high ground
+## Range 1 is melee: it can't cross more than MELEE_REACH levels, except over a step a piece could walk (a stair
+## spanning 3 levels): a foe on the stair would otherwise block the only way down and be safe from the top.
+## Longer reach gains +1 per level of high ground
 ## (up to HIGH_RANGE_MAX) and needs a clear line of sight: walls, cliffs, boulders and trees in between block it.
 static func in_reach(grid: CombatGrid, from: Vector2i, to: Vector2i, r: Vector2i) -> bool:
 	var d := dist(from, to)
@@ -142,7 +144,7 @@ static func in_reach(grid: CombatGrid, from: Vector2i, to: Vector2i, r: Vector2i
 	var reach := r.y
 	if reach > 1:
 		reach += clampi(dh, 0, HIGH_RANGE_MAX)
-	elif absi(dh) > MELEE_REACH:
+	elif absi(dh) > MELEE_REACH and not (d <= 1 and grid.can_step(from, to, 1)):
 		return false
 	if d > reach:
 		return false

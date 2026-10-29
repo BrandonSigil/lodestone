@@ -48,7 +48,7 @@ func play(t: SceneTree) -> void:
 	s = await _explore("village")
 	await _use(s, "gate", "OPT_GO_ON")
 
-	s = await _road_to_pass()
+	s = await _road("pass")
 	await _press(s, 0)  # GO IN
 
 	s = await _explore("snow_pass")
@@ -99,6 +99,14 @@ func play(t: SceneTree) -> void:
 	game.go(game.EXPLORE)
 	s = await _explore("crypt")
 	_check(s.get("groups").any(func(g: Dictionary) -> bool: return g.def.id == "throne" and g.state == "gone"), "the Lich King stays beaten")
+
+	# The road goes on ([USER] 2026-10-29): from the town gate past the cleared pass, without going in.
+	game.wake_in_town(false)
+	s = await _explore("village")
+	await _use(s, "gate", "OPT_GO_ON")
+	s = await _road("beyond")
+	_check(tree.current_scene == s and s.get("_dialog") != null, "arrived past the pass, on the big map")
+	await _press(s, 0)
 
 	print("E2E %s: %d failed checks" % ["PASS" if fails == 0 else "FAIL", fails])
 	finished = true
@@ -287,12 +295,13 @@ func _fell(what: String) -> Node:
 	return v
 
 
-## Out the gate and along the road to the pass; encounters on the way. Returns the overworld at the pass.
-func _road_to_pass() -> Node:
+## Out the gate and along the road to a place, clicked on the big map; encounters on the way. Returns the
+## overworld there. Places on the way are walked past (the scene must not go into them).
+func _road(to: String) -> Node:
 	var s: Node = await _scene("overworld")
 	for attempt in TRIES:
-		s.call("_start_leg", "pass")
-		_check(s.call("walking"), "on the road to the pass")
+		s.call("_click_node", to)
+		_check(s.call("walking"), "on the road to " + to)
 		var eaten := 0  ## food the meals on the walk took (finds and foraging add some back)
 		var foraged := false
 		var fell := false
@@ -315,13 +324,13 @@ func _road_to_pass() -> Node:
 				s.call("fast_forward")
 				eaten += maxi(0, food - game.run.food)
 		if not fell:
-			_check(game.travel.get("at", "") == "pass", "arrived at the pass")
+			_check(game.travel.get("at", "") == to, "arrived at " + to)
 			_check(eaten > 0, "food drained on the walk")
 			return s
 		var v := await _fell("a road fight")
 		await _use(v, "gate", "OPT_GO_ON")
 		s = await _scene("overworld")
-	_check(false, "reached the pass in %d tries" % TRIES)
+	_check(false, "reached %s in %d tries" % [to, TRIES])
 	return s
 
 

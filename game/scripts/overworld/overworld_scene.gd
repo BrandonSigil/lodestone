@@ -88,25 +88,39 @@ func _advance_to(t1: float) -> void:
 	_refresh_side()
 
 
-func _start_leg(to: String) -> void:
+## Walk to a place: leg by leg along the route, past cleared places on the way. then: the places still to go
+## after this one.
+func _start_leg(to: String, then: Array = []) -> void:
 	var at := String(Game.travel.get("at", "town"))
 	var p := TravelRules.path_between(Db.world_paths, at, to)
 	if p.is_empty():
-		_say(Txt.t("UI_OW_CLOSED"))
+		var way := TravelRules.route(Db.world_paths, Db.world_nodes, at, to, Game.meta.flags)
+		if way.size() < 2:
+			_say(Txt.t("UI_OW_CLOSED"))
+			return
+		_start_leg(way[1], way.slice(2))
 		return
 	var stops := TravelRules.plan(Game.run.rng, float(p.seconds), int(p.enc_min), int(p.enc_max))
-	Game.travel = {"from": at, "to": to, "t": 0.0, "stops": stops, "acts": {}}
+	Game.travel = {"from": at, "to": to, "t": 0.0, "stops": stops, "acts": {}, "then": then}
 	_side()
 
 
 func _arrive() -> void:
 	var to := String(Game.travel.to)
+	var then: Array = Game.travel.get("then", [])
 	Game.travel = {"at": to}
 	Game.save_adventure()
+	if not then.is_empty():
+		_say(Txt.f("UI_OW_PASSING", Txt.t(_node(to).name_key)))
+		_start_leg(String(then[0]), then.slice(1))
+		return
 	_side()
 	_busy = true
-	var box := _new_dialog(Txt.f("UI_OW_ARRIVED", Txt.t(_node(to).name_key)))
-	_button(box, Txt.f("UI_OW_ENTER", Txt.t(_node(to).name_key)), _enter)
+	var has_map := String(_node(to).get("map", "")) != ""
+	var text := Txt.f("UI_OW_ARRIVED", Txt.t(_node(to).name_key))
+	var box := _new_dialog(text if has_map else text + "\n" + Txt.t("UI_OW_NOTHING"))
+	if has_map:
+		_button(box, Txt.f("UI_OW_ENTER", Txt.t(_node(to).name_key)), _enter)
 	_button(box, Txt.t("UI_STAY_MAP"), _close_dialog)
 
 
@@ -219,6 +233,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func _click_node(id: String) -> void:
+	if not TravelRules.visible(Db.world_nodes, id, Game.meta.flags):
+		return
 	if id == String(Game.travel.get("at", "")):
 		_enter()
 	elif String(_node(id).open) != "1":
@@ -233,7 +249,7 @@ func _node(id: String) -> Dictionary:
 
 func _node_at(p: Vector2) -> String:
 	for id in Db.world_nodes:
-		if p.distance_to(_node_pos(id)) <= PICK_R:
+		if TravelRules.visible(Db.world_nodes, id, Game.meta.flags) and p.distance_to(_node_pos(id)) <= PICK_R:
 			return id
 	return ""
 
@@ -275,6 +291,8 @@ func _draw() -> void:
 	draw_rect(Rect2(v.o, SIZE * k), MEADOW)
 	_draw_land(k)
 	for p: Dictionary in Db.world_paths:
+		if not (TravelRules.visible(Db.world_nodes, p.from, Game.meta.flags) and TravelRules.visible(Db.world_nodes, p.to, Game.meta.flags)):
+			continue
 		var open := String(_node(p.to).open) == "1" and String(_node(p.from).open) == "1"
 		_draw_path(TravelRules.parse_points(p.points), k, open)
 	if walking():
@@ -283,7 +301,8 @@ func _draw() -> void:
 		for s: float in Game.travel.stops:
 			_draw_stop(_to_screen(TravelRules.point_at(pts, s / float(lp.seconds))), k)
 	for id in Db.world_nodes:
-		_draw_node(id, k)
+		if TravelRules.visible(Db.world_nodes, id, Game.meta.flags):
+			_draw_node(id, k)
 	_draw_party(k)
 	if _note_time > 0.0:
 		var at := _to_screen(party_pos()) + Vector2(0, -46 * k)
@@ -373,6 +392,15 @@ func _draw_node(id: String, k: float) -> void:
 				draw_line(p + Vector2(-10 + i * 10, 8) * k, p + Vector2(-12 + i * 10, -6) * k, Color(0.6, 0.55, 0.25), 2.0)
 		"wood":
 			_pine(p + Vector2(0, 10) * k, k * 0.7)
+		"far":
+			for i in 3:
+				draw_circle(p + Vector2(-8 + i * 8, 2) * k, 2.5 * k + 1.0, Color(INK, 0.6))
+	if TravelRules.cleared(n, Game.meta.flags):
+		# Done: a gold seal on the rim, like a cleared level on an old console map.
+		var b := p + Vector2(r * 0.72, -r * 0.72)
+		draw_circle(b, 9.0 * k + 2.0, Color(0.95, 0.75, 0.25))
+		draw_arc(b, 9.0 * k + 2.0, 0, TAU, 20, INK, 1.5, true)
+		draw_polyline(PackedVector2Array([b + Vector2(-4, 0) * k, b + Vector2(-1, 3.5) * k, b + Vector2(4.5, -4) * k]), INK, 2.0, true)
 	if not open:
 		_label(p + Vector2(0, 6), "?", 22, Color(INK, 0.7))
 	_label(p + Vector2(0, r + 18), Txt.t(n.name_key), 13, INK if open else Color(INK, 0.55))
@@ -442,7 +470,9 @@ func _refresh_side() -> void:
 		return
 	if walking():
 		var lp := leg()
-		_info.text = Txt.f("UI_OW_WALKING", [Txt.t(_node(String(Game.travel.to)).name_key), int(100.0 * float(Game.travel.t) / float(lp.seconds))])
+		var then: Array = Game.travel.get("then", [])
+		var goal := String(then.back()) if not then.is_empty() else String(Game.travel.to)
+		_info.text = Txt.f("UI_OW_WALKING", [Txt.t(_node(goal).name_key), int(100.0 * float(Game.travel.t) / float(lp.seconds))])
 	else:
 		_info.text = Txt.f("UI_OW_AT", Txt.t(_node(String(Game.travel.get("at", "town"))).name_key))
 	_log_label.text = "\n".join(Game.run.lines.slice(-8))
