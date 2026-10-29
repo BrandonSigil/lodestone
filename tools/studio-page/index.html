@@ -24,6 +24,8 @@
   --stamp: #b2463a;
   --shadow: 0 1px 2px rgba(29,39,33,.06), 0 4px 14px rgba(29,39,33,.06);
   --scrim: rgba(20,30,24,.45);
+  --parchment: #ece6d4;
+  --parchment-ink: #1f2b4a;
   --display: "Young Serif", Georgia, "Times New Roman", serif;
   --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
@@ -52,13 +54,15 @@ button, textarea, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--gem); outline-offset: 2px; }
 
-/* Leaf band */
-.band { background: var(--leaf); color: var(--leaf-ink); border-bottom: 3px double color-mix(in srgb, var(--leaf-ink) 45%, transparent); }
-.band-in { max-width: 1240px; margin: 0 auto; padding-block: 18px 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; justify-content: space-between; }
-.brand { display: flex; align-items: center; gap: 12px; }
-.gem { width: 18px; height: 18px; transform: rotate(45deg); background: var(--gem); border: 2px solid var(--leaf-ink); flex: none; }
-.brand h1 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0; letter-spacing: .01em; }
-.brand p { margin: 0; font-size: 13px; opacity: .8; }
+/* Parchment masthead with the logo; the same in light and dark, like the logo's own paper */
+.band { background: var(--parchment); color: var(--parchment-ink); }
+.band-in { max-width: 1240px; margin: 0 auto; padding-block: 14px 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; align-items: center; gap: 14px 28px; justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: 16px; }
+.brand h1 { margin: 0; line-height: 0; }
+.logo { height: 128px; width: auto; display: block; }
+@media (max-width: 560px) { .logo { height: 84px; } }
+.brand-name { font-family: var(--display); font-size: 24px; line-height: 1.1; }
+.brand p { margin: 2px 0 0; font-size: 13px; opacity: .75; }
 .tally { display: flex; gap: 22px; flex-wrap: wrap; }
 .tally div { display: flex; flex-direction: column; }
 .tally b { font-family: var(--display); font-weight: 400; font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
@@ -220,7 +224,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
 
 /* Rooms */
 .rooms { padding-block: 0 0; display: flex; gap: 4px; justify-content: flex-start; }
-.rooms a { color: var(--leaf-ink); text-decoration: none; padding: 8px 14px 9px; border-radius: 8px 8px 0 0; font-size: 14px; opacity: .78; }
+.rooms a { color: var(--parchment-ink); text-decoration: none; padding: 8px 14px 9px; border-radius: 8px 8px 0 0; font-size: 14px; opacity: .78; }
 .rooms a:hover { opacity: 1; }
 .rooms a[aria-current="page"] { background: var(--paper); color: var(--ink); opacity: 1; font-weight: 600; }
 .band { border-bottom: 0; }
@@ -269,9 +273,9 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
 <header class="band">
   <div class="band-in">
     <div class="brand">
-      <div class="gem" aria-hidden="true"></div>
+      <h1><img class="logo" src="/_blob/550d68664d6c502b277bfca8dfe2fbd1" alt="Lodestone" width="900" height="609"></h1>
       <div>
-        <h1>Lodestone Studio</h1>
+        <span class="brand-name">Studio</span>
         <p id="today">Main office</p>
       </div>
     </div>

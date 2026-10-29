@@ -30,6 +30,7 @@ The generated outputs are not in git, so a second machine can't see them. The re
 | Piece | Where | Made with | Status | Notes |
 | --- | --- | --- | --- | --- |
 | Flat forest style panel | `docs/art/references/style-flat-forest*.png` | Brandon's own work | **approved** | The style reference for tiles and plates. |
+| Lodestone logo | `art/brand/lodestone-logo.webp` (transparent background) | Brandon's own work | **approved** | Brandon, 2026-10-29. Sits on parchment `#ece6d4` at the top of the studio page. |
 | Flat zone tile sets (forest, snow, ruins, dungeon, farmland, marsh, canyon, crystal) | `game/art/source/battle/<set>/` | Picsart GPT image, cut by `kit_cut.py` | draft | In use in battle; Brandon hasn't signed them off. |
 | Village tiles and props (first set) | `art/picsart/out/village/`; `village_in/` still in the game | Picsart, `picsart_village.py` | **archived** for the town (2026-10-29), replaced by the fall set; the interiors still use `village_in` | About $1.57. |
 | Fall village set | `game/art/source/battle/village/` | code tops (`code_tops.py --biome village_fall`), Picsart sides, props, foliage, four homes; smithy, tavern and town hall cut from the v2 look sheet as stand-ins | **approved** (Brandon, 2026-10-29: "replace the town assets") | Run sheet B and the home B / C re-roll next. |
