@@ -53,11 +53,17 @@ The run and the village
 - **Three sizes of fight** (c5): quick, simple maps for random road encounters; medium fights on the walkable explore maps; big showpiece battles for bosses.
 - **Dropping is bleeding out, never death** (c6). A downed piece can be helped up by an AID action from a teammate right next to it; a support character may revive from further away. If nobody reaches it in time, it's out for the fight and stands up after the fight with low HP, as today.
 - **High ground adds damage; flanking adds crit chance** (c7). Climbing is a sure gain, surrounding is a gamble for a big hit.
-- **Defense is a flat cut to every hit; GUARD raises it; the cover bonus goes** (c8). Standing behind something only matters by blocking line of sight: ranged foes can't shoot what they can't see. Cover is not an action. The picture: a big knight jumps into the middle, guards, and takes the round of hits for the team.
+- **Defense is a flat cut to every hit; GUARD raises it; the cover bonus goes** (c8). Standing behind something only matters by blocking line of sight: ranged foes can't shoot what they can't see. Cover is not an action (but see c14: brush, low walls and forest also take 1 off ranged hits). The picture: a big knight jumps into the middle, guards, and takes the round of hits for the team.
 - **Each kind of character pays for skills its own way** (c9), WoW / D&D style. Examples Brandon gave: a mage has mana that starts full and refills a little each turn; the dog has 3 special actions to spend any way (bark 3 times, or bite twice and bark once) that come back slowly; a warrior's rage grows as he hits and gets hit.
 - **Every kind of win condition, sometimes several at once** (c10): beat the leader, hold out for N rounds, reach the way out, keep something safe. The hero gets a TALK option in some fights to persuade a leader to cut his losses and flee. Showpiece example: a giant monster you can kill, or a ladder behind it that wins the fight if everyone climbs it, still for some XP.
 - **Bleed-out: 3 turns, and a foe may knock the downed piece out** (c11) by spending its action. Knocked out means out for this fight only; it still stands up after.
 - **A team-up bonus for teammates within one tile, diagonals included** (c12), in place of sandwich follow-ups. No reacting ground and no party meter for now.
+- **A guarding piece holds a zone** (c13): foes that start next to it must attack it, or take a free hit when they walk away.
+- **Cover blocks sight and is half cover against ranged** (c14): brush, low walls and forest take 1 off ranged hits; melee ignores it. Hovering a ranged piece shades the tiles it can't see.
+- **The team-up bonus is a helping strike** (c15): hit a foe that a teammate within one tile can also reach, and the teammate adds a small free hit.
+- **Resources belong to the job** (c16): every knight has rage, every mage mana; the hero's bar changes with his job. No cooldowns on top.
+- **TALK appears only when you know something, or when a fight is written for it** (c17). Some hostile characters can be talked round in a fight, once or twice, and join the party.
+- **Crits are common and double damage** (c18): about 10% base, a flank adds about 20%; some characters crit more often.
 
 ### Pushback on c8 (Brandon asked to be argued with)
 Flat armor plus a stronger GUARD is a good fit for sure hits: it's readable, it shows in the forecast, and it gives a tank a real job. Three worries:
@@ -67,18 +73,30 @@ Flat armor plus a stronger GUARD is a good fit for sure hits: it's readable, it 
 
 Numbers to watch: with armor 0 to 3 and hits of 3 to 5, a wobble of plus or minus 1 is a big share of each hit, and every hit should still do at least 1.
 
-### Gaps these answers open
-- **To-hit bonuses have nothing to change** (from c3). Height, flanking, cover and GUARD are now settled (c7, c8). Still to convert: STAR POINT (+2 hit), SPOOKED (-3 hit), steady_aim (+2 hit), the luck streak (now pointless) and hexes like MOON NAP that rolled to hit. *Proposal:* hit bonuses become crit chance, hit penalties become -1 damage, hexes always land. Batch 3.
-- **New statuses from c4:** TAUNT (foes must go for the taunter) and SLOW (less move) don't exist yet. Taunt changes the enemy AI's target pick and should show in the danger zone or on the foe.
-- **3 or 4 skills per character vs the job tree** (from c4): today a class has 1 or 2 skills; the hero's jobs (level 5 and 10) are an `[AI]` draft. Where a character's skills come from (fixed per character, learned through jobs, picked at level-ups) is a player-choice question.
-- **Skill economy** (from c9): each kind of character gets its own resource. Open: is the resource tied to the job (every knight has rage) or to the character; do cooldowns stay on top; how the bars show in the frame; and the enemy AI must understand each. Each resource is a small rules module to build; start with the three Brandon named (mana, action charges, rage).
-- **Fight sizes need numbers** (from c5). *Proposal:* road 3 to 4 rounds, explore 5 to 7, showpiece 8 to 12; map sizes to match. Retag to `[USER]` or change.
-- **Bleed-out numbers** (from c11): *proposal:* AID brings a piece back at a quarter of its max HP; after the fight, "low health" stays 1 HP as today. The enemy AI must weigh knocking out a downed piece against hitting a standing one.
-- **The team-up bonus** (from c12): what it is (armor, damage, a helping strike, or something per pair). Batch 3 card c15.
-- **Talking a leader down** (from c10): when TALK is offered and how it rolls. Batch 3 card c17.
-- **Rewards for a win without the kill** (from c10). *Proposal:* any win gives the win XP plus XP for each foe actually downed; an escape adds half the XP of the foes left standing.
-- **Counters always land now**, so trading blows in melee is a sure cost. Check that "ranged picks at melee for free" still feels fair.
-- **Bosses** can't lean on telegraphs (c2): fortress, objective, several parts or minions. Batch 3.
+### Defaults for the open numbers (proposals, tunable in data)
+These fill the gaps the answers leave so the build can start; each is `[AI]` until Brandon stamps it.
+- **Damage:** hits do their damage plus or minus 1, at least 1 after armor. Armor 0 to 3 by class; GUARD +2 armor until the piece's next phase.
+- **Height:** +1 damage per level above the target, up to +2; -1 per level below, down to -2. Range from height stays (+1 a level, up to +3).
+- **Crits:** 10% base, +20% on a flank (an ally already next to the target), double damage. A class or character may add crit chance.
+- **Leftover hit bonuses:** STAR POINT and steady_aim become +15% crit; SPOOKED becomes -1 damage; the luck streak goes; hexes like MOON NAP always land.
+- **Bleed-out:** a 3-turn countdown over the downed piece. AID (next to it) brings it back at a quarter of its max HP; after the fight it stands at 1 HP.
+- **Helping strike:** a flat 1 damage (no wobble, no crit); one per attack, from the teammate who'd hit hardest.
+- **Resources:** mana starts full and refills a fifth each phase; rage starts at 0 and builds +1 per hit dealt or taken; the dog has 3 charges, one back every 3 phases.
+- **Fight sizes:** road 3 to 4 rounds, explore 5 to 7, showpieces 8 to 12.
+- **Wins without the kill:** win XP plus XP for each foe downed; an escape also gives half the XP of foes left standing.
+- **Taunt and slow:** TAUNT (foes in range must target the taunter next phase); SLOW (-2 move for a phase).
+
+### Still open in combat (not blocking a build)
+Boss shapes (fortress, objective, several parts, minions); foe types and behaviours (charger, guard, ambusher); actions per turn (move + act is still `[AI]`); a mercy rewind for misclicks; whether counters still feel fair now that they always land. These come after the first build is playable.
+
+### Build order (card `design-combat-build`)
+*Proposal:*
+1. **The damage model.** Sure hits, the wobble, armor and GUARD, height damage, crits with flanking, the leftover bonuses converted, half cover and the sight preview, pop-up numbers (crits bigger), and a forecast that shows the damage range and crit chance. Everything else sits on these numbers. Rerun the balance sim after.
+2. **Guard zones.** Foes next to a guarding piece attack it or take a free hit to leave; the ring is drawn; the AI respects it.
+3. **Bleeding out.** The countdown, AID, a foe's knock-out, standing up after.
+4. **Helping strikes.** The team-up rule, shown in the forecast.
+5. **Job resources.** Mana, rage and charges replace cooldowns; skill costs move into `abilities.csv`; bars in the frame; the AI spends them. The biggest rework, so it comes after the core feels right.
+6. **Fight goals and TALK.** Per-encounter goals (defeat all, leader, hold N, way out, protect, several at once), XP for wins without the kill, flag-gated or written TALK options, and talking a hostile character into joining.
 
 ### Batch 1 (posted 2026-10-29, all answered)
 | Card | Question | Answer |
@@ -103,18 +121,25 @@ Numbers to watch: with armor 0 to 3 and hits of 3 to 5, a wobble of plus or minu
 ### Batch 3 (posted 2026-10-29)
 | Card | Question | Answer |
 |---|---|---|
-| `design-c13-guard` | How a guarding piece draws the hits: zone of control, shield its neighbours, or only through taunt skills? | open |
-| `design-c14-cover` | Cover: sight only (with a sight preview), or half cover against ranged on brush and low walls? | open |
-| `design-c15-teamup` | The team-up bonus: armor, damage, a helping strike, or a bonus per pair? | open |
-| `design-c16-resource` | Whose resource: by job, by character, or by job with exceptions? | open |
-| `design-c17-talk` | TALK in a fight: a d20 check any time, only once the foes are beaten down, or only when you know something? | open |
-| `design-c18-crit` | Crits: rare and huge, or common and double? | open |
-
-### Queued for batch 4
-Converting the leftover hit bonuses (proposal above); the damage wobble's width and the damage wobble's width; boss shapes (fortress, objective, several parts, minions); foe types and behaviours (charger, guard, ambusher); actions per turn (move + act is still `[AI]`); a mercy rewind for misclicks; how strong height is overall.
+| `design-c13-guard` | How a guarding piece draws the hits: zone of control, shield its neighbours, or only through taunt skills? | Zone: hit him or pay to leave |
+| `design-c14-cover` | Cover: sight only (with a sight preview), or half cover against ranged on brush and low walls? | Sight plus half cover against ranged |
+| `design-c15-teamup` | The team-up bonus: armor, damage, a helping strike, or a bonus per pair? | A helping strike |
+| `design-c16-resource` | Whose resource: by job, by character, or by job with exceptions? | By job, no cooldowns on top |
+| `design-c17-talk` | TALK in a fight: a d20 check any time, only once the foes are beaten down, or only when you know something? | Known or written into the fight; can recruit hostile characters |
+| `design-c18-crit` | Crits: rare and huge, or common and double? | Common and double; some characters crit more |
 
 ## Player choice
-Not started. Queued: party size and who comes; how the level pick and the job tree fit; skill and gear builds (few slots and upgrades vs loot); route choice on the overworld; risk and reward (opt-in harder fights, Hades-style vows); sneak, talk or fight; grinding (level caps or not).
+### Batch 1 (posted 2026-10-29)
+| Card | Question | Answer |
+|---|---|---|
+| `design-pc-1-party` | How many pieces fight: 3, 4 or 6? | open |
+| `design-pc-2-skills` | Where a character's 3 or 4 skills come from: fixed, pick 4 of a bigger set before a trip, grown by level picks, or from jobs? | open |
+| `design-pc-3-levelpick` | What the pick every 4 or 5 levels grows into: stats, a new skill from two, or a passive perk? | open |
+| `design-pc-4-grind` | Grinding: let it be, XP shrinks on weak foes, or a level cap per region? | open |
+| `design-pc-5-route` | Route choice: today's Mario-style map, Slay the Spire branches each trip, or forks with known costs? | open |
+| `design-pc-6-risk` | Opt-in risk for reward (multi): marked elite fights, Hades-style vows, a push-on-or-go-home choice | open |
+
+Queued: gear builds (weapon upgrades at the smithy, the earmarked trinket); sneak, talk or fight before a fight starts; who joins and how the roster grows.
 
 ## One more run
 First link, from the inventory theme (inv-5): a recruited character returns to the village and unlocks a pack upgrade, which costs materials brought home. Packing decides how many materials a trip can bring home (inv-4).
@@ -147,8 +172,7 @@ Settled by that: items have shapes, are packed by hand and can be turned. A way 
 - **The trinket slot:** earmarked only.
 - **Whether a fall counts as "going home"** for the dog's return. *Proposal:* yes, any wake-up in the square or GO HOME brings him back.
 
-### Build order (card `design-inv-build`)
-*Proposal:*
+### Build order (card `design-inv-build`, approved 2026-10-29, handed to the systems developer)
 1. **Shaped pack in the live loop.** Swap the 12 plain slots for the 4 x 3 shaped grid (`InventoryGrid`, `PackView`), with per-item stacks, auto-place on pickup, and rearranging and turning from PACK on the overworld and explore maps. Everything else sits on this.
 2. **Belts.** A 2 x 1 strip per character, filled from the pack; in a fight the item menu shows only the belt and using one is the action. Replaces "any piece spends the pack's food or potions".
 3. **Full pack.** A pickup that doesn't fit offers: repack, throw something away, or fill the dog's 2 x 2 saddlebag and send him home (out of the party until you're home).
