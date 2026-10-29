@@ -190,6 +190,10 @@ html.locked { overflow: hidden; }
 .rv-notes li { border-left: 3px solid var(--rule); padding-left: 10px; display: flex; flex-direction: column; gap: 4px; }
 .rv-notes li.new { border-left-color: var(--amber); }
 .rv-notes small { color: var(--muted); font-size: 12px; }
+.rv-needs { margin-bottom: 28px; }
+.rv-needs h3 { color: var(--amber); }
+.rv-pickup { background: var(--gem-soft); border-radius: 8px; padding: 10px 14px; margin: 0 0 20px; }
+.pill.pickup { color: var(--gem); background: var(--gem-soft); }
 .card.flash { outline: 3px solid var(--gem); outline-offset: 3px; transition: outline-color 1.2s; }
 .you { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 12px; }
 
@@ -481,6 +485,7 @@ function cardHtml(d) {
 }
 
 function renderDesk() {
+  if (S.openRole) { $("desk").innerHTML = ""; return; }  // the role window holds the cards while it's open
   const list = S.desk.filter((d) => (d.status || "open") === S.tab)
     .sort((a, b) => (a.priority ?? 50) - (b.priority ?? 50) || String(b.created).localeCompare(String(a.created)));
   const el = $("desk");
@@ -528,8 +533,17 @@ function renderTeam() {
     </div>`;
   }).join("");
 }
+// A role that says "waiting on you" but has nothing open on the desk already has your answers.
+function roleStatus(r) {
+  const open = S.desk.some((d) => d.role === r.id && (d.status || "open") === "open");
+  const answered = S.desk.some((d) => d.role === r.id && d.status === "answered");
+  if (r.status === "waiting" && !open) return answered ? "pickup" : "idle";
+  if (open && r.status !== "working" && r.status !== "blocked") return "waiting";
+  return r.status || "idle";
+}
 function pillHtml(r) {
-  return `<span class="pill ${esc(r.status || "idle")}">${esc({ working: "Working", waiting: "Waiting on you", idle: "Idle", blocked: "Blocked" }[r.status] || r.status || "Idle")}</span>`;
+  const st = roleStatus(r);
+  return `<span class="pill ${esc(st)}">${esc({ working: "Working", waiting: "Waiting on you", pickup: "Has your answers", idle: "Idle", blocked: "Blocked" }[st] || st)}</span>`;
 }
 function when(iso) {
   if (!iso) return "";
@@ -537,11 +551,17 @@ function when(iso) {
 }
 
 /* ---------- one role, full window ---------- */
-function renderRoleView() {
+function renderRoleView(force) {
   const el = $("rv"), r = S.roles.find((x) => x.id === S.openRole);
   if (!r) { el.hidden = true; el.innerHTML = ""; document.documentElement.classList.remove("locked"); return; }
-  // a live update shouldn't wipe a note you're typing
-  if (!el.hidden && el.dataset.role === r.id && document.activeElement?.id === "note-role") return;
+  // a live update shouldn't wipe what you're typing in the window
+  const typing = document.activeElement?.closest?.("#rv") && /^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName);
+  if (!force && !el.hidden && el.dataset.role === r.id && typing) return;
+  // the role's open cards render in this window; keep their ids unique while it's up
+  $("desk").innerHTML = "";
+  document.querySelectorAll("#rv textarea[id^=why-]").forEach((t) => { (S.drafts[t.id.slice(4)] ||= {}).why = t.value; });
+  const openCards = S.desk.filter((d) => d.role === r.id && (d.status || "open") === "open").sort((a, b) => (a.priority ?? 50) - (b.priority ?? 50));
+  const waitingPickup = S.desk.filter((d) => d.role === r.id && d.status === "answered").length;
   const noteDraft = $("note-role")?.value ?? "";
   const scroll = el.scrollTop;
   const log = S.log.filter((l) => l.role === r.id).sort((a, b) => String(b.at).localeCompare(String(a.at)));
@@ -559,6 +579,8 @@ function renderRoleView() {
     </header>
     <div class="rv-grid">
       <section class="rv-main" aria-label="Work">
+        ${openCards.length ? `<div class="rv-needs"><h3>Needs you</h3><div class="desk">${openCards.map(cardHtml).join("")}</div></div>` : ""}
+        ${waitingPickup ? `<p class="rv-pickup">You've answered ${waitingPickup} card${waitingPickup > 1 ? "s" : ""}. ${esc(r.name)} picks ${waitingPickup > 1 ? "them" : "it"} up on its next turn.</p>` : ""}
         <div class="rv-now">
           ${r.now ? `<div><span class="lbl">Now</span><p>${esc(r.now)}</p></div>` : ""}
           ${r.next ? `<div><span class="lbl">Up next</span><p>${esc(r.next)}</p></div>` : ""}
@@ -590,7 +612,8 @@ function renderRoleView() {
   document.documentElement.classList.add("locked");
   if (opening) { el.scrollTop = 0; el.querySelector("[data-act=closerole]")?.focus(); } else el.scrollTop = scroll;
 }
-function closeRole() { const id = S.openRole; S.openRole = null; renderRoleView(); document.querySelector(`#team [data-act=role][data-id="${id}"]`)?.focus(); }
+function rerenderCards() { if (S.openRole) renderRoleView(true); else renderDesk(); }
+function closeRole() { const id = S.openRole; S.openRole = null; renderRoleView(); renderDesk(); document.querySelector(`#team [data-act=role][data-id="${id}"]`)?.focus(); }
 
 /* ---------- references ---------- */
 function renderRefs() {
@@ -663,7 +686,7 @@ document.addEventListener("click", async (ev) => {
         if (o === "neither") p = p.includes("neither") ? [] : ["neither"];
         else if (d?.multi) { p = p.filter((x) => x !== "neither"); p = p.includes(o) ? p.filter((x) => x !== o) : [...p, o]; }
         else p = p.includes(o) ? [] : [o];
-        dr.picks = p; renderDesk();
+        dr.picks = p; rerenderCards();
         if (p.includes("neither")) $("why-" + id)?.focus();
         break;
       }
@@ -689,7 +712,7 @@ document.addEventListener("click", async (ev) => {
         dr.why = why(); dr.items ||= {};
         const it = t.dataset.item, cur = dr.items[it] || {};
         dr.items[it] = { ...cur, verdict: cur.verdict === t.dataset.v ? undefined : t.dataset.v };
-        renderDesk(); break;
+        rerenderCards(); break;
       }
       case "sendreview":
         if (stillUploading(id)) { toast("Wait for the picture to finish uploading."); return; }
