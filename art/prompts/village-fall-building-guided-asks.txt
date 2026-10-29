@@ -1,6 +1,6 @@
 ASKS FOR village-fall-building-guided.txt (not sent; each THIS BUILDING line fills [ZONE] through --zones)
 
-Run one building per picture, two pictures each (--count 2), 1:1 at 2K, image 1 its guide, image 2 the flat forest panel, image 3 only where the ask names one. Then cut, overlay the game grid, check busyness, and bring only the best of the two to the desk:
+Run one building per picture, two pictures each (--count 2), 1:1 at 2K (about 14 cents a picture, 28.5 per building), image 1 its guide, image 2 the flat forest panel, image 3 only where the ask names one. Then cut, overlay the game grid, check busyness, and bring only the best of the two to the desk:
 
   cd tools/art && ~/.lodestone/venv/bin/python picsart_sheet.py --name guided_<name> --prompt-file ../../art/prompts/village-fall-building-guided.txt \
       --zones "$(sed -n 's/^<name>: //p' ../../art/prompts/village-fall-building-guided-asks.txt)" \
