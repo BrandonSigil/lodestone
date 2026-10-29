@@ -3,7 +3,9 @@ extends RefCounted
 ## One-click maps for the map maker, built only from MapOps calls so the result is an ordinary map to
 ## keep editing. `valley` makes a terraced valley like Brandon's reference: high ground at the back, a
 ## river that falls down the terraces toward the front, stairs wherever a climb is needed, roads along the
-## easiest walk, pines and boulders on the terraces and a ragged outline. Same seed, same map.
+## easiest walk, pines and boulders on the terraces, rock pillars on the rims and a ragged outline. It keeps
+## the authoring rules for the painted look (docs/design/map-look.md section 7): edges step two cells at a
+## time (V9), pillars (V10), rivers that fall in a few big drops (V11). Same seed, same map.
 
 const LEVELS: Array[int] = [0, 3, 6, 8]  ## terrace heights: two or three levels apart, so every step is a cliff
 
@@ -14,9 +16,12 @@ static func valley(seed_value: int, w := 22, h := 20, look_id := "alpine") -> Co
 	rng.seed = seed_value
 	_terraces(g, seed_value)
 	MapOps.roughen(g, seed_value + 3, 0.55)
+	MapOps.tidy(g)
+	MapOps.keep_largest(g)
 	_river(g, rng)
 	_dress(g, seed_value, rng)
 	MapOps.link(g, seed_value + 5)
+	MapOps.pillars(g, seed_value + 9, clampi(w * h / 160, 2, 4))
 	_roads(g, rng)
 	g.look = {"id": look_id}
 	return g
@@ -61,7 +66,9 @@ static func _terraces(g: CombatGrid, seed_value: int) -> void:
 		g.set_height(c, mini(hh, CombatGrid.MAX_HEIGHT))
 
 
-## A river from high ground at the back, walking downhill (and frontward) until it leaves the map.
+## A river from high ground at the back, walking downhill (and frontward) until it leaves the map. It keeps
+## going straight for at least two cells before it turns, so a slanted course steps instead of zigzagging
+## (V9), and falls at least two levels wherever it falls (V11).
 static func _river(g: CombatGrid, rng: RandomNumberGenerator) -> void:
 	var start := Vector2i(-1, -1)
 	var best := -INF
@@ -79,6 +86,8 @@ static func _river(g: CombatGrid, rng: RandomNumberGenerator) -> void:
 	var path: Array[Vector2i] = [start]
 	var seen := {start: true}
 	var c := start
+	var dir := Vector2i.ZERO
+	var run := 0
 	for guard in g.w + g.h + 20:
 		var pick := Vector2i(-999, -999)
 		var pick_s := INF
@@ -87,20 +96,24 @@ static func _river(g: CombatGrid, rng: RandomNumberGenerator) -> void:
 			if seen.has(nb):
 				continue
 			if not g.solid(nb):
-				if d.x + d.y > 0:  # off the front or side: the river leaves the map
+				if d.x + d.y > 0 and c.x + c.y > (g.w + g.h) / 2:  # off the front half: the river leaves the map
 					pick = nb
 					pick_s = -INF
 				continue
 			var s := g.height_at(nb) * 1.5 - (d.x + d.y) * 1.2 + rng.randf() * 1.6
+			if dir != Vector2i.ZERO and run < 2:  # straight on for at least two cells
+				s += -4.0 if d == dir else 4.0
 			if s < pick_s:
 				pick_s = s
 				pick = nb
 		if pick.x == -999 or not g.solid(pick):
 			break
+		run = run + 1 if pick - c == dir else 1
+		dir = pick - c
 		path.append(pick)
 		seen[pick] = true
 		c = pick
-	MapOps.river(g, path, 1, 2 if rng.randf() < 0.5 else 1)
+	MapOps.river(g, path, 1, 2 if rng.randf() < 0.5 else 1, 2)
 
 
 ## Pine woods in clumps on the terraces, boulders on some rims.

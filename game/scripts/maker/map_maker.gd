@@ -37,6 +37,8 @@ const TOOLS := [
 	["lower", "lower", "2", "Lower", "click or drag: down one level. Right: up."],
 	["level", "level", "3", "Level", "drag: flatten into a terrace at the level height. Right click: take a cell's height."],
 	["smooth", "smooth", "4", "Smooth", "drag: soften bumps toward the ground around them."],
+	["tidy", "tidy", "5", "Tidy", "drag: square off ragged edges under the brush, so edges step two cells at a time and lone spurs and notches go (rule V9). The Map tab's Tidy edges does the whole map."],
+	["pillar", "pillar", "6", "Pillar", "click a cell: it rises two levels over its neighbours into a lone rock pillar, snow-capped in the painted look (rule V10). Right click: back down."],
 	["|"],
 	["paint", "paint", "P", "Ground", "pick a ground type above, then drag to paint it. Painting a hole fills it first. Right: grass."],
 	["path", "path", "L", "Path", "drag a path's course; stairs are cut where it climbs. With 'follow ground' it finds the easiest walk from where you press to where you let go."],
@@ -50,7 +52,7 @@ const TOOLS := [
 const FIGHT_LABELS := {"hp_pct": "hp %", "attack": "attack", "defense": "defense", "damage": "damage", "move": "move"}
 const GROUNDS := [["grass", T.GRASS], ["forest", T.FOREST], ["road", T.ROAD], ["stone", T.STONE], ["rock", T.ROCK], ["ruin", T.RUIN], ["water", T.WATER]]
 const PATH_GROUNDS := [["road", T.ROAD], ["stone", T.STONE], ["grass", T.GRASS]]
-const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "paint", "path", "river", "cut", "fill", "zone"]
+const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "tidy", "paint", "path", "river", "cut", "fill", "zone"]
 const THING_COLOR := Color(0.98, 0.84, 0.48)
 const START_COLOR := Color(0.45, 0.72, 1.0)
 const FOE_COLOR := Color(1.0, 0.48, 0.42)
@@ -628,6 +630,10 @@ func _apply(c: Vector2i, right: bool) -> void:
 		if c == _stroke.start:
 			_piece(c, right)
 		return
+	if tool == "pillar":
+		if c == _stroke.start and not MapOps.pillar(g, c, right):
+			_say("no pillar here: water, stairs, a hole or too high already")
+		return
 	var done: Dictionary = _stroke.done
 	var cells: Array[Vector2i] = []
 	for p in _brush_cells(c):
@@ -650,6 +656,11 @@ func _apply(c: Vector2i, right: bool) -> void:
 				MapOps.level(g, cells, level_h)
 		"smooth":
 			MapOps.smooth(g, cells)
+		"tidy":
+			var area := {}
+			for p in _brush_cells(c):
+				area[p] = true
+			MapOps.tidy(g, {}, area)
 		"cut":
 			if right:
 				MapOps.fill(g, cells)
@@ -2147,6 +2158,20 @@ func _build_map_page(body: VBoxContainer) -> void:
 	_text_button(grow2, "Link with stairs", func() -> void:
 		_push_undo()
 		_say("placed %d stairs" % MapOps.link(doc.grid, int(_seed_spin.value))))
+	var grow3 := HBoxContainer.new()
+	gen.body.add_child(grow3)
+	_text_button(grow3, "Tidy edges", func() -> void:
+		_push_undo()
+		var n := MapOps.tidy(doc.grid)
+		MapOps.keep_largest(doc.grid)
+		var st := MapOps.link(doc.grid, int(_seed_spin.value))
+		_refresh_marks()
+		_say("tidied %d cells%s" % [n, (", added %d stairs to keep it joined" % st) if st > 0 else ""]))
+	_text_button(grow3, "Add pillars", func() -> void:
+		_push_undo()
+		var got := MapOps.pillars(doc.grid, int(_seed_spin.value) + 9, 3)
+		_refresh_marks()
+		_say("added %d pillars" % got.size()))
 	var tpl_row := HBoxContainer.new()
 	gen.body.add_child(tpl_row)
 	_recipe_pick = OptionButton.new()

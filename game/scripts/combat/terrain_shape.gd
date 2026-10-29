@@ -167,6 +167,141 @@ static func _h1(k: int) -> float:
 	return float(absi((k * 73856093) ^ 83492791) % 10007) / 10007.0
 
 
+# --- roads ---------------------------------------------------------------------------
+
+const ROAD_WIDTH := 0.62  ## a road ribbon's width in cells
+const ROAD_TAPER := 0.3  ## how far (cells) a road narrows to a rounded end where it stops
+
+
+## Roads as ribbons (rule V12): the road cells on each level joined into lines through their centres,
+## smoothed so they bend instead of turning square, and widened into a band with a wavering edge. Cut into
+## pieces per cell, so each cell draws its own at its own depth, and only on ground at the road's level:
+## {"bands": cell -> [polygon], "edges": cell -> [polyline]} in grid units (edges are the band's two sides).
+static func ribbons(grid: CombatGrid, width := ROAD_WIDTH) -> Dictionary:
+	var road := {}
+	for y in grid.h:
+		for x in grid.w:
+			var c := Vector2i(x, y)
+			if grid.terrain_at(c) == CombatGrid.T.ROAD:
+				road[c] = true
+	var links := func(c: Vector2i) -> Array:
+		return NORMALS.filter(func(d: Vector2i) -> bool: return road.has(c + d) and grid.height_at(c + d) == grid.height_at(c))
+	var bands := {}
+	var edges := {}
+	var walked := {}
+	var chains := []
+	for c: Vector2i in road:  # from every end and crossing, along each way out
+		var ds: Array = links.call(c)
+		if ds.is_empty():
+			_band(grid, [Vector2(c) + Vector2(0.3, 0.5), Vector2(c) + Vector2(0.7, 0.5)] as Array[Vector2], [true, true], width, bands, edges)
+		elif ds.size() != 2:
+			for d: Vector2i in ds:
+				if not walked.has(_link_key(c, c + d)):
+					chains.append(_walk(c, c + d, links, walked))
+	for c: Vector2i in road:  # what is left runs round in loops
+		for d: Vector2i in links.call(c):
+			if not walked.has(_link_key(c, c + d)):
+				chains.append(_walk(c, c + d, links, walked))
+	for chain: Array[Vector2i] in chains:
+		var pts: Array[Vector2] = []
+		for k in chain:
+			pts.append(Vector2(k) + Vector2(0.5, 0.5))
+		var ends := [links.call(chain[0]).size() == 1, links.call(chain[chain.size() - 1]).size() == 1]
+		_band(grid, _chaikin(pts, 2), ends, width, bands, edges)
+	return {"bands": bands, "edges": edges}
+
+
+## One road line from a through b, on until a cell that ends it or crosses another, or a step already walked.
+static func _walk(a: Vector2i, b: Vector2i, links: Callable, walked: Dictionary) -> Array[Vector2i]:
+	var chain: Array[Vector2i] = [a, b]
+	walked[_link_key(a, b)] = true
+	while true:
+		var cur := chain[chain.size() - 1]
+		var on: Array = links.call(cur)
+		if on.size() != 2:
+			break
+		var nx: Vector2i = cur + (on[0] if cur + on[0] != chain[chain.size() - 2] else on[1])
+		if walked.has(_link_key(cur, nx)):
+			break
+		walked[_link_key(cur, nx)] = true
+		chain.append(nx)
+	return chain
+
+
+static func _link_key(a: Vector2i, b: Vector2i) -> Vector4i:
+	return Vector4i(a.x, a.y, b.x, b.y) if a < b else Vector4i(b.x, b.y, a.x, a.y)
+
+
+## Corner cutting: each pass replaces every inner point with two, a quarter and three quarters along its
+## segments, so a chain of cell centres becomes a smooth curve. The ends stay.
+static func _chaikin(pts: Array[Vector2], passes: int) -> Array[Vector2]:
+	var out := pts
+	for _p in passes:
+		if out.size() < 3:
+			return out
+		var next: Array[Vector2] = [out[0]]
+		for i in out.size() - 1:
+			next.append(out[i].lerp(out[i + 1], 0.25))
+			next.append(out[i].lerp(out[i + 1], 0.75))
+		next.append(out[out.size() - 1])
+		out = next
+	return out
+
+
+## Widen a road line into a band and cut it into the cells it crosses at its own level.
+static func _band(grid: CombatGrid, pts: Array[Vector2], dead_ends: Array, width: float, bands: Dictionary, edges: Dictionary) -> void:
+	var n := pts.size()
+	if n < 2:
+		return
+	var level := grid.height_at(Vector2i(floori(pts[0].x), floori(pts[0].y)))
+	var along := PackedFloat32Array([0.0])
+	for i in range(1, n):
+		along.append(along[i - 1] + pts[i].distance_to(pts[i - 1]))
+	var total := along[n - 1]
+	var left: Array[Vector2] = []
+	var right: Array[Vector2] = []
+	for i in n:
+		var d := (pts[mini(i + 1, n - 1)] - pts[maxi(i - 1, 0)]).normalized()
+		var side := Vector2(-d.y, d.x)
+		var w := width * 0.5 * (0.85 + 0.3 * noise1(pts[i].x * 1.7 + pts[i].y * 2.3, 31))
+		if dead_ends[0]:
+			w *= sqrt(clampf(along[i] / ROAD_TAPER, 0.0, 1.0))
+		if dead_ends[1]:
+			w *= sqrt(clampf((total - along[i]) / ROAD_TAPER, 0.0, 1.0))
+		left.append(pts[i] + side * w)
+		right.append(pts[i] - side * w)
+	for i in n - 1:
+		var quad := PackedVector2Array([left[i], left[i + 1], right[i + 1], right[i]])
+		var lo := Vector2i(floori(minf(minf(left[i].x, left[i + 1].x), minf(right[i].x, right[i + 1].x))),
+			floori(minf(minf(left[i].y, left[i + 1].y), minf(right[i].y, right[i + 1].y))))
+		var hi := Vector2i(floori(maxf(maxf(left[i].x, left[i + 1].x), maxf(right[i].x, right[i + 1].x))),
+			floori(maxf(maxf(left[i].y, left[i + 1].y), maxf(right[i].y, right[i + 1].y))))
+		for y in range(lo.y, hi.y + 1):
+			for x in range(lo.x, hi.x + 1):
+				var c := Vector2i(x, y)
+				if not _road_ground(grid, c, level):
+					continue
+				var sq := PackedVector2Array([Vector2(x, y), Vector2(x + 1, y), Vector2(x + 1, y + 1), Vector2(x, y + 1)])
+				for piece in Geometry2D.intersect_polygons(quad, sq):
+					if piece.size() >= 3:
+						if not bands.has(c):
+							bands[c] = []
+						bands[c].append(piece)
+	for side_line: Array[Vector2] in [left, right]:
+		var cut := by_cell([{"pts": PackedVector2Array(side_line), "dark": false}])
+		for c: Vector2i in cut:
+			if _road_ground(grid, c, level):
+				if not edges.has(c):
+					edges[c] = []
+				for piece: Dictionary in cut[c]:
+					edges[c].append(piece.pts)
+
+
+## Ground a road ribbon may lie on: dry, natural or paved, at the road's own level.
+static func _road_ground(grid: CombatGrid, c: Vector2i, level: int) -> bool:
+	return grid.solid(c) and grid.height_at(c) == level and grid.terrain_at(c) not in [CombatGrid.T.WATER, CombatGrid.T.STAIRS, CombatGrid.T.ROCK, CombatGrid.T.RUIN]
+
+
 # --- water ---------------------------------------------------------------------------
 
 ## Which way water runs in every water cell (unit vectors, grid units): toward where each body of water

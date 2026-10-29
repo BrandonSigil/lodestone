@@ -31,13 +31,13 @@ static func uv(n: int, c: Vector2i) -> Vector2:
 	return Vector2((c.x - c.y) / s, (c.x + c.y) / (2.0 * s))
 
 
-## A path through screen waypoints, as 4-connected cells.
+## A path through screen waypoints, as 4-connected cells stepping two at a time (V9).
 static func path(n: int, points: Array) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	for i in points.size() - 1:
 		var a := cell(n, points[i].x, points[i].y)
 		var b := cell(n, points[i + 1].x, points[i + 1].y)
-		var seg := MapOps.line(a, b)
+		var seg := MapOps.steps(a, b, 2)
 		for c in seg.slice(1 if i > 0 else 0):
 			out.append(c)
 	return out
@@ -64,13 +64,17 @@ static func highland() -> CombatGrid:
 				g.set_terrain(c, T.VOID)
 				continue
 			g.set_height(c, _highland_h(u, v))
+	# Terrace edges laid along the screen run slantwise across the grid: re-step them two cells at a time (V9).
+	MapOps.tidy(g)
+	MapOps.keep_largest(g)
 
 	# Rivers: the left gorge from the knoll behind, the right plateau's stream, the meadow stream, and the
-	# low river along the front that takes them all off the map.
-	MapOps.river(g, path(n, [Vector2(0.62, 0.95), Vector2(0.62, 0.86), Vector2(0.0, 0.84), Vector2(-0.62, 0.86), Vector2(-0.68, 0.95)]), 1, 2)
-	MapOps.river(g, path(n, [Vector2(-0.04, 0.13), Vector2(-0.04, 0.27), Vector2(-0.3, 0.36), Vector2(-0.47, 0.44), Vector2(-0.47, 0.62), Vector2(-0.42, 0.84)]), 2, 2)
-	MapOps.river(g, path(n, [Vector2(0.66, 0.22), Vector2(0.64, 0.42), Vector2(0.56, 0.6), Vector2(0.48, 0.72), Vector2(0.46, 0.85)]), 1, 2)
-	MapOps.river(g, path(n, [Vector2(0.06, 0.52), Vector2(0.1, 0.66), Vector2(0.12, 0.84)]), 1, 1)
+	# low river along the front that takes them all off the map. Each falls at least two levels where it
+	# falls (V11).
+	MapOps.river(g, path(n, [Vector2(0.62, 0.95), Vector2(0.62, 0.86), Vector2(0.0, 0.84), Vector2(-0.62, 0.86), Vector2(-0.68, 0.95)]), 1, 2, 2)
+	MapOps.river(g, path(n, [Vector2(-0.04, 0.13), Vector2(-0.04, 0.27), Vector2(-0.3, 0.36), Vector2(-0.47, 0.44), Vector2(-0.47, 0.62), Vector2(-0.42, 0.84)]), 2, 2, 2)
+	MapOps.river(g, path(n, [Vector2(0.66, 0.22), Vector2(0.64, 0.42), Vector2(0.56, 0.6), Vector2(0.48, 0.72), Vector2(0.46, 0.85)]), 1, 2, 2)
+	MapOps.river(g, path(n, [Vector2(0.06, 0.52), Vector2(0.1, 0.66), Vector2(0.12, 0.84)]), 1, 1, 2)
 
 	# Ways up: a flight from the meadow to the plateau behind, one to the right plateau, steps down to each
 	# front terrace, and a stone bridge over the gorge to the left terrace.
@@ -136,7 +140,9 @@ static func highland() -> CombatGrid:
 			var c := Vector2i(x, y)
 			if g.passable(c) and g.terrain_at(c) != T.WATER and not main.has(c):
 				g.set_terrain(c, T.VOID)
-	g.look = {"id": "alpine"}
+	# Rock pillars on the rims and in front of the cliffs, the key art's snow-capped columns (V10).
+	MapOps.pillars(g, 13, 4)
+	g.look = {"id": "snow"}
 	return g
 
 

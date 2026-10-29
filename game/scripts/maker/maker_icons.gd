@@ -162,6 +162,15 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 				_line([Vector2(0.1, t), Vector2(0.9, t)])
 		"heights":
 			_line([Vector2(0.14, 0.86), Vector2(0.14, 0.62), Vector2(0.38, 0.62), Vector2(0.38, 0.38), Vector2(0.62, 0.38), Vector2(0.62, 0.14), Vector2(0.86, 0.14), Vector2(0.86, 0.86)], true)
+		"tidy":  # a stepped edge squared off: two big steps instead of a saw
+			_line([Vector2(0.12, 0.86), Vector2(0.12, 0.58), Vector2(0.44, 0.58), Vector2(0.44, 0.26), Vector2(0.86, 0.26)])
+			for k in 3:
+				var x := 0.2 + k * 0.1
+				_line([Vector2(x, 0.86), Vector2(x, 0.74)])
+		"pillar":  # a lone column with a cap
+			_line([Vector2(0.36, 0.86), Vector2(0.36, 0.3), Vector2(0.64, 0.3), Vector2(0.64, 0.86)])
+			_line([Vector2(0.28, 0.3), Vector2(0.3, 0.2), Vector2(0.7, 0.2), Vector2(0.72, 0.3)])
+			_line([Vector2(0.14, 0.86), Vector2(0.86, 0.86)])
 		"soft":  # a block with soft corners and a snow cap: the painted terrain look
 			_arc(0.32, 0.32, 0.16, PI, PI * 1.5)
 			_arc(0.68, 0.32, 0.16, PI * 1.5, TAU)

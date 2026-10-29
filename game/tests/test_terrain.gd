@@ -149,3 +149,27 @@ func test_stairs_climb_along_their_flight() -> void:
 		var run := MapDress.stair_run(g, Vector2i(i + 1, 2))
 		ok(not run.is_empty(), "step %d has a run" % i)
 		eq(run.up, Vector2i(-1, 0), "step %d climbs back up the flight" % i)
+
+
+func test_roads_draw_as_ribbons() -> void:
+	var g := _flat(8, 2)
+	for x in range(1, 7):
+		g.set_terrain(Vector2i(x, 2), T.ROAD)  # along x...
+	for y in range(3, 7):
+		g.set_terrain(Vector2i(6, y), T.ROAD)  # ...then round a corner
+	g.set_height(Vector2i(3, 3), 5)  # a block beside the road: the ribbon never climbs it
+	var r := TerrainShape.ribbons(g)
+	var bands: Dictionary = r.bands
+	ok(not bands.is_empty() and not (r.edges as Dictionary).is_empty(), "a road gets a ribbon and its two edges")
+	ok(not bands.has(Vector2i(3, 3)), "only on ground at the road's level")
+	for c: Vector2i in bands:
+		for poly: PackedVector2Array in bands[c]:
+			for p in poly:
+				ok(p.x >= c.x - 0.001 and p.x <= c.x + 1.001 and p.y >= c.y - 0.001 and p.y <= c.y + 1.001, "each piece stays in its cell")
+	for c in [Vector2i(2, 2), Vector2i(4, 2), Vector2i(6, 4)]:
+		var centre := Vector2(c) + Vector2(0.5, 0.5)
+		ok((bands.get(c, []) as Array).any(func(poly: PackedVector2Array) -> bool: return Geometry2D.is_point_in_polygon(centre, poly)),
+			"the ribbon runs through road cell %s" % c)
+	var corner := Vector2(6.5, 2.5)
+	ok(not (bands.get(Vector2i(6, 2), []) as Array).any(func(poly: PackedVector2Array) -> bool:
+		return Geometry2D.is_point_in_polygon(corner + Vector2(0.4, -0.4), poly)), "it rounds the corner instead of filling it square")

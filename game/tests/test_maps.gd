@@ -12,15 +12,15 @@ static func _island(n := 6, h := 2) -> CombatGrid:
 	return g
 
 
-## Every passable cell (but water, if dry_only: a river at the foot of a gorge is a chasm) reachable from
-## the first dry one for a jump-1 piece.
+## Every passable cell (but water, if dry_only: a river at the foot of a gorge is a chasm; and pillar tops,
+## which only Jump 2 reaches) reachable from the first dry one for a jump-1 piece.
 static func _all_reachable(g: CombatGrid, dry_only := false) -> bool:
 	var start := Vector2i(-1, -1)
 	var cells: Array[Vector2i] = []
 	for y in g.h:
 		for x in g.w:
 			var c := Vector2i(x, y)
-			if g.passable(c) and not (dry_only and g.terrain_at(c) == T.WATER):
+			if g.passable(c) and not (dry_only and g.terrain_at(c) == T.WATER) and not g.perch(c):
 				cells.append(c)
 				if start.x < 0 and g.terrain_at(c) != T.WATER:
 					start = c
@@ -137,6 +137,97 @@ func test_road_follows_the_walk() -> void:
 	eq(g.terrain_at(Vector2i(7, 7)), T.ROAD)
 
 
+## 2 x 2 windows (any offset) with one cell's height different from the other three: one-cell jags.
+static func _jags(g: CombatGrid) -> int:
+	var n := 0
+	for y in g.h - 1:
+		for x in g.w - 1:
+			var count := {}
+			for c in [Vector2i(x, y), Vector2i(x + 1, y), Vector2i(x, y + 1), Vector2i(x + 1, y + 1)]:
+				count[g.height_at(c)] = int(count.get(g.height_at(c), 0)) + 1
+			if count.values().has(3):
+				n += 1
+	return n
+
+
+func test_steps_turn_in_runs() -> void:
+	var p := MapOps.steps(Vector2i(0, 0), Vector2i(7, 6), 2)
+	eq(p[0], Vector2i(0, 0))
+	eq(p[p.size() - 1], Vector2i(7, 6))
+	var runs: Array[int] = []
+	var dir := Vector2i.ZERO
+	for i in range(1, p.size()):
+		var d := p[i] - p[i - 1]
+		eq(absi(d.x) + absi(d.y), 1, "4-connected")
+		if d == dir:
+			runs[runs.size() - 1] += 1
+		else:
+			runs.append(1)
+			dir = d
+	for i in range(1, runs.size() - 1):
+		ok(runs[i] >= 2, "a slanted course turns every two cells or more, not every cell")
+	eq(MapOps.steps(Vector2i(2, 3), Vector2i(2, 3)), [Vector2i(2, 3)] as Array[Vector2i])
+
+
+func test_tidy_squares_off_edges() -> void:
+	var g := _island(12, 1)
+	for y in 12:
+		for x in 12:
+			if x - y < 1:
+				g.set_height(Vector2i(x, y), 4)  # a terrace edge running slantwise: a saw of one-cell steps
+	g.set_height(Vector2i(9, 2), 4)  # a lone spur out of the edge
+	g.set_terrain(Vector2i(2, 9), T.STAIRS)
+	g.set_height(Vector2i(10, 10), 3)
+	g.set_terrain(Vector2i(10, 10), T.WATER)
+	var before := _jags(g)
+	var keep := {Vector2i(5, 5): true}
+	var h_keep := g.height_at(Vector2i(5, 5))
+	var changed := MapOps.tidy(g, keep)
+	ok(changed > 0)
+	ok(_jags(g) <= before * 0.6, "half the one-cell jags or more are gone (%d -> %d)" % [before, _jags(g)])
+	eq(g.height_at(Vector2i(9, 2)), 1, "the lone spur drops")
+	eq(g.terrain_at(Vector2i(2, 9)), T.STAIRS, "stairs stay")
+	eq(g.height_at(Vector2i(10, 10)), 3, "water stays")
+	eq(g.height_at(Vector2i(5, 5)), h_keep, "kept cells stay")
+	var area := {Vector2i(0, 0): true}
+	eq(MapOps.tidy(g, {}, area), 0, "a tidy edge has nothing left to do where it's already square")
+
+
+func test_pillars_stand_alone() -> void:
+	var g := _island(14, 2)
+	for y in 14:
+		for x in 14:
+			if x + y < 12:
+				g.set_height(Vector2i(x, y), 5)  # a high terrace behind, a rim along its front
+	MapOps.link(g, 1)
+	ok(_all_reachable(g))
+	var got := MapOps.pillars(g, 4, 3)
+	ok(got.size() >= 2 and got.size() <= 3, "pillars placed (%d)" % got.size())
+	for c in got:
+		ok(g.perch(c), "%s stands alone two levels over its neighbours" % c)
+		eq(g.terrain_at(c), T.GRASS, "in the top's own ground, so it gets a snow cap")
+		for o in got:
+			ok(o == c or maxi(absi(o.x - c.x), absi(o.y - c.y)) >= 4, "pillars keep apart")
+	ok(_all_reachable(g), "no pillar cuts the walkable map")
+	ok(not g.deploy_cells(0).any(func(c: Vector2i) -> bool: return g.perch(c)), "nobody starts on a pillar")
+	ok(MapOps.pillar(g, got[0], true) and not g.perch(got[0]), "right click takes one back down")
+
+
+func test_rivers_fall_in_big_drops() -> void:
+	var g := CombatGrid.flat(10, 3)
+	for x in 10:
+		for y in 3:
+			g.set_height(Vector2i(x, y), 8 - x / 2)  # a slope stepping down one level every two cells
+	MapOps.river(g, MapOps.line(Vector2i(0, 1), Vector2i(9, 1)), 1, 1, 2)
+	var falls := 0
+	for x in 9:
+		var drop := g.height_at(Vector2i(x, 1)) - g.height_at(Vector2i(x + 1, 1))
+		ok(drop == 0 or drop >= 2, "the river runs level or falls two levels or more (%d)" % drop)
+		if drop > 0:
+			falls += 1
+	ok(falls >= 1 and falls <= 3, "a few big falls, not a step every cell (%d)" % falls)
+
+
 func test_valley_generator() -> void:
 	var a := MapGen.valley(3, 18, 16)
 	eq(JSON.stringify(a.to_dict()), JSON.stringify(MapGen.valley(3, 18, 16).to_dict()), "same seed, same map")
@@ -153,6 +244,12 @@ func test_valley_generator() -> void:
 	ok(heights.size() >= 3, "terraces at several levels")
 	ok(water > 0, "a river")
 	eq(a.look.get("id"), "alpine")
+	var perches := 0
+	for y in a.h:
+		for x in a.w:
+			if a.perch(Vector2i(x, y)):
+				perches += 1
+	ok(perches >= 1, "rock pillars on the rims")
 
 
 func test_highland_recipe() -> void:
@@ -172,6 +269,12 @@ func test_highland_recipe() -> void:
 	for t in [T.VOID, T.WATER, T.STAIRS, T.ROAD, T.FOREST, T.ROCK, T.STONE]:
 		ok(kinds.has(t), "has %s" % CombatGrid.T.keys()[t])
 	ok(falls >= 3, "waterfalls between levels")
+	var perches := 0
+	for y in g.h:
+		for x in g.w:
+			if g.perch(Vector2i(x, y)):
+				perches += 1
+	ok(perches >= 2, "rock pillars (V10)")
 	eq(MapRecipes.cell(26, 0.0, 0.5), Vector2i(13, 13))
 	var back := MapRecipes.uv(26, MapRecipes.cell(26, -0.4, 0.6))
 	ok(absf(back.x + 0.4) < 0.06 and absf(back.y - 0.6) < 0.03, "screen position round trip")

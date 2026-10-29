@@ -144,7 +144,7 @@ func _side_cells(left: bool) -> Array[Vector2i]:
 	for y in grid.h:
 		for x in grid.w:
 			var c := Vector2i(x, y)
-			if grid.passable(c) and grid.terrain_at(c) != CombatGrid.T.WATER:
+			if grid.passable(c) and grid.terrain_at(c) != CombatGrid.T.WATER and not grid.perch(c):
 				cells.append(c)
 	cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		return (a.y - a.x > b.y - b.x) if left else (a.x - a.y > b.x - b.y))

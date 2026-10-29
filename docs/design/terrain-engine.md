@@ -122,17 +122,32 @@ improves piece by piece (the `side_body` crop and fade is that fallback for clif
 
 ## 5. Maps a painter would draw: generator and authoring rules
 
-Drawing can only soften a layout. These join V1 to V8 (`docs/design/map-look.md` section 7):
+Drawing can only soften a layout. These join V1 to V8 (`docs/design/map-look.md` section 7). Brandon had them
+built into the generator, the highland template and the map maker on 2026-10-28:
 
-- **V9 No one-cell zigzags.** An outline runs straight for at least two cells between turns; a diagonal edge is
-  built from two- or three-cell steps. `MapGen` and a new map maker op (TIDY) open and close each height level
-  (remove single-cell notches and spurs) before saving.
+- **V9 No one-cell zigzags.** An outline runs straight for at least two cells between turns; a slanted edge is
+  built from two- or three-cell steps. `MapOps.tidy` re-steps edges two cells at a time (in each 2 x 2 block, at
+  the offset that changes least, the odd one out of three takes their height; a hole counts as a level, so the
+  outline steps too) and drops a cell sticking out or fills a notch; water, stairs and cells beside stairs stay.
+  `MapOps.steps` lays slanted courses (rivers, the recipe's paths) in runs of two cells or more, and the
+  generator's river goes straight on for at least two cells before it turns. Map maker: Tidy brush (5), Map tab
+  > Generate > Tidy edges.
 - **V10 Pillars on the rims.** Two to four single-cell rock columns on high rims and in front of cliffs; they round
-  into the target's snow-capped pillars.
-- **V11 Rivers fall in few, big drops.** Level runs two cells wide with square bends, and one to three falls of two
-  levels or more, not a one-level step every cell.
-- **V12 Paths are ribbons.** The path tool keeps its course as a line, drawn as a smooth band over the ground
-  (cells under it stay road for movement), so a path can bend through a cell instead of filling it.
+  into the target's snow-capped pillars. `MapOps.pillar` raises a cell two levels over its highest neighbour
+  in the top's own ground; `MapOps.pillars` places a few at least four cells apart, off roads, water and stairs,
+  never cutting the walkable map. A pillar top (`CombatGrid.perch`) only takes a Jump 2 piece, so deploy cells
+  and the maker's test party skip it. Map maker: Pillar tool (6), Generate > Add pillars.
+- **V11 Rivers fall in few, big drops.** Level runs with square bends, and falls of two levels or more, not a
+  one-level step every cell: `MapOps.river(..., min_fall)` digs deeper and falls `min_fall` instead of stepping
+  less. The generator and the recipe use 2. The generator's river now only leaves the map from its front half,
+  so it runs the map's length.
+- **V12 Paths are ribbons.** Road cells on each level join into lines through their centres, smoothed with
+  rounded turns and drawn as one band with a wavering edge over the ground (`TerrainShape.ribbons`, cut per cell
+  like the flow strokes); the cells underneath stay road for movement and draw their ground (grass, snow).
+  Built as a drawing rule, so every map's roads become ribbons without changing the map files. The ribbon is
+  the set's road texture. The snow set borrows the base set's sand (`base/top_road`) recoloured to the key art's
+  pale beige by the `tone` column (`#c7b9ab`, which lands on the key art's 220 / 204 / 187 on screen after the
+  height lift); stair treads use the same road. Brandon: the plain sand was "a little too bright and yellow".
 
 ## 6. Build plan
 
@@ -141,7 +156,7 @@ Drawing can only soften a layout. These join V1 to V8 (`docs/design/map-look.md`
 | 0, done | Soft pass: shape, continuous cliffs and lips, flow strokes, sheet falls, carved stairs, silhouette ink | Look at the screens |
 | 1 | Tune with him: radii, cap thickness, drip count, stroke weight; lock as `[USER]` lines | His eye |
 | 2 | Snow kit: cliff rock, lip strip, fall sheet, path, 1024 tops, stroke brushes, decals; loaders for each | Yes to a Picsart batch, or Procreate |
-| 3 | Maps: TIDY op and V9 to V12 in `MapGen` and the highland recipe; pillar dresser; path ribbons | Approve the rules |
+| 3, done | Maps: V9 to V12 in `MapGen`, the highland recipe and the map maker (Tidy, Pillar, ribbons) | Done 2026-10-28 |
 | 4 | Life: flow strokes slide downstream, ice floes, macro variation on tops (two swatches blended by a slow noise) | No |
 | 5 | Other biomes: forest, ruins, canyon kits | A kit per biome |
 
@@ -159,6 +174,6 @@ Drawing can only soften a layout. These join V1 to V8 (`docs/design/map-look.md`
 
 1. Keep the soft pass on for every outdoor map now, or only snow until the kits land?
 2. Corners (0.13, varying) and cap thickness (0.8 levels): right now, or more or less?
-3. Paths as ribbons (V12) or keep road cells?
+3. Done: snow paths are the key art's beige (`tone` column).
 4. Make the snow kit through Picsart (a batch of sheets at about 10 cents each) or paint it in Procreate?
-5. Adopt V9 to V12 and let the generator and TIDY reshape maps to them?
+5. Done: V9 to V12 are built (section 5).

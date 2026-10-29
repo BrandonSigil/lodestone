@@ -93,6 +93,13 @@ These are what make a map look like the reference. The generator and the `highla
 - **V6** Pines in clumps on the high ground and at the back; scattered on the front terraces, so pieces at the front stay visible. Boulders on high rims.
 - **V7** The outline is ragged, never a rectangle: cut the corners, notch the edges, leave no stray scraps.
 - **V8** Battle maps 20 to 30 cells across; the maker allows up to 48.
+- **V9** No one-cell zigzags: edges run at least two cells straight between turns (Tidy, `MapOps.tidy`, `MapOps.steps`).
+- **V10** Two to four single-cell rock pillars on high rims and in front of cliffs (Pillar, `MapOps.pillars`).
+- **V11** Rivers run level and fall in a few drops of two levels or more (`MapOps.river` with `min_fall` 2).
+- **V12** Roads draw as smooth ribbons through their cells (`TerrainShape.ribbons`).
+
+V9 to V12 come from the painted look (`docs/design/terrain-engine.md` section 5); the generator and the highland
+template keep them.
 
 ## 8. The renderer: slabs
 

@@ -120,7 +120,35 @@ static func _row(t: int, from_set: String) -> Dictionary:
 
 
 static func top(t: int, from_set := "") -> Texture2D:
-	return texture(String(_row(t, from_set).get("top", "")), true, from_set)
+	var row := _row(t, from_set)
+	var tex := texture(String(row.get("top", "")), true, from_set)
+	var tone := String(row.get("tone", ""))
+	return toned(tex, Color.html(tone)) if tex != null and tone != "" else tex
+
+
+const TONE_KEEP := 0.6  ## how much of a toned texture's own light and dark marks survive (0 = flat colour)
+static var _toned := {}  # texture id + colour -> retinted texture
+
+
+## A texture recoloured so its average is `col`, keeping its marks a little softer: the `tone` column (a hex
+## colour) in a set's table, e.g. the snow set's road borrows the base sand but in the key art's paler beige.
+static func toned(tex: Texture2D, col: Color) -> Texture2D:
+	var key := "%d|%s" % [tex.get_instance_id(), col.to_html()]
+	if _toned.has(key):
+		return _toned[key]
+	var img := tex.get_image()
+	img.decompress()
+	img.clear_mipmaps()
+	img.convert(Image.FORMAT_RGBA8)
+	var mean := average(tex)
+	for y in img.get_height():
+		for x in img.get_width():
+			var c := img.get_pixel(x, y)
+			img.set_pixel(x, y, Color((col + (c - mean) * TONE_KEEP).clamp(), c.a))
+	img.generate_mipmaps()
+	var out := ImageTexture.create_from_image(img)
+	_toned[key] = out
+	return out
 
 
 static func side(t: int, from_set := "") -> Texture2D:
@@ -221,4 +249,5 @@ static func reset() -> void:
 	_set_rows.clear()
 	_tex.clear()
 	_bodies.clear()
+	_toned.clear()
 	_loaded = false

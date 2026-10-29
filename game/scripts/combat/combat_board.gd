@@ -130,6 +130,7 @@ var _pen_ends := {}  ## soft pass: outline line ends -> how many lines meet ther
 var _pen_by_cell := {}  ## soft pass: cell -> the line ends its outline put in _pen_ends
 var _shape_base := ""  ## soft pass: what the shape caches were built for, but the grid's version
 var _shape_version := -1
+var _ribbons := {"bands": {}, "edges": {}}  ## soft pass: road ribbons cut per cell (TerrainShape.ribbons)
 var _shape_h := PackedInt32Array()  ## the heights and terrain the shape caches were built from
 var _shape_t := PackedInt32Array()
 
@@ -891,11 +892,14 @@ func _refresh_shape() -> void:
 	var full := base != _shape_base or _shape_h.size() != grid.heights.size()
 	var changed := {}
 	var wet := full  # the water may have changed: its strokes need a look
+	var paved := full  # a road or the ground beside one changed: the ribbons need redoing
 	if not full and (grid.heights != _shape_h or grid.terrain != _shape_t):
 		for i in grid.heights.size():
 			if grid.heights[i] != _shape_h[i] or grid.terrain[i] != _shape_t[i]:
 				changed[Vector2i(i % grid.w, i / grid.w)] = true
 				wet = wet or grid.terrain[i] == CombatGrid.T.WATER or _shape_t[i] == CombatGrid.T.WATER
+				paved = paved or grid.terrain[i] == CombatGrid.T.ROAD or _shape_t[i] == CombatGrid.T.ROAD \
+					or _beside_road(Vector2i(i % grid.w, i / grid.w))
 				if changed.size() > SHAPE_LOCAL:
 					full = true
 					wet = true
@@ -920,6 +924,10 @@ func _refresh_shape() -> void:
 			_shape_radii(c)
 		for c: Vector2i in _around(changed, 3):
 			_shape_pens(c)
+	if paved:
+		_ribbons = TerrainShape.ribbons(grid)
+		for d in _depths.size():
+			_dirty[d] = true
 	if not wet:
 		return
 	var water := PackedInt32Array()
@@ -935,6 +943,19 @@ func _refresh_shape() -> void:
 
 
 const SHAPE_LOCAL := 64  ## an edit touching more cells than this redoes the whole map
+
+
+func _beside_road(c: Vector2i) -> bool:
+	for d: Vector2i in TerrainShape.NORMALS:
+		if grid.in_bounds(c + d) and grid.terrain_at(c + d) == CombatGrid.T.ROAD:
+			return true
+	return false
+
+
+## The ground a cell shows in the soft pass: a road shows the ground it runs over (grass), and its ribbon
+## draws the road on top (TerrainShape.ribbons).
+func _ground_t(t: int) -> int:
+	return CombatGrid.T.GRASS if t == CombatGrid.T.ROAD and _soft() else t
 
 
 ## The grid cells within `reach` steps (diagonals count as one) of any of `cells`.
@@ -988,9 +1009,10 @@ func _draw_ground_soft(c: Vector2i) -> void:
 	var t := grid.terrain_at(c)
 	var h := _surf(c)
 	var zone := grid.zone_at(c)
-	var tint := _tint(t)
-	var top_tex := BattleArt.top(t, zone)
-	var top_col := _terrain_color(t).lightened(minf(h, 6.0) * 0.025)
+	var g := _ground_t(t)
+	var tint := _tint(g)
+	var top_tex := BattleArt.top(g, zone)
+	var top_col := _terrain_color(g).lightened(minf(h, 6.0) * 0.025)
 	if t == CombatGrid.T.STAIRS and _stair_steps_soft(c, h):
 		_contact_shadow(c, h)
 		return
@@ -1028,7 +1050,7 @@ func _draw_ground_soft(c: Vector2i) -> void:
 		else:
 			runs.append(run)
 	_soft_drifts(c, h, segs, feet, shown)
-	var lip := _soft_lip_depth(t, zone)
+	var lip := _soft_lip_depth(g, zone)
 	if lip > 0.0:
 		for rn: Array in runs:
 			_soft_lip(rn, h, top_tex, tint, top_col, lip)
@@ -1057,6 +1079,7 @@ func _draw_ground_soft(c: Vector2i) -> void:
 		_ci.draw_polyline(edge, Color(rim, 1.0), 1.0, true)
 	if blend:
 		_fringe(c, t, h, zone)
+	_road_ribbon(c, h, zone)
 	if t == CombatGrid.T.WATER:
 		_water_marks(c, h, top_col)
 	_contact_shadow(c, h)
@@ -1210,7 +1233,7 @@ func _drift_floor(c: Vector2i, s: Dictionary) -> Vector2i:
 
 
 func _drift(run: Array, foot: float, f: Vector2i, h: float) -> void:
-	var t := grid.terrain_at(f)
+	var t := _ground_t(grid.terrain_at(f))
 	var zone := grid.zone_at(f)
 	var depth := BattleArt.drift(t, zone)
 	var tex := BattleArt.top(t, zone)
@@ -1269,6 +1292,35 @@ func _into_water(c: Vector2i, s: Dictionary) -> bool:
 			return false
 		n = g.src
 	return grid.solid(n) and grid.terrain_at(n) == CombatGrid.T.WATER
+
+
+## This cell's pieces of the road ribbons: the road's own ground, at the same world spot as the rest of the
+## band so its texture runs on, and a hairline of its colour down each side (the renderer can't smooth edges).
+func _road_ribbon(c: Vector2i, h: float, zone: String) -> void:
+	var bands: Array = _ribbons.bands.get(c, [])
+	if bands.is_empty():
+		return
+	var tex := BattleArt.top(CombatGrid.T.ROAD, zone)
+	var lift := Color(_tint(CombatGrid.T.ROAD) * (1.0 + minf(h, 6.0) * 0.025), 1.0)
+	for poly: PackedVector2Array in bands:
+		var pts := PackedVector2Array()
+		var uvs := PackedVector2Array()
+		for p in poly:
+			pts.append(iso(p.x, p.y, h))
+			uvs.append(p / BattleArt.TOP_TILES)
+		if tex != null:
+			var cols := PackedColorArray()
+			cols.resize(pts.size())
+			cols.fill(lift)
+			_ci.draw_polygon(pts, cols, uvs, tex)
+		else:
+			_ci.draw_colored_polygon(pts, _terrain_color(CombatGrid.T.ROAD))
+	var rim := Color((BattleArt.average(tex) if tex != null else _terrain_color(CombatGrid.T.ROAD)) * lift, 1.0)
+	for line: PackedVector2Array in _ribbons.edges.get(c, []):
+		var pts := PackedVector2Array()
+		for p in line:
+			pts.append(iso(p.x, p.y, h))
+		_ci.draw_polyline(pts, rim, 1.0, true)
 
 
 ## How far down a stretch of a cell's outline drops: a side to its neighbour, a rounded corner to the
@@ -1416,7 +1468,7 @@ func _gap_floor(c: Vector2i, k: int, r: float) -> void:
 		return
 	var src: Vector2i = g.src
 	var gh: float = g.h
-	var t := grid.terrain_at(src)
+	var t := _ground_t(grid.terrain_at(src))
 	var zone := grid.zone_at(src)
 	var tex := BattleArt.top(t, zone)
 	var poly := TerrainShape.gap_polygon(c, k, r)
@@ -1464,7 +1516,7 @@ func _fillet(c: Vector2i, k: int, r: float) -> void:
 	var src: Vector2i = g.src
 	var gh: float = g.h
 	var h := _surf(c)
-	var t := grid.terrain_at(src)
+	var t := _ground_t(grid.terrain_at(src))
 	var zone := grid.zone_at(src)
 	var tint := _tint(t)
 	var tex := BattleArt.top(t, zone)
@@ -1693,6 +1745,8 @@ func _fringe(c: Vector2i, t: int, h: float, zone: String) -> void:
 			continue
 		var tn := grid.terrain_at(n)
 		var zn := grid.zone_at(n)
+		if _soft() and (tn == CombatGrid.T.ROAD or t == CombatGrid.T.ROAD):  # the soft pass draws roads as ribbons
+			continue
 		var rn: int = BLEND_RANK.get(tn, -1)
 		if rn < 0 or (rn <= rank and zn == zone) or (tn == t and zn == zone):
 			continue

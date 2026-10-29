@@ -439,6 +439,19 @@ func connected(jump: int) -> bool:
 
 
 ## Passable cells in the deploy zone for team 0 (left) or 1 (right), center rows first.
+## A lone column's top: ground standing at least two levels over every neighbour (a rock pillar, MapOps.pillar).
+## Only a piece with Jump 2 or more gets up there, so nobody is set down on one.
+func perch(c: Vector2i) -> bool:
+	if not solid(c):
+		return false
+	var hc := height_at(c)
+	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		var n: Vector2i = c + d
+		if solid(n) and height_at(n) > hc - 2:
+			return false
+	return true
+
+
 func deploy_cells(team: int) -> Array[Vector2i]:
 	var cols := range(DEPLOY_COLS) if team == 0 else range(w - DEPLOY_COLS, w)
 	if team == 0:
@@ -449,6 +462,6 @@ func deploy_cells(team: int) -> Array[Vector2i]:
 	for x in cols:
 		for y in rows:
 			var c := Vector2i(x, y)
-			if passable(c):
+			if passable(c) and not perch(c):
 				out.append(c)
 	return out

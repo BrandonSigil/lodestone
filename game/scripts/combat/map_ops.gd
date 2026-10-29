@@ -33,6 +33,30 @@ static func line(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
 	return out
 
 
+## Every cell from a to b, 4-connected, moving `run` cells along one axis at a time, so a slanted course
+## turns in steps two or three cells long instead of zigzagging one cell at a time (rule V9).
+static func steps(a: Vector2i, b: Vector2i, run := 2) -> Array[Vector2i]:
+	var out: Array[Vector2i] = [a]
+	var d := b - a
+	var sx := signi(d.x)
+	var sy := signi(d.y)
+	var c := a
+	while c != b:
+		var rx := absi(b.x - c.x)
+		var ry := absi(b.y - c.y)
+		var along_x := ry == 0
+		if rx > 0 and ry > 0:  # take the axis that is further behind the straight line
+			along_x = float(rx) / absi(d.x) >= float(ry) / absi(d.y)
+		var left := rx if along_x else ry
+		var n := mini(run, left)
+		if left - n == 1:  # never leave a single cell for the end of a run
+			n = left
+		for i in n:
+			c += Vector2i(sx, 0) if along_x else Vector2i(0, sy)
+			out.append(c)
+	return out
+
+
 ## Raise or lower ground (holes stay holes), clamped to the editor's range.
 static func raise(grid: CombatGrid, cells: Array[Vector2i], dh: int) -> void:
 	for c in cells:
@@ -81,8 +105,10 @@ static func fill(grid: CombatGrid, cells: Array[Vector2i], h := -1) -> void:
 
 ## A river along a path: water dug `depth` levels below the ground, never flowing uphill, so every place
 ## the ground steps down becomes a waterfall. width 2 also floods the cell beside each step.
+## `min_fall`: where the water would step down less than this, it digs deeper and falls this far instead,
+## so a river runs level and drops in a few big falls rather than a little every cell (rule V11).
 ## A path that runs off the ground stops there (the river leaves the map).
-static func river(grid: CombatGrid, path: Array[Vector2i], depth := 1, width := 1) -> void:
+static func river(grid: CombatGrid, path: Array[Vector2i], depth := 1, width := 1, min_fall := 1) -> void:
 	var lvl := CombatGrid.MAX_HEIGHT
 	var prev := Vector2i(-999, -999)
 	for c in path:
@@ -90,7 +116,10 @@ static func river(grid: CombatGrid, path: Array[Vector2i], depth := 1, width := 
 			if prev.x > -999:
 				break
 			continue
-		lvl = mini(lvl, maxi(0, grid.height_at(c) - depth)) if grid.terrain_at(c) != T.WATER else mini(lvl, grid.height_at(c))
+		var want := mini(lvl, maxi(0, grid.height_at(c) - depth)) if grid.terrain_at(c) != T.WATER else mini(lvl, grid.height_at(c))
+		if prev.x > -999 and want < lvl and lvl - want < min_fall:
+			want = maxi(0, lvl - min_fall)
+		lvl = want
 		var cells: Array[Vector2i] = [c]
 		if width > 1 and prev.x > -999:
 			var d := c - prev
@@ -264,6 +293,182 @@ static func keep_largest(grid: CombatGrid) -> void:
 			if grid.solid(c) and not keep.has(c):
 				gone.append(c)
 	cut(grid, gone)
+
+
+## Square off ragged edges (rule V9), so every edge runs at least two cells between turns. Edges re-step two
+## cells at a time: in each 2 x 2 block (at the offset that changes least), a cell that is the odd one out of
+## three takes their height, or goes when the other three are holes, or fills when it is the hole. Then a
+## dry cell whose dry neighbours are at least three at one other height takes it (a cell sticking out drops,
+## a notch fills, a lone column goes; add pillars after). Water, stairs, cells next to stairs and `keep` stay as they are.
+## `area` (cells) limits it to those cells (the maker's brush); empty means the whole map.
+## Returns how many cells changed; run keep_largest and link after it.
+static func tidy(grid: CombatGrid, keep := {}, area := {}) -> int:
+	var cells: Array[Vector2i] = []
+	if area.is_empty():
+		for y in grid.h:
+			for x in grid.w:
+				cells.append(Vector2i(x, y))
+	else:
+		for c: Vector2i in area:
+			if grid.in_bounds(c):
+				cells.append(c)
+	var free := func(c: Vector2i) -> bool: return grid.in_bounds(c) and (area.is_empty() or area.has(c)) and _tidy_free(grid, c, keep)
+	var best := {}
+	var best_n := -1
+	for off: Vector2i in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]:
+		var moves := {}
+		var blocks := {}
+		for c in cells:
+			blocks[Vector2i(floori((c.x - off.x) / 2.0), floori((c.y - off.y) / 2.0))] = true
+		for b: Vector2i in blocks:
+			var block: Array[Vector2i] = []
+			for j in 2:
+				for i in 2:
+					block.append(off + Vector2i(b.x * 2 + i, b.y * 2 + j))
+			if not block.all(free):
+				continue
+			var count := {}
+			for c in block:
+				var k := _tidy_level(grid, c)
+				count[k] = int(count.get(k, 0)) + 1
+			for k: int in count:
+				if count[k] == 3:
+					for c in block:
+						if _tidy_level(grid, c) != k:
+							moves[c] = k
+		if best_n < 0 or moves.size() < best_n:
+			best = moves
+			best_n = moves.size()
+	for c: Vector2i in best:
+		_tidy_set(grid, c, best[c])
+	var changed := best.size()
+	for _pass in 1:  # one pass: a single cell sticking out goes; a longer spur only loses its tip
+		var lone := {}
+		for c in cells:
+			if not grid.solid(c) or not free.call(c):
+				continue
+			var count := {}
+			for d: Vector2i in CombatRules.DIRS:
+				var n := c + d
+				if grid.solid(n) and _tidy_free(grid, n, {}):
+					count[grid.height_at(n)] = int(count.get(grid.height_at(n), 0)) + 1
+			for k: int in count:
+				if count[k] >= 3 and k != grid.height_at(c):
+					lone[c] = k
+		if lone.is_empty():
+			break
+		for c: Vector2i in lone:
+			grid.set_height(c, lone[c])
+		changed += lone.size()
+	return changed
+
+
+## Dry, natural ground tidy may move: not water, stairs, masonry, a cell next to stairs, or kept.
+static func _tidy_free(grid: CombatGrid, c: Vector2i, keep: Dictionary) -> bool:
+	if keep.has(c):
+		return false
+	if grid.solid(c) and grid.terrain_at(c) not in [T.GRASS, T.FOREST, T.ROCK, T.ROAD]:
+		return false
+	for d: Vector2i in CombatRules.DIRS:
+		if grid.in_bounds(c + d) and grid.terrain_at(c + d) == T.STAIRS:
+			return false
+	return true
+
+
+## A cell's level for tidy: its height, or -1 for a hole.
+static func _tidy_level(grid: CombatGrid, c: Vector2i) -> int:
+	return grid.height_at(c) if grid.solid(c) else -1
+
+
+static func _tidy_set(grid: CombatGrid, c: Vector2i, k: int) -> void:
+	if k < 0:
+		cut(grid, [c] as Array[Vector2i])
+	elif not grid.solid(c):
+		grid.set_terrain(c, T.GRASS)
+		grid.set_height(c, k)
+	else:
+		grid.set_height(c, k)
+
+
+## One rock pillar (rule V10): the cell rises two levels over its highest neighbour into a lone column, in the
+## top's own ground (the soft look rounds it into a snow-capped pillar; rock would grow a boulder on it).
+## `down` lowers one back to its neighbours. False when the cell can't hold one.
+static func pillar(grid: CombatGrid, c: Vector2i, down := false) -> bool:
+	if not grid.solid(c) or grid.terrain_at(c) in [T.WATER, T.STAIRS]:
+		return false
+	var top := -1
+	for d: Vector2i in CombatRules.DIRS:
+		if grid.solid(c + d):
+			top = maxi(top, grid.height_at(c + d))
+	if top < 0:
+		return false
+	if down:
+		grid.set_height(c, top)
+		return true
+	if top + 2 > CombatGrid.MAX_HEIGHT:
+		return false
+	var a := grid.prop_anchor(c)
+	if a != CombatGrid.NONE_CELL:
+		remove_prop(grid, a)
+	grid.set_terrain(c, T.GRASS)
+	grid.set_height(c, top + 2)
+	return true
+
+
+## Place up to `count` pillars (rule V10) on high rims and in front of cliffs, at least four cells apart, off
+## roads, water, stairs and `keep`, never cutting a piece of the walkable map off. Returns their cells.
+static func pillars(grid: CombatGrid, seed_value: int, count := 3, keep := {}) -> Array[Vector2i]:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var options := []
+	for y in grid.h:
+		for x in grid.w:
+			var c := Vector2i(x, y)
+			if keep.has(c) or not grid.solid(c) or grid.terrain_at(c) not in [T.GRASS, T.FOREST, T.ROCK]:
+				continue
+			if grid.prop_anchor(c) != CombatGrid.NONE_CELL:
+				continue
+			var ok := true
+			var rim := false
+			var foot := false
+			for d: Vector2i in CombatRules.DIRS:
+				var n := c + d
+				if not grid.solid(n):
+					rim = true
+					continue
+				if grid.terrain_at(n) in [T.STAIRS, T.ROAD, T.WATER]:
+					ok = false
+				var diff := grid.height_at(n) - grid.height_at(c)
+				rim = rim or diff <= -2
+				foot = foot or diff >= 2
+			if ok and (rim or foot):
+				options.append([c, (2.0 if rim else 1.0) + rng.randf()])
+	options.sort_custom(func(p: Array, q: Array) -> bool: return p[1] > q[1])
+	var placed: Array[Vector2i] = []
+	var start := _biggest_walk(grid, 1)
+	for o: Array in options:
+		if placed.size() >= count:
+			break
+		var c: Vector2i = o[0]
+		if placed.any(func(p: Vector2i) -> bool: return maxi(absi(p.x - c.x), absi(p.y - c.y)) < 4):
+			continue
+		var before := reach(grid, start, 1)
+		var h0 := grid.height_at(c)
+		var t0 := grid.terrain_at(c)
+		if not pillar(grid, c):
+			continue
+		var after := reach(grid, start if start != c else Vector2i(-1, -1), 1)
+		var lost := false
+		for k: Vector2i in before:
+			if k != c and not after.has(k):
+				lost = true
+				break
+		if lost:
+			grid.set_height(c, h0)
+			grid.set_terrain(c, t0)
+			continue
+		placed.append(c)
+	return placed
 
 
 ## Cells a piece with this Jump can walk to from `from` (stairs help, as in combat).

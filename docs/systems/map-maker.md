@@ -16,8 +16,8 @@ Catalog: `game/data/catalog.csv`. Scene: `scenes/map_maker.tscn`.
 - **Top bar** (icons, tooltips name them): new, open, save, undo, redo; the map's name (`*` unsaved); painted
   terrain (K, on), grid lines, height numbers, names over things; turn the view (editing only), fit, hide
   panels; **Play test**.
-- **Tool rail** (left): Select V, Place B, Erase X | Raise 1, Lower 2, Level 3, Smooth 4 | Ground P, Path L,
-  River W, Stairs T | Cut C, Fill F, Zone Z. Hover a tool for what it does.
+- **Tool rail** (left): Select V, Place B, Erase X, Party U, Enemy E | Raise 1, Lower 2, Level 3, Smooth 4, Tidy 5,
+  Pillar 6 | Ground P, Path L, River W, Stairs T | Cut C, Fill F, Zone Z. Hover a tool for what it does.
 - **Options bar** (top): what the picked tool needs: brush size and shape, the level height, ground
   swatches (the tile set's own textures), path ground and "follow ground", the zone's tile set, the stamp
   and its angle, or the selection's turn / mirror / copy / delete.
@@ -62,6 +62,11 @@ Name the map and the id or blob, and write what you want in its note:
 ## Ground
 - **Raise / Lower / Level / Smooth**: brush tools; each cell changes once per stroke. Right click on Level
   takes a cell's height.
+- **Tidy** (5): brush over ragged edges to square them off: slanted edges re-step two cells at a time, a cell
+  sticking out drops, a notch fills (rule V9). Water and stairs stay. Map tab > Generate > Tidy edges does the
+  whole map and adds stairs if that cut anything off.
+- **Pillar** (6): click a cell to raise it into a lone rock pillar two levels over its neighbours (rule V10);
+  right click lowers it back. Generate > Add pillars places three on rims and in front of cliffs.
 - **Ground**: pick a swatch (grass, forest floor, road, stone, rock, ruin, water) and paint.
 - **Path**: drag a course; it's painted `brush` cells wide in road, stone or grass, and stairs are cut where
   it climbs more than a level. "Follow ground" finds the easiest walk between press and release instead.
@@ -90,27 +95,31 @@ What the look does with what you build:
 
 So, to get the key art's look:
 - Avoid one-cell zigzags. A diagonal bank or terrace edge built a cell at a time reads as a saw; build it in
-  steps two or three cells long, with straight runs between corners (V9 in the design doc).
-- Put two to four single-cell pillars on high rims and in front of cliffs (V10).
+  steps two or three cells long, with straight runs between corners (V9). Brush Tidy (5) over it, or Tidy edges.
+- Put two to four single-cell pillars on high rims and in front of cliffs (V10): Pillar (6), or Add pillars.
 - Let rivers run level and fall in a few big drops (two levels or more) instead of a step every cell (V11).
 - Keep stair flights straight, one cell wide, running up the slope.
+- Roads draw as smooth ribbons through their cells (V12): paint road cells along the way and the ribbon finds
+  its own curve; the cells stay road for movement.
 
 Per tile set, `data/battle_art_<set>.csv` tunes the look: `lip` (how far a top's ground hangs over an edge,
 levels), `cap` (share of a side texture's top that is painted snow or moss, cut off so only the rock
-repeats), `drift` (how high a ground piles against a wall's foot; snow only for now).
+repeats), `drift` (how high a ground piles against a wall's foot; snow only for now), `tone` (a hex colour a top texture is
+recoloured to on load, marks kept; the snow set's road borrows the base sand toned to the key art's beige).
 
 ## Map tab
 - **Map**: name, kind (battle map in `data/maps`, explore map in `data/explore`), size and resize.
 - **Look**: tile set, look, "Use this view as the map's angle" (players only ever see that angle; turning
   while editing doesn't change it), cliff depth, forest rings, strangeness.
-- **Generate**: seed, new valley, next seed, roughen outline, link with stairs, templates.
+- **Generate**: seed, new valley, next seed, roughen outline, link with stairs, tidy edges, add pillars,
+  templates. New valleys keep V9 to V11 (tidy edges, pillars, rivers with big falls).
 - **Keys**: every shortcut.
 
 ## Keys
 Drag paints, right drag does the opposite. Shift drag, middle drag or two fingers pan; arrows pan; wheel or
 pinch zooms; space fits. Tools: V B X 1 2 3 4 P L W T C F Z. R turn, M mirror, Del delete, Esc deselect,
 ctrl D copy to the stamp, alt click pick up, [ ] brush, Q turn the view (editing only), K painted terrain or
-plain blocks, G grid, H hide panels, ctrl Z undo, ctrl shift Z redo (80 steps), ctrl S save.
+plain blocks, G grid, H hide panels, ctrl Z undo, ctrl shift Z redo (80 steps), ctrl S save. Tidy 5, Pillar 6.
 
 ## Saving
 - Battle maps save to `game/data/maps/<name>.json`, explore maps to `game/data/explore/<name>.json`
@@ -136,7 +145,7 @@ From `game/`:
 the maker scene (sculpt, undo, stamping props, blobs and doors, unique ids, notes, moving, deleting, the
 start, battle maps refusing things, the painted terrain toggle), ground blend ranks.
 `game/tests/test_terrain.gd`: the painted look's rules (corners, fillets, outlines, lips, drifts, water flow,
-stair flights).
+stair flights, road ribbons). `test_maps.gd` also covers steps, tidy, pillars and big river falls.
 
 Performance: an edit only reworks the painted look near the cells it touched (about 1 ms on a 48 x 48 map);
 editing water also redoes that river's flow strokes.
