@@ -74,6 +74,14 @@ static func unit_at(units: Array, c: Vector2i) -> CombatUnit:
 	return null
 
 
+## Whoever takes up the cell: a standing piece, or a downed one bleeding out on it.
+static func occupant(units: Array, c: Vector2i) -> CombatUnit:
+	for o: CombatUnit in units:
+		if (o.alive() or o.downed()) and o.cell == c:
+			return o
+	return null
+
+
 ## Dijkstra over move cost. Returns {"cost": {cell: int}, "prev": {cell: cell}}.
 ## Units pass through allies but can't stop on them, and can't pass enemies.
 static func reachable(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
@@ -93,7 +101,7 @@ static func reachable(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictiona
 				continue
 			if not grid.can_step(c, n, u.jump):
 				continue
-			var other := unit_at(units, n)
+			var other := occupant(units, n)
 			if other != null and other.team != u.team:
 				continue
 			var nc: int = cost[c] + grid.step_cost(n)
@@ -104,7 +112,7 @@ static func reachable(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictiona
 			if not open.has(n):
 				open.append(n)
 	for c: Vector2i in cost.keys():
-		if c != u.cell and unit_at(units, c) != null:
+		if c != u.cell and occupant(units, c) != null:
 			cost.erase(c)
 	return {"cost": cost, "prev": prev}
 
@@ -197,6 +205,10 @@ static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Arr
 	match a.target:
 		"self":
 			out.append(from)
+		"downed":  # AID (own side) or a knock-out (the other side) on a piece bleeding out
+			for o: CombatUnit in units:
+				if o.downed() and (o.team == u.team) == (a.kind == "revive") and in_reach(grid, from, o.cell, r):
+					out.append(o.cell)
 		"enemy", "ally":
 			for o: CombatUnit in units:
 				if not o.alive():
@@ -230,7 +242,7 @@ static func area(grid: CombatGrid, a: Ability, center: Vector2i) -> Array[Vector
 static func affected_units(grid: CombatGrid, user: CombatUnit, a: Ability, center: Vector2i, units: Array, from: Vector2i) -> Array[CombatUnit]:
 	var out: Array[CombatUnit] = []
 	for c in area(grid, a, center):
-		var o: CombatUnit = user if c == from else unit_at(units, c)
+		var o: CombatUnit = user if c == from else (occupant(units, c) if a.target == "downed" else unit_at(units, c))
 		if o == null or (o == user and c != from):
 			continue
 		if a.target == "enemy" and o.team == user.team:
@@ -399,6 +411,8 @@ static func forecast(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector
 				e.crit_parts = crit_parts(grid, u, t, units, from, a)
 			"heal":
 				e.heal = mini(heal_amount(u, a), t.max_hp - t.hp)
+			"revive":
+				e.heal = aid_hp(t)
 		out.targets.append(e)
 	if a.kind == "attack" and a.radius == 0 and hit_list.size() == 1:
 		var t: CombatUnit = hit_list[0]
@@ -432,6 +446,15 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 				var before := t.hp
 				t.hp = mini(t.max_hp, t.hp + heal_amount(u, a))
 				events.append({"type": "heal", "src": u, "unit": t, "amount": t.hp - before})
+			"revive":
+				if t.downed():
+					t.hp = aid_hp(t)
+					t.bleed = 0
+					events.append({"type": "revive", "src": u, "unit": t, "amount": t.hp})
+			"knockout":
+				if t.downed():
+					t.bleed = 0
+					events.append({"type": "knockout", "src": u, "unit": t})
 			"buff":
 				if a.status != "":
 					t.statuses[a.status] = a.status_turns
@@ -474,7 +497,7 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 	var path: Array[Vector2i] = [t.cell]
 	for i in n:
 		var dest := t.cell + dir
-		var blocked := not grid.passable(dest) or unit_at(units, dest) != null
+		var blocked := not grid.passable(dest) or occupant(units, dest) != null
 		if not blocked and grid.height_at(dest) - grid.height_at(t.cell) > 1:
 			blocked = true
 		if blocked:
@@ -495,12 +518,6 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 	return events
 
 
-## A basic strike of att on tgt (older tests and the simple sim). Returns {"damage", "crit"}.
-static func attack(rng: RandomNumberGenerator, grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units: Array) -> Dictionary:
-	var ev: Dictionary = _swing(rng, grid, att, att.abilities[0], tgt, units)[0]
-	return {"damage": ev.amount, "crit": ev.crit}
-
-
 static func guard(u: CombatUnit) -> void:
 	u.statuses[STATUS_GUARD] = 1
 
@@ -516,6 +533,10 @@ static func begin_phase(units: Array, team: int) -> Array:
 		u.acted = false
 		u.move_origin = u.cell
 		u.left_guard = false
+		if u.downed():
+			u.bleed -= 1  # one of its own phases gone; at 0 it's out for the fight
+			if u.bleed <= 0:
+				events.append({"type": "bled_out", "unit": u})
 		if u.has_status(STATUS_SLEEP):
 			u.moved = true
 			u.acted = true
@@ -542,6 +563,22 @@ static func end_phase(units: Array, team: int) -> void:
 			u.statuses[s] = int(u.statuses[s]) - 1
 			if u.statuses[s] <= 0:
 				u.statuses.erase(s)
+
+
+# --- bleeding out ([USER] c6 and c11, combat build step 3) ---------------------------------------------
+
+## The HP AID brings a downed piece back with: a quarter of its max, at least 1.
+static func aid_hp(t: CombatUnit) -> int:
+	return maxi(1, ceili(t.max_hp * num("aid_pct") / 100.0))
+
+
+## AID for the party, a knock-out for foes: the actions every piece has on top of its own skills.
+static func extra_actions(u: CombatUnit) -> Array[Ability]:
+	var out: Array[Ability] = []
+	var a := Db.ability("aid" if u.team == 0 else "knock_out")
+	if a != null:
+		out.append(a)
+	return out
 
 
 # --- guard zones ([USER] c13, combat build step 2) ------------------------------------------------------

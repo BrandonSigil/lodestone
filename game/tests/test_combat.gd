@@ -194,13 +194,11 @@ func test_ai_vs_ai_terminates() -> void:
 		var rounds := 0
 		while CombatRules.team_alive(units, 0) and CombatRules.team_alive(units, 1) and rounds < 60:
 			for team in [0, 1]:
+				CombatRules.begin_phase(units, team)
 				for u: CombatUnit in units:
 					if u.team != team or not u.alive():
 						continue
-					var plan := EnemyAi.plan(g, u, units)
-					u.place(plan.move, g.height_at(plan.move))
-					if plan.target != null:
-						CombatRules.attack(rng, g, u, plan.target, units)
+					CombatSim.take_turn(rng, g, u, units)
 			rounds += 1
 		ok(rounds < 60, "seed %d ended in %d rounds" % [s, rounds])
 
@@ -500,3 +498,71 @@ func test_the_ai_hits_the_guard_or_pays_to_leave() -> void:
 		if held and p.ability != null:
 			eq(p.aim, s.knight.cell, "held: it swings at the guard")
 		ok(held or EnemyAi.leave_cost(s.g, bandit, s.units, p.move) > 0.0, "walking away was weighed")
+
+
+# --- bleeding out ([USER] c6, c11, combat build step 3) ------------------------------------------
+
+func test_a_party_piece_bleeds_out_instead_of_dying() -> void:
+	var g := CombatGrid.flat(5, 3)
+	var knight := _unit("knight", 0, Vector2i(1, 1), g)
+	var hunter := _unit("hunter", 0, Vector2i(1, 2), g)
+	var bandit := _unit("bandit", 1, Vector2i(2, 1), g)
+	var units := [knight, hunter, bandit]
+	knight.hp = 0
+	ok(knight.downed() and not knight.alive(), "downed, not gone")
+	eq(knight.bleed, int(CombatRules.num("bleed_turns")))
+	eq(CombatRules.occupant(units, knight.cell), knight, "it still takes up its cell")
+	eq(CombatRules.unit_at(units, knight.cell), null, "but can't be hit")
+	bandit.hp = 0
+	ok(not bandit.downed(), "foes still fall for good")
+	bandit.hp = bandit.max_hp
+	for i in 2:
+		CombatRules.begin_phase(units, 0)
+	ok(knight.downed(), "two phases in, still waiting")
+	var events := CombatRules.begin_phase(units, 0)
+	ok(not knight.downed() and events.any(func(e: Dictionary) -> bool: return e.type == "bled_out"), "the third: out for the fight")
+
+
+func test_aid_brings_a_downed_teammate_back() -> void:
+	var g := CombatGrid.flat(5, 3)
+	var knight := _unit("knight", 0, Vector2i(1, 1), g)
+	var hunter := _unit("hunter", 0, Vector2i(3, 1), g)
+	var units := [knight, hunter]
+	knight.hp = 0
+	var aid: Ability = CombatRules.extra_actions(hunter)[0]
+	eq(aid.kind, "revive")
+	eq(CombatRules.target_cells(g, hunter, aid, units, hunter.cell), [] as Array[Vector2i], "AID needs to stand next to it")
+	hunter.place(Vector2i(2, 1), 0)
+	eq(CombatRules.target_cells(g, hunter, aid, units, hunter.cell), [knight.cell] as Array[Vector2i])
+	var ev := CombatRules.resolve(RandomNumberGenerator.new(), g, hunter, aid, knight.cell, units)
+	eq(ev[0].type, "revive")
+	eq(knight.hp, ceili(knight.max_hp / 4.0), "back at a quarter of max HP")
+	eq(knight.bleed, 0)
+
+
+func test_a_foe_can_knock_a_downed_piece_out() -> void:
+	var g := CombatGrid.flat(5, 3)
+	var knight := _unit("knight", 0, Vector2i(1, 1), g)
+	var hunter := _unit("hunter", 0, Vector2i(1, 2), g)
+	var bandit := _unit("bandit", 1, Vector2i(2, 1), g)
+	var units := [knight, hunter, bandit]
+	knight.hp = 0
+	var ko: Ability = CombatRules.extra_actions(bandit)[0]
+	eq(ko.kind, "knockout")
+	CombatRules.begin_phase(units, 1)
+	var p := EnemyAi.plan(g, bandit, units)
+	ok(p.ability != null, "the bandit acts")
+	CombatRules.resolve(RandomNumberGenerator.new(), g, bandit, ko, knight.cell, units)
+	ok(not knight.downed(), "knocked out: no AID will help now")
+	eq(CombatRules.target_cells(g, hunter, CombatRules.extra_actions(hunter)[0], units, hunter.cell), [] as Array[Vector2i])
+
+
+func test_the_ai_helps_a_teammate_up() -> void:
+	var g := CombatGrid.flat(6, 3)
+	var knight := _unit("knight", 0, Vector2i(1, 1), g)
+	var hunter := _unit("hunter", 0, Vector2i(3, 1), g)
+	var units := [knight, hunter, _unit("bandit", 1, Vector2i(5, 2), g)]
+	knight.hp = 0
+	CombatRules.begin_phase(units, 0)
+	var p := EnemyAi.plan(g, hunter, units)
+	ok(p.ability != null and p.ability.kind == "revive" and p.aim == knight.cell, "the party AI picks AID")

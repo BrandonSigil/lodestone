@@ -7,7 +7,14 @@ var name_key := ""
 var cls: ClassDef
 var team := 0
 var cell := Vector2i.ZERO
-var hp := 1
+## Dropping to 0 makes a party piece bleed out ([USER] 2026-10-29: never death): it lies downed for a few of
+## its own phases, when a teammate next to it can AID it back up, unless a foe knocks it out first.
+var hp := 1:
+	set(v):
+		if v <= 0 and hp > 0 and team == 0:
+			bleed = int(CombatRules.num("bleed_turns"))
+		hp = v
+var bleed := 0  ## own phases left to be helped up while downed; 0 = standing, or out for the fight
 var tint := Color.GRAY
 var deficiency: StringName = &""
 var skills: Dictionary = {}
@@ -165,6 +172,11 @@ static func enemy(c: ClassDef, mods: Dictionary = {}) -> CombatUnit:
 
 func alive() -> bool:
 	return hp > 0
+
+
+## Down but still on the board, waiting for AID.
+func downed() -> bool:
+	return hp <= 0 and bleed > 0
 
 
 func done() -> bool:

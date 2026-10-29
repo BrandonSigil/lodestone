@@ -14,3 +14,5 @@ veil_armor,1,moon veil adds this armor
 shield_wall_armor,1,the lead's shield wall adds this armor to allies next to them
 cover_ranged,1,brush and low walls and forest take this off ranged hits
 spooked_damage,-1,a spooked piece hits for this much less
+bleed_turns,3,a downed party piece can be helped up for this many of its own phases
+aid_pct,25,AID brings a downed piece back at this % of its max HP

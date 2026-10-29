@@ -7,6 +7,8 @@ const KILL_BONUS := 15.0
 const HEIGHT_PULL := 1.5
 const COUNTER_FEAR := 3.0  ## how much it dislikes eating a counterattack (damage taken counts less than damage dealt)
 const GUARD_SCORE := 4.0  ## guard when hurt and nothing better to do
+const REVIVE_SCORE := 40.0  ## helping a downed teammate up beats most hits
+const KNOCKOUT_SCORE := 12.0  ## a downed foe kept down for the fight: about a solid hit's worth
 
 
 ## Returns {"move": Vector2i, "ability": Ability or null, "aim": Vector2i, "path": Array[Vector2i], "guard": bool}.
@@ -21,8 +23,10 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var leave := {}  # cell -> what walking away from guards costs there ([USER] c13)
 	for cell: Vector2i in cost:
 		leave[cell] = leave_cost(grid, u, units, cell)
+	var actions: Array[Ability] = u.abilities.duplicate()
+	actions.append_array(CombatRules.extra_actions(u))  # AID or a knock-out too
 	for cell: Vector2i in cost:
-		for a in u.abilities:
+		for a in actions:
 			if not CombatRules.usable(u, a):
 				continue
 			for aim in _aims(grid, u, a, units, cell):
@@ -81,6 +85,10 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 					s += side * _hex_value(t, a.status)
 			"heal":
 				s += e.heal * 6.0 if t.team == u.team else -e.heal * 6.0
+			"revive":
+				s += REVIVE_SCORE if t.team == u.team else 0.0
+			"knockout":
+				s += KNOCKOUT_SCORE if t.team != u.team else 0.0
 			"buff":
 				s += _buff_value(u, t, a.status)
 	if a.kind != "attack" and s <= 0.0:

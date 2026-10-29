@@ -65,6 +65,17 @@ func run(s: Node, _frames: int, _step: String) -> void:
 						best = c
 				u.place(best, b.grid.height_at(best))
 				u.moved = true
+			"downed":
+				# The first piece is down and bleeding out; the second stands next to it with AID in its menu.
+				var o: CombatUnit = b.units[1]
+				for d in CombatRules.DIRS:
+					var c: Vector2i = u.cell + d
+					if b.grid.passable(c) and CombatRules.occupant(b.units, c) == null:
+						o.place(c, b.grid.height_at(c))
+						break
+				u.hp = 0
+				u.sync_view()
+				b._select(o)
 			"guard":
 				# The first piece guards: its ring of held cells shows ([USER] c13).
 				b._select(u)

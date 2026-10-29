@@ -572,7 +572,7 @@ func _sync_slabs() -> void:
 		_bucket(_over_by_depth, hover)
 	_units_by_depth.clear()
 	for u: CombatUnit in units:
-		if u.shown_hp > 0:
+		if u.shown_hp > 0 or u.downed():
 			var d := clampi(_unit_depth(u) + _off, 0, _depths.size() - 1)
 			if not _units_by_depth.has(d):
 				_units_by_depth[d] = []
@@ -2916,6 +2916,9 @@ static func _overlap(a: Rect2, b: Rect2) -> float:
 
 func _draw_unit(u: CombatUnit) -> void:
 	var base := _unit_base(u)
+	if u.shown_hp <= 0 and u.downed():
+		_draw_downed(u, base)
+		return
 	if u.spooked:
 		base += Vector2(sin(_time * 40.0) * 1.5, 0)
 	var col := u.tint
@@ -2944,6 +2947,22 @@ func _draw_unit(u: CombatUnit) -> void:
 		var font := ThemeDB.fallback_font
 		_ci.draw_string_outline(font, p + Vector2(-23, -4), tags.strip_edges(), HORIZONTAL_ALIGNMENT_CENTER, 80, 10, 3, Color(0, 0, 0, 0.8))
 		_ci.draw_string(font, p + Vector2(-23, -4), tags.strip_edges(), HORIZONTAL_ALIGNMENT_CENTER, 80, 10, Color(1, 0.95, 0.7))
+
+
+## A piece bleeding out ([USER] c6, c11): a dim marker where it fell and the phases left for an AID.
+func _draw_downed(u: CombatUnit, base: Vector2) -> void:
+	var r := 15.0
+	var pts := PackedVector2Array()
+	for i in 20:
+		var t := TAU * i / 20.0
+		pts.append(base + Vector2(cos(t) * r * 1.4, sin(t) * r * 0.7))
+	_ci.draw_colored_polygon(pts, Color(u.tint.darkened(0.5), 0.75))
+	pts.append(pts[0])
+	_ci.draw_polyline(pts, Color(0.4, 0.7, 1.0, 0.9), 2.0, true)
+	var c := base + Vector2(0, -22)
+	_ci.draw_circle(c, 11.0, Color(0.75, 0.2, 0.18))
+	var font := ThemeDB.fallback_font
+	_ci.draw_string(font, c + Vector2(-20, 6), str(u.bleed), HORIZONTAL_ALIGNMENT_CENTER, 40, 16, Color(1, 1, 1))
 
 
 ## A character sprite standing on base: contact shadow and team ring like the Pawn, then the anim frame.

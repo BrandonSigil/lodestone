@@ -276,6 +276,9 @@ func _show_phase_events(events: Array) -> void:
 	for ev in events:
 		if ev.type == "heal":
 			board.float_text(ev.unit.cell, "+%d" % ev.amount, Color(0.5, 1.0, 0.6))
+		elif ev.type == "bled_out":
+			board.float_text(ev.unit.cell, Txt.t("UI_KNOCKED_OUT"), Color(1, 0.6, 0.5))
+			log_line.emit(Txt.f("LOG_BLED_OUT", Txt.t(ev.unit.name_key)))
 	for o: CombatUnit in units:
 		o.sync_view()
 
@@ -347,6 +350,15 @@ func _play(ev: Dictionary) -> void:
 			board.float_text(t.cell, "%s -%d" % [Txt.t("UI_" + String(ev.type).to_upper()), ev.amount], Color(1, 0.7, 0.4))
 			log_line.emit("  %s %s -%d" % [Txt.t(t.name_key), Txt.t("UI_" + String(ev.type).to_upper()), ev.amount])
 			await get_tree().create_timer(0.25).timeout
+		"revive":
+			t.shown_hp = int(ev.amount)
+			board.float_text(t.cell, Txt.t("UI_AIDED"), Color(0.5, 1.0, 0.6))
+			log_line.emit(Txt.f("LOG_AIDED", [Txt.t(ev.src.name_key), Txt.t(t.name_key)]))
+			await get_tree().create_timer(0.25).timeout
+		"knockout":
+			await board.animate_attack(ev.src, t, true)
+			board.float_text(t.cell, Txt.t("UI_KNOCKED_OUT"), Color(1, 0.6, 0.5))
+			log_line.emit(Txt.f("LOG_KNOCKED_OUT", [Txt.t(ev.src.name_key), Txt.t(t.name_key)]))
 		"free_hit":
 			board.float_text(ev.src.cell, Txt.t("UI_FREE_HIT"), Color(1, 1, 1))
 			log_line.emit(Txt.f("LOG_FREE_HIT", [Txt.t(ev.src.name_key), Txt.t(t.name_key)]))
@@ -462,6 +474,9 @@ func _open_menu() -> void:
 	if not u.acted:
 		for a in u.abilities:
 			_menu_item(_ability_label(u, a), _has_targets(u, a) and u.can_use(a), _start_targeting.bind(a))
+		for a in CombatRules.extra_actions(u):  # AID, only while a downed teammate lies next to this piece
+			if _has_targets(u, a):
+				_menu_item(Txt.t(a.name_key), true, _start_targeting.bind(a))
 		for id: String in Db.combat_items:  # only what's on this piece's own belt
 			var it: Ability = Db.combat_items[id]
 			var have := u.belt.count(it.spends) if u.belt != null else 0
@@ -740,6 +755,8 @@ func _show_forecast(u: CombatUnit, a: Ability, c: Vector2i) -> void:
 				lines.append("%s  %s" % [Txt.t(t.name_key), Txt.t("TAG_" + a.status.to_upper())])
 			"heal":
 				lines.append("%s  HP %d > %d" % [Txt.t(t.name_key), t.hp, t.hp + int(e.heal)])
+			"revive":
+				lines.append("%s  HP 0 > %d" % [Txt.t(t.name_key), int(e.heal)])
 			"buff":
 				lines.append("%s  %s" % [Txt.t(t.name_key), Txt.t("TAG_" + a.status.to_upper())])
 	if not f.counter.is_empty():
