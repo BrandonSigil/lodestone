@@ -515,6 +515,9 @@ func _sync_slabs() -> void:
 	_find_cover()
 	for k: Vector2i in _changed(_fade, _fade_prev):
 		_dirty_props[_depth_at(_prop_front(k, grid.props[k]) if grid.props.has(k) else k)] = true
+		if grid.props.has(k) and grid.props[k].get("arch", false):  # its far pillar draws with its own cell
+			_dirty_props[_depth_at(k)] = true
+			_dirty_props[_depth_at(k + Vector2i(grid.props[k].foot) - Vector2i.ONE)] = true
 	for k: Vector2i in _changed(_skirt_fade, _skirt_fade_prev):
 		_dirty_props[_depth_at(k)] = true
 	_fade_prev = _fade.duplicate()
@@ -1980,8 +1983,8 @@ func _placed(c: Vector2i) -> void:
 		col = Color(0.45, 0.46, 0.52)  # remembered, out of sight: same wash as the veil
 	if _fade.has(a):
 		col.a = 0.35
-	if tex == null and p.get("arch", false):
-		_arch(a, p, c, col)
+	if p.get("arch", false):
+		_arch(a, p, c, col, tex)
 		return
 	if _prop_front(a, p) != c:
 		return
@@ -2014,16 +2017,44 @@ func _box(lo: Vector2, hi: Vector2, z0: float, z1: float, col: Color) -> void:
 	_ci.draw_colored_polygon(PackedVector2Array([iso(lo.x, lo.y, z1), iso(hi.x, lo.y, z1), iso(hi.x, hi.y, z1), iso(lo.x, hi.y, z1)]), MASONRY.lightened(0.1) * col)
 
 
-## A graybox arch until its art exists. Each pillar draws with its own cell, so a piece walking through
-## stands between them; the lintel draws with the front pillar, over anyone in the gap.
-func _arch(a: Vector2i, p: Dictionary, c: Vector2i, col: Color) -> void:
+## An arch draws in two parts so a piece walking through stands between its pillars: the far pillar with
+## its own cell, the rest (lintel and near pillar) with the near pillar, over anyone in the gap. Painted, the
+## sprite spans the footprint like a building and is cut at the far pillar's cell edge; a graybox until then.
+## An arch goes see-through for a piece behind it, never for one standing in its gap.
+func _arch(a: Vector2i, p: Dictionary, c: Vector2i, col: Color, tex: Texture2D) -> void:
 	if grid.under_arch(c):
+		return
+	var front := _prop_front(a, p)
+	if tex != null:
+		var r := _prop_rect(a, p.merged({"tall": 0.0}, true), tex)
+		var h := float(grid.height_at(a))
+		var far: Vector2i = a if front != a else a + Vector2i(p.foot) - Vector2i.ONE
+		var fx := [iso(far.x, far.y, h).x, iso(far.x + 1, far.y, h).x, iso(far.x + 1, far.y + 1, h).x, iso(far.x, far.y + 1, h).x]
+		var on_left: bool = fx.max() <= r.get_center().x
+		var cut: float = fx.max() if on_left else fx.min()
+		var x0 := r.position.x if (c == far) == on_left else cut
+		var x1 := cut if (c == far) == on_left else r.end.x
+		var flip: bool = p.get("flip", false)
+		var u0 := (x0 - r.position.x) / r.size.x
+		var u1 := (x1 - r.position.x) / r.size.x
+		if flip:
+			var t := u0
+			u0 = 1.0 - u1
+			u1 = 1.0 - t
+		var src := Rect2(u0 * tex.get_width(), 0.0, (u1 - u0) * tex.get_width(), tex.get_height())
+		var dst := Rect2(x0, r.position.y, x1 - x0, r.size.y)
+		if flip:
+			_ci.draw_set_transform(Vector2(dst.get_center().x * 2.0, 0.0), 0.0, Vector2(-1, 1))
+			_ci.draw_texture_rect_region(tex, dst, src, col)
+			_ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		else:
+			_ci.draw_texture_rect_region(tex, dst, src, col)
 		return
 	var h := float(grid.height_at(a))
 	var top := h + maxf(2.0, float(p.tall) * 2.0)
 	var inset := Vector2(0.2, 0.2)
 	_box(Vector2(c) + inset, Vector2(c) + Vector2.ONE - inset, h, top, col)
-	if c == _prop_front(a, p):
+	if c == front:
 		_box(Vector2(a) + inset, Vector2(a) + Vector2(p.foot) - inset, top - 0.6, top, col)
 
 
@@ -2785,9 +2816,10 @@ func _find_cover() -> void:
 						if u.team == 0:
 							_covered[u] = true
 				var a := grid.prop_anchor(c)
-				if a != CombatGrid.NONE_CELL and _prop_front(a, grid.props[a]) == c:
-					var tex := prop_texture(grid.props[a], grid.zone_at(a))
-					if tex != null and _overlap(box, _prop_rect(a, grid.props[a], tex)) > 0.2:
+				if a != CombatGrid.NONE_CELL and _prop_front(a, grid.props[a]) == c and grid.prop_anchor(uc) != a:
+					var pr: Dictionary = grid.props[a]
+					var tex := prop_texture(pr, grid.zone_at(a))
+					if tex != null and _overlap(box, _prop_rect(a, pr.merged({"tall": 0.0}, true) if pr.get("arch", false) else pr, tex)) > 0.2:
 						_fade[a] = true
 						if u.team == 0:
 							_covered[u] = true
