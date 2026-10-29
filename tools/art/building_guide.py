@@ -13,7 +13,8 @@ gabled or pyramid roofs; the prompt asks the model to keep them and paint the bu
 
 Coordinates per part are grid cells: x runs along the LEFT front wall (foot_w), y along the right one
 (foot_h); (0, 0) is the back corner. h is wall height in levels, rh roof height, roof "x" puts the ridge
-along x (a long left wall, gable on the right), "y" along y, "pyr" a pyramid, None a flat top.
+along x (a long left wall, gable on the right), "y" along y, "pyr" a pyramid, "shed" a lean-to
+sloping down to the front, None a flat top. "windows" lists ("left" | "right", place along that wall).
 """
 import argparse
 from functools import cmp_to_key
@@ -30,35 +31,45 @@ DOOR = (0.85, 4.6)  # door width in cells, height in levels (74 px; the hero is 
 HERO_H = 3.4  # levels
 
 BUILDINGS = {
-    # The approved fall houses are one storey and a roof; a home stays that size.
+    # Brandon 2026-10-29: every building in the village is single storey (a bigger building gets a bigger
+    # footprint), homes are less generic and have windows on their east (right) walls, and the village
+    # should look less like a stock fantasy village.
+    # Home B: the house with a low lean-to woodshed on the front right end.
     "home_b": {"foot": (4, 3), "parts": [
-        {"box": (0, 0, 4, 3), "h": STOREY, "roof": "x", "rh": 4.5, "door": ("left", 1.0)},
-        {"box": (2.9, 0.9, 3.4, 1.4), "h": STOREY + 6.5, "roof": None, "chimney": True}]},
+        {"box": (0, 0, 4, 2.3), "h": STOREY, "roof": "x", "rh": 4.5, "door": ("left", 1.2),
+         "windows": [("right", 1.15)]},
+        {"box": (2.4, 2.3, 4, 3), "h": 3.4, "roof": "shed", "rh": 1.8, "windows": [("right", 2.65)]},
+        {"box": (0.5, 0.9, 1.0, 1.4), "h": STOREY + 6.0, "roof": None, "chimney": True}]},
+    # Home C: the thatched cottage with a big stone chimney stack on its east gable.
     "home_c": {"foot": (4, 3), "parts": [
-        {"box": (0, 0, 4, 3), "h": STOREY - 0.5, "roof": "x", "rh": 5.0, "door": ("left", 1.0)},
-        {"box": (3.0, 0.6, 3.5, 1.1), "h": STOREY + 6.0, "roof": None, "chimney": True}]},
+        {"box": (0, 0, 3.55, 3), "h": STOREY - 0.5, "roof": "x", "rh": 5.0, "door": ("left", 1.0),
+         "windows": [("left", 2.6), ("right", 0.55), ("right", 2.45)]},
+        {"box": (3.55, 1.1, 4.0, 1.9), "h": STOREY + 6.5, "roof": None, "chimney": True}]},
     # Brandon: the forge should jut out, a ^ shape. Two wings meet at the back corner: the house runs
     # to the right corner, the open forge wing comes forward at the lower left, a yard between them.
+    # Approved 2026-10-29; kept at the sizes it was painted from.
     "smithy": {"foot": (3, 4), "parts": [
-        {"box": (0, 0, 3, 1.7), "h": STOREY, "roof": "x", "rh": 3.5, "door": ("left", 2.3)},
-        {"box": (0, 1.7, 1.6, 4), "h": STOREY - 0.8, "roof": "y", "rh": 2.6, "open": ("right", 2.85)},
-        {"box": (0.2, 3.2, 0.7, 3.7), "h": STOREY + 4.0, "roof": None, "chimney": True}]},
-    # Brandon: sign hanging by the front door, one chimney.
-    "tavern": {"foot": (4, 4), "parts": [
-        {"box": (0, 0, 4, 4), "h": STOREY * 2, "roof": "x", "rh": 5.0, "door": ("left", 1.4), "sign": 2.15},
-        {"box": (0.5, 1.75, 1.0, 2.25), "h": STOREY * 2 + 6.5, "roof": None, "chimney": True}]},
-    # Brandon: read like a town hall (he pointed at World of Warcraft's): a big stout hall, steps up to
-    # wide double doors in a gabled entrance that juts out, a big roof, and a square tower behind it
-    # that tops everything in town.
-    "townhall": {"foot": (5, 5), "parts": [
-        {"box": (0.1, 0.1, 1.9, 1.9), "h": STOREY * 3, "roof": "pyr", "rh": 6.0},
-        {"box": (0, 0.6, 5, 4.1), "h": STOREY * 1.8, "roof": "x", "rh": 7.0},
-        {"box": (1.6, 4.1, 3.4, 5), "h": STOREY * 1.5, "roof": "y", "rh": 4.0, "door": ("left", 2.5), "wide": True}]},
+        {"box": (0, 0, 3, 1.7), "h": 4.5, "roof": "x", "rh": 3.5, "door": ("left", 2.3)},
+        {"box": (0, 1.7, 1.6, 4), "h": 3.7, "roof": "y", "rh": 2.6, "open": ("right", 2.85)},
+        {"box": (0.2, 3.2, 0.7, 3.7), "h": 8.5, "roof": None, "chimney": True}]},
+    # Tavern: one long low common room under a big roof, one chimney, the sign by the door.
+    "tavern": {"foot": (6, 4), "parts": [
+        {"box": (0, 0, 6, 4), "h": STOREY, "roof": "x", "rh": 6.5, "door": ("left", 2.2), "sign": 3.05,
+         "windows": [("left", 0.9), ("left", 4.3), ("left", 5.3), ("right", 1.2), ("right", 2.8)]},
+        {"box": (4.4, 1.7, 4.9, 2.2), "h": STOREY + 9.5, "roof": None, "chimney": True}]},
+    # Town hall: the biggest single-storey hall in town, a tall gabled entrance that juts out with wide
+    # double doors, and a lantern on the ridge instead of a church-like bell tower.
+    "townhall": {"foot": (7, 5), "parts": [
+        {"box": (3.1, 1.65, 3.9, 2.45), "h": STOREY * 1.25 + 9.5, "roof": "pyr", "rh": 3.5},
+        {"box": (0, 0, 7, 4.1), "h": STOREY * 1.25, "roof": "x", "rh": 7.5,
+         "windows": [("left", 1.1), ("left", 5.9), ("right", 1.0), ("right", 3.0)]},
+        {"box": (2.6, 4.1, 4.4, 5), "h": STOREY * 1.1, "roof": "y", "rh": 3.8, "door": ("left", 3.5), "wide": True}]},
 }
 
 C_LEFT, C_RIGHT, C_TOP = (206, 202, 190), (172, 168, 156), (190, 186, 174)
 C_ROOF, C_ROOF_DARK = (140, 134, 126), (112, 107, 100)
 C_LINE, C_DOOR, C_FIG = (70, 66, 62), (78, 70, 64), (120, 124, 132)
+C_WINDOW = (112, 106, 100)
 
 
 def iso(x, y, h):
@@ -75,9 +86,13 @@ def polys(part):
             out.append(([(x0, y1 + d, 0), (x1, y1 + d, 0), (x1, y1 + d, top), (x0, y1 + d, top)], C_LEFT))
             out.append(([(x0, y1, top), (x1, y1, top), (x1, y1 + d, top), (x0, y1 + d, top)], C_TOP))
         return out
-    out.append(([(x0, y1, 0), (x1, y1, 0), (x1, y1, h), (x0, y1, h)], C_LEFT))
-    out.append(([(x1, y0, 0), (x1, y1, 0), (x1, y1, h), (x1, y0, h)], C_RIGHT))
     roof, e = part["roof"], 0.15
+    out.append(([(x0, y1, 0), (x1, y1, 0), (x1, y1, h), (x0, y1, h)], C_LEFT))
+    if roof == "shed":  # a lean-to: high at the back (y0), low at the front
+        out.append(([(x1, y0, 0), (x1, y1, 0), (x1, y1, h), (x1, y0, h + rh)], C_RIGHT))
+        out.append(([(x0 - e, y0, h + rh), (x1 + e, y0, h + rh), (x1 + e, y1 + e, h), (x0 - e, y1 + e, h)], C_ROOF))
+    else:
+        out.append(([(x1, y0, 0), (x1, y1, 0), (x1, y1, h), (x1, y0, h)], C_RIGHT))
     if roof is None:
         out.append(([(x0, y0, h), (x1, y0, h), (x1, y1, h), (x0, y1, h)], C_TOP))
     elif roof == "x":
@@ -94,6 +109,12 @@ def polys(part):
         xm, ym, H = (x0 + x1) / 2, (y0 + y1) / 2, h + rh
         out.append(([(x0 - e, y1 + e, h), (x1 + e, y1 + e, h), (xm, ym, H)], C_ROOF))
         out.append(([(x1 + e, y0 - e, h), (x1 + e, y1 + e, h), (xm, ym, H)], C_ROOF_DARK))
+    for side, c in part.get("windows", []):  # small windows, sill 1.6 levels up
+        w, s0, s1 = 0.42, 1.6, 3.4
+        if side == "left":
+            out.append(([(c - w / 2, y1, s0), (c + w / 2, y1, s0), (c + w / 2, y1, s1), (c - w / 2, y1, s1)], C_WINDOW))
+        else:
+            out.append(([(x1, c - w / 2, s0), (x1, c + w / 2, s0), (x1, c + w / 2, s1), (x1, c - w / 2, s1)], C_WINDOW))
     if "door" in part:
         side, c = part["door"]
         w = DOOR[0] * (1.6 if part.get("wide") else 1.0)
