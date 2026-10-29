@@ -65,6 +65,23 @@ func run(s: Node, _frames: int, _step: String) -> void:
 						best = c
 				u.place(best, b.grid.height_at(best))
 				u.moved = true
+			"teamup":
+				# Two pieces next to the same foe, the first aiming its HIT: the forecast shows the helping strike.
+				var foe: CombatUnit = null
+				for o: CombatUnit in b.units:
+					if o.team == 1 and (foe == null or o.cell.x < foe.cell.x):
+						foe = o
+				var spots: Array[Vector2i] = []
+				for d in CombatRules.DIRS:
+					var c: Vector2i = foe.cell + d
+					if b.grid.passable(c) and CombatRules.occupant(b.units, c) == null:
+						spots.append(c)
+				u.place(spots[0], b.grid.height_at(spots[0]))
+				b.units[1].place(spots[1], b.grid.height_at(spots[1]))
+				u.moved = true
+				b._select(u)
+				b._start_targeting(u.abilities[0])
+				b._on_cell_hovered(foe.cell)
 			"downed":
 				# The first piece is down and bleeding out; the second stands next to it with AID in its menu.
 				var o: CombatUnit = b.units[1]

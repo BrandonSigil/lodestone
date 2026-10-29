@@ -397,7 +397,7 @@ static func forecast(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector
 	var hit_list := affected_units(grid, u, a, center, units, from)
 	for t in hit_list:
 		var e := {"unit": t, "dmg": 0, "dmg_min": 0, "dmg_max": 0, "crit": 0.0, "swings": 1, "heal": 0,
-			"dmg_parts": [], "armor_parts": [], "crit_parts": []}
+			"dmg_parts": [], "armor_parts": [], "crit_parts": [], "help": 0, "helper": null}
 		match a.kind:
 			"attack":
 				var r := damage_range(grid, u, t, from, a, units)
@@ -409,6 +409,10 @@ static func forecast(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector
 				e.dmg_parts = damage_parts(grid, u, t, from, a, units)
 				e.armor_parts = armor_parts(grid, u, t, from, a, units)
 				e.crit_parts = crit_parts(grid, u, t, units, from, a)
+				var h := helper(u, t, units, from)
+				if h != null:
+					e.help = int(num("help_damage"))
+					e.helper = h
 			"heal":
 				e.heal = mini(heal_amount(u, a), t.max_hp - t.hp)
 			"revive":
@@ -442,6 +446,12 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 					if not t.alive():
 						break
 					events.append_array(_swing(rng, grid, u, a, t, units))
+				var h := helper(u, t, units, u.cell) if allow_counter and a.kind == "attack" else null
+				if h != null and t.alive():
+					var n := int(num("help_damage"))
+					t.hp = maxi(0, t.hp - n)
+					t.statuses.erase(STATUS_SLEEP)
+					events.append({"type": "help", "src": h, "unit": t, "amount": n})
 			"heal":
 				var before := t.hp
 				t.hp = mini(t.max_hp, t.hp + heal_amount(u, a))
@@ -563,6 +573,24 @@ static func end_phase(units: Array, team: int) -> void:
 			u.statuses[s] = int(u.statuses[s]) - 1
 			if u.statuses[s] <= 0:
 				u.statuses.erase(s)
+
+
+# --- helping strikes ([USER] c12, c15, c19, combat build step 4) ------------------------------------------
+
+## The teammate who helps att's hit on tgt from `from`: both stand next to the foe (diagonal neighbours of
+## each other, or anywhere round it while teamup_opposite is on). Awake and standing. null if nobody.
+static func helper(att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2i) -> CombatUnit:
+	if dist(from, tgt.cell) != 1 or tgt.team == att.team:
+		return null
+	var any_side := num("teamup_opposite") != 0.0
+	for o: CombatUnit in units:
+		if o == att or not o.alive() or o.team != att.team or o.has_status(STATUS_SLEEP):
+			continue
+		if dist(o.cell, tgt.cell) != 1 or o.cell == from:
+			continue
+		if any_side or maxi(absi(o.cell.x - from.x), absi(o.cell.y - from.y)) == 1:
+			return o
+	return null
 
 
 # --- bleeding out ([USER] c6 and c11, combat build step 3) ---------------------------------------------

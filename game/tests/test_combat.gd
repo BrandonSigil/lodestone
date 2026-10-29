@@ -566,3 +566,45 @@ func test_the_ai_helps_a_teammate_up() -> void:
 	CombatRules.begin_phase(units, 0)
 	var p := EnemyAi.plan(g, hunter, units)
 	ok(p.ability != null and p.ability.kind == "revive" and p.aim == knight.cell, "the party AI picks AID")
+
+
+# --- helping strikes ([USER] c15, c19, combat build step 4) --------------------------------------
+
+func test_a_corner_pair_teams_up() -> void:
+	# Brandon's picture: teammates above and left of the foe, next to each other on the diagonal.
+	var g := CombatGrid.flat(5, 5)
+	var a := _unit("knight", 0, Vector2i(2, 1), g)
+	var b := _unit("hunter", 0, Vector2i(1, 2), g)
+	var foe := _unit("bandit", 1, Vector2i(2, 2), g)
+	foe.max_hp = 99
+	foe.hp = 99
+	var units := [a, b, foe]
+	eq(CombatRules.helper(a, foe, units, a.cell), b)
+	var f := CombatRules.forecast(g, a, a.abilities[0], foe.cell, units, a.cell)
+	eq(f.targets[0].help, 1, "the forecast shows the help")
+	CombatRules.counters = false
+	var ev := CombatRules.resolve(RandomNumberGenerator.new(), g, a, a.abilities[0], foe.cell, units)
+	CombatRules.reset_switches()
+	var helps := ev.filter(func(e: Dictionary) -> bool: return e.type == "help")
+	eq(helps.size(), 1, "one helper per attack")
+	eq(helps[0].amount, 1, "a flat 1, past armor")
+	eq(helps[0].src, b)
+
+
+func test_who_teams_up() -> void:
+	var g := CombatGrid.flat(5, 5)
+	var a := _unit("knight", 0, Vector2i(1, 2), g)
+	var b := _unit("hunter", 0, Vector2i(3, 2), g)
+	var foe := _unit("bandit", 1, Vector2i(2, 2), g)
+	var units := [a, b, foe]
+	eq(CombatRules.helper(a, foe, units, a.cell), b, "opposite sides count ([USER] c19)")
+	Db.combat["teamup_opposite"] = 0.0
+	eq(CombatRules.helper(a, foe, units, a.cell), null, "with the switch off they must be next to each other")
+	Db.combat["teamup_opposite"] = 1.0
+	b.place(Vector2i(0, 2), 0)
+	eq(CombatRules.helper(a, foe, units, a.cell), null, "one tile behind, not next to the foe: no team-up")
+	b.place(Vector2i(3, 2), 0)
+	var archer := _unit("hunter", 0, Vector2i(2, 0), g)
+	eq(CombatRules.helper(archer, foe, units + [archer], archer.cell), null, "a shot from afar isn't a team-up")
+	b.statuses[CombatRules.STATUS_SLEEP] = 1
+	eq(CombatRules.helper(a, foe, units, a.cell), null, "a sleeping teammate doesn't help")

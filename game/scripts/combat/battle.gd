@@ -350,6 +350,11 @@ func _play(ev: Dictionary) -> void:
 			board.float_text(t.cell, "%s -%d" % [Txt.t("UI_" + String(ev.type).to_upper()), ev.amount], Color(1, 0.7, 0.4))
 			log_line.emit("  %s %s -%d" % [Txt.t(t.name_key), Txt.t("UI_" + String(ev.type).to_upper()), ev.amount])
 			await get_tree().create_timer(0.25).timeout
+		"help":
+			await board.animate_attack(ev.src, t, true)
+			board.float_text(t.cell, "-%d %s" % [ev.amount, Txt.t("UI_HELP")], Color(0.7, 0.9, 1.0))
+			log_line.emit(Txt.f("LOG_HELP", [Txt.t(ev.src.name_key), ev.amount]))
+			t.shown_hp = maxi(0, t.shown_hp - int(ev.amount))
 		"revive":
 			t.shown_hp = int(ev.amount)
 			board.float_text(t.cell, Txt.t("UI_AIDED"), Color(0.5, 1.0, 0.6))
@@ -742,12 +747,14 @@ func _show_forecast(u: CombatUnit, a: Ability, c: Vector2i) -> void:
 		var t: CombatUnit = e.unit
 		match a.kind:
 			"attack":
-				var lo := maxi(0, t.hp - int(e.dmg_max) * int(e.swings))
-				var hi := maxi(0, t.hp - int(e.dmg_min) * int(e.swings))
+				var lo := maxi(0, t.hp - int(e.dmg_max) * int(e.swings) - int(e.help))
+				var hi := maxi(0, t.hp - int(e.dmg_min) * int(e.swings) - int(e.help))
 				lines.append("%s  HP %d > %s" % [Txt.t(t.name_key), t.hp, str(hi) if lo == hi else "%d-%d" % [lo, hi]])
 				var line := Txt.f("UI_DMG_PREVIEW", [_range_text(e), int(round(e.crit * 100))])
 				if e.swings > 1:
 					line += "  " + Txt.f("UI_SWINGS", e.swings)
+				if int(e.help) > 0:
+					line += "  " + Txt.f("UI_HELP_PREVIEW", [int(e.help), Txt.t((e.helper as CombatUnit).name_key)])
 				lines.append("  " + line)
 				lines.append("  " + _parts_text(e.dmg_parts) + _minus_text(e.armor_parts))
 				lines.append("  " + Txt.t("UI_CRIT") + ": " + _parts_text(e.crit_parts, "%"))

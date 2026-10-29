@@ -73,8 +73,8 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 		var side := 1.0 if t.team != u.team else -1.5
 		match a.kind:
 			"attack":
-				s += side * _avg(e) * e.swings * 10.0
-				if e.dmg * e.swings >= t.hp:
+				s += side * (_avg(e) * e.swings + int(e.help)) * 10.0
+				if e.dmg * e.swings + int(e.help) >= t.hp:
 					s += side * KILL_BONUS
 				if a.status != "" and not t.has_status(a.status):
 					s += side * 6.0
