@@ -61,8 +61,6 @@ button { cursor: pointer; }
 .brand h1 { margin: 0; line-height: 0; }
 .logo { height: 128px; width: auto; display: block; }
 @media (max-width: 560px) { .logo { height: 84px; } }
-.brand-name { font-family: var(--display); font-size: 24px; line-height: 1.1; }
-.brand p { margin: 2px 0 0; font-size: 13px; opacity: .75; }
 .tally { display: flex; gap: 22px; flex-wrap: wrap; }
 .tally div { display: flex; flex-direction: column; }
 .tally b { font-family: var(--display); font-weight: 400; font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
@@ -273,11 +271,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
 <header class="band">
   <div class="band-in">
     <div class="brand">
-      <h1><img class="logo" src="/_blob/550d68664d6c502b277bfca8dfe2fbd1" alt="Lodestone" width="900" height="609"></h1>
-      <div>
-        <span class="brand-name">Studio</span>
-        <p id="today">Main office</p>
-      </div>
+      <h1><img class="logo" src="/_blob/550d68664d6c502b277bfca8dfe2fbd1" alt="Lodestone Studio" width="900" height="609"></h1>
     </div>
     <div class="tally" aria-live="polite">
       <div><b id="t-desk">–</b><span>On your desk</span></div>
@@ -350,7 +344,6 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const KIND = { choice: "Your call", go: "Picsart go-ahead", review: "Art review", todo: "To do" };
 
-$("today").textContent = "Main office · " + new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
 
 function ago(iso) {
   if (!iso) return "";

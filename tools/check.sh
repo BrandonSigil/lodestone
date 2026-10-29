@@ -10,6 +10,13 @@ fi
 cd "$(dirname "$0")/../game"
 fail=0
 
+# On the Mac, Godot's "use external editor" setting pointed back at Godot itself, so any run that wanted to show a
+# script opened a stray Project Manager on Brandon's main display. Keep it off (editor settings are saved per version).
+for es in "$HOME/Library/Application Support/Godot"/editor_settings-4*.tres; do
+	[ -f "$es" ] && grep -q '^text_editor/external/use_external_editor = true' "$es" &&
+		sed -i '' 's|^text_editor/external/use_external_editor = true|text_editor/external/use_external_editor = false|' "$es"
+done
+
 "$GODOT" --headless --path . --import >/dev/null 2>&1
 
 if ! "$GODOT" --headless --path . -s res://tests/run_tests.gd; then
