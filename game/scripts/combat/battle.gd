@@ -36,6 +36,10 @@ var targeting: Ability = null
 var reach := {}
 var show_danger := false
 var round_no := 0
+var rounds_done := 0  ## enemy phases finished: a "hold:N" fight is won once this reaches N
+var goals := FightGoals.new()  ## how this fight is won (the host sets it before start; default: defeat all)
+var talk_open := false  ## the host says TALK is open (the fight is written for it and its flag is set)
+var outcome := {"how": "", "joined": []}  ## after the end: the goal met, and flags set by foes talked round
 var enemy_speed := 1.0  ## animation speed multiplier for the enemy phase
 
 var _ui: CanvasLayer
@@ -167,6 +171,12 @@ func _on_rotated() -> void:
 ## enemy_first: the party was caught (spotted on an exploration map), so the enemy moves before round 1.
 func start(enemy_first := false) -> void:
 	round_no = 0
+	rounds_done = 0
+	board.goal_cells = {}
+	for c in goals.exit_cells:
+		board.goal_cells[c] = true
+	for line in goal_lines():
+		log_line.emit(line)
 	if enemy_first:
 		_enemy_phase()
 	else:
@@ -222,6 +232,9 @@ func _enemy_phase() -> void:
 		if _check_end():
 			return
 	CombatRules.end_phase(units, 1)
+	rounds_done += 1
+	if _check_end():
+		return
 	_start_player_phase()
 
 
@@ -378,11 +391,11 @@ func _play(ev: Dictionary) -> void:
 func _check_end() -> bool:
 	if state == S.OVER:
 		return true
-	var won := not CombatRules.team_alive(units, 1)
-	var lost := not CombatRules.team_alive(units, 0)
-	if not won and not lost:
+	var r := goals.check(units, rounds_done)
+	if not r.won and not r.lost:
 		return false
-	_finish(won)
+	outcome.how = r.how
+	_finish(r.won)
 	return true
 
 
@@ -481,6 +494,8 @@ func _open_menu() -> void:
 	if not u.acted:
 		for a in u.abilities:
 			_menu_item(_ability_label(u, a), _has_targets(u, a) and u.can_use(a), _start_targeting.bind(a))
+		if _talk_target(u) != null:
+			_menu_item(Txt.t("ACT_TALK"), true, _on_talk)
 		for a in CombatRules.extra_actions(u):  # AID, only while a downed teammate lies next to this piece
 			if _has_targets(u, a):
 				_menu_item(Txt.t(a.name_key), true, _start_targeting.bind(a))
@@ -565,6 +580,55 @@ func _cancel_targeting() -> void:
 	_show_attack_hints()
 	_open_menu()
 	_refresh_cancel()
+
+
+## The fight's goals as lines for the log at the start ([USER] c10).
+func goal_lines() -> PackedStringArray:
+	var parts: PackedStringArray = []
+	for k in goals.kinds:
+		parts.append(Txt.f("UI_GOAL_HOLD", goals.hold_rounds) if k == "hold" else Txt.t("UI_GOAL_" + k.to_upper()))
+	var out: PackedStringArray = [Txt.f("UI_GOALS", (" %s " % Txt.t("UI_GOAL_OR")).join(parts))]
+	for u: CombatUnit in units:
+		if u.protect:
+			out.append(Txt.f("UI_GOAL_PROTECT", Txt.t(u.name_key)))
+	return out
+
+
+## The foe the hero can TALK to from where it stands, or null: only the hero, only in a fight written for it
+## with its flag set, and within talk_range ([USER] c17).
+func _talk_target(u: CombatUnit) -> CombatUnit:
+	if not talk_open or goals.talk.is_empty() or u.member.is_empty() or (u.member.def as CharacterDef).id != &"lead":
+		return null
+	for o: CombatUnit in units:
+		if o.talk_to and o.alive() and CombatRules.dist(o.cell, u.cell) <= int(CombatRules.num("talk_range")):
+			return o
+	return null
+
+
+## TALK is the hero's action. Enough talking and the group flees (a win) or the foe leaves and joins.
+func _on_talk() -> void:
+	var u := selected
+	var t := _talk_target(u)
+	if t == null:
+		return
+	board.face(u, t.cell)
+	board.float_text(t.cell, Txt.t("UI_TALK_SAID"), Color(1, 1, 0.8))
+	log_line.emit(Txt.f("LOG_TALK", [Txt.t(u.name_key), Txt.t(t.name_key)]))
+	var result := goals.talk_once()
+	if result == "flee":
+		outcome.how = "talk"
+		log_line.emit(Txt.t("LOG_TALK_FLEE"))
+		_finish(true)
+		return
+	if result.begins_with("join:"):
+		outcome.joined.append(result.substr(5))
+		log_line.emit(Txt.f("LOG_TALK_JOIN", Txt.t(t.name_key)))
+		units.erase(t)
+		board.units = units
+		t.talk_to = false
+		if _check_end():
+			return
+	_after_action(u)
 
 
 func _on_guard() -> void:

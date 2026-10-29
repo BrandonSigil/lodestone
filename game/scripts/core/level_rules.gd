@@ -68,8 +68,11 @@ static func bonus(s: Dictionary, cfg: Dictionary) -> Dictionary:
 
 
 ## XP each member who fought gets for a won fight.
-static func fight_xp(foes: int, boss: bool, cfg: Dictionary) -> int:
-	return int(cfg.get("xp_win", 10)) + foes * int(cfg.get("xp_foe", 25)) + (int(cfg.get("xp_boss", 100)) if boss else 0)
+## A won fight: the win XP, XP for each foe downed, the boss bonus, and after an escape half the XP of the
+## foes left standing ([USER] 2026-10-29, combat build step 6).
+static func fight_xp(foes: int, boss: bool, cfg: Dictionary, escaped_from := 0) -> int:
+	return int(cfg.get("xp_win", 10)) + foes * int(cfg.get("xp_foe", 25)) + (int(cfg.get("xp_boss", 100)) if boss else 0) \
+		+ escaped_from * int(cfg.get("xp_foe", 25)) / 2
 
 
 ## Adds two mod dictionaries key by key.

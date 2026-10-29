@@ -65,6 +65,22 @@ func run(s: Node, _frames: int, _step: String) -> void:
 						best = c
 				u.place(best, b.grid.height_at(best))
 				u.moved = true
+			"goals":
+				# A fight written as "beat the boss or get everyone to the green": the boss tag, the way out, the goal line.
+				for o: CombatUnit in b.units:
+					if o.team == 1:
+						o.leader = true
+						break
+				var exits := []
+				for y in b.grid.h:
+					if b.grid.passable(Vector2i(0, y)):
+						exits.append([0, y])
+				b.goals = FightGoals.parse("leader|exit", exits)
+				for c in b.goals.exit_cells:
+					b.board.goal_cells[c] = true
+				for line in b.goal_lines():
+					b.log_line.emit(line)
+				b._select(u)
 			"teamup":
 				# Two pieces next to the same foe, the first aiming its HIT: the forecast shows the helping strike.
 				var foe: CombatUnit = null

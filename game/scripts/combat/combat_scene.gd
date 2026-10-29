@@ -42,6 +42,7 @@ func _ready() -> void:
 	battle = Battle.new()
 	add_child(battle)
 	battle.setup(grid, units, setup.seed, setup.strangeness)
+	battle.goals = FightGoals.parse(String(enc.get("goals", "")))
 	if art_set != "":
 		battle.board.art_set = art_set
 		battle.board.show_grid = false

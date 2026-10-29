@@ -675,3 +675,75 @@ func test_who_teams_up() -> void:
 	eq(CombatRules.helper(archer, foe, units + [archer], archer.cell), null, "a shot from afar isn't a team-up")
 	b.statuses[CombatRules.STATUS_SLEEP] = 1
 	eq(CombatRules.helper(a, foe, units, a.cell), null, "a sleeping teammate doesn't help")
+
+
+# --- fight goals and TALK ([USER] c10, c17, combat build step 6) --------------------------------
+
+func _goal_units() -> Dictionary:
+	var g := CombatGrid.flat(6, 3)
+	var hero := CombatUnit.from_member({"def": Db.character(&"lead"), "hp": 20})
+	hero.place(Vector2i(0, 1), 0)
+	var boss := _unit("bandit", 1, Vector2i(4, 1), g)
+	boss.leader = true
+	var minion := _unit("wolf", 1, Vector2i(5, 2), g)
+	return {"g": g, "hero": hero, "boss": boss, "minion": minion, "units": [hero, boss, minion]}
+
+
+func test_goals_parse_and_any_one_wins() -> void:
+	var f := FightGoals.parse("leader|hold:3|exit", [[5, 0]])
+	eq(f.kinds, ["leader", "hold", "exit"] as Array[String])
+	eq(f.hold_rounds, 3)
+	eq(f.exit_cells, [Vector2i(5, 0)] as Array[Vector2i])
+	eq(FightGoals.parse("").kinds, ["defeat"] as Array[String], "no goals: beat them all")
+	var s := _goal_units()
+	eq(f.check(s.units, 0).won, false)
+	eq(f.check(s.units, 3).how, "hold", "held out three rounds")
+	s.boss.hp = 0
+	eq(f.check(s.units, 0).how, "leader", "the boss is down: the rest flee")
+	s.boss.hp = 5
+	s.hero.place(Vector2i(5, 0), 0)
+	eq(f.check(s.units, 0).how, "exit", "everyone standing is on the way out")
+
+
+func test_a_protected_piece_falling_loses() -> void:
+	var s := _goal_units()
+	var f := FightGoals.parse("defeat")
+	var friend := _unit("hunter", 0, Vector2i(1, 1), s.g)
+	friend.protect = true
+	var units: Array = s.units + [friend]
+	eq(f.check(units, 0).lost, false)
+	friend.hp = 0
+	eq(f.check(units, 0).lost, true, "keep it safe, or lose")
+
+
+func test_escape_pays_half_for_foes_left_standing() -> void:
+	var cfg := {"xp_win": 10, "xp_foe": 25, "xp_boss": 100}
+	eq(LevelRules.fight_xp(1, false, cfg), 35)
+	eq(LevelRules.fight_xp(1, false, cfg, 2), 35 + 25, "two left standing: half of 50")
+
+
+func test_talk_needs_its_flag_and_enough_words() -> void:
+	var f := FightGoals.parse("defeat", [], {"unit": 0, "need": "flag:knows_boss", "times": 2, "result": "join:boss_joined"})
+	ok(not f.talk_open([]), "closed until you know something")
+	ok(f.talk_open(["knows_boss"]))
+	eq(f.talk_once(), "", "once is not enough")
+	eq(f.talk_once(), "join:boss_joined", "twice and the foe comes round")
+	ok(not FightGoals.parse("defeat").talk_open(["anything"]), "a fight not written for TALK has none")
+
+
+func test_talk_in_a_battle() -> void:
+	var s := _goal_units()
+	s.boss.talk_to = true
+	var b := Battle.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(b)
+	b.setup(s.g, s.units, 1)
+	b.goals = FightGoals.parse("defeat", [], {"unit": 0, "times": 1, "result": "flee"})
+	b.talk_open = true
+	eq(b._talk_target(s.hero), null, "too far to talk")
+	s.hero.place(Vector2i(2, 1), 0)
+	eq(b._talk_target(s.hero), s.boss, "within 3 tiles")
+	b.selected = s.hero
+	b._on_talk()
+	eq(b.state, Battle.S.OVER)
+	eq(b.outcome.how, "talk", "talked the group into leaving")
+	b.free()

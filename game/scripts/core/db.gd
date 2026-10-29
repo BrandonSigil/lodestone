@@ -8,7 +8,7 @@ const ROSTER := [&"lead", &"stardrop", &"hunter", &"wizard", &"bushberry", &"ske
 
 var characters: Dictionary = {}  # id -> CharacterDef
 var events: Array[Dictionary] = []
-var encounters: Dictionary = {}  # id -> {"units": Array[String], "loot": String}
+var encounters: Dictionary = {}  # id -> {"units": Array[String], "loot": String, "goals": String (FightGoals)}
 var items: Dictionary = {}  # id -> row of data/items.csv
 var quests: Array[Dictionary] = []  # rows of data/quests.csv
 var abilities: Dictionary = {}  # id -> Ability, from data/abilities.csv
@@ -33,7 +33,7 @@ func reload() -> void:
 	events = parse_events(CsvTable.load_rows("res://data/events.csv"))
 	encounters.clear()
 	for row in CsvTable.load_rows("res://data/encounters.csv"):
-		encounters[row.id] = {"units": Array(row.units.split("|")), "loot": row.loot}
+		encounters[row.id] = {"units": Array(row.units.split("|")), "loot": row.loot, "goals": String(row.get("goals", ""))}
 	items.clear()
 	for row in CsvTable.load_rows("res://data/items.csv"):
 		items[row.id] = row

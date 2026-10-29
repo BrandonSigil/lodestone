@@ -21,3 +21,4 @@ teamup_opposite,1,1: two teammates on opposite sides of a foe team up too ([USER
 mana_regen_pct,20,mana comes back this % of its max at the start of each of the owner's phases
 rage_per_hit,1,rage gained for each hit dealt or taken
 slow_move,-2,SLOW takes this off a piece's move for a phase
+talk_range,3,the hero can TALK to the foe written for it from this many tiles away

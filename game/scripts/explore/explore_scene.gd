@@ -99,6 +99,8 @@ func _ready() -> void:
 				continue
 			var u := CombatUnit.enemy(cls)
 			u.place(e.cell, grid.height_at(e.cell))
+			u.leader = bool(e.get("leader", false))  # FightGoals: beat this one to win a "leader" fight
+			u.talk_to = g.has("talk") and int(g.talk.get("unit", -1)) == g.units.find(e)
 			units.append(u)
 		groups.append({"def": g, "units": units, "state": "idle"})
 	var memory: Dictionary = Game.explore_memory.get(map.map_name, {})
@@ -973,6 +975,9 @@ func _begin_battle() -> void:
 	battle = Battle.new()
 	add_child(battle)
 	battle.setup(grid, units, Game.run.rng.randi(), map.strangeness, {}, board)
+	var def: Dictionary = _pending.foes[0].def  # the group the party met writes the fight's goals and TALK
+	battle.goals = FightGoals.parse(String(def.get("goals", "")), def.get("exit", []), def.get("talk", {}))
+	battle.talk_open = battle.goals.talk_open(Game.meta.flags)
 	battle.log_line.connect(_log)
 	battle.info.connect(func(text: String) -> void: _info.text = text)
 	battle.phase_changed.connect(func(team: int) -> void:
@@ -999,11 +1004,18 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		mode = M.OVER
 		return
 	var downed := 0
+	var standing := 0
 	var boss := false
 	var ends := false
+	for flag: String in battle.outcome.joined:
+		Game.set_flag(flag)  # a foe talked round ([USER] c17)
 	for f: Dictionary in foes:
-		f.state = "gone"
-		downed += f.units.size()
+		f.state = "gone"  # beaten, fled, talked round or left behind: the group is done with the party
+		for u: CombatUnit in f.units:
+			if not u.alive():
+				downed += 1
+			elif battle.units.has(u):
+				standing += 1
 		if f.def.get("boss", false):
 			Game.set_flag(ExploreRules.beaten_flag(map.map_name, String(f.def.id)))
 		boss = boss or bool(f.def.get("boss", false))
@@ -1013,7 +1025,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 			Game.absorb(out.unlocks)
 	for u: CombatUnit in party:
 		u.member.hp = maxi(1, u.hp)  # downed members get back up after a win
-	var xp := LevelRules.fight_xp(downed, boss, Db.levels)
+	var xp := LevelRules.fight_xp(downed, boss, Db.levels, standing if battle.outcome.how == "exit" else 0)
 	var lines := Game.award_xp(xp)
 	lines.insert(0, Txt.f("UI_XP_GAIN", xp))
 	_sync_party_hp()
