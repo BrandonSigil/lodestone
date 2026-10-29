@@ -97,10 +97,10 @@ class Map:
                     return True
         return False
 
-    def save(self, strangeness=0.0, view=0, turn=False, fog=True):
+    def save(self, strangeness=0.0, view=0, turn=False, fog=True, walls=False):
         data = {
             "name": self.name, "art_set": self.art_set, "strangeness": strangeness, "view": view,
-            "turn": turn, "fog": fog,
+            **({"walls": True} if walls else {}), "turn": turn, "fog": fog,
             "grid": {"w": self.w, "h": self.h,
                      "terrain": ["".join(r) for r in self.terrain],
                      "heights": ["".join(str(v) for v in r) for r in self.height],
@@ -342,10 +342,15 @@ P.put(*rope_land, "g")
 P.things.append({"id": "rope_ledge", "kind": "climb", "event": "rope_climb", "cell": list(rope_cell), "to": "snow_pass", "at": list(ledge_front)})
 # Ledge middle (all eight neighbours on the ledge) for the chest; the down rope on the front edge.
 inner = [c for c in LEDGE if all((c[0] + dx, c[1] + dy) in LEDGE for dx in (-1, 0, 1) for dy in (-1, 0, 1))]
-chest = sorted(inner, key=lambda c: abs(c[0] - ledge_front[0]) + abs(c[1] - ledge_front[1]))[1]
+# The chest never shares a screen column (x - y) with the down rope, or their markers stack.
+def near_front(cells, skip):
+    return next(c for c in sorted(cells, key=lambda c: abs(c[0] - ledge_front[0]) + abs(c[1] - ledge_front[1]))
+                if c not in skip)
+for chest in sorted(inner, key=lambda c: abs(c[0] - ledge_front[0]) + abs(c[1] - ledge_front[1]))[1:]:
+    down = near_front(LEDGE, (ledge_front, chest))
+    if chest[0] - chest[1] != down[0] - down[1]:
+        break
 P.things.append({"id": "ledge_chest", "kind": "chest", "event": "ledge_chest", "cell": list(chest), "once": "got_ledge_chest"})
-down = next(c for c in sorted(LEDGE, key=lambda c: abs(c[0] - ledge_front[0]) + abs(c[1] - ledge_front[1]))
-            if c != ledge_front and c != chest)
 P.things.append({"id": "rope_down", "kind": "climb", "event": "rope_down", "cell": list(down), "to": "snow_pass", "at": list(rope_land)})
 P.prop("prop_crate", *[c for c in inner if c != chest][-1], tall=0.6, sight=0.5)
 
@@ -464,7 +469,7 @@ for t in P.things:
         t["at"] = W.start[0]
 
 P.save(strangeness=0.1)
-W.save()
+W.save(walls=True)  # plain gray walls (ExploreMap.walls)
 
 # The painted look's authoring rules (V9 tidy edges, V10 pillars, V12 a beige road from the foot of the pass
 # to the crypt stair) come from the game's own MapOps, as the map maker's Generate menu applies them.
