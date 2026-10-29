@@ -11,8 +11,8 @@ home_b,Village,Buildings,prop,village/b_home_b,4,3,0,3,,,,home B
 home_c,Village,Buildings,prop,village/b_home_c,4,3,0,3,,,,home C
 home_hero,Village,Buildings,prop,village/b_home_hero,3,3,0,3,,,,hero's home
 smithy,Village,Buildings,prop,village/b_smithy,3,4,0,3,,,,smithy
-tavern,Village,Buildings,prop,village/b_tavern,4,4,0,3,,,,tavern
-townhall,Village,Buildings,prop,village/b_townhall,5,5,0,3,,,,town hall
+tavern,Village,Buildings,prop,village/b_tavern,6,4,0,3,,,,tavern
+townhall,Village,Buildings,prop,village/b_townhall,7,5,0,3,,,,town hall
 well,Village,Street,prop,village/prop_well,2,2,1.8,1,,,,well
 lamp,Village,Street,prop,village/prop_lamp,1,1,1.5,0,,,,lamp post
 bench,Village,Street,prop,village/prop_bench,1,1,0.6,0,,,,bench

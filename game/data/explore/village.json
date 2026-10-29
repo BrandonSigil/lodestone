@@ -31,7 +31,7 @@
    "ffgggggwwgggggssssssssssssssggggggggggff",
    "fggggggwwgggggssssssssssssssggggggggggff",
    "ffgddddssdddddssssssssssssssgggggggggff.",
-   "fgggggdssdggggssssssssssssssggggdggggf..",
+   "fgggggdssdggggssssssssssssssgggdgggggf..",
    "ffgggggwwgggggssssssssssssssgggggggggf..",
    "ffgggggwwggggggssssssssssssggggggggggf..",
    "ffggggggwwggggggsssssssssdgggggggggguff.",
@@ -96,7 +96,7 @@
      3
     ],
     "foot": [
-     5,
+     7,
      5
     ],
     "tall": 0.0,
@@ -149,11 +149,11 @@
    {
     "sprite": "b_tavern",
     "cell": [
-     31,
+     29,
      18
     ],
     "foot": [
-     4,
+     6,
      4
     ],
     "tall": 0.0,
@@ -1130,7 +1130,7 @@
    {
     "sprite": "prop_bench",
     "cell": [
-     34,
+     33,
      23
     ],
     "foot": [
@@ -1144,7 +1144,7 @@
    {
     "sprite": "prop_bench",
     "cell": [
-     31,
+     29,
      23
     ],
     "foot": [
@@ -1558,7 +1558,7 @@
    "kind": "enter",
    "event": "",
    "cell": [
-    32,
+    31,
     22
    ],
    "to": "tavern",

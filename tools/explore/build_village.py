@@ -431,11 +431,11 @@ def house(sprite, x, y, fx, fy, door_dx, yard=None):
     return door
 
 
-hall_door = house("b_townhall", 17, 3, 5, 5, 3)  # door at (20, 8), on the line of the stair and the statue
+hall_door = house("b_townhall", 17, 3, 7, 5, 3)  # door at (20, 8), on the line of the stair and the statue
 smithy_door = house("b_smithy", 8, 9, 3, 4, 0, yard=(2, 2))  # on the shelf; the door faces its own yard, inside the ^
 quiet_door = house("b_home_c", 30, 2, 4, 3, 1)  # the quiet house (the hidden book), up on the bluff
 bluff_door = house("b_home_a", 34, 4, 3, 3, 1)  # a second home on the bluff
-tavern_door = house("b_tavern", 31, 18, 4, 4, 1)  # east of the square, its garden facing the front
+tavern_door = house("b_tavern", 29, 18, 6, 4, 2)  # east of the square, its garden facing the front
 west_door = house("b_home_a", 2, 18, 3, 3, 1)  # the dog's house, over the footbridge on the far bank
 hero_door = house("b_home_hero", 11, 25, 3, 3, 1)  # the hero's cottage, on the bend of the stream
 south_east_door = house("b_home_b", 28, 25, 4, 3, 1)
@@ -547,9 +547,9 @@ bush(27, 14, 1)
 p("prop_barrel", 35, 19, 0.7)
 p("prop_barrel", 35, 20, 0.7)
 p("prop_crates", 35, 21, 0.8)
-p("prop_bench", 34, 23, 0.6)
-p("prop_bench", 31, 23, 0.6)
-p("prop_lamp", 30, 22, 1.5)
+p("prop_bench", 33, 23, 0.6)
+p("prop_bench", 29, 23, 0.6)
+p("prop_lamp", 30, 22, 1.5)  # by the door
 tree("prop_tree_3", 36, 22)
 
 # The south-east: two homes, an old cart, an orchard going wild toward the front.
