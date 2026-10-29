@@ -1,6 +1,9 @@
 extends Node
-## Owns meta progression (survives a Lodestone recall) and the current run (lost on recall).
-## Also moves between the three screens: village, trail, combat.
+## Owns meta progression (survives a Lodestone recall) and the current run.
+## Also moves between the screens: the explore maps, the overworld, fights (and the shelved village hub and trail).
+##
+## The E2E loop ([USER] 2026-10-28): the run is an "adventure" run that never ends. Its party, pack,
+## levels and HP are saved in meta, and a wipe wakes everyone in the village square with everything.
 
 const SAVE_PATH := "user://meta.json"
 const PARTY_SLOTS := 4
@@ -13,8 +16,12 @@ const SANDBOX := "res://scenes/combat_sandbox.tscn"  ## archived combat sandbox:
 const EXPLORE := "res://scenes/explore.tscn"  ## walkable map, F10 from any screen for now
 const MAKER := "res://scenes/map_maker.tscn"  ## the map maker, F8 from any screen
 const LAUNCH := "res://scenes/launch.tscn"  ## the fast-travel menu the game opens on, F7 from any screen
+const OVERWORLD := "res://scenes/overworld.tscn"  ## the map between places: town, the snowy pass, and paths still shut
+const SQUARE := Vector2i(20, 23)  ## where the party wakes in the village: the square, by the statue
+## Who can be in the adventure party: the hero first, then companions once their unlock flag is set.
+const ADVENTURE_ROSTER := [&"lead", &"dog"]
 
-var meta := {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": []}
+var meta := _fresh_meta()
 var run: RunState = null
 var save_enabled := true
 var _combat_setup := {}
@@ -29,6 +36,11 @@ var explore_memory := {}
 var maker_map := ""  ## the map file the map maker reopens (it comes back here after a play test)
 var sandbox_map := ""  ## a map file the combat sandbox opens instead of default.json (map maker play test)
 var sandbox_play := false  ## ...and starts the fight straight away
+## The overworld: {"at": node id} when standing at a place, or a leg in progress
+## {"from", "to", "t": seconds walked, "stops": encounter times left, "acts": activity id -> time used}.
+var travel := {"at": "town"}
+var combat_return := ""  ## the scene a won fight goes back to ("" = the trail)
+var _hero: CharacterDef = null
 
 
 func _ready() -> void:
@@ -108,9 +120,26 @@ func save_meta() -> void:
 		f.store_string(JSON.stringify(meta))
 
 
+static func _fresh_meta() -> Dictionary:
+	return {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": [],
+		"levels": {}, "pack": {}}
+
+
 func reset_meta() -> void:
-	meta = {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": []}
+	meta = _fresh_meta()
 	save_meta()
+
+
+## A fresh save and the first walk: the hero's cottage, nothing found, nobody met.
+func new_game() -> void:
+	reset_meta()
+	run = null
+	travel = {"at": "town"}
+	explore_memory = {}
+	pending_lines = []
+	explore_map = "home"
+	explore_entry = Vector2i(-1, -1)
+	go(EXPLORE)
 
 
 ## The Lodestone keeps what the party unearthed on the world map: the village area plus the walked route.
@@ -135,10 +164,154 @@ func start_run(defs: Array, kit: Outfit = null) -> void:
 	go(TRAIL)
 
 
-## For pressing F6 on trail.tscn or combat.tscn without going through the village.
+## Any screen that needs a party gets the adventure party (F6 on a scene, a launch menu jump).
 func ensure_run() -> void:
 	if run == null:
-		run = RunState.create([Db.character(&"lead"), Db.character(&"stardrop"), Db.character(&"hunter")], randi())
+		start_adventure()
+
+
+# --- the adventure party (E2E loop) ---------------------------------------------------------
+
+## The hero, a nobody ([USER] 2026-10-27): the lead's look and skills on the nobody class.
+## The smithy weapon adds to it (weapon_mods) instead of changing the job.
+func hero_def() -> CharacterDef:
+	if _hero == null:
+		_hero = Db.character(&"lead").duplicate()
+		_hero.class_def = load("res://data/classes/nobody.tres")
+		_hero.traits = []
+	return _hero
+
+
+func adventure_defs() -> Array[CharacterDef]:
+	var out: Array[CharacterDef] = [hero_def()]
+	for id in ADVENTURE_ROSTER.slice(1):
+		var d := Db.character(id)
+		if d != null and is_unlocked(d):
+			out.append(d)
+	return out
+
+
+## Builds the run from meta: the party with its HP, and the pack. Nothing here is ever lost.
+func start_adventure() -> void:
+	run = RunState.create([], randi())
+	run.adventure = true
+	var pack: Dictionary = meta.get("pack", {})
+	run.food = int(pack.get("food", 0))
+	run.medicine = int(pack.get("medicine", 0))
+	run.gold = int(pack.get("gold", 0))
+	run.items = Dictionary(pack.get("items", {})).duplicate()
+	refresh_party()
+	var hp: Dictionary = pack.get("hp", {})
+	for m in run.members:
+		var id := String((m.def as CharacterDef).id)
+		if hp.has(id):
+			m.hp = clampi(int(hp[id]), 1, run.max_hp(m))
+
+
+## Adds companions whose flag just got set (at full HP) and recomputes everyone's level and gear bonus.
+func refresh_party() -> void:
+	if run == null:
+		return
+	for d in adventure_defs():
+		var have := run.members.any(func(m: Dictionary) -> bool: return (m.def as CharacterDef).id == d.id)
+		if not have:
+			run.members.append({"def": d, "hp": d.class_def.max_hp, "bonus": {}})
+	for m in run.members:
+		var id := String((m.def as CharacterDef).id)
+		var before := run.max_hp(m)
+		m.bonus = LevelRules.merge(LevelRules.bonus(level_state(id), Db.levels), weapon_mods(id))
+		m.hp = clampi(int(m.hp) + maxi(0, run.max_hp(m) - before), 0, run.max_hp(m))
+
+
+## What the picked smithy weapon adds (data/weapons.csv). Only the hero carries one.
+func weapon_mods(id: String) -> Dictionary:
+	if id != "lead":
+		return {}
+	var row: Dictionary = Db.weapons.get(weapon_id(), {})
+	var out := {}
+	for k in ["attack", "damage", "move", "range_min", "range_max"]:
+		out[k] = int(row.get(k, 0))
+	return out
+
+
+func weapon_id() -> String:
+	for id in Db.weapons:
+		var f := String(Db.weapons[id].flag)
+		if f != "" and has_flag(f):
+			return id
+	return "none"
+
+
+func level_state(id: String) -> Dictionary:
+	return LevelRules.normalize(meta.levels.get(id))
+
+
+## XP for everyone in the party; returns the log lines (who reached which level, picks waiting).
+func award_xp(amount: int) -> PackedStringArray:
+	var lines: PackedStringArray = []
+	if run == null:
+		return lines
+	for m in run.members:
+		var d: CharacterDef = m.def
+		var s := level_state(String(d.id))
+		var had := int(s.pending)
+		for lv in LevelRules.gain(s, amount, Db.levels):
+			lines.append(Txt.f("UI_LEVEL_UP", [Txt.t(d.name_key), lv]))
+		if int(s.pending) > had:
+			lines.append(Txt.f("UI_LS_PICK_WAITING", Txt.t(d.name_key)))
+		meta.levels[String(d.id)] = s
+	refresh_party()
+	save_adventure()
+	return lines
+
+
+func pending_picks() -> int:
+	var n := 0
+	for id in meta.levels:
+		n += int(level_state(String(id)).pending)
+	return n
+
+
+## Spend one Lodestone pick (hp, attack or magic) for a party member.
+func pick_boost(id: String, pick: String) -> bool:
+	var s := level_state(id)
+	if not LevelRules.choose(s, pick):
+		return false
+	meta.levels[id] = s
+	refresh_party()
+	save_adventure()
+	return true
+
+
+## The pack and HP go into meta, so nothing is lost on a restart or a wake-up.
+func save_adventure() -> void:
+	if run == null or not run.adventure:
+		return
+	var hp := {}
+	for m in run.members:
+		hp[String((m.def as CharacterDef).id)] = int(m.hp)
+	meta.pack = {"food": run.food, "medicine": run.medicine, "gold": run.gold, "items": run.items.duplicate(), "hp": hp}
+	save_meta()
+
+
+## Wake in the village square, everyone at full HP ([USER] 2026-10-28: a wipe costs nothing; the
+## Lodestone's GO HOME lands the same way). The first wake-up is when the hero learns what the stone does.
+func wake_in_town(fell: bool) -> void:
+	ensure_run()
+	for m in run.members:
+		m.hp = run.max_hp(m)
+	if fell:
+		meta.runs = int(meta.runs) + 1
+		pending_lines = [Txt.t("UI_WAKE_FIRST") if set_flag("lodestone_revealed") else Txt.t("UI_WAKE")]
+	else:
+		pending_lines = [Txt.t("UI_WENT_HOME")]
+	travel = {"at": "town"}
+	explore_memory = {}
+	explore_map = "village"
+	explore_entry = SQUARE
+	combat_return = ""
+	save_adventure()
+	go(EXPLORE)
 
 
 ## Apply an action's side effects that touch meta (unlocks, the Wall flag).
@@ -150,10 +323,13 @@ func absorb(unlocks: Array) -> void:
 		run.note(Txt.t("LOG_UNLOCK"))
 
 
-func start_combat(encounter_id: String) -> void:
+## A fight on a generated map. art_set picks its tile set ("" = the default); back_to is the scene a win
+## returns to ("" = the trail).
+func start_combat(encounter_id: String, art_set := "", back_to := "") -> void:
 	ensure_run()
 	run.marks.append({"d": run.distance, "kind": "combat"})
-	_combat_setup = {"encounter": encounter_id, "seed": run.rng.randi(), "strangeness": run.strangeness()}
+	_combat_setup = {"encounter": encounter_id, "seed": run.rng.randi(), "strangeness": run.strangeness(), "art_set": art_set}
+	combat_return = back_to
 	go(COMBAT)
 
 
@@ -172,11 +348,17 @@ func end_combat(won: bool) -> void:
 		return
 	for m in run.members:
 		m.hp = maxi(1, m.hp)  # downed members get back up after a win
-	go(TRAIL)
+	var back := combat_return if combat_return != "" else TRAIL
+	combat_return = ""
+	go(back)
 
 
-## The Lodestone pulls everyone home. Possessions are lost, the map and unlocks stay.
+## The Lodestone pulls everyone home. An adventure run wakes in the square with everything.
+## The shelved trail's runs keep the old rule: possessions are lost, the map and unlocks stay.
 func recall() -> void:
+	if run and run.adventure:
+		wake_in_town(true)
+		return
 	if run:
 		meta.best_distance = maxi(int(meta.best_distance), run.distance)
 		for mk in run.marks:
@@ -208,5 +390,6 @@ func complete_run() -> void:
 
 
 func go(path: String) -> void:
+	save_adventure()
 	if is_inside_tree():
 		get_tree().call_deferred("change_scene_to_file", path)

@@ -1,4 +1,4 @@
-# Current state (2026-10-28, refreshed after the map maker)
+# Current state (2026-10-28, refreshed after the E2E loop)
 
 ## Where things live
 - Repo: github.com/BrandonSigil/lodestone, branch `main`. Godot project in `game/`. The repo is the single source of truth: pull before work, push after.
@@ -10,7 +10,7 @@
 
 ## How to run it
 1. Install Godot 4.4 or newer (4.7.2 works; don't commit Godot 4.7's rewrites of existing project files).
-2. Open `game/project.godot`. F5 opens the launch menu (`scenes/launch.tscn`): one button per built place. **Start game** is the hero's cottage; the rest fast-travel to the village hub, trail, world map, each explore map, the trail fight and the sandbox.
+2. Open `game/project.godot`. F5 opens the launch menu (`scenes/launch.tscn`): one button per built place. **New game** starts the E2E loop from a fresh save in the hero's cottage, **Continue** keeps the save; the rest fast-travel to the village hub, trail, world map, each explore map, the trail fight and the sandbox.
 3. Anywhere in the game: **F7** launch menu, **F8** map maker, **F9** combat sandbox, **F10** walkable exploration map. In the editor, F6 runs the open scene.
 4. Checks: `GODOT=/path/to/godot tools/check.sh` (headless import, about 130 unit tests, smoke runs of launch, village, trail, combat, world_map, combat_sandbox, explore and map_maker). Run it after every change.
 5. Screenshots headless: `tools/screenshot.sh`, `game/tools/explore_shot.gd`, `game/tools/sandbox_shot.gd`, `game/tools/map_shot.gd`, `game/tools/maker_shot.gd` (in the cloud: `xvfb-run` and `--rendering-driver opengl3`).
@@ -30,6 +30,8 @@
 - Mac work merged 2026-10-28 (PR #55, branch `lodestone-all-work`): the general dummy character (`game/art/source/characters/dummy/`, five facings S, SE, E, NE, N, tinted by team, enemy glyphs) that every unit without its own art draws with, the code figure fallback (`placeholder_figure.gd`), a more vertical village with no fog (`fog: false` per map), the backdrop proposal `docs/art/environments.md`, `docs/art/explore-test-assets.md`, Hades map research, and the Picsart concept and studio tools (`tools/art/picsart_concepts.py`, `tools/studio/`).
 - Key art studio and sampler (from `lodestone-all-work`, on main 2026-10-28): `python3 tools/studio/studio.py` serves the studio at `/`. Every round goes to Picsart with the key art (`docs/art/characters/00-reference-sheet.png`) as image 1, and an edit round also gets the round it changes as image 2. Brandon rates each round 1 to 5 against the key art; a round under 4 refines by itself when sent; a job stops at 4 rounds. `/sampler` lists the pictures in `art/picsart/out/key-art-sampler/` with scripted checks (`tools/art/sampler_check.py`, bands in `BANDS`) and a blind vision grade (`art/prompts/sampler-grade-rubric.md`). As of 2026-10-27 only v10 passes both: v8 fails scale (grade 2), v9 passes the grade but its strokes are 2 px hairlines.
 - Art pipeline docs and tools: battle map rules B1 to B32 (`docs/art/battle-maps.md`), character rules C1 to C29 (`docs/art/characters.md`), Krita templates, `tools/art/battle_art.py`, `char_art.py`, `break_out.py`, `picsart_sheet.py`, `anim_sheet_cut.py`, zone palette cards, and house-style prompts in `art/prompts/` (see `art/prompts/README.md` and `flat-style-portable.txt`).
+
+- E2E loop (thread "End-to-end gameplay loop", 2026-10-28): New game on the launch menu plays the first loop: an empty village, the smithy weapon, spare items, a dog rescued through a window, the Lodestone taken from a statue (its button on the bottom bar: level picks, GO HOME), out the gate onto a code-drawn overworld (real-time walk with encounters, hunt/fish/forage, fast forward), the snowy pass (`snow_pass`, terraces 0 to 8, rope ledge, wolf den), the crypt and a placeholder Lich King boss. A fall wakes the party in the square with everything. Levels from XP with a pick every 4 levels. `docs/systems/overworld.md`; decisions under "End-to-end loop". A headless robot plays it all: `godot --headless --path game -s res://tools/e2e_play.gd` (or `E2E=1 tools/check.sh`). The village hub, the day-button trail and the riso world map are shelved (launch menu SHELVED column).
 
 ## The art recipe that works now
 - Model: GPT image (`gpt-image-2.5-sunburst`) through the Picsart API on the MacBook, about 10¢ per sheet at 2K. Flux is cheaper but copies references too literally.
@@ -64,6 +66,7 @@
 - Brandon plays clean main from the worktree `~/lodestone-main`. Claude threads on the Mac work in `~/lodestone` or their own worktrees and must commit and push; nothing should stay Mac-only.
 
 ## Open items waiting on Brandon
+- E2E loop: play it; the numbers in the `[AI]` lines under "End-to-end loop" in `docs/decisions.md` (hero and dog stats, XP and picks, overworld timings, the boss and den split); art for the statue, the dog, the Lich King and the overworld (a Picsart batch only on his yes); what the prairie and north-west hold; whether job promotion at level 5 still comes on top of the picks.
 - Terrain engine (`docs/design/terrain-engine.md` section 8): keep the soft pass on everywhere outdoors, corner and cap tuning, Picsart or Procreate for the snow kit.
 - Map look: code backdrop bands or painted strips per look; keep or lock the backdrop parallax; zoom fights in on big maps (`docs/design/map-look.md` section 11).
 - Empty village: is a survivor settler-or-party-member by who they are (Claude's assumption)? Who survives, and which kind? Job system: tier 2 branch roles and names. Approve or replace the village prototype art.

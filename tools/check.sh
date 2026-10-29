@@ -12,7 +12,7 @@ if ! "$GODOT" --headless --path . -s res://tests/run_tests.gd; then
 	fail=1
 fi
 
-for scene in launch village trail combat world_map battle_view explore map_maker; do
+for scene in launch village trail combat world_map battle_view explore map_maker overworld; do
 	out=$("$GODOT" --headless --path . --quit-after 60 "res://scenes/$scene.tscn" 2>&1)
 	if grep -qE "SCRIPT ERROR|^ERROR" <<< "$out"; then
 		echo "FAIL scene $scene"
@@ -22,5 +22,16 @@ for scene in launch village trail combat world_map battle_view explore map_maker
 		echo "ok   scene $scene"
 	fi
 done
+
+# The E2E robot plays the whole loop (about 2 minutes). Opt in: E2E=1 tools/check.sh
+if [ "${E2E:-0}" = "1" ]; then
+	out=$("$GODOT" --headless --path . -s res://tools/e2e_play.gd 2>&1)
+	code=$?
+	grep -E "^FAIL|^E2E|fights lost" <<< "$out"
+	if [ $code -ne 0 ]; then
+		echo "FAIL e2e"
+		fail=1
+	fi
+fi
 
 exit $fail

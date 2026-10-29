@@ -158,8 +158,11 @@ data = {
          "units": [{"id": "wolf", "cell": [2, 18]}, {"id": "wolf", "cell": [3, 20]}]},
         {"id": "tower", "event": "spot_people", "sight": 5, "loot": "medicine:+2",
          "units": [{"id": "bandit_archer", "cell": [30, 3]}, {"id": "bandit", "cell": [30, 8]}]},
-        {"id": "throne", "event": "spot_strange", "sight": 4, "loot": "medicine:+3;gold:+20",
-         "units": [{"id": "strange_thing", "cell": [18, 2]}, {"id": "strange_thing", "cell": [16, 4]}, {"id": "wolf", "cell": [20, 4]}]},
+        # The E2E loop's boss ([USER] 2026-10-28): the Lich King on his throne, a placeholder piece.
+        # Beating him ends the test ("end"); "boss" pays boss XP.
+        {"id": "throne", "event": "spot_boss", "sight": 4, "loot": "medicine:+3;gold:+20;unlock:beat_lich",
+         "boss": True, "end": True,
+         "units": [{"id": "lich", "cell": [18, 2]}]},
     ],
     "things": [
         {"id": "gate", "kind": "door", "event": "locked_door", "cell": [26, 18], "floor": "d"},
@@ -169,6 +172,8 @@ data = {
         {"id": "cave_rubble", "kind": "rubble", "event": "rubble", "cell": [2, 14], "floor": "t"},
         {"id": "tower_chest", "kind": "chest", "event": "chest", "cell": [31, 3]},
         {"id": "way_out", "kind": "exit", "event": "exit", "cell": [13, 2]},
+        # Back up the stair to the top of the snowy pass (the E2E loop comes down into the crypt here).
+        {"id": "up_stair", "kind": "enter", "event": "", "cell": [30, 27], "to": "snow_pass", "at": [9, 8]},
     ],
 }
 # The rubble sits on the cave stair: it blocks the west route until cleared.

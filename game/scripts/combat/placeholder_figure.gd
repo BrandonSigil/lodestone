@@ -14,12 +14,14 @@ const PARTY := {
 	&"lewith_flark": {"weapon": "dagger", "body": Color(0.86, 0.72, 0.3)},
 	&"bushberry": {"weapon": "club", "body": Color(0.6, 0.84, 0.3)},
 	&"skeleton_archer": {"weapon": "bow", "body": Color(0.55, 0.84, 0.82)},
+	&"dog": {"weapon": "claws", "body": Color(0.78, 0.56, 0.32)},
 }
 const ENEMY := {
 	&"bandit": {"weapon": "sword", "glyph": "triangle"},
 	&"bandit_archer": {"weapon": "bow", "glyph": "diamond"},
 	&"wolf": {"weapon": "claws", "glyph": "circle"},
 	&"strange_thing": {"weapon": "staff", "glyph": "cross"},
+	&"lich": {"weapon": "staff", "glyph": "square"},
 }
 const ENEMY_BODY := Color(0.82, 0.2, 0.2)
 const ENEMY_GLYPH := Color(1.0, 0.9, 0.82)

@@ -62,6 +62,33 @@ func _thing(kind: String, p: Vector2, dim: bool) -> void:
 			draw_line(p, p + Vector2(0, -40), Color(0.35, 0.28, 0.2) * k, 3.0)
 			var wave := sin(_time * 3.0) * 3.0
 			draw_colored_polygon(PackedVector2Array([p + Vector2(1, -40), p + Vector2(24, -34 + wave), p + Vector2(1, -27)]), Color(0.9, 0.85, 0.5) * k)
+		"dog":
+			# The locked-in dog: a small brown body, head and ears, the tail wagging. Placeholder until art.
+			var fur := Color(0.72, 0.5, 0.28) * k
+			var wag := sin(_time * 9.0) * 4.0
+			draw_line(p + Vector2(-12, -10), p + Vector2(-19, -18 + wag), fur.darkened(0.2), 3.0, true)
+			draw_colored_polygon(_oval(p + Vector2(-2, -10), 12.0, 6.5), fur)
+			for lx in [-8.0, -2.0, 4.0, 8.0]:
+				draw_line(p + Vector2(lx, -6), p + Vector2(lx, 0), fur.darkened(0.3), 2.5)
+			draw_circle(p + Vector2(11, -17), 6.0, fur.lightened(0.1))
+			draw_colored_polygon(PackedVector2Array([p + Vector2(7, -21), p + Vector2(9, -30), p + Vector2(12, -22)]), fur.darkened(0.25))
+			draw_colored_polygon(PackedVector2Array([p + Vector2(12, -22), p + Vector2(16, -29), p + Vector2(16, -20)]), fur.darkened(0.25))
+			draw_circle(p + Vector2(16, -16), 1.6, INK)
+		"statue":
+			# The Lodestone in the statue's outstretched hand: a glow that goes once the stone is taken.
+			var glow := 0.55 + 0.45 * sin(_time * 2.5)
+			draw_circle(p + Vector2(18, -78), 14.0, Color(0.55, 0.95, 1.0, 0.18 * glow) * k)
+			draw_circle(p + Vector2(18, -78), 7.0, Color(0.6, 0.98, 1.0, 0.5 + 0.4 * glow) * k)
+			draw_circle(p + Vector2(18, -78), 3.5, Color(0.92, 1.0, 1.0) * k)
+		"window":
+			# A small shutter on the house wall, low enough to climb through.
+			var f := PackedVector2Array([p + Vector2(-9, -30), p + Vector2(4, -36), p + Vector2(4, -22), p + Vector2(-9, -16)])
+			draw_colored_polygon(f, Color(0.2, 0.18, 0.2) * k)
+			draw_polyline(f + PackedVector2Array([f[0]]), Color(0.55, 0.4, 0.25) * k, 2.5, true)
+		"climb":
+			# A rope knot at the cliff foot.
+			draw_line(p + Vector2(0, -2), p + Vector2(2, -46), Color(0.75, 0.62, 0.4) * k, 2.5, true)
+			draw_circle(p + Vector2(0, -4), 4.0, Color(0.6, 0.48, 0.3) * k)
 		"door", "rubble":
 			# The wall is the board's ruin block; a door slab marks which one opens.
 			if kind == "door":
@@ -80,3 +107,11 @@ func _box(p: Vector2, r: float, tall: float, col: Color) -> void:
 	draw_colored_polygon(PackedVector2Array([p + Vector2(-r, -r * 0.5), p, t, t + Vector2(-r, -r * 0.5)]), col.darkened(0.1))
 	draw_colored_polygon(PackedVector2Array([p, p + Vector2(r, -r * 0.5), t + Vector2(r, -r * 0.5), t]), col.darkened(0.3))
 	draw_colored_polygon(PackedVector2Array([t, t + Vector2(r, -r * 0.5), t + Vector2(0, -r), t + Vector2(-r, -r * 0.5)]), col.lightened(0.12))
+
+
+static func _oval(c: Vector2, rx: float, ry: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in 16:
+		var a := TAU * i / 16.0
+		pts.append(c + Vector2(cos(a) * rx, sin(a) * ry))
+	return pts

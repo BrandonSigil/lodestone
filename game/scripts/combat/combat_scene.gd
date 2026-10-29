@@ -39,6 +39,8 @@ func _ready() -> void:
 	battle = Battle.new()
 	add_child(battle)
 	battle.setup(grid, units, setup.seed, setup.strangeness, {"medicine": Game.run.medicine, "food": Game.run.food})
+	if String(setup.get("art_set", "")) != "":
+		battle.board.art_set = setup.art_set
 
 	hud = FrameHud.new()
 	add_child(hud)
@@ -109,6 +111,14 @@ func _on_finished(won: bool) -> void:
 	l.text = Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT")
 	l.add_theme_font_size_override("font_size", 28)
 	box.add_child(l)
+	if won and Game.run.adventure:
+		var foes := battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 1).size()
+		var xp := LevelRules.fight_xp(foes, false, Db.levels)
+		var lines := Game.award_xp(xp)
+		lines.insert(0, Txt.f("UI_XP_GAIN", xp))
+		var x := Label.new()
+		x.text = "\n".join(lines)
+		box.add_child(x)
 	var b := Button.new()
 	b.text = Txt.t("UI_CONTINUE")
 	b.pressed.connect(func() -> void: Game.end_combat(won))

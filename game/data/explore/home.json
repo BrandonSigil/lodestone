@@ -162,6 +162,16 @@
     11,
     29
    ]
+  },
+  {
+   "id": "home_chest",
+   "kind": "cache",
+   "event": "cache_potion",
+   "cell": [
+    1,
+    3
+   ],
+   "once": "got_potion"
   }
  ]
 }

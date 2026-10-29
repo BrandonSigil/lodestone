@@ -1,0 +1,4 @@
+from,to,seconds,enc_min,enc_max,strangeness,art_set,points
+town,pass,60,1,2,0.1,snow,500:610|455:520|540:430|470:340|545:250|500:120
+town,prairie,60,1,2,0.05,forest,500:610|620:560|720:470|790:400|860:330
+town,northwest,60,1,2,0.1,forest,500:610|390:540|300:450|210:360|140:250

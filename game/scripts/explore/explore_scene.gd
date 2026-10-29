@@ -49,6 +49,7 @@ var _info: Label
 var _log_label: Label
 var _phase: Label
 var _keys_walking := false  ## the leader is walking on WASD
+var _menu_open := false  ## the pack or the Lodestone menu is the open dialog
 ## Deploying: the fight waiting to start, the member being placed and the cells it may take.
 var _pending := {}
 var _placing: CombatUnit = null
@@ -57,6 +58,7 @@ var _ring: Array[Vector2i] = []
 
 func _ready() -> void:
 	Game.ensure_run()
+	Game.refresh_party()
 	map = ExploreMap.load_named(Game.explore_map)
 	grid = map.grid
 	board = CombatBoard.new()
@@ -114,6 +116,20 @@ func _ready() -> void:
 	var lead := leader()
 	if lead:
 		_snap_to(lead)
+	_show_pending()
+
+
+## Lines left for this screen (waking in the square after a fall, GO HOME).
+func _show_pending() -> void:
+	if Game.pending_lines.is_empty():
+		return
+	var text := "\n".join(Game.pending_lines)
+	Game.pending_lines = []
+	mode = M.DIALOG
+	var box := _new_dialog(text)
+	_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void:
+		_close_dialog()
+		mode = M.WALK)
 
 
 # --- queries the overlay and tests use ------------------------------------------------
@@ -562,8 +578,11 @@ func _open_thing(t: Dictionary) -> void:
 	open_event(String(t.event), {"thing": t})
 
 
-## A hidden thing shows (and can be used) only once the leader stands next to it.
+## A hidden thing shows (and can be used) only once the leader stands next to it. A thing with a "when"
+## flag shows only once that flag is set (the dog's door opens from inside once he is out).
 func shown(t: Dictionary) -> bool:
+	if String(t.get("when", "")) != "" and not Game.has_flag(t.when):
+		return false
 	return t.kind != "hidden" or ExploreRules.dist(leader().cell, t.cell) <= 1.5
 
 
@@ -605,7 +624,7 @@ func open_event(id: String, ctx: Dictionary) -> void:
 	walking_now = false
 	board.highlights = {}
 	var box := _new_dialog(Txt.t(ev.text_key))
-	for o: Dictionary in ExploreRules.options_for(ev, _defs()):
+	for o: Dictionary in ExploreRules.options_for(ev, _defs(), {"items": Game.run.items, "flags": Game.meta.flags}):
 		var label := Txt.t(o.key)
 		if o.check != "none":
 			var who: Dictionary = TrailRules.best_member(Game.run, o.check)
@@ -634,8 +653,10 @@ func choose(o: Dictionary, ctx: Dictionary) -> void:
 	if fx.run != "":
 		var out := TrailRules.apply_effects(Game.run, fx.run)
 		Game.absorb(out.unlocks)
-		_sync_party_hp()
-		_refresh_hud()
+		_after_change()
+		for f: String in out.unlocks:
+			if Txt.has("UI_GOT_" + f.to_upper()):
+				lines.append(Txt.t("UI_GOT_" + f.to_upper()))  # the dog joins, the Lodestone is taken
 		lines.append(fx.run.replace(";", "  "))
 	if lines.is_empty():
 		_close_dialog()
@@ -703,13 +724,37 @@ func _nearest_group(at: Vector2i, within: float) -> Dictionary:
 	return best
 
 
+## After anything that changes the party: someone joined, a level, a Lodestone pick, a potion.
+func _after_change() -> void:
+	Game.refresh_party()
+	_rebuild_party()
+	_sync_party_hp()
+	_refresh_hud()
+
+
+## Party pieces rebuilt from the run (new members, new stats). They stand with the leader. Not mid-fight.
+func _rebuild_party() -> void:
+	if mode == M.FIGHT or mode == M.DEPLOY:
+		return
+	var lead := leader()
+	var at: Vector2i = lead.cell if lead else _free_start()
+	var facing: Vector2i = lead.facing if lead else Vector2i(1, 0)
+	party = []
+	for m in Game.run.alive():
+		var u := CombatUnit.from_member(m)
+		u.place(at, grid.height_at(at))
+		u.facing = facing
+		party.append(u)
+	_refresh_units()
+
+
 func _sync_party_hp() -> void:
 	for u: CombatUnit in party:
 		u.hp = clampi(int(u.member.hp), 0, u.max_hp)
 		u.shown_hp = u.hp
 
 
-func _new_dialog(text: String) -> VBoxContainer:
+func _new_dialog(text: String, top := false) -> VBoxContainer:
 	if _dialog:
 		_dialog.queue_free()
 	_dialog = PanelContainer.new()
@@ -725,7 +770,9 @@ func _new_dialog(text: String) -> VBoxContainer:
 	box.add_child(l)
 	_ui.add_child(_dialog)
 	var r := hud.center_rect()
-	_dialog.position = Vector2(r.get_center().x - 220, r.end.y - 230)
+	_dialog.position = Vector2(r.get_center().x - 220, r.position.y + 16 if top else r.end.y - 230)
+	if text == "":
+		l.queue_free()
 	return box
 
 
@@ -882,15 +929,33 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall())
 		mode = M.OVER
 		return
+	var downed := 0
+	var boss := false
+	var ends := false
 	for f: Dictionary in foes:
 		f.state = "gone"
+		downed += f.units.size()
+		boss = boss or bool(f.def.get("boss", false))
+		ends = ends or bool(f.def.get("end", false))
 		if f.def.loot != "":
 			var out := TrailRules.apply_effects(Game.run, f.def.loot)
 			Game.absorb(out.unlocks)
 	for u: CombatUnit in party:
 		u.member.hp = maxi(1, u.hp)  # downed members get back up after a win
+	var xp := LevelRules.fight_xp(downed, boss, Db.levels)
+	var lines := Game.award_xp(xp)
+	lines.insert(0, Txt.f("UI_XP_GAIN", xp))
 	_sync_party_hp()
 	_refresh_hud()
+	if ends:
+		# The boss is down: the end of the E2E test.
+		Game.set_flag("e2e_done")
+		box = _new_dialog("%s\n%s\n\n%s" % [Txt.t("UI_VICTORY"), "\n".join(lines), Txt.t("UI_E2E_DONE")])
+		_dialog_button(box, Txt.t("UI_E2E_WAKE"), func() -> void: Game.wake_in_town(false))
+		_dialog_button(box, Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.LAUNCH))
+		mode = M.OVER
+		return
+	box = _new_dialog("%s\n%s" % [Txt.t("UI_VICTORY"), "\n".join(lines)])
 	_dialog_button(box, Txt.t("UI_CONTINUE"), _end_fight)
 
 
@@ -918,16 +983,18 @@ func _end_fight() -> void:
 	_pending = {}
 	mode = M.WALK
 	follow = true
+	_rebuild_party()  # levels from the fight show up in the pieces' stats
 	_walk_side()
 	_refresh_sight()
 	_refresh_units()
 
 
+## Out the way out: onto the overworld, standing at the place this map belongs to.
 func _finish_map() -> void:
 	mode = M.OVER
 	Game.explore_memory.clear()
-	var box := _new_dialog(Txt.t("UI_EX_DONE"))
-	_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.go(Game.TRAIL))
+	Game.travel = {"at": TravelRules.node_for_map(Db.world_nodes, map.map_name)}
+	Game.go(Game.OVERWORLD)
 
 
 # --- hud ----------------------------------------------------------------------------------------
@@ -981,3 +1048,29 @@ func _refresh_hud() -> void:
 			"note": Txt.t("TAG_SPOOKED") if u.spooked else ""})
 	hud.set_party(entries)
 	hud.set_slots(Game.run.slot_list(), RunState.CAPACITY)
+	var tools := [{"text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]
+	if Game.has_flag("has_lodestone"):
+		tools.append({"text": Txt.t("UI_LODESTONE"), "cb": _open_menu.bind("lodestone"), "glow": Game.pending_picks() > 0})
+	hud.set_tools(tools)
+
+
+## The pack or the Lodestone menu, from the bottom bar. Only while walking.
+func _open_menu(which: String) -> void:
+	if mode != M.WALK and not (mode == M.DIALOG and _menu_open):
+		return
+	_walk_token += 1
+	walking_now = false
+	mode = M.DIALOG
+	_menu_open = true
+	var box := _new_dialog("", true)
+	var changed := func() -> void:
+		_after_change()
+		_open_menu(which)
+	var close := func() -> void:
+		_close_dialog()
+		_menu_open = false
+		mode = M.WALK
+	if which == "pack":
+		AdventureMenu.pack(box, changed, close)
+	else:
+		AdventureMenu.lodestone(box, changed, close, map.map_name != "village")

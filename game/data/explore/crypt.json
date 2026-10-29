@@ -197,29 +197,17 @@
   },
   {
    "id": "throne",
-   "event": "spot_strange",
+   "event": "spot_boss",
    "sight": 4,
-   "loot": "medicine:+3;gold:+20",
+   "loot": "medicine:+3;gold:+20;unlock:beat_lich",
+   "boss": true,
+   "end": true,
    "units": [
     {
-     "id": "strange_thing",
+     "id": "lich",
      "cell": [
       18,
       2
-     ]
-    },
-    {
-     "id": "strange_thing",
-     "cell": [
-      16,
-      4
-     ]
-    },
-    {
-     "id": "wolf",
-     "cell": [
-      20,
-      4
      ]
     }
    ]
@@ -290,6 +278,20 @@
    "cell": [
     13,
     2
+   ]
+  },
+  {
+   "id": "up_stair",
+   "kind": "enter",
+   "event": "",
+   "cell": [
+    30,
+    27
+   ],
+   "to": "snow_pass",
+   "at": [
+    9,
+    8
    ]
   }
  ]

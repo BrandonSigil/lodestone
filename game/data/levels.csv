@@ -1,0 +1,11 @@
+key,value,note
+xp_per_level,100,XP for each level; levels come on their own
+max_level,40,
+hp_per_level,1,max HP every level gives
+choice_every,4,every this many levels the player picks one boost in the Lodestone menu
+choice_hp,3,MORE HEALTH: max HP
+choice_attack,1,MORE HIT: to-hit and damage
+choice_magic,2,MORE MAGIC: spell and magic damage
+xp_win,10,every member who fought gets this for a won fight
+xp_foe,25,plus this per foe downed
+xp_boss,100,plus this for a boss fight

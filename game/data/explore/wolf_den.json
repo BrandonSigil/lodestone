@@ -1,0 +1,141 @@
+{
+ "name": "wolf_den",
+ "art_set": "dungeon",
+ "strangeness": 0.0,
+ "view": 0,
+ "turn": false,
+ "fog": true,
+ "grid": {
+  "w": 14,
+  "h": 12,
+  "terrain": [
+   "rrrrrrrrrr.r.r",
+   "rssssssssrrrrr",
+   "rsssssrssggggr",
+   "rsrssssssggggr",
+   "rsstsssssggggr",
+   "rrrggggggggggr",
+   ".rggggggggttrr",
+   "rrggggggggggr.",
+   ".rggggggggggrr",
+   "rrrggggggggrr.",
+   ".rggdgggggggrr",
+   "rrrrdrrrrrrrr."
+  ],
+  "heights": [
+   "55555555550202",
+   "53333333355555",
+   "53333343333335",
+   "53433333333335",
+   "53333333333335",
+   "55521111133334",
+   "03111111112244",
+   "23111111111130",
+   "03111111111121",
+   "23211111111220",
+   "03111111111121",
+   "23331332222220"
+  ],
+  "props": [
+   {
+    "sprite": "prop_bush",
+    "cell": [
+     8,
+     9
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 0.5,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     7,
+     4
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 0.5,
+    "walk": false
+   }
+  ]
+ },
+ "start": [
+  [
+   3,
+   9
+  ]
+ ],
+ "groups": [
+  {
+   "id": "den_wolves",
+   "event": "spot_beasts",
+   "sight": 4,
+   "loot": "food:+6",
+   "units": [
+    {
+     "id": "wolf",
+     "cell": [
+      5,
+      2
+     ]
+    },
+    {
+     "id": "wolf",
+     "cell": [
+      3,
+      2
+     ]
+    }
+   ]
+  },
+  {
+   "id": "den_lone",
+   "event": "spot_beasts",
+   "sight": 4,
+   "loot": "food:+3",
+   "units": [
+    {
+     "id": "wolf",
+     "cell": [
+      10,
+      3
+     ]
+    }
+   ]
+  }
+ ],
+ "things": [
+  {
+   "id": "den_out",
+   "kind": "enter",
+   "event": "",
+   "cell": [
+    4,
+    11
+   ],
+   "to": "snow_pass",
+   "at": [
+    22,
+    20
+   ]
+  },
+  {
+   "id": "den_bones",
+   "kind": "chest",
+   "event": "den_bones",
+   "cell": [
+    1,
+    1
+   ],
+   "once": "got_den_bones"
+  }
+ ]
+}

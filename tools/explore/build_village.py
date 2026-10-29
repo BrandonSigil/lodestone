@@ -8,6 +8,11 @@
 - house_ne: an ordinary home a little off the square, with an inner room; the hidden book sits on a
             shelf against its back wall, out of sight from the door (docs/design/empty-village.md s7).
 - tavern:   the tavern's ground floor.
+- house_dog: the west home on the ridge, door locked; the dog is shut inside. The way in is the window on
+            its right front wall ([USER] 2026-10-28, the E2E loop); once he is out the door opens.
+
+The E2E loop also puts the statue with the Lodestone in the square (a placeholder blob until art), and
+spare food, a rope and potions in a tavern barrel, the smithy yard and the hero's own chest.
 
 Buildings and furniture are placed props (CombatGrid.props) drawn from the village and village_in tile
 sets (art cut by tools/art/village_cut.py). Interiors are floors with walls of rock terrain; the walls
@@ -133,6 +138,8 @@ V.prop("prop_bench", 16, 21, tall=0.6)
 V.prop("prop_bench", 23, 17, tall=0.6)
 V.prop("prop_planter", 17, 23, tall=0.8)
 V.prop("prop_planter", 23, 21, tall=0.8)
+# The statue that wasn't there yesterday (an elf woman holding out the Lodestone): a placeholder blob.
+V.prop("ph_statue", 20, 21, (2, 2), tall=2.2, sight=2.0)
 
 # Lanes (packed dirt) out of the square.
 V.fill(19, 13, 22, 13, "d")  # up to the town hall stair
@@ -199,8 +206,8 @@ V.fill(5, 25, 8, 28, "d")  # an old yard gone to dirt
 V.fill(33, 22, 36, 23, "u")  # tumbled wall along the east lane
 V.put(35, 22, "d")
 
-# The gate: the south road runs out of the village to the trail.
-V.thing(id="gate", kind="exit", event="exit", cell=[20, 37])
+# The gate: the south road runs out of the village to the overworld (only once the Lodestone is taken).
+V.thing(id="gate", kind="exit", event="village_gate", cell=[20, 37])
 V.put(20, 37, "d")
 V.put(21, 37, "d")
 
@@ -209,12 +216,18 @@ V.thing(id="quiet_house", kind="enter", event="", cell=quiet_door, to="house_ne"
 V.thing(id="tavern_door", kind="enter", event="", cell=tavern_door, to="tavern", at=[3, 9])
 V.thing(id="hall_door", kind="enter", event="door_stuck", cell=hall_door)
 V.thing(id="smithy_door", kind="enter", event="door_stuck", cell=smithy_door)
-V.thing(id="west_door", kind="enter", event="door_stuck", cell=west_door)
+# The dog's house: the door is locked until he is out; the window on the right front wall gets you in.
+V.thing(id="west_door", kind="enter", event="door_dog", cell=west_door, to="house_dog", at=[3, 5], once="met_dog")
+V.thing(id="west_door_open", kind="enter", event="", cell=west_door, to="house_dog", at=[3, 5], when="met_dog")
+V.thing(id="dog_window", kind="window", event="dog_window", cell=[9, 18], to="house_dog", at=[5, 3], once="met_dog")
 V.thing(id="se_door", kind="enter", event="door_stuck", cell=south_east_door)
 V.thing(id="far_door", kind="enter", event="door_stuck", cell=far_door)
 V.thing(id="bluff_door", kind="enter", event="door_stuck", cell=bluff_door)
 V.thing(id="weapon_rack", kind="rack", event="smithy_rack", cell=[10, 12],
         once="weapon_sword|weapon_daggers|weapon_bow")
+V.thing(id="statue", kind="statue", event="statue_lodestone", cell=[21, 22], once="has_lodestone")
+V.thing(id="food_barrel", kind="cache", event="cache_food", cell=[33, 17], once="got_food_barrel")
+V.thing(id="smithy_rope", kind="cache", event="cache_rope", cell=[11, 10], once="got_rope")
 for c in [hero_door, quiet_door, tavern_door, hall_door, smithy_door, west_door, south_east_door, far_door,
           bluff_door]:
     if V.terrain[c[1]][c[0]] in "gfu":
@@ -243,6 +256,7 @@ H.prop("prop_rug", 2, 4, tall=0.45, sight=0.0, walk=True)
 H.prop("prop_chest", 1, 3, tall=0.6)
 H.prop("prop_pots", 6, 4, tall=0.6)
 H.thing(id="out", kind="enter", event="", cell=[3, 6], to="village", at=hero_door)
+H.thing(id="home_chest", kind="cache", event="cache_potion", cell=[1, 3], once="got_potion")
 H.start = [[3, 4]]
 H.save()
 
@@ -268,6 +282,20 @@ Q.thing(id="out", kind="enter", event="", cell=[3, 8], to="village", at=quiet_do
 Q.thing(id="book", kind="hidden", event="hidden_book", cell=[8, 1], once="found_book")
 Q.start = [[3, 7]]
 Q.save()
+
+# The dog's house: one room; the dog is shut in at the back. In through the window, out by the door.
+D = interior("house_dog", 8, 7)
+room(D, 0, 0, 7, 6)
+D.put(3, 6, "s", 1)
+D.prop("prop_bed", 1, 1, tall=0.75)
+D.prop("prop_cupboard", 3, 1, tall=1.3, sight=1.0)
+D.prop("prop_table", 2, 3, tall=0.7)
+D.prop("prop_broken_chair", 1, 4, tall=0.75)
+D.prop("prop_pots", 6, 1, tall=0.6)
+D.thing(id="out", kind="enter", event="", cell=[3, 6], to="village", at=west_door)
+D.thing(id="dog", kind="dog", event="dog_free", cell=[5, 2], once="met_dog")
+D.start = [[5, 3]]
+D.save()
 
 # The tavern: one long room with the bar at the back.
 T = interior("tavern", 12, 11)

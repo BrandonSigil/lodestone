@@ -228,13 +228,22 @@ static func parse_events(rows: Array[Dictionary]) -> Dictionary:
 	return out
 
 
-## "" (anyone), "skill:<check>" (someone has it), "class:<id>", or "char:<id>". `defs`: the party's CharacterDefs.
-static func need_met(need: String, defs: Array) -> bool:
+## "" (anyone), "skill:<check>" (someone has it), "class:<id>", "char:<id>", "item:<id>" (the pack holds one),
+## "flag:<id>" or "noflag:<id>" (a meta flag is or isn't set). `defs`: the party's CharacterDefs.
+## have: {"items": id -> count, "flags": Array of set flags}.
+static func need_met(need: String, defs: Array, have := {}) -> bool:
 	if need == "":
 		return true
 	var kv := need.split(":")
 	if kv.size() != 2:
 		return false
+	match kv[0]:
+		"item":
+			return int(have.get("items", {}).get(kv[1], 0)) > 0
+		"flag":
+			return have.get("flags", []).has(kv[1])
+		"noflag":
+			return not have.get("flags", []).has(kv[1])
 	for d: CharacterDef in defs:
 		match kv[0]:
 			"skill":
@@ -250,8 +259,8 @@ static func need_met(need: String, defs: Array) -> bool:
 
 
 ## The options this party can pick.
-static func options_for(ev: Dictionary, defs: Array) -> Array:
-	return ev.options.filter(func(o: Dictionary) -> bool: return need_met(o.need, defs))
+static func options_for(ev: Dictionary, defs: Array, have := {}) -> Array:
+	return ev.options.filter(func(o: Dictionary) -> bool: return need_met(o.need, defs, have))
 
 
 ## Splits "open;food:+3;noise" into the map's own effects (in order) and the run effects string.

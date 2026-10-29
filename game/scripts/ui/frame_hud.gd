@@ -17,6 +17,7 @@ var party_box: VBoxContainer
 var slots_box: HBoxContainer
 var slots_label: Label
 var side: VBoxContainer
+var tools_box: HBoxContainer  ## bottom-right buttons: PACK, and the Lodestone once it is found
 var root: Control
 
 
@@ -57,6 +58,12 @@ func _init() -> void:
 	_pin(slots_box, 0, 1, 1, 1, LEFT_W, -BOTTOM_H + 28, -RIGHT_W, -8)
 	slots_box.add_theme_constant_override("separation", 6)
 	root.add_child(slots_box)
+
+	tools_box = HBoxContainer.new()
+	_pin(tools_box, 1, 1, 1, 1, -RIGHT_W + 14, -BOTTOM_H + 12, -14, -10)
+	tools_box.add_theme_constant_override("separation", 8)
+	tools_box.alignment = BoxContainer.ALIGNMENT_END
+	root.add_child(tools_box)
 
 	side = VBoxContainer.new()
 	_pin(side, 1, 0, 1, 1, -RIGHT_W + 14, TOP_H, -14, -BOTTOM_H)
@@ -146,6 +153,20 @@ static func _slot_color(key: String) -> Color:
 	return PANEL
 
 
+## entries: [{"text": String, "cb": Callable, "glow": bool}]. A glowing button has something waiting.
+func set_tools(entries: Array) -> void:
+	for c in tools_box.get_children():
+		c.queue_free()
+	for e: Dictionary in entries:
+		var b := Button.new()
+		b.text = e.text
+		b.custom_minimum_size = Vector2(100, 52)
+		b.pressed.connect(e.cb)
+		if e.get("glow", false):
+			b.add_theme_color_override("font_color", Color(0.65, 0.95, 1.0))
+		tools_box.add_child(b)
+
+
 func clear_side() -> void:
 	for c in side.get_children():
 		c.queue_free()
@@ -172,5 +193,5 @@ static func party_entries_from_run(run: RunState) -> Array:
 	var out := []
 	for m in run.members:
 		var d: CharacterDef = m.def
-		out.append({"name": Txt.t(d.name_key), "hp": m.hp, "max_hp": d.class_def.max_hp, "tint": d.tint, "note": ""})
+		out.append({"name": Txt.t(d.name_key), "hp": m.hp, "max_hp": run.max_hp(m), "tint": d.tint, "note": ""})
 	return out

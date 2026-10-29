@@ -4,7 +4,7 @@ extends Node
 const CHAR_DIR := "res://data/characters/"
 const CLASS_DIR := "res://data/classes/"
 ## Roster display order. Every id needs a .tres in data/characters.
-const ROSTER := [&"lead", &"stardrop", &"hunter", &"wizard", &"bushberry", &"skeleton_archer", &"lewith_flark"]
+const ROSTER := [&"lead", &"stardrop", &"hunter", &"wizard", &"bushberry", &"skeleton_archer", &"lewith_flark", &"dog"]
 
 var characters: Dictionary = {}  # id -> CharacterDef
 var events: Array[Dictionary] = []
@@ -14,6 +14,11 @@ var quests: Array[Dictionary] = []  # rows of data/quests.csv
 var abilities: Dictionary = {}  # id -> Ability, from data/abilities.csv
 var combat_items: Dictionary = {}  # id -> Ability, from data/combat_items.csv
 var explore_events: Dictionary = {}  # id -> event, from data/explore_events.csv (see ExploreRules.parse_events)
+var levels: Dictionary = {}  # key -> number, from data/levels.csv (see LevelRules)
+var weapons: Dictionary = {}  # id -> row of data/weapons.csv: the smithy weapons and what they add
+var travel_events: Array[Dictionary] = []  # overworld encounters, data/travel_events.csv (events.csv format)
+var world_nodes: Dictionary = {}  # id -> row of data/overworld_nodes.csv
+var world_paths: Array[Dictionary] = []  # rows of data/overworld_paths.csv
 
 
 func _ready() -> void:
@@ -39,6 +44,17 @@ func reload() -> void:
 	for row in CsvTable.load_rows("res://data/combat_items.csv"):
 		combat_items[row.id] = Ability.from_item_row(row)
 	explore_events = ExploreRules.parse_events(CsvTable.load_rows("res://data/explore_events.csv"))
+	levels.clear()
+	for row in CsvTable.load_rows("res://data/levels.csv"):
+		levels[row.key] = float(row.value)
+	weapons.clear()
+	for row in CsvTable.load_rows("res://data/weapons.csv"):
+		weapons[row.id] = row
+	travel_events = parse_events(CsvTable.load_rows("res://data/travel_events.csv"))
+	world_nodes.clear()
+	for row in CsvTable.load_rows("res://data/overworld_nodes.csv"):
+		world_nodes[row.id] = row
+	world_paths = CsvTable.load_rows("res://data/overworld_paths.csv")
 
 
 ## Items the village shop sells, in table order.

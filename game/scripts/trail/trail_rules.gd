@@ -222,5 +222,9 @@ static func apply_effects(run: RunState, effects: String) -> Dictionary:
 					else: run.heal_member(m, n)
 			"combat": out.combat = val
 			"unlock": out.unlocks.append(val)
-			_: push_warning("unknown effect '%s'" % key)
+			_:
+				if String(Db.items.get(key, {}).get("kind", "")) == "gear":
+					run.add_item(key, n)  # rope:+1
+				else:
+					push_warning("unknown effect '%s'" % key)
 	return out

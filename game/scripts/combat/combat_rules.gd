@@ -319,6 +319,8 @@ static func damage(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vec
 	if a != null and a.element == "fire" and tgt.has_trait(PERK_FLAMMABLE):
 		dmg += FLAMMABLE_DMG
 	var magic := att.magic or (a != null and a.magic)
+	if magic or spell:
+		dmg += att.magic_power
 	if tgt.has_trait(TRAIT_BONES) and not magic and dist(from, tgt.cell) > 1:
 		dmg -= BONES_DR
 	return maxi(1, dmg)

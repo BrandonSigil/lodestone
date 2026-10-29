@@ -23,6 +23,7 @@ var damage := 1
 var range_min := 1
 var range_max := 1
 var magic := false
+var magic_power := 0  ## extra damage on spells and magic hits (the Lodestone's MORE MAGIC pick)
 var abilities: Array[Ability] = []  ## strike first, then class skills, then picked spells
 var spells: Array[StringName] = []  ## the spells picked into this unit's slots
 var traits: Array[StringName] = []  ## combat traits from the class and the character, plus their perks (see CombatRules.TRAIT_*)
@@ -49,17 +50,19 @@ var shown_hp := 1  ## HP the board draws; trails hp while hits animate
 
 
 ## mods: {"hp_pct": 100, "attack": 0, "defense": 0, "damage": 0, "move": 0}. Missing keys mean no change.
+## Levels and gear add flat "hp", "range_min", "range_max" and "magic_power" (see LevelRules, Game.weapon_mods).
 func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 	cls = c
-	max_hp = maxi(1, int(round(c.max_hp * float(mods.get("hp_pct", 100)) / 100.0)))
+	max_hp = maxi(1, int(round(c.max_hp * float(mods.get("hp_pct", 100)) / 100.0)) + int(mods.get("hp", 0)))
 	move = maxi(1, c.move + int(mods.get("move", 0)))
 	jump = c.jump
 	attack = c.attack + int(mods.get("attack", 0))
 	defense = c.defense + int(mods.get("defense", 0))
 	damage = maxi(1, c.damage + int(mods.get("damage", 0)))
-	range_min = c.range_min
-	range_max = c.range_max
+	range_min = maxi(1, c.range_min + int(mods.get("range_min", 0)))
+	range_max = maxi(range_min, c.range_max + int(mods.get("range_max", 0)))
 	magic = c.magic
+	magic_power = int(mods.get("magic_power", 0))
 	abilities.clear()
 	var strike := Db.ability("strike")
 	if strike:
@@ -119,7 +122,7 @@ static func from_def(d: CharacterDef, mods: Dictionary = {}, spell_ids: Variant 
 
 
 static func from_member(m: Dictionary, mods: Dictionary = {}) -> CombatUnit:
-	var u := from_def(m.def, mods, m.get("spells"))
+	var u := from_def(m.def, LevelRules.merge(mods, m.get("bonus", {})), m.get("spells"))
 	u.hp = clampi(m.hp, 1, u.max_hp)
 	u.shown_hp = u.hp
 	u.member = m

@@ -14,11 +14,13 @@ var view := 0  ## camera quarter turns the map opens with
 var turn := true  ## false locks the camera (building sprites only read from the front)
 var fog := true  ## false shows every cell from the start (the village): no fog of war
 var start: Array[Vector2i] = []  ## party cells, leader first
-## [{"id", "event", "sight", "loot", "units": [{"id": class id, "cell": Vector2i}]}]
+## [{"id", "event", "sight", "loot", "boss": a boss fight (more XP), "end": beating it ends the E2E test,
+##   "units": [{"id": class id, "cell": Vector2i}]}]
 var groups: Array[Dictionary] = []
 ## [{"id", "kind", "event", "cell": Vector2i, "floor": terrain letter the cell becomes when opened,
 ##   "to": map an "enter" thing leads to, "at": Vector2i cell it arrives on there,
-##   "once": flags ("a|b"); when any is set the thing is gone for good}]
+##   "once": flags ("a|b"); when any is set the thing is gone for good,
+##   "when": a flag that must be set before the thing shows at all ("" = always)}]
 var things: Array[Dictionary] = []
 
 
@@ -55,11 +57,13 @@ static func from_dict(d: Dictionary) -> ExploreMap:
 		for u: Dictionary in g.get("units", []):
 			units.append({"id": String(u.id), "cell": _cell(u.cell)})
 		m.groups.append({"id": String(g.get("id", "group%d" % m.groups.size())), "event": String(g.get("event", "spot_people")),
-			"sight": int(g.get("sight", ExploreRules.ENEMY_SIGHT)), "loot": String(g.get("loot", "")), "units": units})
+			"sight": int(g.get("sight", ExploreRules.ENEMY_SIGHT)), "loot": String(g.get("loot", "")), "units": units,
+			"boss": bool(g.get("boss", false)), "end": bool(g.get("end", false))})
 	for t: Dictionary in d.get("things", []):
 		m.things.append({"id": String(t.get("id", "thing%d" % m.things.size())), "kind": String(t.get("kind", "chest")),
 			"event": String(t.get("event", "")), "cell": _cell(t.cell), "floor": String(t.get("floor", "s")),
-			"to": String(t.get("to", "")), "at": _cell(t.get("at", [-1, -1])), "once": String(t.get("once", ""))})
+			"to": String(t.get("to", "")), "at": _cell(t.get("at", [-1, -1])), "once": String(t.get("once", "")),
+			"when": String(t.get("when", ""))})
 	return m
 
 

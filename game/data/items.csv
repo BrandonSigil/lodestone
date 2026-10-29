@@ -6,3 +6,4 @@ crate,ITEM_CRATE,crate,##/##,9,36,0,1
 salve,ITEM_SALVE,med,#,4,0,2,1
 herbkit,ITEM_HERBKIT,herb,##/#.,9,0,8,1
 books,ITEM_BOOKS,book,##/#.,0,0,0,0
+rope,ITEM_ROPE,gear,#,0,0,0,0

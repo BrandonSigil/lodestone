@@ -9,7 +9,9 @@ const FOOD_PER_SLOT := 10
 const MED_PER_SLOT := 5
 const MAX_LINES := 200
 
-var members: Array[Dictionary] = []  # {"def": CharacterDef, "hp": int}
+var members: Array[Dictionary] = []  # {"def": CharacterDef, "hp": int, "bonus": stat mods from levels and gear}
+var adventure := false  ## the E2E loop's run: kept through a wake-up, saved in meta (Game.start_adventure)
+var items := {}  ## gear found on the way (data/items.csv rows of kind gear), id -> count; one slot each
 var food := 0
 var medicine := 0
 var gold := 0
@@ -45,7 +47,7 @@ func strangeness() -> float:
 
 
 func max_hp(m: Dictionary) -> int:
-	return (m.def as CharacterDef).class_def.max_hp
+	return (m.def as CharacterDef).class_def.max_hp + int(m.get("bonus", {}).get("hp", 0))
 
 
 func alive() -> Array[Dictionary]:
@@ -88,8 +90,33 @@ func med_slots() -> int:
 	return ceili(float(medicine) / MED_PER_SLOT)
 
 
+func item_slots() -> int:
+	var n := 0
+	for id in items:
+		n += int(items[id])
+	return n
+
+
 func used_slots() -> int:
-	return gear_slots() + food_slots() + med_slots()
+	return gear_slots() + item_slots() + food_slots() + med_slots()
+
+
+func item_count(id: String) -> int:
+	return int(items.get(id, 0))
+
+
+## Adds (or with n < 0 spends) gear. No room: the extra is left behind.
+func add_item(id: String, n: int) -> void:
+	var have := item_count(id)
+	var want := maxi(0, have + n)
+	if want > have:
+		want = mini(want, have + CAPACITY - used_slots())
+		if want < have + n:
+			note(Txt.f("LOG_OVERFLOW", [have + n - want, Txt.t("SLOT_" + id.to_upper())]))
+	if want <= 0:
+		items.erase(id)
+	else:
+		items[id] = want
 
 
 ## Slot contents in display order, e.g. ["SLOT_BOOKS", "SLOT_FOOD", ...].
@@ -97,6 +124,9 @@ func slot_list() -> Array[String]:
 	var out: Array[String] = []
 	for i in gear_slots():
 		out.append("SLOT_BOOKS")
+	for id in items:
+		for i in int(items[id]):
+			out.append("SLOT_" + String(id).to_upper())
 	for i in food_slots():
 		out.append("SLOT_FOOD")
 	for i in med_slots():
@@ -106,7 +136,7 @@ func slot_list() -> Array[String]:
 
 func add_food(n: int) -> void:
 	food = maxi(0, food + n)
-	var room := (CAPACITY - gear_slots() - med_slots()) * FOOD_PER_SLOT
+	var room := (CAPACITY - gear_slots() - item_slots() - med_slots()) * FOOD_PER_SLOT
 	if food > room:
 		note(Txt.f("LOG_OVERFLOW", [food - room, Txt.t("SLOT_FOOD")]))
 		food = maxi(0, room)
@@ -114,7 +144,7 @@ func add_food(n: int) -> void:
 
 func add_medicine(n: int) -> void:
 	medicine = maxi(0, medicine + n)
-	var room := (CAPACITY - gear_slots() - food_slots()) * MED_PER_SLOT
+	var room := (CAPACITY - gear_slots() - item_slots() - food_slots()) * MED_PER_SLOT
 	if medicine > room:
 		note(Txt.f("LOG_OVERFLOW", [medicine - room, Txt.t("SLOT_MEDICINE")]))
 		medicine = maxi(0, room)

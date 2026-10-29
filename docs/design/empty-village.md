@@ -1,5 +1,12 @@
 # Empty village premise: what changes in the systems
 
+> 2026-10-28: the E2E loop changed several things here ([USER] lines under "End-to-end loop" in
+> `docs/decisions.md`). There is no corgi at the start: a different dog is rescued from a locked house
+> in the village (section 1 is superseded). A fall costs nothing: the party wakes in the square with
+> every item (the "pack is lost" lines in sections 4 and 3 are superseded). Travel is the overworld
+> (`docs/systems/overworld.md`), not the day-button trail. The Lodestone sits in a statue's hand in the
+> square and its menu opens any time from the bottom bar.
+
 Status: draft 3.2, 2026-10-27. Draft 3.2: the smithy pick is final and the hidden item is a book that opens a magic path, per Brandon. Draft 3.1 set the smithy weapons to sword, daggers and bow (knight, rogue, archer) and keeps levels through a recall, per Brandon. Draft 3 added the nobody start and the job system (sections 7 and 8). Brandon answered the first round of questions; his answers are `[USER]` in
 `docs/decisions.md`. Everything else here is `[AI]` until he retags it.
 Story, names, lore and copy are Brandon's. This doc only covers mechanics; all text examples are placeholders.

@@ -52,17 +52,24 @@ func _sections_row() -> HBoxContainer:
 	row.add_theme_constant_override("separation", 26)
 	var sections := [
 		["PLAY", [
-			["Start game", "hero's cottage, the first walk", _start_game],
+			["New game", "fresh save: the cottage, the E2E loop", Game.new_game],
+			["Continue", "the cottage, keeping what you found", _start_game],
+			["Overworld", "town, the paths, the snowy pass", _go.bind(Game.OVERWORLD)],
+		]],
+		["+SHELVED", [
 			["Village hub", "team, shop, pack, the gate", _go.bind(Game.VILLAGE)],
-			["Trail", "the route, the current party", _trail],
-			["World map", "the route and what's unearthed", _go.bind(Game.WORLD_MAP)],
+			["Trail", "the day-button trail", _trail],
+			["World map", "the riso route map", _go.bind(Game.WORLD_MAP)],
 		]],
 		["EXPLORE", [
 			["Hero's cottage", "home (the start)", _explore.bind("home")],
 			["Village square", "the open village map", _explore.bind("village")],
 			["House NE", "the quiet house, hidden book", _explore.bind("house_ne")],
+			["Dog's house", "the dog shut in (E2E loop)", _explore.bind("house_dog")],
+			["Snow pass", "the climb, the wolf den, the crypt", _explore.bind("snow_pass")],
+			["Wolf den", "the cave off the pass", _explore.bind("wolf_den")],
 			["Tavern", "walk-in interior", _explore.bind("tavern")],
-			["Crypt", "the big test map, wolves and bandits", _explore.bind("crypt")],
+			["Crypt", "the Lich King's dungeon, the boss", _explore.bind("crypt")],
 		]],
 		["FIGHT", [
 			["Trail fight", "debug encounter", _trail_fight],
@@ -102,7 +109,7 @@ func _button(label: String, desc: String, cb: Callable) -> Button:
 	return b
 
 
-## A new game: the cottage, with no walk remembered yet.
+## Back to the cottage with what this save has found (New game wipes the save).
 func _start_game() -> void:
 	Game.explore_memory = {}
 	_explore("home")

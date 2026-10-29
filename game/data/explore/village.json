@@ -356,6 +356,20 @@
     "walk": false
    },
    {
+    "sprite": "ph_statue",
+    "cell": [
+     20,
+     21
+    ],
+    "foot": [
+     2,
+     2
+    ],
+    "tall": 2.2,
+    "sight": 2.0,
+    "walk": false
+   },
+   {
     "sprite": "b_townhall",
     "cell": [
      17,
@@ -816,7 +830,7 @@
   {
    "id": "gate",
    "kind": "exit",
-   "event": "exit",
+   "event": "village_gate",
    "cell": [
     20,
     37
@@ -885,11 +899,47 @@
   {
    "id": "west_door",
    "kind": "enter",
-   "event": "door_stuck",
+   "event": "door_dog",
    "cell": [
     7,
     20
-   ]
+   ],
+   "to": "house_dog",
+   "at": [
+    3,
+    5
+   ],
+   "once": "met_dog"
+  },
+  {
+   "id": "west_door_open",
+   "kind": "enter",
+   "event": "",
+   "cell": [
+    7,
+    20
+   ],
+   "to": "house_dog",
+   "at": [
+    3,
+    5
+   ],
+   "when": "met_dog"
+  },
+  {
+   "id": "dog_window",
+   "kind": "window",
+   "event": "dog_window",
+   "cell": [
+    9,
+    18
+   ],
+   "to": "house_dog",
+   "at": [
+    5,
+    3
+   ],
+   "once": "met_dog"
   },
   {
    "id": "se_door",
@@ -927,6 +977,36 @@
     12
    ],
    "once": "weapon_sword|weapon_daggers|weapon_bow"
+  },
+  {
+   "id": "statue",
+   "kind": "statue",
+   "event": "statue_lodestone",
+   "cell": [
+    21,
+    22
+   ],
+   "once": "has_lodestone"
+  },
+  {
+   "id": "food_barrel",
+   "kind": "cache",
+   "event": "cache_food",
+   "cell": [
+    33,
+    17
+   ],
+   "once": "got_food_barrel"
+  },
+  {
+   "id": "smithy_rope",
+   "kind": "cache",
+   "event": "cache_rope",
+   "cell": [
+    11,
+    10
+   ],
+   "once": "got_rope"
   }
  ]
 }

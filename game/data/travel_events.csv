@@ -1,0 +1,6 @@
+id,weight,min_s,max_s,once_flag,text_key,opt1_key,opt1_check,opt1_dc,opt1_win,opt1_lose,opt2_key,opt2_check,opt2_dc,opt2_win,opt2_lose,opt3_key,opt3_check,opt3_dc,opt3_win,opt3_lose
+tr_wolves,3,0,1,,EV_TR_WOLVES,OPT_FIGHT,fight,0,combat:pair_wolves,,OPT_CALM,tame,12,,combat:pair_wolves,OPT_RUN,sneak,12,,combat:pair_wolves
+tr_bandits,3,0,1,,EV_TR_BANDITS,OPT_FIGHT,fight,0,combat:pair_bandits,,OPT_TALK,persuade,12,food:-2,combat:pair_bandits,OPT_SNEAK,sneak,12,,combat:pair_bandits
+tr_found,2,0,1,,EV_TR_FOUND,OPT_TAKE,none,0,food:+3;medicine:+1,,,,,,,,,,,
+tr_house,3,0,1,,EV_TR_HOUSE,OPT_RUMMAGE,sneak,11,food:+4;rope:+1;gold:+5,combat:pair_wolves,OPT_LEAVE,none,0,,,,,,,
+tr_cold,2,0,1,,EV_TR_COLD,OPT_PUSH_ON,nerve,10,,hp_all:-1,OPT_HUDDLE,none,0,food:-2,,,,,,
