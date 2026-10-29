@@ -190,7 +190,7 @@ static func resolve_option(run: RunState, opt: Dictionary) -> Dictionary:
 
 ## Effects are "key:+n;key:-n" strings from events.csv and encounters.csv.
 static func apply_effects(run: RunState, effects: String) -> Dictionary:
-	var out := {"combat": "", "unlocks": []}
+	var out := {"combat": "", "unlocks": [], "weapon": ""}
 	for part in effects.split(";", false):
 		var kv := part.split(":")
 		if kv.size() != 2:
@@ -221,6 +221,7 @@ static func apply_effects(run: RunState, effects: String) -> Dictionary:
 					if n < 0: run.hurt(m, -n)
 					else: run.heal_member(m, n)
 			"combat": out.combat = val
+			"weapon": out.weapon = val  # weapon:bow: the hero takes it, and with it its job (Game.take_weapon)
 			"unlock": out.unlocks.append(val)
 			_:
 				if Db.items.has(key):

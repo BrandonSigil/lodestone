@@ -50,6 +50,12 @@ func run(s: Node, f: int, step: String) -> bool:
 			# The Lodestone menu with a skill rank waiting for the dog (rolled stats show in each line).
 			if f == 5:
 				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false  # a shot never writes the real save
+				game.take_weapon("sword")
+				var hero: Dictionary = game.level_state("lead")
+				hero.jobs.knight.level = 10
+				hero.jobs.knight.pending = 1
+				game.meta.levels["lead"] = hero
 				var st: Dictionary = game.level_state("dog")
 				st.pending = 1
 				st.ranks["bite"] = 1

@@ -172,14 +172,63 @@ func ensure_run() -> void:
 
 # --- the adventure party (E2E loop) ---------------------------------------------------------
 
-## The hero, a nobody ([USER] 2026-10-27): the lead's look and skills on the nobody class.
-## The smithy weapon adds to it (weapon_mods) instead of changing the job.
+## The hero: the lead's look and skills on the class of his job. [USER] pc-9: the weapon is the job, from the
+## start (sword knight, daggers rogue, bow archer, the hidden book mage); before the smithy he's a nobody.
+## The weapon also adds its own numbers (weapon_mods).
 func hero_def() -> CharacterDef:
-	if _hero == null:
+	var job := job_id()
+	var cls_id := String(Db.jobs[job].class) if Db.jobs.has(job) else "nobody"
+	if _hero == null or String(_hero.class_def.id) != cls_id:
 		_hero = Db.character(&"lead").duplicate()
-		_hero.class_def = load("res://data/classes/nobody.tres")
+		_hero.class_def = load("res://data/classes/%s.tres" % cls_id)
 		_hero.traits = []
 	return _hero
+
+
+## The hero's job: the one his weapon makes ("" with bare hands).
+func job_id() -> String:
+	return String(Db.weapons.get(weapon_id(), {}).get("job", ""))
+
+
+## Take a weapon from the smithy rack: it becomes the hero's job ([USER] pc-9, pc-12). He keeps his level and
+## rolled gains; his stats shift to the new job's base; a job he never had starts at job level 1 with no ranks.
+func take_weapon(id: String) -> void:
+	for w in Db.weapons:
+		var f := String(Db.weapons[w].flag)
+		if f != "":
+			meta.flags.erase(f)
+	var flag := String(Db.weapons.get(id, {}).get("flag", ""))
+	if flag != "":
+		meta.flags.append(flag)
+	var s := level_state("lead")
+	var job := job_id()
+	if job != "" and not s.jobs.has(job):
+		s.jobs[job] = LevelRules.fresh_job()
+	meta.levels["lead"] = s
+	refresh_party()
+	save_adventure()
+	save_meta()
+
+
+## The state that holds this member's ranks: the hero's current job, or the character itself.
+func rank_state(id: String) -> Dictionary:
+	var s := level_state(id)
+	if id == "lead" and job_id() != "":
+		return s.jobs.get(job_id(), LevelRules.fresh_job())
+	return s
+
+
+## Pick one of the job's two branches once it's ready ([USER] pc-13; placeholders until their skills exist).
+func choose_branch(which: String) -> bool:
+	var s := level_state("lead")
+	var job := job_id()
+	if not s.jobs.has(job) or not LevelRules.branch_ready(s.jobs[job], Db.levels) or not which in ["a", "b"]:
+		return false
+	s.jobs[job].branch = which
+	meta.levels["lead"] = s
+	save_adventure()
+	save_meta()
+	return true
 
 
 func adventure_defs() -> Array[CharacterDef]:
@@ -225,10 +274,12 @@ func refresh_party() -> void:
 			run.join(d)
 	for m in run.members:
 		var id := String((m.def as CharacterDef).id)
+		if id == "lead":
+			m.def = hero_def()  # the class follows the weapon
 		var before := run.max_hp(m)
 		var s := level_state(id)
 		m.bonus = LevelRules.merge(LevelRules.bonus(s, Db.levels), weapon_mods(id))
-		m.ranks = s.ranks
+		m.ranks = rank_state(id).ranks
 		m.hp = clampi(int(m.hp) + maxi(0, run.max_hp(m) - before), 0, run.max_hp(m))
 
 
@@ -243,6 +294,7 @@ func weapon_mods(id: String) -> Dictionary:
 	return out
 
 
+## The weapon the hero holds now: the one whose flag is set (take_weapon keeps it to one).
 func weapon_id() -> String:
 	for id in Db.weapons:
 		var f := String(Db.weapons[id].flag)
@@ -263,10 +315,13 @@ func award_xp(amount: int) -> PackedStringArray:
 		return lines
 	for m in run.members:
 		var d: CharacterDef = m.def
-		var s := level_state(String(d.id))
+		var id := String(d.id)
+		var s := level_state(id)
+		var job := job_id() if id == "lead" else ""
+		var odds: Dictionary = Db.growth.get(job if Db.growth.has(job) else id, {})
 		var had := int(s.pending)
 		var before: Dictionary = s.gains.duplicate()
-		for lv in LevelRules.gain(s, amount, Db.levels, Db.growth.get(String(d.id), {}), run.rng):
+		for lv in LevelRules.gain(s, amount, Db.levels, odds, run.rng):
 			lines.append(Txt.f("UI_LEVEL_UP", [Txt.t(d.name_key), lv]))
 		var up: PackedStringArray = []
 		for k in LevelRules.STATS:
@@ -275,26 +330,49 @@ func award_xp(amount: int) -> PackedStringArray:
 				up.append("%s +%d" % [Txt.t("UI_STAT_" + k.to_upper()), n * (int(Db.levels.get("growth_hp", 2)) if k == "hp" else 1)])
 		if not up.is_empty():
 			lines.append("  " + "  ".join(up))
-		if int(s.pending) > had:
+		var waiting := int(s.pending) > had
+		if id == "lead":
+			s.pending = 0  # the hero's ranks come from his job (none before the smithy)
+			waiting = false
+		if job != "":
+			# his job levels on the same XP ([USER] pc-12)
+			var js: Dictionary = s.jobs.get(job, LevelRules.fresh_job())
+			var jhad := int(js.pending)
+			var was_ready := LevelRules.branch_ready(js, Db.levels)
+			LevelRules.gain(js, amount, Db.levels)
+			waiting = int(js.pending) > jhad
+			if not was_ready and LevelRules.branch_ready(js, Db.levels):
+				lines.append(Txt.f("UI_BRANCH_WAITING", Txt.t(String(Db.jobs[job].name_key))))
+			s.jobs[job] = js
+		if waiting:
 			lines.append(Txt.f("UI_LS_PICK_WAITING", Txt.t(d.name_key)))
-		meta.levels[String(d.id)] = s
+		meta.levels[id] = s
 	refresh_party()
 	save_adventure()
 	return lines
 
 
+## Ranks waiting to be spent and branches waiting to be picked: what makes the Lodestone button glow.
 func pending_picks() -> int:
 	var n := 0
 	for id in meta.levels:
 		n += int(level_state(String(id)).pending)
+	var job := job_id()
+	if job != "":
+		var js: Dictionary = rank_state("lead")
+		n += int(js.pending) + (1 if LevelRules.branch_ready(js, Db.levels) else 0)
 	return n
 
 
-## Spend one waiting rank on one of a party member's skills ([USER] pc-8).
+## Spend one waiting rank on one of a party member's skills ([USER] pc-8); the hero's go to his current job.
 func rank_skill(id: String, skill: String) -> bool:
 	var s := level_state(id)
-	if not LevelRules.rank_up(s, skill, Db.skill_ranks):
+	var job := job_id() if id == "lead" else ""
+	var target: Dictionary = s.jobs.get(job, LevelRules.fresh_job()) if job != "" else s
+	if not LevelRules.rank_up(target, skill, Db.skill_ranks):
 		return false
+	if job != "":
+		s.jobs[job] = target
 	meta.levels[id] = s
 	refresh_party()
 	save_adventure()

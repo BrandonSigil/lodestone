@@ -1,0 +1,5 @@
+id,name_key,class,branch_a,branch_b,note
+knight,JOB_KNIGHT,job_knight,JOB_KNIGHT_A,JOB_KNIGHT_B,sword; branches are placeholders until their skills are designed
+rogue,JOB_ROGUE,job_rogue,JOB_ROGUE_A,JOB_ROGUE_B,daggers
+archer,JOB_ARCHER,job_archer,JOB_ARCHER_A,JOB_ARCHER_B,bow
+mage,JOB_MAGE,job_mage,JOB_MAGE_A,JOB_MAGE_B,the hidden book

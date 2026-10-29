@@ -716,6 +716,9 @@ func choose(o: Dictionary, ctx: Dictionary) -> void:
 	if fx.run != "":
 		var out := TrailRules.apply_effects(Game.run, fx.run)
 		Game.absorb(out.unlocks)
+		if out.weapon != "":
+			Game.take_weapon(out.weapon)
+			lines.append(Txt.f("UI_NOW_JOB", Txt.t(String(Db.jobs[Game.job_id()].name_key))))
 		_after_change()
 		for f: String in out.unlocks:
 			if Txt.has("UI_GOT_" + f.to_upper()):

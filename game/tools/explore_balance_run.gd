@@ -54,9 +54,10 @@ func _party(level: int, weapon: String) -> Array:
 	var mods := {}
 	for k in ["attack", "damage", "move", "range_min", "range_max"]:
 		mods[k] = int(row.get(k, 0))
-	mods = LevelRules.merge(LevelRules.bonus(_rolled("lead", level), Db.levels), mods)
+	mods = LevelRules.merge(LevelRules.bonus(_rolled(String(row.get("job", "lead")), level), Db.levels), mods)
 	var hero := Db.character(&"lead").duplicate()
-	hero.class_def = load("res://data/classes/nobody.tres")
+	var job := String(row.get("job", ""))  # the weapon is the job ([USER] pc-9)
+	hero.class_def = load("res://data/classes/%s.tres" % (String(Db.jobs[job].class) if Db.jobs.has(job) else "nobody"))
 	hero.traits.clear()
 	var out := [CombatUnit.from_def(hero, mods)]
 	out.append(CombatUnit.from_def(Db.character(&"dog"), LevelRules.bonus(_rolled("dog", level), Db.levels)))

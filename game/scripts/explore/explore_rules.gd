@@ -480,7 +480,7 @@ static func parse_events(rows: Array[Dictionary]) -> Dictionary:
 	var out := {}
 	for row in rows:
 		var ev := {"id": row.id, "text_key": row.text_key, "options": []}
-		for n in range(1, 5):
+		for n in range(1, 6):
 			var key: String = row.get("opt%d_key" % n, "")
 			if key == "":
 				continue
@@ -497,11 +497,13 @@ static func parse_events(rows: Array[Dictionary]) -> Dictionary:
 
 
 ## "" (anyone), "skill:<check>" (someone has it), "class:<id>", "char:<id>", "item:<id>" (the pack holds one),
-## "flag:<id>" or "noflag:<id>" (a meta flag is or isn't set). `defs`: the party's CharacterDefs.
-## have: {"items": id -> count, "flags": Array of set flags}.
+## "flag:<id>" or "noflag:<id>" (a meta flag is or isn't set); several joined by "&" must all hold.
+## `defs`: the party's CharacterDefs. have: {"items": id -> count, "flags": Array of set flags}.
 static func need_met(need: String, defs: Array, have := {}) -> bool:
 	if need == "":
 		return true
+	if need.contains("&"):
+		return Array(need.split("&", false)).all(func(n: String) -> bool: return need_met(n.strip_edges(), defs, have))
 	var kv := need.split(":")
 	if kv.size() != 2:
 		return false

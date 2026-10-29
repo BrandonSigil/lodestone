@@ -6,13 +6,22 @@ extends RefCounted
 ## can't use). Every few levels a skill rank to spend in the Lodestone menu; each rank adds an effect from
 ## data/skill_ranks.csv. Skills also grow on their own as the stats grow. Numbers live in data/levels.csv.
 ##
-## A level state is {"level": int, "xp": int, "gains": {stat: n}, "ranks": {skill id: n}, "pending": int}.
+## A level state is {"level": int, "xp": int, "gains": {stat: n}, "ranks": {skill id: n}, "pending": int,
+## "jobs": {job id: job state}}. The hero's skills come from his job ([USER] pc-9, pc-12, step 2), so his ranks
+## live in a job state {"level", "xp", "ranks", "pending", "branch"} per job, levelled by the same XP; his
+## character level and rolled gains are shared by every job.
 
 const STATS := ["hp", "damage", "armor", "magic", "crit"]
 
 
 static func fresh() -> Dictionary:
-	return {"level": 1, "xp": 0, "gains": {"hp": 0, "damage": 0, "armor": 0, "magic": 0, "crit": 0}, "ranks": {}, "pending": 0}
+	return {"level": 1, "xp": 0, "gains": {"hp": 0, "damage": 0, "armor": 0, "magic": 0, "crit": 0}, "ranks": {}, "pending": 0,
+		"jobs": {}}
+
+
+## A job's own level, ranks and branch, from scratch: a new job starts at 0 ([USER] pc-12).
+static func fresh_job() -> Dictionary:
+	return {"level": 1, "xp": 0, "ranks": {}, "pending": 0, "branch": ""}
 
 
 ## Old or partial saves get the missing keys. A save from before rolled growth keeps what its levels and
@@ -35,7 +44,24 @@ static func normalize(s: Variant) -> Dictionary:
 	var ranks: Dictionary = s.get("ranks", {})
 	for id in ranks:
 		out.ranks[String(id)] = int(ranks[id])
+	var jobs: Dictionary = s.get("jobs", {})
+	for id in jobs:
+		var j: Dictionary = jobs[id]
+		var js := fresh_job()
+		js.level = int(j.get("level", 1))
+		js.xp = int(j.get("xp", 0))
+		js.pending = int(j.get("pending", 0))
+		js.branch = String(j.get("branch", ""))
+		var jr: Dictionary = j.get("ranks", {})
+		for k in jr:
+			js.ranks[String(k)] = int(jr[k])
+		out.jobs[String(id)] = js
 	return out
+
+
+## Can this job take its branch now: at branch_level and not yet branched ([USER] pc-13)?
+static func branch_ready(job: Dictionary, cfg: Dictionary) -> bool:
+	return String(job.get("branch", "")) == "" and int(job.get("level", 1)) >= int(cfg.get("branch_level", 10))
 
 
 ## Adds XP and returns the levels reached (empty when none). Each level rolls the stats from `odds` (a

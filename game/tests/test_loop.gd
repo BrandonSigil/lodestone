@@ -424,3 +424,74 @@ func test_leaf_frame_holds_pack_and_party() -> void:
 	eq(hud.leaf_party.get_child_count(), 2, "the party in the right panel")
 	ok(Rect2(Vector2.ZERO, vs).encloses(Rect2(hud.leaf_pack.position, hud.leaf_pack.size)), "the button is on screen")
 	hud.free()
+
+
+# --- the weapon is the job ([USER] pc-9, pc-12, pc-13; player-choice step 2) -----------------------
+
+func _fresh_game() -> Dictionary:
+	_db()
+	var saved := {"meta": Game.meta.duplicate(true), "on": Game.save_enabled}
+	Game.save_enabled = false
+	Game.meta = Game._fresh_meta()
+	Game.meta.flags = ["met_dog"]
+	Game.start_adventure()
+	return saved
+
+
+func _restore(saved: Dictionary) -> void:
+	Game.meta = saved.meta
+	Game.save_enabled = saved.on
+	Game.run = null
+
+
+func test_the_weapon_makes_the_job() -> void:
+	var saved := _fresh_game()
+	eq(Game.job_id(), "", "bare hands: no job yet")
+	eq(String(Game.hero_def().class_def.id), "nobody")
+	Game.take_weapon("sword")
+	eq(Game.job_id(), "knight")
+	var hero: Dictionary = Game.run.members[0]
+	eq(String((hero.def as CharacterDef).class_def.id), "job_knight", "the party's hero is a knight now")
+	var u := CombatUnit.from_member(hero)
+	ok(u.abilities.any(func(a: Ability) -> bool: return a.id == "shove"), "with the knight's skill")
+	eq(u.res_kind, "rage")
+	_restore(saved)
+
+
+func test_switching_jobs_keeps_the_level() -> void:
+	var saved := _fresh_game()
+	Game.take_weapon("sword")
+	Game.award_xp(100 * 9)  # level 10: the job is level 10 too
+	var s := Game.level_state("lead")
+	eq(int(s.level), 10)
+	var gains: Dictionary = s.gains.duplicate()
+	var js: Dictionary = s.jobs.knight
+	eq(int(js.level), 10, "the job levels on the same XP")
+	eq(int(js.pending), 2, "ranks every 4 job levels")
+	ok(Game.rank_skill("lead", "shove"))
+	ok(LevelRules.branch_ready(Game.rank_state("lead"), Db.levels), "job level 10: time to branch")
+	ok(Game.choose_branch("b"))
+	eq(String(Game.rank_state("lead").branch), "b")
+	ok(not Game.choose_branch("a"), "one branch per job")
+	Game.take_weapon("daggers")
+	s = Game.level_state("lead")
+	eq(Game.job_id(), "rogue")
+	eq(int(s.level), 10, "the character level stays")
+	eq(s.gains, gains, "and so do the rolled gains")
+	eq(int(Game.rank_state("lead").level), 1, "the new job starts at 0")
+	eq(Game.rank_state("lead").ranks, {}, "with no ranks")
+	eq(String((Game.run.members[0].def as CharacterDef).class_def.id), "job_rogue", "stats shift to the rogue's base")
+	Game.take_weapon("sword")
+	eq(int(Game.rank_state("lead").ranks.get("shove", 0)), 1, "back to the sword: the knight's rank is still there")
+	_restore(saved)
+
+
+func test_the_rack_offers_what_the_hero_doesnt_hold() -> void:
+	_db()
+	var ev: Dictionary = Db.explore_events["smithy_rack"]
+	var shown := func(flags: Array) -> Array:
+		return ev.options.filter(func(o: Dictionary) -> bool: return ExploreRules.need_met(o.need, [], {"flags": flags})).map(func(o: Dictionary) -> String: return o.key)
+	eq(shown.call([]), ["OPT_TAKE_SWORD", "OPT_TAKE_DAGGERS", "OPT_TAKE_BOW", "OPT_LEAVE"], "the book waits until it's found")
+	eq(shown.call(["weapon_sword", "found_book"]), ["OPT_TAKE_DAGGERS", "OPT_TAKE_BOW", "OPT_TAKE_BOOK", "OPT_LEAVE"], "swap any time")
+	var out := TrailRules.apply_effects(RunState.new(), "weapon:bow")
+	eq(out.weapon, "bow")
