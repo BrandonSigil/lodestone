@@ -4,7 +4,8 @@
     python3 tools/art/anim_sheet_cut.py art/picsart/out/anim-lead-se_v1.png --id lead --dir se
     python3 tools/art/anim_sheet_cut.py art/picsart/out/anim-lead-ne_v1.png --id lead --dir ne
 
-The sheet is five rows of separate figures on cream: idle 4, walk 6, swing 6, cast 6, hurt 2 + down 2.
+The sheet is five rows of separate figures on cream: idle 4 + blink 1, walk 6, swing 6, cast 6, hurt 2 + down 2
+(older sheets have no blink frame; their idle row is just 4).
 The paper is keyed off (char_art.key_background), rows are found from the empty bands between them and
 figures from the gaps inside a row (a spark or sweat drop above a figure joins the figure it sits over).
 Every frame is scaled by one factor per sheet (the idle figures come out HERO_H tall) and placed in a
@@ -34,9 +35,10 @@ ANCHOR = (96, 160)
 HERO_H = 94  # idle body height in art px (wide rows only, see body_height); hair tips reach about 108 (C3)
 
 # Rows of the sheet: (anim, expected frames). Row 5 holds hurt and down.
-ROWS = [("idle", 4), ("walk", 6), ("attack", 6), ("cast", 6), ("hurt_down", 4)]
+ROWS = [("idle", 5), ("walk", 6), ("attack", 6), ("cast", 6), ("hurt_down", 4)]
 ANIMS = {  # C16; ready and advance are idle and walk with the weapon out (combat stance)
     "idle": {"fps": 6, "loop": True},
+    "blink": {"fps": 6, "loop": False},  # one frame: idle frame 1 with the eyes shut
     "ready": {"fps": 6, "loop": True},
     "advance": {"fps": 10, "loop": True},
     "walk": {"fps": 10, "loop": True},
@@ -189,6 +191,9 @@ def main():
         frames = [place(rgba, alpha, b, scale, pin) for b in bx]
         flag = "" if len(frames) == want else "  (expected %d)" % want
         print("  %s: %d frames%s" % (anim, len(frames), flag))
+        if anim == "idle" and len(frames) >= 5:
+            write("blink", frames[4:5])
+            frames = frames[:4]
         if anim == "hurt_down":
             half = max(1, len(frames) // 2)
             write("hurt", frames[:half])

@@ -1,19 +1,21 @@
 LODESTONE FALL VILLAGE BUILDINGS, RE-ROLL: THE TWO LONG HOMES (home B and home C)
 
-Image 1 = the four homes sheet (art/picsart/out/village-fall/buildings_a.png). Keep both bottom houses exactly as they are: same walls, roofs, windows, ivy, bushes, colours and finish. Change only their proportions.
-Image 2 = the finish: docs/art/references/style-flat-forest.png.
+Image 1 = the four homes sheet (art/picsart/out/village-fall/buildings_a.png). Keep both bottom houses as they are: same walls, roofs, windows, ivy, bushes and colours. Change their proportions, and draw them with the line art below (image 1 has too little of it).
+Image 2 = the finish: docs/art/references/style-flat-forest.png. Copy its paint-marker line art round every shape and its soft painted fills.
 
 Aspect 3:2, plain cream paper background (#eae8d6). No text anywhere.
 Layout: two equal cells side by side with a wide clear cream gap between them. ONE building per cell, centred, nothing crosses a cell edge.
    left: the two-storey half-timbered house from the bottom left of image 1.
    right: the thatched cottage from the bottom right of image 1.
 
-PROPORTIONS (THE ONLY CHANGE, IMPORTANT): each house is clearly RECTANGULAR, not square. Seen from above its floor plan is 4 long by 3 deep. The LEFT front wall, the one with the door, is the LONG side: make it a third longer than in image 1, with one more window. The RIGHT front wall, the gable end, is the SHORT side and stays as it is. The roof ridge runs along the long left wall. So the front corner of the house, its lowest point, sits RIGHT of the cell's centre, at about four sevenths of the building's width from its left edge.
+PROPORTIONS (IMPORTANT): each house is clearly RECTANGULAR, not square. Seen from above its floor plan is 4 long by 3 deep. The LEFT front wall, the one with the door, is the LONG side: make it a third longer than in image 1, with one more window. The RIGHT front wall, the gable end, is the SHORT side and stays as it is. The roof ridge runs along the long left wall. So the front corner of the house, its lowest point, sits RIGHT of the cell's centre, at about four sevenths of the building's width from its left edge.
 
 VIEW: 2:1 dimetric three-quarter view from above, the same angle as image 1. Light from the upper left. Roof fully on.
 GROUNDING: same as image 1: low grey stone foundation, a thin band of golden grass tufts hugging the walls, one bush at a corner. No grass pad spreading past the walls, no ground slab, no cast shadow.
 
-Avoid: square floor plans, a door on the right wall, changing the style, grass pads, ground slabs, cast shadows, perspective, pixel art, dithering, outlined roof tiles, plank lines, text, letters, watermark, black outlines, saturated red, saturated blue.
+LINE ART (ESSENTIAL, the house style): every building is drawn with a clear soft, imperfect paint-marker outline, exactly like image 2, where every tree, rock and block edge has one. A dark warm charcoal line (#373335, not pure black), about as thick as the line round the trees and rock of image 2, slightly wobbly and uneven in weight, with rounded ends, like a felt marker drawn by hand. It runs round the whole silhouette of each building and also along its big inner edges: the roof eaves and ridge, the wall corners, the chimney, the timber frame, the foundation, the door, each window and shutter, the bushes. Inner lines may be a little lighter than the silhouette line. The building must read clearly from its outline alone.
+
+Avoid: square floor plans, a door on the right wall, changing the designs, grass pads, ground slabs, cast shadows, perspective, pixel art, dithering, outlined roof tiles, plank lines, text, letters, watermark, missing or faint outlines, thin even hairline outlines, crisp vector lines, pure black outlines, saturated red, saturated blue.
 
 CUT (staged first):
    cd tools/art && ~/.lodestone/venv/bin/python props_cut.py ../../art/picsart/out/village-fall/buildings_long.png --grid 2x1 --names b_home_b,b_home_c --width 512 --out ../../art/picsart/out/village-fall/cut

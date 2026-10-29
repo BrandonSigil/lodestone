@@ -1,7 +1,7 @@
 LODESTONE FALL VILLAGE BUILDINGS, SHEET B: SMITHY, TAVERN, TOWN HALL (game-ready)
 
 Image 1 = the look: the fall village sheet v2 (art/picsart/out/village-fall-sheet_v2.webp). Copy its smithy, tavern and stone hall with the bell tower: roofs, walls, timber, fall colours. Take the designs, not the layout.
-Image 2 = the finish: docs/art/references/style-flat-forest.png. Match its soft painted edges and its amount of detail exactly.
+Image 2 = the finish: docs/art/references/style-flat-forest.png. Match its soft painted fills, its paint-marker line art round every shape and its amount of detail exactly.
 
 Aspect 3:2, plain cream paper background (#eae8d6). No title, no labels, no text, no letters, no writing on signs anywhere.
 Layout: three equal cells side by side in one row, with a wide clear cream gap between them. ONE building per cell, centred, nothing crosses a cell edge, nothing touches another building.
@@ -13,9 +13,11 @@ VIEW: every building in 2:1 dimetric three-quarter view from above (orthographic
 
 GROUNDING: walls rise from a low foundation of warm grey stone. At the foot of the walls, a thin band of golden grass tufts no deeper than the foundation stones, and one small fall bush at one corner. The tufts hug the walls; they never spread into a diamond of ground. No ground slab, no grass pad, no path, no cast shadow.
 
-FINISH: three flat values, light from the upper left: roof lightest, left wall mid, right wall darkest. Walls one flat colour with one or two windows; timber as a few flat brown stripes; roof one flat colour with two or three soft darker bands for the tile rows, no outlined tiles. Wood flat brown, no plank lines. One soft dark outline (#373335) around each whole building and its big parts only. Soft painted edges, as soft as the trees of image 2. Quiet and a little overgrown, as if left alone for years: one or two missing roof tiles, a cracked shutter, a little ivy. Not a ruin.
+FINISH: three flat values, light from the upper left: roof lightest, left wall mid, right wall darkest. Walls one flat colour with one or two windows; timber as a few flat brown stripes; roof one flat colour with two or three soft darker bands for the tile rows, no outlined tiles. Wood flat brown, no plank lines. Soft painted fills, as soft as the trees of image 2. Quiet and a little overgrown, as if left alone for years: one or two missing roof tiles, a cracked shutter, a little ivy. Not a ruin.
 
-Avoid: grass pads spreading past the walls, ground slabs, paths, fences, barrels or crates around the buildings, anvils outside, cast shadows, perspective, vanishing point, outlined roof tiles, every brick drawn, wood grain, plank lines, pixel art, dithering, jagged edges, 3d render, glossy, photo, characters, text, letters, watermark, black outlines, saturated red, saturated blue.
+LINE ART (ESSENTIAL, the house style): every building is drawn with a clear soft, imperfect paint-marker outline, exactly like image 2, where every tree, rock and block edge has one. A dark warm charcoal line (#373335, not pure black), about as thick as the line round the trees and rock of image 2, slightly wobbly and uneven in weight, with rounded ends, like a felt marker drawn by hand. It runs round the whole silhouette of each building and also along its big inner edges: the roof eaves and ridge, the wall corners, the chimney, the tower, the foundation, the door, each window and shutter, the bushes. Inner lines may be a little lighter than the silhouette line. The building must read clearly from its outline alone.
+
+Avoid: grass pads spreading past the walls, ground slabs, paths, fences, barrels or crates around the buildings, anvils outside, cast shadows, perspective, vanishing point, outlined roof tiles, every brick drawn, wood grain, plank lines, pixel art, dithering, jagged edges, 3d render, glossy, photo, characters, text, letters, watermark, missing or faint outlines, thin even hairline outlines, crisp vector lines, pure black outlines, saturated red, saturated blue.
 
 CUT (staged first):
    cd tools/art && ~/.lodestone/venv/bin/python props_cut.py ../../art/picsart/out/village-fall/buildings_b.png --grid 3x1 --names b_smithy,b_tavern,b_townhall --width 512 --out ../../art/picsart/out/village-fall/cut
