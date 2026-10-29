@@ -82,6 +82,10 @@ var fog := {}
 var fog_on := false
 var cull := Rect2()  ## board-local area worth drawing (big maps); empty draws everything
 var show_grid := true  ## cell outlines; off, only real ledges keep their rim (exploration hides the grid)
+## The soft terrain pass (TerrainShape, docs/design/terrain-engine.md): rounded blocks, cliffs and lips that run
+## on unbroken from cell to cell, flow strokes down the water, stairs cut into the rock. Off = the old blocks.
+## Interiors ("plain" looks) always keep the blocks.
+var soft := true
 ## Players never turn the view: every map is seen from its one approved angle ([USER] 2026-10-28, like Hades).
 ## Only editors (the map maker, the sandbox's map editing) switch this on; a map's "view" is its angle.
 var can_turn := false
@@ -119,6 +123,11 @@ var _snap_t := PackedInt32Array()
 var _snap_z := PackedStringArray()
 var _snap_props := 0
 var _snap_version := -1
+var _shape_key := ""
+var _radii := {}  ## soft pass: cell -> its four corner radii (TerrainShape.radii)
+var _streams := {}  ## soft pass: water cell -> its pieces of the flow strokes
+var _water_sig := 0
+var _pen_ends := {}  ## soft pass: outline line ends -> how many lines meet there (see _pen_end)
 
 
 func _ready() -> void:
@@ -440,8 +449,8 @@ func _sync_slabs() -> void:
 	var valley := _valley()
 	if valley:
 		_refresh_skirt()
-	var gkey := "%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s" % [grid.get_instance_id(), grid.w, grid.h, rot, art_set, look.key(),
-		strangeness, show_grid, backdrop, island, fog_on, wallpaper]
+	var gkey := "%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [grid.get_instance_id(), grid.w, grid.h, rot, art_set, look.key(),
+		strangeness, show_grid, backdrop, island, fog_on, wallpaper, soft]
 	var lkey := "%s|%s" % [gkey, _skirt_key if valley else ""]
 	if lkey != _layers_key:
 		_layers_key = lkey
@@ -466,6 +475,8 @@ func _sync_slabs() -> void:
 		_snapshot_grid()
 	elif grid.version != _snap_version:
 		_diff_grid()
+	if _soft():
+		_refresh_shape()
 	if fog_on:
 		# Fog moves as the party walks: newly seen ground gets drawn, the veil and the forest skirt
 		# (which follows the ground it grows from, a few rings out) redraw where sight changed.
@@ -753,6 +764,9 @@ func _tint(t: int) -> Color:
 ## The still part of a cell (GROUND slab): its faces down to the neighbours in front, grass lips, the top,
 ## stairs, ledge lines. Falling water, overlays and props are drawn by the LIVE slab.
 func _draw_ground(c: Vector2i) -> void:
+	if _soft():
+		_draw_ground_soft(c)
+		return
 	var t := grid.terrain_at(c)
 	var h := _surf(c)
 	var top_col := _terrain_color(t).lightened(minf(h, 6.0) * 0.025)
@@ -844,6 +858,758 @@ func _draw_ground(c: Vector2i) -> void:
 				_ci.draw_line(iso(e[0].x, e[0].y, h), iso(e[1].x, e[1].y, h), Color(top_col.lightened(0.35), 0.8), 1.5, true)
 
 
+# --- the soft terrain pass ------------------------------------------------------------------
+# The same cells drawn as one hand-shaped ground (docs/design/terrain-engine.md): a block's corners round off
+# where both its sides drop away, with the lower ground showing in the bit cut away; cliff faces are textured
+# along the screen and down from the cliff's own top, so their pattern runs on across cells and round corners
+# and never lines up with the grid; the lip hangs along the whole outline; water carries flow strokes from
+# TerrainShape; ink only where a block stands out against what's behind it.
+
+const LIP_LIT := Color(0.88, 0.92, 1.0)  ## a lip's front on the lit side: a little darker than its top, cool (B12)
+const LIP_SHADE := Color(0.68, 0.76, 0.92)  ## and on the shade side: blue
+const DRIFT_LIT := Color(0.96, 0.97, 1.0)  ## snow piled at a wall's foot, lit side
+const DRIFT_SHADE := Color(0.8, 0.86, 0.97)  ## and shade side
+
+
+func _soft() -> bool:
+	return soft and look.staging != "plain"
+
+
+## Soft pass caches: every cell's corner radii, and the water's flow strokes (rebuilt only when the water
+## changes, and then every row redraws, since a stroke runs the length of a river).
+func _refresh_shape() -> void:
+	var key := "%d|%d|%s|%d" % [grid.get_instance_id(), grid.version, _floor(), rot]
+	if key == _shape_key:
+		return
+	_shape_key = key
+	_radii.clear()
+	for y in grid.h:
+		for x in grid.w:
+			var c := Vector2i(x, y)
+			if grid.solid(c):
+				_radii[c] = TerrainShape.radii(grid, c, _surf_or_floor)
+	# Where every outline line starts and stops, so a line that just hands over to the next cell's carries on
+	# and only a line that really stops tapers off (_pen_end).
+	_pen_ends.clear()
+	for c: Vector2i in _radii:
+		var t := grid.terrain_at(c)
+		if t == CombatGrid.T.WATER or (t == CombatGrid.T.STAIRS and not MapDress.stair_run(grid, c).is_empty()):
+			continue
+		var o := _soft_outline(c, _surf(c))
+		for piece: Dictionary in _line_pieces(c, _surf(c), o.segs, o.feet, o.shown):
+			for e: Vector3i in _piece_ends(piece):
+				_pen_ends[e] = int(_pen_ends.get(e, 0)) + 1
+	var water := PackedInt32Array()
+	for i in grid.terrain.size():
+		if grid.terrain[i] == CombatGrid.T.WATER:
+			water.append(i)
+			water.append(grid.heights[i])
+	if hash(water) != _water_sig:
+		_water_sig = hash(water)
+		_streams = TerrainShape.by_cell(TerrainShape.strokes(grid, TerrainShape.flow(grid)))
+		for d in _depths.size():
+			_dirty[d] = true
+
+
+func _radii_of(c: Vector2i) -> PackedFloat32Array:
+	return _radii.get(c, PackedFloat32Array([0.0, 0.0, 0.0, 0.0]))
+
+
+func _draw_ground_soft(c: Vector2i) -> void:
+	var t := grid.terrain_at(c)
+	var h := _surf(c)
+	var zone := grid.zone_at(c)
+	var tint := _tint(t)
+	var top_tex := BattleArt.top(t, zone)
+	var top_col := _terrain_color(t).lightened(minf(h, 6.0) * 0.025)
+	if t == CombatGrid.T.STAIRS and _stair_steps_soft(c, h):
+		_contact_shadow(c, h)
+		return
+	var r := _radii_of(c)
+	var o := _soft_outline(c, h)
+	var segs: Array = o.segs
+	var feet: Array = o.feet
+	var shown: Array = o.shown
+	for k in 4:
+		if r[k] > 0.0:
+			_gap_floor(c, k, r[k])
+	# River walls are the rock around them, not the set's masonry.
+	var side_t := CombatGrid.T.GRASS if t == CombatGrid.T.WATER else t
+	var body := BattleArt.side_body(side_t, zone)
+	var built := t == CombatGrid.T.STONE or t == CombatGrid.T.RUIN
+	var face := (MASONRY if built else CLIFF).lerp(ALIEN_CLIFF, strangeness)
+	# Faces, and the runs of shown segments that drop (each gets one unbroken lip).
+	var runs := []
+	var run := []
+	for i in segs.size():
+		var s: Dictionary = segs[i]
+		var foot: float = feet[i]
+		if shown[i] and foot < h - 0.01:
+			_soft_face(s.a, s.b, s.na, s.nb, h, foot, body, _tint(side_t), face)
+			if foot <= _floor() + 0.01 and _valley():
+				_face_mist(s.a, s.b, h, foot)
+			run.append([s, foot])
+		elif not run.is_empty():
+			runs.append(run)
+			run = []
+	if not run.is_empty():
+		if not runs.is_empty() and shown[0] and feet[0] < h - 0.01:
+			run.append_array(runs[0])  # the outline is a loop: the last run carries on into the first
+			runs[0] = run
+		else:
+			runs.append(run)
+	_soft_drifts(c, h, segs, feet, shown)
+	var lip := _soft_lip_depth(t, zone)
+	if lip > 0.0:
+		for rn: Array in runs:
+			_soft_lip(rn, h, top_tex, tint, top_col, lip)
+	# The top.
+	var pts := PackedVector2Array()
+	var uvs := PackedVector2Array()
+	for s: Dictionary in segs:
+		pts.append(iso(s.a.x, s.a.y, h))
+		uvs.append(s.a / BattleArt.TOP_TILES)
+	if top_tex != null:
+		var lift := Color(tint * (1.0 + minf(h, 6.0) * 0.025), 1.0)
+		var cols := PackedColorArray()
+		cols.resize(pts.size())
+		cols.fill(lift)
+		_ci.draw_polygon(pts, cols, uvs, top_tex)
+	else:
+		_ci.draw_colored_polygon(pts, top_col)
+	# The renderer can't antialias polygons, so a hairline of the top's own colour smooths its seen edges.
+	var rim := (BattleArt.average(top_tex) * Color(tint * (1.0 + minf(h, 6.0) * 0.025), 1.0)) if top_tex != null else top_col
+	for rn: Array in runs:
+		var edge := PackedVector2Array()
+		for item: Array in rn:
+			edge.append(iso(item[0].a.x, item[0].a.y, h))
+		var tail: Dictionary = rn[rn.size() - 1][0]
+		edge.append(iso(tail.b.x, tail.b.y, h))
+		_ci.draw_polyline(edge, Color(rim, 1.0), 1.0, true)
+	if blend:
+		_fringe(c, t, h, zone)
+	if t == CombatGrid.T.WATER:
+		_water_marks(c, h, top_col)
+	_contact_shadow(c, h)
+	for k in 4:
+		if r[k] < 0.0:
+			_fillet(c, k, -r[k])
+	# The pen outline (see _line_pieces).
+	if t != CombatGrid.T.WATER:
+		for piece: Dictionary in _line_pieces(c, h, segs, feet, shown):
+			if piece.along:
+				var gp: Array = piece.pts
+				_marker_along(gp, piece.z, _pen_end(gp[0], piece.z), _pen_end(gp[gp.size() - 1], piece.z))
+			else:
+				_marker_down(piece.p, piece.top, piece.low, _pen_end(piece.p, piece.top), _pen_end(piece.p, piece.low))
+	if show_grid:
+		var d := _diamond(c, h)
+		_ci.draw_polyline(PackedVector2Array([d[0], d[1], d[2], d[3], d[0]]), Color(top_col.darkened(0.55), 0.2), 1.0, true)
+
+
+const WATERLINE := 0.1  ## the waterline outline sits this far (levels) up the face, clear of the water in front
+
+
+## A cell's outline (TerrainShape.outline with its corner radii) and, per segment, how far it drops ("feet")
+## and whether it faces the camera ("shown").
+func _soft_outline(c: Vector2i, h: float) -> Dictionary:
+	var segs := TerrainShape.outline(c, _radii_of(c))
+	var toward := Vector2(front_dir(false) + front_dir(true))
+	var feet := []
+	var shown := []
+	for s: Dictionary in segs:
+		feet.append(_seg_foot(c, s, h))
+		shown.append((s.na + s.nb).dot(toward) > 0.02)
+	return {"segs": segs, "feet": feet, "shown": shown}
+
+
+## The outline lines a cell draws, where it stands out against what's behind it: along the back of its top
+## where the ground behind is lower, down its sides where its faces turn away, and along the waterline where
+## its faces go down into water. Never its front edges or a foot on dry ground. Each is
+## {"along": true, "pts": grid points, "z": level} or {"along": false, "p": grid point, "top", "low"}.
+func _line_pieces(c: Vector2i, h: float, segs: Array, feet: Array, shown: Array) -> Array:
+	var out := []
+	var back := []
+	for i in segs.size():
+		var s: Dictionary = segs[i]
+		var foot: float = feet[i]
+		if not shown[i] and foot < h - 0.5:
+			var a: Vector2 = s.a
+			var b: Vector2 = s.b
+			if s.edge >= 0:  # stop where the lower neighbour's ground curves up to this one (its fillet)
+				var n: Vector2i = c + TerrainShape.NORMALS[s.edge]
+				var nr := _radii_of(n)
+				for k in 4:
+					var at: Vector2 = Vector2(n) + TerrainShape.CORNERS[k]
+					if nr[k] < 0.0 and at.is_equal_approx(s.a):
+						a = a.move_toward(b, -nr[k])
+					elif nr[k] < 0.0 and at.is_equal_approx(s.b):
+						b = b.move_toward(a, -nr[k])
+			if not back.is_empty() and not a.is_equal_approx(back[back.size() - 1]):
+				out.append({"along": true, "pts": back, "z": h})
+				back = []
+			if back.is_empty():
+				back.append(a)
+			back.append(b)
+		elif not back.is_empty():
+			out.append({"along": true, "pts": back, "z": h})
+			back = []
+		var j := (i + 1) % segs.size()
+		if shown[i] != shown[j]:
+			var low := maxf(foot, feet[j])
+			if low < h - 0.25:
+				out.append({"along": false, "p": s.b, "top": h, "low": low})
+	if back.size() > 1:
+		out.append({"along": true, "pts": back, "z": h})
+	# The waterline, drawn on the face just above the water so the water in front doesn't cover it.
+	var wet := []
+	var wet_h := 0.0
+	for i in segs.size():
+		var s: Dictionary = segs[i]
+		var foot: float = feet[i]
+		if shown[i] and foot < h - 0.3 and _into_water(c, s):
+			if not wet.is_empty() and (absf(foot - wet_h) > 0.01 or not (wet[wet.size() - 1] as Vector2).is_equal_approx(s.a)):
+				out.append({"along": true, "pts": wet, "z": wet_h + WATERLINE})
+				wet = []
+			if wet.is_empty():
+				wet.append(s.a)
+				wet_h = foot
+			wet.append(s.b)
+		elif not wet.is_empty():
+			out.append({"along": true, "pts": wet, "z": wet_h + WATERLINE})
+			wet = []
+	if wet.size() > 1:
+		out.append({"along": true, "pts": wet, "z": wet_h + WATERLINE})
+	return out
+
+
+static func _pen_key(p: Vector2, z: float) -> Vector3i:
+	return Vector3i(roundi(p.x * 64.0), roundi(p.y * 64.0), roundi(z * 64.0))
+
+
+static func _piece_ends(piece: Dictionary) -> Array:
+	if piece.along:
+		var pts: Array = piece.pts
+		return [_pen_key(pts[0], piece.z), _pen_key(pts[pts.size() - 1], piece.z)]
+	return [_pen_key(piece.p, piece.top), _pen_key(piece.p, piece.low)]
+
+
+## Does an outline line stop here (no other line carries on from this point)? Then the pen lifts: it tapers.
+func _pen_end(p: Vector2, z: float) -> bool:
+	return int(_pen_ends.get(_pen_key(p, z), 0)) < 2
+
+
+## Where a wall rises from a floor, the floor's snow piles up against its foot in drifts, like the key art's
+## snow banks: a band of the floor's own ground up the bottom of the face, its top swelling into mounds. Only
+## ground with a `drift` depth in its set's table does it (snow).
+func _soft_drifts(c: Vector2i, h: float, segs: Array, feet: Array, shown: Array) -> void:
+	var run := []
+	var run_floor := NONE
+	var run_foot := 0.0
+	for i in segs.size():
+		var s: Dictionary = segs[i]
+		var foot: float = feet[i]
+		var f := _drift_floor(c, s) if shown[i] and foot < h - 0.3 else NONE
+		var joins: bool = not run.is_empty() and f == run_floor and absf(foot - run_foot) < 0.01 \
+			and (run[run.size() - 1].b as Vector2).is_equal_approx(s.a)
+		if not run.is_empty() and not joins:
+			_drift(run, run_foot, run_floor, h)
+			run = []
+		if f != NONE:
+			if run.is_empty():
+				run_floor = f
+				run_foot = foot
+			run.append(s)
+	if not run.is_empty():
+		_drift(run, run_foot, run_floor, h)
+
+
+## The floor a stretch of wall rises from (its neighbour, or the ground in its rounded corner), when that
+## floor piles snow; else NONE.
+func _drift_floor(c: Vector2i, s: Dictionary) -> Vector2i:
+	var n: Vector2i
+	if s.edge >= 0:
+		n = c + TerrainShape.NORMALS[s.edge]
+	else:
+		var g := TerrainShape.gap(grid, c, s.corner, _surf_or_floor)
+		if not g.has("src"):
+			return NONE
+		n = g.src
+	if not grid.solid(n) or grid.terrain_at(n) == CombatGrid.T.WATER:
+		return NONE
+	return n if BattleArt.drift(grid.terrain_at(n), grid.zone_at(n)) > 0.0 else NONE
+
+
+func _drift(run: Array, foot: float, f: Vector2i, h: float) -> void:
+	var t := grid.terrain_at(f)
+	var zone := grid.zone_at(f)
+	var depth := BattleArt.drift(t, zone)
+	var tex := BattleArt.top(t, zone)
+	var base := _tint(t) if tex != null else _terrain_color(t)
+	var avg := BattleArt.average(tex) if tex != null else Color.WHITE
+	var pts: Array[Vector2] = []
+	var nrm: Array[Vector2] = []
+	for s: Dictionary in run:
+		var steps := maxi(1, ceili((s.b - s.a).length() / 0.05))
+		for i in steps:
+			var k := float(i) / steps
+			pts.append(s.a.lerp(s.b, k))
+			nrm.append(s.na.lerp(s.nb, k).normalized())
+	var last: Dictionary = run[run.size() - 1]
+	pts.append(last.b)
+	nrm.append(last.nb)
+	var n := pts.size()
+	var room := (h - foot) * 0.6
+	var poly := PackedVector2Array()
+	var uvs := PackedVector2Array()
+	var cols := PackedColorArray()
+	var edge := PackedVector2Array()
+	var ecols := PackedColorArray()
+	for i in n:  # along the foot
+		poly.append(iso(pts[i].x, pts[i].y, foot))
+		uvs.append(pts[i] / BattleArt.TOP_TILES)
+		cols.append(_drift_colour(base, nrm[i]))
+	for i in range(n - 1, -1, -1):  # back along its top, mounding up
+		var dh := minf(TerrainShape.drift_height(_screen_u(pts[i], 0.0) + 7.3, depth), room)
+		var col := _drift_colour(base, nrm[i])
+		poly.append(iso(pts[i].x, pts[i].y, foot + dh))
+		uvs.append((pts[i] + nrm[i] * dh * 0.3) / BattleArt.TOP_TILES)
+		cols.append(col)
+		edge.append(iso(pts[i].x, pts[i].y, foot + dh))
+		ecols.append(Color(avg * col, 1.0))
+	if tex != null:
+		_ci.draw_polygon(poly, cols, uvs, tex)
+	else:
+		_ci.draw_polygon(poly, cols)
+	_ci.draw_polyline_colors(edge, ecols, 1.0, true)
+
+
+## A drift faces up more than a wall does: nearly its floor's own value on the lit side, cool on the shade side.
+func _drift_colour(base: Color, n: Vector2) -> Color:
+	return Color(base * (DRIFT_LIT if _face_light(n) > 0.9 else DRIFT_SHADE), 1.0)
+
+
+## Does this stretch of a cell's outline go down into water (its neighbour, or the ground in its rounded corner)?
+func _into_water(c: Vector2i, s: Dictionary) -> bool:
+	var n: Vector2i
+	if s.edge >= 0:
+		n = c + TerrainShape.NORMALS[s.edge]
+	else:
+		var g := TerrainShape.gap(grid, c, s.corner, _surf_or_floor)
+		if not g.has("src"):
+			return false
+		n = g.src
+	return grid.solid(n) and grid.terrain_at(n) == CombatGrid.T.WATER
+
+
+## How far down a stretch of a cell's outline drops: a side to its neighbour, a rounded corner to the
+## ground left in it (the floor where there is no ground).
+func _seg_foot(c: Vector2i, s: Dictionary, h: float) -> float:
+	var low: float
+	if s.edge >= 0:
+		var n: Vector2i = c + TerrainShape.NORMALS[s.edge]
+		low = _surf_or_floor(n)
+		if grid.solid(n) and grid.terrain_at(n) == CombatGrid.T.STAIRS:  # its low steps sit under its own level
+			var run := MapDress.stair_run(grid, n)
+			if not run.is_empty():
+				low = minf(low, float(run.lo))
+	else:
+		low = TerrainShape.gap(grid, c, s.corner, _surf_or_floor).h
+	return maxf(_floor(), minf(low, h))
+
+
+## A face's light by the way it faces: 1 lit (lower left) or 0.72 shade (lower right). Two flat values and a
+## clean step between them, never a blend, so a rounded corner stays a painted corner, not a cylinder.
+func _face_light(n: Vector2) -> float:
+	return 1.0 if n.dot(Vector2(front_dir(false))) >= n.dot(Vector2(front_dir(true))) else 0.72
+
+
+## Where a grid point sits across the screen, in cell widths, shifted by the cliff's top so stacked walls
+## don't repeat each other. Cliff textures run along this, so they continue from cell to cell and round
+## every corner.
+func _screen_u(p: Vector2, top: float) -> float:
+	var q := _rot(p.x, p.y)
+	return q.x - q.y + top * 0.73
+
+
+const MARKER := Color(0.3, 0.35, 0.48)  ## the outline: a cool slate blue, between the key art's line over rock and over snow
+const PEN_WIDTH := 1.5  ## the outline's width in engine px at full pressure
+const PEN_ALPHA := 0.7  ## see-through ink: what's under it shows a little
+const PEN_TAPER := 3.0  ## how far (engine px) a line narrows to a point where the pen lifts
+
+
+## A pen outline along screen points, like the key art's: a crisp, see-through slate stroke whose width swells
+## and thins with the hand's pressure, that wavers a touch, and now and then tapers off and starts again.
+## Drawn as one strip of triangles, so its edges stay sharp and its ink even (no blur, no darker joins). Its
+## look is a function of `ss` (each point's place along the screen), so a line drawn one cell at a time carries
+## on unbroken from cell to cell. Where the line really stops (`taper_a`, `taper_b`) the pen lifts: the
+## stroke narrows to a rounded point instead of ending square.
+func _marker(pts: PackedVector2Array, ss: PackedFloat32Array, taper_a := true, taper_b := true) -> void:
+	var n := pts.size()
+	if n < 2:
+		return
+	var along := PackedFloat32Array([0.0])
+	for i in range(1, n):
+		along.append(along[i - 1] + pts[i].distance_to(pts[i - 1]))
+	var total := along[n - 1]
+	var verts := PackedVector2Array()
+	var left := PackedVector2Array()
+	var right := PackedVector2Array()
+	var edge := PackedColorArray()
+	for i in n:
+		var d := (pts[mini(i + 1, n - 1)] - pts[maxi(i - 1, 0)]).normalized()
+		var side := Vector2(-d.y, d.x)
+		var s := ss[i]
+		var p := pts[i] + side * (TerrainShape.noise1(s * 3.1, 3) - 0.5) * 1.0
+		var on := smoothstep(0.16, 0.3, TerrainShape.noise1(s * 0.7, 7))  # lifts off now and then
+		if taper_a:
+			on *= sqrt(clampf(along[i] / PEN_TAPER, 0.0, 1.0))
+		if taper_b:
+			on *= sqrt(clampf((total - along[i]) / PEN_TAPER, 0.0, 1.0))
+		var w := PEN_WIDTH * (0.7 + 0.6 * TerrainShape.noise1(s * 1.9, 11)) * on
+		left.append(p + side * w * 0.5)
+		right.append(p - side * w * 0.5)
+		verts.append(p + side * w * 0.5)
+		verts.append(p - side * w * 0.5)
+		edge.append(Color(MARKER, PEN_ALPHA * 0.45 * minf(on * 3.0, 1.0)))
+	var idx := PackedInt32Array()
+	for i in n - 1:
+		var a := i * 2
+		idx.append_array(PackedInt32Array([a, a + 1, a + 2, a + 1, a + 3, a + 2]))
+	var cols := PackedColorArray()
+	cols.resize(verts.size())
+	cols.fill(Color(MARKER, PEN_ALPHA))
+	RenderingServer.canvas_item_add_triangle_array(_ci.get_canvas_item(), idx, verts, cols)
+	# A hairline down each edge smooths the stair-steps without softening the stroke.
+	_ci.draw_polyline_colors(left, edge, 1.0, true)
+	_ci.draw_polyline_colors(right, edge, 1.0, true)
+
+
+## A marker line along grid points on one level (the back of a block's top, a waterline).
+func _marker_along(gpts: Array, h: float, taper_a := true, taper_b := true) -> void:
+	var pts := PackedVector2Array()
+	var ss := PackedFloat32Array()
+	for i in gpts.size() - 1:
+		var a: Vector2 = gpts[i]
+		var b: Vector2 = gpts[i + 1]
+		var steps := maxi(1, ceili(a.distance_to(b) / 0.12))
+		for k in steps:
+			var p := a.lerp(b, float(k) / steps)
+			pts.append(iso(p.x, p.y, h))
+			ss.append(_screen_u(p, 0.0) + h * 0.37)
+	var e: Vector2 = gpts[gpts.size() - 1]
+	pts.append(iso(e.x, e.y, h))
+	ss.append(_screen_u(e, 0.0) + h * 0.37)
+	_marker(pts, ss, taper_a, taper_b)
+
+
+## A marker line straight down a block's side at grid point p, from `top` to `low`.
+func _marker_down(p: Vector2, top: float, low: float, taper_a := true, taper_b := true) -> void:
+	var pts := PackedVector2Array()
+	var ss := PackedFloat32Array()
+	var steps := maxi(2, ceili((top - low) / 0.25))
+	for k in steps + 1:
+		var z := lerpf(top, low, float(k) / steps)
+		pts.append(iso(p.x, p.y, z))
+		ss.append(_screen_u(p, 0.0) * 1.7 + z * 0.45 + 13.0)
+	_marker(pts, ss, taper_a, taper_b)
+
+
+## One stretch of cliff face from a to b (grid points), from `top` down to `foot`, in the rock of
+## BattleArt.side_body. The texture runs along the screen and hangs from `anchor` (the cliff's own top unless
+## given), so it carries on from cell to cell and round corners, and its pattern never lines up with the grid.
+func _soft_face(a: Vector2, b: Vector2, na: Vector2, nb: Vector2, top: float, foot: float, body: Dictionary,
+		tint: Color, col: Color, anchor := INF) -> void:
+	if top <= foot:
+		return
+	var quad := PackedVector2Array([iso(a.x, a.y, top), iso(b.x, b.y, top), iso(b.x, b.y, foot), iso(a.x, a.y, foot)])
+	var light := _face_light(na + nb)
+	if body.is_empty():
+		_ci.draw_colored_polygon(quad, Color(col * light, 1.0))
+		return
+	var ca := Color(tint * light, 1.0)
+	var cb := ca
+	var from := top if anchor == INF else anchor
+	var ua := _screen_u(a, from) / float(body.u)
+	var ub := _screen_u(b, from) / float(body.u)
+	var vt := (from - top) / float(body.v)
+	var vb := (from - foot) / float(body.v)
+	_ci.draw_polygon(quad, PackedColorArray([ca, cb, cb, ca]),
+		PackedVector2Array([Vector2(ua, vt), Vector2(ub, vt), Vector2(ub, vb), Vector2(ua, vb)]), body.tex)
+
+
+## The lower ground showing where corner k was rounded off: the neighbour's own top (same texture at the same
+## world spot, so it runs on unbroken), its face down to the other neighbour when that one is lower, and
+## foam where it is water.
+func _gap_floor(c: Vector2i, k: int, r: float) -> void:
+	var g := TerrainShape.gap(grid, c, k, _surf_or_floor)
+	if not g.has("src"):
+		return
+	var src: Vector2i = g.src
+	var gh: float = g.h
+	var t := grid.terrain_at(src)
+	var zone := grid.zone_at(src)
+	var tex := BattleArt.top(t, zone)
+	var poly := TerrainShape.gap_polygon(c, k, r)
+	_patch(poly, gh, t, tex)
+	var low: Vector2i = g.low
+	var lh := maxf(_floor(), _surf_or_floor(low))
+	var toward := Vector2(front_dir(false) + front_dir(true))
+	var n := Vector2(low - c)
+	if lh < gh - 0.01 and n.dot(toward) > 0.0:
+		var ck: Vector2 = Vector2(c) + TerrainShape.CORNERS[k]
+		var along := (poly[poly.size() - 1] if low == c + TerrainShape.NORMALS[k] else poly[1]) - ck
+		var side_t := CombatGrid.T.GRASS if t == CombatGrid.T.WATER else t
+		_soft_face(ck, ck + along, n, n, gh, lh, BattleArt.side_body(side_t, zone), _tint(side_t), CLIFF)
+	if t == CombatGrid.T.WATER:
+		var foam := PackedVector2Array()
+		for i in range(1, poly.size()):
+			var p: Vector2 = poly[i] + (Vector2(c) + TerrainShape.CORNERS[k] - poly[i]).normalized() * 0.05
+			foam.append(iso(p.x, p.y, gh))
+		_ci.draw_polyline(foam, Color(1, 1, 1, 0.4), 1.6, true)
+
+
+## A piece of another cell's top drawn inside this one (a rounded-off corner's lower ground, a fillet): the
+## same texture at the same world spot, so it runs on unbroken into that cell.
+func _patch(poly: PackedVector2Array, h: float, t: int, tex: Texture2D) -> void:
+	var pts := PackedVector2Array()
+	var uvs := PackedVector2Array()
+	for p in poly:
+		pts.append(iso(p.x, p.y, h))
+		uvs.append(p / BattleArt.TOP_TILES)
+	if tex != null:
+		var cols := PackedColorArray()
+		cols.resize(pts.size())
+		cols.fill(Color(_tint(t) * (1.0 + minf(h, 6.0) * 0.025), 1.0))
+		_ci.draw_polygon(pts, cols, uvs, tex)
+	else:
+		_ci.draw_colored_polygon(pts, _terrain_color(t).lightened(minf(h, 6.0) * 0.025))
+
+
+## A low cell's corner tucked in between higher ground: that ground curves round into it (a fillet) with its
+## own face down to this cell and its lip, so a notch or a zigzag bank reads as one soft edge.
+func _fillet(c: Vector2i, k: int, r: float) -> void:
+	var g := TerrainShape.gap(grid, c, k, _surf_or_floor)
+	if not g.has("src"):
+		return
+	var src: Vector2i = g.src
+	var gh: float = g.h
+	var h := _surf(c)
+	var t := grid.terrain_at(src)
+	var zone := grid.zone_at(src)
+	var tint := _tint(t)
+	var tex := BattleArt.top(t, zone)
+	var toward := Vector2(front_dir(false) + front_dir(true))
+	var run := []
+	for s: Dictionary in TerrainShape.arc(c, k, r):
+		var na: Vector2 = -s.na  # the fillet faces into this cell
+		var nb: Vector2 = -s.nb
+		if (na + nb).dot(toward) <= 0.02:
+			continue
+		_soft_face(s.a, s.b, na, nb, gh, h, BattleArt.side_body(t, zone), tint, CLIFF)
+		run.append([{"a": s.a, "b": s.b, "na": na, "nb": nb}, h])
+	var lip := _soft_lip_depth(t, zone)
+	if lip > 0.0 and not run.is_empty():
+		_soft_lip(run, gh, tex, tint, _terrain_color(t).lightened(minf(gh, 6.0) * 0.025), lip)
+	_patch(TerrainShape.gap_polygon(c, k, r), gh, t, tex)
+	if grid.terrain_at(c) == CombatGrid.T.WATER:
+		var foam := PackedVector2Array()
+		for s: Dictionary in TerrainShape.arc(c, k, r):
+			var p: Vector2 = s.a - s.na * 0.05
+			foam.append(iso(p.x, p.y, h))
+		_ci.draw_polyline(foam, Color(1, 1, 1, 0.4), 1.6, true)
+		if not run.is_empty():  # the waterline round the curve, like the straight banks'
+			var wet := []
+			for item: Array in run:
+				wet.append(item[0].a)
+			wet.append(run[run.size() - 1][0].b)
+			_marker_along(wet, h + WATERLINE)
+
+
+## How thick the lip hangs on this ground: the set's own `lip`, or, where the set paints its snow into the
+## cliff sides instead (cap), one about as thick, since the soft pass uses only the rock under that cap.
+func _soft_lip_depth(t: int, zone: String) -> float:
+	if t == CombatGrid.T.WATER or t == CombatGrid.T.STAIRS:
+		return 0.0
+	var built := t == CombatGrid.T.STONE or t == CombatGrid.T.RUIN
+	var lip := 0.0 if built else BattleArt.lip(t, zone)
+	if lip <= 0.0 and BattleArt.cap(t, zone) > 0.0:
+		lip = 0.5 if built else 0.8
+	return lip
+
+
+## The top's ground folding over a run of the outline as one unbroken lip, like the key art's snow caps: a flat
+## band a little darker and cooler than the top (blue on the shade side), with an uneven brushed edge fixed to
+## the screen position so it carries on across cells and round corners. No gradient, no highlight, no
+## outline: the value step is the edge.
+func _soft_lip(run: Array, h: float, tex: Texture2D, tint: Color, top_col: Color, depth: float) -> void:
+	var pts: Array[Vector2] = []
+	var nrm: Array[Vector2] = []
+	var drop: Array[float] = []
+	for item: Array in run:
+		var s: Dictionary = item[0]
+		var foot: float = item[1]
+		var steps := maxi(1, ceili((s.b - s.a).length() / 0.05))
+		for i in steps:
+			var f := float(i) / steps
+			pts.append(s.a.lerp(s.b, f))
+			nrm.append(s.na.lerp(s.nb, f).normalized())
+			drop.append(h - foot)
+	var last: Dictionary = run[run.size() - 1][0]
+	pts.append(last.b)
+	nrm.append(last.nb)
+	drop.append(h - float(run[run.size() - 1][1]))
+	var n := pts.size()
+	var base := tint if tex != null else top_col
+	var poly := PackedVector2Array()
+	var uvs := PackedVector2Array()
+	var cols := PackedColorArray()
+	for i in n:  # along the top edge
+		poly.append(iso(pts[i].x, pts[i].y, h))
+		uvs.append(pts[i] / BattleArt.TOP_TILES)
+		cols.append(_lip_colour(base, nrm[i]))
+	for i in range(n - 1, -1, -1):  # back along its lower edge
+		var room := drop[i] - 0.06
+		var dd := 0.0 if room < 0.12 else minf(TerrainShape.lip_depth(_screen_u(pts[i], 0.0), depth), room)
+		poly.append(iso(pts[i].x, pts[i].y, h - dd))
+		uvs.append((pts[i] + nrm[i] * dd * 0.4) / BattleArt.TOP_TILES)
+		cols.append(_lip_colour(base, nrm[i]))
+	if tex != null:
+		_ci.draw_polygon(poly, cols, uvs, tex)
+	else:
+		_ci.draw_polygon(poly, cols)
+	# The renderer can't antialias polygons: a hairline of the band's own colour smooths its lower edge.
+	var avg := BattleArt.average(tex) if tex != null else Color.WHITE
+	var edge := PackedVector2Array()
+	var ecols := PackedColorArray()
+	for i in range(n, poly.size()):
+		edge.append(poly[i])
+		ecols.append(Color(avg * cols[i], 1.0))
+	_ci.draw_polyline_colors(edge, ecols, 1.0, true)
+
+
+## The cap band's two values, measured off the key art: lit about 0.94 of its top, shade a clear cool blue.
+func _lip_colour(base: Color, n: Vector2) -> Color:
+	return Color(base * (LIP_LIT if _face_light(n) > 0.9 else LIP_SHADE), 1.0)
+
+
+## Water: flow strokes that follow the river from cell to cell (TerrainShape.strokes) and foam along the banks.
+func _water_marks(c: Vector2i, h: float, top_col: Color) -> void:
+	for piece: Dictionary in _streams.get(c, []):
+		var src: PackedVector2Array = piece.pts
+		var f: PackedFloat32Array = piece.f
+		var line := PackedVector2Array()
+		var cols := PackedColorArray()
+		var col := top_col.darkened(0.12) if piece.dark else top_col.lightened(0.6)
+		var alpha := 0.3 if piece.dark else 0.72
+		for i in src.size():
+			line.append(iso(src[i].x, src[i].y, h))
+			cols.append(Color(col, alpha * pow(sin(PI * clampf(f[i], 0.0, 1.0)), 0.6)))
+		_ci.draw_polyline_colors(line, cols, 3.0 if piece.dark else 2.2, true)
+	for k in 4:
+		var nb: Vector2i = c + TerrainShape.NORMALS[k]
+		if not grid.solid(nb) or grid.terrain_at(nb) == CombatGrid.T.WATER or _surf(nb) <= h + 0.05:
+			continue
+		var p: Vector2 = Vector2(c) + TerrainShape.CORNERS[k]
+		var q: Vector2 = Vector2(c) + TerrainShape.CORNERS[(k + 1) % 4]
+		# Stop short where the bank's corner is rounded: that bank draws its own foam round the curve.
+		var rb := _radii_of(nb)
+		for j in 4:
+			var at: Vector2 = Vector2(nb) + TerrainShape.CORNERS[j]
+			if rb[j] > 0.0 and at.is_equal_approx(p):
+				p = p.move_toward(q, rb[j])
+			elif rb[j] > 0.0 and at.is_equal_approx(q):
+				q = q.move_toward(p, rb[j])
+		var own := _radii_of(c)  # and where this cell's corner is a fillet, which draws its own foam
+		if own[k] < 0.0:
+			p = p.move_toward(q, -own[k])
+		if own[(k + 1) % 4] < 0.0:
+			q = q.move_toward(p, -own[(k + 1) % 4])
+		var inward := -Vector2(TerrainShape.NORMALS[k]) * 0.08
+		var foam := PackedVector2Array()
+		for i in 5:
+			var g := p.lerp(q, i / 4.0)
+			var wob := (MapDress.noise(g * 3.0) - 0.5) * 0.04
+			g += inward * (1.0 + wob * 20.0)
+			foam.append(iso(g.x, g.y, h))
+		_ci.draw_polyline(foam, Color(1, 1, 1, 0.4), 1.6, true)
+
+
+## Soft stairs: treads in the path's ground, risers a shade darker, and the flight's sides in the rock of the
+## cliff it is cut from, that rock's texture hung from the terrace above so it runs on from the cliff beside
+## the stairs. False when there's no slope to show.
+func _stair_steps_soft(c: Vector2i, h: float) -> bool:
+	var run := MapDress.stair_run(grid, c)
+	if run.is_empty():
+		return false
+	var zone := grid.zone_at(c)
+	var tread_tex := BattleArt.top(CombatGrid.T.ROAD, zone)
+	var tread_tint := _tint(CombatGrid.T.ROAD)
+	var rock := BattleArt.side_body(CombatGrid.T.GRASS, zone)
+	var rock_tint := _tint(CombatGrid.T.GRASS)
+	var up: Vector2i = run.up
+	var e_lo: float = run.lo
+	var e_hi: float = run.hi
+	var anchor := maxf(e_hi, _surf_or_floor(c + up))
+	var n := clampi(roundi((e_hi - e_lo) * 3.0), 2, 8)
+	var base := e_lo
+	for shade in [false, true]:
+		base = minf(base, _surf_or_floor(c + front_dir(shade)))
+	base = maxf(base, _floor())
+	var slabs: Array[Dictionary] = []
+	for k in n:
+		var f0 := float(k) / n
+		var f1 := float(k + 1) / n
+		var lo: Vector2
+		var hi: Vector2
+		if up == Vector2i(1, 0):
+			lo = Vector2(c.x + f0, c.y)
+			hi = Vector2(c.x + f1, c.y + 1)
+		elif up == Vector2i(-1, 0):
+			lo = Vector2(c.x + 1 - f1, c.y)
+			hi = Vector2(c.x + 1 - f0, c.y + 1)
+		elif up == Vector2i(0, 1):
+			lo = Vector2(c.x, c.y + f0)
+			hi = Vector2(c.x + 1, c.y + f1)
+		else:
+			lo = Vector2(c.x, c.y + 1 - f1)
+			hi = Vector2(c.x + 1, c.y + 1 - f0)
+		var m := _rot((lo.x + hi.x) * 0.5, (lo.y + hi.y) * 0.5)
+		slabs.append({"lo": lo, "hi": hi, "h": lerpf(e_lo, e_hi, float(k) / (n - 1)), "depth": m.x + m.y})
+	slabs.sort_custom(func(p: Dictionary, q: Dictionary) -> bool: return p.depth < q.depth)
+	for sl in slabs:
+		var lo: Vector2 = sl.lo
+		var hi: Vector2 = sl.hi
+		var sh: float = sl.h
+		for shade in [false, true]:
+			var d := front_dir(shade)
+			var e := _side(lo, hi, d)
+			var nv := Vector2(d)
+			if d == -up:  # a riser: the tread's ground, darker
+				var m := Color(tread_tint * (0.8 if not shade else 0.62), 1.0)
+				var uv := PackedVector2Array([e[0] / BattleArt.TOP_TILES, e[1] / BattleArt.TOP_TILES,
+					(e[1] + Vector2(0, (sh - base) * 0.5)) / BattleArt.TOP_TILES, (e[0] + Vector2(0, (sh - base) * 0.5)) / BattleArt.TOP_TILES])
+				var quad := PackedVector2Array([iso(e[0].x, e[0].y, sh), iso(e[1].x, e[1].y, sh), iso(e[1].x, e[1].y, base), iso(e[0].x, e[0].y, base)])
+				if tread_tex != null:
+					_ci.draw_polygon(quad, PackedColorArray([m, m, m, m]), uv, tread_tex)
+				else:
+					_ci.draw_colored_polygon(quad, _terrain_color(CombatGrid.T.ROAD) * m)
+			else:  # the flight's side: the cliff's rock, carrying on from the terrace above
+				_soft_face(e[0], e[1], nv, nv, sh, base, rock, rock_tint, CLIFF, anchor)
+		var cap := PackedVector2Array([iso(lo.x, lo.y, sh), iso(hi.x, lo.y, sh), iso(hi.x, hi.y, sh), iso(lo.x, hi.y, sh)])
+		var lift := Color(tread_tint * 1.04, 1.0)
+		if tread_tex != null:
+			var uv := PackedVector2Array([lo / BattleArt.TOP_TILES, Vector2(hi.x, lo.y) / BattleArt.TOP_TILES,
+				hi / BattleArt.TOP_TILES, Vector2(lo.x, hi.y) / BattleArt.TOP_TILES])
+			_ci.draw_polygon(cap, PackedColorArray([lift, lift, lift, lift]), uv, tread_tex)
+		else:
+			_ci.draw_colored_polygon(cap, _terrain_color(CombatGrid.T.ROAD).lightened(0.05))
+		var nose := _side(lo, hi, -up)
+		if Vector2(-up).dot(Vector2(front_dir(false) + front_dir(true))) > 0.0:
+			_ci.draw_line(iso(nose[0].x, nose[0].y, sh), iso(nose[1].x, nose[1].y, sh), Color(1, 1, 0.92, 0.5), 1.2, true)
+	return true
+
+
 ## Ground that blends into its neighbours: where a higher-ranked ground (road over grass, stone over road)
 ## or another tile set (ruins zone inside a forest) meets this cell at the same height, the neighbour's own
 ## top texture reaches a ragged way onto this cell and fades out, so the seam isn't a hard line. Painted
@@ -908,7 +1674,10 @@ func _draw_falls(c: Vector2i) -> void:
 			continue
 		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
 		var foot := maxf(fl, minf(nh, h))
-		_waterfall(side[0], side[1], h, foot, c, not edge)
+		if _soft():
+			_waterfall_soft(side[0], side[1], h, foot, c, d, not edge)
+		else:
+			_waterfall(side[0], side[1], h, foot, c, not edge)
 		if edge and _rims():
 			_spill(side[0], side[1], c)
 
@@ -1003,7 +1772,10 @@ func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color, zone := "")
 		if pw > TW * 0.9:  # wide props (bush, boulder) stay inside their cell
 			ph *= TW * 0.9 / pw
 			pw = TW * 0.9
-		Pawn.ellipse(_ci, base, pw * 0.36, pw * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
+		if _soft():  # flat look: a faint cool shade, not a grey disc
+			Pawn.ellipse(_ci, base, pw * 0.3, pw * 0.1, Color(0.22, 0.3, 0.55, 0.14), true)
+		else:
+			Pawn.ellipse(_ci, base, pw * 0.36, pw * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
 		var a := 0.35 if _fade.has(c) else 1.0  # see-through while a piece stands behind it
 		_ci.draw_texture_rect(tex, Rect2(base.x - pw * 0.5, base.y - ph, pw, ph), false, Color(tint, a))
 	return true
@@ -1492,6 +2264,49 @@ func _waterfall(a: Vector2, b: Vector2, h: float, hb: float, c: Vector2i, foam :
 		_foam(a2, b2, hb, c)
 
 
+## Soft falls: one flat sheet across neighbouring falls (no frame between cells) in the set's own water colour,
+## bending white over the edge; streaks placed by screen position, so they carry on across cells, slide down
+## it; foam at the foot.
+func _waterfall_soft(a: Vector2, b: Vector2, h: float, hb: float, c: Vector2i, d: Vector2i, foam: bool) -> void:
+	var ends := PackedFloat32Array()
+	for p: Vector2 in [a, b]:
+		var m := c + Vector2i(int(signf(p.x - c.x - 0.5)), int(signf(p.y - c.y - 0.5))) - d
+		var joined := grid.solid(m) and grid.terrain_at(m) == CombatGrid.T.WATER and absf(_surf(m) - h) < 0.01 \
+			and _surf_or_floor(m + d) < h - 0.01
+		ends.append(0.0 if joined else 0.1)
+	var a2 := a.lerp(b, ends[0])
+	var b2 := b.lerp(a, ends[1])
+	var tex := BattleArt.top(CombatGrid.T.WATER, grid.zone_at(c))
+	var water := BattleArt.average(tex) * _tint(CombatGrid.T.WATER) if tex != null else _terrain_color(CombatGrid.T.WATER)
+	_ci.draw_colored_polygon(PackedVector2Array([iso(a2.x, a2.y, h), iso(b2.x, b2.y, h), iso(b2.x, b2.y, hb), iso(a2.x, a2.y, hb)]),
+		Color(water.lightened(0.28), 0.96))
+	var ua := _screen_u(a2, 0.0)
+	var ub := _screen_u(b2, 0.0)
+	var per := 7.0
+	for j in range(floori(minf(ua, ub) * per), ceili(maxf(ua, ub) * per)):
+		var u := (j + 0.2 + 0.6 * MapDress.noise(Vector2(j, 3))) / per
+		var f := (u - ua) / (ub - ua)
+		if f < 0.0 or f > 1.0:
+			continue
+		var p := a2.lerp(b2, f)
+		if j % 2 == 0:  # a still streak down the whole fall
+			_ci.draw_line(iso(p.x, p.y, h - 0.1), iso(p.x, p.y, hb), Color(1, 1, 1, 0.22), 1.0, true)
+		var speed := 0.3 + 0.35 * MapDress.noise(Vector2(j, 5))
+		var length := 0.5 + 1.1 * MapDress.noise(Vector2(j, 9))
+		for dash in 2:
+			var ph := fmod(_time * speed + MapDress.noise(Vector2(j, 11)) + dash * 0.5, 1.0)
+			var y0 := lerpf(h, hb, ph)
+			_ci.draw_line(iso(p.x, p.y, y0), iso(p.x, p.y, maxf(hb, y0 - length)), Color(1, 1, 1, 0.5 * sin(ph * PI)),
+				1.0 + MapDress.noise(Vector2(j, 13)), true)
+	_ci.draw_line(iso(a2.x, a2.y, h), iso(b2.x, b2.y, h), Color(1, 1, 1, 0.85), 2.2, true)
+	if foam:
+		_foam(a2, b2, hb, c)
+	if ends[0] > 0.0:  # a cel outline down each side where the sheet stops against rock
+		_marker_down(a2, h, hb)
+	if ends[1] > 0.0:
+		_marker_down(b2, h, hb)
+
+
 ## White water where a fall lands: a row of puffs that swell and shrink out of step.
 func _foam(a: Vector2, b: Vector2, hb: float, c: Vector2i) -> void:
 	_ci.draw_line(iso(a.x, a.y, hb), iso(b.x, b.y, hb), Color(1, 1, 1, 0.85), 3.0, true)
@@ -1534,16 +2349,22 @@ func _contact_shadow(c: Vector2i, h: float) -> void:
 		var n: Vector2i = c + d
 		if not grid.in_bounds(n):
 			continue
-		var diff := grid.sight_top(n) - h
+		# Water is drawn a little under its own level, so a neighbour's water at the same level casts nothing.
+		var diff := grid.sight_top(n) - (WATER_INSET if grid.terrain_at(n) == CombatGrid.T.WATER else 0.0) - h
 		if diff <= 0.3:
 			continue
 		var a := clampf(diff * 0.12, 0.1, 0.32)
 		var e := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
-		var inward := -Vector2(d) * 0.35
+		var inward := -Vector2(d) * (0.55 if _soft() else 0.35)
 		var p0: Vector2 = e[0]
 		var p1: Vector2 = e[1]
 		var pts := PackedVector2Array([iso(p0.x, p0.y, h), iso(p1.x, p1.y, h), iso(p1.x + inward.x, p1.y + inward.y, h), iso(p0.x + inward.x, p0.y + inward.y, h)])
-		_ci.draw_colored_polygon(pts, Color(0.05, 0.08, 0.1, a))
+		if _soft():  # a soft shade that fades out, not a band per cell
+			var dark := Color(0.08, 0.1, 0.2, a * 0.3)
+			var clear := Color(dark, 0.0)
+			_ci.draw_polygon(pts, PackedColorArray([dark, dark, clear, clear]))
+		else:
+			_ci.draw_colored_polygon(pts, Color(0.05, 0.08, 0.1, a))
 
 
 ## A small block (tree canopy) centred on p.

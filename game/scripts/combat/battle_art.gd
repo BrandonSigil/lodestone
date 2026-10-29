@@ -148,9 +148,77 @@ static func lip(t: int, from_set := "") -> float:
 	return float(_rows.get(t, {}).get("lip", "0"))
 
 
+## How much of a side texture's top is a painted cap (snow, moss) rather than the rock under it, as a share of
+## its height (0 = none). The soft terrain pass hangs its own lip instead and repeats only the rock below.
+static func cap(t: int, from_set := "") -> float:
+	return float(_row(t, from_set).get("cap", "0"))
+
+
+## How high this ground piles up against the foot of a wall rising from it, in levels (0 = it doesn't): snow
+## banks in the soft terrain pass.
+static func drift(t: int, from_set := "") -> float:
+	return float(_row(t, from_set).get("drift", "0"))
+
+
+const BODY_TRIM := 0.05  ## share of a capped side texture's width cut off each edge (the sheet's paper and ink)
+static var _bodies := {}  # set/stem -> {"tex", "u", "v"}
+
+
+## The rock of a side texture for the soft terrain pass: {"tex", "u": cells across one repeat, "v": levels down
+## one repeat}. A side with a painted cap (cap > 0, cut from a sheet) loses the cap and the sheet's edges, and
+## its far edges are faded over its near ones, so it tiles with no seam (made at load; the art file is
+## untouched). Others come as they are.
+static func side_body(t: int, from_set := "") -> Dictionary:
+	var stem := String(_row(t, from_set).get("side", ""))
+	var c := cap(t, from_set)
+	var src := texture(stem, false, from_set)
+	if src == null:
+		return {}
+	if c <= 0.0:
+		return {"tex": texture(stem, true, from_set), "u": SIDE_TILES, "v": SIDE_LEVELS}
+	var key := "%s/%s/%s" % [from_set if from_set != "" else art_set, stem, c]
+	if _bodies.has(key):
+		return _bodies[key]
+	var img := src.get_image()
+	img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	var w := img.get_width()
+	var h := img.get_height()
+	var x0 := roundi(w * BODY_TRIM)
+	var y0 := roundi(h * c)
+	var body := _tileable(img.get_region(Rect2i(x0, y0, w - 2 * x0, h - y0)))
+	var bw := body.get_width()
+	var bh := body.get_height()
+	body.resize(TEX_SIZE, roundi(TEX_SIZE * float(bh) / bw), Image.INTERPOLATE_LANCZOS)
+	body.generate_mipmaps()
+	var res := {"tex": ImageTexture.create_from_image(body), "u": SIDE_TILES * float(bw) / w, "v": SIDE_LEVELS * float(bh) / h}
+	_bodies[key] = res
+	return res
+
+
+## An image made to tile: a quarter of its width (then height) is cut off its far edge and faded in over its
+## near edge, so the end runs straight on into the start.
+static func _tileable(img: Image) -> Image:
+	for axis in 2:
+		var w := img.get_width()
+		var h := img.get_height()
+		var b := (w if axis == 0 else h) / 4
+		var out := img.get_region(Rect2i(0, 0, w - b, h) if axis == 0 else Rect2i(0, 0, w, h - b))
+		var tail := img.get_region(Rect2i(w - b, 0, b, h) if axis == 0 else Rect2i(0, h - b, w, b))
+		for y in tail.get_height():
+			for x in tail.get_width():
+				var col := tail.get_pixel(x, y)
+				col.a *= 1.0 - ((x if axis == 0 else y) + 0.5) / b
+				tail.set_pixel(x, y, col)
+		out.blend_rect(tail, Rect2i(Vector2i.ZERO, tail.get_size()), Vector2i.ZERO)
+		img = out
+	return img
+
+
 ## Drop cached textures (after new art is imported).
 static func reset() -> void:
 	_rows.clear()
 	_set_rows.clear()
 	_tex.clear()
+	_bodies.clear()
 	_loaded = false

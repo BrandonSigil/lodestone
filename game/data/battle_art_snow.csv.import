@@ -6,10 +6,10 @@ uid="uid://cbupdolvq4jwl"
 
 [deps]
 
-files=["res://data/battle_art_snow.top.translation", "res://data/battle_art_snow.side.translation", "res://data/battle_art_snow.props.translation", "res://data/battle_art_snow.prop.translation", "res://data/battle_art_snow.prop.translation", "res://data/battle_art_snow.lip.translation"]
+files=["res://data/battle_art_snow.top.translation", "res://data/battle_art_snow.side.translation", "res://data/battle_art_snow.props.translation", "res://data/battle_art_snow.prop.translation", "res://data/battle_art_snow.prop.translation", "res://data/battle_art_snow.lip.translation", "res://data/battle_art_snow.cap.translation", "res://data/battle_art_snow.drift.translation"]
 
 source_file="res://data/battle_art_snow.csv"
-dest_files=["res://data/battle_art_snow.top.translation", "res://data/battle_art_snow.side.translation", "res://data/battle_art_snow.props.translation", "res://data/battle_art_snow.prop.translation", "res://data/battle_art_snow.prop.translation", "res://data/battle_art_snow.lip.translation"]
+dest_files=["res://data/battle_art_snow.top.translation", "res://data/battle_art_snow.side.translation", "res://data/battle_art_snow.props.translation", "res://data/battle_art_snow.prop.translation", "res://data/battle_art_snow.prop.translation", "res://data/battle_art_snow.lip.translation", "res://data/battle_art_snow.cap.translation", "res://data/battle_art_snow.drift.translation"]
 
 [params]
 

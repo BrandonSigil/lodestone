@@ -75,26 +75,40 @@ static func noise(g: Vector2) -> float:
 
 ## How a stair cell climbs: {"up": direction of the high side, "lo": height at its low edge, "hi": at its
 ## high edge}, centred on the cell's own height so a piece standing on it is mid-flight.
-## {} when no walkable neighbour is higher or lower (a flat landing).
+## It climbs along one axis: the one its flight carries on along (stair neighbours), else the one with the
+## biggest change in height, so every step of a flight runs the same way (a step picking its highest and
+## lowest neighbours separately could climb sideways across the flight and leave a hole beside it).
+## {} when nothing walkable along that axis is higher or lower (a flat landing).
 static func stair_run(grid: CombatGrid, c: Vector2i) -> Dictionary:
 	var h := float(grid.height_at(c))
-	var low := h
-	var high := h
-	var down := Vector2i.ZERO
-	var up := Vector2i.ZERO
-	for d: Vector2i in CombatRules.DIRS:
-		var n := c + d
-		if not grid.solid(n) or not grid.passable(n):
-			continue
-		var nh := float(grid.height_at(n))
-		if nh < low:
-			low = nh
-			down = d
-		if nh > high:
-			high = nh
-			up = d
-	if up == Vector2i.ZERO and down == Vector2i.ZERO:
+	var best := Vector2i.ZERO
+	var best_score := 0.0
+	for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+		var score := 0.0
+		for e: Vector2i in [d, -d]:
+			var n := c + e
+			if not grid.solid(n) or not grid.passable(n):
+				continue
+			if grid.terrain_at(n) == CombatGrid.T.STAIRS:
+				score += 100.0
+			score += absf(float(grid.height_at(n)) - h)
+		if score > best_score:
+			best_score = score
+			best = d
+	if best == Vector2i.ZERO:
 		return {}
-	if up == Vector2i.ZERO:
-		up = -down
-	return {"up": up, "lo": h - minf(h - low, 2.0) * 0.5, "hi": h + minf(high - h, 2.0) * 0.5}
+	var hp := _walk_height(grid, c + best, h)
+	var hm := _walk_height(grid, c - best, h)
+	var up := best if hp >= hm else -best
+	var high := maxf(hp, hm)
+	var low := minf(hp, hm)
+	var lo := h - minf(maxf(h - low, 0.0), 2.0) * 0.5
+	var hi := h + minf(maxf(high - h, 0.0), 2.0) * 0.5
+	if is_equal_approx(lo, hi):
+		return {}
+	return {"up": up, "lo": lo, "hi": hi}
+
+
+## A neighbour's height for a stair, or the stair's own when it can't be walked onto.
+static func _walk_height(grid: CombatGrid, n: Vector2i, own: float) -> float:
+	return float(grid.height_at(n)) if grid.solid(n) and grid.passable(n) else own

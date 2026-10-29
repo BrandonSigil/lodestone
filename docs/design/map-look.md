@@ -63,6 +63,8 @@ The question was how to paint the grass so it hangs over the edge. The answer he
 
 Why not paint the moss into the cliff side texture (B8, B15)? A side strip with moss painted at its top needs to match the top it hangs from. It breaks when a zone or strangeness recolours the top, it repeats visibly along a long wall, it needs a corner piece for every angle, and it can't follow a drop of any height. A lip cut from the top always matches its top, on every tile set, including sets that don't exist yet.
 
+Update 2026-10-28: the soft terrain pass (`docs/design/terrain-engine.md`) draws this lip as one unbroken band along a cell's whole outline, round its rounded corners, with the drips fixed to screen position. A set that paints its cap into the sides (`cap` column) gets a lip as thick instead.
+
 Later, if Brandon wants a hand-drawn drip silhouette, a `lip_<terrain>.png` mask strip could replace the code profile without changing anything else (section 9).
 
 ## 5. Water and waterfalls
