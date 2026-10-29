@@ -3,6 +3,7 @@
  "art_set": "village_in",
  "strangeness": 0.0,
  "view": 0,
+ "walls": true,
  "turn": false,
  "fog": true,
  "grid": {

@@ -40,6 +40,10 @@ const ALIEN_COLORS := {
 const CLIFF := Color(0.62, 0.58, 0.49)  ## side faces of natural ground
 const ALIEN_CLIFF := Color(0.42, 0.36, 0.5)
 const MASONRY := Color(0.7, 0.66, 0.55)  ## side faces of built stone
+const WALL_TOP := Color("6c6d74")  ## walls maps: a wall's top, a step lighter than its faces (graybox until wall art)
+const WALL_SIDE := Color("48484d")  ## and its faces, the dungeon cliff's grey
+const RIM_THIN := 0.25  ## a front edge's stubby wall: this deep in cells
+const RIM_HIGH := 1.0  ## and this many levels over its floor
 const FALL := Color(0.62, 0.9, 0.86)  ## waterfall sheets
 ## Which ground reaches onto which where they meet (higher over lower); others never blend.
 const BLEND_RANK := {CombatGrid.T.GRASS: 0, CombatGrid.T.FOREST: 1, CombatGrid.T.ROAD: 2, CombatGrid.T.STONE: 3}
@@ -80,6 +84,9 @@ var rot := 0  ## camera quarter turns, 0-3 (Q turns it)
 ## With fog_on, cells missing from it are not drawn or picked at all.
 var fog := {}
 var fog_on := false
+var walls := false  ## rock draws as plain grey walls: flat faces, square corners, no boulders (ExploreMap.walls)
+var rims := {}  ## floor cells on a walls map's front edge: a stubby wall stands on their outer edge
+var wall_cells := {}  ## the rock a walls map draws as walls; the rest of its rock stays natural (ExploreRules.shape_walls)
 var cull := Rect2()  ## board-local area worth drawing (big maps); empty draws everything
 var show_grid := true  ## cell outlines; off, only real ledges keep their rim (exploration hides the grid)
 ## The soft terrain pass (TerrainShape, docs/design/terrain-engine.md): rounded blocks, cliffs and lips that run
@@ -456,8 +463,8 @@ func _sync_slabs() -> void:
 	var valley := _valley()
 	if valley:
 		_refresh_skirt()
-	var gkey := "%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [grid.get_instance_id(), grid.w, grid.h, rot, art_set, look.key(),
-		strangeness, show_grid, backdrop, island, fog_on, wallpaper, soft]
+	var gkey := "%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [grid.get_instance_id(), grid.w, grid.h, rot, art_set, look.key(),
+		strangeness, show_grid, backdrop, island, fog_on, wallpaper, soft, walls]
 	var lkey := "%s|%s" % [gkey, _skirt_key if valley else ""]
 	if lkey != _layers_key:
 		_layers_key = lkey
@@ -670,6 +677,12 @@ func _paint(sl: Slab) -> void:
 			for c: Vector2i in _depths[sl.depth]:
 				if not _unseen(c):
 					_draw_ground(c)
+			if not rims.is_empty():  # the row behind's front-edge walls stand in front of its pieces
+				var rows := [sl.depth - 1] if sl.depth < _depths.size() - 1 else [sl.depth - 1, sl.depth]
+				for d: int in rows:
+					for c: Vector2i in (_depths[d] if d >= 0 else []):
+						if rims.has(c) and not _unseen(c):
+							_rim_walls(c)
 		Slab.K.FALLS:
 			if _soft():
 				for c: Vector2i in _fall_cells[sl.depth]:
@@ -795,15 +808,16 @@ func _draw_ground(c: Vector2i) -> void:
 		return
 	var t := grid.terrain_at(c)
 	var h := _surf(c)
-	var top_col := _terrain_color(t).lightened(minf(h, 6.0) * 0.025)
-	var built := t == CombatGrid.T.STONE or t == CombatGrid.T.STAIRS or t == CombatGrid.T.RUIN
-	var face := (MASONRY if built else CLIFF).lerp(ALIEN_CLIFF, strangeness)
+	var wall := _wall(c)
+	var top_col := WALL_TOP if wall else _terrain_color(t).lightened(minf(h, 6.0) * 0.025)
+	var built := wall or t == CombatGrid.T.STONE or t == CombatGrid.T.STAIRS or t == CombatGrid.T.RUIN
+	var face := WALL_SIDE if wall else (MASONRY if built else CLIFF).lerp(ALIEN_CLIFF, strangeness)
 	if t == CombatGrid.T.WATER:
 		face = MASONRY.lerp(ALIEN_CLIFF, strangeness)
 	var seed_v := _hash(c)
 	var zone := grid.zone_at(c)  # "" = the map's set
-	var top_tex := BattleArt.top(t, zone)
-	var side_tex := BattleArt.side(t, zone)
+	var top_tex: Texture2D = null if wall else BattleArt.top(t, zone)
+	var side_tex: Texture2D = null if wall else BattleArt.side(t, zone)
 	var tint := _tint(t)
 	var fl := _floor()
 	var lip := 0.0 if built or t == CombatGrid.T.WATER else BattleArt.lip(t, zone)
@@ -988,9 +1002,55 @@ func _around(cells: Dictionary, reach: int) -> Dictionary:
 
 func _shape_radii(c: Vector2i) -> void:
 	if grid.solid(c):
-		_radii[c] = TerrainShape.radii(grid, c, _surf_or_floor)
+		var r := TerrainShape.radii(grid, c, _surf_or_floor)
+		if walls:  # walls stand square: no rounding on them, no fillets curving off them
+			for k in 4:
+				if _wall(c) or rims.has(c) or (r[k] < 0.0 and _wall(TerrainShape.gap(grid, c, k, _surf_or_floor).get("src", NONE))):
+					r[k] = 0.0
+		_radii[c] = r
 	else:
 		_radii.erase(c)
+
+
+func _wall(c: Vector2i) -> bool:
+	return walls and wall_cells.has(c) and grid.terrain_at(c) == CombatGrid.T.ROCK
+
+
+func _walkable(c: Vector2i) -> bool:
+	return grid.in_bounds(c) and grid.step_cost(c) < CombatGrid.BLOCKED
+
+
+## A front edge's stubby wall ([USER] 2026-10-29): the floor tile stays whole and walkable, and a wall RIM_THIN
+## deep and RIM_HIGH tall stands on each of its outer edges (not against a wall or onto more floor), from the
+## world's floor up. Drawn with the row in front of the tile, so a piece standing on it is behind the wall.
+func _rim_walls(c: Vector2i) -> void:
+	var h := _surf(c) + RIM_HIGH
+	var foot := _floor()
+	var f0 := front_dir(false)
+	var f1 := front_dir(true)
+	for d: Vector2i in [f0, f1]:
+		var n := c + d
+		if _walkable(n) or _wall(n):
+			continue
+		var lo := Vector2(c)
+		var hi := lo + Vector2.ONE
+		if d.x > 0:
+			lo.x = hi.x - RIM_THIN
+		elif d.x < 0:
+			hi.x = lo.x + RIM_THIN
+		if d.y > 0:
+			lo.y = hi.y - RIM_THIN
+		elif d.y < 0:
+			hi.y = lo.y + RIM_THIN
+		for shade in [false, true]:
+			var fd: Vector2i = f1 if shade else f0
+			var e := _side(lo, hi, fd)
+			var quad := PackedVector2Array([iso(e[0].x, e[0].y, h), iso(e[1].x, e[1].y, h), iso(e[1].x, e[1].y, foot), iso(e[0].x, e[0].y, foot)])
+			_ci.draw_colored_polygon(quad, Color(WALL_SIDE * _face_light(Vector2(fd)), 1.0))
+		var cap := PackedVector2Array([iso(lo.x, lo.y, h), iso(hi.x, lo.y, h), iso(hi.x, hi.y, h), iso(lo.x, hi.y, h)])
+		_ci.draw_colored_polygon(cap, WALL_TOP)
+		cap.append(cap[0])
+		_ci.draw_polyline(cap, Color(WALL_TOP, 1.0), 1.0, true)  # no 2D antialiasing: a hairline in its own colour
 
 
 ## Swap one cell's outline line ends in _pen_ends for its current ones.
@@ -1027,8 +1087,9 @@ func _draw_ground_soft(c: Vector2i) -> void:
 	var zone := grid.zone_at(c)
 	var g := _ground_t(t)
 	var tint := _tint(g)
-	var top_tex := BattleArt.top(g, zone)
-	var top_col := _terrain_color(g).lightened(minf(h, 6.0) * 0.025)
+	var wall := _wall(c)
+	var top_tex: Texture2D = null if wall else BattleArt.top(g, zone)
+	var top_col := WALL_TOP if wall else _terrain_color(g).lightened(minf(h, 6.0) * 0.025)
 	if t == CombatGrid.T.STAIRS and _stair_steps_soft(c, h):
 		_contact_shadow(c, h)
 		return
@@ -1042,9 +1103,9 @@ func _draw_ground_soft(c: Vector2i) -> void:
 			_gap_floor(c, k, r[k])
 	# River walls are the rock around them, not the set's masonry.
 	var side_t := CombatGrid.T.GRASS if t == CombatGrid.T.WATER else t
-	var body := BattleArt.side_body(side_t, zone)
+	var body := {} if wall else BattleArt.side_body(side_t, zone)
 	var built := t == CombatGrid.T.STONE or t == CombatGrid.T.RUIN
-	var face := (MASONRY if built else CLIFF).lerp(ALIEN_CLIFF, strangeness)
+	var face := WALL_SIDE if wall else (MASONRY if built else CLIFF).lerp(ALIEN_CLIFF, strangeness)
 	# Faces, and the runs of shown segments that drop (each gets one unbroken lip).
 	var runs := []
 	var run := []
@@ -1066,7 +1127,7 @@ func _draw_ground_soft(c: Vector2i) -> void:
 		else:
 			runs.append(run)
 	_soft_drifts(c, h, segs, feet, shown)
-	var lip := _soft_lip_depth(g, zone)
+	var lip := 0.0 if wall else _soft_lip_depth(g, zone)
 	if lip > 0.0:
 		for rn: Array in runs:
 			_soft_lip(rn, h, top_tex, tint, top_col, lip)
@@ -1806,6 +1867,8 @@ func _draw_props(c: Vector2i) -> void:
 	var mid := cell_top(c)
 	if grid.prop_anchor(c) != CombatGrid.NONE_CELL:
 		_placed(c)
+		return
+	if _wall(c):
 		return
 	if _props(c, h, t, seed_v, tint, zone):
 		return
@@ -2714,7 +2777,7 @@ func _find_cover() -> void:
 				var h := float(grid.height_at(c))
 				var mid := cell_top(c)
 				var art := BattleArt.props(grid.terrain_at(c), grid.zone_at(c))
-				if not art.list.is_empty() and art.count > 0:
+				if not art.list.is_empty() and art.count > 0 and not _wall(c):
 					var ph: float = art.height * TW * 1.1
 					var prop := Rect2(mid.x - TW * 0.45, mid.y - ph, TW * 0.9, ph)
 					if _overlap(box, prop) > 0.2:

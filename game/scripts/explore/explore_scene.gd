@@ -70,6 +70,7 @@ func _ready() -> void:
 	board.art_set = map.art_set
 	board.rot = map.view
 	board.fog_on = fogged()
+	board.walls = map.walls
 	board.show_grid = false
 	board.backdrop = true  # the map's look: sky, mountains and forest for valley looks, a dark floor indoors
 	# Outdoors, the painted look's staging (as in the map maker and fights): the set's skyline fixed behind
@@ -114,6 +115,10 @@ func _ready() -> void:
 			grid.set_terrain(t.cell, _letter_terrain(String(t.floor)))
 		elif t.kind == "door" or t.kind == "rubble":
 			grid.set_terrain(t.cell, CombatGrid.T.RUIN)  # shut until opened
+	if map.walls:  # after the doors shut, so no front edge opens a way round one
+		var shaped := ExploreRules.shape_walls(grid, [board.front_dir(false), board.front_dir(true)], map.outdoors)
+		board.wall_cells = shaped.walls
+		board.rims = shaped.rims
 
 	hud = FrameHud.new()
 	add_child(hud)

@@ -103,6 +103,165 @@ static func locked_cells(grid: CombatGrid, open: Dictionary, doors: Array, jump:
 	return out
 
 
+# --- walls ------------------------------------------------------------------------
+
+const WALL_TALL := 3  ## a back wall stands this many levels over the floor beside it
+const WALL_HALF := 1  ## a wall between two floors stands this high
+
+
+## Walls maps ([USER] 2026-10-29). Rock beside ground is a wall: WALL_TALL over that ground where nothing walkable
+## lies behind it (back walls), WALL_HALF where floor lies both behind and in front (inner walls). A front wall
+## (floor behind, none in front but a doorway in its own line) becomes floor like the floor behind it, and the
+## board draws a stubby wall on its outer edge. A run of rim cells that would join two areas a walker couldn't
+## get between (round a shut door, say) stays a half wall instead. Rock touching no ground is void. Run it with
+## shut doors already in place. `front`: the two directions toward the camera.
+## `outdoors` ([USER] 2026-10-29): zones that are outside, not interior. Their rock between two floors stays
+## natural rock; their edge rock is void, so the forest skirt's tree line frames the area, except a back edge
+## facing a pocket the world's edge doesn't reach (the space between buildings), which is a tall wall.
+## Returns {"walls": rock cells drawn as walls, "rims": front-edge floor cells}.
+static func shape_walls(grid: CombatGrid, front: Array, outdoors := []) -> Dictionary:
+	var f0: Vector2i = front[0]
+	var f1: Vector2i = front[1]
+	var back: Array[Vector2i] = [-f0, -f1, -f0 - f1]
+	var heights := {}
+	var rims := {}
+	var floors := {}
+	var mass: Array[Vector2i] = []
+	var world := _world(grid)
+	for y in grid.h:
+		for x in grid.w:
+			var c := Vector2i(x, y)
+			if grid.terrain_at(c) != CombatGrid.T.ROCK:
+				continue
+			var floor_h := -1
+			for d in STEPS:
+				if _ground(grid, c + d):
+					floor_h = maxi(floor_h, grid.height_at(c + d))
+			if floor_h < 0:
+				mass.append(c)
+				continue
+			var outside := outdoors.has(grid.zone_at(c))
+			var behind := -1
+			for i in back.size():
+				if _ground(grid, c + back[i]):
+					behind = i
+					break
+			floors[c] = floor_h
+			if outside:
+				var pocket := behind < 0 and not STEPS.any(func(d: Vector2i) -> bool: return world.has(c + d))
+				if pocket:
+					heights[c] = floor_h + WALL_TALL
+				elif behind < 0 or _open_front(grid, c, f0, f1):
+					mass.append(c)
+				continue
+			if behind < 0:
+				heights[c] = floor_h + WALL_TALL
+			elif _open_front(grid, c, f0, f1):
+				rims[c] = c + back[behind]
+			else:
+				heights[c] = floor_h + WALL_HALF
+	for c: Vector2i in _joining_rims(grid, rims):
+		rims.erase(c)
+		heights[c] = int(floors[c]) + WALL_HALF
+	for c in mass:
+		grid.set_terrain(c, CombatGrid.T.VOID)
+	for c: Vector2i in heights:
+		grid.set_height(c, int(heights[c]))
+	for c: Vector2i in rims:
+		var from: Vector2i = rims[c]
+		grid.set_terrain(c, grid.terrain_at(from))
+		grid.set_height(c, grid.height_at(from))
+		rims[c] = true
+	return {"walls": heights, "rims": rims}
+
+
+## The open world round the map: everything off the grid, plus the void and the rock touching no ground that
+## reach the grid's edge. Rock touching no ground shut in by walls is a pocket, not the world.
+static func _world(grid: CombatGrid) -> Dictionary:
+	var open := func(c: Vector2i) -> bool:
+		if grid.terrain_at(c) == CombatGrid.T.VOID:
+			return true
+		if grid.terrain_at(c) != CombatGrid.T.ROCK:
+			return false
+		for d in STEPS:
+			if _ground(grid, c + d):
+				return false
+		return true
+	var out := {}
+	var todo: Array[Vector2i] = []
+	for y in range(-1, grid.h + 1):
+		for x in range(-1, grid.w + 1):
+			var c := Vector2i(x, y)
+			if not grid.in_bounds(c):
+				out[c] = true
+			elif (x == 0 or y == 0 or x == grid.w - 1 or y == grid.h - 1) and open.call(c):
+				out[c] = true
+				todo.append(c)
+	while not todo.is_empty():
+		var c: Vector2i = todo.pop_back()
+		for d in CombatRules.DIRS:
+			var n: Vector2i = c + d
+			if grid.in_bounds(n) and not out.has(n) and open.call(n):
+				out[n] = true
+				todo.append(n)
+	return out
+
+
+## Rim cells in runs that touch more than one walkable area (as a Jump 1 walker finds them before the rims open).
+static func _joining_rims(grid: CombatGrid, rims: Dictionary) -> Array[Vector2i]:
+	var area := {}
+	var n_areas := 0
+	for y in grid.h:
+		for x in grid.w:
+			var c := Vector2i(x, y)
+			if area.has(c) or not _ground(grid, c):
+				continue
+			for k: Vector2i in reach(grid, [c], 1):
+				area[k] = n_areas
+			n_areas += 1
+	var out: Array[Vector2i] = []
+	var done := {}
+	for start: Vector2i in rims:
+		if done.has(start):
+			continue
+		var run: Array[Vector2i] = [start]
+		var touched := {}
+		done[start] = true
+		var i := 0
+		while i < run.size():
+			var c := run[i]
+			i += 1
+			for d in STEPS:
+				var n: Vector2i = c + d
+				if area.has(n):
+					touched[area[n]] = true
+				elif rims.has(n) and not done.has(n):
+					done[n] = true
+					run.append(n)
+		if touched.size() > 1:
+			out.append_array(run)
+	return out
+
+
+## No ground in front of this wall, except a doorway: a gap in its own wall line with rock on its far side.
+static func _open_front(grid: CombatGrid, c: Vector2i, f0: Vector2i, f1: Vector2i) -> bool:
+	for pair: Array in [[f0, f1], [f1, f0], [f0 + f1, Vector2i.ZERO]]:
+		var d: Vector2i = pair[0]
+		var o: Vector2i = pair[1]
+		var n := c + d
+		if not _ground(grid, n):
+			continue
+		var doorway := o != Vector2i.ZERO and _ground(grid, c - o) and _ground(grid, n - o) \
+			and grid.in_bounds(n + d) and grid.terrain_at(n + d) == CombatGrid.T.ROCK
+		if not doorway:
+			return false
+	return true
+
+
+static func _ground(grid: CombatGrid, c: Vector2i) -> bool:
+	return grid.in_bounds(c) and grid.step_cost(c) < CombatGrid.BLOCKED
+
+
 # --- walking ----------------------------------------------------------------------
 
 ## The party walks at the pace of its worst climber, so everyone can follow the leader's steps.

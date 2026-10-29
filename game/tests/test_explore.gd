@@ -116,6 +116,63 @@ func test_crypt_chest_is_locked_until_the_door_opens() -> void:
 	ok(not locked.has(m.start[0]), "the yard the party starts in is open")
 
 
+func _walled(w: int, h: int, floor_cells: Callable) -> CombatGrid:
+	var g := CombatGrid.flat(w, h)
+	for y in h:
+		for x in w:
+			var c := Vector2i(x, y)
+			var inside: bool = floor_cells.call(c)
+			g.set_terrain(c, CombatGrid.T.STONE if inside else CombatGrid.T.ROCK)
+			g.set_height(c, 1 if inside else 2)
+	return g
+
+
+func test_walls_tall_at_the_back_floor_with_a_rim_in_front() -> void:
+	# A 3 x 3 floor at height 1 in a 7 x 7 field of rock; the camera looks from +x, +y.
+	var g := _walled(7, 7, func(c: Vector2i) -> bool: return c.x >= 2 and c.x <= 4 and c.y >= 2 and c.y <= 4)
+	var rims: Dictionary = ExploreRules.shape_walls(g, [Vector2i(0, 1), Vector2i(1, 0)]).rims
+	eq(g.height_at(Vector2i(3, 1)), 1 + ExploreRules.WALL_TALL, "the back wall stands tall")
+	eq(g.height_at(Vector2i(1, 3)), 1 + ExploreRules.WALL_TALL, "so does the other back wall")
+	for c: Vector2i in [Vector2i(3, 5), Vector2i(5, 3), Vector2i(5, 5)]:
+		ok(rims.has(c) and g.passable(c) and g.height_at(c) == 1, "front edge %s is walkable floor with a rim" % c)
+	eq(g.terrain_at(Vector2i(0, 0)), CombatGrid.T.VOID, "rock touching no floor is not drawn")
+
+
+func test_outdoor_zones_get_a_tree_line_not_walls() -> void:
+	var g := _walled(7, 7, func(c: Vector2i) -> bool: return c.x >= 2 and c.x <= 4 and c.y >= 2 and c.y <= 4)
+	for y in 7:
+		for x in 7:
+			g.set_zone(Vector2i(x, y), "forest")
+	var rims: Dictionary = ExploreRules.shape_walls(g, [Vector2i(0, 1), Vector2i(1, 0)], ["forest"]).rims
+	ok(rims.is_empty(), "no front-edge walls outside")
+	for c: Vector2i in [Vector2i(3, 1), Vector2i(3, 5), Vector2i(0, 0)]:
+		eq(g.terrain_at(c), CombatGrid.T.VOID, "edge rock %s opens onto the tree line" % c)
+
+
+func test_outdoor_edge_facing_a_pocket_is_a_wall() -> void:
+	# A forest yard (rows 6-7) under an interior hall (row 1) with side passages; the rock between them shuts in a
+	# pocket the world's edge never reaches. The yard's back edge faces that pocket, so it is a wall.
+	var g := _walled(11, 9, func(c: Vector2i) -> bool:
+		return (c.y == 1 or c.y == 6 or c.y == 7 or c.x == 1 or c.x == 9) and c.x >= 1 and c.x <= 9 and c.y >= 1 and c.y <= 7)
+	for y in range(5, 9):
+		for x in 11:
+			g.set_zone(Vector2i(x, y), "forest")
+	var shaped := ExploreRules.shape_walls(g, [Vector2i(0, 1), Vector2i(1, 0)], ["forest"])
+	eq(g.height_at(Vector2i(5, 5)), 1 + ExploreRules.WALL_TALL, "the yard's back edge stands tall")
+	ok(shaped.walls.has(Vector2i(5, 5)), "and draws as a wall")
+	eq(g.terrain_at(Vector2i(5, 8)), CombatGrid.T.VOID, "its front edge still opens onto the tree line")
+
+
+func test_a_front_rim_never_joins_two_rooms() -> void:
+	# Two rooms side by side, a rock wall between them, sharing the front edge.
+	var g := _walled(7, 5, func(c: Vector2i) -> bool: return c.y >= 1 and c.y <= 2 and c.x != 0 and c.x != 3 and c.x != 6)
+	var rims: Dictionary = ExploreRules.shape_walls(g, [Vector2i(0, 1), Vector2i(1, 0)]).rims
+	ok(not rims.has(Vector2i(3, 3)), "the front row under the dividing wall stays a wall")
+	ok(not g.passable(Vector2i(2, 3)) and not g.passable(Vector2i(4, 3)), "so does the rest of that row")
+	ok(ExploreRules.find_path(g, Vector2i(1, 1), Vector2i(5, 1), 1).is_empty(), "the rooms stay apart")
+	eq(g.height_at(Vector2i(3, 3)), 1 + ExploreRules.WALL_HALF, "a half wall")
+
+
 func test_path_goes_through_the_gap() -> void:
 	var g := _room()
 	var p := ExploreRules.find_path(g, Vector2i(0, 0), Vector2i(8, 0), 1)

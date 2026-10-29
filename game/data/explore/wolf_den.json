@@ -3,6 +3,7 @@
  "art_set": "dungeon",
  "strangeness": 0.0,
  "view": 0,
+ "walls": true,
  "turn": false,
  "fog": true,
  "grid": {

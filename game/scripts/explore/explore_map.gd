@@ -13,6 +13,8 @@ var strangeness := 0.0
 var view := 0  ## camera quarter turns the map opens with
 var turn := true  ## false locks the camera (building sprites only read from the front)
 var fog := true  ## false shows every cell from the start (the village): no fog of war
+var walls := false  ## rock is plain gray walls: tall along the back, half height in front (dungeons, interiors)
+var outdoors: Array = []  ## zones (set names) that are outside on a walls map: natural rock, a tree line at the edge
 var start: Array[Vector2i] = []  ## party cells, leader first
 ## [{"id", "event", "sight", "loot", "boss": a boss fight (more XP), "end": beating it ends the E2E test,
 ##   "units": [{"id": class id, "cell": Vector2i}]}]
@@ -50,6 +52,8 @@ static func from_dict(d: Dictionary) -> ExploreMap:
 	m.view = int(d.get("view", 0))
 	m.turn = bool(d.get("turn", true))
 	m.fog = bool(d.get("fog", true))
+	m.walls = bool(d.get("walls", false))
+	m.outdoors = Array(d.get("outdoors", []))
 	for c in d.get("start", []):
 		m.start.append(_cell(c))
 	for g: Dictionary in d.get("groups", []):
