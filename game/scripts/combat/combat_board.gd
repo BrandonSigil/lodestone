@@ -1911,28 +1911,24 @@ func _prop_rect(a: Vector2i, p: Dictionary, tex: Texture2D) -> Rect2:
 func _placed(c: Vector2i) -> void:
 	var a := grid.prop_anchor(c)
 	var p: Dictionary = grid.props[a]
-	if _prop_front(a, p) != c:
-		return
 	var tex := prop_texture(p, grid.zone_at(a))
 	var col := Color.WHITE
 	if fog_on and fog.get(c, 2) == 1:
 		col = Color(0.45, 0.46, 0.52)  # remembered, out of sight: same wash as the veil
 	if _fade.has(a):
 		col.a = 0.35
+	if tex == null and p.get("arch", false):
+		_arch(a, p, c, col)
+		return
+	if _prop_front(a, p) != c:
+		return
 	if tex == null and p.get("blob", false):
 		_blob(a, p, col)
 		return
 	if tex == null:
 		var h := float(grid.height_at(a))
 		var tall: float = p.tall
-		var top: float = h + (tall * 2.0 if tall > 0.0 else 3.0)
-		var lo := Vector2(a)
-		var hi: Vector2 = lo + Vector2(p.foot)
-		for shade in [false, true]:
-			var e: Array = _side(lo, hi, front_dir(shade))
-			var q := PackedVector2Array([iso(e[0].x, e[0].y, top), iso(e[1].x, e[1].y, top), iso(e[1].x, e[1].y, h), iso(e[0].x, e[0].y, h)])
-			_ci.draw_colored_polygon(q, MASONRY.darkened(0.3 if shade else 0.12) * col)
-		_ci.draw_colored_polygon(PackedVector2Array([iso(lo.x, lo.y, top), iso(hi.x, lo.y, top), iso(hi.x, hi.y, top), iso(lo.x, hi.y, top)]), MASONRY.lightened(0.1) * col)
+		_box(Vector2(a), Vector2(a) + Vector2(p.foot), h, h + (tall * 2.0 if tall > 0.0 else 3.0), col)
 		return
 	var r := _prop_rect(a, p, tex)
 	if p.tall > 0.0 and not p.walk:
@@ -1944,6 +1940,28 @@ func _placed(c: Vector2i) -> void:
 		_ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	else:
 		_ci.draw_texture_rect(tex, r, false, col)
+
+
+## A graybox block over grid rect [lo, hi] from level z0 up to z1: its two camera-facing sides and its top.
+func _box(lo: Vector2, hi: Vector2, z0: float, z1: float, col: Color) -> void:
+	for shade in [false, true]:
+		var e: Array = _side(lo, hi, front_dir(shade))
+		var q := PackedVector2Array([iso(e[0].x, e[0].y, z1), iso(e[1].x, e[1].y, z1), iso(e[1].x, e[1].y, z0), iso(e[0].x, e[0].y, z0)])
+		_ci.draw_colored_polygon(q, MASONRY.darkened(0.3 if shade else 0.12) * col)
+	_ci.draw_colored_polygon(PackedVector2Array([iso(lo.x, lo.y, z1), iso(hi.x, lo.y, z1), iso(hi.x, hi.y, z1), iso(lo.x, hi.y, z1)]), MASONRY.lightened(0.1) * col)
+
+
+## A graybox arch until its art exists. Each pillar draws with its own cell, so a piece walking through
+## stands between them; the lintel draws with the front pillar, over anyone in the gap.
+func _arch(a: Vector2i, p: Dictionary, c: Vector2i, col: Color) -> void:
+	if grid.under_arch(c):
+		return
+	var h := float(grid.height_at(a))
+	var top := h + maxf(2.0, float(p.tall) * 2.0)
+	var inset := Vector2(0.2, 0.2)
+	_box(Vector2(c) + inset, Vector2(c) + Vector2.ONE - inset, h, top, col)
+	if c == _prop_front(a, p):
+		_box(Vector2(a) + inset, Vector2(a) + Vector2(p.foot) - inset, top - 0.6, top, col)
 
 
 ## The sprite a placed prop draws with at the current camera turn: `<sprite>_r<n>` when that angle is

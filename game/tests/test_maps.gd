@@ -437,6 +437,18 @@ func test_prop_extras_round_trip() -> void:
 	eq(String(r.props[Vector2i(1, 1)].name), "Lich king throne", "resize keeps extras")
 
 
+func test_arch_gap_is_walkable() -> void:
+	var g := _island(8)
+	g.add_prop(Vector2i(1, 2), "ph_arch", Vector2i(4, 1), 1.8, 2.0, false, {"arch": true})
+	g.add_prop(Vector2i(6, 1), "ph_arch", Vector2i(1, 3), 1.8, 2.0, false, {"arch": true})
+	ok(not g.passable(Vector2i(1, 2)) and not g.passable(Vector2i(4, 2)), "pillars at both ends block")
+	ok(g.passable(Vector2i(2, 2)) and g.passable(Vector2i(3, 2)), "the gap between them is open")
+	ok(g.sight_top(Vector2i(2, 2)) < g.sight_top(Vector2i(1, 2)), "sight passes under the arch")
+	ok(not g.passable(Vector2i(6, 1)) and g.passable(Vector2i(6, 2)) and not g.passable(Vector2i(6, 3)), "an arch turned the other way")
+	var back := CombatGrid.from_dict(JSON.parse_string(JSON.stringify(g.to_dict())))
+	ok(back.passable(Vector2i(2, 2)) and back.under_arch(Vector2i(3, 2)), "saved and loaded")
+
+
 func test_smooth_and_path() -> void:
 	var g := _island(7, 2)
 	g.set_height(Vector2i(3, 3), 6)
@@ -466,7 +478,7 @@ func test_catalog() -> void:
 	eq(String(hearth.group), "Hearth and light")
 	ok(BattleArt.texture(String(hearth.sprite)) != null, "catalog art exists")
 	for e in all:
-		if e.kind == "prop" and e.drawer != MakerCatalog.UNSORTED:
+		if e.kind == "prop" and e.drawer != MakerCatalog.UNSORTED and not String(e.sprite).get_file().begins_with("ph_"):
 			ok(BattleArt.texture(String(e.sprite)) != null, "art for " + String(e.id))
 		if e.kind == "thing":
 			ok(MakerCatalog.THING_KINDS.has(e.thing), "thing kind " + String(e.id))

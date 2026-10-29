@@ -112,6 +112,8 @@ func test_village_art_is_its_own() -> void:
 			stems[s] = "village.json"
 	stems["skyline"] = "wallpaper"
 	for s in stems:
+		if String(s).get_file().begins_with("ph_"):
+			continue  # a placeholder (statue, arch), drawn in code until its art exists
 		ok(not String(s).contains("/") or String(s).begins_with("village/"), "%s (%s) borrows another set" % [s, stems[s]])
 		var path := "res://art/source/battle/village/%s.png" % String(s).trim_prefix("village/")
 		ok(ResourceLoader.exists(path), "%s (%s) is missing from the village set" % [path, stems[s]])

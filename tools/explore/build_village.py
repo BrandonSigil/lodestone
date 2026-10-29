@@ -39,6 +39,7 @@ class Map:
         self.zones = [["-"] * w for _ in range(h)]
         self.props, self.things, self.start = [], [], []
         self.art_set = art_set
+        self.walls = False  # rock is plain gray walls (ExploreMap.walls): the interiors
 
     def fill(self, x0, y0, x1, y1, t=None, h=None):
         """Inclusive rect; None keeps what is there."""
@@ -52,9 +53,16 @@ class Map:
     def put(self, x, y, t=None, h=None):
         self.fill(x, y, x, y, t, h)
 
-    def prop(self, sprite, x, y, foot=(1, 1), tall=0.0, sight=0.0, walk=False):
+    def prop(self, sprite, x, y, foot=(1, 1), tall=0.0, sight=0.0, walk=False, arch=False):
         self.props.append({"sprite": sprite, "cell": [x, y], "foot": list(foot), "tall": tall,
                            "sight": sight, "walk": walk})
+        if arch:
+            self.props[-1]["arch"] = True
+
+    def arch(self, x, y, foot):
+        """A gateway (CombatGrid.under_arch): pillars on the two end cells of its long side, a walkable gap
+        between them. A graybox until its art (ph_arch) is painted."""
+        self.prop("ph_arch", x, y, foot, tall=1.8, sight=2.0, arch=True)
 
     def building(self, sprite, x, y, fx, fy, door_dx):
         """A whole house on an fx x fy footprint; returns the cell in front of its door (left wall)."""
@@ -66,8 +74,8 @@ class Map:
 
     def save(self, view=0, turn=False, fog=True):
         data = {
-            "name": self.name, "art_set": self.art_set, "strangeness": 0.0, "view": view, "turn": turn,
-            "fog": fog,
+            "name": self.name, "art_set": self.art_set, "strangeness": 0.0, "view": view,
+            **({"walls": True} if self.walls else {}), "turn": turn, "fog": fog,
             "grid": {"w": self.w, "h": self.h,
                      "terrain": ["".join(r) for r in self.terrain],
                      "heights": ["".join(str(v) for v in r) for r in self.height],
@@ -100,12 +108,21 @@ BLOCKED = "ru."  # rock, rubble and void can't be walked (CombatGrid.STEP_COST)
 JUMP, STAIRS_CLIMB, INTERACT_CLIMB = 1, 2, 2  # the lead's jump; CombatGrid and ExploreRules
 
 
+def _under_arch(pr, dx, dy):
+    fx, fy = pr["foot"]
+    if not pr.get("arch"):
+        return False
+    return 0 < dy < fy - 1 if fy > fx else 0 < dx < fx - 1
+
+
 def _prop_cells(m):
+    """Every cell a prop blocks (an arch's gap is left out)."""
     cells = {}
     for pr in m.props:
         for dy in range(pr["foot"][1]):
             for dx in range(pr["foot"][0]):
-                cells[(pr["cell"][0] + dx, pr["cell"][1] + dy)] = pr
+                if not _under_arch(pr, dx, dy):
+                    cells[(pr["cell"][0] + dx, pr["cell"][1] + dy)] = pr
     return cells
 
 
@@ -158,6 +175,12 @@ def check_village(m):
                    for dx in (-1, 0, 1) for dy in (-1, 0, 1) if (dx, dy) != (0, 0)) and tc != start:
             problems.append("thing %s at %s can't be used" % (t["id"], tc))
     # Buildings: flat, on ground, nothing else on them; their door cell open.
+    owners = {}
+    for pr in m.props:
+        for dy in range(pr["foot"][1]):
+            for dx in range(pr["foot"][0]):
+                c = (pr["cell"][0] + dx, pr["cell"][1] + dy)
+                owners[c] = owners.get(c, 0) + 1
     for pr in m.props:
         x0, y0 = pr["cell"]
         fx, fy = pr["foot"]
@@ -169,8 +192,8 @@ def check_village(m):
         if len({hgt(c) for c in cells if ok_cell(c)}) > 1:
             problems.append("%s at %s straddles a height change" % (pr["sprite"], (x0, y0)))
         for c in cells:
-            if props.get(c) is not pr:
-                problems.append("%s at %s overlaps %s" % (pr["sprite"], (x0, y0), props[c]["sprite"]))
+            if owners[c] > 1:
+                problems.append("%s at %s overlaps another prop" % (pr["sprite"], (x0, y0)))
                 break
         if not pr["sprite"].startswith(("b_", "ph_")) and m.terrain[y0][x0] in "dt":
             problems.append("%s at %s sits on a lane or stair" % (pr["sprite"], (x0, y0)))
@@ -432,10 +455,10 @@ def bush(x, y, n=1):
 # The square: open in the middle; the statue on the line from the gate to the hall.
 # The statue that wasn't there yesterday (an elf woman holding out the Lodestone): a placeholder blob.
 V.prop("ph_statue", 20, 21, (2, 2), tall=2.2, sight=2.0)
-p("prop_well", 16, 18, 1.25, 1.0)
-p("prop_stall", 24, 15, 1.2)
-p("prop_crates", 25, 15, 0.8)
-p("prop_stall", 16, 23, 1.2)
+p("prop_well", 16, 18, 1.8, 1.0, (2, 2))
+p("prop_stall", 24, 15, 1.8, 1.0, (2, 2))
+p("prop_crates", 26, 16, 0.8)
+p("prop_stall", 16, 23, 1.8, 1.0, (2, 2))
 p("prop_barrel", 15, 23, 0.7)
 for x, y in [(15, 21), (26, 23)]:
     p("prop_lamp", x, y, 1.5)
@@ -456,8 +479,7 @@ tree("prop_tree", 25, 6)
 tree("prop_tree_2", 16, 8)
 bush(15, 10, 2)
 bush(24, 12, 3)
-p("prop_lamp", 19, 11, 1.5)
-p("prop_lamp", 22, 11, 1.5)
+V.arch(19, 11, (4, 1))  # the hall gate, at the head of the stair
 
 # The smithy yard (its anvil and forge are in the building art): the rack, a grindstone, the rope barrel.
 p("prop_rack", 12, 11, 1.0)
@@ -521,8 +543,7 @@ p("prop_lamp", 30, 22, 1.5)
 tree("prop_tree_3", 36, 22)
 
 # The south-east: two homes, an old cart, an orchard going wild toward the front.
-p("prop_cart", 25, 29, 0.8)
-p("prop_fence", 26, 30, 0.6)
+p("prop_cart", 25, 29, 1.3, 1.0, (2, 2))
 p("prop_stump", 33, 27, 0.5)
 for s, x, y in [("prop_tree_2", 32, 32), ("prop_tree_4", 34, 33), ("prop_tree_3", 31, 34), ("prop_tree", 36, 32),
                 ("prop_tree_5", 33, 35)]:
@@ -540,8 +561,7 @@ p("prop_boulder", 5, 33, 0.6, 1.0)
 p("prop_stump", 9, 33, 0.5)
 tree("prop_pine_1", 15, 35)
 tree("prop_tree_bare", 16, 33)
-p("prop_lamp", 19, 35, 1.5)
-p("prop_lamp", 22, 35, 1.5)
+V.arch(19, 30, (4, 1))  # the town gate, where the south road comes off the bridge
 p("prop_fence", 18, 36, 0.6)
 p("prop_fence", 23, 36, 0.6)
 tree("prop_tree_4", 24, 30)
@@ -583,6 +603,7 @@ V.save(fog=False)  # the whole town is in view: fog of war is for the bigger map
 
 def interior(name, w, h):
     m = Map(name, w, h, ".", 0, "village_in")
+    m.walls = True
     return m
 
 

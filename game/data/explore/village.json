@@ -236,10 +236,10 @@
      18
     ],
     "foot": [
-     1,
-     1
+     2,
+     2
     ],
-    "tall": 1.25,
+    "tall": 1.8,
     "sight": 1.0,
     "walk": false
    },
@@ -250,18 +250,18 @@
      15
     ],
     "foot": [
-     1,
-     1
+     2,
+     2
     ],
-    "tall": 1.2,
-    "sight": 0.0,
+    "tall": 1.8,
+    "sight": 1.0,
     "walk": false
    },
    {
     "sprite": "prop_crates",
     "cell": [
-     25,
-     15
+     26,
+     16
     ],
     "foot": [
      1,
@@ -278,11 +278,11 @@
      23
     ],
     "foot": [
-     1,
-     1
+     2,
+     2
     ],
-    "tall": 1.2,
-    "sight": 0.0,
+    "tall": 1.8,
+    "sight": 1.0,
     "walk": false
    },
    {
@@ -538,32 +538,19 @@
     "walk": false
    },
    {
-    "sprite": "prop_lamp",
+    "sprite": "ph_arch",
     "cell": [
      19,
      11
     ],
     "foot": [
-     1,
+     4,
      1
     ],
-    "tall": 1.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_lamp",
-    "cell": [
-     22,
-     11
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 0.0,
-    "walk": false
+    "tall": 1.8,
+    "sight": 2.0,
+    "walk": false,
+    "arch": true
    },
    {
     "sprite": "prop_rack",
@@ -1202,25 +1189,11 @@
      29
     ],
     "foot": [
-     1,
-     1
+     2,
+     2
     ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_fence",
-    "cell": [
-     26,
-     30
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
+    "tall": 1.3,
+    "sight": 1.0,
     "walk": false
    },
    {
@@ -1462,32 +1435,19 @@
     "walk": false
    },
    {
-    "sprite": "prop_lamp",
+    "sprite": "ph_arch",
     "cell": [
      19,
-     35
+     30
     ],
     "foot": [
-     1,
+     4,
      1
     ],
-    "tall": 1.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_lamp",
-    "cell": [
-     22,
-     35
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 0.0,
-    "walk": false
+    "tall": 1.8,
+    "sight": 2.0,
+    "walk": false,
+    "arch": true
    },
    {
     "sprite": "prop_fence",

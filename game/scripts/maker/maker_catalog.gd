@@ -104,7 +104,7 @@ static func _load() -> void:
 			"id": row.id, "drawer": row.drawer, "group": row.group, "kind": row.kind, "sprite": row.sprite,
 			"foot": Vector2i(maxi(1, int(row.foot_w)), maxi(1, int(row.foot_h))),
 			"tall": float(row.tall) if row.tall != "" else 0.9, "sight": float(row.sight) if row.sight != "" else 0.0,
-			"walk": row.walk == "1", "thing": row.thing, "event": row.event, "label": row.label if row.label != "" else row.id,
+			"walk": row.walk == "1", "arch": row.walk == "arch", "thing": row.thing, "event": row.event, "label": row.label if row.label != "" else row.id,
 		}
 		_entries.append(e)
 		if row.sprite != "":

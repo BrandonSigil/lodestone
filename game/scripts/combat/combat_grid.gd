@@ -29,7 +29,7 @@ var zones := PackedStringArray()  ## per-cell tile set (BattleArt set name); "" 
 ## Placed props (wells, carts, beds, whole buildings): anchor cell (back corner of the footprint) ->
 ## {"sprite": file stem, "foot": Vector2i cells, "tall": draw height in tile widths (0 = fit the footprint),
 ## "sight": levels it blocks sight above the ground, "walk": can pieces stand on it (rugs)}, plus the
-## optional PROP_EXTRA keys the map maker sets (facing, mirror, an id, a placeholder blob's name, a note).
+## optional PROP_EXTRA keys the map maker sets (facing, mirror, an id, a placeholder blob's name, a note, an arch).
 var props := {}
 ## How the map is staged (see MapLook and docs/design/map-look.md): {"id": a row of data/looks.csv, and
 ## optional "staging", "floor", "skirt" overrides}. Empty = the look named like the tile set.
@@ -210,8 +210,9 @@ func set_zone(c: Vector2i, z: String) -> void:
 
 ## Optional prop keys, saved only when set: "face" (0-3, which drawn angle: `<sprite>_r1`.. `_r3`), "flip"
 ## (mirrored), "id" (a name to script it by), "blob" (a named placeholder block: true, with "name"), "note"
-## (a designer note for Claude: what it should do or look like).
-const PROP_EXTRA := ["face", "flip", "id", "blob", "name", "note"]
+## (a designer note for Claude: what it should do or look like), "arch" (true: a gateway; only the two end
+## cells of its long side are pillars, pieces walk and see through the cells between them).
+const PROP_EXTRA := ["face", "flip", "id", "blob", "name", "note", "arch"]
 
 
 ## Stand a prop on the map. Its footprint runs from the anchor toward +x and +y.
@@ -349,7 +350,7 @@ static func _extra(p: Dictionary) -> Dictionary:
 	var e := {}
 	for k in PROP_EXTRA:
 		if p.has(k):
-			e[k] = int(p[k]) if k == "face" else (bool(p[k]) if k == "flip" or k == "blob" else String(p[k]))
+			e[k] = int(p[k]) if k == "face" else (bool(p[k]) if k in ["flip", "blob", "arch"] else String(p[k]))
 	return e
 
 
@@ -365,7 +366,19 @@ func passable(c: Vector2i) -> bool:
 	if not in_bounds(c) or step_cost(c) >= BLOCKED:
 		return false
 	var p := prop_at(c)
-	return p.is_empty() or p.walk
+	return p.is_empty() or p.walk or under_arch(c)
+
+
+## Is this cell the open middle of an arch (between its two pillars)?
+func under_arch(c: Vector2i) -> bool:
+	var a := prop_anchor(c)
+	var p: Dictionary = props.get(a, {})
+	if not p.get("arch", false):
+		return false
+	var d := c - a
+	if p.foot.y > p.foot.x:
+		return d.y > 0 and d.y < p.foot.y - 1
+	return d.x > 0 and d.x < p.foot.x - 1
 
 
 ## Can a piece with this Jump step between two neighbouring cells? Stairs on either end help it climb.
@@ -379,7 +392,7 @@ func can_step(a: Vector2i, b: Vector2i, jump: int) -> bool:
 ## Highest point of the cell for line of sight: ground plus whatever stands on it.
 func sight_top(c: Vector2i) -> float:
 	var p := prop_at(c)
-	return height_at(c) + maxf(SIGHT_BLOCK[terrain_at(c)], 0.0 if p.is_empty() else float(p.sight))
+	return height_at(c) + maxf(SIGHT_BLOCK[terrain_at(c)], 0.0 if p.is_empty() or under_arch(c) else float(p.sight))
 
 
 func top_height() -> int:

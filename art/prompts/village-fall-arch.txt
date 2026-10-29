@@ -1,0 +1,22 @@
+LODESTONE FALL VILLAGE ARCHWAYS (two walk-through gateways, game-ready)
+
+Image 1 = the look: the fall village props sheet (art/picsart/out/village-fall/props_v1.png). Copy its wood brown, warm grey stone, golden grass tufts and finish. Take the look, not the props.
+Image 2 = the finish: docs/art/references/style-flat-forest.png. Match its soft painted edges and its amount of detail exactly.
+
+Aspect 3:2, plain cream paper background (#eae8d6). No title, no labels, no text, no letters anywhere.
+Layout: two equal cells side by side with a wide clear cream gap between them. ONE archway per cell, centred, nothing crosses a cell edge.
+   left: a town gate archway of warm grey stone: two square stone pillars and a round stone arch over the gap between them, a few stones missing from the top, a little ivy on one pillar.
+   right: a timber archway: two thick wooden posts and a wooden beam across their tops with a small pitched shingle roof on the beam, one lantern hanging from the middle of the beam.
+
+SHAPE (IMPORTANT): each archway is long and thin, four map tiles long and one tile deep. The two pillars stand at its two ends, each one tile square at the base. The gap between them is two tiles wide and fully open down to the ground: no gate, no door, no bars, no wall, nothing standing in the gap. The arch is tall: the underside of the arch is at about twice the height of a person, so people walk under it easily.
+
+VIEW: 2:1 dimetric three-quarter view from above (orthographic camera turned 45 degrees, looking down 30 degrees), the same angle as image 1. The archway runs from the upper left down to the lower right, like the left front wall of a house: the far pillar is up and left, the near pillar is down and right. Its open side faces the viewer's lower left, so the way through it runs from lower left to upper right. Light from the upper left: tops lightest, faces toward the lower left mid, faces toward the lower right darkest.
+BASE: no ground slab, no paving, no road, no grass patch, no cast shadow. At most two or three small golden grass tufts touching the foot of each pillar.
+
+FINISH: one flat colour plus one shadow tone per surface. Stones as a few soft darker bands, not every stone outlined. Wood flat brown, no grain, no plank lines. One soft dark outline (#373335) around each whole archway and its big parts only. Quiet and a little overgrown, as if left alone for years. Not a ruin.
+
+Avoid: gates or doors in the gap, walls joining the archway, a road or paving under it, ground slabs, cast shadows, perspective, vanishing point, seen flat-on, short squat arches, wood grain, plank lines, pixel art, dithering, jagged edges, 3d render, glossy, photo, characters, text, letters, watermark, black outlines, saturated red, saturated blue.
+
+CUT (staged first):
+   cd tools/art && ~/.lodestone/venv/bin/python props_cut.py ../../art/picsart/out/village-fall/arches.png --grid 2x1 --names prop_arch,prop_arch_timber --out ../../art/picsart/out/village-fall/cut
+   In game: the catalog's "arch" row (game/data/catalog.csv, 3 x 1, walk "arch") and the village's two gateways (tools/explore/build_village.py, V.arch, 4 x 1) use the graybox ph_arch until these are approved; then point them at prop_arch. A walk-through arch sprite has to be drawn in two parts (far pillar with its own cell, the rest with the near pillar) so a piece in the gap stands in front of the far pillar and under the arch.

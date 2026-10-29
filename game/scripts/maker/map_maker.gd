@@ -845,6 +845,8 @@ func _stamp(c: Vector2i) -> void:
 				extra["face"] = item_face
 			if item_flip:
 				extra["flip"] = true
+			if item.get("arch", false):
+				extra["arch"] = true
 			MapOps.add_prop(g, c, MakerCatalog.stem_for(item, doc.art_set), item_foot, item.tall, item.sight, item.walk, extra)
 		"blob":
 			var cells := _foot_cells(c, item_foot)
