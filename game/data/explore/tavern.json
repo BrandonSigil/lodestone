@@ -261,7 +261,7 @@
     "walk": false
    },
    {
-    "sprite": "prop_barrel",
+    "sprite": "village/prop_barrel",
     "cell": [
      10,
      9

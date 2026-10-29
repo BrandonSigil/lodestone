@@ -677,7 +677,7 @@ T.prop("prop_long_table", 7, 8, (2, 1), tall=0.7)
 for x, y in [(3, 6), (4, 4), (7, 4), (8, 6), (7, 7), (9, 8)]:
     T.prop("prop_stool", x, y, tall=0.5)
 T.prop("prop_broken_chair", 5, 8, tall=0.75)
-T.prop("prop_barrel", 10, 9, tall=0.7)
+T.prop("village/prop_barrel", 10, 9, tall=0.7)  # village_in has no barrel of its own
 T.thing(id="out", kind="enter", event="", cell=[3, 10], to="village", at=tavern_door)
 T.start = [[3, 9]]
 T.save()
