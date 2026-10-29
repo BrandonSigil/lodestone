@@ -44,7 +44,6 @@ const WALL_TOP := Color("6c6d74")  ## walls maps: a wall's top, a step lighter t
 const WALL_SIDE := Color("48484d")  ## and its faces, the dungeon cliff's grey
 const RIM_THIN := 0.25  ## a front edge's stubby wall: this deep in cells
 const RIM_HIGH := 1.0  ## and this many levels over its floor
-const FALL := Color(0.62, 0.9, 0.86)  ## waterfall sheets
 ## Which ground reaches onto which where they meet (higher over lower); others never blend.
 const BLEND_RANK := {CombatGrid.T.GRASS: 0, CombatGrid.T.FOREST: 1, CombatGrid.T.ROAD: 2, CombatGrid.T.STONE: 3}
 const BLEND_DEPTH := 0.34  ## how far (cells) a neighbour's ground reaches in, on average
@@ -416,10 +415,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # --- painting ---------------------------------------------------------------------------
 # The board paints through slabs (children of _stack, back to front): the backdrop, then for every depth
-#   WATER   the water's surface (soft pass), still geometry the water shader moves; under the ground so the
+#   WATER   the water's surface, still geometry the water shader moves; under the ground so the
 #           banks, their rounded-off corners and fillets draw over it,
 #   GROUND  the still terrain (faces, lips, tops, stairs), drawn once and again only when its cells change,
-#   FALLS   waterfall sheets over the river walls (soft pass), still geometry the fall shader moves,
+#   FALLS   waterfall sheets over the river walls, still geometry the fall shader moves,
 #   OVER    what changes by the frame on top of it (the cursor, highlights, danger, areas, falls' outlines),
 #   PROPS   what stands on it (trees, boulders, placed props, the fog veil, the forest skirt), redrawn only
 #           when a prop fades for a piece behind it or the fog moves,
@@ -491,6 +490,7 @@ func _sync_slabs() -> void:
 		_diff_grid()
 	if _soft():
 		_refresh_shape()
+	_sync_water()
 	if fog_on:
 		# Fog moves as the party walks: newly seen ground gets drawn, the veil and the forest skirt
 		# (which follows the ground it grows from, a few rings out) redraw where sight changed.
@@ -552,8 +552,7 @@ func _sync_slabs() -> void:
 	for sl: Slab in _slabs:
 		if sl.kind == Slab.K.OVER or sl.kind == Slab.K.UNITS or sl.kind == Slab.K.BACK or sl.kind == Slab.K.TOP:
 			sl.queue_redraw()
-	if _soft():
-		_update_wakes()
+	_update_wakes()
 
 
 func _depth_at(c: Vector2i) -> int:
@@ -650,7 +649,7 @@ func _has_props(c: Vector2i) -> bool:
 	var t := grid.terrain_at(c)
 	if t == CombatGrid.T.VOID:
 		return false
-	if t == CombatGrid.T.WATER or t == CombatGrid.T.FOREST or t == CombatGrid.T.ROCK or t == CombatGrid.T.RUIN:
+	if t == CombatGrid.T.FOREST or t == CombatGrid.T.ROCK or t == CombatGrid.T.RUIN:
 		return true
 	if grid.prop_anchor(c) != CombatGrid.NONE_CELL:
 		return true
@@ -672,10 +671,9 @@ func _paint(sl: Slab) -> void:
 		Slab.K.BACK:
 			_paint_back()
 		Slab.K.WATER:
-			if _soft():
-				for c: Vector2i in _depths[sl.depth]:
-					if not _unseen(c):
-						_draw_water(c)
+			for c: Vector2i in _depths[sl.depth]:
+				if not _unseen(c):
+					_draw_water(c)
 		Slab.K.GROUND:
 			for c: Vector2i in _depths[sl.depth]:
 				if not _unseen(c):
@@ -687,11 +685,10 @@ func _paint(sl: Slab) -> void:
 						if rims.has(c) and not _unseen(c):
 							_rim_walls(c)
 		Slab.K.FALLS:
-			if _soft():
-				for c: Vector2i in _fall_cells[sl.depth]:
-					if not _unseen(c):
-						_draw_fall_sheets(c)
-						_draw_fall_caps(c)
+			for c: Vector2i in _fall_cells[sl.depth]:
+				if not _unseen(c):
+					_draw_fall_sheets(c)
+					_draw_fall_caps(c)
 		Slab.K.OVER:
 			for c: Vector2i in _fall_cells[sl.depth]:
 				if not hidden(c):
@@ -815,12 +812,10 @@ func _draw_ground(c: Vector2i) -> void:
 	var top_col := WALL_TOP if wall else _terrain_color(t).lightened(minf(h, 6.0) * 0.025)
 	var built := wall or t == CombatGrid.T.STONE or t == CombatGrid.T.STAIRS or t == CombatGrid.T.RUIN
 	var face := WALL_SIDE if wall else (MASONRY if built else CLIFF).lerp(ALIEN_CLIFF, strangeness)
-	if t == CombatGrid.T.WATER:
-		face = MASONRY.lerp(ALIEN_CLIFF, strangeness)
 	var seed_v := _hash(c)
 	var zone := grid.zone_at(c)  # "" = the map's set
 	var top_tex: Texture2D = null if wall else BattleArt.top(t, zone)
-	var side_tex: Texture2D = null if wall else BattleArt.side(t, zone)
+	var side_tex: Texture2D = null if wall else BattleArt.side(CombatGrid.T.GRASS if t == CombatGrid.T.WATER else t, zone)  # river walls are the bank's rock
 	var tint := _tint(t)
 	var fl := _floor()
 	var lip := 0.0 if built or t == CombatGrid.T.WATER else BattleArt.lip(t, zone)
@@ -866,7 +861,9 @@ func _draw_ground(c: Vector2i) -> void:
 		_ink_corners(c, h, low)
 		for l: Array in lips:
 			_lip(l[0], l[1], h, l[2], l[3], top_tex, top_col, tint, l[4], lip)
-		if top_tex != null:
+		if t == CombatGrid.T.WATER:
+			pass  # the WATER slab draws it
+		elif top_tex != null:
 			var uv := PackedVector2Array()
 			for k in [Vector2(c), Vector2(c.x + 1, c.y), Vector2(c) + Vector2.ONE, Vector2(c.x, c.y + 1)]:
 				uv.append(k / BattleArt.TOP_TILES)
@@ -1812,8 +1809,11 @@ func _fringe(c: Vector2i, t: int, h: float, zone: String) -> void:
 				_ci.draw_polygon(poly, cols)
 
 
-## Water pouring over the cell's front edges (LIVE slab: it scrolls).
+## The pen outline down each side of a fall where its sheet stops against rock (OVER slab; the sheets
+## themselves are the FALLS slab's). The block look has no pen outlines.
 func _draw_falls(c: Vector2i) -> void:
+	if not _soft():
+		return
 	var h := _surf(c)
 	var fl := _floor()
 	for shade in [false, true]:
@@ -1825,16 +1825,11 @@ func _draw_falls(c: Vector2i) -> void:
 			continue
 		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
 		var foot := maxf(fl, minf(nh, h))
-		if _soft():
-			var sheet := _fall_span(side[0], side[1], h, foot, c, d)
-			if sheet.ends[0] > 0.0:  # a cel outline down each side where the sheet stops against rock
-				_marker_down(sheet.a, h, foot)
-			if sheet.ends[1] > 0.0:
-				_marker_down(sheet.b, h, foot)
-		else:
-			_waterfall(side[0], side[1], h, foot, c, not edge)
-		if edge and _rims():
-			_spill(side[0], side[1], c)
+		var sheet := _fall_span(side[0], side[1], h, foot, c, d)
+		if sheet.ends[0] > 0.0:
+			_marker_down(sheet.a, h, foot)
+		if sheet.ends[1] > 0.0:
+			_marker_down(sheet.b, h, foot)
 
 
 ## The cursor, highlights, danger and skill area on the cell's top (LIVE slab).
@@ -1887,11 +1882,6 @@ func _draw_props(c: Vector2i) -> void:
 				return  # a painted set without boulder art (house walls): the texture is the wall top
 			_ci.draw_colored_polygon(PackedVector2Array([mid + Vector2(-14, 4), mid + Vector2(-8, -14), mid + Vector2(6, -18), mid + Vector2(15, 2)]), top_col.darkened(0.25))
 			_ci.draw_colored_polygon(PackedVector2Array([mid + Vector2(-8, -14), mid + Vector2(6, -18), mid + Vector2(2, -8)]), top_col.lightened(0.1))
-		CombatGrid.T.WATER:
-			if top_tex == null:  # painted water has its own streaks
-				var wob := sin(_time * 2.0 + c.x + c.y) * 2.0
-				_ci.draw_line(mid + Vector2(-10 + wob, -2), mid + Vector2(4 + wob, -2), top_col.lightened(0.3), 2.0)
-				_ci.draw_line(mid + Vector2(-2 - wob, 4), mid + Vector2(10 - wob, 4), top_col.lightened(0.3), 2.0)
 		CombatGrid.T.RUIN:
 			_ruin(c, h, seed_v)
 
@@ -2371,26 +2361,6 @@ func _underside(a: Vector2, b: Vector2, col: Color, seed_v: int, out: Vector2i) 
 			_cube(stone + Vector2(0, bob), 4.0 + r * 3.0, 4.0 + r * 3.0, c1)
 
 
-## Water pouring off the island's rim keeps falling past the rock and thins out into mist.
-func _spill(a: Vector2, b: Vector2, c: Vector2i) -> void:
-	var a2 := a.lerp(b, 0.25)
-	var b2 := a.lerp(b, 0.75)
-	var sheet := FALL.lerp(ALIEN_COLORS[CombatGrid.T.WATER], strangeness * 0.7)
-	var drop := 3.5
-	var top := PackedVector2Array([iso(a2.x, a2.y, BASE), iso(b2.x, b2.y, BASE), iso(b2.x, b2.y, BASE - drop), iso(a2.x, a2.y, BASE - drop)])
-	var clear := Color(sheet, 0.0)
-	_ci.draw_polygon(top, PackedColorArray([Color(sheet, 0.95), Color(sheet, 0.95), clear, clear]))
-	for k in 3:
-		var p := a2.lerp(b2, 0.2 + k * 0.3)
-		var phase := fmod(_time * 1.2 + k * 0.41 + c.y * 0.13, 1.0)
-		var y0 := BASE - phase * drop
-		_ci.draw_line(iso(p.x, p.y, y0), iso(p.x, p.y, y0 - 0.7), Color(1, 1, 1, 0.6 * (1.0 - phase)), 1.5, true)
-	for k in 3:  # mist puffs where the stream gives out
-		var p := a2.lerp(b2, 0.15 + k * 0.35)
-		var puff := iso(p.x, p.y, BASE - drop + 0.3) + Vector2(0, sin(_time * 1.7 + k) * 1.5)
-		_ci.draw_circle(puff, 4.0 + k, Color(1, 1, 1, 0.18))
-
-
 ## The soft card the island floats on: a rounded rectangle around the map with a vertical wash, a glow
 ## behind the middle, a few light shafts and drifting motes. Colours drift toward lavender with strangeness.
 ## A painted backdrop plate: one picture per art set, centred on the board and scaled to its footprint.
@@ -2438,35 +2408,6 @@ func _draw_backdrop() -> void:
 		_ci.draw_circle(p, 1.2 + (k % 3) * 0.6, Color(1, 1, 1, 0.35 * sin(fy * PI)))
 
 
-func _waterfall(a: Vector2, b: Vector2, h: float, hb: float, c: Vector2i, foam := true) -> void:
-	var a2 := a.lerp(b, 0.12)
-	var b2 := a.lerp(b, 0.88)
-	var top_h := h - 0.08
-	var sheet := FALL.lerp(ALIEN_COLORS[CombatGrid.T.WATER], strangeness * 0.7)
-	var pts := PackedVector2Array([iso(a2.x, a2.y, top_h), iso(b2.x, b2.y, top_h), iso(b2.x, b2.y, hb), iso(a2.x, a2.y, hb)])
-	var fall_tex := BattleArt.texture("side_water", true)
-	if fall_tex != null:
-		# Painted falls scroll downward; one texture covers 2 levels of drop.
-		var v := -fmod(_time * 0.6, 1.0)
-		var tint := _tint(CombatGrid.T.WATER)
-		var uv := PackedVector2Array([Vector2(0, v - top_h * 0.5), Vector2(0.5, v - top_h * 0.5), Vector2(0.5, v - hb * 0.5), Vector2(0, v - hb * 0.5)])
-		_ci.draw_polygon(pts, PackedColorArray([tint, tint, tint, tint]), uv, fall_tex)
-		_ci.draw_line(iso(a2.x, a2.y, top_h), iso(b2.x, b2.y, top_h), Color(1, 1, 1, 0.7), 2.0, true)
-		if foam:
-			_foam(a2, b2, hb, c)
-		return
-	_ci.draw_colored_polygon(pts, sheet)
-	for k in 4:
-		var f := 0.2 + k * 0.2
-		var p := a2.lerp(b2, f)
-		var phase := fmod(_time * 1.6 + k * 0.37 + c.x * 0.1, 1.0)
-		var y0 := lerpf(top_h, hb, phase)
-		var y1 := maxf(hb, y0 - 0.6)
-		_ci.draw_line(iso(p.x, p.y, y0), iso(p.x, p.y, y1), sheet.lightened(0.45), 1.5, true)
-	if foam:
-		_foam(a2, b2, hb, c)
-
-
 ## Where a soft fall's sheet runs along a cell's front edge a..b: right across where the next cell along
 ## falls too (one sheet, no frame between cells), stopping a little short where it meets rock.
 ## {"a", "b": its ends, "ends": how far each was pulled in}.
@@ -2494,6 +2435,8 @@ var _fall_mat := ShaderMaterial.new()
 var _water_tex: ImageTexture
 var _water_img: Image
 var _water_flow := {}  ## the flow the field was last built with
+var _water_key := ""  ## the map and look the field was built for (_water_for)
+var _water_version := -1
 
 
 func _init_water() -> void:
@@ -2502,13 +2445,27 @@ func _init_water() -> void:
 	_water_mat.set_shader_parameter("shore_reach", WaterField.SHORE_REACH)
 
 
+func _water_for() -> String:
+	return "%d|%d|%d|%s" % [grid.get_instance_id(), grid.w, grid.h, _soft()]
+
+
+## Keep the field current. The soft pass redoes it from _refresh_shape as the ground changes; the block look
+## (interiors, the map maker's K) has no shape caches, so it redoes the whole field after any edit.
+func _sync_water() -> void:
+	if _water_for() != _water_key or (not _soft() and grid.version != _water_version):
+		_refresh_water_field(true, {})
+
+
 ## Redo the field the surface shader reads after the water or its banks changed: all of it for a new map,
 ## else only round the edit and wherever the river's flow turned (an edit can turn it all the way down).
 func _refresh_water_field(full: bool, changed: Dictionary) -> void:
 	var flow := TerrainShape.flow(grid)
 	var size := Vector2i(grid.w, grid.h) * WaterField.PER_CELL
+	var radii := _radii if _soft() else {}  # the block look keeps every bank square
+	_water_key = _water_for()
+	_water_version = grid.version
 	if full or _water_img == null or _water_img.get_size() != size:
-		_water_img = WaterField.build(grid, flow, _radii, _surf)
+		_water_img = WaterField.build(grid, flow, radii, _surf)
 	else:
 		var redo := changed.duplicate()
 		for c: Vector2i in flow:
@@ -2518,7 +2475,7 @@ func _refresh_water_field(full: bool, changed: Dictionary) -> void:
 			if not flow.has(c):
 				redo[c] = true
 		var near := _around(redo, 2)
-		WaterField.update(_water_img, grid, flow, _radii, _surf, WaterField.near_water(grid, flow, near), near)
+		WaterField.update(_water_img, grid, flow, radii, _surf, WaterField.near_water(grid, flow, near), near)
 	_water_flow = flow
 	var img := _water_img
 	if _water_tex != null and _water_tex.get_size() == Vector2(img.get_size()):
@@ -2578,7 +2535,8 @@ func _draw_fall_sheets(c: Vector2i) -> void:
 	for shade in [false, true]:
 		var d := front_dir(shade)
 		var n := c + d
-		var nh := fl if not grid.solid(n) else _surf(n)
+		var edge := not grid.solid(n)
+		var nh := fl if edge else _surf(n)
 		if nh >= h:
 			continue
 		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
@@ -2588,11 +2546,21 @@ func _draw_fall_sheets(c: Vector2i) -> void:
 		var b: Vector2 = sheet.b
 		var ua := _screen_u(a, 0.0)
 		var ub := _screen_u(b, 0.0)
+		# Off the map's edge there is no pool: the water spills on down (past an island's rock) and thins out
+		# into mist instead of landing in foam. The shader tells a spill by UV.y from SPILL_V.
+		var v0 := SPILL_V if edge else 0.0
+		if edge:
+			foot -= SPILL_DROP if _rims() else 0.0
 		var drop := h - foot
-		var tint := Color(col, clampf(drop / 10.0, 0.0, 1.0))
+		var tint := Color(col, clampf(drop / (SPILL_SCALE if edge else 10.0), 0.0, 1.0))
 		_ci.draw_polygon(PackedVector2Array([iso(a.x, a.y, h), iso(b.x, b.y, h), iso(b.x, b.y, foot), iso(a.x, a.y, foot)]),
 			PackedColorArray([tint, tint, tint, tint]),
-			PackedVector2Array([Vector2(ua, 0.0), Vector2(ub, 0.0), Vector2(ub, drop), Vector2(ua, drop)]))
+			PackedVector2Array([Vector2(ua, v0), Vector2(ub, v0), Vector2(ub, v0 + drop), Vector2(ua, v0 + drop)]))
+
+
+const SPILL_V := 100.0  ## UV.y of a spill's top (water_fall.gdshader)
+const SPILL_SCALE := 20.0  ## a spill's length in COLOR.a: length / this
+const SPILL_DROP := 3.5  ## levels an island's spill keeps falling below its rock rim
 
 
 const CAP_UP := 1.4  ## a splash cap reaches this many levels up a fall's foot (water_fall.gdshader cap_px)
@@ -2663,17 +2631,6 @@ func _update_wakes() -> void:
 		wakes.append(Vector4.ZERO)
 	_water_mat.set_shader_parameter("wakes", wakes)
 	_water_mat.set_shader_parameter("wake_count", count)
-
-
-## White water where a fall lands: a row of puffs that swell and shrink out of step.
-func _foam(a: Vector2, b: Vector2, hb: float, c: Vector2i) -> void:
-	_ci.draw_line(iso(a.x, a.y, hb), iso(b.x, b.y, hb), Color(1, 1, 1, 0.85), 3.0, true)
-	for k in 5:
-		var p := a.lerp(b, 0.1 + k * 0.2)
-		var beat := 0.5 + 0.5 * sin(_time * 3.0 + k * 1.7 + c.x + c.y)
-		var q := iso(p.x, p.y, hb) + Vector2(0, -1.5)
-		_ci.draw_circle(q, 3.0 + beat * 2.2, Color(1, 1, 1, 0.75))
-		_ci.draw_circle(q + Vector2(0, -3.0 - beat * 2.0), 1.6 + beat, Color(1, 1, 1, 0.55))
 
 
 ## Steps that run down toward the lowest walkable neighbour.

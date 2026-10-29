@@ -5,6 +5,9 @@ shader_type canvas_item;
 // the water's own. Vertex UV.x = position along the lip in screen cell widths (so streaks carry on across
 // cells), UV.y = levels down from the lip (0 and up). Vertex COLOR = the water's colour; alpha = drop / 10.
 //
+// A spill: a fall off the map's edge, with no pool to land in. As the sheet, but UV.y runs from 100 at
+// the lip, COLOR's alpha is its length / 20 levels, and it thins out into mist toward its end.
+//
 // The splash cap: a band of foam clouds sitting over the seam where the sheet meets the pool below, puffing
 // up over the sheet's foot and spilling out onto the water, a soft blue shadow under its puffs. Vertex UV.x
 // as the sheet's, UV.y from -1 (the cap's top) to -2 (its bottom, out on the pool). COLOR = the water's
@@ -93,7 +96,11 @@ void fragment() {
 		cap(u, -v - 1.0, base, COLOR.a, c);
 		COLOR = c;
 	} else {
-		float drop = COLOR.a * 10.0;
+		bool spill = v > 50.0;
+		if (spill) {
+			v -= 100.0;
+		}
+		float drop = COLOR.a * (spill ? 20.0 : 10.0);
 		vec3 sheet = mix(base, vec3(1.0), 0.2);
 		vec3 dark = mix(base, vec3(1.0), 0.06);
 		vec3 white = vec3(1.0);
@@ -105,8 +112,12 @@ void fragment() {
 		// The lip: the water bends white over the edge.
 		float lip = 0.1 + 0.04 * vnoise(vec2(u * 9.0, TIME * 1.2));
 		col = mix(col, mix(sheet, white, 0.8), 1.0 - cut(v, lip));
-		// The foot whitens into the splash cap that covers it.
-		col = mix(col, white, cut(v, drop - 0.35));
-		COLOR = vec4(col, 0.97);
+		if (spill) {  // thins out into mist
+			float gone = smoothstep(drop * 0.45, drop, v + (vnoise(vec2(u * 6.0, TIME * 0.8)) - 0.5) * 0.8);
+			COLOR = vec4(mix(col, white, gone * 0.5), 0.97 * (1.0 - gone));
+		} else {  // the foot whitens into the splash cap that covers it
+			col = mix(col, white, cut(v, drop - 0.35));
+			COLOR = vec4(col, 0.97);
+		}
 	}
 }

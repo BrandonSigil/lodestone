@@ -220,3 +220,21 @@ func test_water_field_knows_banks_flow_and_falls() -> void:
 	var px := img.get_pixel(1 * WaterField.PER_CELL + 3, 2 * WaterField.PER_CELL + 3)
 	ok(px.g > 0.9 and absf(px.b - 0.5) < 0.02, "the field carries the flow down the river (+x), got %s" % px)
 	eq(img.get_pixel(3, 3).a, 0.0, "dry ground far from water stays clear")
+
+
+func test_every_look_draws_the_one_moving_water() -> void:
+	var g := _flat(5, 2)
+	for x in 5:
+		g.set_terrain(Vector2i(x, 2), T.WATER)
+	for soft in [true, false]:  # the soft pass and the block look (interiors, the map maker's K)
+		var b := CombatBoard.new()
+		b.grid = g
+		b.soft = soft
+		b._sync_slabs()
+		ok(b._water_tex != null, "the water field is built (soft %s)" % soft)
+		var mats := {}
+		for sl: CombatBoard.Slab in b._slabs:
+			if sl.kind == CombatBoard.Slab.K.WATER or sl.kind == CombatBoard.Slab.K.FALLS:
+				mats[sl.material] = true
+		eq(mats.size(), 2, "every depth's water and falls go through the two water shaders (soft %s)" % soft)
+		b.free()
