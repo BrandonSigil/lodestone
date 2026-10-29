@@ -25,6 +25,9 @@ func test_high_ground_helps_hit_and_damage() -> void:
 	g.set_height(Vector2i(1, 1), 1)
 	ok(CombatRules.hit_chance(g, a, b, units, a.cell) > flat_p, "higher hits more")
 	eq(CombatRules.damage(g, a, b, a.cell), flat_d + 1)
+	g.set_height(Vector2i(1, 1), 2)
+	eq(CombatRules.damage(g, a, b, a.cell), flat_d + 1, "two levels up still adds only 1 damage")
+	eq(CombatRules.damage(g, b, a, b.cell), maxi(1, CombatRules.damage(CombatGrid.flat(5, 5), b, a, b.cell) - 1), "and takes only 1 from below")
 
 
 func test_melee_cant_reach_cliff() -> void:

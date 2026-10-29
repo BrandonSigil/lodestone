@@ -6,13 +6,13 @@ extends Node2D
 ## further out, heavy ones at the leader's side), then the same board becomes the battlefield.
 ## F6 on explore.tscn, or F10 from any screen. The map is Game.explore_map (data/explore/<name>.json).
 ##
-## Controls: WASD or click ground = walk. Click a thing = walk up and use it.
+## Controls: WASD (free, not cell by cell) or click ground = walk. Click a thing = walk up and use it.
 ## F = use the nearest lit thing. Arrows or right drag = look around, wheel = zoom,
 ## Space = back to the leader. The view never turns ([USER] 2026-10-28: one approved angle per map). Hover an enemy to see what it can see.
 
 enum M { WALK, BUSY, DIALOG, DEPLOY, FIGHT, OVER }
 
-const STEP_TIME := 0.15
+const CLIMB_RATE := 10.0  ## levels a second the leader's feet follow the ground on keys
 const ZOOM_MIN := 0.55
 const ZOOM_MAX := 1.6
 const PAN_SPEED := 700.0
@@ -97,6 +97,11 @@ func _ready() -> void:
 		groups.append({"def": g, "units": units, "state": "idle"})
 	var memory: Dictionary = Game.explore_memory.get(map.map_name, {})
 	seen = memory.get("seen", {}).duplicate()
+	# Groups beaten or calmed before the party stepped through a door stay that way (Brandon's E2E notes).
+	var settled: Dictionary = memory.get("groups", {})
+	for g in groups:
+		if settled.has(String(g.def.id)):
+			g.state = settled[String(g.def.id)]
 	var done_before: Array = memory.get("done", [])
 	for t in map.things:
 		var copy := t.duplicate()
@@ -119,7 +124,11 @@ func _ready() -> void:
 	var lead := leader()
 	if lead:
 		_snap_to(lead)
-	_show_pending()
+	if not Game.pending_lines.is_empty():
+		_show_pending()
+	elif lead:
+		check_groups(true)  # stepping in beside a group: the party gets the first look, not an ambush
+		_refresh_units()
 
 
 ## Lines left for this screen (waking in the square after a fall, GO HOME).
@@ -210,7 +219,7 @@ func _process(delta: float) -> void:
 	if board == null:
 		return
 	var pan := Vector2.ZERO
-	_wasd()
+	_wasd(delta)
 	if Input.is_key_pressed(KEY_LEFT):
 		pan.x -= 1
 	if Input.is_key_pressed(KEY_RIGHT):
@@ -253,9 +262,10 @@ func _screen_to_grid(d: Vector2) -> Vector2:
 	return Vector2((d.x * ey.y - ey.x * d.y) / det, (ex.x * d.y - ex.y * d.x) / det)
 
 
-## WASD walks the leader one cell at a time toward the held screen direction (W = up the screen).
-## Blocked straight ahead, it slides along the wall if a nearby direction is open.
-func _wasd() -> void:
+## WASD walks the leader freely toward the held screen direction (W = up the screen), sliding along walls
+## and easing round corners (ExploreRules.slide). Crossing into a new cell checks sight and enemies, as a
+## step along a clicked path does.
+func _wasd(delta: float) -> void:
 	var want := Vector2.ZERO
 	if mode == M.WALK:
 		if Input.is_key_pressed(KEY_W):
@@ -266,33 +276,35 @@ func _wasd() -> void:
 			want.x -= 1
 		if Input.is_key_pressed(KEY_D):
 			want.x += 1
-	if want == Vector2.ZERO:
-		if _keys_walking and not _stepping:
+	var lead := leader()
+	if want == Vector2.ZERO or lead == null:
+		if _keys_walking:
 			_keys_walking = false
-			board.play_anim(leader(), "idle")
+			if lead:
+				board.play_anim(lead, "idle")
 		return
 	if _stepping:
+		_walk_token += 1  # keys take over from a clicked path once its current step lands
 		return
-	_walk_token += 1  # keys take over from a clicked path
 	walking_now = false
-	var lead := leader()
-	var blocked := _blocked()
-	var screen_of := func(d: Vector2i) -> Vector2: return board.iso(1.0 + d.x, 1.0 + d.y, 0.0) - board.iso(1.0, 1.0, 0.0)
-	for d in ExploreRules.steps_toward(want, screen_of):
-		if ExploreRules.can_step_dir(grid, lead.cell, d, lead.jump, blocked):
-			_key_step(lead.cell + d)
-			return
-
-
-func _key_step(next: Vector2i) -> void:
-	var lead := leader()
 	if not _keys_walking:
 		_keys_walking = true
+		_walk_token += 1
 		board.play_anim(lead, "walk")
+		board.highlights = {}
 	follow = true
-	board.highlights = {}
-	await _step_all([lead], [next])
-	_after_step()
+	var dir := _screen_to_grid(want).normalized()
+	var at := lead.vis + Vector2(0.5, 0.5)
+	var to := ExploreRules.slide(grid, at, dir * ExploreRules.WALK_SPEED * delta, ExploreRules.BODY, lead.jump, _blocked())
+	lead.facing = Vector2i(roundi(dir.x), roundi(dir.y))
+	lead.vis = to - Vector2(0.5, 0.5)
+	var cell := Vector2i(to.floor())
+	lead.vis_h = move_toward(lead.vis_h, float(grid.height_at(cell)), CLIMB_RATE * delta)
+	if cell != lead.cell:
+		lead.cell = cell
+		if _after_step():
+			_keys_walking = false
+			board.play_anim(leader(), "idle")
 
 
 func _apply_camera() -> void:
@@ -427,7 +439,7 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 	if not group_at(c).is_empty():
 		return
 	var lead := leader()
-	var path := ExploreRules.find_path(grid, lead.cell, c, leader().jump, _blocked(), seen)
+	var path := ExploreRules.find_path(grid, lead.cell, c, leader().jump, _blocked(), seen, true)
 	if path.size() < 2:
 		board.float_text(c, Txt.t("UI_EX_NO_WAY"), Color(0.9, 0.8, 0.7))
 		return
@@ -437,7 +449,7 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 
 func _go_use(t: Dictionary) -> void:
 	var lead := leader()
-	var path := ExploreRules.path_to_use(grid, lead.cell, t.cell, leader().jump, _blocked(), seen)
+	var path := ExploreRules.path_to_use(grid, lead.cell, t.cell, leader().jump, _blocked(), seen, true)
 	if path.is_empty():
 		board.float_text(t.cell, Txt.t("UI_EX_NO_WAY"), Color(0.9, 0.8, 0.7))
 		return
@@ -448,7 +460,7 @@ func _go_use(t: Dictionary) -> void:
 		walk(path, t)
 
 
-## Walk the leader along path (path[0] is where the leader stands).
+## Walk the leader along path (path[0] is where the leader stands), gliding at an even pace.
 ## Stops early when something happens. A new walk cancels the one in progress after its current step.
 func walk(path: Array[Vector2i], then_use := {}) -> void:
 	_walk_token += 1
@@ -462,8 +474,9 @@ func walk(path: Array[Vector2i], then_use := {}) -> void:
 	var lead := leader()
 	board.play_anim(lead, "walk")
 	var stopped := false
-	var start := path.find(lead.cell)
-	for i in range(maxi(start, 0) + 1, path.size()):
+	var spare := 0.0  # distance left over from the frame that finished the last step
+	_stepping = true
+	for i in range(maxi(path.find(lead.cell), 0) + 1, path.size()):
 		if token != _walk_token or mode != M.WALK:
 			stopped = true
 			break
@@ -471,10 +484,11 @@ func walk(path: Array[Vector2i], then_use := {}) -> void:
 		if _blocked().has(next):
 			stopped = true
 			break
-		await _step_all([lead], [next])
+		spare = await _glide(lead, next, spare)
 		if _after_step():
 			stopped = true
 			break
+	_stepping = false
 	if token != _walk_token:
 		return  # a newer walk took over
 	walking_now = false
@@ -483,32 +497,27 @@ func walk(path: Array[Vector2i], then_use := {}) -> void:
 		_open_thing(then_use)
 
 
-## Move units[i] one cell toward targets[i], all at once.
-func _step_all(units: Array, targets: Array) -> void:
-	_stepping = true
-	var froms: Array[Vector2] = []
-	var from_h: Array[float] = []
-	for i in units.size():
-		var u: CombatUnit = units[i]
-		froms.append(Vector2(u.cell))
-		from_h.append(float(grid.height_at(u.cell)))
-		if targets[i] != u.cell:
-			u.facing = targets[i] - u.cell
-	var step := func(t: float) -> void:
-		for i in units.size():
-			var u: CombatUnit = units[i]
-			var to: Vector2i = targets[i]
-			u.vis = froms[i].lerp(Vector2(to), t)
-			u.vis_h = lerpf(from_h[i], float(grid.height_at(to)), t)
-			u.hop = sin(t * PI) * (2.0 + absf(grid.height_at(to) - from_h[i]) * CombatBoard.HS * 0.6) if to != Vector2i(froms[i]) else 0.0
-	var tw := create_tween()
-	tw.tween_method(step, 0.0, 1.0, STEP_TIME)
-	await tw.finished
-	for i in units.size():
-		var u: CombatUnit = units[i]
-		u.hop = 0.0
-		u.place(targets[i], grid.height_at(targets[i]))
-	_stepping = false
+## Move a piece from where it stands into cell `to` at walking speed, frame by frame: no bob on flat ground,
+## a small hop where the ground changes height. Returns the distance this frame had left after arriving.
+func _glide(u: CombatUnit, to: Vector2i, spare: float) -> float:
+	var from := u.vis
+	var from_h := u.vis_h
+	var to_h := float(grid.height_at(to))
+	var length := maxf(0.01, from.distance_to(Vector2(to)))
+	var rise := absf(to_h - from_h)
+	if to != u.cell:
+		u.facing = to - u.cell
+	var gone := spare
+	while gone < length:
+		await get_tree().process_frame
+		gone += get_process_delta_time() * ExploreRules.WALK_SPEED
+		var t := minf(1.0, gone / length)
+		u.vis = from.lerp(Vector2(to), t)
+		u.vis_h = lerpf(from_h, to_h, t)
+		u.hop = sin(t * PI) * rise * CombatBoard.HS * 0.6 if rise > 0.01 else 0.0
+	u.hop = 0.0
+	u.place(to, grid.height_at(to))
+	return minf(gone - length, 0.5)
 
 
 ## After each step: update the fog, then see who spotted whom. True when the walk must stop.
@@ -521,7 +530,8 @@ func _after_step() -> bool:
 
 ## A group that sees the party attacks (they move first). A group the party sees first stops the walk
 ## and asks what to do. Returns true when either happened.
-func check_groups() -> bool:
+## arriving: the party just came through a door, so a group that sees it asks first instead of attacking.
+func check_groups(arriving := false) -> bool:
 	var cells := [leader().cell]
 	for g in groups:
 		if g.state != "idle" and g.state != "noticed":
@@ -529,11 +539,13 @@ func check_groups() -> bool:
 		var gc := _group_cells(g)
 		if gc.is_empty():
 			continue
-		if ExploreRules.sees(grid, gc, cells, int(g.def.sight)):
+		if not arriving and ExploreRules.sees(grid, gc, cells, int(g.def.sight)):
 			board.float_text(leader().cell, Txt.t("UI_EX_SPOTTED"), Color(1.0, 0.5, 0.4))
 			start_fight(g, "ambushed")
 			return true
 		var visible := gc.any(func(c: Vector2i) -> bool: return in_sight.has(c))
+		if arriving:
+			visible = visible or ExploreRules.sees(grid, gc, cells, int(g.def.sight))
 		if visible and g.state == "idle":
 			g.state = "noticed"
 			open_event(String(g.def.event), {"group": g})
@@ -565,7 +577,7 @@ func _on_cell_hovered(c: Vector2i) -> void:
 	_info.text = "%s  H%d" % [CombatGrid.T.keys()[grid.terrain_at(c)], grid.height_at(c)]
 	if walking_now:
 		return
-	var path := ExploreRules.find_path(grid, leader().cell, c, leader().jump, _blocked(), seen)
+	var path := ExploreRules.find_path(grid, leader().cell, c, leader().jump, _blocked(), seen, true)
 	for p in path.slice(1):
 		board.highlights[p] = PATH_COLOR
 	if path.size() > 1:
@@ -622,7 +634,11 @@ func _travel(t: Dictionary) -> void:
 	for x in things:
 		if x.done:
 			done.append(x.id)
-	Game.explore_memory[map.map_name] = {"seen": seen.duplicate(), "done": done}
+	var settled := {}
+	for g in groups:
+		if g.state == "gone" or g.state == "calm":
+			settled[String(g.def.id)] = g.state
+	Game.explore_memory[map.map_name] = {"seen": seen.duplicate(), "done": done, "groups": settled}
 	mode = M.OVER
 	Game.explore_map = String(t.to)
 	Game.explore_entry = t.at
@@ -721,7 +737,7 @@ func _apply_map_fx(list: Array, ctx: Dictionary) -> void:
 	if mode == M.WALK:
 		_refresh_sight()
 		_refresh_units()
-		check_groups()
+		check_groups(true)  # right after a choice (BACK OFF included) nobody pounces before the party moves
 		_refresh_units()
 
 

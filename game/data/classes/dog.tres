@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"dog"
 name_key = "CLASS_DOG"
-max_hp = 12
+max_hp = 15
 move = 5
 jump = 2
 attack = 4

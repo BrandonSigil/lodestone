@@ -6,6 +6,7 @@ extends RefCounted
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 const HEIGHT_HIT := 2  ## to-hit per level above the target
 const HEIGHT_LEVELS_MAX := 2  ## levels of height that count
+const HEIGHT_DAMAGE_MAX := 1  ## height adds or takes at most this much damage (to-hit still counts both levels)
 const FLANK_HIT := 2
 const SPOOKED_HIT := -3
 const SPOOKED_MOVE := -2
@@ -306,7 +307,7 @@ static func hit_chance(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units
 
 ## Damage of one swing. `units` is only needed for the wolf's pack trait.
 static func damage(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i, a: Ability = null, units: Array = []) -> int:
-	var dmg := att.damage + (a.power if a else 0) + height_levels(grid, from, tgt.cell)
+	var dmg := att.damage + (a.power if a else 0) + clampi(height_levels(grid, from, tgt.cell), -HEIGHT_DAMAGE_MAX, HEIGHT_DAMAGE_MAX)
 	var spell := a != null and a.is_spell()
 	if spell and att.has_trait(TRAIT_SCHOLAR):
 		dmg += 1

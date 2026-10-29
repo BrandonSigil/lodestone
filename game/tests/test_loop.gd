@@ -228,3 +228,44 @@ func test_no_fog_of_war() -> void:
 	ok(s.mode == 0, "no group spotted at the foot of the pass")
 	s.free()
 	Game.explore_map = "home"
+
+
+## Brandon's E2E notes (2026-10-28): wolves calmed by the dog, or beaten, came back and attacked after a trip
+## into the wolf den and out. A map remembers its settled groups while the party is still on it, and a party
+## stepping in beside a group gets the first look instead of an ambush.
+func test_settled_groups_stay_settled() -> void:
+	_db()
+	Game.save_enabled = false
+	Game.reset_meta()
+	Game.run = null
+	var tree := Engine.get_main_loop() as SceneTree
+	Game.explore_map = "snow_pass"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	s.groups[0].state = "calm"
+	s.groups[1].state = "gone"
+	var den: Dictionary = {}
+	for t: Dictionary in s.things:
+		if t.id == "den_mouth":
+			den = t
+	s._travel(den)
+	s.free()
+	eq(Game.explore_map, "wolf_den")
+	Game.explore_map = "snow_pass"
+	Game.explore_entry = Vector2i(20, 24)  # right in front of where the wolves stood
+	s = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	eq(s.groups[0].state, "calm", "the calmed wolves are still calm")
+	eq(s.groups[1].state, "gone", "the beaten bandits stay beaten")
+	ok(s.mode == 0, "nobody attacks on the way back out")
+	s.free()
+	# A fresh group next to the door asks first.
+	Game.explore_memory.clear()
+	Game.explore_entry = Vector2i(21, 24)
+	s = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	ok(s.mode == 2 and s.groups[0].state == "noticed", "stepping in beside wolves: the party sees them first")
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"

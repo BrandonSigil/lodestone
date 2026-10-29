@@ -108,15 +108,48 @@ static func _buff_value(u: CombatUnit, t: CombatUnit, status: String) -> float:
 	return 5.0 if t.hp < t.max_hp else 0.0
 
 
+## Nobody in reach: walk toward the nearest foe by the way there on foot (round cliffs, up the stairs),
+## not in a straight line, which left pieces stuck at the foot of a wall with the foe on top.
+## Foes nobody can walk to: the straight-line distance, as before.
 static func _approach(grid: CombatGrid, u: CombatUnit, units: Array, cost: Dictionary) -> Vector2i:
+	var walk := walk_distance(grid, u, units)
 	var best := u.cell
 	var best_d := INF
 	for cell: Vector2i in cost:
-		for t: CombatUnit in units:
-			if t.team == u.team or not t.alive():
-				continue
-			var d := CombatRules.dist(cell, t.cell) - grid.height_at(cell) * 0.1
-			if d < best_d:
-				best_d = d
-				best = cell
+		var d: float
+		if walk.has(cell):
+			d = float(walk[cell])
+		else:
+			d = INF
+			for t: CombatUnit in units:
+				if t.team != u.team and t.alive():
+					d = minf(d, 1000.0 + CombatRules.dist(cell, t.cell))
+		d -= grid.height_at(cell) * 0.1
+		if d < best_d:
+			best_d = d
+			best = cell
 	return best
+
+
+## Steps on foot from every cell to the nearest living foe of u (u's jump, stairs count), over the whole map.
+static func walk_distance(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
+	var out := {}
+	var queue: Array[Vector2i] = []
+	for t: CombatUnit in units:
+		if t.team != u.team and t.alive():
+			out[t.cell] = 0
+			queue.append(t.cell)
+	var i := 0
+	while i < queue.size():
+		var c: Vector2i = queue[i]
+		i += 1
+		for d in CombatRules.DIRS:
+			var n: Vector2i = c + d
+			if out.has(n) or not grid.passable(n) or not grid.can_step(c, n, u.jump):
+				continue
+			var other := CombatRules.unit_at(units, n)
+			if other != null and other.team != u.team:
+				continue
+			out[n] = int(out[c]) + 1
+			queue.append(n)
+	return out

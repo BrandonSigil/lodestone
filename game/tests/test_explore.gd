@@ -197,12 +197,34 @@ func test_wasd_diagonals_dont_cut_corners() -> void:
 	ok(not ExploreRules.can_step_dir(g, Vector2i(2, 2), Vector2i(0, -1), 1), "no climbing a cliff")
 
 
-func test_wasd_picks_the_screen_direction() -> void:
-	# Camera turn 0: grid (-1, -1) is straight up the screen, (1, -1) is right.
-	var screen_of := func(d: Vector2i) -> Vector2: return Vector2((d.x - d.y) * 32.0, (d.x + d.y) * 16.0)
-	eq(ExploreRules.steps_toward(Vector2(0, -1), screen_of)[0], Vector2i(-1, -1), "W goes up")
-	eq(ExploreRules.steps_toward(Vector2(1, 0), screen_of)[0], Vector2i(1, -1), "D goes right")
-	ok(not ExploreRules.steps_toward(Vector2(0, -1), screen_of).has(Vector2i(1, 1)), "never backwards")
+func test_free_walk_slides_and_rounds_corners() -> void:
+	var g := CombatGrid.flat(6, 6)
+	var b := ExploreRules.BODY
+	eq(ExploreRules.slide(g, Vector2(2.5, 2.5), Vector2(0.3, 0.0), b, 1), Vector2(2.8, 2.5), "open ground: the whole move")
+	g.set_terrain(Vector2i(3, 2), CombatGrid.T.ROCK)
+	var p := ExploreRules.slide(g, Vector2(2.5, 2.5), Vector2(0.6, 0.0), b, 1)
+	ok(p.x + b <= 3.0 and p.x > 2.6, "stops against a wall: %s" % p)
+	p = ExploreRules.slide(g, Vector2(2.5, 2.5), Vector2(0.6, 0.2), b, 1)
+	ok(p.y > 2.6 and p.x + b <= 3.0, "slides along it: %s" % p)
+	# Brushing a corner: the body overlaps the blocked row a little; it eases into the open lane.
+	p = ExploreRules.slide(g, Vector2(2.5, 1.8), Vector2(0.4, 0.0), b, 1)
+	ok(p.y < 1.8 and p.y >= 1.5, "eases off the corner instead of stopping: %s" % p)
+	g.set_height(Vector2i(2, 1), 3)
+	p = ExploreRules.slide(g, Vector2(2.5, 2.5), Vector2(0.0, -0.6), b, 1)
+	ok(p.y - b >= 2.0, "no walking up a cliff: %s" % p)
+	g.set_height(Vector2i(2, 1), 1)
+	p = ExploreRules.slide(g, Vector2(2.5, 2.5), Vector2(0.0, -0.6), b, 1)
+	ok(is_equal_approx(p.y, 1.9), "a one-level step is fine: %s" % p)
+
+
+func test_walk_paths_take_diagonals() -> void:
+	var g := CombatGrid.flat(8, 8)
+	var p := ExploreRules.find_path(g, Vector2i(0, 0), Vector2i(5, 5), 1, {}, {}, true)
+	eq(p.size(), 6, "straight down the diagonal")
+	eq(ExploreRules.find_path(g, Vector2i(0, 0), Vector2i(5, 5), 1).size(), 11, "fights keep straight steps")
+	g.set_terrain(Vector2i(1, 0), CombatGrid.T.ROCK)
+	p = ExploreRules.find_path(g, Vector2i(0, 0), Vector2i(1, 1), 1, {}, {}, true)
+	eq(p.size(), 3, "no cutting a corner")
 
 
 func test_placed_props_block_and_save() -> void:

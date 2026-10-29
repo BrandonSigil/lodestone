@@ -310,9 +310,10 @@ for c in [(den[0] - 1, den[1] - 1), (den[0], den[1] - 1)]:
         P.put(*c, "g")
 P.things.append({"id": "den_mouth", "kind": "enter", "event": "", "cell": list(den), "to": "wolf_den", "at": [3, 9]})
 
-# The wolves: on the wolf shelf, left of the flight that comes up from the meadow.
+# The wolves: on the wolf shelf, back from its front cliff, so the party meets them on the shelf and not
+# from the meadow two levels below (a fight from below lost every time: -4 to hit, wolves +4).
 P.groups.append({"id": "pass_wolves", "event": "spot_beasts", "sight": 4, "loot": "food:+6",
-                 "units": [{"id": "wolf", "cell": list(at(-3, 47))}, {"id": "wolf", "cell": list(at(-5, 49))}]})
+                 "units": [{"id": "wolf", "cell": list(at(-4, 44))}, {"id": "wolf", "cell": list(at(-6, 44))}]})
 
 # The cache: in the meadow's far left corner behind the pines.
 cache = at(-9, 59)

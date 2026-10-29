@@ -18,6 +18,7 @@ const MAX_HEIGHT := 8  ## editor and saved maps
 const GEN_MAX_HEIGHT := 4  ## the random generator stays gentle; stairs keep it crossable
 const PLATEAU_LEVEL := 4  ## the high floor of a plateau map (see _plateau)
 const DEPLOY_COLS := 2  ## columns kept clear at each side for deployment
+const DEPLOY_MIN := 6  ## starting cells each side needs; fewer on the main ground and the side borrows more
 const NONE_CELL := Vector2i(-999, -999)
 
 var w := 0
@@ -459,9 +460,42 @@ func deploy_cells(team: int) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	var rows := range(h)
 	rows.sort_custom(func(a: int, b: int) -> bool: return absf(a - (h - 1) * 0.5) < absf(b - (h - 1) * 0.5))
+	var ground := main_ground()
 	for x in cols:
 		for y in rows:
 			var c := Vector2i(x, y)
-			if passable(c) and not perch(c):
+			if passable(c) and not perch(c) and ground.has(c):
 				out.append(c)
+	if out.size() < DEPLOY_MIN:
+		# The deploy columns are cut off from the main ground: take its cells nearest this side instead.
+		var more: Array = ground.keys().filter(func(c: Vector2i) -> bool: return not out.has(c) and not perch(c))
+		more.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.x < b.x if team == 0 else a.x > b.x)
+		for c: Vector2i in more.slice(0, DEPLOY_MIN - out.size()):
+			out.append(c)
 	return out
+
+
+## The biggest stretch of ground a Jump 1 piece can walk all over (stairs count). Fights deploy only on it,
+## so nobody starts on a ledge or wall top they can't get down from, out of reach of the other side.
+func main_ground(jump := 1) -> Dictionary:
+	var best := {}
+	var done := {}
+	for y in h:
+		for x in w:
+			var start := Vector2i(x, y)
+			if done.has(start) or not passable(start):
+				continue
+			var region := {start: true}
+			done[start] = true
+			var queue: Array[Vector2i] = [start]
+			while not queue.is_empty():
+				var c: Vector2i = queue.pop_back()
+				for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+					var n: Vector2i = c + d
+					if not done.has(n) and passable(n) and can_step(c, n, jump):
+						done[n] = true
+						region[n] = true
+						queue.append(n)
+			if region.size() > best.size():
+				best = region
+	return best

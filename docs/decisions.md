@@ -114,6 +114,7 @@ Every design call goes here, newest at the bottom of its section.
 ## Village hub
 - [USER] 2026-10-26 The starting village uses the style lab look. It is where the player picks the team, buys supplies, arranges a Tetris-like grid inventory and talks to the mayor for lore and side quests.
 - [AI] 2026-10-26 The village uses frame A (embroidered band) from the style lab for now: party left, Lodestone medallion center, pack right. Swapping to B or C only touches `village_frame.gd`.
+- [USER] 2026-10-29 The UI frame: no wolf imagery. The bottom centre is the Lodestone shrine (arched niche with an altar, two hooded statues with halos either side; concept in `docs/art/references/ui-frame-shrine-concept.png`), with the Lodestone itself a separate sprite. Prompts: `art/prompts/ui-frame.txt`, `ui-frame-shrine-edit.txt` (Brandon).
 - [AI] 2026-10-26 The pack is a 4 x 3 grid (12 cells, matching the trail's 12 slots). Items are shapes that can be turned. The Wizard's books are a 3-cell L shape that can't be sold.
 - [AI] 2026-10-26 The lord's backing is gold, not free food: 30 starting gold plus 5 per 50 leagues of best distance. This replaces the "+5 starting food per 50 leagues" line. Leftover gold goes on the trip.
 - [AI] 2026-10-26 Shop (graybox prices): food bit 1 cell 5 food 2G, food sack 2 cells 12 food 4G, dry meat T 4 cells 30 food 7G, food box 2x2 36 food 9G, goop 1 cell 2 medicine 4G, herb bag L 3 cells 8 medicine 9G. Selling in town refunds the full price.
@@ -208,8 +209,8 @@ Every design call goes here, newest at the bottom of its section.
 - [USER] 2026-10-28 Food drains while travelling the overworld (Brandon).
 - [USER] 2026-10-28 Overworld encounters are fights, choice events, found items, or an abandoned home to rummage through (an item, or you get attacked) (Brandon).
 - [USER] 2026-10-28 The test ends with a placeholder boss fight against the Lich King on the crypt's throne terrace (Brandon).
-- [AI] 2026-10-28 Built as `docs/systems/overworld.md` says. Numbers are proposals: the hero is a nobody (16 HP, hit +4, defense 11, damage 3) and the smithy weapon adds to it (sword +1 hit +1 damage, daggers +2 hit +1 move, bow range 2 to 3, bare hands -1 damage), instead of picking the job; the job at level 5 is not built yet.
-- [AI] 2026-10-28 The dog: 12 HP, move 5, jump 2, hit +4, damage 2, hunt and forage +2, eats 1 food. No BARK or sniff yet. He takes a party slot like anyone else (the corgi's free slot was for the corgi).
+- [AI] 2026-10-28 Built as `docs/systems/overworld.md` says. Numbers are proposals: the hero is a nobody (16 HP, now 20, hit +4, defense 11, damage 3) and the smithy weapon adds to it (sword +1 hit +1 damage, daggers +2 hit +1 move, bow range 2 to 3, bare hands -1 damage), instead of picking the job; the job at level 5 is not built yet.
+- [AI] 2026-10-28 The dog: 12 HP (now 15), move 5, jump 2, hit +4, damage 2, hunt and forage +2, eats 1 food. No BARK or sniff yet. He takes a party slot like anyone else (the corgi's free slot was for the corgi).
 - [AI] 2026-10-28 Levels: 100 XP a level, +1 max HP each level, a pick every 4 levels (MORE HEALTH +3 HP, MORE HIT +1 to hit and damage, MORE MAGIC +2 on spells and magic hits). Every member gets the fight's XP: 10 for the win, 25 a foe, 100 for a boss. `data/levels.csv`.
 - [AI] 2026-10-28 Overworld numbers: a leg is 60 seconds with 1 or 2 encounters; a meal every 30 seconds walked; no food costs 1 HP each, never below 1; hunt, fish and forage once per 15 seconds walked each. GO HOME from the Lodestone heals the party in the square, like a fall.
 - [AI] 2026-10-28 The village gate opens only once the Lodestone is taken, so there are no fights before it (as the empty-village draft proposed).
@@ -218,6 +219,14 @@ Every design call goes here, newest at the bottom of its section.
 - [USER] 2026-10-28 No fog of war for now: it is frustrating and doesn't work well yet (Brandon).
 - [AI] 2026-10-28 Following that: one switch, `ExploreRules.FOG_OF_WAR` (false), draws every map whole with every group in view; spotting and ambushes still use the party's line of sight within 7 cells, so nobody is jumped from across the map. Each map's `fog` setting is kept for when it comes back.
 - [AI] 2026-10-28 Balance for a party of two (AI-vs-AI sim): the Lich King fights alone at 22 HP (about 46% for the AI at level 4); the wolf den is a pair plus a lone wolf instead of three together (three wolves won 61% at level 2).
+
+- [USER] 2026-10-29 E2E notes (Brandon): enemies came back after a trip into the cave or wolf den and attacked, even ones the dog had calmed; combat was too tough (the first wolves on the pass won every time, by hand or on auto); WASD walking was clunky and snagged on every corner; a road fight set the hero and dog on a wall top the bandits couldn't reach.
+- [AI] 2026-10-29 Following that: beaten and calmed groups are remembered with the map until the party leaves through the exit (a new trip meets them again); stepping in beside a group, or right after a choice, the party gets the first look instead of an ambush.
+- [AI] 2026-10-29 The pass wolves stand back from the front cliff of their shelf, so the party meets them on the shelf, not from the meadow two levels below (from below: 0 wins in 12 on auto; on the shelf: 12 of 12).
+- [AI] 2026-10-29 Height still adds +2 to hit per level (two levels count), but at most 1 damage either way (it was +2 damage from two levels up, and -2 from below).
+- [AI] 2026-10-29 The hero has 20 HP (was 16) and the dog 15 (was 12). With the rest, the sim gives the starting party 89 to 99% against the pass and den groups and the road pairs at level 1 (`tools/explore_balance.gd`).
+- [AI] 2026-10-29 The AI walks toward the nearest foe by the way there on foot, not in a straight line, which stalled a third of road fights at the foot of a wall. Fights deploy only on the biggest stretch of ground a Jump 1 piece can walk all over, so nobody starts on a wall top.
+- [AI] 2026-10-29 WASD walks freely, sliding along walls and easing round corners; clicked paths take diagonals and glide at the same 5 cells a second.
 
 ## Exploration maps
 - [USER] 2026-10-27 Big isometric maps the party walks freely, with fog of war past the party's eyesight. Events stop the walk: enemies that spot you start a fight right there on the map; things like a locked door show an interact icon and open a text box whose options depend on the party (Brandon). His multi-level reference is for layout only, not style.

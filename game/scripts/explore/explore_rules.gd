@@ -60,7 +60,9 @@ static func party_jump(units: Array) -> int:
 
 ## Cheapest path from `from` to `to`, both included. Empty when there is none.
 ## `blocked`: cells nobody may enter (enemies, things). `known`: cells the party has seen; empty = every cell.
-static func find_path(grid: CombatGrid, from: Vector2i, to: Vector2i, jump: int, blocked := {}, known := {}) -> Array[Vector2i]:
+## diagonal: walking also takes the four diagonal steps (never cutting a corner), so a path up the screen
+## runs straight instead of zigzagging. Fights keep the four straight steps.
+static func find_path(grid: CombatGrid, from: Vector2i, to: Vector2i, jump: int, blocked := {}, known := {}, diagonal := false) -> Array[Vector2i]:
 	var none: Array[Vector2i] = []
 	if not _open(grid, to, blocked, known) and to != from:
 		return none
@@ -79,11 +81,14 @@ static func find_path(grid: CombatGrid, from: Vector2i, to: Vector2i, jump: int,
 			break
 		if int(item[0]) > int(cost[c]):
 			continue
-		for d in CombatRules.DIRS:
+		for d in (STEPS if diagonal else CombatRules.DIRS):
 			var n: Vector2i = c + d
-			if not _open(grid, n, blocked, known) or not grid.can_step(c, n, jump):
+			if d.x != 0 and d.y != 0:
+				if not can_step_dir(grid, c, d, jump, blocked, known):
+					continue
+			elif not _open(grid, n, blocked, known) or not grid.can_step(c, n, jump):
 				continue
-			var nc: int = int(cost[c]) + grid.step_cost(n)
+			var nc: int = int(cost[c]) + grid.step_cost(n) * (14 if d.x != 0 and d.y != 0 else 10)
 			if not cost.has(n) or nc < int(cost[n]):
 				cost[n] = nc
 				prev[n] = c
@@ -100,7 +105,58 @@ static func _open(grid: CombatGrid, c: Vector2i, blocked: Dictionary, known: Dic
 	return grid.passable(c) and not blocked.has(c) and (known.is_empty() or known.has(c))
 
 
-## WASD walking: the eight grid steps (diagonals too, so W is straight up the screen).
+# --- free walking (WASD) ------------------------------------------------------------
+
+const WALK_SPEED := 5.0  ## cells a second, on keys and along clicked paths
+const BODY := 0.26  ## the leader's half-width in cells: what bumps into walls on keys
+
+
+## WASD walking is free, not cell by cell: move a body of half-width `body` from `pos` by `move` (cell units,
+## cell c spans c to c + 1), one axis at a time so it slides along walls. When only a corner is in the way
+## it eases sideways into the open lane instead of stopping, so nobody has to line up with a doorway.
+## Climbing follows the cell rules: every cell the body touches must be a step the walker can take from
+## the cell under its middle.
+static func slide(grid: CombatGrid, pos: Vector2, move: Vector2, body: float, jump: int, blocked := {}) -> Vector2:
+	var from := Vector2i(pos.floor())
+	var p := pos
+	for axis in 2:
+		var d: float = move[axis]
+		if d == 0.0:
+			continue
+		var q := p
+		q[axis] += d
+		if body_fits(grid, from, q, body, jump, blocked):
+			p = q
+			continue
+		var side := 1 - axis
+		var lane := floorf(p[side]) + 0.5
+		var straight := q
+		straight[side] = lane
+		if absf(p[side] - lane) > 0.01 and body_fits(grid, from, straight, body, jump, blocked):
+			p[side] = move_toward(p[side], lane, absf(d))  # a corner, not a wall: ease round it
+			continue
+		for i in 4:  # a wall: close up to it
+			d *= 0.5
+			q = p
+			q[axis] += d
+			if body_fits(grid, from, q, body, jump, blocked):
+				p = q
+	return p
+
+
+## Does a body centred on `q` touch only cells it may stand in, coming from cell `from`?
+static func body_fits(grid: CombatGrid, from: Vector2i, q: Vector2, body: float, jump: int, blocked := {}) -> bool:
+	for y in range(floori(q.y - body + 0.001), floori(q.y + body - 0.001) + 1):
+		for x in range(floori(q.x - body + 0.001), floori(q.x + body - 0.001) + 1):
+			var c := Vector2i(x, y)
+			if c == from:
+				continue
+			if not grid.passable(c) or blocked.has(c) or not grid.can_step(from, c, jump):
+				return false
+	return true
+
+
+## The eight grid steps walking paths take (fights keep the four straight ones).
 const STEPS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
 	Vector2i(1, 1), Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1)]
 
@@ -120,22 +176,6 @@ static func can_step_dir(grid: CombatGrid, from: Vector2i, d: Vector2i, jump: in
 	return true
 
 
-## Grid steps ordered by how well they match a screen direction (`screen_of` maps a step to its screen vector).
-## Only steps within 60 degrees count, so a key never walks the leader sideways.
-static func steps_toward(want: Vector2, screen_of: Callable) -> Array[Vector2i]:
-	var scored: Array = []
-	for d in STEPS:
-		var v: Vector2 = screen_of.call(d)
-		var dot := v.normalized().dot(want.normalized())
-		if dot > 0.5:
-			scored.append([dot, d])
-	scored.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0])
-	var out: Array[Vector2i] = []
-	for s in scored:
-		out.append(s[1])
-	return out
-
-
 ## Can someone standing at `at` use the thing at `thing`? Next to it (diagonals count) and not a cliff apart.
 static func can_use_from(grid: CombatGrid, at: Vector2i, thing: Vector2i) -> bool:
 	if maxi(absi(at.x - thing.x), absi(at.y - thing.y)) > 1 or at == thing:
@@ -144,7 +184,7 @@ static func can_use_from(grid: CombatGrid, at: Vector2i, thing: Vector2i) -> boo
 
 
 ## Shortest walk to a cell from which the thing can be used. Empty when it can't be reached.
-static func path_to_use(grid: CombatGrid, from: Vector2i, thing: Vector2i, jump: int, blocked := {}, known := {}) -> Array[Vector2i]:
+static func path_to_use(grid: CombatGrid, from: Vector2i, thing: Vector2i, jump: int, blocked := {}, known := {}, diagonal := false) -> Array[Vector2i]:
 	var best: Array[Vector2i] = []
 	if can_use_from(grid, from, thing):
 		best.append(from)
@@ -154,7 +194,7 @@ static func path_to_use(grid: CombatGrid, from: Vector2i, thing: Vector2i, jump:
 			var c := thing + Vector2i(dx, dy)
 			if not grid.in_bounds(c) or not can_use_from(grid, c, thing):
 				continue
-			var p := find_path(grid, from, c, jump, blocked, known)
+			var p := find_path(grid, from, c, jump, blocked, known, diagonal)
 			if not p.is_empty() and (best.is_empty() or p.size() < best.size()):
 				best = p
 	return best

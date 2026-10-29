@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"nobody"
 name_key = "CLASS_NOBODY"
-max_hp = 16
+max_hp = 20
 move = 4
 jump = 1
 attack = 4

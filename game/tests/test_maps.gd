@@ -319,6 +319,19 @@ func test_art_borrows_and_lips() -> void:
 	ok(BattleArt.lip(T.GRASS, "alpine") > 0.0)
 
 
+## Road fights (Brandon's E2E notes, 2026-10-28): the party was set down on a wall top it couldn't leave and
+## the bandits couldn't reach. Every starting cell must sit on one stretch of Jump 1 ground.
+func test_road_fight_deploy_on_one_ground() -> void:
+	for s in 40:
+		var g := MapGen.valley(s, 14, 12, "snow")
+		var ground := g.main_ground()
+		var mine := g.deploy_cells(0)
+		var theirs := g.deploy_cells(1)
+		ok(mine.size() >= 3 and theirs.size() >= 3, "seed %d: room to deploy" % s)
+		for c in mine + theirs:
+			ok(ground.has(c), "seed %d: %s is on the main ground" % [s, c])
+
+
 func test_map_doc_files() -> void:
 	var g := MapGen.valley(2, 14, 12)
 	var battle := MapDoc.create("battle", "Test Map!", g, "alpine").to_dict()
