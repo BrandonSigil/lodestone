@@ -4,16 +4,30 @@ extends RefCounted
 
 const GOAL := 300  ## leagues to the end of the route
 const WALL := 150
-const CAPACITY := 12  ## group inventory slots
-const FOOD_PER_SLOT := 10
-const MED_PER_SLOT := 5
+const PACK_COLS := 4  ## [USER] 2026-10-29: the first pack is 4 x 3
+const PACK_ROWS := 3
+const FOOD_ITEM := "meat"  ## one food = one piece of meat in the pack (data/items.csv)
+const MED_ITEM := "potion"  ## one medicine = one potion
 const MAX_LINES := 200
 
 var members: Array[Dictionary] = []  # {"def": CharacterDef, "hp": int, "bonus": stat mods from levels and gear}
 var adventure := false  ## the E2E loop's run: kept through a wake-up, saved in meta (Game.start_adventure)
-var items := {}  ## gear found on the way (data/items.csv rows of kind gear), id -> count; one slot each
-var food := 0
-var medicine := 0
+## Everything carried, as shapes in the party pack ([USER] 2026-10-29). Weapons sit on their members instead.
+var pack: InventoryGrid = InventoryGrid.create(PACK_COLS, PACK_ROWS)
+## What the pack holds, id -> count (gear bound to a member left out). Read-only: change it with add_item.
+var items: Dictionary:
+	get:
+		var out := {}
+		for it in pack.items:
+			if it.bound == "":
+				out[it.id] = int(out.get(it.id, 0)) + int(it.get("n", 1))
+		return out
+var food: int:
+	get: return pack.count(FOOD_ITEM)
+	set(v): add_item(FOOD_ITEM, maxi(0, v) - pack.count(FOOD_ITEM))
+var medicine: int:
+	get: return pack.count(MED_ITEM)
+	set(v): add_item(MED_ITEM, maxi(0, v) - pack.count(MED_ITEM))
 var gold := 0
 var morale := 70
 var day := 1
@@ -28,12 +42,20 @@ static func create(defs: Array, seed_value: int, bonus_food := 0) -> RunState:
 	var r := RunState.new()
 	r.rng.seed = seed_value
 	for d: CharacterDef in defs:
-		r.members.append({"def": d, "hp": d.class_def.max_hp})
+		r.join(d)
 	r.food = 40 + bonus_food
 	r.medicine = 3
 	r.gold = 10
-	r.add_food(0)  # clamp to capacity
 	return r
+
+
+## A member joins at full HP. Gear they bring (the Wizard's books) is packed, bound to them.
+func join(d: CharacterDef) -> Dictionary:
+	var m := {"def": d, "hp": d.class_def.max_hp, "bonus": {}}
+	members.append(m)
+	if d.inventory_slots > 0:
+		pack.put("books", shape_of("books"), 1, 1, String(d.id))
+	return m
 
 
 func note(line: String) -> void:
@@ -75,79 +97,57 @@ func heal_member(m: Dictionary, amount: int) -> void:
 		m.hp = mini(m.hp + amount, max_hp(m))
 
 
-func gear_slots() -> int:
-	var n := 0
-	for m in members:
-		n += (m.def as CharacterDef).inventory_slots
-	return n
+static func shape_of(id: String) -> Array[Vector2i]:
+	return InventoryGrid.parse_shape(String(Db.items[id].shape))
 
 
-func food_slots() -> int:
-	return ceili(float(food) / FOOD_PER_SLOT)
-
-
-func med_slots() -> int:
-	return ceili(float(medicine) / MED_PER_SLOT)
-
-
-func item_slots() -> int:
-	var n := 0
-	for id in items:
-		n += int(items[id])
-	return n
-
-
-func used_slots() -> int:
-	return gear_slots() + item_slots() + food_slots() + med_slots()
+static func stack_of(id: String) -> int:
+	return maxi(1, int(Db.items[id].get("stack", 1)))
 
 
 func item_count(id: String) -> int:
-	return int(items.get(id, 0))
+	return pack.count(id)
 
 
-## Adds (or with n < 0 spends) gear. No room: the extra is left behind.
-func add_item(id: String, n: int) -> void:
-	var have := item_count(id)
-	var want := maxi(0, have + n)
-	if want > have:
-		want = mini(want, have + CAPACITY - used_slots())
-		if want < have + n:
-			note(Txt.f("LOG_OVERFLOW", [have + n - want, Txt.t("SLOT_" + id.to_upper())]))
-	if want <= 0:
-		items.erase(id)
-	else:
-		items[id] = want
-
-
-## Slot contents in display order, e.g. ["SLOT_BOOKS", "SLOT_FOOD", ...].
-func slot_list() -> Array[String]:
-	var out: Array[String] = []
-	for i in gear_slots():
-		out.append("SLOT_BOOKS")
-	for id in items:
-		for i in int(items[id]):
-			out.append("SLOT_" + String(id).to_upper())
-	for i in food_slots():
-		out.append("SLOT_FOOD")
-	for i in med_slots():
-		out.append("SLOT_MEDICINE")
-	return out
+## Adds n of an item to the pack (auto-placed), or with n < 0 spends it. What doesn't fit is left
+## behind; returns how many that was.
+func add_item(id: String, n: int) -> int:
+	if n < 0:
+		pack.take(id, -n)
+		return 0
+	var lost := pack.put(id, shape_of(id), n, stack_of(id))
+	if lost > 0:
+		note(Txt.f("LOG_OVERFLOW", [lost, Txt.t(String(Db.items[id].name_key))]))
+	return lost
 
 
 func add_food(n: int) -> void:
-	food = maxi(0, food + n)
-	var room := (CAPACITY - gear_slots() - item_slots() - med_slots()) * FOOD_PER_SLOT
-	if food > room:
-		note(Txt.f("LOG_OVERFLOW", [food - room, Txt.t("SLOT_FOOD")]))
-		food = maxi(0, room)
+	add_item(FOOD_ITEM, n)
 
 
 func add_medicine(n: int) -> void:
-	medicine = maxi(0, medicine + n)
-	var room := (CAPACITY - gear_slots() - item_slots() - food_slots()) * MED_PER_SLOT
-	if medicine > room:
-		note(Txt.f("LOG_OVERFLOW", [medicine - room, Txt.t("SLOT_MEDICINE")]))
-		medicine = maxi(0, room)
+	add_item(MED_ITEM, n)
+
+
+## Rebuilds the pack from InventoryGrid.to_save. Anything that no longer fits where it was
+## (its shape changed in the data) is auto-placed again.
+func load_pack(saved: Array) -> void:
+	pack = InventoryGrid.create(PACK_COLS, PACK_ROWS)
+	var later := []
+	for e: Dictionary in saved:
+		var id := String(e.get("id", ""))
+		if not Db.items.has(id):
+			continue
+		var i := pack.place(id, shape_of(id), int(e.get("rot", 0)), Vector2i(int(e.get("x", 0)), int(e.get("y", 0))), String(e.get("bound", "")))
+		if i == -1:
+			later.append(e)
+		else:
+			pack.items[i].n = clampi(int(e.get("n", 1)), 1, stack_of(id))
+	for e: Dictionary in later:
+		var id := String(e.id)
+		var lost := pack.put(id, shape_of(id), int(e.get("n", 1)), stack_of(id), String(e.get("bound", "")))
+		if lost > 0:
+			note(Txt.f("LOG_OVERFLOW", [lost, Txt.t(String(Db.items[id].name_key))]))
 
 
 func food_need() -> int:

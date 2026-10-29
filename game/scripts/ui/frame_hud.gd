@@ -1,6 +1,6 @@
 class_name FrameHud
 extends CanvasLayer
-## The border that frames every screen: party strip on the left, item slots along the bottom,
+## The border that frames every screen: party strip on the left, the pack along the bottom,
 ## a status line on top and a side panel for the screen's own controls.
 ## Graybox panels for now; Brandon's 9-slice border replaces the StyleBoxes later.
 
@@ -8,6 +8,7 @@ const LEFT_W := 210.0
 const RIGHT_W := 250.0
 const TOP_H := 40.0
 const BOTTOM_H := 78.0
+const PACK_CELL := 15.0  ## the bottom bar's copy of the pack grid
 const FRAME := Color(0.17, 0.23, 0.22)
 const PANEL := Color(0.23, 0.29, 0.28)
 const INK := Color(0.9, 0.92, 0.87)
@@ -125,32 +126,26 @@ func set_party(entries: Array) -> void:
 		party_box.add_child(row)
 
 
-## slots: Array of SLOT_* keys; empty slots are drawn up to capacity.
-func set_slots(slots: Array, capacity: int) -> void:
+## The party pack along the bottom: a small copy of the grid, and what's in it in words.
+func set_pack(bag: InventoryGrid) -> void:
 	for c in slots_box.get_children():
 		c.queue_free()
-	slots_label.text = "%s   %s" % [Txt.t("UI_ITEMS"), Txt.f("UI_SLOTS_USED", [slots.size(), capacity])]
-	for i in maxi(capacity, slots.size()):
-		var key: String = slots[i] if i < slots.size() else "SLOT_EMPTY"
-		var p := PanelContainer.new()
-		p.custom_minimum_size = Vector2(44, 40)
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = _slot_color(key) if i < capacity else Color(0.6, 0.2, 0.2)
-		sb.set_corner_radius_all(3)
-		p.add_theme_stylebox_override("panel", sb)
-		var l := _label(Txt.t(key), 10)
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		p.add_child(l)
-		slots_box.add_child(p)
-
-
-static func _slot_color(key: String) -> Color:
-	match key:
-		"SLOT_FOOD": return Color(0.55, 0.42, 0.25)
-		"SLOT_MEDICINE": return Color(0.3, 0.5, 0.35)
-		"SLOT_BOOKS": return Color(0.35, 0.33, 0.6)
-	return PANEL
+	slots_label.text = "%s   %s" % [Txt.t("UI_ITEMS"), Txt.f("UI_SLOTS_USED", [bag.used_cells(), bag.capacity()])]
+	var shrunk := Control.new()
+	shrunk.custom_minimum_size = Vector2(PACK_CELL * bag.cols, PACK_CELL * bag.rows)
+	shrunk.draw.connect(func() -> void: PackView.draw_bag(shrunk, bag, Db.items, Vector2.ZERO, PACK_CELL, false))
+	slots_box.add_child(shrunk)
+	var counts := {}
+	for it in bag.items:
+		counts[it.id] = int(counts.get(it.id, 0)) + int(it.get("n", 1))
+	var words: PackedStringArray = []
+	for id: String in counts:
+		words.append("%s %d" % [Txt.t(String(Db.items[id].name_key)), counts[id]])
+	var l := _label("   ".join(words), 13)
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	slots_box.add_child(l)
 
 
 ## entries: [{"text": String, "cb": Callable, "glow": bool}]. A glowing button has something waiting.

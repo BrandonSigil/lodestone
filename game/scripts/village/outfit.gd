@@ -6,7 +6,7 @@ extends RefCounted
 
 const BASE_GOLD := 30
 const COLS := 4
-const ROWS := 3  ## 12 cells, same as RunState.CAPACITY
+const ROWS := 3  ## 12 cells, the same as the run pack (RunState.PACK_COLS x PACK_ROWS)
 
 var gold := BASE_GOLD
 var bag: InventoryGrid = InventoryGrid.create(COLS, ROWS)

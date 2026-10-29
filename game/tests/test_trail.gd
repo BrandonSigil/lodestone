@@ -33,9 +33,9 @@ func test_starving_hurts() -> void:
 func test_wizard_books_fill_slots() -> void:
 	var plain := _run(["lead"], 40)
 	var wiz := _run(["lead", "wizard"], 40)
-	eq(wiz.used_slots(), plain.used_slots() + 3)
+	eq(wiz.pack.used_cells(), plain.pack.used_cells() + 3)
 	wiz.add_food(200)
-	eq(wiz.food, (RunState.CAPACITY - 3 - wiz.med_slots()) * RunState.FOOD_PER_SLOT, "overflow is lost")
+	eq(wiz.food, (wiz.pack.capacity() - 3 - 1) * 10, "the books and a potion cell leave 8 cells of meat; overflow is lost")
 
 
 func test_travel_and_wall() -> void:

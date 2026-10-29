@@ -182,7 +182,7 @@ Settled by that: items have shapes, are packed by hand and can be turned. A way 
 ### What's on file and built
 - `[USER]` 2026-10-26: the village has a Tetris-like grid inventory.
 - `[AI]`, never confirmed: the pack is a 4 x 3 grid of turnable shapes (12 cells); 12 slots, food 10 a slot, medicine 5 a slot, overflow lost; the Wizard's books take 3 cells.
-- Built: `InventoryGrid` and `PackView` (`game/scripts/village/`) in the shelved village hub; shapes in `game/data/items.csv`. The live loop uses 12 plain slots (`RunState.CAPACITY`) on the explore ITEMS bar. In fights any piece can spend the pack's food or potions as its action (`data/combat_items.csv`).
+- Built: `InventoryGrid` and `PackView` (`game/scripts/village/`); shapes and stack sizes in `game/data/items.csv`. Step 1 is in (2026-10-29): the live loop carries the 4 x 3 shaped pack (`RunState.pack`), meat 10 a cell, potions 3 a cell, rope 1 x 2, auto-place on pickup, drag and turn from PACK. In fights any piece can still spend the pack's food or potions as its action (`data/combat_items.csv`) until step 2.
 
 ### The tension to solve
 Falling keeps every item (`[USER]` 2026-10-28), so a tight pack can't create fear of loss. The grid needs a job: what you bring home, what you bring out, the layout as a build, or just a satisfying tidy (card 4).

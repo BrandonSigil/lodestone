@@ -6,7 +6,8 @@ extends RefCounted
 var cols := 4
 var rows := 3
 ## Each item: {"id": String, "shape": Array[Vector2i] (unrotated), "rot": int 0-3,
-## "pos": Vector2i (top-left of the rotated shape), "bound": String (member id that owns it, or "")}
+## "pos": Vector2i (top-left of the rotated shape), "bound": String (member id that owns it, or ""),
+## "n": int (how many share the cell, up to the item's stack size; 1 for most things)}
 var items: Array[Dictionary] = []
 
 
@@ -97,7 +98,7 @@ func find_room(shape: Array[Vector2i], prefer_rot := 0) -> Dictionary:
 func place(id: String, shape: Array[Vector2i], rot: int, pos: Vector2i, bound := "") -> int:
 	if not fits(shape, rot, pos):
 		return -1
-	items.append({"id": id, "shape": shape, "rot": posmod(rot, 4), "pos": pos, "bound": bound})
+	items.append({"id": id, "shape": shape, "rot": posmod(rot, 4), "pos": pos, "bound": bound, "n": 1})
 	return items.size() - 1
 
 
@@ -127,3 +128,58 @@ func used_cells() -> int:
 	for it in items:
 		n += (it.shape as Array).size()
 	return n
+
+
+## How many of id the pack holds, over all its stacks.
+func count(id: String) -> int:
+	var n := 0
+	for it in items:
+		if it.id == id:
+			n += int(it.get("n", 1))
+	return n
+
+
+## Adds n of id: tops up its stacks already in the pack, then puts new stacks in the first spot
+## that fits (turning them if that helps). Returns how many found no room.
+func put(id: String, shape: Array[Vector2i], n: int, stack := 1, bound := "") -> int:
+	stack = maxi(1, stack)
+	for it in items:
+		if n <= 0:
+			break
+		if it.id == id and it.bound == bound and int(it.get("n", 1)) < stack:
+			var k := mini(n, stack - int(it.get("n", 1)))
+			it.n = int(it.get("n", 1)) + k
+			n -= k
+	while n > 0:
+		var i := add(id, shape, bound)
+		if i == -1:
+			break
+		items[i].n = mini(n, stack)
+		n -= items[i].n
+	return n
+
+
+## Takes up to n of id out, emptiest stack first so cells free up. Returns how many it took.
+func take(id: String, n: int) -> int:
+	var took := 0
+	while took < n:
+		var best := -1
+		for i in items.size():
+			if items[i].id == id and items[i].bound == "" and (best == -1 or int(items[i].get("n", 1)) < int(items[best].get("n", 1))):
+				best = i
+		if best == -1:
+			break
+		var k := mini(n - took, int(items[best].get("n", 1)))
+		items[best].n = int(items[best].get("n", 1)) - k
+		took += k
+		if items[best].n <= 0:
+			items.remove_at(best)
+	return took
+
+
+## The layout as plain data for a save file.
+func to_save() -> Array:
+	var out := []
+	for it in items:
+		out.append({"id": it.id, "rot": it.rot, "x": it.pos.x, "y": it.pos.y, "n": int(it.get("n", 1)), "bound": it.bound})
+	return out

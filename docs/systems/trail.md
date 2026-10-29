@@ -6,7 +6,7 @@ Code: `game/scripts/trail/`. Rules are in `trail_rules.gd`, state in `run_state.
 - End of every day: each member eats `food_per_day`, Bushberry adds 1 food, Skeleton Archer costs 2 morale. No food = -2 HP each and -10 morale.
 - Wayfinding: each walk rolls the party's best Wayfind vs 8 + 8 x strangeness. Failing covers half the distance.
 - Events: 35% per walk, from `data/events.csv`. Each option is a check (or `none` / `fight`) with a DC and win/lose effects. Buttons show the party's success chance.
-- Inventory: 12 slots. Food 10 per slot, medicine 5 per slot, Wizard's books 3 slots. Overflow is lost.
+- Inventory: the shared 4 x 3 shaped pack (`RunState.pack`, see overworld.md). Food is meat, 10 a cell; medicine is potions, 3 a cell; the Wizard's books take 3 cells, bound to him. Overflow is lost.
 - The Lodestone strip shows the route, the Wall at 150, the fog past the farthest anyone has walked, and marks from every past run.
 - Run ends at 300 leagues (success) or when everyone is at 0 HP (recall). Meta progress survives: deaths, best distance, unlocks, map marks.
 - Try it alone: open `scenes/trail.tscn` and press F6.

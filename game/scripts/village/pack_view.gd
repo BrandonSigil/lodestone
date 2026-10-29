@@ -1,15 +1,18 @@
 class_name PackView
 extends Control
 ## The pack grid you arrange by hand: drag an item to move it, R or right-click turns it,
-## drop it on the sell box to sell it. Gear bound to a member (the Wizard's books) can be
-## moved and turned but not sold.
+## and in the village drop it on the sell box to sell it. Gear bound to a member (the Wizard's
+## books) can be moved and turned but not sold. Used for the village outfit and the run's pack.
 
 signal changed
 
 const CELL := 72.0
 const SELL_SIZE := Vector2(150, 110)
 
-var outfit: Outfit
+var bag: InventoryGrid
+var db: Dictionary = {}  ## item rows (Db.items)
+var sell := Callable()  ## index -> bool; empty means no sell box
+var cell := CELL
 var held := -1  ## index of the item being dragged
 var held_rot := 0
 var grab := Vector2i.ZERO  ## which cell of the rotated shape the mouse holds
@@ -22,22 +25,33 @@ func _init() -> void:
 	focus_mode = Control.FOCUS_ALL
 
 
+## The village outfit, with its sell box.
 func setup(kit: Outfit) -> void:
-	outfit = kit
-	custom_minimum_size = Vector2(CELL * kit.bag.cols + 40 + SELL_SIZE.x, CELL * kit.bag.rows + 30)
+	setup_bag(kit.bag, kit.items_db, kit.sell)
+
+
+func setup_bag(grid: InventoryGrid, items_db: Dictionary, sell_cb := Callable(), cell_size := CELL) -> void:
+	bag = grid
+	db = items_db
+	sell = sell_cb
+	cell = cell_size
+	var w := cell * bag.cols + (40 + SELL_SIZE.x if sell.is_valid() else 0.0)
+	custom_minimum_size = Vector2(w, cell * bag.rows + 30)
 	queue_redraw()
 
 
 func _sell_rect() -> Rect2:
-	return Rect2(Vector2(CELL * outfit.bag.cols + 40, CELL * outfit.bag.rows - SELL_SIZE.y), SELL_SIZE)
+	if not sell.is_valid():
+		return Rect2()
+	return Rect2(Vector2(cell * bag.cols + 40, cell * bag.rows - SELL_SIZE.y), SELL_SIZE)
 
 
 func _cell_at(pos: Vector2) -> Vector2i:
-	return Vector2i(floori(pos.x / CELL), floori(pos.y / CELL))
+	return Vector2i(floori(pos.x / cell), floori(pos.y / cell))
 
 
 func _gui_input(e: InputEvent) -> void:
-	if outfit == null:
+	if bag == null:
 		return
 	if e is InputEventMouseMotion:
 		mouse = e.position
@@ -59,14 +73,14 @@ func _gui_input(e: InputEvent) -> void:
 
 
 func _pick(pos: Vector2) -> void:
-	var i := outfit.bag.item_at(_cell_at(pos))
+	var i := bag.item_at(_cell_at(pos))
 	if i == -1:
 		return
 	if is_inside_tree():
 		grab_focus()
 	held = i
-	held_rot = outfit.bag.items[i].rot
-	grab = _cell_at(pos) - (outfit.bag.items[i].pos as Vector2i)
+	held_rot = bag.items[i].rot
+	grab = _cell_at(pos) - (bag.items[i].pos as Vector2i)
 	flash = ""
 	queue_redraw()
 
@@ -75,14 +89,14 @@ func _turn(pos: Vector2) -> void:
 	if held != -1:
 		# turn the held cell offset with the shape so the item spins under the cursor
 		held_rot = (held_rot + 1) % 4
-		var shape: Array[Vector2i] = InventoryGrid.rotated(outfit.bag.items[held].shape, held_rot)
+		var shape: Array[Vector2i] = InventoryGrid.rotated(bag.items[held].shape, held_rot)
 		grab = shape[0]
 		queue_redraw()
 		return
-	var i := outfit.bag.item_at(_cell_at(pos))
+	var i := bag.item_at(_cell_at(pos))
 	if i != -1:
-		var it := outfit.bag.items[i]
-		if not outfit.bag.move(i, it.pos, (int(it.rot) + 1) % 4):
+		var it := bag.items[i]
+		if not bag.move(i, it.pos, (int(it.rot) + 1) % 4):
 			flash = "SHOP_NO_ROOM"
 		changed.emit()
 		queue_redraw()
@@ -94,36 +108,38 @@ func _drop(pos: Vector2) -> void:
 	var i := held
 	held = -1
 	if _sell_rect().has_point(pos):
-		if not outfit.sell(i):
+		if not sell.call(i):
 			flash = "UI_BOUND"
-	elif not outfit.bag.move(i, _cell_at(pos) - grab, held_rot):
+	elif not bag.move(i, _cell_at(pos) - grab, held_rot):
 		flash = "SHOP_NO_ROOM"
 	changed.emit()
 	queue_redraw()
 
 
 func _draw() -> void:
-	if outfit == null:
+	if bag == null:
 		return
-	draw_bag(self, outfit.bag, outfit.items_db, Vector2.ZERO, CELL, true, held)
+	draw_bag(self, bag, db, Vector2.ZERO, cell, true, held)
 	var sr := _sell_rect()
-	var over := held != -1 and sr.has_point(mouse)
-	draw_rect(sr, Riso.mix(Riso.PAPER, Riso.RED, 0.25 if over else 0.08))
-	_dashed_rect(sr, Riso.RED)
-	Riso.draw_label(self, Txt.t("UI_SELL"), sr.get_center(), 20, Riso.RED, HORIZONTAL_ALIGNMENT_CENTER)
+	if sell.is_valid():
+		var over := held != -1 and sr.has_point(mouse)
+		draw_rect(sr, Riso.mix(Riso.PAPER, Riso.RED, 0.25 if over else 0.08))
+		_dashed_rect(sr, Riso.RED)
+		Riso.draw_label(self, Txt.t("UI_SELL"), sr.get_center(), 20, Riso.RED, HORIZONTAL_ALIGNMENT_CENTER)
 	if flash != "":
-		Riso.draw_label(self, Txt.t(flash), Vector2(0, CELL * outfit.bag.rows + 16), 14, Riso.RED)
+		Riso.draw_label(self, Txt.t(flash), Vector2(0, cell * bag.rows + 16), 14, Riso.RED)
 	if held != -1:
-		var it := outfit.bag.items[held]
+		var it := bag.items[held]
 		var cells := InventoryGrid.rotated(it.shape, held_rot)
-		var top_left := mouse - (Vector2(grab) + Vector2(0.5, 0.5)) * CELL
+		var top_left := mouse - (Vector2(grab) + Vector2(0.5, 0.5)) * cell
 		var target := _cell_at(mouse) - grab
-		var ok := outfit.bag.fits(it.shape, held_rot, target, held)
+		var ok := bag.fits(it.shape, held_rot, target, held)
 		if not sr.has_point(mouse):
 			for c in cells:
-				var cr := Rect2(Vector2(c + target) * CELL, Vector2(CELL, CELL))
+				var cr := Rect2(Vector2(c + target) * cell, Vector2(cell, cell))
 				draw_rect(cr.grow(-4), Riso.alpha(Riso.INK if ok else Riso.RED, 0.18))
-		draw_item(self, it.id, outfit.items_db, cells, top_left, CELL, it.bound != "", 0.85)
+		draw_item(self, it.id, db, cells, top_left, cell, it.bound != "", 0.85)
+		_draw_count(self, cells, top_left, cell, int(it.get("n", 1)))
 
 
 func _dashed_rect(r: Rect2, col: Color) -> void:
@@ -154,7 +170,22 @@ static func draw_bag(ci: CanvasItem, bag: InventoryGrid, db: Dictionary, origin:
 		if i == skip:
 			continue
 		var it := bag.items[i]
-		draw_item(ci, it.id, db, InventoryGrid.rotated(it.shape, it.rot), origin + Vector2(it.pos as Vector2i) * cell, cell, it.bound != "")
+		var cells := InventoryGrid.rotated(it.shape, it.rot)
+		var top_left := origin + Vector2(it.pos as Vector2i) * cell
+		draw_item(ci, it.id, db, cells, top_left, cell, it.bound != "")
+		_draw_count(ci, cells, top_left, cell, int(it.get("n", 1)))
+
+
+## A stack's count in the corner of its last cell. Single things show none.
+static func _draw_count(ci: CanvasItem, cells: Array[Vector2i], top_left: Vector2, cell: float, n: int) -> void:
+	if n <= 1:
+		return
+	var last := cells[0]
+	for c in cells:
+		if c.y > last.y or (c.y == last.y and c.x > last.x):
+			last = c
+	var corner := top_left + (Vector2(last) + Vector2(1, 1)) * cell
+	Riso.draw_label(ci, str(n), corner - Vector2(cell * 0.12, cell * 0.26), maxi(9, int(cell * 0.26)), Riso.INK, HORIZONTAL_ALIGNMENT_RIGHT)
 
 
 ## One item: its cells as one flat plane with an ink keyline round the outside, icon at the middle.
@@ -189,5 +220,7 @@ static func draw_item(ci: CanvasItem, id: String, db: Dictionary, cells: Array[V
 			best_d = cc.distance_to(center)
 			best = cc
 	Riso.draw_item_icon(ci, kind, best, cell * 0.8)
+	if kind == "gear" and cell >= 30.0:  # no icon drawn for gear yet, so it carries its name
+		Riso.draw_label(ci, Txt.t(String(db[id].name_key)), center, maxi(10, int(cell * 0.22)), ink, HORIZONTAL_ALIGNMENT_CENTER)
 	if bound:
 		Riso.draw_stamp_star(ci, top_left + Vector2(cell * 0.2, cell * 0.2), cell * 0.12, Riso.alpha(Riso.INDIGO, a))

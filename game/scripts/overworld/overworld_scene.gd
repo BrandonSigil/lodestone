@@ -480,7 +480,7 @@ func _refresh_side() -> void:
 
 func _refresh_hud() -> void:
 	hud.set_party(FrameHud.party_entries_from_run(Game.run))
-	hud.set_slots(Game.run.slot_list(), RunState.CAPACITY)
+	hud.set_pack(Game.run.pack)
 	var tools := [{"text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]
 	if Game.has_flag("has_lodestone"):
 		tools.append({"text": Txt.t("UI_LODESTONE"), "cb": _open_menu.bind("lodestone"), "glow": Game.pending_picks() > 0})

@@ -46,6 +46,16 @@ func run(s: Node, f: int, step: String) -> bool:
 	match step:
 		"start":
 			return f == 20
+		"pack":
+			# The PACK box with a few stacks and a find in it, to judge the grid.
+			if f == 5:
+				var run: RunState = s.get_node("/root/Game").run
+				run.food = 34
+				run.medicine = 4
+				run.add_item("rope", 1)
+				s._refresh_hud()
+				s._open_menu("pack")
+			return f == 30
 		"walk":
 			# Walk into the yard and up to the gate for real (pathing, steps, fog as it goes).
 			if f == 5:

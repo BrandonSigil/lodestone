@@ -103,10 +103,11 @@ func test_items_data() -> void:
 		var cells := InventoryGrid.parse_shape(it.shape).size()
 		ok(cells > 0, "%s has a shape" % id)
 		ok(keys.has(it.name_key), "%s name key" % id)
-		# the trail still counts slots by food and medicine, so no item may pack denser than it
-		ok(int(it.food) <= cells * RunState.FOOD_PER_SLOT, "%s food density" % id)
-		ok(int(it.medicine) <= cells * RunState.MED_PER_SLOT, "%s medicine density" % id)
-	eq(Outfit.COLS * Outfit.ROWS, RunState.CAPACITY, "pack grid matches trail capacity")
+		ok(int(it.get("stack", 1)) >= 1, "%s stack size" % id)
+		# leaving the village turns food and medicine into meat and potions, so no item may pack denser
+		ok(int(it.food) <= cells * RunState.stack_of(RunState.FOOD_ITEM), "%s food density" % id)
+		ok(int(it.medicine) <= cells * RunState.stack_of(RunState.MED_ITEM), "%s medicine density" % id)
+	eq(Vector2i(Outfit.COLS, Outfit.ROWS), Vector2i(RunState.PACK_COLS, RunState.PACK_ROWS), "village pack matches the run pack")
 	for q in Db.quests:
 		ok(keys.has(q.text_key), "quest %s text key" % q.id)
 
@@ -118,7 +119,7 @@ func test_outfit_becomes_run() -> void:
 	var run := RunState.create(members_of(["lead"]), 1)
 	run.food = k.food()
 	run.medicine = k.medicine()
-	eq(run.used_slots() <= k.bag.used_cells(), true, "trail slots never exceed packed cells")
+	eq(run.pack.used_cells() <= k.bag.used_cells(), true, "the run pack never needs more cells than the outfit")
 
 
 func test_pack_drag_turn_sell() -> void:

@@ -159,6 +159,7 @@ Every design call goes here, newest at the bottom of its section.
 - [USER] 2026-10-29 New items auto-place on pickup and the player rearranges by hand; no tidy button: "We will have that travel time where people can choose to arrange their pack. Which feels like its only fun little mini game to pass the travel time." (Brandon, design grilling, card design-inv-11-sort)
 - [USER] 2026-10-29 The dog carries a 2 x 2 saddlebag home: "Let's start with 2x2 and balance it later." (Brandon, design grilling, card design-inv-12-dog)
 - [USER] 2026-10-29 Build inventory in four steps, in this order: the shaped 4 x 3 pack in the live loop; belts and belt-only fight items; the full-pack choice with the dog's saddlebag; materials banking at home. Pack upgrades wait on the one-more-run theme; the trinket slot stays earmarked (picked "All four steps, in that order"). (Brandon, design grilling, card design-inv-build)
+- [AI] 2026-10-29 Inventory step 1 built with the core-loop proposals as data (`data/items.csv`): a food is one piece of meat (1 cell, 10 a cell), a medicine is one potion (1 cell, 3 a cell), rope is 1 x 2. A pickup that still doesn't fit is lost and logged until step 3 adds the choice. The Wizard's books stay in the pack, bound to him (he isn't in the live party). (systems developer)
 
 ## Battle map art
 - [USER] 2026-10-26 Battle maps take their look from Brandon's isometric reference: mossy stone cliff blocks, temple stair, waterfalls, pines, a floating island on cream paper.

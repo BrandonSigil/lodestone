@@ -62,7 +62,7 @@ func _refresh() -> void:
 		Txt.f("UI_FOOD", run.food), Txt.f("UI_MEDICINE", run.medicine), Txt.f("UI_GOLD", run.gold),
 		Txt.f("UI_MORALE", run.morale), Txt.f("UI_STRANGE", run.strangeness())])
 	hud.set_party(FrameHud.party_entries_from_run(run))
-	hud.set_slots(run.slot_list(), RunState.CAPACITY)
+	hud.set_pack(run.pack)
 	map.run = run
 	map.queue_redraw()
 	log_text.text = "\n".join(run.lines.slice(-60))

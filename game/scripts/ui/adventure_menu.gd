@@ -5,6 +5,7 @@ extends RefCounted
 ## its HUD and rebuilds the box); `close` shuts the box.
 
 const W := 460.0
+const PACK_CELL := 56.0
 
 
 ## [USER] 2026-10-28: the Lodestone opens from its bottom-bar button at any time: level-up picks, head back
@@ -39,7 +40,8 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 	_button(box, Txt.t("UI_CLOSE_MENU"), close)
 
 
-## What the party carries, with EAT and DRINK for the hurt.
+## What the party carries, with EAT and DRINK for the hurt. The grid is the pack itself: drag to move,
+## R or right-click to turn ([USER] 2026-10-29: rearranging is the little game for the walk).
 static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void:
 	var run := Game.run
 	_label(box, Txt.t("UI_PACK"), 20)
@@ -50,11 +52,21 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	_use_row(box, Txt.f("UI_PACK_POTION", run.medicine), Txt.t("UI_DRINK"), run.medicine > 0 and hurt, func() -> void:
 		TrailRules.heal(run)
 		changed.call())
-	for id: String in run.items:
-		_label(box, "%s  x%d" % [Txt.t("ITEM_" + id.to_upper()), int(run.items[id])], 14)
+	var finds := run.items
+	for id: String in finds:
+		if id != RunState.FOOD_ITEM and id != RunState.MED_ITEM:
+			_label(box, "%s  x%d" % [Txt.t(String(Db.items[id].name_key)), int(finds[id])], 14)
+	_label(box, Txt.t("UI_PACK_HELP_RUN"), 12)
+	var grid := PackView.new()
+	grid.setup_bag(run.pack, Db.items, Callable(), PACK_CELL)
+	grid.changed.connect(func() -> void:
+		Game.save_adventure()
+		if grid.flash == "":  # a refused move keeps the box up so its "no room" stays readable
+			changed.call())
+	box.add_child(grid)
 	_label(box, Txt.f("UI_PACK_GOLD", run.gold), 14)
 	_label(box, Txt.f("UI_PACK_WEAPON", Txt.t(String(Db.weapons.get(Game.weapon_id(), {}).get("name_key", "")))), 14)
-	_label(box, Txt.f("UI_SLOTS_USED", [run.used_slots(), RunState.CAPACITY]), 12)
+	_label(box, Txt.f("UI_SLOTS_USED", [run.pack.used_cells(), run.pack.capacity()]), 12)
 	if not run.lines.is_empty():
 		_label(box, run.lines[run.lines.size() - 1], 12)
 	_button(box, Txt.t("UI_CLOSE_MENU"), close)

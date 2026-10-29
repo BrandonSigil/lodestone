@@ -196,10 +196,15 @@ func start_adventure() -> void:
 	run = RunState.create([], randi())
 	run.adventure = true
 	var pack: Dictionary = meta.get("pack", {})
-	run.food = int(pack.get("food", 0))
-	run.medicine = int(pack.get("medicine", 0))
+	if pack.has("grid"):
+		run.load_pack(pack.grid)
+	else:  # a save from before the shaped pack: counts only
+		run.food = int(pack.get("food", 0))
+		run.medicine = int(pack.get("medicine", 0))
+		for id: String in Dictionary(pack.get("items", {})):
+			if Db.items.has(id):
+				run.add_item(id, int(pack["items"][id]))
 	run.gold = int(pack.get("gold", 0))
-	run.items = Dictionary(pack.get("items", {})).duplicate()
 	refresh_party()
 	var hp: Dictionary = pack.get("hp", {})
 	for m in run.members:
@@ -215,7 +220,7 @@ func refresh_party() -> void:
 	for d in adventure_defs():
 		var have := run.members.any(func(m: Dictionary) -> bool: return (m.def as CharacterDef).id == d.id)
 		if not have:
-			run.members.append({"def": d, "hp": d.class_def.max_hp, "bonus": {}})
+			run.join(d)
 	for m in run.members:
 		var id := String((m.def as CharacterDef).id)
 		var before := run.max_hp(m)
@@ -290,7 +295,7 @@ func save_adventure() -> void:
 	var hp := {}
 	for m in run.members:
 		hp[String((m.def as CharacterDef).id)] = int(m.hp)
-	meta.pack = {"food": run.food, "medicine": run.medicine, "gold": run.gold, "items": run.items.duplicate(), "hp": hp}
+	meta.pack = {"grid": run.pack.to_save(), "gold": run.gold, "hp": hp}
 	save_meta()
 
 

@@ -25,7 +25,10 @@ The first playable loop ([USER] 2026-10-28, `docs/decisions.md` "End-to-end loop
 
 ## Party, pack and levels
 - The adventure party is `Game.ADVENTURE_ROSTER` (the hero, then the dog once `met_dog` is set). The hero is the lead's look on the nobody class; the smithy weapon adds attack, damage, move or range (`Game.weapon_mods`).
-- Pack: food, potions (the `medicine` count), gold and gear (`RunState.items`, rows of kind `gear` in `data/items.csv`, e.g. rope; an effect like `rope:+1` adds one). PACK lets the hurt EAT (1 food, +2 HP) or DRINK (a potion).
+- Pack: one 4 x 3 grid of shaped items (`RunState.pack`, an `InventoryGrid`; [USER] 2026-10-29). Everything carried takes room: food is stacks of meat (10 a cell), the `medicine` count is stacks of potions (3 a cell), and finds and gear are their own shapes (rope is 1 x 2). Shapes and stack sizes are data (`data/items.csv`, columns `shape` and `stack`). `run.food` and `run.medicine` read and write those stacks, so rules code still adds and spends counts; `run.items` is what the pack holds, id -> count. Gold is a number, not in the grid. Each member's weapon sits on the member (the trinket slot is earmarked, not built).
+- A pickup auto-places: it tops up open stacks, then takes the first spot that fits, turning if that helps. What still doesn't fit is lost and logged (step 3 of the build replaces this with a choice).
+- PACK (overworld and explore maps) shows the grid: drag to move, R or right-click to turn (`PackView`, shared with the shelved village). No tidy button. The bottom bar shows a small copy of the grid and the counts. PACK also lets the hurt EAT (1 food, +2 HP) or DRINK (a potion).
+- The save keeps the layout (`meta.pack.grid`, from `InventoryGrid.to_save`); an older save with only counts is packed fresh on load.
 - Levels ([USER]: they come on their own; every few levels a pick): `data/levels.csv`. 100 XP a level, +1 max HP a level, a pick every 4 levels: MORE HEALTH (+3 HP), MORE HIT (+1 to hit and damage) or MORE MAGIC (+2 on spells and magic hits). Picks wait in the Lodestone menu (its button glows). XP for a won fight: 10, plus 25 a foe, plus 100 for a boss, to everyone in the party. Rules: `LevelRules` (pure).
 - Everything lives in meta (`meta.pack`, `meta.levels`, flags), saved on every scene change, so a restart or a wake-up keeps it.
 

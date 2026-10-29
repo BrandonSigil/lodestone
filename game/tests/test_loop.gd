@@ -112,7 +112,7 @@ func test_rope_is_gear_and_needs_read_the_pack() -> void:
 	var r := RunState.create([Db.character(&"lead")], 1)
 	TrailRules.apply_effects(r, "rope:+1")
 	eq(r.item_count("rope"), 1)
-	ok(r.slot_list().has("SLOT_ROPE"))
+	ok(r.pack.items.any(func(it: Dictionary) -> bool: return it.id == "rope"), "the rope takes room in the pack")
 	ok(ExploreRules.need_met("item:rope", [], {"items": r.items}))
 	ok(not ExploreRules.need_met("item:rope", [], {"items": {}}))
 	ok(ExploreRules.need_met("flag:has_lodestone", [], {"flags": ["has_lodestone"]}))

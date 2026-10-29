@@ -1115,7 +1115,7 @@ func _refresh_hud() -> void:
 		entries.append({"name": Txt.t(u.name_key), "hp": u.hp, "max_hp": u.max_hp, "tint": u.tint,
 			"note": Txt.t("TAG_SPOOKED") if u.spooked else ""})
 	hud.set_party(entries)
-	hud.set_slots(Game.run.slot_list(), RunState.CAPACITY)
+	hud.set_pack(Game.run.pack)
 	var tools := [{"text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]
 	if Game.has_flag("has_lodestone"):
 		tools.append({"text": Txt.t("UI_LODESTONE"), "cb": _open_menu.bind("lodestone"), "glow": Game.pending_picks() > 0})

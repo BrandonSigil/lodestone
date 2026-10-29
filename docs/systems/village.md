@@ -24,15 +24,14 @@ embroidered band. Every picture is a pure function of `VillageView.SEED`.
 - Tabs: a status tab (gold, deaths, best) and PACK, MAP, GO buttons.
 
 ## Pack (Tetris-style grid)
-- 4 x 3 = 12 cells, the same capacity as the trail's 12 slots.
+- 4 x 3 = 12 cells, the same as the run's pack (`RunState.PACK_COLS` x `PACK_ROWS`).
 - Drag an item to move it. While holding, R or right click turns it. Right click an item in place turns it too.
 - Drop on SELL to sell it back at full price (still in town).
 - The Wizard's books are a 3-cell L that joins the pack when he joins the party and leaves with him.
   They can be moved and turned but not sold. If they don't fit, he can't join until there's room.
 - On departure the pack becomes the run's food and medicine, and leftover gold comes along
-  (`Game.start_run(picked, outfit)`). The trail still counts slots its own way (10 food or 5 medicine per
-  slot); items are never denser than that, so the trail never sees more slots than the pack used.
-  A test enforces it.
+  (`Game.start_run(picked, outfit)`), repacked as meat (10 a cell) and potions (3 a cell). No shop item
+  is denser than that, so the run's pack never needs more cells than the outfit used. A test enforces it.
 
 ## Adding a shop item (no code)
 1. Add a row to `game/data/items.csv`: id, name_key, kind (food, crate, med, herb, book: picks the icon
