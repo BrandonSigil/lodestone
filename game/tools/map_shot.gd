@@ -1,6 +1,6 @@
 extends SceneTree
 ## Renders one map with its look (backdrop, forest, lips) to a PNG, so map work can be checked headless.
-## Args after "--": <png path> <map> [rot 0-3] [grid]
+## Args after "--": <png path> <map> [rot 0-3] [grid] [blocks]  (blocks: the plain look, without the soft terrain pass)
 ## <map>: maps/<name> (a sandbox map), explore/<name> (an exploration map), gen:<seed>:<w>:<h>[:<look>]
 ## (MapGen.valley) or recipe:<name> (MapRecipes). Needs a display: in the cloud use xvfb-run and --rendering-driver opengl3.
 

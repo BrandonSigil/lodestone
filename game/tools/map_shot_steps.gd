@@ -26,7 +26,9 @@ func build(parent: Node2D, args: PackedStringArray) -> void:
 	board.grid = grid
 	board.art_set = art_set
 	board.backdrop = true
-	board.show_grid = args.size() > 3 and args[3] == "grid"
+	var flags := args.slice(3)
+	board.show_grid = flags.has("grid")
+	board.soft = not flags.has("blocks")  # "blocks": the plain block look, without the soft terrain pass
 	board.rot = int(args[2]) if args.size() > 2 else 0
 	parent.add_child(board)
 	var vs := parent.get_viewport_rect().size

@@ -123,11 +123,15 @@ var _snap_t := PackedInt32Array()
 var _snap_z := PackedStringArray()
 var _snap_props := 0
 var _snap_version := -1
-var _shape_key := ""
 var _radii := {}  ## soft pass: cell -> its four corner radii (TerrainShape.radii)
 var _streams := {}  ## soft pass: water cell -> its pieces of the flow strokes
 var _water_sig := 0
 var _pen_ends := {}  ## soft pass: outline line ends -> how many lines meet there (see _pen_end)
+var _pen_by_cell := {}  ## soft pass: cell -> the line ends its outline put in _pen_ends
+var _shape_base := ""  ## soft pass: what the shape caches were built for, but the grid's version
+var _shape_version := -1
+var _shape_h := PackedInt32Array()  ## the heights and terrain the shape caches were built from
+var _shape_t := PackedInt32Array()
 
 
 func _ready() -> void:
@@ -875,30 +879,49 @@ func _soft() -> bool:
 	return soft and look.staging != "plain"
 
 
-## Soft pass caches: every cell's corner radii, and the water's flow strokes (rebuilt only when the water
-## changes, and then every row redraws, since a stroke runs the length of a river).
+## Soft pass caches: every cell's corner radii, where every outline line starts and stops (so a line that just
+## hands over to the next cell's carries on and only a line that really stops tapers off, _pen_end), and the
+## water's flow strokes. An edit only redoes the cells near it (a brush stroke on a big map stays cheap); a new
+## map, floor or view turn redoes them all. Strokes are rebuilt only when the water changes, and then every
+## row redraws, since a stroke runs the length of a river.
 func _refresh_shape() -> void:
-	var key := "%d|%d|%s|%d" % [grid.get_instance_id(), grid.version, _floor(), rot]
-	if key == _shape_key:
+	var base := "%d|%d|%d|%s|%d" % [grid.get_instance_id(), grid.w, grid.h, _floor(), rot]
+	if base == _shape_base and grid.version == _shape_version:
 		return
-	_shape_key = key
-	_radii.clear()
-	for y in grid.h:
-		for x in grid.w:
-			var c := Vector2i(x, y)
-			if grid.solid(c):
-				_radii[c] = TerrainShape.radii(grid, c, _surf_or_floor)
-	# Where every outline line starts and stops, so a line that just hands over to the next cell's carries on
-	# and only a line that really stops tapers off (_pen_end).
-	_pen_ends.clear()
-	for c: Vector2i in _radii:
-		var t := grid.terrain_at(c)
-		if t == CombatGrid.T.WATER or (t == CombatGrid.T.STAIRS and not MapDress.stair_run(grid, c).is_empty()):
-			continue
-		var o := _soft_outline(c, _surf(c))
-		for piece: Dictionary in _line_pieces(c, _surf(c), o.segs, o.feet, o.shown):
-			for e: Vector3i in _piece_ends(piece):
-				_pen_ends[e] = int(_pen_ends.get(e, 0)) + 1
+	var full := base != _shape_base or _shape_h.size() != grid.heights.size()
+	var changed := {}
+	var wet := full  # the water may have changed: its strokes need a look
+	if not full and (grid.heights != _shape_h or grid.terrain != _shape_t):
+		for i in grid.heights.size():
+			if grid.heights[i] != _shape_h[i] or grid.terrain[i] != _shape_t[i]:
+				changed[Vector2i(i % grid.w, i / grid.w)] = true
+				wet = wet or grid.terrain[i] == CombatGrid.T.WATER or _shape_t[i] == CombatGrid.T.WATER
+				if changed.size() > SHAPE_LOCAL:
+					full = true
+					wet = true
+					break
+	_shape_base = base
+	_shape_version = grid.version
+	_shape_h = grid.heights.duplicate()
+	_shape_t = grid.terrain.duplicate()
+	if full:
+		_radii.clear()
+		_pen_ends.clear()
+		_pen_by_cell.clear()
+		for y in grid.h:
+			for x in grid.w:
+				_shape_radii(Vector2i(x, y))
+		for y in grid.h:
+			for x in grid.w:
+				_shape_pens(Vector2i(x, y))
+	elif not changed.is_empty():
+		# A cell's corners depend on its neighbours; its lines on theirs (fillets, stair runs) too.
+		for c: Vector2i in _around(changed, 1):
+			_shape_radii(c)
+		for c: Vector2i in _around(changed, 3):
+			_shape_pens(c)
+	if not wet:
+		return
 	var water := PackedInt32Array()
 	for i in grid.terrain.size():
 		if grid.terrain[i] == CombatGrid.T.WATER:
@@ -909,6 +932,52 @@ func _refresh_shape() -> void:
 		_streams = TerrainShape.by_cell(TerrainShape.strokes(grid, TerrainShape.flow(grid)))
 		for d in _depths.size():
 			_dirty[d] = true
+
+
+const SHAPE_LOCAL := 64  ## an edit touching more cells than this redoes the whole map
+
+
+## The grid cells within `reach` steps (diagonals count as one) of any of `cells`.
+func _around(cells: Dictionary, reach: int) -> Dictionary:
+	var out := {}
+	for c: Vector2i in cells:
+		for dy in range(-reach, reach + 1):
+			for dx in range(-reach, reach + 1):
+				var n := c + Vector2i(dx, dy)
+				if grid.in_bounds(n):
+					out[n] = true
+	return out
+
+
+func _shape_radii(c: Vector2i) -> void:
+	if grid.solid(c):
+		_radii[c] = TerrainShape.radii(grid, c, _surf_or_floor)
+	else:
+		_radii.erase(c)
+
+
+## Swap one cell's outline line ends in _pen_ends for its current ones.
+func _shape_pens(c: Vector2i) -> void:
+	for e: Vector3i in _pen_by_cell.get(c, []):
+		var left := int(_pen_ends.get(e, 0)) - 1
+		if left > 0:
+			_pen_ends[e] = left
+		else:
+			_pen_ends.erase(e)
+	_pen_by_cell.erase(c)
+	if not grid.solid(c):
+		return
+	var t := grid.terrain_at(c)
+	if t == CombatGrid.T.WATER or (t == CombatGrid.T.STAIRS and not MapDress.stair_run(grid, c).is_empty()):
+		return
+	var h := _surf(c)
+	var o := _soft_outline(c, h)
+	var mine := []
+	for piece: Dictionary in _line_pieces(c, h, o.segs, o.feet, o.shown):
+		for e: Vector3i in _piece_ends(piece):
+			_pen_ends[e] = int(_pen_ends.get(e, 0)) + 1
+			mine.append(e)
+	_pen_by_cell[c] = mine
 
 
 func _radii_of(c: Vector2i) -> PackedFloat32Array:

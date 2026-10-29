@@ -13,8 +13,9 @@ Catalog: `game/data/catalog.csv`. Scene: `scenes/map_maker.tscn`.
 - **F8 from any screen**, the launch menu's MAKE buttons (F7; "Edit the village" opens that map straight away), or F6 on `scenes/map_maker.tscn` in the editor. It reopens the last map.
 
 ## Screen
-- **Top bar** (icons, tooltips name them): new, open, save, undo, redo; the map's name (`*` unsaved); grid
-  lines, height numbers, names over things; turn the view (editing only), fit, hide panels; **Play test**.
+- **Top bar** (icons, tooltips name them): new, open, save, undo, redo; the map's name (`*` unsaved); painted
+  terrain (K, on), grid lines, height numbers, names over things; turn the view (editing only), fit, hide
+  panels; **Play test**.
 - **Tool rail** (left): Select V, Place B, Erase X | Raise 1, Lower 2, Level 3, Smooth 4 | Ground P, Path L,
   River W, Stairs T | Cut C, Fill F, Zone Z. Hover a tool for what it does.
 - **Options bar** (top): what the picked tool needs: brush size and shape, the level height, ground
@@ -68,6 +69,36 @@ Name the map and the id or blob, and write what you want in its note:
   drop; stairs join a cliff or run a flight; cut and fill shape the outline; zone paints another tile set).
 - Where different grounds meet on one level they blend (see `docs/art/transitions.md`).
 
+## Building for the painted look
+The maker draws the map exactly as players see it: the soft terrain pass (`docs/design/terrain-engine.md`).
+The grid stays the rules; the picture is worked out from your heights and grounds, so what you build decides
+how it looks. **K** (or the snow-capped block in the top bar) switches to plain blocks when you need to see
+every cell; G still draws the grid over either.
+
+What the look does with what you build:
+- **Corners** round off a little where both sides of a block drop away. A **single raised cell** (Raise one
+  cell 2 or 3 levels above its neighbours) becomes a snow-capped rock pillar, the key art's signature shape,
+  outlined all round.
+- **Notches**: a low cell tucked between higher ground of one height gets that ground curving into its
+  corner, so a notch or a bank reads as one soft edge.
+- **Snow caps** hang over every edge that drops; **drifts** pile up the foot of walls that rise from snow.
+- **Outlines** are a pen line on silhouettes only: the back of a raised top, down its sides, the waterline,
+  the sides of a waterfall. They taper where they stop. No lines between cells.
+- **Water** gets flow strokes that follow it downhill toward where it pours off the map; neighbouring falls
+  join into one sheet.
+- **Stairs** climb along their flight; side walls are the cliff's rock.
+
+So, to get the key art's look:
+- Avoid one-cell zigzags. A diagonal bank or terrace edge built a cell at a time reads as a saw; build it in
+  steps two or three cells long, with straight runs between corners (V9 in the design doc).
+- Put two to four single-cell pillars on high rims and in front of cliffs (V10).
+- Let rivers run level and fall in a few big drops (two levels or more) instead of a step every cell (V11).
+- Keep stair flights straight, one cell wide, running up the slope.
+
+Per tile set, `data/battle_art_<set>.csv` tunes the look: `lip` (how far a top's ground hangs over an edge,
+levels), `cap` (share of a side texture's top that is painted snow or moss, cut off so only the rock
+repeats), `drift` (how high a ground piles against a wall's foot; snow only for now).
+
 ## Map tab
 - **Map**: name, kind (battle map in `data/maps`, explore map in `data/explore`), size and resize.
 - **Look**: tile set, look, "Use this view as the map's angle" (players only ever see that angle; turning
@@ -78,8 +109,8 @@ Name the map and the id or blob, and write what you want in its note:
 ## Keys
 Drag paints, right drag does the opposite. Shift drag, middle drag or two fingers pan; arrows pan; wheel or
 pinch zooms; space fits. Tools: V B X 1 2 3 4 P L W T C F Z. R turn, M mirror, Del delete, Esc deselect,
-ctrl D copy to the stamp, alt click pick up, [ ] brush, Q turn the view (editing only), G grid, H hide
-panels, ctrl Z undo, ctrl shift Z redo (80 steps), ctrl S save.
+ctrl D copy to the stamp, alt click pick up, [ ] brush, Q turn the view (editing only), K painted terrain or
+plain blocks, G grid, H hide panels, ctrl Z undo, ctrl shift Z redo (80 steps), ctrl S save.
 
 ## Saving
 - Battle maps save to `game/data/maps/<name>.json`, explore maps to `game/data/explore/<name>.json`
@@ -94,11 +125,18 @@ explore scene at its start. F8 comes back.
 ## Command line
 From `game/`:
 - Screenshot the maker: `godot --path . -s res://tools/maker_shot.gd -- out.png explore/home "item:blob_2x2,stamp:5:4"`
-  (steps in `tools/maker_shot.gd`). In the cloud: `xvfb-run -a godot --rendering-driver opengl3 --resolution 1600x1000 ...`.
-- Screenshot a map with its look: `godot --path . -s res://tools/map_shot.gd -- out.png <map> [turn] [grid]`.
+  (steps in `tools/maker_shot.gd`; `view:soft` shows the plain blocks). In the cloud:
+  `xvfb-run -a godot --rendering-driver opengl3 --resolution 1600x1000 ...`.
+- Screenshot a map with its look: `godot --path . -s res://tools/map_shot.gd -- out.png <map> [turn] [grid] [blocks]`
+  (`blocks`: the plain look, for before and after shots).
 - Save a recipe as a battle map: `godot --headless --path . -s res://tools/map_build.gd -- highland alpine`.
 
 ## Tests
 `game/tests/test_maps.gd`: the look, map ops (smooth, path), recipes, prop extras round trip, the catalog,
 the maker scene (sculpt, undo, stamping props, blobs and doors, unique ids, notes, moving, deleting, the
-start, battle maps refusing things), ground blend ranks.
+start, battle maps refusing things, the painted terrain toggle), ground blend ranks.
+`game/tests/test_terrain.gd`: the painted look's rules (corners, fillets, outlines, lips, drifts, water flow,
+stair flights).
+
+Performance: an edit only reworks the painted look near the cells it touched (about 1 ms on a 48 x 48 map);
+editing water also redoes that river's flow strokes.

@@ -469,6 +469,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_fit_view()
 		KEY_G:
 			_toggle_view("grid")
+		KEY_K:
+			_toggle_view("soft")
 		KEY_BRACKETLEFT:
 			_set_radius(radius - 1)
 		KEY_BRACKETRIGHT:
@@ -1365,7 +1367,8 @@ func _build_top() -> void:
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bar.add_child(_title)
-	for v in [["grid", "grid", "Grid lines  (G)", true], ["heights", "heights", "Height numbers", false], ["labels", "note", "Names over things and blobs", true]]:
+	for v in [["soft", "soft", "Painted terrain  (K): the look players see. Off shows plain blocks, to check every cell", true],
+			["grid", "grid", "Grid lines  (G)", true], ["heights", "heights", "Height numbers", false], ["labels", "note", "Names over things and blobs", true]]:
 		var b := MakerUI.IconButton.new(v[1], v[2], 34.0)
 		b.toggle_mode = true
 		b.button_pressed = v[3]
@@ -1386,6 +1389,8 @@ func _build_top() -> void:
 
 func _on_view(on: bool, key: String) -> void:
 	match key:
+		"soft":
+			board.soft = on
 		"grid":
 			board.show_grid = on
 		"heights":

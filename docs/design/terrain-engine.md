@@ -91,7 +91,10 @@ Still short of the key art, waiting on art or the next phases:
 - The cliff rock is the old Picsart side, cropped and faded (a little soft); stairs are the set's grey road.
 - Layouts still have one-cell zigzags (highland's diagonal channel). Prop ground shadows are now a faint cool shade.
 
-Switch: `CombatBoard.soft` (default true). Maps with a `plain` look (interiors) always draw blocks.
+Switch: `CombatBoard.soft` (default true). Maps with a `plain` look (interiors) always draw blocks. In the map maker,
+K (or the top bar's snow-capped block) flips it; `tools/map_shot.gd ... blocks` renders the plain look. How to
+build for it: `docs/systems/map-maker.md`, "Building for the painted look". The shape caches rebuild only near
+an edit (about 1 ms per edit on a 48 x 48 map; a full rebuild there is about 90 ms).
 
 ## 4. The biome kit: art that makes it painterly
 

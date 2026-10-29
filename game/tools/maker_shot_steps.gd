@@ -40,3 +40,5 @@ func run(m: Node, script: String) -> void:
 			"zoom":
 				m.set("zoom", float(a[1]))
 				m.call("_look_at", Vector2i(int(a[2]), int(a[3])))
+			"view":  # flip a top-bar view toggle: soft, grid, heights, labels
+				m.call("_toggle_view", a[1])

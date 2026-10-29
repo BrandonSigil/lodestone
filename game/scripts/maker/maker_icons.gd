@@ -162,6 +162,12 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 				_line([Vector2(0.1, t), Vector2(0.9, t)])
 		"heights":
 			_line([Vector2(0.14, 0.86), Vector2(0.14, 0.62), Vector2(0.38, 0.62), Vector2(0.38, 0.38), Vector2(0.62, 0.38), Vector2(0.62, 0.14), Vector2(0.86, 0.14), Vector2(0.86, 0.86)], true)
+		"soft":  # a block with soft corners and a snow cap: the painted terrain look
+			_arc(0.32, 0.32, 0.16, PI, PI * 1.5)
+			_arc(0.68, 0.32, 0.16, PI * 1.5, TAU)
+			_line([Vector2(0.32, 0.16), Vector2(0.68, 0.16)])
+			_line([Vector2(0.16, 0.32), Vector2(0.16, 0.86), Vector2(0.84, 0.86), Vector2(0.84, 0.32)])
+			_line([Vector2(0.16, 0.44), Vector2(0.3, 0.5), Vector2(0.42, 0.43), Vector2(0.56, 0.52), Vector2(0.7, 0.45), Vector2(0.84, 0.5)])
 		"fit":
 			for c in [Vector2(0.12, 0.12), Vector2(0.88, 0.12), Vector2(0.88, 0.88), Vector2(0.12, 0.88)]:
 				var dx := 0.24 if c.x < 0.5 else -0.24
