@@ -79,6 +79,7 @@
 - Fill in `docs/style-bible.md`; edit the art rule in CLAUDE.md.
 - Approve or replace the generated `lead` sprite (now all five drawn views S, SE, E, NE, N with every anim; sheets in `art/picsart/out/anim-lead-<dir>_v1.png` and `stance-lead-<dir>_v1.png` on the MacBook); the rest of the roster comes after.
 - Tune the explore deploy ring (move - 3) after playing. Play the fixes from his first E2E notes (2026-10-29): settled groups stay settled, free WASD walking, easier first fights, road fights on one stretch of ground.
+- Studio desk cards `boss-skip` (how the party gets past a cleared crypt) and `first-fights` (how the first fight or two are kept from squashing a level-1 party; auto wins 94% vs the wolf pair, 86% vs the bandit pair). A beaten boss already stays beaten (b53f99c).
 - Rotate the Picsart key.
 
 ## Gotchas for Claude sessions
