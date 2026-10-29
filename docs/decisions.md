@@ -98,6 +98,8 @@ Every design call goes here, newest at the bottom of its section.
 - [USER] 2026-10-29 A skill resource belongs to the job (every knight rage, every mage mana); the hero's bar changes with his job. The card's proposal stood: no cooldowns on top, the resource is the only limit (picked "By job"). (Brandon, design grilling, card design-c16-resource)
 - [USER] 2026-10-29 TALK in a fight shows up only when you know something, or when it is written into the fight (picked "Only when you know something"): "I imagine these are discovered options, or ones that we write into the fight, regardless if they discover something or not. I could see us doing this for a few new party member acquisitions, they start out hostile, but if you talk to them once or twice during the fight, they finally see reason and join your side." (Brandon, design grilling, card design-c17-talk)
 - [USER] 2026-10-29 Crits are common and double damage (about 10% base, a flank adds about 20%): "Common and double, but also characters may have increased chances to crit." (Brandon, design grilling, card design-c18-crit)
+- [USER] 2026-10-29 Build combat in all six steps, in order, with the designer's default numbers to tune in play: the damage model; guard zones; bleeding out; helping strikes; job resources; fight goals and TALK (picked "All six steps, my default numbers"). (Brandon, design grilling, card design-combat-build)
+- [USER] 2026-10-29 Correction to the team-up range: "I would only want the characters to get that bonus if they were both next to each other around an enemy." His pictures (`docs/design/img/teamup-yes.png`, `teamup-no.png`): two teammates each next to the same foe and diagonal to each other team up; a teammate next to an ally but not next to the foe does not. (Brandon, design grilling, card design-combat-build)
 
 ## Trail and survival
 - [USER] 2026-10-25 Balance combat, unearthing the map, survival, mental and physical health.
@@ -160,6 +162,14 @@ Every design call goes here, newest at the bottom of its section.
 - [USER] 2026-10-29 The dog carries a 2 x 2 saddlebag home: "Let's start with 2x2 and balance it later." (Brandon, design grilling, card design-inv-12-dog)
 - [USER] 2026-10-29 Build inventory in four steps, in this order: the shaped 4 x 3 pack in the live loop; belts and belt-only fight items; the full-pack choice with the dog's saddlebag; materials banking at home. Pack upgrades wait on the one-more-run theme; the trinket slot stays earmarked (picked "All four steps, in that order"). (Brandon, design grilling, card design-inv-build)
 - [AI] 2026-10-29 Inventory step 1 built with the core-loop proposals as data (`data/items.csv`): a food is one piece of meat (1 cell, 10 a cell), a medicine is one potion (1 cell, 3 a cell), rope is 1 x 2. A pickup that still doesn't fit is lost and logged until step 3 adds the choice. The Wizard's books stay in the pack, bound to him (he isn't in the live party). (systems developer)
+
+## Player choice
+- [USER] 2026-10-29 Four pieces go into a fight (picked "4"). (Brandon, design grilling, card design-pc-1-party)
+- [USER] 2026-10-29 A character's skills are fixed for now: "For now, let's have them fixed and at certain level intervals you can upgrade said skill to be better and better." (Brandon, design grilling, card design-pc-2-skills)
+- [USER] 2026-10-29 Level-ups give stats every level, and at intervals a character improves one of their own skills: "Stats every level, and at intervals they can improve one of their unique skills." This grows the 2026-10-28 pick (more health, attack or magic every 4 or 5 levels). (Brandon, design grilling, card design-pc-3-levelpick)
+- [USER] 2026-10-29 Players may grind: "Let them grind, but also let them pass completed levels." (Brandon, design grilling, card design-pc-4-grind)
+- [USER] 2026-10-29 Keep the console overworld, with forks that branch and join up again: "You should be able to head straight north for awhile then have a fork branch back east and west which link back up to if you had selected west as your first choice and then went north." (Brandon, design grilling, card design-pc-5-route)
+- [USER] 2026-10-29 Opt-in risk comes from marked elite fights: some groups are marked tougher, with better rewards (picked "Marked elite fights" only). (Brandon, design grilling, card design-pc-6-risk)
 
 ## Battle map art
 - [USER] 2026-10-26 Battle maps take their look from Brandon's isometric reference: mossy stone cliff blocks, temple stair, waterfalls, pines, a floating island on cream paper.

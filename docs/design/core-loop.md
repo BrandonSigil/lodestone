@@ -60,7 +60,7 @@ The run and the village
 - **A team-up bonus for teammates within one tile, diagonals included** (c12), in place of sandwich follow-ups. No reacting ground and no party meter for now.
 - **A guarding piece holds a zone** (c13): foes that start next to it must attack it, or take a free hit when they walk away.
 - **Cover blocks sight and is half cover against ranged** (c14): brush, low walls and forest take 1 off ranged hits; melee ignores it. Hovering a ranged piece shades the tiles it can't see.
-- **The team-up bonus is a helping strike** (c15): hit a foe that a teammate within one tile can also reach, and the teammate adds a small free hit.
+- **The team-up bonus is a helping strike** (c15): hit a foe that a teammate within one tile can also reach, and the teammate adds a small free hit. **Corrected on the build card:** both teammates must be next to the same foe *and* next to each other (his pictures: `img/teamup-yes.png` counts, `img/teamup-no.png` doesn't). Whether two teammates on opposite sides of a foe count is card c19.
 - **Resources belong to the job** (c16): every knight has rage, every mage mana; the hero's bar changes with his job. No cooldowns on top.
 - **TALK appears only when you know something, or when a fight is written for it** (c17). Some hostile characters can be talked round in a fight, once or twice, and join the party.
 - **Crits are common and double damage** (c18): about 10% base, a flank adds about 20%; some characters crit more often.
@@ -89,8 +89,7 @@ These fill the gaps the answers leave so the build can start; each is `[AI]` unt
 ### Still open in combat (not blocking a build)
 Boss shapes (fortress, objective, several parts, minions); foe types and behaviours (charger, guard, ambusher); actions per turn (move + act is still `[AI]`); a mercy rewind for misclicks; whether counters still feel fair now that they always land. These come after the first build is playable.
 
-### Build order (card `design-combat-build`)
-*Proposal:*
+### Build order (card `design-combat-build`, approved 2026-10-29 with the default numbers, handed to the systems developer after the inventory build and the bottom UI frame)
 1. **The damage model.** Sure hits, the wobble, armor and GUARD, height damage, crits with flanking, the leftover bonuses converted, half cover and the sight preview, pop-up numbers (crits bigger), and a forecast that shows the damage range and crit chance. Everything else sits on these numbers. Rerun the balance sim after.
 2. **Guard zones.** Foes next to a guarding piece attack it or take a free hit to leave; the ring is drawn; the AI respects it.
 3. **Bleeding out.** The countdown, AID, a foe's knock-out, standing up after.
@@ -128,18 +127,48 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 | `design-c17-talk` | TALK in a fight: a d20 check any time, only once the foes are beaten down, or only when you know something? | Known or written into the fight; can recruit hostile characters |
 | `design-c18-crit` | Crits: rare and huge, or common and double? | Common and double; some characters crit more |
 
-## Player choice
-### Batch 1 (posted 2026-10-29)
+### Follow-up (posted 2026-10-29)
 | Card | Question | Answer |
 |---|---|---|
-| `design-pc-1-party` | How many pieces fight: 3, 4, 6, or by fight size? | open |
-| `design-pc-2-skills` | Where a character's 3 or 4 skills come from: fixed, pick 4 of a bigger set before a trip, grown by level picks, or from jobs? | open |
-| `design-pc-3-levelpick` | What the pick every 4 or 5 levels grows into: stats, a new skill from two, or a passive perk? | open |
-| `design-pc-4-grind` | Grinding: let it be, XP shrinks on weak foes, or a level cap per region? | open |
-| `design-pc-5-route` | Route choice: today's Mario-style map, Slay the Spire branches each trip, or forks with known costs? | open |
-| `design-pc-6-risk` | Opt-in risk for reward (multi): marked elite fights, Hades-style vows, a push-on-or-go-home choice | open |
+| `design-c19-teamup-shape` | Team-up: corner pairs only (his picture), or also two teammates on opposite sides of a foe? | open |
 
-Queued: gear builds (weapon upgrades at the smithy, the earmarked trinket); sneak, talk or fight before a fight starts; who joins and how the roster grows.
+## Player choice
+### Decided in the grilling
+- **Four pieces fight** (pc-1).
+- **Skills are fixed per character for now; at level intervals a skill can be upgraded, better and better** (pc-2).
+- **Stats every level; at intervals, improve one of your own skills** (pc-3). This grows the earlier pick (health, attack or magic every 4 or 5 levels).
+- **Grinding is allowed, and completed places can be walked past** (pc-4; walking past cleared places is built).
+- **The console overworld stays, with forks that branch and join up again** (pc-5): head north, fork east or west, and the branches link back up. A map-layout rule for the overworld, not a new system.
+- **Opt-in risk is marked elite fights** (pc-6): tougher groups, better rewards. No vows, no push-on-or-go-home.
+
+### Gaps these answers open
+- **"Stats every level": rolled on their own, or picked?** The old pick was a choice; "stats every level" could be either. Card pc-7.
+- **How skill upgrades work:** how often, how many ranks, and whether they cost anything. Card pc-8.
+- **The hero's jobs:** fixed skills plus resources by job (c16) need the hero's job path settled; the level 5 and 10 jobs are still an `[AI]` draft. Card pc-9.
+- **Who goes on a trip:** four slots, a growing roster (survivors who join, hostile characters talked round). Card pc-10.
+- **Elite rewards:** what "better" means (more materials, rare gear) belongs to the one-more-run theme.
+- **Grinding vs the Lich King skill check:** Brandon chose freedom; the boss stays a skill check only for players who don't grind.
+
+### Batch 1 (posted 2026-10-29, all answered)
+| Card | Question | Answer |
+|---|---|---|
+| `design-pc-1-party` | How many pieces fight: 3, 4, 6, or by fight size? | 4 |
+| `design-pc-2-skills` | Where a character's 3 or 4 skills come from: fixed, pick 4 of a bigger set before a trip, grown by level picks, or from jobs? | Fixed for now, upgraded at level intervals |
+| `design-pc-3-levelpick` | What the pick every 4 or 5 levels grows into: stats, a new skill from two, or a passive perk? | Stats every level; skill upgrades at intervals |
+| `design-pc-4-grind` | Grinding: let it be, XP shrinks on weak foes, or a level cap per region? | Let them grind; let them pass completed places |
+| `design-pc-5-route` | Route choice: today's Mario-style map, Slay the Spire branches each trip, or forks with known costs? | Console map with forks that rejoin |
+| `design-pc-6-risk` | Opt-in risk for reward (multi): marked elite fights, Hades-style vows, a push-on-or-go-home choice | Marked elite fights |
+
+### Batch 2 (posted 2026-10-29)
+| Card | Question | Answer |
+|---|---|---|
+| `design-pc-7-stats` | Stats each level: rolled on their own, a pick each level, or a small rise plus a pick? | open |
+| `design-pc-8-skillup` | Skill upgrades: a rank at set levels, ranks bought in the village with materials, or a choice of two upgrades per rank? | open |
+| `design-pc-9-jobs` | The hero's job: the draft tree (job at 5, branch at 10), set by the starting weapon, or switchable in the village? | open |
+| `design-pc-10-roster` | When can you change who's in the four: only at home, at camps on the map, or at home with the bench running errands? | open |
+| `design-pc-11-sneak` | How much sneaking matters on explore maps: a first strike only, slipping past fights, or none? | open |
+
+Queued: gear builds (smithy upgrades, the earmarked trinket) go with the one-more-run theme.
 
 ## One more run
 First link, from the inventory theme (inv-5): a recruited character returns to the village and unlocks a pack upgrade, which costs materials brought home. Packing decides how many materials a trip can bring home (inv-4).
