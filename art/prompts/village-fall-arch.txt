@@ -19,4 +19,4 @@ Avoid: gates or doors in the gap, walls joining the archway, a road or paving un
 
 CUT (staged first):
    cd tools/art && ~/.lodestone/venv/bin/python props_cut.py ../../art/picsart/out/village-fall/arches.png --grid 2x1 --names prop_arch,prop_arch_timber --out ../../art/picsart/out/village-fall/cut
-   In game: the catalog's "arch" row (game/data/catalog.csv, 3 x 1, walk "arch") and the village's two gateways (tools/explore/build_village.py, V.arch, 4 x 1) use the graybox ph_arch until these are approved; then point them at prop_arch. A walk-through arch sprite has to be drawn in two parts (far pillar with its own cell, the rest with the near pillar) so a piece in the gap stands in front of the far pillar and under the arch.
+   Approved v2 (2026-10-29): prop_arch at the town gate, prop_arch_timber at the hall gate (tools/explore/build_village.py, V.arch, 4 x 1), both in the catalog. The engine draws an arch in two parts (far pillar with its own cell) so a piece in the gap stands between the pillars.

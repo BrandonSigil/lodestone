@@ -538,7 +538,7 @@
     "walk": false
    },
    {
-    "sprite": "ph_arch",
+    "sprite": "prop_arch_timber",
     "cell": [
      19,
      11
@@ -1435,7 +1435,7 @@
     "walk": false
    },
    {
-    "sprite": "ph_arch",
+    "sprite": "prop_arch",
     "cell": [
      19,
      30

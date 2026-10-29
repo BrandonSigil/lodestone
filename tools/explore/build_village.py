@@ -59,10 +59,10 @@ class Map:
         if arch:
             self.props[-1]["arch"] = True
 
-    def arch(self, x, y, foot):
+    def arch(self, sprite, x, y, foot):
         """A gateway (CombatGrid.under_arch): pillars on the two end cells of its long side, a walkable gap
-        between them. A graybox until its art (ph_arch) is painted."""
-        self.prop("ph_arch", x, y, foot, tall=1.8, sight=2.0, arch=True)
+        between them."""
+        self.prop(sprite, x, y, foot, tall=1.8, sight=2.0, arch=True)
 
     def building(self, sprite, x, y, fx, fy, door_dx):
         """A whole house on an fx x fy footprint; returns the cell in front of its door (left wall)."""
@@ -479,7 +479,7 @@ tree("prop_tree", 25, 6)
 tree("prop_tree_2", 16, 8)
 bush(15, 10, 2)
 bush(24, 12, 3)
-V.arch(19, 11, (4, 1))  # the hall gate, at the head of the stair
+V.arch("prop_arch_timber", 19, 11, (4, 1))  # the hall gate, at the head of the stair
 
 # The smithy yard (its anvil and forge are in the building art): the rack, a grindstone, the rope barrel.
 p("prop_rack", 12, 11, 1.0)
@@ -561,7 +561,7 @@ p("prop_boulder", 5, 33, 0.6, 1.0)
 p("prop_stump", 9, 33, 0.5)
 tree("prop_pine_1", 15, 35)
 tree("prop_tree_bare", 16, 33)
-V.arch(19, 30, (4, 1))  # the town gate, where the south road comes off the bridge
+V.arch("prop_arch", 19, 30, (4, 1))  # the town gate, where the south road comes off the bridge
 p("prop_fence", 18, 36, 0.6)
 p("prop_fence", 23, 36, 0.6)
 tree("prop_tree_4", 24, 30)
