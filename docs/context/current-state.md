@@ -13,7 +13,7 @@
 2. Open `game/project.godot`. F5 opens the launch menu (`scenes/launch.tscn`): one button per built place. **New game** starts the E2E loop from a fresh save in the hero's cottage, **Continue** keeps the save; the rest fast-travel to the village hub, trail, world map, each explore map, the trail fight and the sandbox.
 3. Anywhere in the game: **F7** launch menu, **F8** map maker, **F9** combat sandbox, **F10** walkable exploration map. In the editor, F6 runs the open scene.
 4. Checks: `GODOT=/path/to/godot tools/check.sh` (headless import, about 130 unit tests, smoke runs of launch, village, trail, combat, world_map, combat_sandbox, explore and map_maker). Run it after every change.
-5. Screenshots headless: `tools/screenshot.sh`, `game/tools/explore_shot.gd`, `game/tools/sandbox_shot.gd`, `game/tools/map_shot.gd`, `game/tools/maker_shot.gd` (in the cloud: `xvfb-run` and `--rendering-driver opengl3`).
+5. Screenshots: `tools/screenshot.sh`, `game/tools/explore_shot.gd`, `game/tools/sandbox_shot.gd`, `game/tools/map_shot.gd`, `game/tools/maker_shot.gd` (in the cloud: `xvfb-run` and `--rendering-driver opengl3`). On the Mac, run every windowed Godot call through `tools/godot.sh <args>` (e.g. `tools/godot.sh --path game -s res://tools/explore_shot.gd -- out.png start`): the window opens on the laptop display and focus returns to Brandon's app, so his full-screen Space on the main monitor doesn't flip. `GODOT_SCREEN` picks another display.
 
 ## What's built (all on main)
 - Week 1 graybox: iso grid combat with height and d20 checks, trail loop (days, food, morale, 12 slots, CSV events), village roster with unlocks, Lodestone recall save.

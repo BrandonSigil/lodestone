@@ -13,6 +13,7 @@ Read `docs/context/README.md` first, then `docs/context/current-state.md`. Toget
 - Game data lives in `game/data/` (`.tres` Resources and `.csv` tables), not hardcoded in scripts.
 - Rules math lives in pure scripts (`CombatRules`, `TrailRules`, `Dice`) so tests can run it headless.
 - After a change, run `tools/check.sh` (headless import, unit tests, scene smoke runs) and fix every error.
+- Any Godot run that opens a window (the `game/tools/*_shot.gd` screenshot scripts) goes through `tools/godot.sh <args>`, never the bare binary. It opens the window on Brandon's second display and hands focus back, so his screen doesn't jump. Headless runs can use either.
 
 ## Layout
 - `docs/decisions.md`: every design call, tagged and dated.
