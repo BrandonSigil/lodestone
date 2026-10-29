@@ -31,6 +31,7 @@ var root: Control
 var bottom_h := BOTTOM_H  ## the bottom border; the leaf frame's band is taller
 var clear_h := BOTTOM_H  ## the bottom border plus whatever art pokes above it (the leaf frame's diamond)
 var leaf: Control = null  ## the leaf frame along the bottom (explore maps and the overworld walk), or null
+var side_panel: PanelContainer = null  ## with the leaf frame: the screen's controls float over the map, top right
 var leaf_pack: Button
 var leaf_party: HBoxContainer
 var _leaf_art: TextureRect
@@ -114,6 +115,8 @@ func _label(text: String, font_size := 16) -> Label:
 ## The play area inside the border, in viewport coordinates.
 func center_rect() -> Rect2:
 	var vs := root.get_viewport_rect().size
+	if leaf != null:  # [USER] 2026-10-29: the game fills the whole window above the leaf frame
+		return Rect2(0, 0, vs.x, vs.y - bottom_h)
 	return Rect2(LEFT_W, TOP_H, vs.x - LEFT_W - RIGHT_W, vs.y - TOP_H - bottom_h)
 
 
@@ -126,9 +129,12 @@ func clear_rect() -> Rect2:
 
 
 ## Swaps the bottom bar for Brandon's leaf frame: the band scaled to the screen width, the inventory
-## button in its left square, the party in its right panel. The long bar and the centre diamond stay
-## bare art for now (the Lodestone medallion goes in the diamond later). Clicks on the band don't reach
-## the map. set_tools gives the entry with "id": "pack" to the square; the rest sit above the frame.
+## button in its left square, the party in its right panel, each member in a small square frame. The long
+## bar and the centre diamond stay bare art for now (the Lodestone medallion goes in the diamond later).
+## Clicks on the band don't reach the map. set_tools gives the entry with "id": "pack" to the square; the rest
+## sit above the frame on the right. [USER] 2026-10-29: nothing else frames the game: no grey border, no
+## party list on the left, no title along the top, no help text; the screen's own buttons and lines float in
+## a small see-through box at the top right of the map.
 func use_leaf_frame() -> void:
 	if leaf != null:
 		return
@@ -160,6 +166,23 @@ func use_leaf_frame() -> void:
 	leaf.add_child(leaf_party)
 	slots_label.visible = false
 	slots_box.visible = false
+	party_box.visible = false
+	top_label.visible = false
+	_border.set_border_width_all(0)
+	side_panel = PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.08, 0.1, 0.1, 0.72)
+	sb.set_corner_radius_all(6)
+	sb.set_content_margin_all(10)
+	side_panel.add_theme_stylebox_override("panel", sb)
+	root.add_child(side_panel)
+	root.move_child(side_panel, leaf.get_index())  # under the frame and its buttons
+	side.get_parent().remove_child(side)
+	side.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	side_panel.add_child(side)
+	for c in side.get_children():
+		if c.has_meta("help"):
+			c.visible = false
 	leaf.resized.connect(_layout_leaf)
 	_layout_leaf()
 
@@ -180,12 +203,11 @@ func _layout_leaf() -> void:
 	leaf_party.position = Vector2(0, top) + LEAF_PARTY.position * s
 	leaf_party.size = LEAF_PARTY.size * s
 	for c in leaf_party.get_children():
-		(c as Control).custom_minimum_size.x = leaf_party.size.x / LEAF_PARTY_MAX - 4.0
-	_border.set_border_width(SIDE_BOTTOM, int(bottom_h))
-	_pin(party_box, 0, 0, 0, 1, 12, TOP_H, LEFT_W - 12, -bottom_h)
+		(c as Control).custom_minimum_size = _member_size()
 	var clear := (art.y - LEAF_DECOR_TOP) * s + 6.0
 	_pin(tools_box, 1, 1, 1, 1, -RIGHT_W + 14, -clear - 52, -14, -clear)
-	_pin(side, 1, 0, 1, 1, -RIGHT_W + 14, TOP_H, -14, -clear - 58)
+	_pin(side_panel, 1, 0, 1, 0, -RIGHT_W + 4, 46, -10, 46)  # under a fight's AUTO FIGHT button
+	side_panel.grow_vertical = Control.GROW_DIRECTION_END
 
 
 const RES_COLORS := {"mana": Color(0.35, 0.55, 1.0), "rage": Color(0.9, 0.3, 0.25), "charges": Color(0.95, 0.8, 0.3)}
@@ -205,34 +227,61 @@ func _res_bar(e: Dictionary, size: Vector2) -> ProgressBar:
 	return bar
 
 
-## One member in the leaf frame's party panel: pawn, name, HP bar and numbers.
+func _process(_delta: float) -> void:
+	# the floating controls box only shows while it holds a button or a line to read
+	if side_panel != null:
+		side_panel.visible = side.get_children().any(func(c: Node) -> bool:
+			return (c as CanvasItem).visible and (c is Button or (c is Label and (c as Label).text != "")))
+
+
+## A member's square in the party panel: as tall as the panel, four fit across.
+func _member_size() -> Vector2:
+	var side_len := minf(leaf_party.size.y, leaf_party.size.x / LEAF_PARTY_MAX - 6.0)
+	return Vector2(side_len, side_len)
+
+
+## One member in the leaf frame's party panel ([USER] 2026-10-29: little square frames that fit inside that
+## rectangle): pawn, name and HP numbers, the HP bar, and in a fight the job's bar.
 func _leaf_member(e: Dictionary) -> Control:
-	var box := HBoxContainer.new()
-	box.add_theme_constant_override("separation", 2)
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.custom_minimum_size.x = leaf_party.size.x / LEAF_PARTY_MAX - 4.0
+	var frame := PanelContainer.new()
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.custom_minimum_size = _member_size()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.05, 0.12, 0.12, 0.55)
+	sb.border_color = Color(0.93, 0.88, 0.74, 0.9)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(4)
+	sb.set_content_margin_all(4)
+	frame.add_theme_stylebox_override("panel", sb)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 1)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.add_child(col)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var icon := PawnIcon.new()
 	icon.tint = e.tint
 	icon.dim = e.hp <= 0
-	icon.custom_minimum_size = Vector2(22, 30)
-	box.add_child(icon)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 0)
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_child(_label(e.name, 11))
+	icon.custom_minimum_size = Vector2(16, 22)
+	row.add_child(icon)
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", -2)
+	words.add_child(_label(e.name, 10))
+	words.add_child(_label("%d/%d%s" % [e.hp, e.max_hp, (" " + e.note) if e.get("note", "") != "" else ""], 9))
+	row.add_child(words)
+	col.add_child(row)
 	var bar := ProgressBar.new()
 	bar.max_value = e.max_hp
 	bar.value = e.hp
 	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(44, 6)
+	bar.custom_minimum_size = Vector2(0, 5)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(bar)
 	if e.get("res_kind", "") != "":
-		col.add_child(_res_bar(e, Vector2(44, 4)))
-	col.add_child(_label("%d / %d%s" % [e.hp, e.max_hp, ("  " + e.note) if e.get("note", "") != "" else ""], 10))
-	box.add_child(col)
-	return box
+		col.add_child(_res_bar(e, Vector2(0, 4)))
+	return frame
 
 
 ## entries: [{"name": String, "hp": int, "max_hp": int, "tint": Color, "note": String}], plus in a fight
@@ -321,6 +370,15 @@ func add_button(text: String, on_press: Callable) -> Button:
 	b.pressed.connect(on_press)
 	side.add_child(b)
 	return b
+
+
+## The screen's own help ("WASD = walk ..."). Hidden under the leaf frame ([USER] 2026-10-29: no explainers
+## round the game); it can come back behind a key later.
+func add_help(text: String) -> Label:
+	var l := add_side_label(text, 11)
+	l.set_meta("help", true)
+	l.visible = leaf == null
+	return l
 
 
 func add_side_label(text: String, font_size := 14) -> Label:

@@ -291,7 +291,9 @@ func _to_map(s: Vector2) -> Vector2:
 func _draw() -> void:
 	var v := _view()
 	var k := float(v.k)
-	draw_rect(Rect2(v.o, SIZE * k), MEADOW)
+	# [USER] 2026-10-29: the game fills the window, so the meadow and the mountain row run on past the map's
+	# own edges to the window's (the places stay where they are).
+	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), MEADOW)
 	_draw_land(k)
 	for p: Dictionary in Db.world_paths:
 		if not (TravelRules.visible(Db.world_nodes, p.from, Game.meta.flags) and TravelRules.visible(Db.world_nodes, p.to, Game.meta.flags)):
@@ -323,8 +325,10 @@ func _draw_land(k: float) -> void:
 		var a := _to_screen(Vector2(700 + i * 10, y))
 		var b := _to_screen(Vector2(1000, y + 10))
 		draw_rect(Rect2(a, Vector2(b.x - a.x, 16 * k)), PRAIRIE if i % 2 == 0 else PRAIRIE.darkened(0.06))
-	# Mountains: a row of flat peaks with snow caps across the north.
-	for i in 11:
+	# Mountains: a row of flat peaks with snow caps across the north, as wide as the window.
+	var first := floori((_to_map(Vector2.ZERO).x - 40.0) / 92.0) - 1
+	var last := ceili((_to_map(Vector2(get_viewport_rect().size.x, 0)).x - 40.0) / 92.0) + 1
+	for i in range(first, last + 1):
 		var x := 40.0 + i * 92.0
 		var h := 150.0 + 70.0 * absf(sin(i * 1.3)) + (90.0 if absf(x - 500) < 140 else 0.0)
 		var base := 175.0 + 20.0 * sin(i * 2.1)
@@ -463,7 +467,7 @@ func _side() -> void:
 		var n := _node(String(Game.travel.get("at", "town")))
 		if String(n.get("map", "")) != "":
 			hud.add_button(Txt.f("UI_OW_ENTER", Txt.t(n.name_key)), _enter)
-	hud.add_side_label(Txt.t("UI_OW_HELP"), 11)
+	hud.add_help(Txt.t("UI_OW_HELP"))
 	_log_label = hud.add_side_label("", 12)
 	_refresh_side()
 

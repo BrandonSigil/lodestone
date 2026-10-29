@@ -1087,7 +1087,7 @@ func _walk_side() -> void:
 	hud.top_label.text = "%s   %s" % [Txt.t("UI_EX_TITLE"), map.map_name.to_upper()]
 	_phase = null
 	_info = hud.add_side_label("", 14)
-	hud.add_side_label(Txt.t("UI_EX_HELP"), 11)
+	hud.add_help(Txt.t("UI_EX_HELP"))
 	_log_label = hud.add_side_label("", 12)
 
 
@@ -1099,7 +1099,7 @@ func _deploy_side() -> void:
 	for u: CombatUnit in party.slice(1):
 		hud.add_button(Txt.t(u.name_key), _pick_member.bind(u))
 	hud.add_button(Txt.t("UI_EX_START_FIGHT"), _begin_battle)
-	hud.add_side_label(Txt.t("UI_EX_DEPLOY_HELP"), 11)
+	hud.add_help(Txt.t("UI_EX_DEPLOY_HELP"))
 	_log_label = hud.add_side_label("", 12)
 
 
@@ -1112,7 +1112,7 @@ func _fight_side() -> void:
 	hud.add_button(Txt.t("UI_DANGER"), func() -> void:
 		battle.show_danger = not battle.show_danger
 		battle._refresh_danger())
-	hud.add_side_label(Txt.t("UI_HELP_COMBAT"), 11)
+	hud.add_help(Txt.t("UI_HELP_COMBAT"))
 	_log_label = hud.add_side_label("", 12)
 
 
