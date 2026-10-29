@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tactics Combat Research</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@400..800&family=Nunito+Sans:wght@400;700&display=swap">
+<style>
+body{margin:0;background:#D9CFBC;font-family:'Nunito Sans',Verdana,sans-serif;color:#2F3A38}
+main{max-width:1280px;margin:0 auto;padding:24px 16px 64px}
+.frame{width:100%;aspect-ratio:16/9;position:relative;overflow:hidden;margin-top:24px;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.scaler{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+.slide{width:1920px;height:1080px;box-sizing:border-box;position:relative;overflow:hidden}
+.slide *{box-sizing:border-box;margin:0}
+.slide ul{padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+.slide table{border-collapse:collapse;width:100%}
+.slide th,.slide td{padding:.35em .6em;border-bottom:1px solid #D9CDB6;text-align:left;vertical-align:top}
+.notes{background:#F3ECDF;border-radius:8px;padding:10px 16px;margin-top:8px;font-size:15px;line-height:1.5}
+.notes summary{cursor:pointer;font-weight:700;color:#A44A25}
+</style></head><body><main>
+<p style="font-size:14px">Lodestone research deck, saved from the published Slides artifact. Click "notes" under a slide for the longer write-up.</p>
+<div class="frame"><div class="scaler"><section class="slide" id="cover" data-transition="fade" style="background:#1E2A29;color:#F3ECDF;font-family:'Nunito Sans', Verdana, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:32px">
+<svg aria-label="A small stack of isometric map tiles at different heights" style="position:absolute;left:1180px;top:250px;width:600px;height:560px" width="600" height="560" viewBox="0 0 600 560">
+<g stroke="#1E2A29" stroke-width="3">
+<path d="M300 120 L420 180 L300 240 L180 180 Z" fill="#E8A15C"/>
+<path d="M180 180 L300 240 L300 330 L180 270 Z" fill="#A44A25"/>
+<path d="M420 180 L300 240 L300 330 L420 270 Z" fill="#7A3519"/>
+<path d="M180 270 L300 330 L180 390 L60 330 Z" fill="#5E9B8A"/>
+<path d="M60 330 L180 390 L180 430 L60 370 Z" fill="#2C6A66"/>
+<path d="M180 390 L300 330 L300 370 L180 430 Z" fill="#1F4F4C"/>
+<path d="M420 270 L540 330 L420 390 L300 330 Z" fill="#5E9B8A"/>
+<path d="M300 330 L420 390 L420 430 L300 370 Z" fill="#2C6A66"/>
+<path d="M540 330 L420 390 L420 430 L540 370 Z" fill="#1F4F4C"/>
+<path d="M300 370 L420 430 L300 490 L180 430 Z" fill="#C9B88F"/>
+<path d="M180 430 L300 490 L300 520 L180 460 Z" fill="#8C7A55"/>
+<path d="M420 430 L300 490 L300 520 L420 460 Z" fill="#6E5E40"/>
+</g>
+<path d="M300 40 L310 70 L340 72 L316 90 L325 120 L300 102 L275 120 L284 90 L260 72 L290 70 Z" fill="#F3ECDF"/>
+</svg>
+<p style="font-size:26px;letter-spacing:4px;text-transform:uppercase;color:#E8A15C;font-weight:700">Lodestone · research deck</p>
+<h1 style="font-family:'Alegreya', Georgia, serif;font-size:120px;font-weight:800;line-height:1.02;color:#F3ECDF;width:1000px">Tactics combat research</h1>
+<p style="font-size:34px;line-height:1.4;color:#C9D6D2;width:960px">How fourteen games handle turn order, depth, classes, maps, bosses, menus and gear, and what Lodestone can take from each.</p>
+<p style="font-size:26px;color:#9FB2AD">29 October 2026 · for Brandon</p>
+
+</section>
+</div></div><details class="notes"><summary>Slide 1 notes</summary><p>Brandon asked for deep research on Final Fantasy Tactics, Fire Emblem Fates, Sea of Stars, Golden Sun and Divinity: Original Sin 2. Eight more games close to Lodestone are added: Banner Saga, Darkest Dungeon, Into the Breach, XCOM 2, Triangle Strategy, Tactics Ogre Reborn, Wildermyth and Unicorn Overlord, plus Hades II at Brandon’s request. The deck ends with takeaways for Lodestone. Everything about Lodestone here is a systems proposal ([AI]) until Brandon tags it [USER]. No story or copy for Lodestone is written here.</p></details><div class="frame"><div class="scaler"><section class="slide" id="brief" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">The brief</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Nine questions asked of every game</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:20px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">1 · Turn order</h3><p style="font-size:25px;line-height:1.35">Who acts when, and how the player sees it coming.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">2 · Depth</h3><p style="font-size:25px;line-height:1.35">What makes a fight interesting past turn three.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">3 · Jobs and classes</h3><p style="font-size:25px;line-height:1.35">How roles are picked, mixed and changed.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">4 · Leveling</h3><p style="font-size:25px;line-height:1.35">How characters grow, and what the player controls.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">5 · Player choice</h3><p style="font-size:25px;line-height:1.35">The decisions that belong to the player.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">6 · Why it’s fun</h3><p style="font-size:25px;line-height:1.35">What players praise, and what they complain about.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">7 · Combat menus</h3><p style="font-size:25px;line-height:1.35">The commands, the forecast and where information lives.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">8 · Maps and bosses</h3><p style="font-size:25px;line-height:1.35">How terrain adds strategy; how big fights are built.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">9 · Gear and inventory</h3><p style="font-size:25px;line-height:1.35">Upgrade it, find new things, or keep it static?</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 2 notes</summary><p>Each of Brandon’s five games gets three slides: the game at a glance (turn order, why it’s fun, player choice, complaints), its combat (depth, map, bosses, menu), and its growth (classes, leveling, gear, inventory). Then comparison tables, eight extra games, and takeaways.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lineup" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">The games</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Brandon’s five, plus nine close cousins</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:34px;font-weight:700;color:#2C6A66">Brandon’s list</h3>
+<p style="font-size:25px;line-height:1.35"><b>Final Fantasy Tactics</b> · height, jobs, speed timeline</p>
+<p style="font-size:25px;line-height:1.35"><b>Fire Emblem Fates</b> · phases, pairs, permadeath</p>
+<p style="font-size:25px;line-height:1.35"><b>Sea of Stars</b> · timed hits, enemy locks</p>
+<p style="font-size:25px;line-height:1.35"><b>Golden Sun</b> · Djinn, magic used in the world</p>
+<p style="font-size:25px;line-height:1.35"><b>Divinity: Original Sin 2</b> · surfaces, sandbox</p>
+</div>
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:34px;font-weight:700;color:#A44A25">Added: closest to Lodestone</h3>
+<p style="font-size:25px;line-height:1.35"><b>Banner Saga</b> · caravan, supplies, morale</p>
+<p style="font-size:25px;line-height:1.35"><b>Darkest Dungeon</b> · stress, quirks, hamlet</p>
+<p style="font-size:25px;line-height:1.35"><b>Into the Breach</b> · telegraphs, carry-over pilot</p>
+<p style="font-size:25px;line-height:1.35"><b>XCOM 2</b> · cover, hit %, base between fights</p>
+<p style="font-size:25px;line-height:1.35"><b>Triangle Strategy</b> · modern FFT, elements</p>
+<p style="font-size:25px;line-height:1.35"><b>Tactics Ogre Reborn</b> · rewind, level caps</p>
+<p style="font-size:25px;line-height:1.35"><b>Wildermyth</b> · paper heroes who age</p>
+<p style="font-size:25px;line-height:1.35"><b>Unicorn Overlord</b> · rules set before the fight</p>
+<p style="font-size:25px;line-height:1.35"><b>Hades II</b> · die, go home, grow the hub</p>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 3 notes</summary><p>The eight additions were picked because each solves a problem Lodestone has: Banner Saga is the closest existing game to “tactics plus Oregon Trail”; Darkest Dungeon is the reference for stress, quirks (our deficiencies) and a roguelite hub; Into the Breach shows readable fixed-camera maps and a carry-over between failed runs; XCOM 2 for hit chance and the base layer; Triangle Strategy and Tactics Ogre Reborn as the living descendants of FFT; Wildermyth for cheap-to-animate characters players love; Unicorn Overlord for strategy that happens before the fight.</p></details><div class="frame"><div class="scaler"><section class="slide" id="fft-1" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Final Fantasy Tactics · 1997, remastered 2025</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">A job board you never finish</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Turn order: Charge Time</h3><p style="font-size:25px;line-height:1.38">Each clock tick, every unit adds its Speed to a CT meter. At 100 it acts. Fast units act more often, so Speed is the most valued stat.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Spells take time</h3><p style="font-size:25px;line-height:1.38">Big spells charge for several ticks and land on a tile, not a person. A target that moves first dodges it. Casting is a prediction.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Why people love it</h3><p style="font-size:25px;line-height:1.38">Mixing jobs. A Knight with a Black Mage’s spells and a Ninja’s two swords. Players spend hours on builds and swap them for decades.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Player choice</h3><p style="font-size:25px;line-height:1.38">About 20 jobs. Each unit runs one job, borrows one other job’s skill set, and slots a Reaction, a Support and a Movement ability.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Hidden personality stats</h3><p style="font-size:25px;line-height:1.38">Brave raises the chance reactions fire. Faith scales magic both ways, dealt and received. Zodiac signs make some pairs hit harder.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Common complaints</h3><p style="font-size:25px;line-height:1.38">Grinding, sudden difficulty walls (a forced one-on-one duel), slow menus, and heights hidden until you turn the camera.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 4 notes</summary><p>FFT (Square, 1997; Ivalice Chronicles remaster 2025). CT detail: a unit that both moves and acts resets to CT 0; if it only moved or only acted it keeps some CT, and if it did neither it keeps more, so waiting early brings the unit back sooner. The famous Wiegraf fight traps Ramza alone against a boss after a fight with no chance to change gear, and players who built Ramza as a mage got stuck with no way back: a lesson about rule-changing bosses and save files. The remaster added a modern turn-order list, faster text and difficulty options. The job system is what keeps people coming back: abilities learned in one job stay learned forever, so a unit becomes a collection of everything it has done.</p></details><div class="frame"><div class="scaler"><section class="slide" id="fft-2" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Final Fantasy Tactics · combat and map</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Height, facing and timing do the work</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Height</h3><p style="font-size:25px;line-height:1.38">Every tile has a height. Jump limits what a unit can climb. Archers gain range from above; some attacks can’t reach up a cliff.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Facing</h3><p style="font-size:25px;line-height:1.38">You end each turn by choosing a direction. Hits from the side or back land more often, so the last click of a turn is a defensive choice.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Move, Act, Wait</h3><p style="font-size:25px;line-height:1.38">One move and one action, in either order. Skipping either one brings the unit back sooner on the timeline.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Bosses</h3><p style="font-size:25px;line-height:1.38">Named enemies with their own unique job and skills. Many maps end when the leader falls, so a dash for the boss is a real plan.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The menu</h3><p style="font-size:25px;line-height:1.38">A short list: Move, Act, Wait, Status. Act opens the job’s skills. Before you commit, a box shows hit chance and damage.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Death has a clock</h3><p style="font-size:25px;line-height:1.38">A fallen unit shows a 3-turn countdown. Revive in time or it turns into a crystal or a chest, gone for good.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 5 notes</summary><p>FFT maps are small hand-made dioramas (often 10 by 10 or so) with big height differences: rooftops, cliffs, water that slows you. Height is both a weapon and a wall. The three-turn countdown is a great tension device: the fight changes priority the moment someone falls. Many players remember the rescue maps where an ally must survive: they force aggression. The weak point for us is the camera: FFT needs rotation because tall tiles hide units, which is why Lodestone’s fixed camera needs map rules (see the camera takeaway).</p></details><div class="frame"><div class="scaler"><section class="slide" id="fft-3" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Final Fantasy Tactics · growth and gear</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">You earn points in a job, then keep what you learned</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Two kinds of points</h3><p style="font-size:25px;line-height:1.38">Every action earns XP (character level) and JP (job points). JP buys abilities in the current job, one at a time, from a list.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">A job tree</h3><p style="font-size:25px;line-height:1.38">Jobs unlock by reaching levels in earlier ones: Squire and Chemist open Knight, Archer, mages, and so on up to Ninja and Mime.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Growth follows the job</h3><p style="font-size:25px;line-height:1.38">Stats gained on level up depend on the job you’re in at that moment. Strong for planners, a trap for newcomers.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Gear: shops by chapter</h3><p style="font-size:25px;line-height:1.38">No upgrading. Shops get better as the story moves. Rare items come from stealing, hunting monsters and hidden tiles.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Inventory</h3><p style="font-size:25px;line-height:1.38">One shared stock. Units carry nothing personal except gear; only the Chemist line can use items in battle.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Errands</h3><p style="font-size:25px;line-height:1.38">Idle units can be sent off on tavern jobs for days. They return with gold, JP and sometimes treasure. Off-screen progress.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 6 notes</summary><p>The job system’s magic is permanence: nothing learned is ever lost, so every hour adds to a unit. Equip abilities (Equip Heavy Armor, Equip Swords) let a mage wear a knight’s armor, which is where the wild builds come from. Restricting “who can use items” to one job line is a strong idea: it gives a support class a unique role. Errands (“propositions”) are a cheap way to make benched characters matter, which is relevant to Lodestone’s settlers between runs.</p></details><div class="frame"><div class="scaler"><section class="slide" id="fe-1" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Fire Emblem Fates · 2015 · Birthright, Conquest, Revelation</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Every unit is someone you can lose</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Turn order: phases</h3><p style="font-size:25px;line-height:1.38">You move every unit in any order, then the enemy moves all of theirs. No speed timeline; speed decides who hits twice.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Why people love it</h3><p style="font-size:25px;line-height:1.38">Permadeath plus support talks between units makes players care. Conquest’s tight maps are a series high point for many.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Player choice</h3><p style="font-size:25px;line-height:1.38">Which route to play, who fights paired with whom, who reclasses into what, and who gets the scarce XP.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Three ways to die</h3><p style="font-size:25px;line-height:1.38">Classic: fallen units are gone. Casual: they return after the map. Phoenix: they return next turn. Players pick their own stakes.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Scarcity by design</h3><p style="font-size:25px;line-height:1.38">Conquest has no extra battles to grind. Gold and XP are fixed, so every level up and purchase is a decision.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Common complaints</h3><p style="font-size:25px;line-height:1.38">Birthright can be easy and grindy. Some Revelation maps lean on gimmicks that slow play. The home castle is busywork for some.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 7 notes</summary><p>Fates shipped as three versions with the same core rules but different map design philosophies: Birthright is the open, grindable, gentler route; Conquest is the hard, scarce, objective-driven route; Revelation is a mix with puzzle-heavy maps. Comparing Birthright and Conquest is a natural experiment: the same combat feels very different once resources are fixed. That is the strongest argument for Lodestone’s Oregon-Trail scarcity making the tactics better, not just harder.</p></details><div class="frame"><div class="scaler"><section class="slide" id="fe-2" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Fire Emblem Fates · combat and map</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Full information, hard decisions</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Weapon triangle</h3><p style="font-size:25px;line-height:1.38">Swords and magic beat axes and bows; those beat lances and daggers; those beat swords and magic. Matchups decide who goes where.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Forecast and danger zone</h3><p style="font-size:25px;line-height:1.38">Before any attack you see damage, hit and crit for both sides. One button paints every tile enemies can reach next phase.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Pair up</h3><p style="font-size:25px;line-height:1.38">Attack stance: an adjacent ally joins your hit. Guard stance: two units share a tile, one boosts and shields the other. Enemies pair too.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Terrain and Dragon Veins</h3><p style="font-size:25px;line-height:1.38">Forests add dodge, forts heal. Royal units can trigger Dragon Veins that change the map: drain a lake, burn a forest, calm a wind.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Objectives and bosses</h3><p style="font-size:25px;line-height:1.38">Rout, seize, defend, survive, escape. Bosses usually guard a throne on bonus terrain with skills of their own. You can capture some.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The menu</h3><p style="font-size:25px;line-height:1.38">A short context list after moving: Attack, Staff, Items, Trade, Convoy, Wait, plus Dragon Vein or Rescue when they apply.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 8 notes</summary><p>The forecast window is the single most copied Fire Emblem idea, and Lodestone already has it. Fates’ forecast shows both sides’ HP, damage, hit, crit and whether either side attacks twice. Enemy phase play is a core skill: park a sturdy unit where enemies must attack into its counterattacks. Pair up is how Fates handles “two units acting together”, a useful model for Lewith and Flark or the corgi riding alongside the hero. Dragon Veins are a good example of a map verb that only some characters can use, which links classes to the map. Bosses in Fates are rarely interesting on their own; the map around them is the challenge.</p></details><div class="frame"><div class="scaler"><section class="slide" id="fe-3" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Fire Emblem Fates · growth and gear</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Seals change classes; weapons never break</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Leveling</h3><p style="font-size:25px;line-height:1.38">XP from each fight. Each stat has a growth chance per level, set by the character and class, so two copies of a unit grow apart.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Branching promotion</h3><p style="font-size:25px;line-height:1.38">At level 10+ a Master Seal promotes a unit into one of two advanced classes. The same two-branch shape Lodestone already chose.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Skills carry over</h3><p style="font-size:25px;line-height:1.38">Each class teaches skills at set levels. A unit equips 5 of everything it has learned, so reclassing builds a toolbox.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Gear: tradeoffs, not wear</h3><p style="font-size:25px;line-height:1.38">No durability in Fates. Strong weapons cost you instead: steel lowers your stats after a fight, silver stops HP regeneration.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Forging</h3><p style="font-size:25px;line-height:1.38">At the castle smithy, fuse two identical weapons plus gold for +1, up to +7. Your favorite weapon grows with you.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Inventory and hub</h3><p style="font-size:25px;line-height:1.38">5 slots per unit, a shared convoy, trades with neighbors. Between maps, a castle you build out with shops and visits.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 9 notes</summary><p>Heart Seals switch a unit to its personal second class; Friendship and Partner Seals borrow a class from a close ally, so relationships feed the class system. Removing durability while keeping costs on strong weapons was widely liked: it keeps the choice without the chore. Forging is a cheap upgrade path that makes a found weapon matter for a long time. My Castle (the hub) is the closest Fire Emblem gets to Lodestone’s village: buildings unlock as you progress and you spend a currency earned in battle to build them.</p></details><div class="frame"><div class="scaler"><section class="slide" id="sos-1" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Sea of Stars · 2023 · Sabotage Studio</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">A turn-based fight where you never sit still</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Turn order</h3><p style="font-size:25px;line-height:1.38">No grid. Your party acts in any order you like each round. Every enemy shows a number: turns left until it acts.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Locks</h3><p style="font-size:25px;line-height:1.38">A big enemy move shows a row of icons: sword, blunt, sun, moon. Hit it with those damage types before the count ends to cancel it.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Timed hits and blocks</h3><p style="font-size:25px;line-height:1.38">Press at the moment of impact for an extra hit, or to take less damage. Your hands stay busy on every turn.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Why people love it</h3><p style="font-size:25px;line-height:1.38">Every turn is a little puzzle, fights start where you meet enemies, there’s no grind, and the pixel art is screenshot bait.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Player choice</h3><p style="font-size:25px;line-height:1.38">Break the lock or burst damage? Spend combo points now or save them? Who sits on the bench? Which relics make it easier?</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Common complaints</h3><p style="font-size:25px;line-height:1.38">Fights get samey late; there’s little build variety; it’s easy once you have the healer’s best moves. Story pacing splits people.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 10 notes</summary><p>Sea of Stars is not a tactics game, but its lock system is the cleanest modern take on telegraphed enemy intent, which a grid game can borrow directly: a charging enemy shows what it needs to be stopped, and the player solves it. Damage types are a vocabulary (slash, blunt, sun, moon, and more later), so the party you bring decides which locks you can break. That maps neatly onto Stardrop’s moon magic as a lock-breaker. Relics are optional modifiers the player turns on (more HP, auto-timing): a respectful accessibility system that also works as a difficulty dial.</p></details><div class="frame"><div class="scaler"><section class="slide" id="sos-2" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Sea of Stars · combat</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Basic attacks feed the big moves</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Live mana</h3><p style="font-size:25px;line-height:1.38">Basic attacks knock loose mana orbs. A character can soak them up to add their element to the next hit. Plain hits restore MP too.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Combos</h3><p style="font-size:25px;line-height:1.38">Every hit fills combo points. Spend them on two- or three-person moves, each a small set piece. Pairs of characters matter.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Free swaps</h3><p style="font-size:25px;line-height:1.38">Three fight at once; the rest wait on the bench and swap in without spending a turn. The whole roster stays useful.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The map</h3><p style="font-size:25px;line-height:1.38">No grid or height in fights. Depth on the map comes from the world: climbing, swimming, pushing blocks between fights.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Bosses</h3><p style="font-size:25px;line-height:1.38">Big bosses split into parts, each with its own countdown and locks. Phases change the lock pattern. You read, then plan.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The menu</h3><p style="font-size:25px;line-height:1.38">A compact wheel per character: Attack, Skills, Combos, Items. Turn counts and locks float over enemies, not in a list.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 11 notes</summary><p>The live mana idea solves a common RPG problem: basic attacks feel pointless once you have skills. In Sea of Stars, a basic attack is how you earn the resources for the good stuff. A tactics game can borrow this: a plain hit could build a shared meter or charge a class skill. Multi-part bosses work because each part is a separate small puzzle; you pick which to solve first. Information lives on the battlefield (numbers and icons over enemies) instead of a side panel, which is exactly the right model for a fixed-camera grid.</p></details><div class="frame"><div class="scaler"><section class="slide" id="sos-3" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Sea of Stars · growth and gear</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Fixed roles, small choices, food at the fire</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Classes</h3><p style="font-size:25px;line-height:1.38">No job system. Each character has one fixed role and element. New skills arrive with the story, not from a menu.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Leveling</h3><p style="font-size:25px;line-height:1.38">XP is shared, so benched characters keep up. On each level up you pick one bonus: HP, MP, attack, magic or defense.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Gear</h3><p style="font-size:25px;line-height:1.38">Weapon, armor, two trinkets. Bought in towns or found in chests. No upgrading; a new town means a new tier.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Cooking</h3><p style="font-size:25px;line-height:1.38">Healing is mostly food. Gather ingredients, learn recipes, cook at campfires. Meals are your potions.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Campfires</h3><p style="font-size:25px;line-height:1.38">Rest, cook and talk with the party. A calm beat between fights that also does the bookkeeping.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Relics</h3><p style="font-size:25px;line-height:1.38">Optional toggles found in the world: extra HP, auto-timed hits, more gold. The player sets their own difficulty.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 12 notes</summary><p>Sea of Stars is the lightest of the five on growth systems, and it works because the combat itself carries the depth. The level-up stat pick is a cheap, satisfying micro-choice that Lodestone could add on top of its own growth with little cost. Cooking as the healing economy is directly relevant: Lodestone’s fight items already spend real food and medicine from the trail, so a campfire step that turns raw food into better meals would tie the hunting and herb minigames into combat.</p></details><div class="frame"><div class="scaler"><section class="slide" id="gs-1" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Golden Sun · 2001 and 2002 · Camelot</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">The magic you fight with is the magic you explore with</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Turn order</h3><p style="font-size:25px;line-height:1.38">Classic rounds. Pick every character’s command first, then all units act in Agility order, with some randomness.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Psynergy in the world</h3><p style="font-size:25px;line-height:1.38">Move, Freeze, Growth, Catch: the same skills solve puzzles on the field. A class is also a way of touching the world.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Djinn</h3><p style="font-size:25px;line-height:1.38">Little elemental spirits hidden around the world. Collect them, equip them, and they reshape a character’s class and stats.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Why people love it</h3><p style="font-size:25px;line-height:1.38">Hunting every Djinn, the risk of unleashing them, flashy summons, and puzzles that use battle skills.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Player choice</h3><p style="font-size:25px;line-height:1.38">Where each Djinni goes, when to unleash it, when to save up for a summon. A full party rebuild is one menu away.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Common complaints</h3><p style="font-size:25px;line-height:1.38">Lots of text, slow early hours, a few obscure puzzles, and battles that get easy once summons are stacked.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 13 notes</summary><p>Golden Sun (GBA, 2001) and The Lost Age (2002). Brandon’s brief asks for classes that “synthesize well throughout the game”: Golden Sun is the best example of that. A Venus adept’s Growth spell makes vines to climb on the map; the same element heals and hits in battle. Hidden Djinn reward exploration with combat power, which ties “unearthing the map” to fighting. When you misassign an action and the target dies first, a Golden Sun character retargets automatically: a small kindness worth copying.</p></details><div class="frame"><div class="scaler"><section class="slide" id="gs-2" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Golden Sun · combat</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Spend your power now, or bank it for a summon</h2>
+<div style="display:flex;gap:24px;align-items:stretch">
+<div style="flex:1;background:#2C6A66;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">1 · Set</h3><p style="font-size:25px;line-height:1.35;color:#E3EEEA">Equipped. Raises stats and decides the class.</p></div>
+<div style="align-self:center;font-size:56px;color:#A44A25;font-weight:700">&#8594;</div>
+<div style="flex:1;background:#2C6A66;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">2 · Unleash</h3><p style="font-size:25px;line-height:1.35;color:#E3EEEA">A one-off battle effect. The class may drop.</p></div>
+<div style="align-self:center;font-size:56px;color:#A44A25;font-weight:700">&#8594;</div>
+<div style="flex:1;background:#2C6A66;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">3 · Standby</h3><p style="font-size:25px;line-height:1.35;color:#E3EEEA">Waiting Djinn pay for summons; more = bigger.</p></div>
+<div style="align-self:center;font-size:56px;color:#A44A25;font-weight:700">&#8594;</div>
+<div style="flex:1;background:#2C6A66;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">4 · Recover</h3><p style="font-size:25px;line-height:1.35;color:#E3EEEA">After a summon, they come back over a few turns.</p></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Bosses</h3><p style="font-size:25px;line-height:1.38">Many act two or three times a round. Optional superbosses hide behind puzzles and test your whole Djinn plan.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The map</h3><p style="font-size:25px;line-height:1.38">No grid. Strategy lives in the four elements, resistances and turn order, not in positions.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The menu</h3><p style="font-size:25px;line-height:1.38">Six icons in a row: Attack, Psynergy, Djinn, Summon, Item, Defend. Icons, not words, so it reads fast.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 14 notes</summary><p>The Djinn cycle is a resource loop with a real cost: unleashing is strong but weakens the character (lower stats, sometimes a worse class) until the Djinn returns, and a summon spends several Djinn at once. The tension of “I could summon now and be weak for three turns” is what makes fights memorable. The four elements (Venus earth, Mars fire, Jupiter wind, Mercury water) also give every party a readable identity. For Lodestone this is a model for collectibles found while exploring that feed the battle system.</p></details><div class="frame"><div class="scaler"><section class="slide" id="gs-3" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Golden Sun · growth and gear</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Classes come from what you carry</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Classes by mix</h3><p style="font-size:25px;line-height:1.38">A character’s class comes from their own element plus the Djinn they hold. Mixed elements give hybrid classes with new spells.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Hidden item classes</h3><p style="font-size:25px;line-height:1.38">Rare items unlock secret classes when equipped: a card, a whip, a dark book. Explore, find, become something new.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Leveling</h3><p style="font-size:25px;line-height:1.38">Plain XP levels. The class acts as a multiplier on base stats, so changing class can make a character much stronger at once.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Gear with surprises</h3><p style="font-size:25px;line-height:1.38">Weapons can randomly “unleash” a special attack. Cursed gear is very strong but can freeze you in place until cleansed.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The blacksmith</h3><p style="font-size:25px;line-height:1.38">Rare materials found on the road go to one smith, who forges a unique item from each. A reason to explore, and to come back.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Inventory</h3><p style="font-size:25px;line-height:1.38">Each character has a small bag of their own. You juggle items between bags, and items given away are hard to get back.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 15 notes</summary><p>The hidden item classes are a close match for Lodestone’s hidden magic path (the book on a shelf, already decided [USER]): finding a thing in the world opens a class. The forge-from-rare-materials loop (in The Lost Age a smith in one town turns ores like Orihalcon into unique weapons) lines up with Lodestone’s decision that gold and gear unlock once a blacksmith settles in the village. The stat multiplier per class is a clean, data-driven rule that suits our CSV tables.</p></details><div class="frame"><div class="scaler"><section class="slide" id="dos-1" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Divinity: Original Sin 2 · 2017 · Larian</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Every spell changes the ground you fight on</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Turn order</h3><p style="font-size:25px;line-height:1.38">Initiative sets the order, and the sides alternate: one of yours, one of theirs. A portrait strip shows the round. You can delay.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Action points</h3><p style="font-size:25px;line-height:1.38">About 4 AP a turn. Moving, attacking and spells all cost AP. Saving some lets you take a big turn next time.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Why people love it</h3><p style="font-size:25px;line-height:1.38">A sandbox: rain then lightning, oil then fire, teleport a foe into lava. If it makes sense, it works. Co-op with friends.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Player choice</h3><p style="font-size:25px;line-height:1.38">No fixed classes. Mix skills from about ten schools. Talents and social skills (persuasion, sneaking, bartering) shape the run.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Lone Wolf talent</h3><p style="font-size:25px;line-height:1.38">With a party of one or two, Lone Wolf greatly boosts stats and AP. Exactly the “head out alone” idea in Lodestone’s brief.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Common complaints</h3><p style="font-size:25px;line-height:1.38">The armor rules push parties to be all-physical or all-magic. Gear needs replacing every level. Late-game numbers balloon.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 16 notes</summary><p>DOS2’s initiative: units are ordered by Initiative, but the game interleaves the two sides so a team with many fast units can’t take five turns in a row. Delay sends a unit to the end of the round. AP: units start with a few AP, regain a set amount each turn and can carry leftovers, which rewards a quiet turn. Social skills and character tags (noble, scholar, outlaw) open dialogue options and persuasion checks, which is the same idea as Lodestone’s dice checks to talk past bandits.</p></details><div class="frame"><div class="scaler"><section class="slide" id="dos-2" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Divinity: Original Sin 2 · combat and map</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">The map is a chemistry set</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Surfaces</h3><p style="font-size:25px;line-height:1.38">Fire, water, ice, oil, poison, blood. Water plus lightning stuns, oil plus fire burns, cold freezes a puddle into ice.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Two armor bars</h3><p style="font-size:25px;line-height:1.38">Physical and magic armor sit over HP. Stuns and knockdowns only land once the matching bar is gone, and then they always land.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">High ground</h3><p style="font-size:25px;line-height:1.38">Ranged attacks from above hit harder and reach further; from below they’re weaker. Ledges invite pushes and teleports.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Fights start anywhere</h3><p style="font-size:25px;line-height:1.38">No separate battle screen. A talk goes wrong and the fight starts right there, with whatever terrain you happen to stand on.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Bosses</h3><p style="font-size:25px;line-height:1.38">Set-piece arenas with hazards: totems, turrets, spreading fire. Many are won by fixing the arena before hitting the boss.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The menu</h3><p style="font-size:25px;line-height:1.38">An MMO-style hotbar of skills, AP pips above it, initiative portraits at the top. Hover a target for hit chance and damage.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 17 notes</summary><p>Surfaces are the deepest system in DOS2 and the most expensive to build: each needs art, rules for spreading and rules for every combination. A small version (wet, burning, frozen, three reactions) gives most of the fun. The armor bars removed dice from crowd control: you see exactly when a stun will land. Players love the certainty but dislike that it rewards stacking one damage type. Larian’s free-form exploration where combat begins in place is the same model Lodestone’s explore maps already use (fights start where you meet enemies, party placed around the leader).</p></details><div class="frame"><div class="scaler"><section class="slide" id="dos-3" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Divinity: Original Sin 2 · growth and gear</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Points everywhere, loot that keeps changing</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Leveling</h3><p style="font-size:25px;line-height:1.38">Each level gives attribute points, combat skill points and sometimes social points or a talent. The player places all of them.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Skills from books</h3><p style="font-size:25px;line-height:1.38">Spells are learned from skillbooks bought or found. Memory limits how many you can have ready at once.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Random loot</h3><p style="font-size:25px;line-height:1.38">Gear drops in rarity tiers with random bonuses and a level. You replace it often. Runes socket into gear for extra effects.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Crafting</h3><p style="font-size:25px;line-height:1.38">Combine any two items to try a recipe: a needle and thread, an arrowhead and a shaft, food on a fire.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Inventory</h3><p style="font-size:25px;line-height:1.38">Each character has a bag with a weight limit set by Strength. A strong character becomes the pack mule.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Tags and origins</h3><p style="font-size:25px;line-height:1.38">Race and background tags (noble, scholar, outlaw) unlock extra choices in talks and checks. Who you bring changes the options.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 18 notes</summary><p>DOS2 is the most player-driven of the five for growth and also the noisiest: inventory management and loot comparison eat a lot of play time, and many players say the constant gear swaps are the weakest part. For Lodestone, the useful pieces are the tags (who you bring changes what you can do in an event, like the dice checks), strength-limited carrying (fits the Tetris-like grid inventory that is already decided), and the idea that a small number of attribute points per level is enough to feel ownership.</p></details><div class="frame"><div class="scaler"><section class="slide" id="cmp-turns" data-transition="fade" style="background:#E8DFCC;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Side by side · turn order</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Four ways to decide who acts next</h2>
+<table style="font-size:24px;color:#2F3A38;background:#FBF7EF;border-radius:14px">
+<tr><th style="width:24%">Game</th><th style="width:40%">System</th><th style="width:36%">What it makes the player do</th></tr>
+<tr><td>Final Fantasy Tactics</td><td>Charge Time: Speed fills a meter, act at 100</td><td>Value speed, predict where foes will be</td></tr>
+<tr><td>Fire Emblem Fates</td><td>Phases: all of yours, then all of theirs</td><td>Plan the whole board, bait the enemy phase</td></tr>
+<tr><td>Sea of Stars</td><td>Rounds, your order; enemies count down</td><td>Race each countdown, break locks</td></tr>
+<tr><td>Golden Sun</td><td>Rounds, orders first, Agility order</td><td>Guess the order, hedge with Defend</td></tr>
+<tr><td>Divinity: Original Sin 2</td><td>Initiative, sides alternate, AP to spend</td><td>Budget AP, set up combos in sequence</td></tr>
+<tr style="background:#F0E7D6"><td>Triangle Strategy, Tactics Ogre</td><td>Speed timeline shown as portraits</td><td>Same as FFT, but readable at a glance</td></tr>
+<tr style="background:#F0E7D6"><td>Into the Breach, XCOM 2</td><td>Phases; Breach shows every enemy move first</td><td>Solve a puzzle; nothing is a surprise</td></tr>
+<tr style="background:#F0E7D6"><td>Banner Saga</td><td>Sides alternate one unit at a time</td><td>Few strong units stay strong; kill order matters</td></tr>
+</table>
+<p style="font-size:25px;line-height:1.38;color:#4A5553">Lodestone today uses Fire Emblem phases. The takeaways weigh a speed timeline against it.</p>
+
+</section>
+</div></div><details class="notes"><summary>Slide 19 notes</summary><p>Phases (Fire Emblem, XCOM, Into the Breach) are the most readable and easiest to plan; the player controls tempo completely. Speed timelines (FFT, Triangle Strategy, Tactics Ogre) make Speed a stat worth building and let fast scouts and slow knights feel different every turn, which ties into Lodestone’s placement ring where fast characters deploy further out. Alternating sides (Banner Saga, DOS2) stop one side from taking many turns in a row. Banner Saga’s twist: since sides alternate one unit each regardless of numbers, killing weak enemies doesn’t reduce how often the enemy acts, which makes wounding instead of killing a real tactic (and its Pillage rule kicks in when one side is down to one unit).</p></details><div class="frame"><div class="scaler"><section class="slide" id="cmp-growth" data-transition="fade" style="background:#E8DFCC;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Side by side · growth, gear and inventory</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Who grows how, and what they carry</h2>
+<table style="font-size:24px;color:#2F3A38;background:#FBF7EF;border-radius:14px">
+<tr><th style="width:14%">Game</th><th style="width:24%">Classes</th><th style="width:21%">Leveling</th><th style="width:23%">Gear</th><th style="width:18%">Inventory</th></tr>
+<tr><td>FFT</td><td>20 jobs in a tree; borrow one other skill set</td><td>XP and job points per action</td><td>Static; better shops each chapter</td><td>One shared stock</td></tr>
+<tr><td>Fates</td><td>Two-way promotion; Seals to reclass</td><td>Random growth per stat</td><td>No wear; forge up to +7</td><td>5 per unit, shared convoy</td></tr>
+<tr><td>Sea of Stars</td><td>One fixed role each</td><td>Pick a stat bonus each level</td><td>Static tiers; cook food to heal</td><td>Shared bag</td></tr>
+<tr><td>Golden Sun</td><td>From the Djinn mix; secret item classes</td><td>Class multiplies base stats</td><td>Shops, cursed gear, smith forges finds</td><td>Small bag each</td></tr>
+<tr><td>Divinity 2</td><td>Classless; about ten skill schools</td><td>Player places every point</td><td>Random loot, runes, crafting</td><td>Weight limit by Strength</td></tr>
+</table>
+<p style="font-size:25px;line-height:1.38;color:#4A5553">Players love upgrading a favorite weapon (Fates, Golden Sun). Constant loot swaps (Divinity) draw the most complaints.</p>
+
+</section>
+</div></div><details class="notes"><summary>Slide 20 notes</summary><p>A pattern across the five: the games people replay for builds (FFT, DOS2) put the class choice in the player’s hands and make it permanent progress; the games people replay for the fights (Sea of Stars, Fire Emblem) keep growth simpler and spend their depth on the battlefield. Gear is the same split: static tiers keep focus on tactics, random loot adds a second game of inventory management. FFT also lets units equip rare gear stolen or found on hidden tiles; Fates’ strong weapons carry costs (steel lowers stats after a fight); FFT restricts in-battle item use to the Chemist line.</p></details><div class="frame"><div class="scaler"><section class="slide" id="menus" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Side by side · combat menus</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Short menus, and the board does the talking</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">FFT · a nested list</h3><p style="font-size:25px;line-height:1.38">Move, Act, Wait, Status. Act opens the job’s list. Clear but deep; a lot of clicks per turn.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Fire Emblem · a context list</h3><p style="font-size:25px;line-height:1.38">Only the commands that apply here appear after you move. The forecast panel is the real star.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Sea of Stars · a wheel</h3><p style="font-size:25px;line-height:1.38">Four choices around the character. Countdowns and lock icons sit over enemies’ heads.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Golden Sun · an icon row</h3><p style="font-size:25px;line-height:1.38">Six pictures in a row with element colors. Fast to read, needs no words.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Divinity 2 · a hotbar</h3><p style="font-size:25px;line-height:1.38">Every skill on a bar, AP pips, portrait strip. Powerful, but busy and PC-shaped.</p></div>
+<div style="background:#2C6A66;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">The common thread</h3><p style="font-size:25px;line-height:1.38;color:#E3EEEA">Six commands or fewer. Show the result before the click. Put enemy intent on the map, not in a panel.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 21 notes</summary><p>Into the Breach is the extreme of the last point: its enemies have no menu at all, because their next attack is drawn on the board as arrows and tile highlights. XCOM puts hit chance over the target and cover shields on tiles. Triangle Strategy shows the turn timeline at the side and a full forecast like Fire Emblem. All of these are readable from one fixed view, which matters for Lodestone.</p></details><div class="frame"><div class="scaler"><section class="slide" id="bosses" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Side by side · bosses</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Six ways to build a boss fight</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The fortress</h3><p style="font-size:25px;line-height:1.38">The boss sits on strong terrain and the map is the puzzle. Fire Emblem’s throne bosses; FFT’s rooftop archers.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The telegraph</h3><p style="font-size:25px;line-height:1.38">The boss shows its big move ahead of time; you answer it. Sea of Stars locks; Into the Breach.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The arena</h3><p style="font-size:25px;line-height:1.38">Hazards and objects matter more than the boss. Divinity 2’s burning, trapped set pieces.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The objective</h3><p style="font-size:25px;line-height:1.38">Win without the kill: escape, survive, protect, seize. Fire Emblem, FFT rescues, Banner Saga.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The optional giant</h3><p style="font-size:25px;line-height:1.38">Hidden superbosses for mastery: Golden Sun’s secret fights, FFT’s deep dungeon. No one is forced in.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Handle with care: rule change</h3><p style="font-size:25px;line-height:1.38">The boss changes the rules, like FFT’s forced solo duel. Memorable, and the number one cause of stuck saves.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 22 notes</summary><p>Multi-action bosses (Golden Sun) and multi-part bosses (Sea of Stars) give a single big enemy the presence of a squad, which suits grid games where one unit would otherwise be easy to surround. XCOM 2’s Chosen (War of the Chosen) are recurring bosses who show up across many missions, learn, and must be hunted down at their base: a nice model for an enemy that follows a caravan. A rule-change boss is safe only if the player is told in advance or can retreat; in a roguelite with recall, a failed boss is less punishing, but the warning still matters.</p></details><div class="frame"><div class="scaler"><section class="slide" id="more-1" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Eight more games · the road and the hub</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">The two closest games to Lodestone</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:36px;font-weight:700;color:#2C6A66">The Banner Saga</h3>
+<p style="font-size:24px;color:#6B7471"><i>2014 to 2018 · Stoic · hand-drawn, fixed view</i></p>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>A caravan walks between fights. Supplies drop every day; run out and people die.</li>
+<li>Morale from the road changes willpower in battle.</li>
+<li>Renown buys both level ups and supplies. Every promotion costs food.</li>
+<li>Strength is both HP and damage, so wounded units hit softer.</li>
+</ul>
+<div style="flex:1"></div>
+<p style="font-size:25px;line-height:1.38;color:#A44A25"><b>Steal this:</b> one currency pulling two ways, and road mood feeding the fight.</p>
+</div>
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:36px;font-weight:700;color:#2C6A66">Darkest Dungeon</h3>
+<p style="font-size:24px;color:#6B7471"><i>2016 · Red Hook · roguelite hub town</i></p>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Four heroes in a line; each skill works only from certain spots.</li>
+<li>Stress fills as well as HP. At 100 a hero breaks (or rarely rises) and acts on their own.</li>
+<li>Quirks, good and bad, stick from trips: fear of beasts, love of light.</li>
+<li>Buy food, torches and shovels before setting out. Low light raises risk and reward.</li>
+</ul>
+<div style="flex:1"></div>
+<p style="font-size:25px;line-height:1.38;color:#A44A25"><b>Steal this:</b> mental health as a second HP bar, and quirks earned on the road.</p>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 23 notes</summary><p>Banner Saga’s combat also has a willpower pool spent for extra move or damage, and armor vs strength: you choose between breaking armor and hurting strength, a two-bar choice like DOS2’s but simpler. Its fixed hand-drawn view is direct proof that a fixed camera and painted art can carry a tactics game. Darkest Dungeon’s hamlet is upgraded with treasure brought home; heroes who die are gone, so the roster churns. Its gear is a small set of weapon and armor upgrades at the blacksmith plus two trinket slots, which keeps inventory light. Both games connect directly to Brandon’s brief: “balance combat, survival, mental and physical health.”</p></details><div class="frame"><div class="scaler"><section class="slide" id="more-2" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Eight more games · information and risk</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Show everything, or hide just enough</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:36px;font-weight:700;color:#2C6A66">Into the Breach</h3>
+<p style="font-size:24px;color:#6B7471"><i>2018 · Subset Games · 8 by 8, fixed view</i></p>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Enemies show their attack first; then you move. Every turn is a puzzle.</li>
+<li>Most damage comes from pushing: into water, into each other, off the map.</li>
+<li>One reset per fight lets you take a turn back.</li>
+<li>When a run fails, one pilot jumps to a new timeline and keeps their skills.</li>
+</ul>
+<div style="flex:1"></div>
+<p style="font-size:25px;line-height:1.38;color:#A44A25"><b>Steal this:</b> drawn enemy intent, and a survivor who carries over after a loss.</p>
+</div>
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:36px;font-weight:700;color:#2C6A66">XCOM 2</h3>
+<p style="font-size:24px;color:#6B7471"><i>2016 · Firaxis · War of the Chosen 2017</i></p>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Two actions per turn. Half and full cover shields on tiles; flanking breaks cover.</li>
+<li>Hit chance over every target; overwatch shoots during the enemy turn.</li>
+<li>A class is rolled at first promotion; then you pick skills down a tree.</li>
+<li>Between missions: a base, research, gear tiers and weapon mods.</li>
+</ul>
+<div style="flex:1"></div>
+<p style="font-size:25px;line-height:1.38;color:#A44A25"><b>Steal this:</b> cover shields drawn on tiles, and recurring hunter bosses.</p>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 24 notes</summary><p>Into the Breach’s designers aimed for every loss to feel like the player’s own fault: perfect information, almost no dice. Its time-travel carry-over is the closest mechanic to Lodestone’s recall: a run ends, but one piece of progress survives and the next run starts stronger. XCOM 2’s hidden enemy pods and missed 90% shots are its most loved and most hated features at once. War of the Chosen added Bonds between soldiers, Fatigue (tired soldiers must rest), and the Chosen: three bosses who appear across missions, steal, kidnap and level up until you raid their stronghold. Mission timers were its most criticized pressure tool.</p></details><div class="frame"><div class="scaler"><section class="slide" id="more-3" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Eight more games · FFT’s living family</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">What modern FFT-likes fixed</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:36px;font-weight:700;color:#2C6A66">Triangle Strategy</h3>
+<p style="font-size:24px;color:#6B7471"><i>2022 · Square Enix and Artdink · HD-2D</i></p>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Speed timeline shown as portraits; you always know who is next.</li>
+<li>Sandwich a foe between two allies and the second one strikes for free.</li>
+<li>Fire spreads on grass, water carries lightning, ice slows.</li>
+<li>Skill points grow by 1 each turn, so big moves come later in a fight.</li>
+</ul>
+<div style="flex:1"></div>
+<p style="font-size:25px;line-height:1.38;color:#A44A25"><b>Steal this:</b> free follow-up hits for flanking, and a slowly filling resource.</p>
+</div>
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:36px;font-weight:700;color:#2C6A66">Tactics Ogre: Reborn</h3>
+<p style="font-size:24px;color:#6B7471"><i>2022 · Square Enix · remake of the 1995 classic</i></p>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Wait-time turn order like FFT; heavy gear makes you slower.</li>
+<li>Chariot rewinds up to 50 turns: undo a mistake without reloading.</li>
+<li>A level cap per chapter ends grinding; you win by tactics, not levels.</li>
+<li>Buff cards appear on the map and pull units into risky spots.</li>
+</ul>
+<div style="flex:1"></div>
+<p style="font-size:25px;line-height:1.38;color:#A44A25"><b>Steal this:</b> a mercy rewind, and pickups that lure units forward.</p>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 25 notes</summary><p>Triangle Strategy also upgrades weapons with materials at camp, which unlocks new skills per character, and promotes classes with medals. Its conviction system (Utility, Morality, Liberty) tracks the player’s choices and changes who joins, and big choices are made by a party vote you can try to sway with persuasion — a cousin of Lodestone’s dice checks. Tactics Ogre Reborn’s level caps solved the oldest FFT complaint (grinding breaks balance). The Chariot Tarot is a great anti-frustration tool for a game with permadeath. Triangle Strategy lets the camera turn, but many maps are designed to read from the default angle.</p></details><div class="frame"><div class="scaler"><section class="slide" id="more-4" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Eight more games · the party and the plan</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Characters that change, plans made in advance</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:36px;font-weight:700;color:#2C6A66">Wildermyth</h3>
+<p style="font-size:24px;color:#6B7471"><i>2021 · Worldwalker · papercraft heroes</i></p>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Generated heroes with traits and friendships, built from flat paper parts.</li>
+<li>Heroes age, get hurt and transform; a lost arm can become something stranger.</li>
+<li>Mystics fuse with objects on the map: a tree or a fire becomes a spell.</li>
+<li>Retired heroes become legacy picks for future campaigns.</li>
+</ul>
+<div style="flex:1"></div>
+<p style="font-size:25px;line-height:1.38;color:#A44A25"><b>Steal this:</b> cheap paper-doll art that still makes players care.</p>
+</div>
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:36px;font-weight:700;color:#2C6A66">Unicorn Overlord</h3>
+<p style="font-size:24px;color:#6B7471"><i>2024 · Vanillaware · squads on a living map</i></p>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Squads with front and back rows march across a map in real time.</li>
+<li>Each unit gets if-then rules: “if an ally is below half HP, heal them.”</li>
+<li>Clashes play out on their own; the strategy is in the setup.</li>
+<li>Stamina, towns to free and outposts to hold shape the march.</li>
+</ul>
+<div style="flex:1"></div>
+<p style="font-size:25px;line-height:1.38;color:#A44A25"><b>Steal this:</b> simple rules for helpers who act on their own.</p>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 26 notes</summary><p>Wildermyth is the strongest evidence for Brandon’s art goal: board-game-like characters made of a few flat parts, randomized, animated cheaply, and still loved. Its comic-panel events with choices tied to traits are a model for trail events (not their writing, the structure). Its turns are phase-based on a small grid with line of sight and stealth. Unicorn Overlord’s if-then tactics are a good fit for a companion the player doesn’t micro-manage, such as the corgi: give it two or three simple rules the player can set in camp.</p></details><div class="frame"><div class="scaler"><section class="slide" id="more-5" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Brandon’s pick · Hades II · 2025 · Supergiant</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Dying is how you go home and get stronger</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">The loop</h3><p style="font-size:25px;line-height:1.38">Real-time action, not turns. A run ends in death or victory; either way you return to the Crossroads hub with what you gathered.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Upgrading the hub</h3><p style="font-size:25px;line-height:1.38">Gathered reagents fuel Incantations at a cauldron: each one adds a feature to the hub or to future runs. The base visibly grows.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Slowly getting better</h3><p style="font-size:25px;line-height:1.38">Arcana cards are permanent perks with a cap on how many you equip. You choose a loadout before each run.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Gathering tools</h3><p style="font-size:25px;line-height:1.38">Pick, spade, fishing rod: unlocked tools let you mine, dig and fish during runs for hub materials. Small side-games inside the run.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">People notice you died</h3><p style="font-size:25px;line-height:1.38">Hub characters react to each return; gifts deepen bonds. Story moves forward because of deaths, so losing never feels wasted.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Choice every run</h3><p style="font-size:25px;line-height:1.38">Weapon and its aspect, keepsake, familiar, then random god boons. Fear vows raise difficulty for better rewards.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 27 notes</summary><p>Hades II reached 1.0 in September 2025 after early access in 2024. Why it matters for Lodestone: it is the clearest model of the Lodestone recall loop Brandon described. Each run brings home materials that permanently grow the hub (Darkest Dungeon does the same with its hamlet), and the hub’s people respond to each death, which turns failure into progress. Familiars (a cat, a frog, a raven, a dog and more) come along on runs, help in combat and boost gathering, which is close to the corgi. Hades’ fixed camera is also the reference Brandon already chose for Lodestone. Gathering tools that open small activities during a run line up with Lodestone’s fishing, hunting and herb minigames. Difficulty is player-chosen (vows), and a God Mode option softens it.</p></details><div class="frame"><div class="scaler"><section class="slide" id="fun" data-transition="fade" style="background:#E8DFCC;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Across all fourteen</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Why people find these games fun</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">See, then decide</h3><p style="font-size:25px;line-height:1.38">Forecasts, danger zones, telegraphs and locks. The player feels clever because they had what they needed to plan.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Builds you author</h3><p style="font-size:25px;line-height:1.38">FFT jobs, Djinn, Divinity points. Progress that the player chose feels owned, and is worth replaying.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Attachment through risk</h3><p style="font-size:25px;line-height:1.38">Permadeath, stress, aging, scars. Characters matter because something can happen to them.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Systems that combine</h3><p style="font-size:25px;line-height:1.38">Water and lightning, sandwich attacks, combos, pair up. Two simple rules meeting make a story.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Scarcity outside the fight</h3><p style="font-size:25px;line-height:1.38">Conquest, Banner Saga, Darkest Dungeon. A fight that costs supplies is a fight with stakes.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">A mercy valve</h3><p style="font-size:25px;line-height:1.38">Rewinds, turn resets, Phoenix mode, relics. Harsh games keep players by letting them undo a misclick.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 28 notes</summary><p>These six are the shared ingredients. The earlier Lodestone research note (docs/research/tactical-combat.md, 2026-10-26) reached the same core points from design talks and interviews: every turn a real decision, information makes the player feel smart, randomness must feel fair, position is the main currency, small readable boards, fragile specialists to protect, actions outside your turn, spend-now-or-save resources, objectives beyond killing, and a clean core first. This deck adds the RPG-side ingredients: authored builds, attachment, and scarcity outside combat.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lo-divider" data-transition="fade" style="background:#A44A25;color:#FBF3E6;font-family:'Nunito Sans', Verdana, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:36px">
+<p style="font-size:26px;letter-spacing:4px;text-transform:uppercase;color:#FBE3C8;font-weight:700">Takeaways for Lodestone</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:104px;font-weight:800;line-height:1.05;color:#FBF3E6;width:1500px">Readable from one view, tense on the road, kind when you fall</h2>
+<p style="font-size:32px;line-height:1.4;color:#FBE3C8;width:1300px">Every idea that follows is a systems proposal, tagged [AI], until Brandon says yes. None of it is story.</p>
+
+</section>
+</div></div><details class="notes"><summary>Slide 29 notes</summary><p>The takeaways build on what is already decided [USER] in docs/decisions.md: fixed camera with no player rotation (2026-10-28); falling costs nothing, the party wakes in the square with items, levels and flags (2026-10-28); levels come from XP with a pick every few levels from the Lodestone menu; an overworld map where food drains as you walk; a dog rescued in the village who fights on the grid; smithy weapons that branch into jobs; the hidden magic book; gold and shops once a blacksmith or merchant settles.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lo-camera" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Takeaway 1 · fixed camera, no rotation</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">One view works if the map is built for it</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:2;background:#2C6A66;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">What the games show</h3>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Into the Breach and Banner Saga never rotate, and they read perfectly.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">FFT needed rotation because tall tiles hid units behind them.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Sea of Stars and Into the Breach put enemy intent on the board itself.</p>
+</div>
+<div style="flex:3;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Proposals [AI]</h3>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Map rule: tall cliffs and props sit on the far edges; nothing over 2 levels stands in front of a walkable tile. The map maker can flag tiles that break it.</li>
+<li>Keep the prop fade and x-ray outline already built for whatever still hides a unit.</li>
+<li>Show height as a number on hover, and a soft step shadow on every ledge.</li>
+<li>Draw enemy intent on tiles: target marks and push arrows, not panels.</li>
+<li>Skip FFT-style facing. Back and side are hard to read from one angle; keep the flanking rule we have.</li>
+</ul>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 30 notes</summary><p>The fixed camera is a [USER] decision from 2026-10-28 (like Hades). These proposals are about making it work: most of FFT’s need for rotation came from map layout, so an authoring rule in the map maker is cheaper than any camera tech. A “hidden tile” check could run in tools/check.sh against saved maps.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lo-turns" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Takeaway 2 · turn order and depth</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Keep phases; make the enemy turn a puzzle</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:2;background:#2C6A66;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">What the games show</h3>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Phases are the easiest order to plan around (Fire Emblem, XCOM, Into the Breach).</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Speed timelines make speed matter (FFT, Triangle Strategy).</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Telegraphs and locks make every turn a small puzzle (Sea of Stars).</p>
+</div>
+<div style="flex:3;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Proposals [AI]</h3>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Keep Fire Emblem phases. They’re built, balanced and readable from one view.</li>
+<li>Telegraphed heavy moves: big foes wind up one phase ahead, shown on tiles, with icons for what stops them (a push, a hit from height, moon damage).</li>
+<li>Speed already counts at deployment (the placement ring). Test a speed timeline in the sandbox only if fast and slow units still feel alike.</li>
+<li>A small party meter filled by plain hits, spent on pair moves (Sea of Stars combos, Fates pair up).</li>
+</ul>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 31 notes</summary><p>Telegraphs on a grid are the strongest single idea from this research for Lodestone: they combine Into the Breach’s readability with Sea of Stars’ locks, and they give Stardrop’s moon spells and the Knight’s pushes a clear job (break the wind-up). They also suit bosses (see takeaway 7). A party meter fed by basic attacks fixes the “basic attack is boring once you have skills” problem; Lodestone’s skills use cooldowns today, so the meter would only power pair moves, not replace cooldowns.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lo-classes" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Takeaway 3 · jobs, classes and leveling</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Every class works in the fight and on the road</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:2;background:#2C6A66;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">What the games show</h3>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Golden Sun’s field magic and Fates’ Dragon Veins tie a class to the world.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">FFT: what you learn stays forever.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Golden Sun hides classes in items you find.</p>
+</div>
+<div style="flex:3;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Proposals [AI]</h3>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Each class has one battle verb and one road verb. Knight: shove, and clear a blocked trail. Rogue: ambush, and pick locks. Archer: reach from height, and hunt. Mage: light, and wayfind.</li>
+<li>Keep the decided tree: three smithy weapons, two branches each, magic through the hidden book.</li>
+<li>Off-class skills stay learned for good (FFT), in 1 to 3 slots.</li>
+<li>The decided pick every few levels can grow into class-flavored options (Sea of Stars’ stat pick, FFT’s job abilities).</li>
+</ul>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 32 notes</summary><p>Brandon’s original brief asked for jobs that “synthesize well throughout the game”, with Stardrop wayfinding by the stars and the Hunter trapping food. Golden Sun is the proof that a class used both in battle and in the world feels richer than either alone. The verbs above are placeholders for systems only; their names, flavor and any text are Brandon’s. The hidden book matches Golden Sun’s item classes, already a [USER] decision.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lo-recall" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Takeaway 4 · falling and waking in the square</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">No cost to falling, so the stakes live inside the trip</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:2;background:#2C6A66;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">What the games show</h3>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Hades II: each death brings materials home; the hub grows and its people react.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Into the Breach keeps one pilot after a failed timeline.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Darkest Dungeon grows its town from what you bring home.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Tactics Ogre’s rewind and Fates’ Phoenix mode soften one bad turn.</p>
+</div>
+<div style="flex:3;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Proposals [AI]</h3>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Kept on a fall (decided): items, levels and flags. Keep it that way.</li>
+<li>Trip-only power: blessings found on the road that last until you wake in the square (Hades boons). A trip has something to lose without undoing progress.</li>
+<li>Bring home materials that grow the village a step at a time (Hades, Darkest Dungeon).</li>
+<li>Falling in a fight leaves an injury or quirk for the rest of the trip, not for good.</li>
+<li>One optional rewind per fight, for misclicks.</li>
+</ul>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 33 notes</summary><p>Death has no consequences ([USER] 2026-10-28): the party wakes in the village square with all items, levels and flags. That replaced the older “possessions are lost” rule. Hades II is the closest model: what you keep is permanent, and what you lose on death is only the run’s temporary power (boons), so every run is tense but no run is wasted. Darkest Dungeon’s hamlet and Hades’ Incantations show how materials brought home can grow the hub over time. Injuries and quirks for the rest of a trip fit Brandon’s “mental and physical health” goal without breaking the no-cost rule.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lo-trail" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Takeaway 5 · Oregon Trail travel</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">The road should be felt inside the fight</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:2;background:#2C6A66;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">What the games show</h3>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Banner Saga: one currency for levels and food; road morale changes battle.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Darkest Dungeon: stress, quirks, and supplies bought before you leave.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Fates Conquest: no grinding makes every fight count.</p>
+</div>
+<div style="flex:3;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Proposals [AI]</h3>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Road state carries into battle: low morale shrinks a small willpower pool; hunger lowers max HP.</li>
+<li>A stress bar beside HP. It rises with frightening events and strange lands past the Wall; deficiencies are its triggers.</li>
+<li>A camp step: cook hunting and herb finds into meals that heal in battle (fight items already spend food and medicine).</li>
+<li>No grinding: fights cost supplies and give limited XP, so avoiding one is a real choice.</li>
+</ul>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 34 notes</summary><p>Lodestone’s overworld already drains food as you walk and rolls for hunting, fishing and foraging (docs/systems/overworld.md). What the games add is the link back into combat: in Banner Saga a hungry, low-morale caravan fights worse, which turns every road choice into a combat choice and vice versa. Darkest Dungeon’s stress makes “mental health” a playable number. Making deficiencies (afraid of rodents, eats more) into stress or supply triggers keeps them systemic and gives Brandon hooks to write around.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lo-corgi" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Takeaway 6 · the dog companion</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">A small helper with a big job: noticing</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:2;background:#2C6A66;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#F3ECDF">What the games show</h3>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Unicorn Overlord: simple if-then rules let a unit act well alone.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Fates’ guard stance: a partner can block a hit.</p>
+<p style="font-size:25px;line-height:1.38;color:#E3EEEA">Hades II: familiars, a dog among them, fight beside you and boost gathering.</p>
+</div>
+<div style="flex:3;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Proposals [AI]</h3>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Fast: the widest placement ring, slips through gaps, carries no gear.</li>
+<li>Sniff: reveals hidden foes and buried items. Ears perking up is the warning before an ambush or a wind-up.</li>
+<li>In a fight: trip or distract so one enemy loses its counterattack, or stay beside the hero to block one hit.</li>
+<li>Two or three orders set at camp (stay close, chase the weakest, fetch) so it never needs micromanaging.</li>
+<li>When it falls, it runs back to the hero instead of staying down.</li>
+</ul>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 35 notes</summary><p>The companion is now the dog rescued in the village ([USER] 2026-10-28, replacing the corgi at the start). He takes a party slot, fights on the grid, and has hunt and forage bonuses; BARK and sniff are not built yet. These proposals give him a role no one else has: information. In the games studied, information (forecasts, telegraphs, danger zones) is what players value most, so the companion who gives it becomes beloved without big damage. Hades II’s familiars show a pet that helps in fights and in gathering. “Runs back when he falls” keeps the dog from being a source of dread.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lo-gear" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Takeaway 7 · gear, inventory and bosses</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Upgrade a few things you love</h2>
+<div style="display:flex;gap:24px;flex:1">
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Gear and inventory [AI]</h3>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Few slots: weapon, armor, one trinket (Darkest Dungeon).</li>
+<li>Upgrade, don’t replace: once the blacksmith settles (decided), raise a weapon +1 to +3 (Fates forge). Nothing is lost on a fall, so upgrades are safe to invest in. Rare finds past the Wall become unique pieces (Golden Sun).</li>
+<li>Strong gear has a cost: heavy armor slows, strange gear has side effects.</li>
+<li>The wagon grid is the inventory (decided); the Wizard’s books take space in it. Each unit takes 2 items from it into a fight.</li>
+</ul>
+</div>
+<div style="flex:1;background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:32px;display:flex;flex-direction:column;gap:14px">
+<h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#A44A25">Bosses [AI]</h3>
+<ul style="font-size:25px;line-height:1.38;color:#2F3A38">
+<li>Mix three kinds: fortress (terrain is the puzzle), telegraph (answer the wind-up) and objective (escape, protect, hold).</li>
+<li>Big creatures past the Wall are multi-part, each part with its own wind-up (Sea of Stars).</li>
+<li>No surprise rule changes. Warn before any duel-style fight.</li>
+<li>Later: a recurring hunter that follows the caravan (XCOM’s Chosen).</li>
+</ul>
+</div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 36 notes</summary><p>Since falling costs nothing ([USER] 2026-10-28), gear upgrades are permanent progress, which makes the Fire Emblem forge and Golden Sun’s smith a strong fit for the blacksmith who settles in town. Darkest Dungeon keeps gear to a weapon, armor and two trinkets, which keeps inventory light and every piece meaningful. Golden Sun’s cursed gear (powerful with a random downside) fits the Earth to Alien shift: strange gear past the Wall can be strong with unknown side effects.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lo-menu" data-transition="fade" style="background:#F3ECDF;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Takeaway 8 · the combat menu</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Six icons in the frame, the rest on the board</h2>
+<div style="display:flex;gap:16px;align-items:stretch">
+<div style="flex:1;background:#2C6A66;border-radius:14px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:8px"><p style="font-size:26px;color:#F3ECDF;font-weight:700">MOVE</p></div>
+<div style="flex:1;background:#2C6A66;border-radius:14px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:8px"><p style="font-size:26px;color:#F3ECDF;font-weight:700">ATTACK</p></div>
+<div style="flex:1;background:#2C6A66;border-radius:14px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:8px"><p style="font-size:26px;color:#F3ECDF;font-weight:700">SKILL</p></div>
+<div style="flex:1;background:#2C6A66;border-radius:14px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:8px"><p style="font-size:26px;color:#F3ECDF;font-weight:700">ITEM</p></div>
+<div style="flex:1;background:#2C6A66;border-radius:14px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:8px"><p style="font-size:26px;color:#F3ECDF;font-weight:700">GUARD</p></div>
+<div style="flex:1;background:#2C6A66;border-radius:14px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:8px"><p style="font-size:26px;color:#F3ECDF;font-weight:700">WAIT</p></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;flex:1">
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">In the frame</h3><p style="font-size:25px;line-height:1.38">Today’s six commands as Brandon-drawn icons in the bottom border, like Golden Sun’s row. Few words.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">Before the click</h3><p style="font-size:25px;line-height:1.38">Keep the forecast already built: dice odds, damage, every modifier and the counter, Fire Emblem style.</p></div>
+<div style="background:#FBF7EF;border:1px solid #D9CDB6;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#2C6A66">On the board</h3><p style="font-size:25px;line-height:1.38">Enemy wind-ups, push arrows, height numbers and the danger zone live on tiles, not in panels.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 37 notes</summary><p>These icons are generic stand-ins for layout only; Brandon draws the real ones. The command set (move, attack, skill, item, guard, wait) matches what the combat controller has today (docs/systems/combat.md), so no new rules are needed: this is a presentation pass. The decorative bottom frame for party, items and the Lodestone is already a [USER] direction.</p></details><div class="frame"><div class="scaler"><section class="slide" id="lo-next" data-transition="fade" style="background:#1E2A29;color:#F3ECDF;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#E8A15C;font-weight:700">To get unstuck</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#F3ECDF">Six calls for Brandon</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:20px;flex:1">
+<div style="background:#2A3938;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#E8A15C">1 · Telegraphs</h3><p style="font-size:25px;line-height:1.35;color:#C9D6D2">Should big enemies show their next move on the tiles?</p></div>
+<div style="background:#2A3938;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#E8A15C">2 · Stress</h3><p style="font-size:25px;line-height:1.35;color:#C9D6D2">Add a mental-health bar beside HP, fed by the road?</p></div>
+<div style="background:#2A3938;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#E8A15C">3 · Falling in a fight</h3><p style="font-size:25px;line-height:1.35;color:#C9D6D2">Out for the fight only, or hurt for the rest of the trip?</p></div>
+<div style="background:#2A3938;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#E8A15C">4 · Trip-only power</h3><p style="font-size:25px;line-height:1.35;color:#C9D6D2">Blessings that last until you wake in the square?</p></div>
+<div style="background:#2A3938;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#E8A15C">5 · Road verbs</h3><p style="font-size:25px;line-height:1.35;color:#C9D6D2">Give every class one use on the trail as well as in battle?</p></div>
+<div style="background:#2A3938;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><h3 style="font-family:'Alegreya', Georgia, serif;font-size:32px;font-weight:700;color:#E8A15C">6 · Homework</h3><p style="font-size:25px;line-height:1.35;color:#C9D6D2">Play Into the Breach, Banner Saga, Darkest Dungeon for an hour each.</p></div>
+</div>
+
+</section>
+</div></div><details class="notes"><summary>Slide 38 notes</summary><p>Each answer becomes a [USER] line in docs/decisions.md and unlocks a build: telegraphs and road verbs are the two highest-value, lowest-cost additions to what already exists. The three games in the homework are short, cheap and closest to Lodestone’s loop, so an hour each shows more than any deck.</p></details><div class="frame"><div class="scaler"><section class="slide" id="sources" data-transition="fade" style="background:#E8DFCC;color:#2F3A38;font-family:'Nunito Sans', Verdana, sans-serif;padding:96px 128px 160px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:24px;letter-spacing:3px;text-transform:uppercase;color:#A44A25;font-weight:700">Sources</p>
+<h2 style="font-family:'Alegreya', Georgia, serif;font-size:60px;font-weight:700;line-height:1.1;color:#1E2A29">Where this comes from</h2>
+<ul style="font-size:25px;line-height:1.45;color:#2F3A38">
+<li>Fan wikis for rules and numbers: <a href="https://finalfantasy.fandom.com/wiki/Final_Fantasy_Tactics">Final Fantasy Wiki</a>, <a href="https://fireemblemwiki.org/wiki/Fire_Emblem_Fates">Fire Emblem Wiki</a>, <a href="https://seaofstars.fandom.com/wiki/Combat">Sea of Stars Wiki</a>, <a href="https://goldensunwiki.net/wiki/Djinn">Golden Sun Wiki</a>, <a href="https://www.divinitywiki.com/index.php/DOS2:Initiative">Divinity Wiki</a></li>
+<li>Developer talks and interviews summarized in Lodestone’s own note, docs/research/tactical-combat.md (Into the Breach, XCOM, Untamed Tactics)</li>
+<li>Long-running player discussion and reviews for what people praise and complain about</li>
+<li>Lodestone’s docs/decisions.md for every decided [USER] rule quoted here</li>
+</ul>
+<p style="font-size:25px;line-height:1.4;color:#4A5553">Numbers are approximate and vary by version or remaster. Speaker notes on each slide hold the longer write-up.</p>
+
+</section>
+</div></div><details class="notes"><summary>Slide 39 notes</summary><p>This deck is also saved in the repo as docs/research/tactics-combat-deck.html, with every slide and its notes, so it lives with the project.</p></details>
+</main>
+<script>
+function fit(){document.querySelectorAll('.frame').forEach(f=>{f.firstChild.style.transform='scale('+(f.clientWidth/1920)+')';});}
+addEventListener('resize',fit);fit();
+</script></body></html>
