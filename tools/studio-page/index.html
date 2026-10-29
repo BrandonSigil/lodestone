@@ -23,6 +23,7 @@
   --bad-soft: #f5dcd8;
   --stamp: #b2463a;
   --shadow: 0 1px 2px rgba(29,39,33,.06), 0 4px 14px rgba(29,39,33,.06);
+  --scrim: rgba(20,30,24,.45);
   --display: "Young Serif", Georgia, "Times New Roman", serif;
   --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
@@ -33,7 +34,7 @@
     --leaf: #1f3d2d; --leaf-ink: #e6efe7; --leaf-soft: #23352b;
     --gem: #6ea3e0; --gem-soft: #1d2d42; --amber: #e3a54a; --amber-soft: #3a2e1a;
     --ok: #79c08a; --ok-soft: #1e3324; --bad: #e07e72; --bad-soft: #3d221f; --stamp: #e07e72;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25); --scrim: rgba(0,0,0,.6);
     color-scheme: dark;
   }
 }
@@ -42,7 +43,7 @@
   --leaf: #1f3d2d; --leaf-ink: #e6efe7; --leaf-soft: #23352b;
   --gem: #6ea3e0; --gem-soft: #1d2d42; --amber: #e3a54a; --amber-soft: #3a2e1a;
   --ok: #79c08a; --ok-soft: #1e3324; --bad: #e07e72; --bad-soft: #3d221f; --stamp: #e07e72;
-  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25); --scrim: rgba(0,0,0,.6);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -163,9 +164,16 @@ textarea { width: 100%; min-height: 70px; border: 1.5px solid var(--rule); borde
 
 /* One role, full window */
 html.locked { overflow: hidden; }
-.rv { position: fixed; inset: 0; z-index: 35; background: var(--paper); overflow-y: auto; }
-.rv-in { max-width: 1120px; margin: 0 auto; padding-block: 0 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-.rv-head { position: sticky; top: 0; z-index: 1; background: var(--paper); display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-block: calc(16px + env(safe-area-inset-top, 0px)) 14px; border-bottom: 1px solid var(--rule); }
+.rv { position: fixed; inset: 0; z-index: 35; background: var(--scrim); overflow-y: auto; overscroll-behavior: contain; padding: max(32px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 32px max(16px, env(safe-area-inset-left, 0px)); }
+.rv-in { max-width: 1040px; margin: 0 auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; box-shadow: 0 24px 70px rgba(0,0,0,.35); padding: 0 28px 32px; }
+.rv-head { position: sticky; top: 0; z-index: 1; background: var(--paper); border-radius: 14px 14px 0 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-block: 20px 14px; border-bottom: 1px solid var(--rule); }
+.rv-x { flex: none; width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--rule); background: var(--sheet); font-size: 22px; line-height: 1; display: grid; place-items: center; padding: 0 0 2px; }
+.rv-x:hover { border-color: var(--ink); }
+@media (max-width: 640px) {
+  .rv { padding: 0; }
+  .rv-in { border: 0; border-radius: 0; min-height: 100%; padding: 0 16px 32px; box-shadow: none; }
+  .rv-head { border-radius: 0; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+}
 .rv-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .rv-title h2 { font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1.15; margin: 0; }
 .rv-head .job { color: var(--muted); margin: 4px 0 0; max-width: 68ch; }
@@ -364,7 +372,9 @@ function attachHtml(key) {
   const ims = S.drafts[key]?.images || [];
   return `<div class="attach" id="att-${esc(key)}">${ims.map((im, i) => `<span class="att"><img src="${esc(im.url || im.local)}" alt="Attached picture" data-zoom="${esc(im.url || im.local)}" data-cap="Your picture">${im.url ? "" : `<em>Uploading…</em>`}<button type="button" data-act="unattach" data-key="${esc(key)}" data-i="${i}" aria-label="Remove picture">×</button></span>`).join("")}${S.assets ? `<label class="btn small attach-add">Add picture<input type="file" accept="image/*" multiple hidden data-attach="${esc(key)}"></label><small>or paste or drop one into the box</small>` : ""}</div>`;
 }
-function renderAttach(key) { const el = document.getElementById("att-" + key); if (el) el.outerHTML = attachHtml(key); }
+// While a role window is open its cards repeat ones on the desk behind it, so look inside the window first.
+function byId(x) { return (S.openRole ? $("rv") : document).querySelector("#" + CSS.escape(x)); }
+function renderAttach(key) { const el = byId("att-" + key); if (el) el.outerHTML = attachHtml(key); }
 function shownImages(images) {
   return images?.length ? `<div class="attach">${images.map((im) => `<span class="att"><img src="${esc(im.url)}" alt="Attached picture" data-zoom="${esc(im.url)}" data-cap="Your picture" loading="lazy"></span>`).join("")}</div>` : "";
 }
@@ -485,7 +495,6 @@ function cardHtml(d) {
 }
 
 function renderDesk() {
-  if (S.openRole) { $("desk").innerHTML = ""; return; }  // the role window holds the cards while it's open
   const list = S.desk.filter((d) => (d.status || "open") === S.tab)
     .sort((a, b) => (a.priority ?? 50) - (b.priority ?? 50) || String(b.created).localeCompare(String(a.created)));
   const el = $("desk");
@@ -499,7 +508,7 @@ function renderDesk() {
     return;
   }
   // keep typed text across live re-renders
-  document.querySelectorAll("#desk textarea[id^=why-]").forEach((t) => { const id = t.id.slice(4); (S.drafts[id] ||= {}).why = t.value; });
+  if (!S.openRole) document.querySelectorAll("#desk textarea[id^=why-]").forEach((t) => { const id = t.id.slice(4); (S.drafts[id] ||= {}).why = t.value; });
   el.innerHTML = list.map(cardHtml).join("");
 }
 
@@ -557,8 +566,6 @@ function renderRoleView(force) {
   // a live update shouldn't wipe what you're typing in the window
   const typing = document.activeElement?.closest?.("#rv") && /^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName);
   if (!force && !el.hidden && el.dataset.role === r.id && typing) return;
-  // the role's open cards render in this window; keep their ids unique while it's up
-  $("desk").innerHTML = "";
   document.querySelectorAll("#rv textarea[id^=why-]").forEach((t) => { (S.drafts[t.id.slice(4)] ||= {}).why = t.value; });
   const openCards = S.desk.filter((d) => d.role === r.id && (d.status || "open") === "open").sort((a, b) => (a.priority ?? 50) - (b.priority ?? 50));
   const waitingPickup = S.desk.filter((d) => d.role === r.id && d.status === "answered").length;
@@ -575,7 +582,7 @@ function renderRoleView(force) {
         <div class="rv-title"><h2 id="rv-h">${esc(r.name)}</h2>${pillHtml(r)}</div>
         <p class="job">${esc(r.job)}</p>
       </div>
-      <button class="btn" data-act="closerole">Close</button>
+      <button class="rv-x" data-act="closerole" aria-label="Close">×</button>
     </header>
     <div class="rv-grid">
       <section class="rv-main" aria-label="Work">
@@ -672,12 +679,13 @@ async function save(id, patch, msg) {
   catch (e) { toast(e?.code === "invalid_argument" ? "You can't change this card from here." : "Couldn't save. Try again in a moment."); }
 }
 document.addEventListener("click", async (ev) => {
+  if (ev.target.id === "rv") { closeRole(); return; }  // a click on the dimmed page outside the window
   const z = ev.target.closest("[data-zoom]");
   if (z) { $("lb-img").src = z.dataset.zoom; $("lb-img").alt = z.dataset.cap || ""; $("lb-cap").textContent = z.dataset.cap || ""; $("lb").hidden = false; $("lb-close").focus(); return; }
   const t = ev.target.closest("[data-act]");
   if (t) {
     const id = t.dataset.id, d = S.desk.find((x) => x.id === id), dr = (S.drafts[id] ||= {});
-    const why = () => ($("why-" + id)?.value || "").trim();
+    const why = () => (byId("why-" + id)?.value || "").trim();
     switch (t.dataset.act) {
       case "tab": break;
       case "pick": {
@@ -687,13 +695,13 @@ document.addEventListener("click", async (ev) => {
         else if (d?.multi) { p = p.filter((x) => x !== "neither"); p = p.includes(o) ? p.filter((x) => x !== o) : [...p, o]; }
         else p = p.includes(o) ? [] : [o];
         dr.picks = p; rerenderCards();
-        if (p.includes("neither")) $("why-" + id)?.focus();
+        if (p.includes("neither")) byId("why-" + id)?.focus();
         break;
       }
       case "send": {
         const w = why();
         if (stillUploading(id)) { toast("Wait for the picture to finish uploading."); return; }
-        if ((dr.picks || []).includes("neither") && !w && !attached(id).length) { toast("Say why neither works, so the team knows what to change."); $("why-" + id)?.focus(); return; }
+        if ((dr.picks || []).includes("neither") && !w && !attached(id).length) { toast("Say why neither works, so the team knows what to change."); byId("why-" + id)?.focus(); return; }
         await save(id, { status: "answered", answer: { picks: dr.picks, why: w, images: attached(id), at: new Date().toISOString() } }, "Sent to " + roleName(d?.role));
         break;
       }
