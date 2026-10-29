@@ -204,6 +204,35 @@ html.locked { overflow: hidden; }
 .rv-needs h3 { color: var(--amber); }
 .rv-pickup { background: var(--gem-soft); border-radius: 8px; padding: 10px 14px; margin: 0 0 20px; }
 .pill.pickup { color: var(--gem); background: var(--gem-soft); }
+/* Quick actions in the masthead, and their windows */
+.qa { display: flex; gap: 8px; flex-wrap: wrap; }
+.qa button { border: 1.5px solid color-mix(in srgb, var(--parchment-ink) 30%, transparent); background: color-mix(in srgb, #fff 45%, var(--parchment)); color: var(--parchment-ink); border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: 14px; display: inline-flex; gap: 7px; align-items: center; }
+.qa button:hover { border-color: var(--parchment-ink); background: #fff; }
+.qa button span { color: #2f6fb5; font-size: 12px; }
+.qa-body { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; max-width: 760px; }
+.rep h4 { font-family: var(--display); font-weight: 400; font-size: 18px; margin: 18px 0 6px; }
+.rep p { margin: 0 0 8px; font-size: 16px; line-height: 1.55; }
+.rep p.lead { font-size: 18px; }
+.rep ul { margin: 0 0 6px; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; }
+.rep-meta { color: var(--muted); font-size: 13px; }
+.rm-track { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.rm-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.rm-head h3 { margin: 0; font-size: 17px; }
+.rm-head span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.rm-bar { height: 8px; background: var(--leaf-soft); border-radius: 999px; overflow: hidden; }
+.rm-bar i { display: block; height: 100%; background: var(--ok); border-radius: 999px; }
+.rm-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.rm-items li { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: baseline; font-size: 14.5px; }
+.rm-items li.later { color: var(--muted); }
+.rm-items code { font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+.rs { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; text-align: center; }
+.rs.done { background: var(--ok-soft); color: var(--ok); }
+.rs.doing { background: var(--gem-soft); color: var(--gem); }
+.rs.next { background: var(--amber-soft); color: var(--amber); }
+.rs.later { background: var(--leaf-soft); color: var(--muted); }
+.launch-state { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; font-size: 16px; }
+.cmd { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cmd code { font-family: var(--mono); font-size: 12.5px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 10px; overflow-wrap: anywhere; min-width: 0; }
 .card.flash { outline: 3px solid var(--gem); outline-offset: 3px; transition: outline-color 1.2s; }
 .you { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 12px; }
 
@@ -273,6 +302,11 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
     <div class="brand">
       <h1><img class="logo" src="/_blob/550d68664d6c502b277bfca8dfe2fbd1" alt="Lodestone Studio" width="900" height="609"></h1>
     </div>
+    <div class="qa" aria-label="Quick actions">
+      <button data-act="qa-report"><span aria-hidden="true">◆</span> Status report</button>
+      <button data-act="qa-launch"><span aria-hidden="true">▶</span> Launch game</button>
+      <button data-act="qa-roadmap"><span aria-hidden="true">◇</span> Roadmap</button>
+    </div>
     <div class="tally" aria-live="polite">
       <div><b id="t-desk">–</b><span>On your desk</span></div>
       <div><b id="t-work">–</b><span>Working now</span></div>
@@ -331,6 +365,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
 </main>
 
 <div class="rv" id="rv" hidden role="dialog" aria-modal="true" aria-labelledby="rv-h"></div>
+<div class="rv" id="qv" hidden role="dialog" aria-modal="true" aria-labelledby="qv-h"></div>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Image">
   <button id="lb-close">Close</button>
   <img id="lb-img" alt="">
@@ -339,7 +374,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
 <div class="toast" id="toast" hidden></div>
 
 <script>
-const S = { db: null, desk: [], roles: [], log: [], notes: [], refs: [], library: [], tab: "open", libTab: "all", room: "office", openRole: null, openFolder: null, drafts: {} };
+const S = { db: null, desk: [], roles: [], log: [], notes: [], refs: [], library: [], roadmap: [], requests: [], qa: null, reportHtml: "", tab: "open", libTab: "all", room: "office", openRole: null, openFolder: null, drafts: {} };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const KIND = { choice: "Your call", go: "Picsart go-ahead", review: "Art review", todo: "To do" };
@@ -668,7 +703,109 @@ document.querySelectorAll("#lib-tabs button").forEach((b) => b.addEventListener(
 }));
 setRoom((location.hash || "").slice(1));
 
-function renderAll() { renderTally(); renderDesk(); renderTeam(); renderRefs(); renderLib(); if (S.openRole) renderRoleView(); }
+/* ---------- quick actions ---------- */
+function openQa(kind) {
+  S.qa = kind;
+  renderQa();
+  const el = $("qv");
+  el.hidden = false; el.scrollTop = 0;
+  document.documentElement.classList.add("locked");
+  el.querySelector("[data-act=closeqa]")?.focus();
+}
+function closeQa() {
+  S.qa = null; S.reportAbort?.abort();
+  $("qv").hidden = true; $("qv").innerHTML = "";
+  if (!S.openRole) document.documentElement.classList.remove("locked");
+}
+function renderQa() {
+  if (!S.qa) return;
+  const title = { report: "Status report", roadmap: "Roadmap", launch: "Launch the game" }[S.qa];
+  const body = S.qa === "report" ? `<div class="rep" id="rep">${S.reportHtml || ""}</div>` : S.qa === "roadmap" ? roadmapHtml() : launchHtml();
+  $("qv").innerHTML = `<div class="rv-in"><header class="rv-head"><div class="rv-title"><h2 id="qv-h">${title}</h2></div><button class="rv-x" data-act="closeqa" aria-label="Close">×</button></header><div class="qa-body">${body}</div></div>`;
+}
+
+// Status report: Claude writes it from the studio records; without Claude in this view, a plain summary.
+function mdLite(t) {
+  const out = []; let list = null;
+  for (const raw of String(t).split(/\n/)) {
+    const l = raw.trim().replace(/\*\*/g, "");
+    if (!l) { list = null; continue; }
+    if (/^#{1,4}\s/.test(l)) { list = null; out.push(`<h4>${esc(l.replace(/^#+\s*/, ""))}</h4>`); }
+    else if (/^[-*•]\s/.test(l)) { if (!list) { list = []; out.push(list); } list.push(`<li>${esc(l.replace(/^[-*•]\s*/, ""))}</li>`); }
+    else { list = null; out.push(`<p${out.length ? "" : ' class="lead"'}>${esc(l)}</p>`); }
+  }
+  return out.map((x) => Array.isArray(x) ? `<ul>${x.join("")}</ul>` : x).join("");
+}
+function studioSnapshot() {
+  const day = Date.now() - 86400000;
+  const pick = (d) => ({ id: d.id, title: d.title, role: roleName(d.role), status: d.status || "open", result: d.result || undefined });
+  return {
+    now: new Date().toISOString(),
+    roles: S.roles.map((r) => ({ name: r.name, status: roleStatus(r), now: r.now, next: r.next, updated: r.updated })),
+    waiting_on_brandon: S.desk.filter((d) => (d.status || "open") === "open").map(pick),
+    answered_not_picked_up: S.desk.filter((d) => d.status === "answered").map(pick),
+    done_last_24h: S.desk.filter((d) => d.status === "done" && new Date(d.answer?.at || d.created).getTime() > day).map(pick),
+    log_last: [...S.log].sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 30).map((l) => ({ role: roleName(l.role), at: l.at, text: l.text })),
+    roadmap: S.roadmap.map((t) => ({ track: t.title, items: (t.items || []).map((i) => `${i.status}: ${i.title}`) })),
+  };
+}
+function plainReport() {
+  const s = studioSnapshot();
+  const lines = [`${s.waiting_on_brandon.length} card${s.waiting_on_brandon.length === 1 ? "" : "s"} wait on you; ${s.roles.filter((r) => r.status === "working").length} role${s.roles.filter((r) => r.status === "working").length === 1 ? " is" : "s are"} working.`, "## Waiting on you", ...s.waiting_on_brandon.map((d) => `- ${d.title} (${d.role})`), "## The team", ...s.roles.map((r) => `- ${r.name}: ${r.now || r.status}`), "## Latest", ...s.log_last.slice(0, 8).map((l) => `- ${l.role}: ${l.text}`)];
+  return mdLite(lines.join("\n"));
+}
+async function runReport() {
+  openQa("report");
+  const set = (html) => { S.reportHtml = html; const el = $("rep"); if (el) el.innerHTML = html; };
+  if (!S.sample) { set(plainReport() + `<p class="rep-meta">A plain summary from the studio records; Claude isn't available in this view.</p>`); return; }
+  set(`<p class="rep-meta">Writing the report from the studio records…</p>`);
+  S.reportAbort?.abort(); S.reportAbort = new AbortController();
+  const prompt = `You are the project manager of Lodestone, a tactics game in development. Write a status report for Brandon, the art director and writer, from the studio records below. Plain words, short sentences, no jargon, no story or lore. Format: one headline sentence; then sections as lines starting "## ": "Done today", "In progress", "Waiting on you", "Up next". Each section 2 to 6 bullets starting "- ". Keep commit ids in parentheses where the records give them. Under 250 words. Only use what the records say.\n\nRecords (JSON):\n${JSON.stringify(studioSnapshot())}`;
+  try {
+    const r = await S.sample(prompt, { cache: false, signal: S.reportAbort.signal, onText: ({ text }) => set(mdLite(text)) });
+    set(mdLite(r.text) + `<p class="rep-meta">Written ${esc(new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))} from the studio records.</p>`);
+  } catch (e) {
+    if (e?.name === "AbortError") return;
+    set(plainReport() + `<p class="rep-meta">${e?.code === "rate_limited" ? "Claude is busy; here's the plain summary. Try again in a minute." : "Claude couldn't write it just now; here's the plain summary."}</p>`);
+  }
+}
+
+// Roadmap: one record per track, kept current by the roles as steps land.
+function roadmapHtml() {
+  if (!S.roadmap.length) return `<div class="empty"><h3>No roadmap yet</h3>The project manager keeps one here.</div>`;
+  const label = { done: "Done", doing: "Doing", next: "Next", later: "Later" };
+  return [...S.roadmap].sort((a, b) => (a.order ?? 50) - (b.order ?? 50)).map((t) => {
+    const items = t.items || [];
+    const counted = items.filter((i) => i.status !== "later");
+    const done = counted.filter((i) => i.status === "done").length;
+    const pct = counted.length ? Math.round(100 * done / counted.length) : 0;
+    return `<section class="rm-track">
+      <div class="rm-head"><h3>${esc(t.title)}</h3><span>${done} of ${counted.length} done${t.owner ? " · " + esc(roleName(t.owner)) : ""}</span></div>
+      <div class="rm-bar" role="img" aria-label="${pct}% done"><i style="width:${pct}%"></i></div>
+      <ol class="rm-items">${items.map((i) => `<li class="${esc(i.status)}"><span class="rs ${esc(i.status)}">${label[i.status] || esc(i.status)}</span><span>${esc(i.title)}${i.ref ? ` <code>${esc(i.ref)}</code>` : ""}</span></li>`).join("")}</ol>
+    </section>`;
+  }).join("");
+}
+
+// Launch: the page can't start programs on the Mac, so it asks the project manager, who opens the game.
+function launchHtml() {
+  const last = [...S.requests].filter((r) => r.kind === "launch").sort((a, b) => String(b.at).localeCompare(String(a.at)))[0];
+  const state = !last ? `<p>Sending the request…</p>`
+    : last.status === "done" ? `<p><b>Launched</b> ${esc(ago(last.done_at || last.at))}. ${esc(last.result || "")}</p>`
+    : `<p><b>Asked the project manager</b> ${esc(ago(last.at))}. The game opens on your screen at its next check, within 15 minutes. To have it now, say "launch" in the Lodestone chat.</p>`;
+  return `<div class="launch-state">${state}</div>
+    <p class="rep-meta">Or start it yourself in Terminal:</p>
+    <div class="cmd"><code id="launch-cmd">open -n -a Godot --args --path ~/lodestone/game</code><button class="btn small" data-act="qa-copy">Copy</button></div>`;
+}
+async function requestLaunch() {
+  openQa("launch");
+  const recent = S.requests.find((r) => r.kind === "launch" && r.status === "new" && Date.now() - new Date(r.at).getTime() < 15 * 60000);
+  if (recent) return;
+  try { await S.db.collection("requests").add({ kind: "launch", status: "new", at: new Date().toISOString() }); }
+  catch { toast("Couldn't send the launch request. Try again in a moment."); }
+}
+
+function renderAll() { renderTally(); renderDesk(); renderTeam(); renderRefs(); renderLib(); if (S.openRole) renderRoleView(); if (S.qa && S.qa !== "report") renderQa(); }
 
 /* ---------- actions ---------- */
 async function save(id, patch, msg) {
@@ -677,6 +814,7 @@ async function save(id, patch, msg) {
 }
 document.addEventListener("click", async (ev) => {
   if (ev.target.id === "rv") { closeRole(); return; }  // a click on the dimmed page outside the window
+  if (ev.target.id === "qv") { closeQa(); return; }
   const z = ev.target.closest("[data-zoom]");
   if (z) { $("lb-img").src = z.dataset.zoom; $("lb-img").alt = z.dataset.cap || ""; $("lb-cap").textContent = z.dataset.cap || ""; $("lb").hidden = false; $("lb-close").focus(); return; }
   const t = ev.target.closest("[data-act]");
@@ -732,6 +870,16 @@ document.addEventListener("click", async (ev) => {
       }
       case "role": S.openRole = id; renderRoleView(); break;
       case "closerole": closeRole(); break;
+      case "qa-report": runReport(); break;
+      case "qa-roadmap": openQa("roadmap"); break;
+      case "qa-launch": requestLaunch(); break;
+      case "closeqa": closeQa(); break;
+      case "qa-copy": {
+        const txt = $("launch-cmd")?.textContent || "";
+        try { await navigator.clipboard.writeText(txt); toast("Copied"); }
+        catch { const r = document.createRange(); r.selectNodeContents($("launch-cmd")); getSelection().removeAllRanges(); getSelection().addRange(r); toast("Selected: press ⌘C"); }
+        break;
+      }
       case "gotocard": {
         const st = d?.status || "open";
         S.openRole = null; renderRoleView(); setRoom("office"); setTab(st);
@@ -768,6 +916,7 @@ $("lb").addEventListener("click", (e) => { if (e.target.id === "lb") closeLb(); 
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (!$("lb").hidden) closeLb();
+  else if (S.qa) closeQa();
   else if (S.openRole) closeRole();
 });
 
@@ -784,8 +933,9 @@ function watch(coll, key) {
 (async () => {
   try { S.db = await window.claude?.use?.("db"); } catch { S.db = null; }
   try { S.assets = await window.claude?.use?.("assets"); } catch { S.assets = null; }
+  try { S.sample = await window.claude?.use?.("sample"); } catch { S.sample = null; }
   if (!S.db) { renderAll(); return; }
-  watch("desk", "desk"); watch("roles", "roles"); watch("log", "log"); watch("notes", "notes"); watch("refs", "refs"); watch("library", "library");
+  watch("desk", "desk"); watch("roles", "roles"); watch("log", "log"); watch("notes", "notes"); watch("refs", "refs"); watch("library", "library"); watch("roadmap", "roadmap"); watch("requests", "requests");
 })();
 setInterval(renderTally, 60000);
 </script>

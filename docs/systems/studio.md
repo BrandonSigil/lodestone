@@ -19,6 +19,8 @@ Read and write them with the `ArtifactData` tool and the URL above. Pin every wr
 | `roles` | a chair | `name`, `job`, `status` (`working`, `waiting`, `idle`, `blocked`), `now`, `next`, `updated`, `order` |
 | `log` | one line of a role's work | `role`, `at`, `text`, `image` (optional) |
 | `notes` | a note Brandon left a role | `role`, `text`, `images` [{url, id}], `at`, `status` (`new`, `seen`) |
+| `roadmap` | a track on the Roadmap (quick action) | `title`, `order`, `owner` (role id), `items` [{title, status (`done`, `doing`, `next`, `later`), ref (commit)}] |
+| `requests` | a quick-action request from the page | `kind` (`launch`), `status` (`new`, `done`), `at`, `result`, `done_at` |
 | `refs` | a group on the References wall | `title`, `used_for`, `warning`, `images` [{url, caption, path, slot}], `prompts`, `order`, `retired` |
 | `library` | a shelf | `title`, `path`, `kind` (`ingame`, `raw`, `code`), `status`, `note`, `items` [{url, name}], `order` |
 
@@ -40,3 +42,8 @@ Pictures from Brandon: any answer, and any note, may carry `images` [{url, id}] 
 ## Keep the walls true
 - References: when a prompt starts sending a different picture, change its group on the wall the same day. If it isn't on the wall, Claude isn't using it.
 - Library: add a shelf (or items) for every new batch folder; flip its `status` when Brandon stamps it.
+
+## Quick actions (masthead)
+- **Status report**: Claude writes it in the page from the desk, roles, log and roadmap (the page's `sample` capability). Nothing to do here, except keep those records true.
+- **Roadmap**: one `roadmap` doc per track. When a role finishes or starts a step, it flips that item's `status` and adds the commit as `ref`; new approved build orders become new items. The project manager keeps tracks and order tidy.
+- **Launch game**: the page writes a `requests` doc with `kind: "launch"`. The project manager's desk watch launches the game (`open -n -a Godot --args --path ~/lodestone/game`, on Brandon's main screen since he asked for it) and marks the request `done` with `done_at` and a one-line `result`.
