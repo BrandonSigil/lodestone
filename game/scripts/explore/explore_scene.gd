@@ -69,6 +69,9 @@ func _ready() -> void:
 	board.fog_on = map.fog
 	board.show_grid = false
 	board.backdrop = true  # the map's look: sky, mountains and forest for valley looks, a dark floor indoors
+	# Outdoors, the painted look's staging (as in the map maker and fights): the set's skyline fixed behind
+	# the view and a solid foreground band. Interiors keep their dark floor.
+	board.wallpaper = MapLook.resolve(grid.look, map.art_set, map.strangeness).staging != "plain"
 	add_child(board)
 	overlay = ExploreOverlay.new()
 	overlay.scene = self

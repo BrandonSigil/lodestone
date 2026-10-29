@@ -213,6 +213,8 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-28 Levels: 100 XP a level, +1 max HP each level, a pick every 4 levels (MORE HEALTH +3 HP, MORE HIT +1 to hit and damage, MORE MAGIC +2 on spells and magic hits). Every member gets the fight's XP: 10 for the win, 25 a foe, 100 for a boss. `data/levels.csv`.
 - [AI] 2026-10-28 Overworld numbers: a leg is 60 seconds with 1 or 2 encounters; a meal every 30 seconds walked; no food costs 1 HP each, never below 1; hunt, fish and forage once per 15 seconds walked each. GO HOME from the Lodestone heals the party in the square, like a fall.
 - [AI] 2026-10-28 The village gate opens only once the Lodestone is taken, so there are no fights before it (as the empty-village draft proposed).
+- [USER] 2026-10-28 The loop's maps and fights use the painted look from the "Handmade map generator aesthetics" work, not the older staging (Brandon).
+- [AI] 2026-10-28 Following that: explore maps outdoors turn on the wallpaper staging; road fights are `MapGen.valley` maps (V9 to V11) instead of the old generated islands (kept for the shelved trail); the snow pass is dressed by the game's own MapOps after its Python builder (V9 tidy, V10 pillars, V12 a road ribbon) and its stair flights are one cell wide.
 - [AI] 2026-10-28 Balance for a party of two (AI-vs-AI sim): the Lich King fights alone at 22 HP (about 46% for the AI at level 4); the wolf den is a pair plus a lone wolf instead of three together (three wolves won 61% at level 2).
 
 ## Exploration maps

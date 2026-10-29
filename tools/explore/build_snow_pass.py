@@ -178,8 +178,9 @@ for y in range(N):
         i = terrace(u, d)
         P.put(x, y, "g", LEVELS[i])
 
-# Stair flights. Each runs up the screen (toward -x on the left of the pass, -y on the right), two cells
-# wide; the lower cell sits one level up, the upper one on the terrace's level. They switch back:
+# Stair flights. Each runs up the screen (toward -x on the left of the pass, -y on the right), one cell
+# wide and straight up the slope, as the painted look wants (map maker notes, V9); the lower cell sits one
+# level up, the upper one on the terrace's level. They switch back:
 # meadow -> wolf shelf on the right, wolf shelf -> middle on the left, middle -> high on the right,
 # high -> summit in the middle (the choke the bandits hold).
 
@@ -187,7 +188,7 @@ for y in range(N):
 def flight(u0, i, axis):
     """A flight from terrace i to i+1 at screen column u0; axis 'x' climbs along -x, 'y' along -y."""
     lo, hi = LEVELS[i], LEVELS[i + 1]
-    lanes = [0, 1]
+    lanes = [0]
     made = []
     for lane in lanes:
         # Start on terrace i just in front of its back edge, on this lane.
@@ -263,7 +264,7 @@ for u, d in ROCKS:
     if P.t(x, y) in "gf":
         P.put(x, y, "r", P.ht(x, y) + 1)
 
-# The choke under the summit: rock shoulders either side of the last flight leave two cells open.
+# The choke under the summit: rock shoulders either side of the last flight leave a narrow way up.
 for u in range(-8, 9):
     if -3 <= u <= 2:
         continue
@@ -463,6 +464,15 @@ for t in P.things:
 
 P.save(strangeness=0.1)
 W.save()
+
+# The painted look's authoring rules (V9 tidy edges, V10 pillars, V12 a beige road from the foot of the pass
+# to the crypt stair) come from the game's own MapOps, as the map maker's Generate menu applies them.
+import shutil
+import subprocess
+GODOT = os.environ.get("GODOT") or shutil.which("godot") or "/Applications/Godot.app/Contents/MacOS/Godot"
+GAME = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "game"))
+subprocess.run([GODOT, "--headless", "--path", GAME, "-s", "res://tools/dress_explore.gd", "--",
+                "snow_pass", "pass_exit", "crypt_stair", "3"], check=True)
 if __name__ == "__main__":
     P.dump()
     print("start", start, "den_mouth", den, "den front", DEN_FRONT, "rope", rope_cell, "->", ledge_front,
