@@ -145,10 +145,13 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 - **The weapon is the job; switch in the village, starting that job at 0** (pc-9). Take a different weapon at the smithy to change job (so you can bring a companion who fills your old role). Later weapon types can be powerful new jobs. This replaces the draft of a job at level 5.
 - **The party of four changes only at home** (pc-10). Every companion lives somewhere in the village; walk up to one to invite them, or use the edit-party prompt at the gate on the way out (one key to go, one to edit). So a dog sent home with a load leaves a party of three for the rest of the trip.
 - **Sneaking wins the first strike, as today** (pc-11). Rogue and sneaky characters get skills that feel stealthy in a fight (a shadowstep, a vanish).
+- **Switching job keeps the hero's level; stats shift toward the new job; its ranks start at 0** (pc-12), Fire Emblem reclass style.
+- **A well-levelled job splits into one of two branches** (pc-13), Fire Emblem promotion style. The draft pairs (knight to guardian or vanguard, rogue to assassin or thief, archer to hunter or sharpshooter, mage to wizard or healer) stay `[AI]` until their skills are designed.
+- **Weapons improve by smithy upgrades paid in materials** (pc-14). One weapon per job, raised step by step; no loot chase.
+- **Elite fights are marked with a badge and avoidable** (pc-15): they sit where you can back out or take another path.
 
 ### Gaps these answers open
-- **What "start that job at 0" resets** (from pc-9): only the job's own level (its skills and ranks), or the hero's whole level and stats too? *Proposal:* the hero keeps one character level (HP and stats); each job has its own job level that sets its skill ranks and resource size. Next batch.
-- **The level 10 branch** (from pc-9): the draft's two branches per job (knight to guardian or vanguard, and so on) are still `[AI]`. With jobs switchable, do branches stay? Next batch.
+- **Job level vs character level** (from pc-12): the hero keeps one character level; each job has its own job level for ranks and its branch. *Proposal:* the branch comes at job level 10; job XP is earned alongside character XP.
 - **Companions' homes** (from pc-10): each companion needs a place in the village to be found and invited. A job for the map builder once companions exist; it fits the `[USER]` 2026-10-27 line that settlers are village NPCs (companions also live there, but join the party).
 - **Rank interval** (from pc-8): *proposal:* a rank to spend every 4 levels, up to 3 ranks a skill. What ranks cost (nothing, or a village trainer and materials) ties to the one-more-run theme.
 - **Growth odds are data** (from pc-7): a per-character, per-job table of odds in `game/data/`.
@@ -178,17 +181,40 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 ### Batch 3 (posted 2026-10-29)
 | Card | Question | Answer |
 |---|---|---|
-| `design-pc-12-jobreset` | Switching job: only the job's level starts at 0, stats shift to the new job, or back to level 1? | open |
-| `design-pc-13-branch` | Does a job split in two later: two branches, one promotion, or no branches (new weapons are the growth)? | open |
-| `design-pc-14-weapons` | How a weapon gets better: smithy upgrades, found weapons with traits, or both? | open |
-| `design-pc-15-elites` | How elite fights show: marked on the map and avoidable, seen only up close, or a hunter that roams? | open |
+| `design-pc-12-jobreset` | Switching job: only the job's level starts at 0, stats shift to the new job, or back to level 1? | Keep the level; stats shift; ranks from 0 |
+| `design-pc-13-branch` | Does a job split in two later: two branches, one promotion, or no branches (new weapons are the growth)? | Two branches |
+| `design-pc-14-weapons` | How a weapon gets better: smithy upgrades, found weapons with traits, or both? | Smithy upgrades |
+| `design-pc-15-elites` | How elite fights show: marked on the map and avoidable, seen only up close, or a hunter that roams? | Marked with a badge, avoidable |
 
-After this batch: the player-choice build card, then the one-more-run theme.
+### Build order (card `design-choice-build`)
+*Proposal:* after the inventory build, the bottom UI frame and the combat build, because jobs lean on combat step 5 (resources by job).
+1. **Growth.** A level every 100 XP; stats rolled each level from per-character (and per-job) growth odds in `game/data/`, never a stat the character can't use; skills scale with stats on their own; a skill rank to spend every 4 levels (up to 3 a skill) from the Lodestone menu, each rank adding an effect from data. Replaces +1 HP a level and the health / attack / magic pick.
+2. **The weapon is the job.** The smithy weapon sets the hero's job from the start (sword knight, daggers rogue, bow archer, the book mage); each job has its own job level; switching weapons at the smithy keeps the character level, shifts stats to the new job's base, and starts its ranks at 0. Branch choice at job level 10 (two per job; skills for them come later).
+3. **Party at home.** Edit the four at the gate (one key to go, one to edit), and invite a companion by walking up to them in the village.
+4. **Elite fights.** An elite tier for groups, a badge over them on explore maps and on overworld places, placed where the party can back out or go round.
+5. **Later:** smithy weapon upgrades (need materials, the one-more-run theme).
+
 
 ## One more run
-First link, from the inventory theme (inv-5): a recruited character returns to the village and unlocks a pack upgrade, which costs materials brought home. Packing decides how many materials a trip can bring home (inv-4).
+### Already decided (from the other themes)
+- Falling costs nothing; the party wakes in the square with everything (2026-10-28). Grinding is allowed (pc-4).
+- Everything carried shares a 4 x 3 pack; packing decides what you bring out and what you bring home (inv-1, inv-4, inv-7).
+- Materials bank themselves when you get home (inv-10).
+- A settler you find unlocks the pack upgrade, paid in materials (inv-5). Smithy weapon upgrades are paid in materials (pc-14).
+- Elite fights are marked, avoidable and give better rewards (pc-6, pc-15).
+- Gold and a shop arrive once a blacksmith or merchant settles (2026-10-27).
 
-Not started as its own theme. Queued: what a trip brings home (one material or several); what the village builds; what a building unlocks (classes, gear upgrades, new places, trip-only boons); what a fall costs, if anything, beyond the decided "nothing"; how long one run should be.
+So the chain has its shape: **trip, then materials, then a settler's build, then a stronger party or a bigger pack, then a deeper trip.** Batch 1 asks what fills each box.
+
+### Batch 1 (posted 2026-10-29)
+| Card | Question | Answer |
+|---|---|---|
+| `design-omr-1-materials` | How many kinds of material: one, a few, or new ones per region? | open |
+| `design-omr-2-builds` | What a village build is: fixed buildings restored, a board of projects, or free placement on plots? | open |
+| `design-omr-3-unlocks` | What builds unlock beyond pack and weapon upgrades (multi): new places, trip starts, new companions, shops, fight perks | open |
+| `design-omr-4-length` | How long one trip should be: 15 to 20 minutes, 30 to 45, or an hour or more? | open |
+| `design-omr-5-goal` | How the next goal stays in view: a build board with what's missing, a pinned wish list, or settlers who ask? | open |
+| `design-omr-6-boons` | Power that lasts only for a trip: blessings found on the road, camp meals, or none? | open |
 
 ## Inventory
 ### Brandon's opening (2026-10-29)
