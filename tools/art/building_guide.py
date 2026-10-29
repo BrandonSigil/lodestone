@@ -14,9 +14,10 @@ gabled or pyramid roofs; the prompt asks the model to keep them and paint the bu
 Coordinates per part are grid cells: x runs along the LEFT front wall (foot_w), y along the right one
 (foot_h); (0, 0) is the back corner. h is wall height in levels, rh roof height, roof "x" puts the ridge
 along x (a long left wall, gable on the right), "y" along y, "pyr" a pyramid, "shed" a lean-to
-sloping down to the front, None a flat top. "windows" lists ("left" | "right", place along that wall).
+sloping down to the front, None a flat top; "curve": True bows a gabled roof's slopes. "windows" lists ("left" | "right", place along that wall).
 """
 import argparse
+import math
 from functools import cmp_to_key
 from pathlib import Path
 
@@ -52,18 +53,19 @@ BUILDINGS = {
         {"box": (0, 0, 3, 1.7), "h": 4.5, "roof": "x", "rh": 3.5, "door": ("left", 2.3)},
         {"box": (0, 1.7, 1.6, 4), "h": 3.7, "roof": "y", "rh": 2.6, "open": ("right", 2.85)},
         {"box": (0.2, 3.2, 0.7, 3.7), "h": 8.5, "roof": None, "chimney": True}]},
-    # Tavern: one long low common room under a big roof, one chimney, the sign by the door.
+    # Tavern: one long low common room under a big roof, one chimney, the sign by the door. Brandon on the
+    # rooted review: roofs a bit more curved and less steep (tavern and town hall).
     "tavern": {"foot": (6, 4), "parts": [
-        {"box": (0, 0, 6, 4), "h": STOREY, "roof": "x", "rh": 6.5, "door": ("left", 2.2), "sign": 3.05,
+        {"box": (0, 0, 6, 4), "h": STOREY, "roof": "x", "rh": 4.2, "curve": True, "door": ("left", 2.2), "sign": 3.05,
          "windows": [("left", 0.9), ("left", 4.3), ("left", 5.3), ("right", 1.2), ("right", 2.8)]},
-        {"box": (4.4, 1.7, 4.9, 2.2), "h": STOREY + 9.5, "roof": None, "chimney": True}]},
+        {"box": (4.4, 1.7, 4.9, 2.2), "h": STOREY + 7.0, "roof": None, "chimney": True}]},
     # Town hall: the biggest single-storey hall in town, a tall gabled entrance that juts out with wide
     # double doors, and a lantern on the ridge instead of a church-like bell tower.
     "townhall": {"foot": (7, 5), "parts": [
-        {"box": (3.1, 1.65, 3.9, 2.45), "h": STOREY * 1.25 + 9.5, "roof": "pyr", "rh": 3.5},
-        {"box": (0, 0, 7, 4.1), "h": STOREY * 1.25, "roof": "x", "rh": 7.5,
+        {"box": (3.1, 1.65, 3.9, 2.45), "h": STOREY * 1.25 + 6.5, "roof": "pyr", "rh": 3.0},
+        {"box": (0, 0, 7, 4.1), "h": STOREY * 1.25, "roof": "x", "rh": 4.8, "curve": True,
          "windows": [("left", 1.1), ("left", 5.9), ("right", 1.0), ("right", 3.0)]},
-        {"box": (2.6, 4.1, 4.4, 5), "h": STOREY * 1.1, "roof": "y", "rh": 3.8, "door": ("left", 3.5), "wide": True}]},
+        {"box": (2.6, 4.1, 4.4, 5), "h": STOREY * 1.1, "roof": "y", "rh": 2.8, "curve": True, "door": ("left", 3.5), "wide": True}]},
 }
 
 C_LEFT, C_RIGHT, C_TOP = (206, 202, 190), (172, 168, 156), (190, 186, 174)
@@ -74,6 +76,15 @@ C_WINDOW = (112, 106, 100)
 
 def iso(x, y, h):
     return ((x - y) * TW * 0.5, (x + y) * TH * 0.5 - h * HS)
+
+
+def profile(eave, ridge, h, rh, curve):
+    """Points (across, height) of one roof slope from its eave up to the ridge: straight, or bowed
+    (a gentle bow: a little steeper at the eave, flatter at the ridge) when curve is set."""
+    if not curve:
+        return [(eave, h), (ridge, h + rh)]
+    steps = 8
+    return [(eave + (ridge - eave) * i / steps, h + rh * (0.45 * i / steps + 0.55 * math.sin(math.pi / 2 * i / steps))) for i in range(steps + 1)]
 
 
 def polys(part):
@@ -96,15 +107,21 @@ def polys(part):
     if roof is None:
         out.append(([(x0, y0, h), (x1, y0, h), (x1, y1, h), (x0, y1, h)], C_TOP))
     elif roof == "x":
-        ym, H = (y0 + y1) / 2, h + rh
-        out.append(([(x0 - e, y0 - e, h), (x1 + e, y0 - e, h), (x1 + e, ym, H), (x0 - e, ym, H)], C_ROOF_DARK))
-        out.append(([(x1, y1, h), (x1, y0, h), (x1, ym, H)], C_RIGHT))
-        out.append(([(x0 - e, ym, H), (x1 + e, ym, H), (x1 + e, y1 + e, h), (x0 - e, y1 + e, h)], C_ROOF))
+        ym = (y0 + y1) / 2
+        back = profile(y0 - e, ym, h, rh, part.get("curve"))  # [(y, z)] from the back eave up to the ridge
+        front = profile(y1 + e, ym, h, rh, part.get("curve"))
+        out.append(([(x0 - e, y, z) for y, z in back] + [(x1 + e, y, z) for y, z in reversed(back)], C_ROOF_DARK))
+        gable = profile(y1, ym, h, rh, part.get("curve")) + list(reversed(profile(y0, ym, h, rh, part.get("curve"))))[1:]
+        out.append(([(x1, y, z) for y, z in gable], C_RIGHT))
+        out.append(([(x0 - e, y, z) for y, z in front] + [(x1 + e, y, z) for y, z in reversed(front)], C_ROOF))
     elif roof == "y":
-        xm, H = (x0 + x1) / 2, h + rh
-        out.append(([(x0 - e, y0 - e, h), (x0 - e, y1 + e, h), (xm, y1 + e, H), (xm, y0 - e, H)], C_ROOF))
-        out.append(([(xm, y0 - e, H), (xm, y1 + e, H), (x1 + e, y1 + e, h), (x1 + e, y0 - e, h)], C_ROOF_DARK))
-        out.append(([(x0, y1, h), (x1, y1, h), (xm, y1, H)], C_LEFT))
+        xm = (x0 + x1) / 2
+        back = profile(x0 - e, xm, h, rh, part.get("curve"))
+        front = profile(x1 + e, xm, h, rh, part.get("curve"))
+        out.append(([(x, y0 - e, z) for x, z in back] + [(x, y1 + e, z) for x, z in reversed(back)], C_ROOF))
+        out.append(([(x, y0 - e, z) for x, z in front] + [(x, y1 + e, z) for x, z in reversed(front)], C_ROOF_DARK))
+        gable = profile(x0, xm, h, rh, part.get("curve")) + list(reversed(profile(x1, xm, h, rh, part.get("curve"))))[1:]
+        out.append(([(x, y1, z) for x, z in gable], C_LEFT))
     elif roof == "pyr":
         xm, ym, H = (x0 + x1) / 2, (y0 + y1) / 2, h + rh
         out.append(([(x0 - e, y1 + e, h), (x1 + e, y1 + e, h), (xm, ym, H)], C_ROOF))
