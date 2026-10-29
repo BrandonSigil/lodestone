@@ -291,4 +291,5 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-29 Following that: the block-outs propose the tavern at 6 x 4 (was 4 x 4) and the town hall at 7 x 5 (was 5 x 5), with a lantern on the hall's ridge instead of a bell tower. `game/data/catalog.csv` and the village map keep the old sizes until those buildings are approved; the map builder then makes room.
 - [USER] 2026-10-29 The village look is "rooted in the land", a bit moss covered: rough fieldstone walls, low heavy turf or mossy slate roofs, rounded corners, small deep-set windows, little timber; less storybook (Brandon, studio direction card). The approved smithy is in the older storybook look.
 - [USER] 2026-10-29 Keep the shipped see-through window (small, the lead in their own colours, the foot ring), and give the part of the house the window clears a very subtle tint, so its shape still reads (Brandon, studio card see-through-tune-1).
-- [AI] 2026-10-29 Following that: the cleared part draws as a flat silhouette of the prop in a pale blue at 22%, fading in with the window.
+- [AI] 2026-10-29 Following that: the cleared part draws as a flat silhouette of the prop in pale blue, fading in with the window.
+- [USER] 2026-10-29 The window's tint is pale blue at 30% (Brandon, studio card see-through-tune-2).
