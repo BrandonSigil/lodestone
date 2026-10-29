@@ -64,9 +64,13 @@ class Map:
         between them."""
         self.prop(sprite, x, y, foot, tall=1.8, sight=2.0, arch=True)
 
-    def building(self, sprite, x, y, fx, fy, door_dx):
-        """A whole house on an fx x fy footprint; returns the cell in front of its door (left wall)."""
+    def building(self, sprite, x, y, fx, fy, door_dx, yard=None):
+        """A whole house on an fx x fy footprint; returns the cell in front of its door (left wall). A `yard`
+        offset inside the footprint is left open and is the door cell instead (a door painted inside a ^ shape)."""
         self.prop(sprite, x, y, (fx, fy), 0.0, 3.0)
+        if yard:
+            self.props[-1]["open"] = "%d,%d" % yard
+            return [x + yard[0], y + yard[1]]
         return [x + door_dx, y + fy]
 
     def thing(self, **t):
@@ -115,13 +119,18 @@ def _under_arch(pr, dx, dy):
     return 0 < dy < fy - 1 if fy > fx else 0 < dx < fx - 1
 
 
+def _open(pr):
+    """Footprint offsets a prop leaves free ("open": "x,y|x,y", CombatGrid.open_offsets)."""
+    return {tuple(int(v) for v in part.split(",")) for part in pr.get("open", "").split("|") if part}
+
+
 def _prop_cells(m):
-    """Every cell a prop blocks (an arch's gap is left out)."""
+    """Every cell a prop blocks (an arch's gap and its open cells are left out)."""
     cells = {}
     for pr in m.props:
         for dy in range(pr["foot"][1]):
             for dx in range(pr["foot"][0]):
-                if not _under_arch(pr, dx, dy):
+                if not _under_arch(pr, dx, dy) and (dx, dy) not in _open(pr):
                     cells[(pr["cell"][0] + dx, pr["cell"][1] + dy)] = pr
     return cells
 
@@ -179,12 +188,13 @@ def check_village(m):
     for pr in m.props:
         for dy in range(pr["foot"][1]):
             for dx in range(pr["foot"][0]):
-                c = (pr["cell"][0] + dx, pr["cell"][1] + dy)
-                owners[c] = owners.get(c, 0) + 1
+                if (dx, dy) not in _open(pr):
+                    c = (pr["cell"][0] + dx, pr["cell"][1] + dy)
+                    owners[c] = owners.get(c, 0) + 1
     for pr in m.props:
         x0, y0 = pr["cell"]
         fx, fy = pr["foot"]
-        cells = [(x0 + dx, y0 + dy) for dy in range(fy) for dx in range(fx)]
+        cells = [(x0 + dx, y0 + dy) for dy in range(fy) for dx in range(fx) if (dx, dy) not in _open(pr)]
         for c in cells:
             if not ok_cell(c) or m.terrain[c[1]][c[0]] in ".wt":
                 problems.append("%s at %s stands on %s" % (pr["sprite"], (x0, y0), "void/water/stairs"))
@@ -412,23 +422,23 @@ V.put(7, 5, "g")
 BUILT = []
 
 
-def house(sprite, x, y, fx, fy, door_dx):
+def house(sprite, x, y, fx, fy, door_dx, yard=None):
     h = V.height[y][x]
     V.fill(x, y, x + fx - 1, y + fy - 1, "g", h)
     BUILT.append((sprite, x, y, fx, fy))
-    door = V.building(sprite, x, y, fx, fy, door_dx)
+    door = V.building(sprite, x, y, fx, fy, door_dx, yard)
     V.put(door[0], door[1], "d", h)
     return door
 
 
 hall_door = house("b_townhall", 17, 3, 5, 5, 3)  # door at (20, 8), on the line of the stair and the statue
-smithy_door = house("b_smithy", 8, 9, 3, 4, 1)  # on the shelf, the stream below its back wall
+smithy_door = house("b_smithy", 8, 9, 3, 4, 0, yard=(2, 2))  # on the shelf; the door faces its own yard, inside the ^
 quiet_door = house("b_home_c", 30, 2, 4, 3, 1)  # the quiet house (the hidden book), up on the bluff
 bluff_door = house("b_home_a", 34, 4, 3, 3, 1)  # a second home on the bluff
 tavern_door = house("b_tavern", 31, 18, 4, 4, 1)  # east of the square, its garden facing the front
 west_door = house("b_home_a", 2, 18, 3, 3, 1)  # the dog's house, over the footbridge on the far bank
 hero_door = house("b_home_hero", 11, 25, 3, 3, 1)  # the hero's cottage, on the bend of the stream
-south_east_door = house("b_home_b", 28, 25, 4, 3, 2)
+south_east_door = house("b_home_b", 28, 25, 4, 3, 1)
 far_door = house("b_home_a", 34, 28, 3, 3, 1)
 
 V.fill(20, 9, 21, 11, "s")  # the forecourt runs straight from the hall door to the stair

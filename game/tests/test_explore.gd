@@ -331,6 +331,19 @@ func test_placed_props_block_and_save() -> void:
 	eq(back.prop_at(Vector2i(4, 3)).sprite, "b_tavern", "footprint cell finds its prop")
 
 
+func test_open_footprint_cells() -> void:
+	var g := CombatGrid.flat(8, 8)
+	g.add_prop(Vector2i(1, 1), "b_smithy", Vector2i(3, 4), 0.0, 3.0, false, {"open": "2,2"})
+	ok(g.passable(Vector2i(3, 3)), "an open cell in a footprint can be walked (the smithy yard)")
+	ok(not g.passable(Vector2i(3, 4)) and not g.passable(Vector2i(2, 3)), "the rest still blocks")
+	eq(g.prop_anchor(Vector2i(3, 3)), CombatGrid.NONE_CELL, "the open cell belongs to no prop")
+	var back := CombatGrid.from_dict(g.to_dict())
+	ok(back.passable(Vector2i(3, 3)), "open cells survive a save")
+	eq(CombatGrid.mirror_open("2,2|0,3"), "2,2|3,0", "mirroring swaps each open offset")
+	g.remove_prop(Vector2i(1, 1))
+	ok(g.passable(Vector2i(3, 4)), "removing it frees the footprint")
+
+
 func test_village_maps_link_up() -> void:
 	if Db.explore_events.is_empty():
 		Db.reload()

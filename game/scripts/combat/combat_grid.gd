@@ -29,7 +29,8 @@ var zones := PackedStringArray()  ## per-cell tile set (BattleArt set name); "" 
 ## Placed props (wells, carts, beds, whole buildings): anchor cell (back corner of the footprint) ->
 ## {"sprite": file stem, "foot": Vector2i cells, "tall": draw height in tile widths (0 = fit the footprint),
 ## "sight": levels it blocks sight above the ground, "walk": can pieces stand on it (rugs)}, plus the
-## optional PROP_EXTRA keys the map maker sets (facing, mirror, an id, a placeholder blob's name, a note, an arch).
+## optional PROP_EXTRA keys the map maker sets (facing, mirror, an id, a placeholder blob's name, a note, an arch,
+## and "open": footprint offsets "x,y|x,y" the prop leaves free, like the yard in a ^-shaped building).
 var props := {}
 ## How the map is staged (see MapLook and docs/design/map-look.md): {"id": a row of data/looks.csv, and
 ## optional "staging", "floor", "skirt" overrides}. Empty = the look named like the tile set.
@@ -212,7 +213,7 @@ func set_zone(c: Vector2i, z: String) -> void:
 ## (mirrored), "id" (a name to script it by), "blob" (a named placeholder block: true, with "name"), "note"
 ## (a designer note for Claude: what it should do or look like), "arch" (true: a gateway; only the two end
 ## cells of its long side are pillars, pieces walk and see through the cells between them).
-const PROP_EXTRA := ["face", "flip", "id", "blob", "name", "note", "arch"]
+const PROP_EXTRA := ["face", "flip", "id", "blob", "name", "note", "arch", "open"]
 
 
 ## Stand a prop on the map. Its footprint runs from the anchor toward +x and +y.
@@ -222,9 +223,8 @@ func add_prop(anchor: Vector2i, sprite: String, foot := Vector2i.ONE, tall := 0.
 		if extra.has(k):
 			props[anchor][k] = extra[k]
 	version += 1
-	for dy in foot.y:
-		for dx in foot.x:
-			_prop_at[anchor + Vector2i(dx, dy)] = anchor
+	for c in prop_cells(anchor):
+		_prop_at[c] = anchor
 	_sight.clear()
 
 
@@ -232,11 +232,9 @@ func add_prop(anchor: Vector2i, sprite: String, foot := Vector2i.ONE, tall := 0.
 func remove_prop(anchor: Vector2i) -> void:
 	if not props.has(anchor):
 		return
-	var p: Dictionary = props[anchor]
+	for c in prop_cells(anchor):
+		_prop_at.erase(c)
 	props.erase(anchor)
-	for dy in p.foot.y:
-		for dx in p.foot.x:
-			_prop_at.erase(anchor + Vector2i(dx, dy))
 	version += 1
 	_sight.clear()
 
@@ -248,6 +246,38 @@ func prop_at(c: Vector2i) -> Dictionary:
 
 func prop_anchor(c: Vector2i) -> Vector2i:
 	return _prop_at.get(c, NONE_CELL)
+
+
+## The cells a placed prop stands on: its footprint less any it leaves open.
+func prop_cells(anchor: Vector2i) -> Array[Vector2i]:
+	var p: Dictionary = props[anchor]
+	var free := open_offsets(p)
+	var out: Array[Vector2i] = []
+	for dy in p.foot.y:
+		for dx in p.foot.x:
+			if not free.has(Vector2i(dx, dy)):
+				out.append(anchor + Vector2i(dx, dy))
+	return out
+
+
+## A prop's "open" offsets ("x,y|x,y") as cells.
+static func open_offsets(p: Dictionary) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	for part in String(p.get("open", "")).split("|", false):
+		var xy := part.split(",")
+		if xy.size() == 2:
+			out.append(Vector2i(int(xy[0]), int(xy[1])))
+	return out
+
+
+## The "open" offsets of a prop mirrored (its footprint's x and y swap).
+static func mirror_open(open: String) -> String:
+	var parts: Array[String] = []
+	for part in open.split("|", false):
+		var xy := part.split(",")
+		if xy.size() == 2:
+			parts.append("%s,%s" % [xy[1], xy[0]])
+	return "|".join(parts)
 
 
 ## A copy at a new size. Cells that still fit keep their height and terrain; new cells are flat grass.

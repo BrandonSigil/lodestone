@@ -906,6 +906,8 @@ func _turn_item() -> void:
 	elif selection.get("type", "") == "prop":
 		_change_prop(func(p: Dictionary) -> void:
 			var r := _turned(String(p.sprite), int(p.get("face", 0)), bool(p.get("flip", false)), p.foot)
+			if p.has("open") and r[1] != bool(p.get("flip", false)):  # a one-angle sprite turns by mirroring
+				p["open"] = CombatGrid.mirror_open(p.open)
 			p["face"] = r[0]
 			p["flip"] = r[1]
 			p["foot"] = r[2])
@@ -919,6 +921,8 @@ func _mirror_item() -> void:
 	elif selection.get("type", "") == "prop":
 		_change_prop(func(p: Dictionary) -> void:
 			p["flip"] = not bool(p.get("flip", false))
+			if p.has("open"):
+				p["open"] = CombatGrid.mirror_open(p.open)
 			p["foot"] = Vector2i(p.foot.y, p.foot.x))
 
 

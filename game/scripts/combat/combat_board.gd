@@ -308,6 +308,23 @@ func depth_of(x: float, y: float) -> int:
 	return int(round(p.x + p.y))
 
 
+## A piece's draw order. One standing right in front of a building's wall (at its door) draws after the
+## building, which sorts by its front-most cell and would otherwise cover it.
+func _unit_depth(u: CombatUnit) -> int:
+	var d := depth_of(u.vis.x, u.vis.y)
+	var uc := Vector2i(roundi(u.vis.x), roundi(u.vis.y))
+	for shade in [false, true]:
+		var a := grid.prop_anchor(uc - front_dir(shade))
+		if a == CombatGrid.NONE_CELL:
+			continue
+		var p: Dictionary = grid.props[a]
+		var inside := Rect2i(a, p.foot).has_point(uc)  # an open yard cell: the building's front still stands before it
+		if float(p.tall) <= 0.0 and not p.walk and not p.get("arch", false) and not inside:
+			var f := _prop_front(a, p)
+			d = maxi(d, depth_of(f.x, f.y))
+	return d
+
+
 ## The grid direction that faces the viewer's lower-left (lit) or lower-right (shade) at this rotation.
 func front_dir(shade: bool) -> Vector2i:
 	var want := Vector2(1, 0) if shade else Vector2(0, 1)
@@ -371,7 +388,7 @@ func pick(local: Vector2) -> Vector2i:
 	for u: CombatUnit in units:
 		if u.shown_hp <= 0 or hidden(u.cell) or not _unit_box(u).has_point(local):
 			continue
-		var d := depth_of(u.vis.x, u.vis.y)
+		var d := _unit_depth(u)
 		if d > body_depth:
 			body_depth = d
 			body = u.cell
@@ -555,7 +572,7 @@ func _sync_slabs() -> void:
 	_units_by_depth.clear()
 	for u: CombatUnit in units:
 		if u.shown_hp > 0:
-			var d := clampi(depth_of(u.vis.x, u.vis.y) + _off, 0, _depths.size() - 1)
+			var d := clampi(_unit_depth(u) + _off, 0, _depths.size() - 1)
 			if not _units_by_depth.has(d):
 				_units_by_depth[d] = []
 			_units_by_depth[d].append(u)
@@ -1946,10 +1963,11 @@ func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color, zone := "")
 ## The footprint cell nearest the camera: a placed prop draws with that cell, so pieces behind it go first.
 func _prop_front(a: Vector2i, p: Dictionary) -> Vector2i:
 	var best := a
+	var free := CombatGrid.open_offsets(p)
 	for dy in p.foot.y:
 		for dx in p.foot.x:
 			var c := a + Vector2i(dx, dy)
-			if depth_of(c.x, c.y) > depth_of(best.x, best.y):
+			if not free.has(Vector2i(dx, dy)) and depth_of(c.x, c.y) > depth_of(best.x, best.y):
 				best = c
 	return best
 
@@ -2808,7 +2826,7 @@ func _find_cover() -> void:
 		if u.shown_hp <= 0:
 			continue
 		var box := _unit_box(u)
-		var d := depth_of(u.vis.x, u.vis.y)
+		var d := _unit_depth(u)
 		var uc := Vector2i(roundi(u.vis.x), roundi(u.vis.y))
 		for dy in range(-6, 7):  # a house in front can reach this far
 			for dx in range(-6, 7):

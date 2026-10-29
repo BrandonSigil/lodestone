@@ -20,7 +20,7 @@
    "ffffwwggggfttfgggsssdssssgddgggttggggfff",
    ".ffgwwgggggssssggssssssssgdggggttgggggff",
    ".ffgwwgggggssssggssssssssgdggdddddggggff",
-   ".ffgwggggggssssggssssssssgdggdddddggfff.",
+   ".ffgwgggggdssssggssssssssgdggdddddggfff.",
    ".ffwwggggggssssgggggttggggdggdddddgggf..",
    ".ffwwggggdddttggggggttgggddggdddddggf...",
    ".ffgwwgggdddttggsssssssssdgggttggggff...",
@@ -37,7 +37,7 @@
    "ffggggggwwggggggsssssssssdgggggggggguff.",
    "ffggggggwwggggggggggddgggddgggggggggguff",
    "ffgggggggwwgggggggggddggugdgggggggggggff",
-   "ffgggggggwwwdddggdddddggggdddddgggggggff",
+   "ffgggggggwwwdddggdddddggggddddggggggggff",
    "fffgggggggwwwdddddggddggggggdddddggggfff",
    "ffgggggggggwwwwgggggddgggggggggdddggggff",
    ".ffggggggggggwwwwwggddggggggggggggddggff",
@@ -115,7 +115,8 @@
     ],
     "tall": 0.0,
     "sight": 3.0,
-    "walk": false
+    "walk": false,
+    "open": "2,2"
    },
    {
     "sprite": "b_home_c",
@@ -1580,8 +1581,8 @@
    "kind": "enter",
    "event": "door_stuck",
    "cell": [
-    9,
-    13
+    10,
+    11
    ]
   },
   {
@@ -1634,7 +1635,7 @@
    "kind": "enter",
    "event": "door_stuck",
    "cell": [
-    30,
+    29,
     28
    ]
   },

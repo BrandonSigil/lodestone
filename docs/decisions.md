@@ -304,3 +304,4 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-29 Following that: the cleared part draws as a flat silhouette of the prop in pale blue, fading in with the window.
 - [USER] 2026-10-29 The window's tint is pale blue at 30% (Brandon, studio card see-through-tune-2).
 - [USER] 2026-10-29 Homes B and C in the rooted look approved; the tavern and town hall roofs should be a bit more curved and less steep (Brandon, studio review).
+- [AI] 2026-10-29 Approved fall homes B and C and the smithy are placed: home B's door moved one cell left to meet the painted door. The smithy's painted door faces its own yard inside the ^ shape, so that yard cell is left open (a prop's `open` cells) and the door thing sits there. A piece standing in front of a building's wall now draws after the building, so the lead at a door is never covered or windowed by the house it stands at.
