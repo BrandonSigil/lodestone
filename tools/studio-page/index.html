@@ -305,7 +305,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
     </div>
     <div class="qa" aria-label="Quick actions">
       <button data-act="qa-report"><span aria-hidden="true">◆</span> Status report</button>
-      <a href="lodestone://launch" target="_blank" rel="noopener" data-act="qa-launch"><span aria-hidden="true">▶</span> Launch game</a>
+      <button data-act="qa-launch"><span aria-hidden="true">▶</span> Launch game</button>
       <button data-act="qa-roadmap"><span aria-hidden="true">◇</span> Roadmap</button>
     </div>
     <div class="tally" aria-live="polite">
@@ -788,14 +788,31 @@ function roadmapHtml() {
   }).join("");
 }
 
-// Launch: the button is a lodestone://launch link that the Lodestone Launcher app on the Mac answers
-// (tools/launcher/build_launcher.sh). If the link can't reach it, the project manager can launch the game.
+// Launch: the page calls the local "lodestone" MCP tool through the Claude app (tools/launcher/lodestone_mcp.py),
+// which opens the game at once. Outside the app, or before the tool is installed, the project manager launches it.
+async function launchNow() {
+  S.launchState = "starting"; openQa("launch");
+  let mcp = null;
+  try { mcp = await window.claude?.use?.("mcp"); } catch { mcp = null; }
+  if (!mcp) { S.launchState = "nohost"; renderQa(); return; }
+  try { await mcp.callTool("host:lodestone", "launch_game"); S.launchState = "launched"; }
+  catch (e) {
+    S.launchErr = e?.code || "";
+    S.launchState = e?.code === "cancelled" || e?.code === "approval_required" ? "declined"
+      : ["server_not_connected", "not_in_manifest", "not_granted", "capability_disabled", "capability_removed"].includes(e?.code) ? "nohost" : "error";
+  }
+  renderQa();
+}
 function launchHtml() {
   const last = [...S.requests].filter((r) => r.kind === "launch").sort((a, b) => String(b.at).localeCompare(String(a.at)))[0];
   const pending = last && last.status !== "done" && Date.now() - new Date(last.at).getTime() < 30 * 60000;
+  const pmButton = `<div class="row"><button class="btn small" data-act="qa-launch-pm">Ask the project manager to launch it</button></div>`;
   const state = pending ? `<p><b>Asked the project manager</b> ${esc(ago(last.at))}. The game opens on your screen at its next check, within 15 minutes, or at once if you say "launch" in the Lodestone chat.</p>`
-    : `<p><b>Opening the game…</b> The Lodestone Launcher starts it on your screen. The first time, your Mac may ask whether to open the Launcher; allow it.</p>
-       <div class="row"><button class="btn small" data-act="qa-launch-pm">Nothing opened? Ask the project manager</button></div>`;
+    : S.launchState === "launched" ? `<p><b>The game is starting</b> on your screen.</p>`
+    : S.launchState === "starting" ? `<p><b>Starting the game…</b> The first time, the Claude app asks whether this page may use the Lodestone tool; allow it.</p>`
+    : S.launchState === "declined" ? `<p>The launch wasn't allowed. Press Launch game again and allow the Lodestone tool when the Claude app asks.</p>`
+    : S.launchState === "nohost" ? `<p><b>The launch tool isn't connected here.</b> It works when the studio is open in the Claude app on the Mac with the Lodestone tool installed (<code>tools/launcher/install_mcp.py</code>, then restart the Claude app).</p>${pmButton}`
+    : `<p>The launch tool didn't answer${S.launchErr ? ` (${esc(S.launchErr)})` : ""}.</p>${pmButton}`;
   return `<div class="launch-state">${state}</div>
     <p class="rep-meta">Or start it yourself in Terminal:</p>
     <div class="cmd"><code id="launch-cmd">open -n -a Godot --args --path ~/lodestone/game</code><button class="btn small" data-act="qa-copy">Copy</button></div>`;
@@ -876,7 +893,7 @@ document.addEventListener("click", async (ev) => {
       case "closerole": closeRole(); break;
       case "qa-report": runReport(); break;
       case "qa-roadmap": openQa("roadmap"); break;
-      case "qa-launch": openQa("launch"); break;  // the link itself opens the Launcher; this shows what's happening
+      case "qa-launch": launchNow(); break;
       case "qa-launch-pm": requestLaunch(); break;
       case "closeqa": closeQa(); break;
       case "qa-copy": {
