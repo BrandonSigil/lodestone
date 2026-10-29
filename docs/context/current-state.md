@@ -74,7 +74,6 @@
 - Terrain engine (`docs/design/terrain-engine.md` section 8): keep the soft pass on everywhere outdoors, corner and cap tuning, Picsart or Procreate for the snow kit.
 - Map look: code backdrop bands or painted strips per look; keep or lock the backdrop parallax; zoom fights in on big maps (`docs/design/map-look.md` section 11).
 - Empty village: is a survivor settler-or-party-member by who they are (Claude's assumption)? Who survives, and which kind? Job system: tier 2 branch roles and names. Approve or replace the village prototype art.
-- Pick the bottom frame: A embroidered band (current), B quilt row, C foreground ridge, or a mix.
 - Retag `[AI]` lines he agrees with in `docs/decisions.md` as `[USER]`; mark rules B1 to B32 and C1 to C29 his or change them.
 - Fill in `docs/style-bible.md`; edit the art rule in CLAUDE.md.
 - Approve or replace the generated `lead` sprite (now all five drawn views S, SE, E, NE, N with every anim; sheets in `art/picsart/out/anim-lead-<dir>_v1.png` and `stance-lead-<dir>_v1.png` on the MacBook); the rest of the roster comes after.

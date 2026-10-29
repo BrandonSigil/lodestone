@@ -48,6 +48,7 @@ The generated outputs are not in git, so a second machine can't see them. The re
 | River Village fall sheet and fall moodboard | `docs/art/references/village-fall-style-sheet.png`, `village-fall-moodboard.png` | Brandon's pick (generated elsewhere) | **reference** | The fall feel for the village; simplify toward the zones sampler (`picsart/zones-gpt-simple_v1.png`). |
 | UI frame mock-up and shrine concept | `docs/art/references/ui-frame-mockup.png`, `ui-frame-shrine-concept.png` | Brandon | **reference** | Earlier ideas, kept on file; the shrine centre was dropped for the diamond. Never attach them to a frame prompt (models copy them). |
 | UI frame leaf reference | `docs/art/references/ui-frame-leaf-reference.png` | Brandon | **reference** | The look for the frame (thin green bands, leaves, blue diamonds); `ui-frame.txt` uses it as image 1. |
+| UI frame, bottom band | `game/art/source/ui/frame_bottom.webp` (2000 x 261, transparent above) | Brandon | **approved** | Brandon, 2026-10-29: goes along the bottom of the player screen; left square = inventory button, right panel = party and health. |
 
 ## Batch log
 
