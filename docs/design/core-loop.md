@@ -60,7 +60,7 @@ The run and the village
 - **A team-up bonus for teammates within one tile, diagonals included** (c12), in place of sandwich follow-ups. No reacting ground and no party meter for now.
 - **A guarding piece holds a zone** (c13): foes that start next to it must attack it, or take a free hit when they walk away.
 - **Cover blocks sight and is half cover against ranged** (c14): brush, low walls and forest take 1 off ranged hits; melee ignores it. Hovering a ranged piece shades the tiles it can't see.
-- **The team-up bonus is a helping strike** (c15): hit a foe that a teammate within one tile can also reach, and the teammate adds a small free hit. **Corrected on the build card:** both teammates must be next to the same foe *and* next to each other (his pictures: `img/teamup-yes.png` counts, `img/teamup-no.png` doesn't). Whether two teammates on opposite sides of a foe count is card c19.
+- **The team-up bonus is a helping strike** (c15): hit a foe that a teammate within one tile can also reach, and the teammate adds a small free hit. **Corrected on the build card:** both teammates must be next to the same foe *and* next to each other (his pictures: `img/teamup-yes.png` counts, `img/teamup-no.png` doesn't). Two teammates on opposite sides of a foe count too (c19). So the rule is: any two teammates next to the same foe.
 - **Resources belong to the job** (c16): every knight has rage, every mage mana; the hero's bar changes with his job. No cooldowns on top.
 - **TALK appears only when you know something, or when a fight is written for it** (c17). Some hostile characters can be talked round in a fight, once or twice, and join the party.
 - **Crits are common and double damage** (c18): about 10% base, a flank adds about 20%; some characters crit more often.
@@ -130,7 +130,7 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 ### Follow-up (posted 2026-10-29)
 | Card | Question | Answer |
 |---|---|---|
-| `design-c19-teamup-shape` | Team-up: corner pairs only (his picture), or also two teammates on opposite sides of a foe? | open |
+| `design-c19-teamup-shape` | Team-up: corner pairs only (his picture), or also two teammates on opposite sides of a foe? | Opposite sides count too |
 
 ## Player choice
 ### Decided in the grilling
@@ -140,11 +140,15 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 - **Grinding is allowed, and completed places can be walked past** (pc-4; walking past cleared places is built).
 - **The console overworld stays, with forks that branch and join up again** (pc-5): head north, fork east or west, and the branches link back up. A map-layout rule for the overworld, not a new system.
 - **Opt-in risk is marked elite fights** (pc-6): tougher groups, better rewards. No vows, no push-on-or-go-home.
+- **Stats are rolled each level from each character's own growth odds** (pc-7), Fire Emblem style. A tank mostly gains HP or defense, now and then attack, and never a stat it can't use.
+- **Skills grow on their own; ranks add something new** (pc-8). A skill gets stronger with the character's stats even if never ranked. Choosing to rank it adds an effect: a stronger slow, a bleed at rank 2.
+- **The weapon is the job; switch in the village, starting that job at 0** (pc-9). Take a different weapon at the smithy to change job (so you can bring a companion who fills your old role). Later weapon types can be powerful new jobs. This replaces the draft of a job at level 5.
 
 ### Gaps these answers open
-- **"Stats every level": rolled on their own, or picked?** The old pick was a choice; "stats every level" could be either. Card pc-7.
-- **How skill upgrades work:** how often, how many ranks, and whether they cost anything. Card pc-8.
-- **The hero's jobs:** fixed skills plus resources by job (c16) need the hero's job path settled; the level 5 and 10 jobs are still an `[AI]` draft. Card pc-9.
+- **What "start that job at 0" resets** (from pc-9): only the job's own level (its skills and ranks), or the hero's whole level and stats too? *Proposal:* the hero keeps one character level (HP and stats); each job has its own job level that sets its skill ranks and resource size. Next batch.
+- **The level 10 branch** (from pc-9): the draft's two branches per job (knight to guardian or vanguard, and so on) are still `[AI]`. With jobs switchable, do branches stay? Next batch.
+- **Rank interval** (from pc-8): *proposal:* a rank to spend every 4 levels, up to 3 ranks a skill. What ranks cost (nothing, or a village trainer and materials) ties to the one-more-run theme.
+- **Growth odds are data** (from pc-7): a per-character, per-job table of odds in `game/data/`.
 - **Who goes on a trip:** four slots, a growing roster (survivors who join, hostile characters talked round). Card pc-10.
 - **Elite rewards:** what "better" means (more materials, rare gear) belongs to the one-more-run theme.
 - **Grinding vs the Lich King skill check:** Brandon chose freedom; the boss stays a skill check only for players who don't grind.
@@ -162,9 +166,9 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 ### Batch 2 (posted 2026-10-29)
 | Card | Question | Answer |
 |---|---|---|
-| `design-pc-7-stats` | Stats each level: rolled on their own, a pick each level, or a small rise plus a pick? | open |
-| `design-pc-8-skillup` | Skill upgrades: a rank at set levels, ranks bought in the village with materials, or a choice of two upgrades per rank? | open |
-| `design-pc-9-jobs` | The hero's job: the draft tree (job at 5, branch at 10), set by the starting weapon, or switchable in the village? | open |
+| `design-pc-7-stats` | Stats each level: rolled on their own, a pick each level, or a small rise plus a pick? | Rolled, from each character's growth odds |
+| `design-pc-8-skillup` | Skill upgrades: a rank at set levels, ranks bought in the village with materials, or a choice of two upgrades per rank? | Skills scale on their own; a chosen rank adds an effect |
+| `design-pc-9-jobs` | The hero's job: the draft tree (job at 5, branch at 10), set by the starting weapon, or switchable in the village? | Weapon is the job; switch in the village, new job starts at 0 |
 | `design-pc-10-roster` | When can you change who's in the four: only at home, at camps on the map, or at home with the bench running errands? | open |
 | `design-pc-11-sneak` | How much sneaking matters on explore maps: a first strike only, slipping past fights, or none? | open |
 
@@ -194,6 +198,7 @@ Settled by that: items have shapes, are packed by hand and can be turned. A way 
 - **Coming home, materials bank themselves** (inv-10); gear and supplies stay packed.
 - **Auto-place on pickup, rearrange by hand, no tidy button** (inv-11). Rearranging is the little game for the overworld walk.
 - **The dog's saddlebag is 2 x 2** (inv-12), to balance later.
+- **A belt cell holds a full stack, like a pack cell** (`design-inv-belt-stack`, asked by the developer once belts were built). Stack sizes per item get balanced so belts aren't too strong.
 
 ### Still open (not blocking a build)
 - **Upgrade steps:** how big each pack upgrade is, and which settler unlocks it. Belongs to the one-more-run theme.
