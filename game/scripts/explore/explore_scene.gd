@@ -13,8 +13,9 @@ extends Node2D
 enum M { WALK, BUSY, DIALOG, DEPLOY, FIGHT, OVER }
 
 const CLIMB_RATE := 10.0  ## levels a second the leader's feet follow the ground on keys
-const ZOOM_MIN := 0.55
-const ZOOM_MAX := 1.6
+const ZOOM_START := 1.35  ## [USER] 2026-10-29: close in; what's on screen is what the party gets
+const ZOOM_MIN := 1.0
+const ZOOM_MAX := 1.8
 const PAN_SPEED := 700.0
 const PATH_COLOR := Color(1.0, 1.0, 1.0, 0.16)
 const GOAL_COLOR := Color(0.4, 0.75, 1.0, 0.45)
@@ -32,9 +33,11 @@ var groups: Array[Dictionary] = []
 var things: Array[Dictionary] = []  ## the map's things plus "done"
 var seen := {}  ## every cell the party has ever had in sight
 var in_sight := {}  ## cells in sight now
+var locked := {}  ## cells behind a shut door or rubble: left undrawn until the way opens
+var _reached := {}  ## every cell the party could walk to so far
 var mode := M.WALK
 var battle: Battle
-var zoom := 1.0
+var zoom := ZOOM_START
 var focus := Vector2.ZERO  ## grid point the camera centres on (unturned grid coords, so the camera turn keeps it)
 var focus_h := 0.0  ## height of that point
 var follow := true  ## the camera follows the leader until the player pans
@@ -118,6 +121,7 @@ func _ready() -> void:
 	_ui.layer = 4
 	add_child(_ui)
 	_walk_side()
+	_refresh_locked()
 	_refresh_sight()
 	_refresh_units()
 	_refresh_hud()
@@ -375,15 +379,29 @@ func _refresh_sight() -> void:
 			seen[c] = true
 		var lit := {}
 		for c in seen:
-			lit[c] = 2
+			if not locked.has(c):
+				lit[c] = 2
 		board.fog = lit
 		return
 	for c in in_sight:
 		seen[c] = true
 	var fog := {}
 	for c in seen:
-		fog[c] = 2 if in_sight.has(c) else 1
+		if not locked.has(c):
+			fog[c] = 2 if in_sight.has(c) else 1
 	board.fog = fog
+
+
+## Work out which rooms are still behind a shut door or rubble. On arrival and when a way opens.
+func _refresh_locked() -> void:
+	var doors: Array[Vector2i] = []
+	for t in things:
+		if not t.done and (t.kind == "door" or t.kind == "rubble"):
+			doors.append(t.cell)
+	var jump: int = leader().jump if leader() else 1
+	_reached.merge(ExploreRules.reach(grid, party_cells(), jump))
+	locked = ExploreRules.locked_cells(grid, _reached, doors, jump)
+	board.fog_on = fogged() or not locked.is_empty()
 
 
 ## Fog of war on this map: the map asks for it and the switch is on (it is off for now, ExploreRules.FOG_OF_WAR).
@@ -409,7 +427,7 @@ func _refresh_units() -> void:
 		if g.state == "gone":
 			continue
 		for u: CombatUnit in g.units:
-			if u.alive() and (in_sight.has(u.cell) or not fogged()):
+			if u.alive() and (in_sight.has(u.cell) or not fogged()) and not locked.has(u.cell):
 				shown.append(u)
 	board.units = shown
 
@@ -564,7 +582,7 @@ func _on_cell_hovered(c: Vector2i) -> void:
 	if c == CombatBoard.NONE:
 		return
 	var g := group_at(c)
-	if not g.is_empty() and (in_sight.has(c) or not fogged()):
+	if not g.is_empty() and (in_sight.has(c) or not fogged()) and not locked.has(c):
 		for s in ExploreRules.sight(grid, _group_cells(g), int(g.def.sight)):
 			if seen.has(s):
 				board.highlights[s] = WATCH_COLOR
@@ -689,6 +707,12 @@ func choose(o: Dictionary, ctx: Dictionary) -> void:
 			if Txt.has("UI_GOT_" + f.to_upper()):
 				lines.append(Txt.t("UI_GOT_" + f.to_upper()))  # the dog joins, the Lodestone is taken
 		lines.append(fx.run.replace(";", "  "))
+	if Game.run.wiped():
+		# A trap took the last one standing: the run ends as a lost fight does.
+		lines.append(Txt.t("UI_DEFEAT"))
+		mode = M.OVER
+		_dialog_button(_new_dialog("\n".join(lines)), Txt.t("UI_CONTINUE"), func() -> void: Game.recall())
+		return
 	if lines.is_empty():
 		_close_dialog()
 		_apply_map_fx(fx.map, ctx)
@@ -735,6 +759,8 @@ func _apply_map_fx(list: Array, ctx: Dictionary) -> void:
 			"travel":
 				_travel(t)
 	if mode == M.WALK:
+		if "open" in list:
+			_refresh_locked()
 		_refresh_sight()
 		_refresh_units()
 		check_groups(true)  # right after a choice (BACK OFF included) nobody pounces before the party moves
@@ -765,8 +791,8 @@ func _after_change() -> void:
 
 ## Party pieces rebuilt from the run (new members, new stats). They stand with the leader. Not mid-fight.
 func _rebuild_party() -> void:
-	if mode == M.FIGHT or mode == M.DEPLOY:
-		return
+	if mode == M.FIGHT or mode == M.DEPLOY or Game.run.wiped():
+		return  # a wiped party keeps its fallen pieces until the run ends
 	var lead := leader()
 	var at: Vector2i = lead.cell if lead else _free_start()
 	var facing: Vector2i = lead.facing if lead else Vector2i(1, 0)

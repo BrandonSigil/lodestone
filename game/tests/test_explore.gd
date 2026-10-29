@@ -82,6 +82,40 @@ func test_door_blocks_until_opened() -> void:
 	ok(g.passable(door.cell), "an open door is floor")
 
 
+func test_rooms_past_a_shut_door_stay_locked() -> void:
+	var g := _room()
+	var gap := Vector2i(4, 2)
+	g.set_terrain(gap, CombatGrid.T.RUIN)
+	var open := ExploreRules.reach(g, [Vector2i(0, 0)], 1)
+	ok(open.has(Vector2i(3, 4)) and not open.has(Vector2i(5, 0)), "the party reaches only its own side")
+	var locked := ExploreRules.locked_cells(g, open, [gap], 1)
+	ok(locked.has(Vector2i(5, 0)) and locked.has(Vector2i(8, 4)), "the far side is locked")
+	ok(not locked.has(gap), "the door itself shows")
+	ok(not locked.has(Vector2i(4, 0)), "a wall that faces the party shows")
+	ok(not locked.has(Vector2i(2, 2)), "the party's side never locks")
+	g.set_terrain(gap, CombatGrid.T.STONE)
+	open = ExploreRules.reach(g, [Vector2i(0, 0)], 1)
+	ok(ExploreRules.locked_cells(g, open, [], 1).is_empty(), "nothing is locked once the door opens")
+
+
+func test_crypt_chest_is_locked_until_the_door_opens() -> void:
+	var m := _crypt()
+	var doors: Array[Vector2i] = []
+	var chest := Vector2i(-1, -1)
+	for t in m.things:
+		if t.kind == "door" or t.kind == "rubble":
+			m.grid.set_terrain(t.cell, CombatGrid.T.RUIN)
+			doors.append(t.cell)
+		if t.id == "crypt_chest":
+			chest = t.cell
+	var open := ExploreRules.reach(m.grid, [m.start[0]], 1)
+	var locked := ExploreRules.locked_cells(m.grid, open, doors, 1)
+	ok(locked.has(chest), "the crypt chest sits in a locked room")
+	ok(not locked.has(Vector2i(26, 18)), "the gate, facing the yard, shows")
+	ok(locked.has(Vector2i(28, 15)), "the crypt door, off the corridor past the gate, is locked too")
+	ok(not locked.has(m.start[0]), "the yard the party starts in is open")
+
+
 func test_path_goes_through_the_gap() -> void:
 	var g := _room()
 	var p := ExploreRules.find_path(g, Vector2i(0, 0), Vector2i(8, 0), 1)

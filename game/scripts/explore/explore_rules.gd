@@ -48,6 +48,61 @@ static func sees(grid: CombatGrid, from: Array, to: Array, radius: int) -> bool:
 	return false
 
 
+# --- locked rooms -----------------------------------------------------------------
+
+## Every cell a walker with this Jump can get to from the `from` cells, on the steps walking takes.
+static func reach(grid: CombatGrid, from: Array, jump: int) -> Dictionary:
+	var out := {}
+	var todo: Array[Vector2i] = []
+	for c: Vector2i in from:
+		if grid.in_bounds(c) and not out.has(c):
+			out[c] = true
+			todo.append(c)
+	while not todo.is_empty():
+		var c: Vector2i = todo.pop_back()
+		for d in STEPS:
+			var n: Vector2i = c + d
+			if not out.has(n) and can_step_dir(grid, c, d, jump):
+				out[n] = true
+				todo.append(n)
+	return out
+
+
+## Cells behind a shut door or rubble: ground the party can't reach (`open` is what it can) but could once
+## one of `doors` opens, plus the walls and ledges that face only that ground. A door shows while it touches
+## open ground; one deeper in (a door off a locked corridor) is locked with the rest.
+## [USER] 2026-10-29: these rooms stay fogged until the party gets in.
+static func locked_cells(grid: CombatGrid, open: Dictionary, doors: Array, jump: int) -> Dictionary:
+	var past := {}
+	var todo: Array[Vector2i] = []
+	for door: Vector2i in doors:
+		past[door] = true
+		todo.append(door)
+	while not todo.is_empty():
+		var c: Vector2i = todo.pop_back()
+		var through := doors.has(c)  # a doorway leads onto whatever ground lies past it
+		for d in CombatRules.DIRS:
+			var n: Vector2i = c + d
+			if past.has(n) or open.has(n) or not grid.in_bounds(n):
+				continue
+			if doors.has(n) or (grid.passable(n) and (through or grid.can_step(c, n, jump))):
+				past[n] = true
+				todo.append(n)
+	var out := {}
+	for c: Vector2i in past:
+		if not doors.has(c) or not STEPS.any(func(e: Vector2i) -> bool: return open.has(c + e)):
+			out[c] = true
+	var ground := out.keys()
+	for c: Vector2i in ground:
+		for d in STEPS:
+			var w: Vector2i = c + d
+			if out.has(w) or not grid.in_bounds(w) or grid.passable(w) or doors.has(w) or open.has(w):
+				continue
+			if not STEPS.any(func(e: Vector2i) -> bool: return open.has(w + e)):
+				out[w] = true
+	return out
+
+
 # --- walking ----------------------------------------------------------------------
 
 ## The party walks at the pace of its worst climber, so everyone can follow the leader's steps.
