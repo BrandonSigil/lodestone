@@ -24,7 +24,7 @@ Read and write them with the `ArtifactData` tool and the URL above. Pin every wr
 
 Card kinds:
 - `choice`: `options` [{id, label, detail, image}], `multi` for pick-many. The page always adds **Neither** with a required "why". Answer: `{picks, why, at}`.
-- `go` (Picsart go-ahead): `batch` {prompt, model, count, cost, refs [{url, caption}]}. Answer: `{pick: "go" | "nogo", why, at}`.
+- `go` (Picsart go-ahead): `batch` {prompt, model, count, cost, refs [{url, caption}]}. The cost on the card is a ceiling: if a run would go past it, stop and post a new `go` card for the rest. Answer: `{pick: "go" | "nogo", why, at}`.
 - `review` (Picsart results): `items` [{id, url, caption, score 1-5, notes}]. Score each against the References wall, honestly. Answer: `{items: {id: {verdict: "approve" | "redo" | "reject", note}}, why, at}`.
 - `todo`: Brandon marks it done himself.
 
