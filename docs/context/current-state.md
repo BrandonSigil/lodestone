@@ -79,10 +79,10 @@
 - Fill in `docs/style-bible.md`; edit the art rule in CLAUDE.md.
 - Approve or replace the generated `lead` sprite (now all five drawn views S, SE, E, NE, N with every anim; sheets in `art/picsart/out/anim-lead-<dir>_v1.png` and `stance-lead-<dir>_v1.png` on the MacBook); the rest of the roster comes after.
 - Tune the explore deploy ring (move - 3) after playing. Play the fixes from his first E2E notes (2026-10-29): settled groups stay settled, free WASD walking, easier first fights, road fights on one stretch of ground.
-- `tools/e2e_play.gd` seed 3 hangs after a second lost road fight (also on main before the E2E notes fixes): the robot's `_fell` waits for the village and never gets it.
 - Rotate the Picsart key.
 
 ## Gotchas for Claude sessions
+- Auto fights (`Battle.auto_fight`) end in a stalemate as a win after a while with nobody hurt, so the game moves on as if won. The E2E robot counts that as a failed check, on road fights and explore fights alike; it is not a fall (the old seed 3 "hang" was this).
 - `CombatBoard` draws through child "slab" nodes; every draw helper paints on `_ci` (the slab being drawn). A `draw_*` call on `self` from those helpers fails. Ground and props are cached per depth row; `grid.version` and the fog tell the board what to redraw.
 - Godot in the cloud rewrites every art `.import` file; `git checkout -- game/art` before committing. Godot 4.7 on Brandon's machines edits project files too; don't commit those edits.
 - The MacBook has no git-lfs (PNGs go in as plain blobs) and a big art push dies with "unexpected disconnect"; push with `git -c http.postBuffer=524288000 push`. Godot there is `/Applications/Godot.app/Contents/MacOS/Godot` (4.7.2).
