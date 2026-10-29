@@ -1,8 +1,9 @@
 class_name PackView
 extends Control
 ## The pack grid you arrange by hand: drag an item to move it, R or right-click turns it,
-## and in the village drop it on the sell box to sell it. Gear bound to a member (the Wizard's
-## books) can be moved and turned but not sold. Used for the village outfit and the run's pack.
+## and drop it on the bin to be rid of it (SELL in the village, THROW AWAY on the road). Gear bound
+## to a member (the Wizard's books) can be moved and turned but not binned. Used for the village
+## outfit and the run's pack.
 ## The run's view also shows each member's belt as its own small grid: drag between them to fill a
 ## belt from the pack. A stack dropped on a stack of the same thing tops it up.
 
@@ -15,7 +16,10 @@ const LABEL_H := 20.0  ## room above a labeled grid for its name
 var bag: InventoryGrid  ## the first grid (the pack)
 var areas: Array[Dictionary] = []  ## {"bag": InventoryGrid, "at": Vector2 (top-left here), "label": String}
 var db: Dictionary = {}  ## item rows (Db.items)
-var sell := Callable()  ## index -> bool; empty means no sell box
+var bin := Callable()  ## (grid, index) -> bool: false if refused; empty means no bin
+var bin_key := "UI_SELL"  ## the bin's text
+var refused_key := "UI_BOUND"  ## shown when the bin refuses
+var bin_rect := Rect2()  ## where the bin is; setup_bag puts it right of the first grid
 var cell := CELL
 var held := -1  ## index of the item being dragged
 var held_area := -1  ## which grid it's from
@@ -33,15 +37,24 @@ func _init() -> void:
 
 ## The village outfit, with its sell box.
 func setup(kit: Outfit) -> void:
-	setup_bag(kit.bag, kit.items_db, kit.sell)
+	setup_bag(kit.bag, kit.items_db, func(g: InventoryGrid, i: int) -> bool: return g == kit.bag and kit.sell(i))
 
 
-func setup_bag(grid: InventoryGrid, items_db: Dictionary, sell_cb := Callable(), cell_size := CELL) -> void:
+func setup_bag(grid: InventoryGrid, items_db: Dictionary, bin_cb := Callable(), cell_size := CELL) -> void:
 	bag = grid
 	db = items_db
-	sell = sell_cb
+	bin = bin_cb
 	cell = cell_size
 	areas = [{"bag": grid, "at": Vector2.ZERO, "label": ""}]
+	bin_rect = Rect2(Vector2(cell * grid.cols + 40, cell * grid.rows - SELL_SIZE.y), SELL_SIZE) if bin.is_valid() else Rect2()
+	_fit_size()
+
+
+## Moves the bin (a run's PACK box lays it out round its grids).
+func place_bin(r: Rect2, key: String, refused: String) -> void:
+	bin_rect = r
+	bin_key = key
+	refused_key = refused
 	_fit_size()
 
 
@@ -60,16 +73,14 @@ func _fit_size() -> void:
 	var end := Vector2.ZERO
 	for a in areas:
 		end = end.max(_rect_of(a).end)
-	if sell.is_valid():
-		end.x += 40 + SELL_SIZE.x
+	if bin.is_valid():
+		end = end.max(bin_rect.end)
 	custom_minimum_size = end + Vector2(0, 30)
 	queue_redraw()
 
 
-func _sell_rect() -> Rect2:
-	if not sell.is_valid():
-		return Rect2()
-	return Rect2(Vector2(cell * bag.cols + 40, cell * bag.rows - SELL_SIZE.y), SELL_SIZE)
+func _bin_rect() -> Rect2:
+	return bin_rect if bin.is_valid() else Rect2()
 
 
 func _area_at(pos: Vector2) -> int:
@@ -154,9 +165,9 @@ func _drop(pos: Vector2) -> void:
 	held = -1
 	held_area = -1
 	var k := _area_at(pos)
-	if from == 0 and _sell_rect().has_point(pos):
-		if not sell.call(i):
-			flash = "UI_BOUND"
+	if _bin_rect().has_point(pos):
+		if not bin.call(areas[from].bag, i):
+			flash = refused_key
 	elif k == -1:
 		pass  # dropped outside every grid: it stays where it was
 	elif not _put_down(from, i, k, _cell_in(k, pos)):
@@ -203,12 +214,13 @@ func _draw() -> void:
 		if a.label != "":
 			Riso.draw_label(self, a.label, a.at - Vector2(0, LABEL_H * 0.55), 13, label_color)
 		bottom = maxf(bottom, _rect_of(a).end.y)
-	var sr := _sell_rect()
-	if sell.is_valid():
+	var sr := _bin_rect()
+	if bin.is_valid():
 		var over := held != -1 and sr.has_point(mouse)
 		draw_rect(sr, Riso.mix(Riso.PAPER, Riso.RED, 0.25 if over else 0.08))
 		_dashed_rect(sr, Riso.RED)
-		Riso.draw_label(self, Txt.t("UI_SELL"), sr.get_center(), 20, Riso.RED, HORIZONTAL_ALIGNMENT_CENTER)
+		Riso.draw_label(self, Txt.t(bin_key), Vector2(sr.position.x + 4, sr.get_center().y), 18, Riso.RED, HORIZONTAL_ALIGNMENT_CENTER, sr.size.x - 8)
+		bottom = maxf(bottom, sr.end.y)
 	if flash != "":
 		Riso.draw_label(self, Txt.t(flash), Vector2(0, bottom + 16), 14, Riso.RED)
 	if held != -1:

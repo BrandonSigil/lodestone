@@ -15,5 +15,6 @@ deficiency = &""
 food_per_day = 1
 party_slots = 1
 inventory_slots = 0
+saddlebag = Vector2i(2, 2)
 unlock = "met_dog"
 tint = Color(0.72, 0.52, 0.3, 1)

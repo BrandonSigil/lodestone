@@ -157,6 +157,17 @@ UI_STATUS_TAB,GOLD %d · DEATHS %d · BEST %d
 UI_PACK_HELP,drag thing. R or right click = turn. drop on SELL = sell.
 UI_PACK_HELP_RUN,drag thing. R or right click = turn. thing on belt = use in fight.
 UI_BELT_OF,%s BELT
+UI_PACK_FULL,PACK FULL. NEW THING NO FIT. lorem ipsum.
+UI_FOUND,NEW THING
+UI_COURIER_BAG,%s BAG
+UI_SEND_HOME,%s TAKE BAG HOME
+UI_THROW,THROW AWAY
+UI_BOUND_THROW,friend need this. no throw.
+UI_LEAVE_REST,LEAVE REST HERE
+LOG_SENT_HOME,%s GO HOME WITH BAG. lorem
+LOG_CAME_HOME,%s BACK. lorem
+LOG_LEFT_BEHIND,left %d thing behind
+LOG_THROWN,throw away %d %s
 UI_TEAM_HELP,PICK FRIEND. lorem ipsum.
 UI_BOUND,friend need this. no sell.
 UI_NO_MAP,MAP NOT MADE YET. lorem.

@@ -190,3 +190,109 @@ func test_drag_from_the_pack_to_a_belt() -> void:
 	eq(r.members[0].belt.count("potion"), 3, "dropped on the stack, it tops it up to 3")
 	eq(r.pack.count("potion"), 1, "and the rest stays behind")
 	pv.free()
+
+
+# --- step 3: the full pack ----------------------------------------------------------------
+
+func _full_adventure() -> RunState:
+	var r := _party_run()
+	r.adventure = true
+	r.add_item(RunState.FOOD_ITEM, 110)  # with the potion cell, every cell is taken
+	return r
+
+
+func test_no_room_waits_in_found_on_an_adventure() -> void:
+	var r := _full_adventure()
+	ok(not r.overfull())
+	eq(r.add_item("rope", 1), 0, "nothing lost")
+	eq(r.found.count("rope"), 1, "the rope waits beside the pack")
+	ok(r.overfull())
+	eq(r.items.get("rope", 0), 0, "waiting things aren't carried")
+	var plain := _party_run()
+	plain.add_item(RunState.FOOD_ITEM, 110)
+	eq(plain.add_item("rope", 1), 1, "the old trail still loses it")
+
+
+func test_throw_away_frees_room() -> void:
+	var r := _full_adventure()
+	r.add_item("rope", 1)
+	ok(r.throw_away(r.pack, r.pack.items.size() - 1), "a meat stack goes for good")
+	eq(r.food, 100)
+	var wiz := RunState.create([Db.character(&"wizard")], 1)
+	var books := -1
+	for i in wiz.pack.items.size():
+		if wiz.pack.items[i].id == "books":
+			books = i
+	ok(not wiz.throw_away(wiz.pack, books), "bound gear stays")
+
+
+func test_the_dog_takes_his_bag_home_and_comes_back() -> void:
+	var r := _full_adventure()
+	r.add_item("rope", 1)
+	var dog := r.courier()
+	eq(String((dog.def as CharacterDef).id), "dog")
+	var bag := r.open_courier_bag()
+	eq(Vector2i(bag.cols, bag.rows), Vector2i(2, 2), "a 2 x 2 saddlebag")
+	ok(bag.place("rope", r.found.items[0].shape, 0, Vector2i.ZERO) != -1)
+	r.found.items.clear()
+	ok(not r.found.items.size(), "the rope went into the bag")
+	r.send_home(dog)
+	eq(r.members.size(), 1, "the dog is out of the party")
+	ok(r.courier().is_empty(), "no courier left to send")
+	ok(r.is_away(&"dog"))
+	ok(not r.overfull())
+	r.throw_away(r.pack, r.pack.items.size() - 1)  # make room (two cells side by side) for what comes home
+	r.throw_away(r.pack, r.pack.items.size() - 1)
+	r.come_home()
+	eq(r.members.size(), 2, "home again, the dog rejoins")
+	eq(r.item_count("rope"), 1, "and his bag is unpacked into the pack")
+	ok(r.away.is_empty())
+
+
+func test_leave_the_rest() -> void:
+	var r := _full_adventure()
+	r.add_item("rope", 1)
+	r.open_courier_bag().put("potion", RunState.shape_of("potion"), 1, 3)
+	r.leave_found()
+	ok(not r.overfull(), "nothing waits")
+	ok(r.lines[r.lines.size() - 1] != "", "the log says what was left")
+
+
+func test_waiting_things_are_kept_in_the_save() -> void:
+	var r := _full_adventure()
+	r.add_item("rope", 1)
+	var dog := r.courier()
+	r.open_courier_bag().put("potion", RunState.shape_of("potion"), 2, 3)
+	r.send_home(dog)
+	r.add_item("rope", 1)
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(r.waiting_save()))
+	var back := _party_run()
+	back.load_waiting(saved)
+	eq(back.found.count("rope"), 2)
+	ok(back.is_away(&"dog"))
+	eq((back.away[0].bag as InventoryGrid).count("potion"), 2)
+
+
+func test_home_brings_the_dog_back_in_the_game() -> void:
+	_db()
+	var saved := Game.meta.duplicate(true)
+	var was_on := Game.save_enabled
+	Game.save_enabled = false
+	Game.meta.flags = ["met_dog"]
+	Game.meta.pack = {}
+	Game.start_adventure()
+	eq(Game.run.members.size(), 2, "hero and dog")
+	var dog := Game.run.courier()
+	Game.run.open_courier_bag().put("potion", RunState.shape_of("potion"), 1, 3)
+	Game.run.send_home(dog)
+	Game.refresh_party()
+	eq(Game.run.members.size(), 1, "the roster doesn't pull him back while he's away")
+	Game.save_adventure()
+	Game.start_adventure()
+	eq(Game.run.members.size(), 1, "still away after a restart")
+	Game.home_again()
+	eq(Game.run.members.size(), 2, "home: he's back")
+	eq(Game.run.medicine, 1, "with what he carried")
+	Game.meta = saved
+	Game.save_enabled = was_on
+	Game.run = null

@@ -205,6 +205,7 @@ func start_adventure() -> void:
 			if Db.items.has(id):
 				run.add_item(id, int(pack["items"][id]))
 	run.gold = int(pack.get("gold", 0))
+	run.load_waiting(pack.get("waiting", {}))
 	refresh_party()
 	run.load_belts(pack.get("belts", {}))
 	var hp: Dictionary = pack.get("hp", {})
@@ -220,7 +221,7 @@ func refresh_party() -> void:
 		return
 	for d in adventure_defs():
 		var have := run.members.any(func(m: Dictionary) -> bool: return (m.def as CharacterDef).id == d.id)
-		if not have:
+		if not have and not run.is_away(d.id):
 			run.join(d)
 	for m in run.members:
 		var id := String((m.def as CharacterDef).id)
@@ -296,7 +297,7 @@ func save_adventure() -> void:
 	var hp := {}
 	for m in run.members:
 		hp[String((m.def as CharacterDef).id)] = int(m.hp)
-	meta.pack = {"grid": run.pack.to_save(), "belts": run.belts_save(), "gold": run.gold, "hp": hp}
+	meta.pack = {"grid": run.pack.to_save(), "belts": run.belts_save(), "waiting": run.waiting_save(), "gold": run.gold, "hp": hp}
 	save_meta()
 
 
@@ -304,6 +305,7 @@ func save_adventure() -> void:
 ## Lodestone's GO HOME lands the same way). The first wake-up is when the hero learns what the stone does.
 func wake_in_town(fell: bool) -> void:
 	ensure_run()
+	home_again()
 	for m in run.members:
 		m.hp = run.max_hp(m)
 	if fell:
@@ -318,6 +320,15 @@ func wake_in_town(fell: bool) -> void:
 	combat_return = ""
 	save_adventure()
 	go(EXPLORE)
+
+
+## The party is home (woken in the square, or walked into the village): whoever was sent home rejoins.
+func home_again() -> void:
+	if run == null or run.away.is_empty():
+		return
+	run.come_home()
+	refresh_party()
+	save_adventure()
 
 
 ## Apply an action's side effects that touch meta (unlocks, the Wall flag).

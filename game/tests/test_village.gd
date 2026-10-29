@@ -134,7 +134,7 @@ func test_pack_drag_turn_sell() -> void:
 	eq(k.bag.items[0].rot, 1, "turned while held")
 	eq(k.bag.cells_of(0), [Vector2i(2, 1), Vector2i(2, 2)] as Array[Vector2i])
 	pv._pick(Vector2(c * 2.5, c * 1.5))
-	pv._drop(pv._sell_rect().get_center())
+	pv._drop(pv._bin_rect().get_center())
 	eq(k.bag.items.size(), 0, "dropped on SELL")
 	eq(k.gold, 30)
 	pv.free()

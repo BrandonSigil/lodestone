@@ -13,6 +13,7 @@ extends Resource
 @export var food_per_day: int = 1
 @export var party_slots: int = 1
 @export var inventory_slots: int = 0  ## group slots their gear fills (the Wizard's books)
+@export var saddlebag := Vector2i.ZERO  ## a courier's bag (cols x rows): when the pack is full they can carry it home
 @export var unlock: String = ""  ## "" = unlocked from the start, else a meta flag id
 @export var tint: Color = Color(0.6, 0.6, 0.6)  ## graybox piece color
 

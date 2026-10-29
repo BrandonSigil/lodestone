@@ -6,6 +6,7 @@ extends RefCounted
 
 const W := 460.0
 const PACK_CELL := 56.0
+const FULL_CELL := 46.0  ## smaller when FOUND and the courier's bag share the box
 
 
 ## [USER] 2026-10-28: the Lodestone opens from its bottom-bar button at any time: level-up picks, head back
@@ -41,36 +42,71 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 
 
 ## What the party carries, with EAT and DRINK for the hurt. The grid is the pack itself: drag to move,
-## R or right-click to turn ([USER] 2026-10-29: rearranging is the little game for the walk).
+## R or right-click to turn ([USER] 2026-10-29: rearranging is the little game for the walk). Each member's
+## belt sits under it. When a pickup found no room the box opens on its own, full: the new things wait in
+## FOUND beside the pack until the player repacks, throws something away, or fills the courier's bag and
+## sends them home ([USER] 2026-10-29); LEAVE THE REST leaves whatever is still waiting.
 static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void:
 	var run := Game.run
+	var full := run.overfull()
 	_label(box, Txt.t("UI_PACK"), 20)
-	var hurt := TravelRules.most_hurt(run) != {}
-	_use_row(box, Txt.f("UI_PACK_FOOD", run.food), Txt.t("UI_EAT"), run.food > 0 and hurt, func() -> void:
-		TravelRules.eat_one(run)
-		changed.call())
-	_use_row(box, Txt.f("UI_PACK_POTION", run.medicine), Txt.t("UI_DRINK"), run.medicine > 0 and hurt, func() -> void:
-		TrailRules.heal(run)
-		changed.call())
-	var finds := run.items
-	for id: String in finds:
-		if id != RunState.FOOD_ITEM and id != RunState.MED_ITEM:
-			_label(box, "%s  x%d" % [Txt.t(String(Db.items[id].name_key)), int(finds[id])], 14)
+	if full:
+		_label(box, Txt.t("UI_PACK_FULL"), 14)
+	else:
+		var hurt := TravelRules.most_hurt(run) != {}
+		_use_row(box, Txt.f("UI_PACK_FOOD", run.food), Txt.t("UI_EAT"), run.food > 0 and hurt, func() -> void:
+			TravelRules.eat_one(run)
+			changed.call())
+		_use_row(box, Txt.f("UI_PACK_POTION", run.medicine), Txt.t("UI_DRINK"), run.medicine > 0 and hurt, func() -> void:
+			TrailRules.heal(run)
+			changed.call())
+		var finds := run.items
+		for id: String in finds:
+			if id != RunState.FOOD_ITEM and id != RunState.MED_ITEM:
+				_label(box, "%s  x%d" % [Txt.t(String(Db.items[id].name_key)), int(finds[id])], 14)
 	_label(box, Txt.t("UI_PACK_HELP_RUN"), 12)
+	var cell := FULL_CELL if full else PACK_CELL
 	var grid := PackView.new()
-	grid.setup_bag(run.pack, Db.items, Callable(), PACK_CELL)
+	grid.setup_bag(run.pack, Db.items, run.throw_away, cell)
+	var pack_size := Vector2(RunState.PACK_COLS, RunState.PACK_ROWS) * cell
+	if full:
+		grid.add_area(run.found, Vector2(pack_size.x + 24.0, 0), Txt.t("UI_FOUND"))
 	# the belts in a row under the pack, one per member: what each can use in a fight
-	var belt_w := PACK_CELL * RunState.BELT_COLS + 24.0
+	var belt_w := cell * RunState.BELT_COLS + 24.0
 	var per_row := maxi(1, int(W / belt_w))
+	var y := pack_size.y + 14.0
 	for k in run.members.size():
 		var m: Dictionary = run.members[k]
-		var at := Vector2((k % per_row) * belt_w, PACK_CELL * RunState.PACK_ROWS + 14.0 + floorf(float(k) / per_row) * (PACK_CELL + 30.0))
+		var at := Vector2((k % per_row) * belt_w, y + floorf(float(k) / per_row) * (cell + PackView.LABEL_H + 10.0))
 		grid.add_area(m.belt, at, Txt.f("UI_BELT_OF", Txt.t((m.def as CharacterDef).name_key)))
+	y += ceilf(float(run.members.size()) / per_row) * (cell + PackView.LABEL_H + 10.0)
+	var courier := run.courier()
+	var bag: InventoryGrid = run.open_courier_bag() if full else null
+	if bag != null:
+		grid.add_area(bag, Vector2(0, y), Txt.f("UI_COURIER_BAG", Txt.t((courier.def as CharacterDef).name_key)))
+		grid.place_bin(Rect2(Vector2(bag.cols * cell + 24.0, y + PackView.LABEL_H), Vector2(150, bag.rows * cell)), "UI_THROW", "UI_BOUND_THROW")
+	elif full:
+		grid.place_bin(Rect2(Vector2(0, y + PackView.LABEL_H), Vector2(150, cell)), "UI_THROW", "UI_BOUND_THROW")
+	else:
+		grid.place_bin(Rect2(Vector2(pack_size.x + 24.0, 0), Vector2(150, pack_size.y)), "UI_THROW", "UI_BOUND_THROW")
 	grid.changed.connect(func() -> void:
 		Game.save_adventure()
 		if grid.flash == "":  # a refused move keeps the box up so its "no room" stays readable
 			changed.call())
 	box.add_child(grid)
+	if full:
+		if bag != null:
+			var send := _button(box, Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
+				run.send_home(courier)
+				Game.refresh_party()
+				Game.save_adventure()
+				changed.call())
+			send.disabled = bag.items.is_empty()
+		_button(box, Txt.t("UI_LEAVE_REST"), func() -> void:
+			run.leave_found()
+			Game.save_adventure()
+			close.call())
+		return
 	_label(box, Txt.f("UI_PACK_GOLD", run.gold), 14)
 	_label(box, Txt.f("UI_PACK_WEAPON", Txt.t(String(Db.weapons.get(Game.weapon_id(), {}).get("name_key", "")))), 14)
 	_label(box, Txt.f("UI_SLOTS_USED", [run.pack.used_cells(), run.pack.capacity()]), 12)
@@ -88,12 +124,13 @@ static func _label(box: VBoxContainer, text: String, font_size: int) -> void:
 	box.add_child(l)
 
 
-static func _button(box: VBoxContainer, text: String, cb: Callable) -> void:
+static func _button(box: VBoxContainer, text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(W, 30)
 	b.pressed.connect(cb)
 	box.add_child(b)
+	return b
 
 
 static func _use_row(box: VBoxContainer, text: String, verb: String, enabled: bool, cb: Callable) -> void:

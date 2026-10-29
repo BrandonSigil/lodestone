@@ -64,6 +64,8 @@ func leg() -> Dictionary:
 func _process(delta: float) -> void:
 	_time += delta
 	_note_time = maxf(0.0, _note_time - delta)
+	if not _busy and _dialog == null and Game.run.overfull():
+		_open_menu("pack")  # a pickup found no room: the player decides before walking on
 	if walking() and not _busy:
 		_advance_to(float(Game.travel.t) + delta)
 	queue_redraw()

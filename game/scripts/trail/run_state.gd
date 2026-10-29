@@ -8,6 +8,8 @@ const PACK_COLS := 4  ## [USER] 2026-10-29: the first pack is 4 x 3
 const PACK_ROWS := 3
 const BELT_COLS := 2  ## [USER] 2026-10-29: each belt is a 2 x 1 strip where shapes count
 const BELT_ROWS := 1
+const FOUND_COLS := 4  ## where pickups with no room wait for the player's call
+const FOUND_ROWS := 2
 const FOOD_ITEM := "meat"  ## one food = one piece of meat in the pack (data/items.csv)
 const MED_ITEM := "potion"  ## one medicine = one potion
 const MAX_LINES := 200
@@ -16,6 +18,11 @@ var members: Array[Dictionary] = []  # {"def": CharacterDef, "hp": int, "bonus":
 var adventure := false  ## the E2E loop's run: kept through a wake-up, saved in meta (Game.start_adventure)
 ## Everything carried, as shapes in the party pack ([USER] 2026-10-29). Weapons sit on their members instead.
 var pack: InventoryGrid = InventoryGrid.create(PACK_COLS, PACK_ROWS)
+## Adventure runs: a pickup that doesn't fit waits here until the player repacks, throws something away
+## or sends the courier home ([USER] 2026-10-29). Not carried: it counts for nothing until packed.
+var found: InventoryGrid = InventoryGrid.create(FOUND_COLS, FOUND_ROWS)
+var courier_bag: InventoryGrid = null  ## the courier's saddlebag while it's being filled
+var away: Array[Dictionary] = []  ## members sent home with a bag: {"member": Dictionary, "bag": InventoryGrid}
 ## What the party carries in the pack and on its belts, id -> count (gear bound to a member left out).
 ## Read-only: change it with add_item.
 var items: Dictionary:
@@ -135,9 +142,76 @@ func add_item(id: String, n: int) -> int:
 			left -= g.take(id, left)
 		return 0
 	var lost := pack.put(id, shape_of(id), n, stack_of(id))
+	if lost > 0 and adventure:
+		lost = found.put(id, shape_of(id), lost, stack_of(id))
 	if lost > 0:
 		note(Txt.f("LOG_OVERFLOW", [lost, Txt.t(String(Db.items[id].name_key))]))
 	return lost
+
+
+## True while found things wait on the player's call (the courier's half-filled bag counts too).
+func overfull() -> bool:
+	return not found.items.is_empty() or (courier_bag != null and not courier_bag.items.is_empty())
+
+
+## The member who can carry a saddlebag home (the dog), or {} if none is in the party.
+func courier() -> Dictionary:
+	for m in alive():
+		if (m.def as CharacterDef).saddlebag != Vector2i.ZERO:
+			return m
+	return {}
+
+
+## The courier's bag, made on first use. null without a courier.
+func open_courier_bag() -> InventoryGrid:
+	var m := courier()
+	if m.is_empty():
+		return null
+	if courier_bag == null:
+		var size: Vector2i = (m.def as CharacterDef).saddlebag
+		courier_bag = InventoryGrid.create(size.x, size.y)
+	return courier_bag
+
+
+## The courier takes the bag home and is out of the party until the party is home too.
+func send_home(m: Dictionary) -> void:
+	members.erase(m)
+	away.append({"member": m, "bag": courier_bag if courier_bag != null else InventoryGrid.create(1, 1)})
+	courier_bag = null
+	note(Txt.f("LOG_SENT_HOME", Txt.t((m.def as CharacterDef).name_key)))
+
+
+## Anything still in FOUND or a bag that wasn't sent stays where the party stands, for good.
+func leave_found() -> void:
+	var n := 0
+	for g in [found, courier_bag]:
+		if g == null:
+			continue
+		for it in g.items:
+			n += int(it.get("n", 1))
+		g.items.clear()
+	if n > 0:
+		note(Txt.f("LOG_LEFT_BEHIND", n))
+
+
+## Throws one thing out of a grid for good. Gear bound to a member can't go.
+func throw_away(g: InventoryGrid, index: int) -> bool:
+	if g.items[index].bound != "":
+		return false
+	var it := g.remove(index)
+	note(Txt.f("LOG_THROWN", [int(it.get("n", 1)), Txt.t(String(Db.items[it.id].name_key))]))
+	return true
+
+
+## The party is home (a wake-up or walking into the village): whoever was sent home rejoins, and
+## their bag is unpacked into the pack (what doesn't fit waits in FOUND).
+func come_home() -> void:
+	for a in away:
+		members.append(a.member)
+		note(Txt.f("LOG_CAME_HOME", Txt.t((a.member.def as CharacterDef).name_key)))
+		for it in (a.bag as InventoryGrid).items:
+			add_item(String(it.id), int(it.get("n", 1)))
+	away.clear()
 
 
 func add_food(n: int) -> void:
@@ -170,6 +244,44 @@ func belts_save() -> Dictionary:
 	for m in members:
 		out[String((m.def as CharacterDef).id)] = (m.belt as InventoryGrid).to_save()
 	return out
+
+
+## FOUND, the courier's open bag and who is away, for the save.
+func waiting_save() -> Dictionary:
+	var gone := []
+	for a in away:
+		var m: Dictionary = a.member
+		gone.append({"id": String((m.def as CharacterDef).id), "hp": int(m.hp), "bag": (a.bag as InventoryGrid).to_save(),
+			"bag_size": [a.bag.cols, a.bag.rows], "belt": (m.belt as InventoryGrid).to_save()})
+	var bag := {"cols": courier_bag.cols, "rows": courier_bag.rows, "items": courier_bag.to_save()} if courier_bag != null else {}
+	return {"found": found.to_save(), "courier_bag": bag, "away": gone}
+
+
+## Put back what waiting_save wrote. Call before Game.refresh_party, so the away aren't re-added.
+func load_waiting(saved: Dictionary) -> void:
+	found = InventoryGrid.create(FOUND_COLS, FOUND_ROWS)
+	_load_into(found, saved.get("found", []))
+	away.clear()
+	for e: Dictionary in saved.get("away", []):
+		var d := Db.character(StringName(String(e.get("id", ""))))
+		if d == null:
+			continue
+		var size: Array = e.get("bag_size", [2, 2])
+		var bag := InventoryGrid.create(int(size[0]), int(size[1]))
+		_load_into(bag, e.get("bag", []))
+		var belt := InventoryGrid.create(BELT_COLS, BELT_ROWS)
+		_load_into(belt, e.get("belt", []))
+		away.append({"member": {"def": d, "hp": maxi(1, int(e.get("hp", 1))), "bonus": {}, "belt": belt}, "bag": bag})
+	var bag: Dictionary = saved.get("courier_bag", {})
+	courier_bag = null
+	if not bag.is_empty():
+		courier_bag = InventoryGrid.create(int(bag.cols), int(bag.rows))
+		_load_into(courier_bag, bag.get("items", []))
+
+
+## Whether a member with this id was sent home.
+func is_away(id: StringName) -> bool:
+	return away.any(func(a: Dictionary) -> bool: return (a.member.def as CharacterDef).id == id)
 
 
 ## Places saved entries where they were. Returns the ones that didn't fit there; on the pack those are

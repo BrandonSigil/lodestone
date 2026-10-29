@@ -63,6 +63,8 @@ func _ready() -> void:
 	Game.ensure_run()
 	Game.refresh_party()
 	map = ExploreMap.load_named(Game.explore_map)
+	if map.map_name == "village":
+		Game.home_again()
 	grid = map.grid
 	board = CombatBoard.new()
 	board.grid = grid
@@ -229,6 +231,8 @@ func _free_start() -> Vector2i:
 func _process(delta: float) -> void:
 	if board == null:
 		return
+	if mode == M.WALK and _dialog == null and Game.run.overfull():
+		_open_menu("pack")  # a pickup found no room: the player decides before walking on
 	var pan := Vector2.ZERO
 	_wasd(delta)
 	if Input.is_key_pressed(KEY_LEFT):

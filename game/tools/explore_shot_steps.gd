@@ -46,6 +46,15 @@ func run(s: Node, f: int, step: String) -> bool:
 	match step:
 		"start":
 			return f == 20
+		"pack_full":
+			# A pickup with no room: FOUND beside the pack, the dog's saddlebag and THROW AWAY under it.
+			if f == 5:
+				var run: RunState = s.get_node("/root/Game").run
+				run.adventure = true
+				run.food = 200
+				run.add_item("rope", 1)
+				run.add_item("potion", 2)
+			return f == 30
 		"pack":
 			# The PACK box with a few stacks and a find in it, to judge the grid.
 			if f == 5:

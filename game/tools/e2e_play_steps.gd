@@ -100,6 +100,30 @@ func play(t: SceneTree) -> void:
 	s = await _explore("crypt")
 	_check(s.get("groups").any(func(g: Dictionary) -> bool: return g.def.id == "throne" and g.state == "gone"), "the Lich King stays beaten")
 
+	# A full pack ([USER] 2026-10-29): what doesn't fit waits, PACK opens on its own, and the dog can carry
+	# it home. He's out of the party until the party is home too.
+	var pack: InventoryGrid = game.run.pack
+	game.run.add_item("meat", 10 * (pack.capacity() - pack.used_cells()) + 10)
+	await _frames(4)
+	_check(bool(s.get("_menu_open")) and game.run.found.count("meat") > 0, "a full pack opens PACK with the rest waiting")
+	var bag: InventoryGrid = game.run.open_courier_bag()
+	_check(bag != null, "the dog's saddlebag is there to fill")
+	if bag != null:
+		var w: Dictionary = game.run.found.items[0]
+		bag.items[bag.place(String(w.id), w.shape, 0, Vector2i.ZERO)].n = int(w.n)
+		game.run.found.items.clear()
+		var carried := int(w.n)
+		await _press_text(s, Txt.f("UI_SEND_HOME", Txt.t("CHAR_DOG")))
+		_check(game.run.is_away(&"dog") and not game.run.overfull(), "the dog took the bag home")
+		_check((s.get("party") as Array).size() == game.run.alive().size(), "and left the map")
+		await _press_text(s, Txt.t("UI_CLOSE_MENU"))
+		game.run.add_item("meat", -10 * carried)  # room for what he brings back
+		var meat: int = game.run.food
+		game.wake_in_town(false)
+		s = await _explore("village")
+		_check(not game.run.is_away(&"dog") and game.run.members.size() == 2, "home again, the dog is back")
+		_check(game.run.food == meat + carried, "with the meat he carried")
+
 	# The road goes on ([USER] 2026-10-29): from the town gate past the cleared pass, without going in.
 	game.wake_in_town(false)
 	s = await _explore("village")
