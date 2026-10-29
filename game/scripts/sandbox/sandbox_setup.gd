@@ -26,7 +26,6 @@ var seed_value := 1
 var strangeness := 0.0
 var art_set := ""  ## battle tile set (a subfolder of BattleArt.DIR), "" = base art
 var counters := true
-var mercy := true
 var view := 0  ## camera quarter turns the map opens with
 
 
@@ -164,7 +163,6 @@ func build_units() -> Array:
 
 func apply_switches() -> void:
 	CombatRules.counters = counters
-	CombatRules.mercy = mercy
 
 
 ## One AI-vs-AI fight. Returns {"winner", "rounds", "hp_left": party HP fraction, "downed": party units down}.
@@ -223,7 +221,7 @@ func to_dict() -> Dictionary:
 		"name": map_name, "map": grid.to_dict(), "party": cells.call(party), "enemies": cells.call(enemies),
 		"party_mods": party_mods, "enemy_mods": enemy_mods, "extra_enemies": extra_enemies,
 		"supplies": supplies, "seed": seed_value, "strangeness": strangeness, "art_set": art_set,
-		"counters": counters, "mercy": mercy, "view": view,
+		"counters": counters, "view": view,
 	}
 
 
@@ -248,7 +246,6 @@ static func from_dict(d: Dictionary) -> SandboxSetup:
 	s.strangeness = float(d.get("strangeness", 0.0))
 	s.art_set = String(d.get("art_set", ""))
 	s.counters = bool(d.get("counters", true))
-	s.mercy = bool(d.get("mercy", true))
 	s.view = int(d.get("view", 0)) % 4
 	return s
 

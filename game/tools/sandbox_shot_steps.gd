@@ -60,7 +60,7 @@ func run(s: Node, _frames: int, _step: String) -> void:
 				# Walk the first piece to the cell nearest the enemy, then aim its best ready skill.
 				b._select(u)
 				var best: Vector2i = u.cell
-				for c: Vector2i in b.reach.cost:
+				for c: Vector2i in CombatRules.reachable(b.grid, u, b.units).cost:
 					if CombatRules.dist(c, Vector2i(b.grid.w - 1, u.cell.y)) < CombatRules.dist(best, Vector2i(b.grid.w - 1, u.cell.y)):
 						best = c
 				u.place(best, b.grid.height_at(best))

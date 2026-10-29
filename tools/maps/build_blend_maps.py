@@ -109,7 +109,7 @@ class Map:
         inv = {n: k for k, n in key.items()}
         d = {
             "name": self.name, "seed": 1, "view": 0, "strangeness": strangeness, "art_set": art_set,
-            "counters": True, "mercy": True, "extra_enemies": 0,
+            "counters": True, "extra_enemies": 0,
             "supplies": {"food": 10, "medicine": 3},
             "party_mods": {"attack": 0, "damage": 0, "defense": 0, "hp_pct": 100, "move": 0},
             "enemy_mods": {"attack": 0, "damage": 0, "defense": 0, "hp_pct": 100, "move": 0},

@@ -13,12 +13,11 @@ func run(args: PackedStringArray) -> void:
 	for s: SandboxSetup in setups:
 		for preset in SandboxSetup.PRESETS:
 			s.apply_preset(preset)
-			for sw in [[true, true], [true, false], [false, false]]:
-				s.counters = sw[0]
-				s.mercy = sw[1]
+			for on in [true, false]:
+				s.counters = on
 				var t := {}
 				for i in n:
 					SandboxSetup.tally(t, s.simulate(i))
-				print("%-10s %-7s counters=%-5s luck=%-5s | %s" % [s.map_name, preset, sw[0], sw[1],
+				print("%-10s %-7s counters=%-5s | %s" % [s.map_name, preset, on,
 					SandboxSetup.describe_tally(t).replace("\n", " | ")])
 	CombatRules.reset_switches()

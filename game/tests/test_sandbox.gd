@@ -5,7 +5,7 @@ func test_setup_round_trip() -> void:
 	var s := SandboxSetup.default_setup()
 	s.apply_preset("HARD")
 	s.party_mods.damage = 2
-	s.mercy = false
+	s.counters = false
 	s.art_set = "snow"
 	var back := SandboxSetup.from_dict(JSON.parse_string(JSON.stringify(s.to_dict())))
 	eq(back.party.size(), s.party.size())
@@ -13,7 +13,7 @@ func test_setup_round_trip() -> void:
 	eq(back.enemy_mods, s.enemy_mods)
 	eq(back.party_mods.damage, 2)
 	eq(back.extra_enemies, s.extra_enemies)
-	eq(back.mercy, false)
+	eq(back.counters, false)
 	eq(back.art_set, "snow")
 	eq(back.grid.heights, s.grid.heights)
 

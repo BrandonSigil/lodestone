@@ -39,12 +39,10 @@ const REGROW := 1
 
 ## Rule switches the sandbox can flip to compare. Real fights use the defaults.
 static var counters := true  ## melee units hit back once when attacked in reach
-static var mercy := true  ## no effect since hits always land (2026-10-29); the sandbox's "party luck" box still sets it
 
 
 static func reset_switches() -> void:
 	counters = true
-	mercy = true
 
 
 ## A rule number from data/combat.csv ([USER] 2026-10-29 defaults, tuned in play).

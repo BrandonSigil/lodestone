@@ -49,7 +49,7 @@ const TOOLS := [
 	["fill", "fill", "F", "Fill", "give holes ground again at the height around them. Right: cut."],
 	["zone", "zone", "Z", "Zone", "paint another tile set onto cells (blend forest into ruins). Right: back to the map's set."],
 ]
-const FIGHT_LABELS := {"hp_pct": "hp %", "attack": "attack", "defense": "defense", "damage": "damage", "move": "move"}
+const FIGHT_LABELS := {"hp_pct": "hp %", "attack": "crit (5% a point)", "defense": "armor", "damage": "damage", "move": "move"}
 const GROUNDS := [["grass", T.GRASS], ["forest", T.FOREST], ["road", T.ROAD], ["stone", T.STONE], ["rock", T.ROCK], ["ruin", T.RUIN], ["water", T.WATER]]
 const PATH_GROUNDS := [["road", T.ROAD], ["stone", T.STONE], ["grass", T.GRASS]]
 const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "tidy", "paint", "path", "river", "cut", "fill", "zone"]
@@ -143,7 +143,7 @@ var _party_pick: OptionButton
 var _enemy_pick: OptionButton
 var _fight_drawer: MakerUI.Drawer
 var _fight_spins := {}  ## fight dials by "party.hp_pct", "enemy.move", "extra", "medicine", "food", "seed"
-var _fight_checks := {}  ## "counters", "mercy"
+var _fight_checks := {}  ## "counters"
 var _w_spin: SpinBox
 var _h_spin: SpinBox
 var _floor_spin: SpinBox
@@ -1280,7 +1280,6 @@ func _sync_fight() -> void:
 	_fight_spins["food"].set_value_no_signal(s.supplies["food"])
 	_fight_spins["seed"].set_value_no_signal(s.seed_value)
 	_fight_checks["counters"].set_pressed_no_signal(s.counters)
-	_fight_checks["mercy"].set_pressed_no_signal(s.mercy)
 
 
 func _sync_ui() -> void:
@@ -2254,7 +2253,7 @@ func _build_map_page(body: VBoxContainer) -> void:
 	_fight_spins["medicine"] = _spin_row(fight.body, "medicine", 0, 20, 1, func(v: float) -> void: _fight_edit(func(s: SandboxSetup) -> void: s.supplies["medicine"] = int(v)))
 	_fight_spins["food"] = _spin_row(fight.body, "food", 0, 60, 1, func(v: float) -> void: _fight_edit(func(s: SandboxSetup) -> void: s.supplies["food"] = int(v)))
 	_fight_spins["seed"] = _spin_row(fight.body, "dice seed", 1, 99999, 1, func(v: float) -> void: _fight_edit(func(s: SandboxSetup) -> void: s.seed_value = int(v)))
-	for pair in [["counters", "counterattacks"], ["mercy", "party luck after misses"]]:
+	for pair in [["counters", "counterattacks"]]:
 		var check := CheckBox.new()
 		check.text = pair[1]
 		var field: String = pair[0]

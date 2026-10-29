@@ -58,7 +58,6 @@ var _med_spin: SpinBox
 var _food_spin: SpinBox
 var _strange_spin: SpinBox
 var _counter_check: CheckBox
-var _mercy_check: CheckBox
 var _dice_check: CheckBox
 var _fights_spin: SpinBox
 var _relief_spin: SpinBox  ## height scale for generated maps, times ten (10 = normal)
@@ -301,7 +300,6 @@ func _build_ui() -> void:
 			battle.board.wallpaper = on)
 	wall_check.button_pressed = _wallpaper_on
 	_counter_check = _check(rb, "counterattacks", func(on: bool) -> void: setup.counters = on)
-	_mercy_check = _check(rb, "party luck after misses", func(on: bool) -> void: setup.mercy = on)
 	_dice_check = _check(rb, "new dice on restart", func(on: bool) -> void: random_dice = on)
 	rb.add_child(_title("BALANCE"))
 	_relief_spin = _dial(rb, "generated relief (x10)", 10, 30, 5)
@@ -315,7 +313,7 @@ func _build_ui() -> void:
 
 
 func _dial_rows(parent: Control, side: String) -> void:
-	var spec := {"hp_pct": ["HP %", 25, 300, 5], "attack": ["to-hit", -5, 8, 1], "defense": ["defense", -5, 8, 1],
+	var spec := {"hp_pct": ["HP %", 25, 300, 5], "attack": ["crit (5% a point)", -5, 8, 1], "defense": ["armor", -5, 8, 1],
 		"damage": ["damage", -3, 6, 1], "move": ["move", -3, 3, 1]}
 	for key in SandboxSetup.MOD_KEYS:
 		var sp: Array = spec[key]
@@ -422,7 +420,6 @@ func _sync_controls() -> void:
 		if i > 0 and _set_menu.get_item_text(i) == setup.art_set:
 			_set_menu.select(i)
 	_counter_check.button_pressed = setup.counters
-	_mercy_check.button_pressed = setup.mercy
 	_dice_check.button_pressed = random_dice
 	_syncing = false
 	_rebuild_spells()
