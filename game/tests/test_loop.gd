@@ -204,3 +204,27 @@ func test_loop_data_is_whole() -> void:
 		ok(Txt.has(Db.weapons[id].name_key))
 	for p in LevelRules.PICKS:
 		ok(Txt.has("UI_LS_PICK_" + p.to_upper()))
+
+
+## [USER] 2026-10-28: no fog of war for now. The pass is drawn whole from the first step, every group stands
+## in view, but spotting still waits for line of sight (nobody jumps the party from across the map).
+func test_no_fog_of_war() -> void:
+	_db()
+	Game.save_enabled = false
+	Game.reset_meta()
+	Game.run = null
+	Game.explore_map = "snow_pass"
+	Game.explore_entry = Vector2i(-1, -1)
+	var tree := Engine.get_main_loop() as SceneTree
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	ok(not s.board.fog_on, "the board draws every cell")
+	eq(s.seen.size(), s.grid.w * s.grid.h, "the whole map counts as seen, so any cell can be walked to")
+	var shown := 0
+	for g: Dictionary in s.groups:
+		shown += g.units.filter(func(u: CombatUnit) -> bool: return s.board.units.has(u)).size()
+	eq(shown, 4, "both groups on the pass are in view")
+	ok(s.in_sight.size() < s.grid.w * s.grid.h, "spotting still uses the party's line of sight")
+	ok(s.mode == 0, "no group spotted at the foot of the pass")
+	s.free()
+	Game.explore_map = "home"

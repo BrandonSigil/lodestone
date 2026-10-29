@@ -215,6 +215,8 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-28 The village gate opens only once the Lodestone is taken, so there are no fights before it (as the empty-village draft proposed).
 - [USER] 2026-10-28 The loop's maps and fights use the painted look from the "Handmade map generator aesthetics" work, not the older staging (Brandon).
 - [AI] 2026-10-28 Following that: explore maps outdoors turn on the wallpaper staging; road fights are `MapGen.valley` maps (V9 to V11) instead of the old generated islands (kept for the shelved trail); the snow pass is dressed by the game's own MapOps after its Python builder (V9 tidy, V10 pillars, V12 a road ribbon) and its stair flights are one cell wide.
+- [USER] 2026-10-28 No fog of war for now: it is frustrating and doesn't work well yet (Brandon).
+- [AI] 2026-10-28 Following that: one switch, `ExploreRules.FOG_OF_WAR` (false), draws every map whole with every group in view; spotting and ambushes still use the party's line of sight within 7 cells, so nobody is jumped from across the map. Each map's `fog` setting is kept for when it comes back.
 - [AI] 2026-10-28 Balance for a party of two (AI-vs-AI sim): the Lich King fights alone at 22 HP (about 46% for the AI at level 4); the wolf den is a pair plus a lone wolf instead of three together (three wolves won 61% at level 2).
 
 ## Exploration maps

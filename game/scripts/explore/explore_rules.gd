@@ -5,6 +5,9 @@ extends RefCounted
 ## Pure functions on a CombatGrid, so tests run them headless.
 
 const PARTY_SIGHT := 7  ## cells the party sees around each member (line of sight still applies)
+## [USER] 2026-10-28: no fog of war for now; every map is drawn whole. The party still spots enemy groups
+## (and gets spotted) by line of sight within PARTY_SIGHT. True brings back each map's own `fog` setting.
+const FOG_OF_WAR := false
 const ENEMY_SIGHT := 4  ## default for groups; a map can set its own per group
 const INTERACT_CLIMB := 2  ## a thing on a ledge more than this above or below can't be reached
 const HINT_RANGE := 3  ## the interact icon lights up when the leader is this close

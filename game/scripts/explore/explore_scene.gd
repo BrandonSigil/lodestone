@@ -66,7 +66,7 @@ func _ready() -> void:
 	board.strangeness = map.strangeness
 	board.art_set = map.art_set
 	board.rot = map.view
-	board.fog_on = map.fog
+	board.fog_on = fogged()
 	board.show_grid = false
 	board.backdrop = true  # the map's look: sky, mountains and forest for valley looks, a dark floor indoors
 	# Outdoors, the painted look's staging (as in the map maker and fights): the set's skyline fixed behind
@@ -356,15 +356,27 @@ func _nearest_thing() -> Dictionary:
 
 func _refresh_sight() -> void:
 	var eyes: Array = party_cells() if mode == M.FIGHT else [leader().cell]
+	# Sight is who the party can spot, fog or not; without fog the whole map counts as seen and is drawn lit.
 	in_sight = ExploreRules.sight(grid, eyes, ExploreRules.PARTY_SIGHT)
-	if not map.fog:
-		in_sight = _every_cell()
+	if not fogged():
+		for c in _every_cell():
+			seen[c] = true
+		var lit := {}
+		for c in seen:
+			lit[c] = 2
+		board.fog = lit
+		return
 	for c in in_sight:
 		seen[c] = true
 	var fog := {}
 	for c in seen:
 		fog[c] = 2 if in_sight.has(c) else 1
 	board.fog = fog
+
+
+## Fog of war on this map: the map asks for it and the switch is on (it is off for now, ExploreRules.FOG_OF_WAR).
+func fogged() -> bool:
+	return map.fog and ExploreRules.FOG_OF_WAR
 
 
 ## Every cell of the map, for maps without fog of war.
@@ -385,7 +397,7 @@ func _refresh_units() -> void:
 		if g.state == "gone":
 			continue
 		for u: CombatUnit in g.units:
-			if u.alive() and in_sight.has(u.cell):
+			if u.alive() and (in_sight.has(u.cell) or not fogged()):
 				shown.append(u)
 	board.units = shown
 
@@ -540,7 +552,7 @@ func _on_cell_hovered(c: Vector2i) -> void:
 	if c == CombatBoard.NONE:
 		return
 	var g := group_at(c)
-	if not g.is_empty() and in_sight.has(c):
+	if not g.is_empty() and (in_sight.has(c) or not fogged()):
 		for s in ExploreRules.sight(grid, _group_cells(g), int(g.def.sight)):
 			if seen.has(s):
 				board.highlights[s] = WATCH_COLOR
