@@ -40,7 +40,7 @@ The run and the village
 - **Nothing a trip earns grows the village yet.** With falling free and no village building decided, the "one more run" chain (X builds Y, Y unlocks Z) has no X. This is theme 3's main hole.
 - **Food and supplies have little bite.** Food drains, but a fall refills nothing and loses nothing, so scarcity only matters inside one trip. Ties to combat card 6 and theme 3.
 - **Grinding is open.** Foes come back on every new trip, every fight gives XP, and falls are free, so a player can level past the Lich King "skill check". Tactics Ogre's level caps and Fates Conquest's fixed fights are the two answers in the deck; asked in the choice theme.
-- **Actions per turn and counters are still `[AI]`.** Turn order and dice are now settled (see Combat).
+- **Actions per turn and counters are still `[AI]`.** Turn order, dice, fight sizes and dropping are now settled (see Combat).
 - **Party size.** 4 slots is `[AI]`; the playable party today is the hero and the dog. Asked in the choice theme.
 - **The level pick vs the job tree.** The pick (health, attack, magic) is `[USER]`; jobs at level 5 and 10 are an `[AI]` draft. How the two fit is asked in the choice theme.
 
@@ -49,26 +49,42 @@ The run and the village
 - **Turn order: Fire Emblem phases**, as built (c1). Speed matters only for movement and the deploy ring.
 - **Warning: the danger zone only** (c2). Foes show where they could hit, not who they'll go for. No telegraphed wind-ups or drawn intent, so the enemy phase keeps some surprise.
 - **Hits always land; damage wobbles by a point or two; crits can happen** (c3). Floating damage numbers pop on every blow, crits shown bigger. The d20 stays for checks outside fights.
+- **Combos come from characters, not one system** (c4). A balanced mix of shoving, teamwork, reacting ground and a meter. Each character has 3 or 4 skills of their own; some share an effect under another name (the dog's bark and another fighter's goad both taunt). The fun is picking teammates whose skills fit your play style. Skills should also do something on the road or while exploring where they can (a goal, not a rule): some characters are mostly explorers (the dog: bite slows, bark taunts, but his worth is sniffing out treasure and rare food), some mostly fighters (plus brute-force checks like smashing a door).
+- **Three sizes of fight** (c5): quick, simple maps for random road encounters; medium fights on the walkable explore maps; big showpiece battles for bosses.
+- **Dropping is bleeding out, never death** (c6). A downed piece can be helped up by an AID action from a teammate right next to it; a support character may revive from further away. If nobody reaches it in time, it's out for the fight and stands up after the fight with low HP, as today.
 
-### Open from these answers (for batch 2)
-- **What the to-hit bonuses become.** With no roll to hit, the +2s from height, flanking and STAR POINT, cover and GUARD's defense, SPOOKED's -3, steady_aim, the luck streak and hexes (MOON NAP rolls to hit) have nothing to change. Each must turn into damage, crit chance or a sure effect, or go away. This decides what positioning is worth, so it's the first card of batch 2.
-- **How crits work.** A flat chance, or a chance raised by position (height, flanking)? Bigger crit chance from high ground would keep height worth climbing.
-- **How wide the wobble is**, and whether the forecast shows the range ("4-6") or the middle.
+### Gaps these answers open
+- **To-hit bonuses have nothing to change** (from c3): height, flanking, STAR POINT, cover, GUARD, SPOOKED, steady_aim, the luck streak and hexes all worked on the hit roll. Batch 2 cards c7 and c8.
+- **New statuses from c4:** TAUNT (foes must go for the taunter) and SLOW (less move) don't exist yet. Taunt changes the enemy AI's target pick and should show in the danger zone or on the foe.
+- **3 or 4 skills per character vs the job tree** (from c4): today a class has 1 or 2 skills; the hero's jobs (level 5 and 10) are an `[AI]` draft. Where a character's skills come from (fixed per character, learned through jobs, picked at level-ups) is a player-choice question.
+- **Skill economy** (from c4): with 3 or 4 skills each, cooldowns alone may be too much to track. Batch 2 card c9.
+- **Fight sizes need numbers** (from c5). *Proposal:* road 3 to 4 rounds, explore 5 to 7, showpiece 8 to 12; map sizes to match. Retag to `[USER]` or change.
+- **Bleed-out details** (from c6): how many turns, what HP AID brings back, and whether foes can finish a downed piece early. Batch 2 card c11. "Low health" after the fight is 1 HP today.
 - **Counters always land now**, so trading blows in melee is a sure cost. Check that "ranged picks at melee for free" still feels fair.
-- **Bosses** can't lean on telegraphs (c2), so boss shapes in batch 2 are fortress, objective, several parts or minions.
+- **Bosses** can't lean on telegraphs (c2): fortress, objective, several parts or minions. Batch 3.
 
-### Batch 1 (posted 2026-10-29)
+### Batch 1 (posted 2026-10-29, all answered)
 | Card | Question | Answer |
 |---|---|---|
 | `design-c1-turn-order` | Phases, speed timeline, or one each back and forth? | Phases |
 | `design-c2-intent` | Danger zone only, big foes telegraph, or every foe shows its move? | Danger zone only |
 | `design-c3-luck` | Roll to hit, sure hits, or sure hits with a damage wobble? | Sure hits, damage wobble, plus crits and pop-up numbers |
-| `design-c4-combos` | Heart of a clever turn (pick 2): shoving, teamwork hits, reacting ground, party meter | open |
-| `design-c5-length` | Short and many, medium, long set pieces, or a mix? | open |
-| `design-c6-down` | Out for the fight, bleeding out, hurt for the trip (last two combine)? | open |
+| `design-c4-combos` | Heart of a clever turn (pick 2): shoving, teamwork hits, reacting ground, party meter | Neither: a mix, carried by 3 or 4 skills per character, with road uses |
+| `design-c5-length` | Short and many, medium, long set pieces, or a mix? | Mix: quick road, medium explore, big boss showpieces |
+| `design-c6-down` | Out for the fight, bleeding out, hurt for the trip (last two combine)? | Bleeding out, AID to revive, never death |
 
-### Queued for batch 2
-What the to-hit bonuses become and how crits work (see above); win conditions beyond "defeat all" (escape, protect, hold); how strong height should be; healing and skill economy (cooldowns, a pool, or items only); actions per turn (move + act, two actions, or points); foe types and behaviours (charger, guard, ambusher); boss shapes (fortress, objective, several parts, minions); a mercy rewind for misclicks.
+### Batch 2 (posted 2026-10-29)
+| Card | Question | Answer |
+|---|---|---|
+| `design-c7-position` | What height and flanking give now that hits always land: damage, crit chance, or height = damage and flanking = crit? | open |
+| `design-c8-defense` | What defense, cover and GUARD do: take points off each hit, block or halve one hit, or only cut crits? | open |
+| `design-c9-skills` | How skills are paid for: cooldowns, a slowly filling pool, or uses per fight? | open |
+| `design-c10-goals` | Win conditions beyond defeat all (multi): beat the leader, hold out, reach the exit, protect something | open |
+| `design-c11-bleed` | Bleed-out: how long, and can foes finish a downed piece early? | open |
+| `design-c12-systems` | Board-wide rules on top of skills (multi): reacting ground, a party meter, sandwich follow-ups | open |
+
+### Queued for batch 3
+Crit size and the damage wobble's width; boss shapes (fortress, objective, several parts, minions); foe types and behaviours (charger, guard, ambusher); actions per turn (move + act is still `[AI]`); a mercy rewind for misclicks; how strong height is overall.
 
 ## Player choice
 Not started. Queued: party size and who comes; how the level pick and the job tree fit; skill and gear builds (few slots and upgrades vs loot); route choice on the overworld; risk and reward (opt-in harder fights, Hades-style vows); sneak, talk or fight; grinding (level caps or not).
@@ -82,6 +98,9 @@ Not started. Queued: what a trip brings home (one material or several); what the
 
 Settled by that: items have shapes, are packed by hand and can be turned. A way to grow the pack is a maybe.
 
+### Decided in the grilling
+- **Everything carried shares the grid** (inv-1): gear, food, potions, finds and village materials. Each member's weapon, and maybe one trinket or accessory, sits on that member instead (the trinket is earmarked, not to be built yet). So hauling materials home competes with supplies for room.
+
 ### What's on file and built
 - `[USER]` 2026-10-26: the village has a Tetris-like grid inventory.
 - `[AI]`, never confirmed: the pack is a 4 x 3 grid of turnable shapes (12 cells); 12 slots, food 10 a slot, medicine 5 a slot, overflow lost; the Wizard's books take 3 cells.
@@ -93,7 +112,7 @@ Falling keeps every item (`[USER]` 2026-10-28), so a tight pack can't create fea
 ### Batch 1 (posted 2026-10-29)
 | Card | Question | Answer |
 |---|---|---|
-| `design-inv-1-what` | Everything carried, materials in a pouch, or food and potions as counts too? | open |
+| `design-inv-1-what` | Everything carried, materials in a pouch, or food and potions as counts too? | Everything carried, except each member's weapon and maybe a trinket, which sit on the member |
 | `design-inv-2-who` | One party pack, a bag each, or a party pack plus a belt each? | open |
 | `design-inv-3-fight` | In a fight: anything usable, belt only, or no items? | open |
 | `design-inv-4-pressure` | What packing decides (pick 2): what you bring home, what you bring out, layout as build, just a tidy | open |
