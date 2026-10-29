@@ -25,8 +25,8 @@ REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "art" / "templates" / "buildings"
 TW, TH, HS = 64.0, 32.0, 16.0
 SIZE = 1024
-STOREY = 4.5  # wall levels per storey: 72 screen px, 1.35 x the hero
-DOOR = (0.7, 4.0)  # door width in cells, height in levels (64 px; the hero is 54 with his hair)
+STOREY = 5.5  # wall levels per storey: 88 screen px, 1.6 x the hero
+DOOR = (0.85, 4.6)  # door width in cells, height in levels (74 px; the hero is 54 with his hair)
 HERO_H = 3.4  # levels
 
 BUILDINGS = {
