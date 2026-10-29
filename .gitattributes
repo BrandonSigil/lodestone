@@ -21,3 +21,4 @@ game/art/source/characters/** -filter -diff -merge binary
 art/palettes/*.png -filter -diff -merge binary
 # Soft terrain pass screenshots stay plain git (made on the MacBook, which has no git-lfs).
 art/screens/soft-terrain/** -filter -diff -merge binary
+art/screens/water/** -filter -diff -merge binary

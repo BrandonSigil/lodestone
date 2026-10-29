@@ -13,6 +13,12 @@ const PILLAR := 0.2  ## a block standing alone: a rounded column, still flat sid
 const BUILT := 0.04  ## masonry (stone floor, ruins) stays crisp
 const FILLET := 0.1  ## where a low cell's corner is tucked between higher ground, that ground curves in this far
 const JITTER := 0.35  ## each corner's radius is its kind's times 1 +- this, fixed per corner
+## Banks: a river's cells are square, but its banks are not. Where a bank pokes into the water it rounds off
+## wide, and where the water turns a corner the bank fills it in wide, so a stepped river reads as one that
+## winds (WaterField draws the water to the same shape).
+const WET_ROUND := 0.36
+const WET_FILLET := 0.36
+const WET_MAX := 0.48  ## never more, so the two corners of one side never meet
 const MIN_DROP := 0.2  ## a step lower than this doesn't round
 const ARC_STEPS := 6
 const STROKE_STEP := 0.07  ## flow strokes are traced in steps this long (cells)
@@ -42,13 +48,15 @@ static func corner_radius(grid: CombatGrid, c: Vector2i, k: int, surf: Callable)
 	if h - h1 >= MIN_DROP and h - h2 >= MIN_DROP and t != CombatGrid.T.WATER:
 		if t == CombatGrid.T.STONE or t == CombatGrid.T.RUIN:
 			return BUILT * vary
+		if _is(grid, n1, CombatGrid.T.WATER) and _is(grid, n2, CombatGrid.T.WATER):
+			return minf(WET_ROUND * vary, WET_MAX)
 		for d: Vector2i in NORMALS:
 			if h - float(surf.call(c + d)) < MIN_DROP:
 				return ROUND * vary
 		return PILLAR * vary
 	var hd: float = surf.call(n1 + NORMALS[k])
 	if h1 - h >= MIN_DROP and absf(h1 - h2) < 0.01 and hd >= h1 - 0.01 and _fills(grid, n1) and _fills(grid, n2):
-		return -FILLET * vary
+		return -minf(WET_FILLET * vary, WET_MAX) if t == CombatGrid.T.WATER else -FILLET * vary
 	return 0.0
 
 

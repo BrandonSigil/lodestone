@@ -173,3 +173,50 @@ func test_roads_draw_as_ribbons() -> void:
 	var corner := Vector2(6.5, 2.5)
 	ok(not (bands.get(Vector2i(6, 2), []) as Array).any(func(poly: PackedVector2Array) -> bool:
 		return Geometry2D.is_point_in_polygon(corner + Vector2(0.4, -0.4), poly)), "it rounds the corner instead of filling it square")
+
+
+func test_banks_round_wide_into_water() -> void:
+	var g := _flat(4, 2)
+	for c in [Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, 2), Vector2i(1, 3)]:  # a river that turns a corner
+		g.set_terrain(c, T.WATER)
+		g.set_height(c, 1)
+	var s := _surf(g)
+	var bank := TerrainShape.corner_radius(g, Vector2i(0, 2), 1, s)  # the bank inside the bend pokes in
+	ok(bank >= TerrainShape.WET_ROUND * (1.0 - TerrainShape.JITTER) - 0.0001 and bank <= TerrainShape.WET_MAX, "a bank rounds wide into the water (got %s)" % bank)
+	var bend := TerrainShape.corner_radius(g, Vector2i(1, 1), 1, s)  # the outside of the bend fills in
+	ok(bend < 0.0 and -bend >= TerrainShape.WET_FILLET * (1.0 - TerrainShape.JITTER) - 0.0001 and -bend <= TerrainShape.WET_MAX,
+		"the outside of a bend fills in wide (got %s)" % bend)
+
+
+## The board's radii for a whole grid, as CombatBoard._radii holds them.
+static func _all_radii(g: CombatGrid, s: Callable) -> Dictionary:
+	var out := {}
+	for y in g.h:
+		for x in g.w:
+			out[Vector2i(x, y)] = TerrainShape.radii(g, Vector2i(x, y), s)
+	return out
+
+
+func test_water_field_knows_banks_flow_and_falls() -> void:
+	var g := _flat(6, 3)
+	for x in 6:  # a river three wide along x, falling two levels at x = 3
+		for y in range(1, 4):
+			g.set_terrain(Vector2i(x, y), T.WATER)
+			g.set_height(Vector2i(x, y), 2 if x < 3 else 0)
+	var s := _surf(g)
+	var fl := TerrainShape.flow(g)
+	var radii := _all_radii(g, s)
+	var mid := WaterField.sample(g, Vector2i(1, 2), Vector2(1.5, 2.5), s.call(Vector2i(1, 2)), radii, s)
+	ok(mid.shore >= WaterField.SHORE_REACH, "mid-river is open water, past the shore band (got %s)" % mid.shore)
+	var edge := WaterField.sample(g, Vector2i(1, 1), Vector2(1.5, 1.1), s.call(Vector2i(1, 1)), radii, s)
+	ok(absf(edge.shore - 0.1) < 0.01, "a tenth of a cell off the bank (got %s)" % edge.shore)
+	eq(edge.churn, 0.0, "no fall lands up here")
+	var foot := WaterField.sample(g, Vector2i(3, 2), Vector2(3.05, 2.5), s.call(Vector2i(3, 2)), radii, s)
+	ok(foot.churn > 0.7, "the water churns at the foot of the fall (got %s)" % foot.churn)
+	var lip := WaterField.sample(g, Vector2i(2, 2), Vector2(2.95, 2.5), s.call(Vector2i(2, 2)), radii, s)
+	ok(lip.shore > 0.5, "the lip of the fall is open water, not a bank (got %s)" % lip.shore)
+	var img := WaterField.build(g, fl, radii, s)
+	eq(img.get_size(), Vector2i(6, 6) * WaterField.PER_CELL)
+	var px := img.get_pixel(1 * WaterField.PER_CELL + 3, 2 * WaterField.PER_CELL + 3)
+	ok(px.g > 0.9 and absf(px.b - 0.5) < 0.02, "the field carries the flow down the river (+x), got %s" % px)
+	eq(img.get_pixel(3, 3).a, 0.0, "dry ground far from water stays clear")

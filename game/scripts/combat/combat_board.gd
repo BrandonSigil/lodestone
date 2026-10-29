@@ -124,8 +124,6 @@ var _snap_z := PackedStringArray()
 var _snap_props := 0
 var _snap_version := -1
 var _radii := {}  ## soft pass: cell -> its four corner radii (TerrainShape.radii)
-var _streams := {}  ## soft pass: water cell -> its pieces of the flow strokes
-var _water_sig := 0
 var _pen_ends := {}  ## soft pass: outline line ends -> how many lines meet there (see _pen_end)
 var _pen_by_cell := {}  ## soft pass: cell -> the line ends its outline put in _pen_ends
 var _shape_base := ""  ## soft pass: what the shape caches were built for, but the grid's version
@@ -411,8 +409,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # --- painting ---------------------------------------------------------------------------
 # The board paints through slabs (children of _stack, back to front): the backdrop, then for every depth
+#   WATER   the water's surface (soft pass), still geometry the water shader moves; under the ground so the
+#           banks, their rounded-off corners and fillets draw over it,
 #   GROUND  the still terrain (faces, lips, tops, stairs), drawn once and again only when its cells change,
-#   OVER    what changes by the frame on top of it (falling water, the cursor, highlights, danger, areas),
+#   FALLS   waterfall sheets over the river walls (soft pass), still geometry the fall shader moves,
+#   OVER    what changes by the frame on top of it (the cursor, highlights, danger, areas, falls' outlines),
 #   PROPS   what stands on it (trees, boulders, placed props, the fog veil, the forest skirt), redrawn only
 #           when a prop fades for a piece behind it or the fog moves,
 #   UNITS   the pieces,
@@ -421,8 +422,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## One canvas in the board's painter's order.
 class Slab extends Node2D:
-	enum K { BACK, GROUND, OVER, PROPS, UNITS, TOP }
-	const PER_DEPTH := 4
+	enum K { BACK, WATER, GROUND, FALLS, OVER, PROPS, UNITS, TOP }
+	const PER_DEPTH := 6
 	var board: CombatBoard
 	var kind := K.GROUND
 	var depth := 0
@@ -432,13 +433,14 @@ class Slab extends Node2D:
 
 
 func _init() -> void:
+	_init_water()
 	_stack = Node2D.new()
 	_stack.name = "Slabs"
 	add_child(_stack)  # first child, so overlays hosts add later draw on top
 
 
 func _slab(kind: int, d: int) -> Slab:
-	return _slabs[1 + d * Slab.PER_DEPTH + kind - Slab.K.GROUND]
+	return _slabs[1 + d * Slab.PER_DEPTH + kind - Slab.K.WATER]
 
 
 ## Once a frame: work out which still slabs changed and redraw those, plus everything that moves.
@@ -515,6 +517,8 @@ func _sync_slabs() -> void:
 			_fall_cells[d] = (_depths[d] as Array).filter(_has_fall)
 			_prop_cells[d] = (_depths[d] as Array).filter(_has_props)
 			_slab(Slab.K.GROUND, d).queue_redraw()
+			_slab(Slab.K.WATER, d).queue_redraw()
+			_slab(Slab.K.FALLS, d).queue_redraw()
 			_dirty_props[d] = true
 	_dirty.clear()
 	for d: int in _dirty_props:
@@ -538,6 +542,8 @@ func _sync_slabs() -> void:
 	for sl: Slab in _slabs:
 		if sl.kind == Slab.K.OVER or sl.kind == Slab.K.UNITS or sl.kind == Slab.K.BACK or sl.kind == Slab.K.TOP:
 			sl.queue_redraw()
+	if _soft():
+		_update_wakes()
 
 
 func _depth_at(c: Vector2i) -> int:
@@ -563,7 +569,7 @@ func _bucket(into: Dictionary, c: Vector2i) -> void:
 	into[d][c] = true
 
 
-## BACK, then GROUND, OVER, PROPS and UNITS for each depth, then TOP.
+## BACK, then WATER, GROUND, FALLS, OVER, PROPS and UNITS for each depth, then TOP.
 func _build_slabs(n: int) -> void:
 	if _slabs.size() == 2 + n * Slab.PER_DEPTH:
 		return
@@ -579,11 +585,15 @@ func _build_slabs(n: int) -> void:
 		sl.board = self
 		sl.kind = kind
 		sl.depth = depth
+		if kind == Slab.K.WATER:
+			sl.material = _water_mat
+		elif kind == Slab.K.FALLS:
+			sl.material = _fall_mat
 		_stack.add_child(sl)
 		_slabs.append(sl)
 	add.call(Slab.K.BACK, 0)
 	for d in n:
-		for kind in [Slab.K.GROUND, Slab.K.OVER, Slab.K.PROPS, Slab.K.UNITS]:
+		for kind in [Slab.K.WATER, Slab.K.GROUND, Slab.K.FALLS, Slab.K.OVER, Slab.K.PROPS, Slab.K.UNITS]:
 			add.call(kind, d)
 		_fall_cells[d] = []
 		_prop_cells[d] = []
@@ -651,10 +661,21 @@ func _paint(sl: Slab) -> void:
 	match sl.kind:
 		Slab.K.BACK:
 			_paint_back()
+		Slab.K.WATER:
+			if _soft():
+				for c: Vector2i in _depths[sl.depth]:
+					if not _unseen(c):
+						_draw_water(c)
 		Slab.K.GROUND:
 			for c: Vector2i in _depths[sl.depth]:
 				if not _unseen(c):
 					_draw_ground(c)
+		Slab.K.FALLS:
+			if _soft():
+				for c: Vector2i in _fall_cells[sl.depth]:
+					if not _unseen(c):
+						_draw_fall_sheets(c)
+						_draw_fall_caps(c)
 		Slab.K.OVER:
 			for c: Vector2i in _fall_cells[sl.depth]:
 				if not hidden(c):
@@ -929,17 +950,12 @@ func _refresh_shape() -> void:
 		for d in _depths.size():
 			_dirty[d] = true
 	if not wet:
-		return
-	var water := PackedInt32Array()
-	for i in grid.terrain.size():
-		if grid.terrain[i] == CombatGrid.T.WATER:
-			water.append(i)
-			water.append(grid.heights[i])
-	if hash(water) != _water_sig:
-		_water_sig = hash(water)
-		_streams = TerrainShape.by_cell(TerrainShape.strokes(grid, TerrainShape.flow(grid)))
-		for d in _depths.size():
-			_dirty[d] = true
+		for c: Vector2i in _around(changed, 1):  # a bank changed: the water beside it knows its shape
+			if grid.terrain_at(c) == CombatGrid.T.WATER:
+				wet = true
+				break
+	if wet:
+		_refresh_water_field(full, changed)
 
 
 const SHAPE_LOCAL := 64  ## an edit touching more cells than this redoes the whole map
@@ -1054,13 +1070,15 @@ func _draw_ground_soft(c: Vector2i) -> void:
 	if lip > 0.0:
 		for rn: Array in runs:
 			_soft_lip(rn, h, top_tex, tint, top_col, lip)
-	# The top.
+	# The top (water's is the WATER slab's).
 	var pts := PackedVector2Array()
 	var uvs := PackedVector2Array()
 	for s: Dictionary in segs:
 		pts.append(iso(s.a.x, s.a.y, h))
 		uvs.append(s.a / BattleArt.TOP_TILES)
-	if top_tex != null:
+	if t == CombatGrid.T.WATER:
+		pass
+	elif top_tex != null:
 		var lift := Color(tint * (1.0 + minf(h, 6.0) * 0.025), 1.0)
 		var cols := PackedColorArray()
 		cols.resize(pts.size())
@@ -1070,7 +1088,7 @@ func _draw_ground_soft(c: Vector2i) -> void:
 		_ci.draw_colored_polygon(pts, top_col)
 	# The renderer can't antialias polygons, so a hairline of the top's own colour smooths its seen edges.
 	var rim := (BattleArt.average(top_tex) * Color(tint * (1.0 + minf(h, 6.0) * 0.025), 1.0)) if top_tex != null else top_col
-	for rn: Array in runs:
+	for rn: Array in (runs if t != CombatGrid.T.WATER else []):
 		var edge := PackedVector2Array()
 		for item: Array in rn:
 			edge.append(iso(item[0].a.x, item[0].a.y, h))
@@ -1080,8 +1098,6 @@ func _draw_ground_soft(c: Vector2i) -> void:
 	if blend:
 		_fringe(c, t, h, zone)
 	_road_ribbon(c, h, zone)
-	if t == CombatGrid.T.WATER:
-		_water_marks(c, h, top_col)
 	_contact_shadow(c, h)
 	for k in 4:
 		if r[k] < 0.0:
@@ -1472,7 +1488,8 @@ func _gap_floor(c: Vector2i, k: int, r: float) -> void:
 	var zone := grid.zone_at(src)
 	var tex := BattleArt.top(t, zone)
 	var poly := TerrainShape.gap_polygon(c, k, r)
-	_patch(poly, gh, t, tex)
+	if t != CombatGrid.T.WATER:  # water there is the WATER slab's
+		_patch(poly, gh, t, tex)
 	var low: Vector2i = g.low
 	var lh := maxf(_floor(), _surf_or_floor(low))
 	var toward := Vector2(front_dir(false) + front_dir(true))
@@ -1482,12 +1499,6 @@ func _gap_floor(c: Vector2i, k: int, r: float) -> void:
 		var along := (poly[poly.size() - 1] if low == c + TerrainShape.NORMALS[k] else poly[1]) - ck
 		var side_t := CombatGrid.T.GRASS if t == CombatGrid.T.WATER else t
 		_soft_face(ck, ck + along, n, n, gh, lh, BattleArt.side_body(side_t, zone), _tint(side_t), CLIFF)
-	if t == CombatGrid.T.WATER:
-		var foam := PackedVector2Array()
-		for i in range(1, poly.size()):
-			var p: Vector2 = poly[i] + (Vector2(c) + TerrainShape.CORNERS[k] - poly[i]).normalized() * 0.05
-			foam.append(iso(p.x, p.y, gh))
-		_ci.draw_polyline(foam, Color(1, 1, 1, 0.4), 1.6, true)
 
 
 ## A piece of another cell's top drawn inside this one (a rounded-off corner's lower ground, a fillet): the
@@ -1534,11 +1545,6 @@ func _fillet(c: Vector2i, k: int, r: float) -> void:
 		_soft_lip(run, gh, tex, tint, _terrain_color(t).lightened(minf(gh, 6.0) * 0.025), lip)
 	_patch(TerrainShape.gap_polygon(c, k, r), gh, t, tex)
 	if grid.terrain_at(c) == CombatGrid.T.WATER:
-		var foam := PackedVector2Array()
-		for s: Dictionary in TerrainShape.arc(c, k, r):
-			var p: Vector2 = s.a - s.na * 0.05
-			foam.append(iso(p.x, p.y, h))
-		_ci.draw_polyline(foam, Color(1, 1, 1, 0.4), 1.6, true)
 		if not run.is_empty():  # the waterline round the curve, like the straight banks'
 			var wet := []
 			for item: Array in run:
@@ -1612,48 +1618,6 @@ func _soft_lip(run: Array, h: float, tex: Texture2D, tint: Color, top_col: Color
 ## The cap band's two values, measured off the key art: lit about 0.94 of its top, shade a clear cool blue.
 func _lip_colour(base: Color, n: Vector2) -> Color:
 	return Color(base * (LIP_LIT if _face_light(n) > 0.9 else LIP_SHADE), 1.0)
-
-
-## Water: flow strokes that follow the river from cell to cell (TerrainShape.strokes) and foam along the banks.
-func _water_marks(c: Vector2i, h: float, top_col: Color) -> void:
-	for piece: Dictionary in _streams.get(c, []):
-		var src: PackedVector2Array = piece.pts
-		var f: PackedFloat32Array = piece.f
-		var line := PackedVector2Array()
-		var cols := PackedColorArray()
-		var col := top_col.darkened(0.12) if piece.dark else top_col.lightened(0.6)
-		var alpha := 0.3 if piece.dark else 0.72
-		for i in src.size():
-			line.append(iso(src[i].x, src[i].y, h))
-			cols.append(Color(col, alpha * pow(sin(PI * clampf(f[i], 0.0, 1.0)), 0.6)))
-		_ci.draw_polyline_colors(line, cols, 3.0 if piece.dark else 2.2, true)
-	for k in 4:
-		var nb: Vector2i = c + TerrainShape.NORMALS[k]
-		if not grid.solid(nb) or grid.terrain_at(nb) == CombatGrid.T.WATER or _surf(nb) <= h + 0.05:
-			continue
-		var p: Vector2 = Vector2(c) + TerrainShape.CORNERS[k]
-		var q: Vector2 = Vector2(c) + TerrainShape.CORNERS[(k + 1) % 4]
-		# Stop short where the bank's corner is rounded: that bank draws its own foam round the curve.
-		var rb := _radii_of(nb)
-		for j in 4:
-			var at: Vector2 = Vector2(nb) + TerrainShape.CORNERS[j]
-			if rb[j] > 0.0 and at.is_equal_approx(p):
-				p = p.move_toward(q, rb[j])
-			elif rb[j] > 0.0 and at.is_equal_approx(q):
-				q = q.move_toward(p, rb[j])
-		var own := _radii_of(c)  # and where this cell's corner is a fillet, which draws its own foam
-		if own[k] < 0.0:
-			p = p.move_toward(q, -own[k])
-		if own[(k + 1) % 4] < 0.0:
-			q = q.move_toward(p, -own[(k + 1) % 4])
-		var inward := -Vector2(TerrainShape.NORMALS[k]) * 0.08
-		var foam := PackedVector2Array()
-		for i in 5:
-			var g := p.lerp(q, i / 4.0)
-			var wob := (MapDress.noise(g * 3.0) - 0.5) * 0.04
-			g += inward * (1.0 + wob * 20.0)
-			foam.append(iso(g.x, g.y, h))
-		_ci.draw_polyline(foam, Color(1, 1, 1, 0.4), 1.6, true)
 
 
 ## Soft stairs: treads in the path's ground, risers a shade darker, and the flight's sides in the rock of the
@@ -1798,7 +1762,11 @@ func _draw_falls(c: Vector2i) -> void:
 		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
 		var foot := maxf(fl, minf(nh, h))
 		if _soft():
-			_waterfall_soft(side[0], side[1], h, foot, c, d, not edge)
+			var sheet := _fall_span(side[0], side[1], h, foot, c, d)
+			if sheet.ends[0] > 0.0:  # a cel outline down each side where the sheet stops against rock
+				_marker_down(sheet.a, h, foot)
+			if sheet.ends[1] > 0.0:
+				_marker_down(sheet.b, h, foot)
 		else:
 			_waterfall(side[0], side[1], h, foot, c, not edge)
 		if edge and _rims():
@@ -2387,47 +2355,202 @@ func _waterfall(a: Vector2, b: Vector2, h: float, hb: float, c: Vector2i, foam :
 		_foam(a2, b2, hb, c)
 
 
-## Soft falls: one flat sheet across neighbouring falls (no frame between cells) in the set's own water colour,
-## bending white over the edge; streaks placed by screen position, so they carry on across cells, slide down
-## it; foam at the foot.
-func _waterfall_soft(a: Vector2, b: Vector2, h: float, hb: float, c: Vector2i, d: Vector2i, foam: bool) -> void:
+## Where a soft fall's sheet runs along a cell's front edge a..b: right across where the next cell along
+## falls too (one sheet, no frame between cells), stopping a little short where it meets rock.
+## {"a", "b": its ends, "ends": how far each was pulled in}.
+func _fall_span(a: Vector2, b: Vector2, h: float, _hb: float, c: Vector2i, d: Vector2i) -> Dictionary:
 	var ends := PackedFloat32Array()
 	for p: Vector2 in [a, b]:
 		var m := c + Vector2i(int(signf(p.x - c.x - 0.5)), int(signf(p.y - c.y - 0.5))) - d
 		var joined := grid.solid(m) and grid.terrain_at(m) == CombatGrid.T.WATER and absf(_surf(m) - h) < 0.01 \
 			and _surf_or_floor(m + d) < h - 0.01
 		ends.append(0.0 if joined else 0.1)
-	var a2 := a.lerp(b, ends[0])
-	var b2 := b.lerp(a, ends[1])
+	return {"a": a.lerp(b, ends[0]), "b": b.lerp(a, ends[1]), "ends": ends}
+
+
+# --- moving water (soft pass) -------------------------------------------------------------
+# The surface and the falls are still geometry in their own slabs; their shaders move them
+# (shaders/water_surface.gdshader, water_fall.gdshader). WaterField tells the surface shader where the
+# banks are, which way the river runs and where falls land. docs/systems/water.md.
+
+const WATER_SHADER := preload("res://shaders/water_surface.gdshader")
+const FALL_SHADER := preload("res://shaders/water_fall.gdshader")
+const MAX_WAKES := 8
+
+var _water_mat := ShaderMaterial.new()
+var _fall_mat := ShaderMaterial.new()
+var _water_tex: ImageTexture
+var _water_img: Image
+var _water_flow := {}  ## the flow the field was last built with
+
+
+func _init_water() -> void:
+	_water_mat.shader = WATER_SHADER
+	_fall_mat.shader = FALL_SHADER
+	_water_mat.set_shader_parameter("shore_reach", WaterField.SHORE_REACH)
+
+
+## Redo the field the surface shader reads after the water or its banks changed: all of it for a new map,
+## else only round the edit and wherever the river's flow turned (an edit can turn it all the way down).
+func _refresh_water_field(full: bool, changed: Dictionary) -> void:
+	var flow := TerrainShape.flow(grid)
+	var size := Vector2i(grid.w, grid.h) * WaterField.PER_CELL
+	if full or _water_img == null or _water_img.get_size() != size:
+		_water_img = WaterField.build(grid, flow, _radii, _surf)
+	else:
+		var redo := changed.duplicate()
+		for c: Vector2i in flow:
+			if not _water_flow.has(c) or not (_water_flow[c] as Vector2).is_equal_approx(flow[c]):
+				redo[c] = true
+		for c: Vector2i in _water_flow:
+			if not flow.has(c):
+				redo[c] = true
+		var near := _around(redo, 2)
+		WaterField.update(_water_img, grid, flow, _radii, _surf, WaterField.near_water(grid, flow, near), near)
+	_water_flow = flow
+	var img := _water_img
+	if _water_tex != null and _water_tex.get_size() == Vector2(img.get_size()):
+		_water_tex.update(img)
+	else:
+		_water_tex = ImageTexture.create_from_image(img)
+	_water_mat.set_shader_parameter("field", _water_tex)
+	_water_mat.set_shader_parameter("field_cells", Vector2(grid.w, grid.h))
+
+
+## The water's colour in a cell: its tile set's water, drifted toward the alien palette.
+func _water_colour(c: Vector2i) -> Color:
 	var tex := BattleArt.top(CombatGrid.T.WATER, grid.zone_at(c))
-	var water := BattleArt.average(tex) * _tint(CombatGrid.T.WATER) if tex != null else _terrain_color(CombatGrid.T.WATER)
-	_ci.draw_colored_polygon(PackedVector2Array([iso(a2.x, a2.y, h), iso(b2.x, b2.y, h), iso(b2.x, b2.y, hb), iso(a2.x, a2.y, hb)]),
-		Color(water.lightened(0.28), 0.96))
-	var ua := _screen_u(a2, 0.0)
-	var ub := _screen_u(b2, 0.0)
-	var per := 7.0
-	for j in range(floori(minf(ua, ub) * per), ceili(maxf(ua, ub) * per)):
-		var u := (j + 0.2 + 0.6 * MapDress.noise(Vector2(j, 3))) / per
-		var f := (u - ua) / (ub - ua)
-		if f < 0.0 or f > 1.0:
+	var col := BattleArt.average(tex) * _tint(CombatGrid.T.WATER) if tex != null else _terrain_color(CombatGrid.T.WATER)
+	return Color(col, 1.0)
+
+
+## A water cell's surface, or the water a bank's rounded-off corners show (WATER slab).
+func _draw_water(c: Vector2i) -> void:
+	if grid.terrain_at(c) == CombatGrid.T.WATER:
+		var h := _surf(c)
+		var pts := PackedVector2Array()
+		var uvs := PackedVector2Array()
+		for s: Dictionary in TerrainShape.outline(c, _radii_of(c)):
+			pts.append(iso(s.a.x, s.a.y, h))
+			uvs.append(s.a)
+		_water_poly(pts, uvs, _water_colour(c))
+		return
+	var r := _radii_of(c)
+	for k in 4:
+		if r[k] <= 0.0:
 			continue
-		var p := a2.lerp(b2, f)
-		if j % 2 == 0:  # a still streak down the whole fall
-			_ci.draw_line(iso(p.x, p.y, h - 0.1), iso(p.x, p.y, hb), Color(1, 1, 1, 0.22), 1.0, true)
-		var speed := 0.3 + 0.35 * MapDress.noise(Vector2(j, 5))
-		var length := 0.5 + 1.1 * MapDress.noise(Vector2(j, 9))
-		for dash in 2:
-			var ph := fmod(_time * speed + MapDress.noise(Vector2(j, 11)) + dash * 0.5, 1.0)
-			var y0 := lerpf(h, hb, ph)
-			_ci.draw_line(iso(p.x, p.y, y0), iso(p.x, p.y, maxf(hb, y0 - length)), Color(1, 1, 1, 0.5 * sin(ph * PI)),
-				1.0 + MapDress.noise(Vector2(j, 13)), true)
-	_ci.draw_line(iso(a2.x, a2.y, h), iso(b2.x, b2.y, h), Color(1, 1, 1, 0.85), 2.2, true)
-	if foam:
-		_foam(a2, b2, hb, c)
-	if ends[0] > 0.0:  # a cel outline down each side where the sheet stops against rock
-		_marker_down(a2, h, hb)
+		var g := TerrainShape.gap(grid, c, k, _surf_or_floor)
+		if not g.has("src") or grid.terrain_at(g.src) != CombatGrid.T.WATER:
+			continue
+		var poly := TerrainShape.gap_polygon(c, k, r[k])
+		var pts := PackedVector2Array()
+		for q: Vector2 in poly:
+			pts.append(iso(q.x, q.y, g.h))
+		_water_poly(pts, poly, _water_colour(g.src))
+
+
+func _water_poly(pts: PackedVector2Array, uvs: PackedVector2Array, col: Color) -> void:
+	var cols := PackedColorArray()
+	cols.resize(pts.size())
+	cols.fill(col)
+	_ci.draw_polygon(pts, cols, uvs)
+
+
+## The sheets of water pouring over a water cell's front edges (FALLS slab). UV.x runs along the screen so
+## streaks carry on from cell to cell, UV.y counts levels down from the lip; the colour's alpha carries the
+## drop for the shader's foam.
+func _draw_fall_sheets(c: Vector2i) -> void:
+	var h := _surf(c)
+	var fl := _floor()
+	var col := _water_colour(c)
+	for shade in [false, true]:
+		var d := front_dir(shade)
+		var n := c + d
+		var nh := fl if not grid.solid(n) else _surf(n)
+		if nh >= h:
+			continue
+		var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
+		var foot := maxf(fl, minf(nh, h))
+		var sheet := _fall_span(side[0], side[1], h, foot, c, d)
+		var a: Vector2 = sheet.a
+		var b: Vector2 = sheet.b
+		var ua := _screen_u(a, 0.0)
+		var ub := _screen_u(b, 0.0)
+		var drop := h - foot
+		var tint := Color(col, clampf(drop / 10.0, 0.0, 1.0))
+		_ci.draw_polygon(PackedVector2Array([iso(a.x, a.y, h), iso(b.x, b.y, h), iso(b.x, b.y, foot), iso(a.x, a.y, foot)]),
+			PackedColorArray([tint, tint, tint, tint]),
+			PackedVector2Array([Vector2(ua, 0.0), Vector2(ub, 0.0), Vector2(ub, drop), Vector2(ua, drop)]))
+
+
+const CAP_UP := 1.4  ## a splash cap reaches this many levels up a fall's foot (water_fall.gdshader cap_px)
+const CAP_OUT := 0.75  ## and this far (cells) out onto the pool below
+const CAP_FADE := 0.3  ## where a fall stops against rock, the cap thins out over this share of its width
+const CAP_STEPS := 6
+
+## Splash caps over the seams where falls behind a water cell pour into it (this cell's FALLS slab, so they
+## draw over its pool as well as the fall's foot). UV.y runs -1 to -2 down the cap; the colour's alpha says
+## how full the cap is, so it thins out where the sheet stops against rock.
+func _draw_fall_caps(n: Vector2i) -> void:
+	var foot := _surf(n)
+	var col := _water_colour(n)
+	for shade in [false, true]:
+		var d := front_dir(shade)
+		var m := n - d
+		if not grid.solid(m) or grid.terrain_at(m) != CombatGrid.T.WATER or _surf(m) <= foot + 0.01 or hidden(m):
+			continue
+		var h := _surf(m)
+		var side := _side(Vector2(m), Vector2(m) + Vector2.ONE, d)
+		var sheet := _fall_span(side[0], side[1], h, foot, m, d)
+		var ends: PackedFloat32Array = sheet.ends
+		var a: Vector2 = sheet.a
+		var b: Vector2 = sheet.b
+		var out := Vector2(d) * CAP_OUT
+		for i in CAP_STEPS:
+			var f0 := float(i) / CAP_STEPS
+			var f1 := float(i + 1) / CAP_STEPS
+			var p0 := a.lerp(b, f0)
+			var p1 := a.lerp(b, f1)
+			var full0 := _cap_full(f0, ends)
+			var full1 := _cap_full(f1, ends)
+			var u0 := _screen_u(p0, 0.0)
+			var u1 := _screen_u(p1, 0.0)
+			var c0 := Color(col, full0)
+			var c1 := Color(col, full1)
+			_ci.draw_polygon(
+				PackedVector2Array([iso(p0.x, p0.y, foot + CAP_UP), iso(p1.x, p1.y, foot + CAP_UP),
+					iso(p1.x + out.x, p1.y + out.y, foot), iso(p0.x + out.x, p0.y + out.y, foot)]),
+				PackedColorArray([c0, c1, c1, c0]),
+				PackedVector2Array([Vector2(u0, -1.0), Vector2(u1, -1.0), Vector2(u1, -2.0), Vector2(u0, -2.0)]))
+
+
+## How full a splash cap is a share f of the way along its fall: full, but thinning out toward an end where
+## the sheet stops against rock (an end joined to the next cell's fall stays full).
+static func _cap_full(f: float, ends: PackedFloat32Array) -> float:
+	var full := 1.0
+	if ends[0] > 0.0:
+		full = minf(full, smoothstep(0.0, CAP_FADE, f))
 	if ends[1] > 0.0:
-		_marker_down(b2, h, hb)
+		full = minf(full, smoothstep(0.0, CAP_FADE, 1.0 - f))
+	return lerpf(0.35, 1.0, full)
+
+
+## Rings round anyone standing or walking in water.
+func _update_wakes() -> void:
+	var wakes := []
+	for u: CombatUnit in units:
+		if wakes.size() >= MAX_WAKES or u.shown_hp <= 0:
+			continue
+		var c := Vector2i(roundi(u.vis.x), roundi(u.vis.y))
+		if not grid.in_bounds(c) or grid.terrain_at(c) != CombatGrid.T.WATER or hidden(c):
+			continue
+		var moving := not u.vis.is_equal_approx(Vector2(u.cell))
+		wakes.append(Vector4(u.vis.x + 0.5, u.vis.y + 0.5, 1.0 if moving else 0.6, float(u.get_instance_id() % 97) / 97.0))
+	var count := wakes.size()
+	for i in MAX_WAKES - count:
+		wakes.append(Vector4.ZERO)
+	_water_mat.set_shader_parameter("wakes", wakes)
+	_water_mat.set_shader_parameter("wake_count", count)
 
 
 ## White water where a fall lands: a row of puffs that swell and shrink out of step.
