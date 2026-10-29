@@ -5,7 +5,7 @@ extends RefCounted
 
 var id := ""
 var name_key := ""
-var kind := "attack"  ## attack (rolls d20, deals damage), hex (rolls d20, only adds its status), heal (no roll), buff (no roll, adds a status)
+var kind := "attack"  ## attack (deals damage), hex (only adds its status), heal, buff (adds a status), revive, knockout
 var target := "enemy"  ## enemy, ally (includes self), self, cell (aim at any cell, hits everyone in the radius)
 var range_min := 0  ## 0 and 0 = use the unit's weapon range
 var range_max := 0
@@ -16,11 +16,21 @@ var res_cost := 0  ## what one use costs of the user's job resource (mana, rage 
 var push := 0  ## tiles the target is shoved away from the user
 var status := ""  ## rooted, veil, guard
 var status_turns := 0
+var bleed := 0  ## phases of BLEED a hit adds (a skill rank's effect, data/skill_ranks.csv)
 var magic := false  ## ignores cover
 var element := ""  ## fire, moon, frost or empty. Some traits care (flammable takes more from fire).
 ## Items only: the pack item it spends from the user's belt (data/items.csv id) and how many.
 var spends := ""
 var cost := 0
+
+
+## A separate copy, so a skill rank can change one piece's skill without touching the shared row.
+func copy() -> Ability:
+	var out := Ability.new()
+	for p in get_property_list():
+		if p.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			out.set(p.name, get(p.name))
+	return out
 
 
 static func from_row(row: Dictionary) -> Ability:

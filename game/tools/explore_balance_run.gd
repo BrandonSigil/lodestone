@@ -54,14 +54,22 @@ func _party(level: int, weapon: String) -> Array:
 	var mods := {}
 	for k in ["attack", "damage", "move", "range_min", "range_max"]:
 		mods[k] = int(row.get(k, 0))
-	var lv := {"level": level, "picks": {}}
-	mods = LevelRules.merge(LevelRules.bonus(lv, Db.levels), mods)
+	mods = LevelRules.merge(LevelRules.bonus(_rolled("lead", level), Db.levels), mods)
 	var hero := Db.character(&"lead").duplicate()
 	hero.class_def = load("res://data/classes/nobody.tres")
 	hero.traits.clear()
 	var out := [CombatUnit.from_def(hero, mods)]
-	out.append(CombatUnit.from_def(Db.character(&"dog"), LevelRules.bonus(lv, Db.levels)))
+	out.append(CombatUnit.from_def(Db.character(&"dog"), LevelRules.bonus(_rolled("dog", level), Db.levels)))
 	return out
+
+
+## A character at this level with its stats rolled from its growth odds (the same rolls every run).
+func _rolled(id: String, level: int) -> Dictionary:
+	var s := LevelRules.fresh()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1
+	LevelRules.gain(s, (level - 1) * int(Db.levels.get("xp_per_level", 100)), Db.levels, Db.growth.get(id, {}), rng)
+	return s
 
 
 ## The leader stands on the walk from the map start toward the group, at the first cell where

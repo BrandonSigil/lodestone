@@ -1,0 +1,9 @@
+id,hp,damage,armor,magic,crit,note
+lead,70,45,25,0,20,the hero; each job gets its own row in the weapon-is-the-job step
+dog,60,40,15,0,35,quick and bitey; never magic
+hunter,50,50,10,0,40,
+stardrop,40,10,5,60,15,a caster: magic first
+wizard,35,10,5,65,10,
+bushberry,80,20,40,0,5,a tank: HP and armor, now and then damage
+skeleton_archer,45,45,20,0,30,
+lewith_flark,65,45,30,0,20,

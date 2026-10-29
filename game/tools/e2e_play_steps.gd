@@ -432,6 +432,9 @@ func _heal_up() -> void:
 
 
 func _spend_picks() -> void:
-	for id in ["lead", "dog"]:
-		while game.level_state(id).pending > 0:
-			_check(game.pick_boost(id, "hp" if id == "dog" else "attack"), "Lodestone pick for " + id)
+	for m in game.run.members:
+		var id := String(m.def.id)
+		var u: CombatUnit = CombatUnit.from_member(m)
+		for a: Ability in u.abilities:
+			while game.level_state(id).pending > 0 and game.rank_skill(id, a.id):
+				_check(true, "Lodestone rank for %s: %s" % [id, a.id])

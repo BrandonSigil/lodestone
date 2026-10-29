@@ -151,6 +151,9 @@ static func from_member(m: Dictionary, mods: Dictionary = {}) -> CombatUnit:
 	u.shown_hp = u.hp
 	u.member = m
 	u.belt = m.get("belt")
+	var ranks: Dictionary = m.get("ranks", {})
+	for i in u.abilities.size():  # skills ranked up in the Lodestone menu carry their effects
+		u.abilities[i] = LevelRules.ranked(u.abilities[i], int(ranks.get(u.abilities[i].id, 0)), Db.skill_ranks)
 	return u
 
 

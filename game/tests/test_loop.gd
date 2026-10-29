@@ -1,9 +1,9 @@
 extends TestCase
-## The end-to-end loop (2026-10-28): levels and Lodestone picks, overworld travel, items and needs,
+## The end-to-end loop (2026-10-28): levels, rolled growth and skill ranks, overworld travel, items and needs,
 ## the village's new things and the boss, and that every event and text key the loop uses exists.
 
-const CFG := {"xp_per_level": 100, "max_level": 40, "hp_per_level": 1, "choice_every": 4,
-	"choice_hp": 3, "choice_attack": 1, "choice_magic": 2, "xp_win": 10, "xp_foe": 25, "xp_boss": 100}
+const CFG := {"xp_per_level": 100, "max_level": 40, "growth_hp": 2, "choice_every": 4,
+	"xp_win": 10, "xp_foe": 25, "xp_boss": 100}
 
 
 func _db() -> void:
@@ -15,34 +15,84 @@ func test_levels_come_on_their_own() -> void:
 	var s := LevelRules.fresh()
 	eq(LevelRules.gain(s, 250, CFG), [2, 3] as Array[int], "250 XP: two levels")
 	eq(int(s.xp), 50, "the rest carries")
-	eq(int(s.pending), 0, "no pick before level 4")
+	eq(int(s.pending), 0, "no rank before level 4")
 	LevelRules.gain(s, 50, CFG)
 	eq(int(s.level), 4)
-	eq(int(s.pending), 1, "level 4 queues a pick")
-
-
-func test_picks_and_bonus() -> void:
-	var s := LevelRules.fresh()
-	ok(not LevelRules.choose(s, "hp"), "no pick waiting")
-	s.level = 4
-	s.pending = 2
-	ok(LevelRules.choose(s, "hp"))
-	ok(LevelRules.choose(s, "magic"))
-	ok(not LevelRules.choose(s, "attack"), "picks used up")
-	var b := LevelRules.bonus(s, CFG)
-	eq(int(b.hp), 3 + 3, "3 levels of +1 and one +3 pick")
-	eq(int(b.magic_power), 2)
-	eq(int(b.attack), 0)
+	eq(int(s.pending), 1, "level 4 queues a skill rank")
 	eq(LevelRules.fight_xp(3, false, CFG), 85)
 	eq(LevelRules.fight_xp(2, true, CFG), 160)
 
 
+## [USER] pc-7: stats roll each level from the character's own odds; never a stat it can't use.
+func test_growth_rolls_from_the_odds() -> void:
+	_db()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var tank := {"hp": 80, "damage": 20, "armor": 40, "magic": 0, "crit": 5}
+	var s := LevelRules.fresh()
+	LevelRules.gain(s, 100 * 39, CFG, tank, rng)
+	eq(int(s.level), 40)
+	eq(int(s.gains.magic), 0, "a tank never gains magic")
+	ok(int(s.gains.hp) > int(s.gains.damage) and int(s.gains.armor) > int(s.gains.crit), "mostly HP and armor (%s)" % [s.gains])
+	ok(int(s.gains.damage) > 0, "now and then damage")
+	var none := LevelRules.fresh()
+	LevelRules.roll(none, {"hp": 0.001, "damage": 0, "armor": 0, "magic": 0, "crit": 0}, rng)
+	eq(int(none.gains.hp), 1, "a level never comes up empty: the likeliest stat goes up")
+	var b := LevelRules.bonus(s, CFG)
+	eq(int(b.hp), int(s.gains.hp) * 2, "each HP roll is +2")
+	eq(int(b.defense), int(s.gains.armor), "armor rides on the defense key")
+	ok(Db.growth.has("dog") and float(Db.growth.dog.magic) == 0.0, "the dog's odds are data, with no magic")
+
+
+## [USER] pc-8: a rank every 4 levels on one of the character's own skills, each adding an effect from data.
+func test_skill_ranks() -> void:
+	_db()
+	var s := LevelRules.fresh()
+	ok(not LevelRules.rank_up(s, "bite", Db.skill_ranks), "no rank waiting")
+	s.pending = 4
+	for i in 3:
+		ok(LevelRules.rank_up(s, "bite", Db.skill_ranks))
+	ok(not LevelRules.rank_up(s, "bite", Db.skill_ranks), "bite tops out at its last rank in data")
+	eq(int(s.pending), 1)
+	var bite := Db.ability("bite")
+	var r1 := LevelRules.ranked(bite, 1, Db.skill_ranks)
+	eq(r1.status_turns, bite.status_turns + 1, "rank 1: the slow lasts longer")
+	eq(bite.status_turns, Db.ability("bite").status_turns, "the shared row is untouched")
+	var r2 := LevelRules.ranked(bite, 2, Db.skill_ranks)
+	eq(r2.bleed, 2, "rank 2 adds a bleed ([USER] pc-8's example)")
+	var m := {"def": Db.character(&"dog"), "hp": 15, "ranks": {"bite": 2}}
+	var u := CombatUnit.from_member(m)
+	var ub: Ability = u.abilities.filter(func(a: Ability) -> bool: return a.id == "bite")[0]
+	eq(ub.bleed, 2, "the dog fights with its ranked bite")
+	var old := LevelRules.normalize({"level": 5, "xp": 10, "picks": {"hp": 1, "attack": 2, "magic": 0}, "pending": 1})
+	eq(int(old.gains.hp), 4 + 3, "an old save keeps its +1 HP a level and its HP pick")
+	eq(int(old.gains.damage), 2)
+
+
+func test_bleed_ticks_at_the_start_of_its_phase() -> void:
+	_db()
+	var g := CombatGrid.flat(3, 1)
+	var dog := CombatUnit.from_member({"def": Db.character(&"dog"), "hp": 15, "ranks": {"bite": 2}})
+	dog.place(Vector2i(0, 0), 0)
+	var wolf := CombatUnit.enemy(Db.class_def(&"wolf"))
+	wolf.team = 1
+	wolf.place(Vector2i(1, 0), 0)
+	var bite: Ability = dog.abilities.filter(func(a: Ability) -> bool: return a.id == "bite")[0]
+	CombatRules.resolve(RandomNumberGenerator.new(), g, dog, bite, wolf.cell, [dog, wolf], false)
+	ok(wolf.has_status(CombatRules.STATUS_BLEED))
+	var hp := wolf.hp
+	var ev := CombatRules.begin_phase([dog, wolf], 1)
+	eq(wolf.hp, maxi(0, hp - 1), "a point at the start of its phase")
+	ok(ev.any(func(e: Dictionary) -> bool: return e.type == "bleed"))
+
+
 func test_bonus_reaches_the_unit() -> void:
 	_db()
-	var m := {"def": Db.character(&"dog"), "hp": 5, "bonus": {"hp": 4, "attack": 1, "damage": 1, "magic_power": 2, "range_max": 1}}
+	var m := {"def": Db.character(&"dog"), "hp": 5, "bonus": {"hp": 4, "attack": 1, "damage": 1, "magic_power": 2, "range_max": 1, "defense": 1}}
 	var u := CombatUnit.from_member(m)
 	eq(u.max_hp, Db.character(&"dog").class_def.max_hp + 4)
-	eq(u.attack, Db.character(&"dog").class_def.attack + 1)
+	eq(u.crit, Db.character(&"dog").class_def.crit + 5, "an attack bonus is crit")
+	eq(u.armor, Db.character(&"dog").class_def.armor + 1, "a defense bonus is armor")
 	eq(u.magic_power, 2)
 	eq(u.range_max, 2)
 
@@ -224,8 +274,10 @@ func test_loop_data_is_whole() -> void:
 		ok(Txt.has(Db.world_nodes[id].name_key))
 	for id in Db.weapons:
 		ok(Txt.has(Db.weapons[id].name_key))
-	for p in LevelRules.PICKS:
-		ok(Txt.has("UI_LS_PICK_" + p.to_upper()))
+	for k in LevelRules.STATS:
+		ok(Txt.has("UI_STAT_" + k.to_upper()))
+	for id in Db.skill_ranks:
+		ok(Db.ability(String(id)) != null, "ranks for a real skill: " + String(id))
 
 
 ## [USER] 2026-10-28: no fog of war for now. The pass is drawn whole from the first step, every group stands

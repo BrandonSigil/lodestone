@@ -9,28 +9,34 @@ const PACK_CELL := 56.0
 const FULL_CELL := 46.0  ## smaller when FOUND and the courier's bag share the box
 
 
-## [USER] 2026-10-28: the Lodestone opens from its bottom-bar button at any time: level-up picks, head back
-## to town. home: false hides GO HOME (in town already, or mid-fight).
+## [USER] 2026-10-28: the Lodestone opens from its bottom-bar button at any time: skill ranks waiting, head back
+## to town ([USER] 2026-10-29: stats roll on their own each level; every 4 levels a rank for one of the
+## character's own skills). home: false hides GO HOME (in town already, or mid-fight).
 static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, home := true) -> void:
 	_label(box, Txt.t("UI_LODESTONE"), 20)
 	for m in Game.run.members:
 		var d: CharacterDef = m.def
 		var id := String(d.id)
 		var s := Game.level_state(id)
-		var u := CombatUnit.from_member(m)  # the stats it fights with: class, levels, picks, weapon
+		var u := CombatUnit.from_member(m)  # the stats it fights with: class, levels, ranks, weapon
 		_label(box, Txt.f("UI_LS_MEMBER", [Txt.t(d.name_key), int(s.level), int(s.xp), int(Db.levels.get("xp_per_level", 100)),
-			int(m.hp), u.max_hp, u.attack, u.damage, u.magic_power]), 14)
-		if int(s.pending) <= 0:
+			int(m.hp), u.max_hp, u.damage, u.armor, u.crit, u.magic_power]), 14)
+		var skills := u.abilities.filter(func(a: Ability) -> bool: return LevelRules.max_rank(a.id, Db.skill_ranks) > 0)
+		if int(s.pending) <= 0 or skills.is_empty():
 			continue
-		_label(box, Txt.f("UI_LS_PICK", int(s.pending)), 13)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		for pick: String in LevelRules.PICKS:
+		_label(box, Txt.f("UI_LS_RANK", int(s.pending)), 13)
+		var row := HFlowContainer.new()
+		row.add_theme_constant_override("h_separation", 6)
+		row.custom_minimum_size = Vector2(W, 0)
+		for a: Ability in skills:
 			var b := Button.new()
-			b.text = Txt.t("UI_LS_PICK_" + pick.to_upper())
+			var have := int(s.ranks.get(a.id, 0))
+			var top := LevelRules.max_rank(a.id, Db.skill_ranks)
+			b.text = Txt.f("UI_LS_SKILL_RANK", [Txt.t(a.name_key), have, top])
+			b.disabled = have >= top
 			b.custom_minimum_size = Vector2(140, 30)
 			b.pressed.connect(func() -> void:
-				Game.pick_boost(id, pick)
+				Game.rank_skill(id, a.id)
 				changed.call())
 			row.add_child(b)
 		box.add_child(row)

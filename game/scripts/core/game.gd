@@ -226,7 +226,9 @@ func refresh_party() -> void:
 	for m in run.members:
 		var id := String((m.def as CharacterDef).id)
 		var before := run.max_hp(m)
-		m.bonus = LevelRules.merge(LevelRules.bonus(level_state(id), Db.levels), weapon_mods(id))
+		var s := level_state(id)
+		m.bonus = LevelRules.merge(LevelRules.bonus(s, Db.levels), weapon_mods(id))
+		m.ranks = s.ranks
 		m.hp = clampi(int(m.hp) + maxi(0, run.max_hp(m) - before), 0, run.max_hp(m))
 
 
@@ -253,7 +255,8 @@ func level_state(id: String) -> Dictionary:
 	return LevelRules.normalize(meta.levels.get(id))
 
 
-## XP for everyone in the party; returns the log lines (who reached which level, picks waiting).
+## XP for everyone in the party; each level rolls their stats from data/growth.csv. Returns the log lines
+## (who reached which level and what went up, ranks waiting).
 func award_xp(amount: int) -> PackedStringArray:
 	var lines: PackedStringArray = []
 	if run == null:
@@ -262,8 +265,16 @@ func award_xp(amount: int) -> PackedStringArray:
 		var d: CharacterDef = m.def
 		var s := level_state(String(d.id))
 		var had := int(s.pending)
-		for lv in LevelRules.gain(s, amount, Db.levels):
+		var before: Dictionary = s.gains.duplicate()
+		for lv in LevelRules.gain(s, amount, Db.levels, Db.growth.get(String(d.id), {}), run.rng):
 			lines.append(Txt.f("UI_LEVEL_UP", [Txt.t(d.name_key), lv]))
+		var up: PackedStringArray = []
+		for k in LevelRules.STATS:
+			var n := int(s.gains[k]) - int(before.get(k, 0))
+			if n > 0:
+				up.append("%s +%d" % [Txt.t("UI_STAT_" + k.to_upper()), n * (int(Db.levels.get("growth_hp", 2)) if k == "hp" else 1)])
+		if not up.is_empty():
+			lines.append("  " + "  ".join(up))
 		if int(s.pending) > had:
 			lines.append(Txt.f("UI_LS_PICK_WAITING", Txt.t(d.name_key)))
 		meta.levels[String(d.id)] = s
@@ -279,10 +290,10 @@ func pending_picks() -> int:
 	return n
 
 
-## Spend one Lodestone pick (hp, attack or magic) for a party member.
-func pick_boost(id: String, pick: String) -> bool:
+## Spend one waiting rank on one of a party member's skills ([USER] pc-8).
+func rank_skill(id: String, skill: String) -> bool:
 	var s := level_state(id)
-	if not LevelRules.choose(s, pick):
+	if not LevelRules.rank_up(s, skill, Db.skill_ranks):
 		return false
 	meta.levels[id] = s
 	refresh_party()

@@ -19,6 +19,7 @@ const STATUS_SLEEP := "sleep"  ## skips the owner's next phase, can't hit back; 
 const STATUS_GUIDED := "guided"  ## STAR POINT: more crit chance until the owner's next phase
 const STATUS_TAUNT := "taunt"  ## foes that can reach the taunter must hit it, until the taunter's next phase
 const STATUS_SLOW := "slow"  ## less move for a phase
+const STATUS_BLEED := "bleed"  ## loses a little HP at the start of each of its phases (a ranked bite)
 ## Cleared when the owner's next phase starts (they protect through the enemy phase).
 const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT]
 
@@ -358,8 +359,9 @@ static func swings(u: CombatUnit, a: Ability) -> int:
 
 
 ## What a heal restores, before capping at max HP.
+## Spells heal more as the caster's magic grows ([USER] pc-8: skills grow with the character on their own).
 static func heal_amount(u: CombatUnit, a: Ability) -> int:
-	return a.power + (1 if a.is_spell() and u.has_trait(TRAIT_SCHOLAR) else 0)
+	return a.power + (1 if a.is_spell() and u.has_trait(TRAIT_SCHOLAR) else 0) + (u.magic_power if a.is_spell() else 0)
 
 
 static func _sum(parts: Array) -> int:
@@ -501,6 +503,9 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 	if t.alive() and a.status != "":
 		t.statuses[a.status] = a.status_turns
 		events.append({"type": "status", "src": u, "unit": t, "status": a.status, "struck": a.kind == "hex"})
+	if t.alive() and a.bleed > 0:
+		t.statuses[STATUS_BLEED] = a.bleed
+		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_BLEED})
 	if t.alive() and a.push > 0:
 		events.append_array(push(grid, units, u.cell, t, a.push))
 	return events
@@ -554,6 +559,10 @@ static func begin_phase(units: Array, team: int) -> Array:
 		u.acted = false
 		u.move_origin = u.cell
 		u.left_guard = false
+		if u.alive() and u.has_status(STATUS_BLEED):
+			var n := mini(int(num("bleed_damage")), u.hp)
+			u.hp -= n
+			events.append({"type": "bleed", "unit": u, "amount": n})
 		if u.downed():
 			u.bleed -= 1  # one of its own phases gone; at 0 it's out for the fight
 			if u.bleed <= 0:

@@ -46,6 +46,19 @@ func run(s: Node, f: int, step: String) -> bool:
 	match step:
 		"start":
 			return f == 20
+		"lodestone":
+			# The Lodestone menu with a skill rank waiting for the dog (rolled stats show in each line).
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				var st: Dictionary = game.level_state("dog")
+				st.pending = 1
+				st.ranks["bite"] = 1
+				game.meta.levels["dog"] = st
+				game.meta.flags.append_array(["has_lodestone", "met_dog"])  # in memory only, not saved
+				game.refresh_party()
+				s._refresh_hud()
+				s._open_menu("lodestone")
+			return f == 30
 		"pack_full":
 			# A pickup with no room: FOUND beside the pack, the dog's saddlebag and THROW AWAY under it.
 			if f == 5:

@@ -291,6 +291,9 @@ func _show_phase_events(events: Array) -> void:
 	for ev in events:
 		if ev.type == "heal":
 			board.float_text(ev.unit.cell, "+%d" % ev.amount, Color(0.5, 1.0, 0.6))
+		elif ev.type == "bleed":
+			board.float_text(ev.unit.cell, "-%d" % ev.amount, Color(0.9, 0.3, 0.3))
+			ev.unit.shown_hp = ev.unit.hp
 		elif ev.type == "bled_out":
 			board.float_text(ev.unit.cell, Txt.t("UI_KNOCKED_OUT"), Color(1, 0.6, 0.5))
 			log_line.emit(Txt.f("LOG_BLED_OUT", Txt.t(ev.unit.name_key)))

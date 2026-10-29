@@ -22,3 +22,4 @@ mana_regen_pct,20,mana comes back this % of its max at the start of each of the 
 rage_per_hit,1,rage gained for each hit dealt or taken
 slow_move,-2,SLOW takes this off a piece's move for a phase
 talk_range,3,the hero can TALK to the foe written for it from this many tiles away
+bleed_damage,1,BLEED takes this much at the start of each of the bleeding piece's phases

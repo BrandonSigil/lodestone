@@ -16,6 +16,8 @@ var combat_items: Dictionary = {}  # id -> Ability, from data/combat_items.csv
 var explore_events: Dictionary = {}  # id -> event, from data/explore_events.csv (see ExploreRules.parse_events)
 var levels: Dictionary = {}  # key -> number, from data/levels.csv (see LevelRules)
 var combat: Dictionary = {}  # key -> number, from data/combat.csv (see CombatRules.num)
+var growth: Dictionary = {}  # character id -> {stat: % chance a level}, from data/growth.csv (see LevelRules)
+var skill_ranks: Dictionary = {}  # skill id -> [effect of rank 1, rank 2, ...], from data/skill_ranks.csv
 var weapons: Dictionary = {}  # id -> row of data/weapons.csv: the smithy weapons and what they add
 var travel_events: Array[Dictionary] = []  # overworld encounters, data/travel_events.csv (events.csv format)
 var world_nodes: Dictionary = {}  # id -> row of data/overworld_nodes.csv
@@ -51,6 +53,19 @@ func reload() -> void:
 	combat.clear()
 	for row in CsvTable.load_rows("res://data/combat.csv"):
 		combat[row.key] = float(row.value)
+	growth.clear()
+	for row in CsvTable.load_rows("res://data/growth.csv"):
+		var odds := {}
+		for k in LevelRules.STATS:
+			odds[k] = float(row.get(k, 0))
+		growth[row.id] = odds
+	skill_ranks.clear()
+	for row in CsvTable.load_rows("res://data/skill_ranks.csv"):
+		var list: Array = skill_ranks.get(row.skill, [])
+		while list.size() < int(row.rank):
+			list.append("")
+		list[int(row.rank) - 1] = row.effect
+		skill_ranks[row.skill] = list
 	weapons.clear()
 	for row in CsvTable.load_rows("res://data/weapons.csv"):
 		weapons[row.id] = row
