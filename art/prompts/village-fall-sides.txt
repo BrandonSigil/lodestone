@@ -1,0 +1,24 @@
+LODESTONE FALL VILLAGE SIDES v1 (cliff and wall faces, game-ready)
+
+Image 1 = the look: the fall village sheet v2 (art/picsart/out/village-fall-sheet_v2.webp). Copy its cliff stone, its foundation stone and its waterfall: colours and paint. Take the look, not the layout.
+Image 2 = the finish: docs/art/references/style-flat-forest.png. Match its soft painted edges and its amount of detail exactly.
+
+Aspect 3:2, plain cream paper background (#eae8d6), no title, no labels, no text anywhere.
+Layout: a 3 x 2 grid of six equal SQUARE cells with a clear cream gap between cells. Each cell is filled edge to edge by one wall face. Nothing crosses a cell edge.
+   row 1: warm grey cliff stone (the terraces); a second warm grey cliff stone, a little darker, with one patch of golden moss; low dressed stone wall of big squared blocks (foundations and the square's retaining walls)
+   row 2: waterfall face (falling water over stone); earth bank (packed brown earth with a few roots); the same dressed stone wall with ivy across one corner
+
+EVERY FACE (IMPORTANT)
+- Seen perfectly straight on, flat, like a texture swatch. NOT an isometric block, no top surface, no corner, no perspective.
+- Seamless left to right: the left edge matches the right edge, so copies side by side show no seam. The top and bottom edges are straight.
+- Four equal horizontal bands of height read faintly in the stone (one per level), with no hard lines between them.
+- No grass lip, no moss hanging over the top edge: the game adds the grass lip itself.
+- One flat colour plus one darker tone, two or three soft vertical smudges or cracks. The dressed wall shows only five or six big blocks, joints as soft lines in a darker tint, never outlined in dark ink.
+- Waterfall: flat pale blue with three or four soft white vertical strokes, seamless top to bottom too.
+
+Colour: warm grey stone (about #9f8874 lit, #756354 shade), earth brown, water a soft blue (about #6fb0dc), moss the golden grass colour of image 1. No black.
+
+Avoid: isometric blocks, cube corners, top surfaces, grass lips, moss drips, perspective, every stone outlined, fine cracks, speckle, pebbles, pixel art, dithering, cast shadows, text, labels, borders around cells, 3d render, glossy, photo, saturated red, saturated blue.
+
+CELL TO GAME FILE (game/art/source/battle/village/, 512 x 512 each): row 1 grey cliff -> side_cliff.png; darker cliff with moss -> side_cliff_b.png; dressed wall -> side_masonry.png; row 2 waterfall -> side_water.png; earth bank -> side_hazard.png (spare); dressed wall with ivy -> side_masonry_b.png (spare).
+Cut: crop the six cells on the fixed 3 x 2 grid, trim the paper gap, scale to 512 x 512, then check the left and right edges meet (Offset by half in Procreate, blend the seam).

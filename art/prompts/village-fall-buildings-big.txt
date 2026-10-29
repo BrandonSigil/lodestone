@@ -1,0 +1,22 @@
+LODESTONE FALL VILLAGE BUILDINGS, SHEET B: SMITHY, TAVERN, TOWN HALL (game-ready)
+
+Image 1 = the look: the fall village sheet v2 (art/picsart/out/village-fall-sheet_v2.webp). Copy its smithy, tavern and stone hall with the bell tower: roofs, walls, timber, fall colours. Take the designs, not the layout.
+Image 2 = the finish: docs/art/references/style-flat-forest.png. Match its soft painted edges and its amount of detail exactly.
+
+Aspect 3:2, plain cream paper background (#eae8d6). No title, no labels, no text, no letters, no writing on signs anywhere.
+Layout: three equal cells side by side in one row, with a wide clear cream gap between them. ONE building per cell, centred, nothing crosses a cell edge, nothing touches another building.
+   left: smithy, a stone and timber workshop with a red tile roof, an open forge bay with a glowing hearth on the right front wall, a chimney with a wisp of smoke. The right front wall is a third longer than the left front wall (3 to 4): the floor plan is a clear rectangle, not a square, and the front corner (its lowest point) sits LEFT of the cell centre, at about three sevenths of the building width from its left edge.
+   middle: two-storey tavern, red tile roof, a round blank hanging sign by the door, two chimneys. Square footprint: the left front wall and the right front wall are the same length.
+   right: stone town hall with a red tile roof and a small square bell tower with a grey slate spire. Square footprint, the biggest building of the three.
+
+VIEW: every building in 2:1 dimetric three-quarter view from above (orthographic camera turned 45 degrees, looking down 30 degrees). Each stands on a rectangular footprint seen as a diamond: one corner points at the viewer at the bottom centre of its cell. The front door is in the middle of the LEFT front wall. Roofs fully on.
+
+GROUNDING: walls rise from a low foundation of warm grey stone. At the foot of the walls, a thin band of golden grass tufts no deeper than the foundation stones, and one small fall bush at one corner. The tufts hug the walls; they never spread into a diamond of ground. No ground slab, no grass pad, no path, no cast shadow.
+
+FINISH: three flat values, light from the upper left: roof lightest, left wall mid, right wall darkest. Walls one flat colour with one or two windows; timber as a few flat brown stripes; roof one flat colour with two or three soft darker bands for the tile rows, no outlined tiles. Wood flat brown, no plank lines. One soft dark outline (#373335) around each whole building and its big parts only. Soft painted edges, as soft as the trees of image 2. Quiet and a little overgrown, as if left alone for years: one or two missing roof tiles, a cracked shutter, a little ivy. Not a ruin.
+
+Avoid: grass pads spreading past the walls, ground slabs, paths, fences, barrels or crates around the buildings, anvils outside, cast shadows, perspective, vanishing point, outlined roof tiles, every brick drawn, wood grain, plank lines, pixel art, dithering, jagged edges, 3d render, glossy, photo, characters, text, letters, watermark, black outlines, saturated red, saturated blue.
+
+CUT (staged first):
+   cd tools/art && ~/.lodestone/venv/bin/python props_cut.py ../../art/picsart/out/village-fall/buildings_b.png --grid 3x1 --names b_smithy,b_tavern,b_townhall --width 512 --out ../../art/picsart/out/village-fall/cut
+   Left wall share should read about 0.43 for the smithy (3 to 4) and about 0.50 for the tavern and town hall.

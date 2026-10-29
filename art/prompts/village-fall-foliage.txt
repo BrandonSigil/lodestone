@@ -1,0 +1,22 @@
+LODESTONE FALL VILLAGE FOLIAGE v1 (trees, pines, bushes, rocks, game-ready)
+
+Image 1 = the look: the fall village sheet v2 (art/picsart/out/village-fall-sheet_v2.webp). Copy its fall trees, dark pines, bushes and grey boulders: shapes and colours. Take the designs, not the layout.
+Image 2 = the finish: docs/art/references/style-flat-forest.png. Its trees and bushes are exactly how simple ours must be.
+
+Aspect 3:2, plain cream paper background (#eae8d6), no title, no labels, no text anywhere.
+Layout: a 5 x 3 grid of 15 equal cells with a wide clear cream gap between cells. ONE piece per cell, standing alone, centred, nothing crosses a cell edge.
+   row 1: round fall tree, golden; round fall tree, orange; round fall tree, rust red; round fall tree, half gold and half green; tall narrow fall tree, gold
+   row 2: dark pine, tall; dark pine, medium; dark pine, short and wide; bare fall tree with a few leaves left; tree stump
+   row 3: round fall bush, gold; round fall bush, orange; low green bush; grey boulder; two small grey boulders together
+
+TREES (IMPORTANT): a round tree is ONE soft cloud-blob canopy with a lumpy edge on a short stub trunk, two flat tones (light on the upper left, darker on the lower right). No individual leaves, no leaf clusters, no squared pixel edges. A pine is two or three stacked soft triangles in deep blue-green, two tones. Bushes are one rounded blob, two tones. Boulders are one rounded shape, two tones.
+VIEW: 2:1 dimetric three-quarter view from above, like image 1. The base sits at the bottom centre of its cell. No ground disc, no grass patch, no cast shadow, no fallen leaves around the base.
+FINISH: one soft dark outline (#373335) around each whole piece only, no inner lines. Light from the upper left. Soft painted edges.
+
+Colour: gold about #f2b44f, orange about #e9823a, rust about #b8533a, pine deep blue-green (darker than the gold by far), stone warm grey. Slightly faded, like a printed picture book. No black.
+
+Avoid: individual leaves, leaf clusters, pixel art, dithering, jagged square edges, needles, bark texture, ground under pieces, leaf piles, cast shadows, text, labels, borders around cells, 3d render, glossy, photo, characters, animals, watermark, saturated red, saturated blue.
+
+CELL TO GAME FILE (staged first):
+   ~/.lodestone/venv/bin/python tools/art/props_cut.py SHEET.png --grid 5x3 --names prop_tree,prop_tree_2,prop_tree_3,prop_tree_4,prop_tree_5,prop_pine_1,prop_pine_2,prop_pine_3,prop_tree_bare,prop_stump,prop_bush,prop_bush_2,prop_bush_3,prop_boulder,prop_boulder_2 --out art/picsart/out/village-fall/cut
+   Each becomes <name>.png, 256 px tall. game/data/battle_art_village.csv then lists the variants for forest and rock cells the way battle_art_snow.csv does.

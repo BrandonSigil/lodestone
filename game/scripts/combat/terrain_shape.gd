@@ -208,6 +208,16 @@ static func ribbons(grid: CombatGrid, width := ROAD_WIDTH) -> Dictionary:
 			pts.append(Vector2(k) + Vector2(0.5, 0.5))
 		var ends := [links.call(chain[0]).size() == 1, links.call(chain[chain.size() - 1]).size() == 1]
 		_band(grid, _chaikin(pts, 2), ends, width, bands, edges)
+	for c: Vector2i in road:  # a road two cells wide fills the square between its ribbons, so no ground peeks through
+		var m := Vector2(c) + Vector2(0.5, 0.5)
+		for q: Vector2i in [Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]:
+			var block := [Vector2i(q.x, 0), Vector2i(0, q.y), q].all(func(d: Vector2i) -> bool:
+				return road.has(c + d) and grid.height_at(c + d) == grid.height_at(c))
+			if block:
+				var k := m + Vector2(q) * 0.5
+				if not bands.has(c):
+					bands[c] = []
+				bands[c].append(PackedVector2Array([m, Vector2(k.x, m.y), k, Vector2(m.x, k.y)]))
 	return {"bands": bands, "edges": edges}
 
 

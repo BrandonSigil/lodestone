@@ -1,0 +1,31 @@
+LODESTONE FALL VILLAGE STYLE SHEET v1 (town tiles, transitions, buildings, props on one sheet)
+
+Attach ONE image: docs/art/references/village-fall-moodboard.png (built by tools/art/village_fall_moodboard.py).
+   LEFT, the big sheet = THE FEEL. Copy its fall colours, its golden grass, its warm stone, its red-tile roofs, its snowy blue mountains and dark navy pines, its 2:1 isometric angle, and how each house sits on the ground. Keep its building designs as a starting point.
+   RIGHT, the two tall panels = THE DETAIL LEVEL. Simplify everything down to these: big flat fills, one shadow tone, two or three soft marks per surface, chunky simple silhouettes. When the left and the right disagree on detail, the right wins.
+
+Make ONE picture, aspect 3:2, plain cream paper background (#eae8d6). No title, no labels, no section headers, no text, no letters, no writing on signs anywhere.
+
+LAYOUT
+   Top left, about half the sheet: a small diorama of a village square in fall. A flat open cobblestone square in the middle; dirt lanes leading out of it into golden grass; one raised grass terrace with a stone cliff and a stair down to the square; a stream with one small waterfall along one side. Three or four houses around the square, a well, a market stall, two lamp posts, a few fall trees. Behind it, snowy blue mountains and a band of dark navy pine silhouettes, exactly as on the left reference.
+   Top right: tile blocks, each one square isometric block standing alone: golden grass, worn grass, dirt lane, cobblestone, grass block with a stone cliff side, cliff with a waterfall, stair block, water.
+   Middle right: TRANSITION PIECES, flat isometric ground slabs that show where two grounds meet: cobblestone into grass (edge, outer corner, inner corner), dirt lane into grass (edge, outer corner, inner corner).
+   Bottom row: buildings (a small cottage, a two-storey half-timbered house, a thatched cottage, a smithy with an open forge side, a tavern, a town hall), then props (well, market stall, lamp post, anvil on a stump, barrel, crate stack, hay bale, wooden fence, bench, hand cart, notice board, grindstone, weapon rack), then foliage (two fall trees, one pine, two fall bushes, one leaf pile).
+
+THE TWO FIXES (most important)
+   1. GROUND TRANSITIONS. No hard straight seam between two grounds anywhere. Where cobblestone meets grass, the outer cobbles come loose and scatter into the grass, grass tufts and fallen leaves grow in the gaps, and the edge is ragged. Where a dirt lane meets grass, the grass thins into worn patches before the dirt, never a ruler-straight line. Show this in the diorama and in the transition pieces.
+   2. BUILDINGS BELONG TO THE GROUND. Every building and prop is drawn with the same paint, outline weight, light and colours as the ground and cliffs: same golden grass, same warm grey stone, same few marks. Every building stands on a low stone foundation in the cliff stone, with a skirt of grass tufts, leaves and a small fall bush around its base, so it grows out of the tile instead of floating on it. Roofs and walls use only colours already in the ground palette. Wooden props use the same brown as the stairs and fences.
+
+VIEW AND LIGHT
+   Everything in 2:1 dimetric three-quarter view from above (orthographic camera turned 45 degrees, looking down 30 degrees), like board game pieces. Doors on the LEFT front wall. One soft sun from the upper left: tops lightest, left faces mid, right faces darkest.
+
+FINISH
+   Flat illustrated storybook game art with a soft painted edge: one flat colour plus one shadow tone per surface, two or three soft marks, no texture fields. One soft warm dark outline (#373335) around big shapes only, never black. No pixel stair-steps, no pixel-art dithering.
+   The village is quiet and a little overgrown, as if left alone for many years: a few missing roof tiles, a cracked shutter, ivy on one wall, leaves in the cobble gaps, weeds at the foundations. Cosy, not a ruin.
+
+COLOUR (sampled from the left reference)
+   Fall: mustard gold #f3b54d, orange #de8d30, burnt orange #e06a32, rust red #9c4336, wood brown #724a38.
+   Ground and cool: olive #85823f, moss green #636b46, warm stone grey #ac9b93, slate blue #647793, water blue #75aed6.
+   Navy pines and mountain shadow stay deep blue. No black anywhere.
+
+Avoid: text, letters, labels, signs with writing, pixel art, dithering, hard straight seams between grounds, buildings floating on the ground, buildings in a different art style from the tiles, glossy, 3d render, photo, perspective, vanishing point, busy texture, every brick or cobble outlined in black, fine speckle, characters, people, animals, watermark, saturated pure red, saturated pure blue.

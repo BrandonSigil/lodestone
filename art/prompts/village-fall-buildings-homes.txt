@@ -1,0 +1,23 @@
+LODESTONE FALL VILLAGE BUILDINGS, SHEET A: FOUR HOMES (game-ready)
+
+Image 1 = the look: the fall village sheet v2 (art/picsart/out/village-fall-sheet_v2.webp). Copy its houses: roofs, walls, timber, fall colours. Take the designs, not the layout.
+Image 2 = the finish: docs/art/references/style-flat-forest.png. Match its soft painted edges and its amount of detail exactly.
+
+Aspect 1:1, plain cream paper background (#eae8d6). No title, no labels, no text, no letters anywhere.
+Layout: a 2 x 2 grid of four equal square cells with a wide clear cream gap between cells. ONE building per cell, centred, the same size scale in every cell, nothing crosses a cell edge, nothing touches another building.
+   top left: small one-storey cottage, red tile roof, one chimney. Square footprint: the left front wall and the right front wall are the same length.
+   top right: small one-storey cottage, red tile roof, one chimney, a small wooden porch roof over the door. Square footprint.
+   bottom left: two-storey half-timbered house, red tile roof, one chimney. Rectangular, not square: the left front wall (with the door) is a third longer than the right front wall (4 to 3), so its front corner sits right of the cell centre.
+   bottom right: one-storey cottage with a golden thatched roof and a small chimney. Rectangular, not square: the left front wall (with the door) is a third longer than the right front wall (4 to 3), so its front corner sits right of the cell centre.
+
+VIEW: every building in 2:1 dimetric three-quarter view from above (orthographic camera turned 45 degrees, looking down 30 degrees). Each stands on a rectangular footprint seen as a diamond: one corner points at the viewer at the bottom centre of its cell. The front door is in the middle of the LEFT front wall. Roofs fully on.
+
+GROUNDING: walls rise from a low foundation of warm grey stone. At the foot of the walls, a thin band of golden grass tufts no deeper than the foundation stones, and one small fall bush at one corner. The tufts hug the walls; they never spread into a diamond of ground. No ground slab, no grass pad, no path, no cast shadow.
+
+FINISH: three flat values, light from the upper left: roof lightest, left wall mid, right wall darkest. Walls one flat cream with one or two windows; timber as a few flat brown stripes; roof one flat colour with two or three soft darker bands for the tile or thatch rows, no outlined tiles. Porch and shutters flat brown, no plank lines. One soft dark outline (#373335) around each whole building and its big parts only. Soft painted edges, as soft as the trees of image 2. Quiet and a little overgrown, as if left alone for years: one or two missing roof tiles, a cracked shutter, a little ivy. Not a ruin.
+
+Avoid: grass pads spreading past the walls, ground slabs, paths, fences, barrels or crates around the buildings, cast shadows, perspective, vanishing point, outlined roof tiles, every brick drawn, wood grain, plank lines, pixel art, dithering, jagged edges, 3d render, glossy, photo, characters, text, letters, watermark, black outlines, saturated red, saturated blue.
+
+CUT (staged first):
+   cd tools/art && ~/.lodestone/venv/bin/python props_cut.py ../../art/picsart/out/village-fall/buildings_a.png --grid 2x2 --names b_home_hero,b_home_a,b_home_b,b_home_c --width 512 --out ../../art/picsart/out/village-fall/cut
+   Left wall share should read about 0.50 for the square homes and about 0.57 for the 4 to 3 ones.

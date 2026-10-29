@@ -7,6 +7,8 @@ trimmed to its outline and scaled to 256 px tall. Writes to a staging folder, ne
 
     python3 tools/art/props_cut.py SHEET.png --grid 5x3 --names a,b,c,... --out art/picsart/out/<batch>/cut
 Names go left to right, top to bottom; "-" skips a cell. Needs Pillow and numpy.
+Buildings: add --width 512 to scale to that width instead; it also prints each building's left wall share
+(as tools/art/village_cut.py does), to check against its footprint.
 """
 import argparse
 from pathlib import Path
@@ -40,7 +42,7 @@ def _runs(on: np.ndarray, min_gap: int) -> list:
     return merged
 
 
-def cut(sheet: str, cols: int, rows: int, names: list, out: Path) -> list:
+def cut(sheet: str, cols: int, rows: int, names: list, out: Path, width: int = 0) -> list:
     """Rows and props are found from the paper gaps between them, so uneven rows still cut cleanly."""
     img = Image.open(sheet).convert("RGB")
     rgb = np.asarray(img).astype(int)
@@ -67,7 +69,13 @@ def cut(sheet: str, cols: int, rows: int, names: list, out: Path) -> list:
             a[np.abs(a[..., :3].astype(int) - paper).max(-1) <= PAPER_TOL, 3] = 0
             p = Image.fromarray(a, "RGBA")
             p = p.crop(p.getchannel("A").getbbox())
-            p = p.resize((max(1, round(p.width * PROP_H / p.height)), PROP_H), Image.LANCZOS)
+            if width:
+                # The front corner is the lowest solid pixel; walls run up-left and up-right from it.
+                ys, xs = np.where(np.asarray(p.getchannel("A")) > 128)
+                print("%s: left wall share %.2f" % (names[i], xs[ys >= ys.max() - 3].mean() / p.width))
+                p = p.resize((width, max(1, round(p.height * width / p.width))), Image.LANCZOS)
+            else:
+                p = p.resize((max(1, round(p.width * PROP_H / p.height)), PROP_H), Image.LANCZOS)
             p.save(out / f"{names[i]}.png")
             written.append(names[i])
     return written
@@ -79,9 +87,10 @@ def main() -> None:
     ap.add_argument("--grid", default="5x3")
     ap.add_argument("--names", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--width", type=int, default=0, help="scale to this width (buildings) instead of 256 tall")
     args = ap.parse_args()
     cols, rows = (int(x) for x in args.grid.split("x"))
-    done = cut(args.sheet, cols, rows, args.names.split(","), Path(args.out))
+    done = cut(args.sheet, cols, rows, args.names.split(","), Path(args.out), args.width)
     print("cut", len(done), "props to", args.out)
 
 

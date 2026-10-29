@@ -27,6 +27,19 @@ BIOMES = {
         "forest_top":    ((232, 239, 249), (190, 208, 234), 0.10, 6),   # snow under the trees
         "road_top":      ((214, 222, 234), (192, 202, 220), 0.10, 7),   # packed, trodden snow for paths
     },
+    # The fall village, sampled from the fall look sheet v2 and faded a step. Named as the game files.
+    "village_fall": {
+        "top_grass":     ((240, 186, 82), (224, 162, 66), 0.10, 11),   # golden grass
+        "top_grass_b":   ((236, 180, 78), (214, 148, 60), 0.16, 12),
+        "top_forest":    ((232, 172, 74), (214, 128, 60), 0.14, 13),   # grass under trees, orange leaf litter
+        "top_road":      ((232, 198, 142), (214, 176, 120), 0.10, 14), # dirt lanes
+        "top_stone":     ((206, 190, 174), (188, 172, 158), 0.10, 15), # the cobbled square
+        "top_stone_b":   ((186, 172, 160), (166, 152, 142), 0.12, 16), # stairs and rock
+        "top_rock":      ((178, 166, 154), (158, 146, 136), 0.12, 17), # ruin floor
+        "top_water":     ((104, 170, 216), (146, 198, 232), 0.12, 18), # stream, lighter streaks
+        "top_special":   ((240, 186, 82), (226, 140, 64), 0.12, 19),
+        "top_hazard":    ((226, 166, 72), (196, 110, 56), 0.16, 20),
+    },
 }
 
 

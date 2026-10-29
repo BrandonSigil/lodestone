@@ -1,0 +1,29 @@
+LODESTONE FALL VILLAGE BUILDING v1 (one building per picture, game-ready)
+
+Run once per building: replace [BUILDING] and [FOOTPRINT] with one line from THE SEVEN BUILDINGS below.
+
+Image 1 = the look: the fall village sheet v2 (art/picsart/out/village-fall-sheet_v2.webp). Copy the matching building from it: its roof, walls, timber and fall colours. Take the design, not the layout.
+Image 2 = the finish: docs/art/references/style-flat-forest.png. Match its soft painted edges and its amount of detail exactly.
+
+Aspect 1:1, plain cream paper background (#eae8d6). ONE building alone in the middle, nothing else in frame. No text, no letters, no writing on signs.
+The building: [BUILDING]
+
+VIEW AND FOOTPRINT (IMPORTANT): 2:1 dimetric three-quarter view from above (orthographic camera turned 45 degrees, looking down 30 degrees), like image 1. The building stands on a rectangular footprint seen as a diamond: one corner points at the viewer at the bottom centre of the picture. [FOOTPRINT] The front door is in the middle of the LEFT front wall. The roof is fully on.
+
+GROUNDING: the walls rise from a low foundation of the warm grey cliff stone in image 1. At the foot of the walls, a thin skirt of golden grass tufts and one small fall bush at one corner, all inside the footprint, so the building grows out of the tile. The tufts hug the bottom of the walls in a band no deeper than the foundation stones; they never spread out into a diamond of ground around the house. No ground slab, no grass square, no grass pad, no path, no cast shadow, nothing past the footprint.
+
+FINISH: three flat values, light from the upper left: roof top lightest, left wall mid, right wall darkest. Walls one flat cream colour with one or two windows; timber as a few flat brown stripes; roof one flat colour with three or four soft tile or thatch rows hinted, no outlined tiles. One soft dark outline (#373335) around the whole building and its big parts only. Quiet and a little overgrown, as if left alone for years: one or two missing roof tiles, a cracked shutter, a little ivy. Not a ruin.
+Paint it as softly as the trees in the fall foliage sheet: soft painted edges, roof rows as two or three soft darker bands, porch and shutters as flat brown with no plank lines. Same finish on all seven buildings.
+
+Avoid: ground slabs, grass squares, grass pads spreading past the walls, paths, fences, barrels or crates around the building, cast shadows, perspective, vanishing point, outlined roof tiles, every brick drawn, wood grain, pixel art, dithering, jagged edges, 3d render, glossy, photo, characters, text, letters, watermark, black outlines, saturated red, saturated blue.
+
+THE SEVEN BUILDINGS (footprint from game/data/catalog.csv; the left front wall runs along foot_w, the right front wall along foot_h)
+   b_home_hero  | [BUILDING] small one-storey cottage, red tile roof, one chimney (the top-left cottage of image 1) | [FOOTPRINT] The footprint is square: the left front wall and the right front wall are the same length.
+   b_home_a     | [BUILDING] small one-storey cottage, red tile roof, one chimney, a wooden porch roof over the door | [FOOTPRINT] The footprint is square: the left front wall and the right front wall are the same length.
+   b_home_b     | [BUILDING] two-storey half-timbered house, red tile roof, one chimney | [FOOTPRINT] The left front wall is a third longer than the right front wall (4 to 3).
+   b_home_c     | [BUILDING] one-storey cottage with a golden thatched roof and a small chimney | [FOOTPRINT] The left front wall is a third longer than the right front wall (4 to 3).
+   b_smithy     | [BUILDING] smithy: a stone and timber workshop, red tile roof, an open forge bay with a glowing hearth on the right front wall, a chimney with a wisp of smoke | [FOOTPRINT] The right front wall is a third longer than the left front wall (3 to 4).
+   b_tavern     | [BUILDING] two-storey tavern, red tile roof, a round blank hanging sign by the door, two chimneys | [FOOTPRINT] The footprint is square: the left front wall and the right front wall are the same length.
+   b_townhall   | [BUILDING] stone town hall with a red tile roof and a small square bell tower with a grey slate spire | [FOOTPRINT] The footprint is a large square: the left front wall and the right front wall are the same length.
+
+Cut: key the paper, trim, scale to 512 px wide, save as game/art/source/battle/village/<name>.png (staged first). tools/art/village_cut.py prints each building's wall split; check it against the footprint above before it goes in.

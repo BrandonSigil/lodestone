@@ -1,0 +1,25 @@
+LODESTONE FALL VILLAGE SHEET: SIMPLIFY PASS (v2, edit of the v1 sheet)
+
+Attach TWO images, in this order. Do NOT attach the River Village sheet or the moodboard again: their pixel-art finish is what made v1 too busy.
+   Image 1 = the v1 fall village sheet. KEEP its layout, its list of pieces, its view angle, its fall colours and its building designs.
+   Image 2 = docs/art/references/style-flat-forest.png. COPY ITS FINISH EXACTLY: how much detail, how the paint looks, how the edges look.
+
+Repaint image 1 in the finish of image 2. Same picture, same pieces in the same places, about one fifth of the detail. Aspect 3:2, plain cream paper background (#eae8d6), no text.
+
+WHAT TO CHANGE
+- Paint, not pixels. Soft hand-painted gouache edges like image 2. No pixel-art stair-steps, no dithering, no crisp square clusters.
+- Ground tops: ONE flat colour each (golden grass, warm dirt, warm grey stone) with 3 to 5 small specks of a slightly different shade. Remove the leaf confetti, the grass tufts and the scattered pebbles from every top.
+- Cobblestone square: one flat warm grey slab. Do not draw every cobble: hint the stones with a few faint joint lines near the edges only, the middle stays plain.
+- Transitions stay, but simple: where stone or dirt meets grass, the edge is a soft, wavy, uneven line with two or three loose specks past it. No scattered stones, no leaf piles at the seam.
+- Cliffs and block sides: one flat colour a shade darker than the top, one or two soft vertical smudges. No block joints, no cracks, no moss drips.
+- Trees: a round fall tree is ONE soft cloud-blob canopy on a stub trunk, two flat tones (gold and a deeper gold, or orange and rust). A pine is two or three stacked soft triangles. No individual leaves.
+- Buildings: roof one flat colour with three or four soft tile rows hinted, no outlined tiles; walls one flat cream with one or two windows; timber beams as a few flat stripes. Keep one bush and a soft grass skirt at the base, remove the barrels, crates and leaf piles crowding each building.
+- Props: one silhouette, two flat tones each. No wood grain, no nails, no plank lines.
+- Water: one flat blue with two or three soft white strokes; the waterfall is two or three soft vertical strokes.
+- Lines: one soft dark outline (#373335) around each whole object or block only. No inner lines, no outline on small bits.
+- Shading: three flat values only. Top lightest, left face mid, right face darkest. No gradients, no cast shadows.
+- Colour: the same fall palette, slightly faded like a printed picture book. Calm the hot orange down. No black.
+
+Rule of thumb: if a surface has more than three marks on it, remove marks until it has three.
+
+Avoid: pixel art, dithering, crisp jagged edges, leaf confetti, scattered pebbles, grass tufts, drawn bricks or cobbles or roof tiles, wood grain, block joints on cliffs, busy texture, clutter around buildings, gradients, cast shadows, black outlines, text, labels, saturated red, saturated blue.

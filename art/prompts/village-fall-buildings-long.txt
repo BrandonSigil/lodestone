@@ -1,0 +1,20 @@
+LODESTONE FALL VILLAGE BUILDINGS, RE-ROLL: THE TWO LONG HOMES (home B and home C)
+
+Image 1 = the four homes sheet (art/picsart/out/village-fall/buildings_a.png). Keep both bottom houses exactly as they are: same walls, roofs, windows, ivy, bushes, colours and finish. Change only their proportions.
+Image 2 = the finish: docs/art/references/style-flat-forest.png.
+
+Aspect 3:2, plain cream paper background (#eae8d6). No text anywhere.
+Layout: two equal cells side by side with a wide clear cream gap between them. ONE building per cell, centred, nothing crosses a cell edge.
+   left: the two-storey half-timbered house from the bottom left of image 1.
+   right: the thatched cottage from the bottom right of image 1.
+
+PROPORTIONS (THE ONLY CHANGE, IMPORTANT): each house is clearly RECTANGULAR, not square. Seen from above its floor plan is 4 long by 3 deep. The LEFT front wall, the one with the door, is the LONG side: make it a third longer than in image 1, with one more window. The RIGHT front wall, the gable end, is the SHORT side and stays as it is. The roof ridge runs along the long left wall. So the front corner of the house, its lowest point, sits RIGHT of the cell's centre, at about four sevenths of the building's width from its left edge.
+
+VIEW: 2:1 dimetric three-quarter view from above, the same angle as image 1. Light from the upper left. Roof fully on.
+GROUNDING: same as image 1: low grey stone foundation, a thin band of golden grass tufts hugging the walls, one bush at a corner. No grass pad spreading past the walls, no ground slab, no cast shadow.
+
+Avoid: square floor plans, a door on the right wall, changing the style, grass pads, ground slabs, cast shadows, perspective, pixel art, dithering, outlined roof tiles, plank lines, text, letters, watermark, black outlines, saturated red, saturated blue.
+
+CUT (staged first):
+   cd tools/art && ~/.lodestone/venv/bin/python props_cut.py ../../art/picsart/out/village-fall/buildings_long.png --grid 2x1 --names b_home_b,b_home_c --width 512 --out ../../art/picsart/out/village-fall/cut
+   Left wall share should read 0.57 to 0.60 (the square homes read 0.52 to 0.53 with their bushes).

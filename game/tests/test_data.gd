@@ -85,3 +85,33 @@ func test_dummy_draws_every_facing() -> void:
 		for anim in ["idle", "walk", "attack", "cast", "hurt", "down"]:
 			var f := CharacterArt.frame(CharacterArt.FALLBACK, anim, dir, 0.0)
 			ok(not f.is_empty(), "dummy %s %s draws" % [anim, dir])
+
+
+## The town draws only its own art: every file the village asks for is in the village set, so nothing falls
+## back to the older base or snow art (a missing file in a set silently loads the base one).
+func test_village_art_is_its_own() -> void:
+	var stems := {}
+	for row in CsvTable.load_rows("res://data/battle_art_village.csv"):
+		for col in ["top", "side"]:
+			stems[String(row[col])] = "battle_art_village.csv"
+		for s in String(row.props).split("|", false):
+			stems[s] = "battle_art_village.csv"
+	for row in CsvTable.load_rows("res://data/looks.csv"):
+		if row.id == "village":
+			for s in String(row.trees).split("|", false):
+				stems[s] = "looks.csv"
+	for row in CsvTable.load_rows("res://data/catalog.csv"):
+		if row.drawer in ["Village", "Nature"]:
+			var s := MakerCatalog.stem_for(row, "village")
+			if not s.contains("/"):
+				stems[s] = "catalog.csv " + String(row.id)
+	var doc: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/explore/village.json"))
+	for p in doc.grid.props:
+		var s := String(p.sprite)
+		if not s.begins_with("ph_"):  # ph_ is a placeholder block, drawn in code
+			stems[s] = "village.json"
+	stems["skyline"] = "wallpaper"
+	for s in stems:
+		ok(not String(s).contains("/") or String(s).begins_with("village/"), "%s (%s) borrows another set" % [s, stems[s]])
+		var path := "res://art/source/battle/village/%s.png" % String(s).trim_prefix("village/")
+		ok(ResourceLoader.exists(path), "%s (%s) is missing from the village set" % [path, stems[s]])

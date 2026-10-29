@@ -1,0 +1,23 @@
+LODESTONE FALL VILLAGE PROPS v1 (16 street and work props, game-ready)
+
+Image 1 = the look: the fall village sheet v2 (art/picsart/out/village-fall-sheet_v2.webp). Copy its props (well, stall, lamp post, anvil, crates, hay, fence, bench, cart, board, grindstone, rack): their shapes, wood brown, warm stone and fall colours. Take the designs, not the layout.
+Image 2 = the finish: docs/art/references/style-flat-forest.png. Match its soft painted edges and its amount of detail exactly.
+
+Aspect 1:1, plain cream paper background (#eae8d6), no title, no labels, no text, no writing on the notice board.
+Layout: a 4 x 4 grid of 16 equal square cells with a wide clear cream gap between cells. ONE prop per cell, standing alone, centred, nothing crosses a cell edge, nothing touches another prop.
+The 16 props, row by row, left to right:
+   row 1: stone well with a small wooden roof; market stall with a faded red and cream striped awning and a few fruit crates; wooden barrel; stack of two wooden crates
+   row 2: small wooden hand cart; round hay bale; short wooden fence section (two posts, two rails); notice board on two posts, blank paper pinned on it
+   row 3: lamp post with a hanging lantern; plain wooden bench; stone planter box with a small fall bush; anvil on a tree stump
+   row 4: weapon rack with three spears; grindstone wheel on a wooden frame; old tree stump; small round fall tree (golden canopy)
+
+VIEW: every prop in 2:1 dimetric three-quarter view from above (orthographic camera turned 45 degrees, looking down 30 degrees), the same angle as image 1. The base sits at the bottom centre of its cell, as if standing on one map tile. Nothing seen flat-on.
+BASE: no ground disc, no grass patch, no floor, no cast shadow. At most two or three small golden grass tufts touching the very base, in the grass colour of image 1, so it sits in the same world as the ground.
+
+FINISH: one flat colour plus one shadow tone per surface, light from the upper left (top lightest, left faces mid, right faces darkest). One soft dark outline (#373335) around each whole prop only, no inner lines. No wood grain, no nails, no plank lines, no every-stone-outlined. Big simple silhouettes.
+
+Avoid: ground under props, cast shadows, perspective, flat-on views, wood grain, plank lines, pixel art, dithering, crisp jagged edges, fine detail, text, letters, numbers, borders around cells, 3d render, glossy, photo, characters, people, animals, watermark, saturated red, saturated blue.
+
+CELL TO GAME FILE (game/art/source/battle/village/, staged first):
+   ~/.lodestone/venv/bin/python tools/art/props_cut.py SHEET.png --grid 4x4 --names prop_well,prop_stall,prop_barrel,prop_crates,prop_cart,prop_hay,prop_fence,prop_board,prop_lamp,prop_bench,prop_planter,prop_anvil,prop_rack,prop_grindstone,prop_stump,prop_tree --out art/picsart/out/village-fall/cut
+   Each becomes <name>.png, 256 px tall. Same names as the props in game/data/catalog.csv.
