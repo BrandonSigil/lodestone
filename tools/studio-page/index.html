@@ -157,12 +157,40 @@ textarea { width: 100%; min-height: 70px; border: 1.5px solid var(--rule); borde
 .pill.blocked { color: var(--bad); background: var(--bad-soft); }
 @keyframes pulse { 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .pill.working::before { animation: none; } }
-.role-more { border-top: 1px solid var(--rule); padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
-.log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow-y: auto; }
-.log li { font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
-.log time { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.log img { border-radius: 5px; border: 1px solid var(--rule); cursor: zoom-in; }
-.notes-list { font-size: 13px; color: var(--muted); margin: 0; padding-left: 18px; }
+.role > button { border-radius: 10px; transition: background .12s; }
+.role > button:hover { background: var(--leaf-soft); }
+.open-hint { grid-column: 1 / -1; justify-self: end; font-size: 12px; font-weight: 600; color: var(--gem); }
+
+/* One role, full window */
+html.locked { overflow: hidden; }
+.rv { position: fixed; inset: 0; z-index: 35; background: var(--paper); overflow-y: auto; }
+.rv-in { max-width: 1120px; margin: 0 auto; padding-block: 0 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.rv-head { position: sticky; top: 0; z-index: 1; background: var(--paper); display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-block: calc(16px + env(safe-area-inset-top, 0px)) 14px; border-bottom: 1px solid var(--rule); }
+.rv-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rv-title h2 { font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1.15; margin: 0; }
+.rv-head .job { color: var(--muted); margin: 4px 0 0; max-width: 68ch; }
+.rv-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 36px; margin-top: 24px; align-items: start; }
+@media (max-width: 880px) { .rv-grid { grid-template-columns: minmax(0, 1fr); } }
+.rv h3 { font-family: var(--display); font-weight: 400; font-size: 19px; margin: 0 0 10px; }
+.rv-now { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; display: grid; gap: 14px; margin-bottom: 28px; }
+.rv-now p { margin: 3px 0 0; font-size: 17px; line-height: 1.5; max-width: 68ch; }
+.rv-now small, .rv-empty { color: var(--muted); }
+.lbl { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rv-log { list-style: none; margin: 0; padding: 0; }
+.rv-log li { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 18px; padding-block: 16px; border-top: 1px solid var(--rule); }
+.rv-log time { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 3px; font-variant-numeric: tabular-nums; }
+.rv-log p { margin: 0; font-size: 15.5px; line-height: 1.55; max-width: 68ch; }
+.rv-log img { grid-column: 2; width: 100%; max-width: 620px; border-radius: 6px; border: 1px solid var(--rule); cursor: zoom-in; }
+@media (max-width: 560px) { .rv-log li { grid-template-columns: minmax(0, 1fr); } .rv-log img { grid-column: 1; } }
+.rv-side { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.rv-cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.rv-cards button { width: 100%; text-align: left; border: 1px solid var(--rule); background: var(--sheet); border-radius: 8px; padding: 9px 11px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; font-size: 14px; }
+.rv-cards button:hover { border-color: var(--gem); }
+.rv-notes { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.rv-notes li { border-left: 3px solid var(--rule); padding-left: 10px; display: flex; flex-direction: column; gap: 4px; }
+.rv-notes li.new { border-left-color: var(--amber); }
+.rv-notes small { color: var(--muted); font-size: 12px; }
+.card.flash { outline: 3px solid var(--gem); outline-offset: 3px; transition: outline-color 1.2s; }
 .you { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 12px; }
 
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 8px 16px; border-radius: 8px; font-size: 14px; z-index: 30; }
@@ -292,6 +320,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
   </aside>
 </main>
 
+<div class="rv" id="rv" hidden role="dialog" aria-modal="true" aria-labelledby="rv-h"></div>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Image">
   <button id="lb-close">Close</button>
   <img id="lb-img" alt="">
@@ -485,30 +514,83 @@ function renderTeam() {
   const el = $("team");
   if (!S.roles.length) { el.innerHTML = `<div class="empty">${S.db ? "No roles yet. The project manager adds them." : "Can't reach the studio records."}</div>`; return; }
   const roles = [...S.roles].sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
-  const noteDraft = document.querySelector("#team textarea")?.value;
   el.innerHTML = roles.map((r) => {
-    const open = S.openRole === r.id;
-    const log = S.log.filter((l) => l.role === r.id).sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 15);
-    const notes = S.notes.filter((n) => n.role === r.id && n.status !== "seen");
     const waiting = S.desk.filter((d) => d.role === r.id && (d.status || "open") === "open").length;
+    const newNotes = S.notes.filter((n) => n.role === r.id && n.status !== "seen").length;
     return `<div class="role">
-      <button data-act="role" data-id="${esc(r.id)}" aria-expanded="${open}">
-        <h3>${esc(r.name)}</h3><span class="pill ${esc(r.status || "idle")}">${esc({working:"Working",waiting:"Waiting on you",idle:"Idle",blocked:"Blocked"}[r.status] || r.status || "Idle")}</span>
+      <button data-act="role" data-id="${esc(r.id)}" aria-haspopup="dialog" aria-label="Open ${esc(r.name)}">
+        <h3>${esc(r.name)}</h3>${pillHtml(r)}
         <span class="job">${esc(r.job)}</span>
         ${r.now ? `<span class="now">${esc(r.now)}</span>` : ""}
-        <span class="job">${r.updated ? "Updated " + esc(ago(r.updated)) : ""}${waiting ? ` · ${waiting} card${waiting > 1 ? "s" : ""} on your desk` : ""}</span>
+        <span class="job">${r.updated ? "Updated " + esc(ago(r.updated)) : ""}${waiting ? ` · ${waiting} card${waiting > 1 ? "s" : ""} on your desk` : ""}${newNotes ? ` · ${newNotes} unread note${newNotes > 1 ? "s" : ""} from you` : ""}</span>
+        <span class="open-hint" aria-hidden="true">Open ›</span>
       </button>
-      ${open ? `<div class="role-more">
-        ${r.next ? `<div style="font-size:13px"><b>Up next:</b> ${esc(r.next)}</div>` : ""}
-        ${log.length ? `<ul class="log">${log.map((l) => `<li><time>${esc(ago(l.at))}</time><span>${esc(l.text)}</span>${l.image ? `<img src="${esc(l.image)}" alt="" data-zoom="${esc(l.image)}" data-cap="${esc(l.text)}" loading="lazy">` : ""}</li>`).join("")}</ul>` : `<div style="font-size:13px;color:var(--muted)">No log entries yet.</div>`}
-        ${notes.length ? `<div><b style="font-size:13px">Your notes waiting for this role</b><ul class="notes-list">${notes.map((n) => `<li>${esc(n.text)}${shownImages(n.images)}</li>`).join("")}</ul></div>` : ""}
-        <label for="note-role" style="font-size:13px;font-weight:600">Leave a note on their desk</label>
-        <textarea id="note-role" placeholder="e.g. try the arch with a mossier top">${esc(noteDraft || "")}</textarea>${attachHtml("note:" + r.id)}
-        <div class="row"><button class="btn small primary" data-act="leavenote" data-id="${esc(r.id)}">Leave note</button></div>
-      </div>` : ""}
     </div>`;
   }).join("");
 }
+function pillHtml(r) {
+  return `<span class="pill ${esc(r.status || "idle")}">${esc({ working: "Working", waiting: "Waiting on you", idle: "Idle", blocked: "Blocked" }[r.status] || r.status || "Idle")}</span>`;
+}
+function when(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+}
+
+/* ---------- one role, full window ---------- */
+function renderRoleView() {
+  const el = $("rv"), r = S.roles.find((x) => x.id === S.openRole);
+  if (!r) { el.hidden = true; el.innerHTML = ""; document.documentElement.classList.remove("locked"); return; }
+  // a live update shouldn't wipe a note you're typing
+  if (!el.hidden && el.dataset.role === r.id && document.activeElement?.id === "note-role") return;
+  const noteDraft = $("note-role")?.value ?? "";
+  const scroll = el.scrollTop;
+  const log = S.log.filter((l) => l.role === r.id).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const rank = { open: 0, answered: 1, done: 2 };
+  const cards = S.desk.filter((d) => d.role === r.id).sort((a, b) => (rank[a.status || "open"] - rank[b.status || "open"]) || String(b.created).localeCompare(String(a.created)));
+  const notes = S.notes.filter((n) => n.role === r.id).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const stLabel = { open: "Needs you", answered: "Answered", done: "Done" };
+  el.innerHTML = `<div class="rv-in">
+    <header class="rv-head">
+      <div style="min-width:0">
+        <div class="rv-title"><h2 id="rv-h">${esc(r.name)}</h2>${pillHtml(r)}</div>
+        <p class="job">${esc(r.job)}</p>
+      </div>
+      <button class="btn" data-act="closerole">Close</button>
+    </header>
+    <div class="rv-grid">
+      <section class="rv-main" aria-label="Work">
+        <div class="rv-now">
+          ${r.now ? `<div><span class="lbl">Now</span><p>${esc(r.now)}</p></div>` : ""}
+          ${r.next ? `<div><span class="lbl">Up next</span><p>${esc(r.next)}</p></div>` : ""}
+          <small>${r.updated ? "Updated " + esc(ago(r.updated)) : ""}</small>
+        </div>
+        <h3>Log</h3>
+        ${log.length ? `<ol class="rv-log">${log.map((l) => `<li><time datetime="${esc(l.at)}">${esc(when(l.at))}</time><p>${esc(l.text)}</p>${l.image ? `<img src="${esc(l.image)}" alt="" data-zoom="${esc(l.image)}" data-cap="${esc(l.text)}" loading="lazy">` : ""}</li>`).join("")}</ol>` : `<p class="rv-empty">Nothing logged yet. This role adds a line for each milestone, with a picture when there is one.</p>`}
+      </section>
+      <aside class="rv-side" aria-label="Your side">
+        <div>
+          <h3>Cards from ${esc(r.name)}</h3>
+          ${cards.length ? `<ul class="rv-cards">${cards.map((d) => `<li><button data-act="gotocard" data-id="${esc(d.id)}"><span class="chip ${(d.status || "open") === "open" ? "kind-go" : "st-" + esc(d.status)}">${stLabel[d.status || "open"]}</span><span>${esc(d.title)}</span></button></li>`).join("")}</ul>` : `<p class="rv-empty">No cards yet.</p>`}
+        </div>
+        <div>
+          <h3>Your notes</h3>
+          ${notes.length ? `<ul class="rv-notes">${notes.map((n) => `<li class="${n.status === "seen" ? "" : "new"}"><small>${esc(when(n.at))} · ${n.status === "seen" ? "read" : "not read yet"}</small><span>${esc(n.text)}</span>${shownImages(n.images)}</li>`).join("")}</ul>` : ""}
+          <div class="why">
+            <label for="note-role" class="lbl">Leave a note on their desk</label>
+            <textarea id="note-role" placeholder="e.g. try the arch with a mossier top">${esc(noteDraft)}</textarea>${attachHtml("note:" + r.id)}
+            <div class="row"><button class="btn small primary" data-act="leavenote" data-id="${esc(r.id)}">Leave note</button></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>`;
+  el.dataset.role = r.id;
+  const opening = el.hidden;
+  el.hidden = false;
+  document.documentElement.classList.add("locked");
+  if (opening) { el.scrollTop = 0; el.querySelector("[data-act=closerole]")?.focus(); } else el.scrollTop = scroll;
+}
+function closeRole() { const id = S.openRole; S.openRole = null; renderRoleView(); document.querySelector(`#team [data-act=role][data-id="${id}"]`)?.focus(); }
 
 /* ---------- references ---------- */
 function renderRefs() {
@@ -559,7 +641,7 @@ document.querySelectorAll("#lib-tabs button").forEach((b) => b.addEventListener(
 }));
 setRoom((location.hash || "").slice(1));
 
-function renderAll() { renderTally(); renderDesk(); renderTeam(); renderRefs(); renderLib(); }
+function renderAll() { renderTally(); renderDesk(); renderTeam(); renderRefs(); renderLib(); if (S.openRole) renderRoleView(); }
 
 /* ---------- actions ---------- */
 async function save(id, patch, msg) {
@@ -620,13 +702,21 @@ document.addEventListener("click", async (ev) => {
         await save(id, { status: "open" }); S.drafts[id] = back();
         setTab("open"); break;
       }
-      case "role": S.openRole = S.openRole === id ? null : id; renderTeam(); break;
+      case "role": S.openRole = id; renderRoleView(); break;
+      case "closerole": closeRole(); break;
+      case "gotocard": {
+        const st = d?.status || "open";
+        S.openRole = null; renderRoleView(); setRoom("office"); setTab(st);
+        const c = document.getElementById("card-" + id);
+        if (c) { c.scrollIntoView({ block: "start" }); c.classList.add("flash"); setTimeout(() => c.classList.remove("flash"), 1600); }
+        break;
+      }
       case "folder": S.openFolder = S.openFolder === id ? null : id; renderLib(); break;
       case "leavenote": {
         const txt = ($("note-role")?.value || "").trim(), nk = "note:" + id;
         if (stillUploading(nk)) { toast("Wait for the picture to finish uploading."); return; }
         if (!txt && !attached(nk).length) return;
-        try { await S.db.collection("notes").add({ role: id, text: txt, images: attached(nk), at: new Date().toISOString(), status: "new" }); $("note-role").value = ""; delete S.drafts[nk]; renderTeam(); toast("Note left for " + roleName(id)); }
+        try { await S.db.collection("notes").add({ role: id, text: txt, images: attached(nk), at: new Date().toISOString(), status: "new" }); $("note-role").value = ""; delete S.drafts[nk]; renderRoleView(); toast("Note left for " + roleName(id)); }
         catch { toast("Couldn't leave the note. Try again in a moment."); }
         break;
       }
@@ -647,7 +737,11 @@ document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("cli
 const closeLb = () => { $("lb").hidden = true; $("lb-img").src = ""; };
 $("lb-close").addEventListener("click", closeLb);
 $("lb").addEventListener("click", (e) => { if (e.target.id === "lb") closeLb(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("lb").hidden) closeLb(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!$("lb").hidden) closeLb();
+  else if (S.openRole) closeRole();
+});
 
 /* ---------- data ---------- */
 function watch(coll, key) {
