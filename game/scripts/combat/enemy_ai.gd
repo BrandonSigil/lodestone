@@ -9,6 +9,8 @@ const COUNTER_FEAR := 3.0  ## how much it dislikes eating a counterattack (damag
 const GUARD_SCORE := 4.0  ## guard when hurt and nothing better to do
 const REVIVE_SCORE := 40.0  ## helping a downed teammate up beats most hits
 const KNOCKOUT_SCORE := 12.0  ## a downed foe kept down for the fight: about a solid hit's worth
+const COST_WEIGHT := 0.4  ## how much a point of mana, rage or charge weighs against a skill's worth
+const TAUNT_RANGE := 5  ## foes this close are the ones a taunt will pull
 
 
 ## Returns {"move": Vector2i, "ability": Ability or null, "aim": Vector2i, "path": Array[Vector2i], "guard": bool}.
@@ -90,13 +92,13 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 			"knockout":
 				s += KNOCKOUT_SCORE if t.team != u.team else 0.0
 			"buff":
-				s += _buff_value(u, t, a.status)
+				s += _buff_value(u, t, a.status, units)
 	if a.kind != "attack" and s <= 0.0:
 		return -INF
 	if not f.counter.is_empty():
 		s -= _avg(f.counter) * COUNTER_FEAR
-	if a.cooldown > 0:
-		s += 2.0  # spend skills when they're good, not only strikes
+	if a.res_cost > 0:
+		s += 2.0 - a.res_cost * COST_WEIGHT  # spend the job's resource when a skill is good, not only strikes
 	return s
 
 
@@ -128,12 +130,21 @@ static func _hex_value(t: CombatUnit, status: String) -> float:
 	return 4.0
 
 
-static func _buff_value(u: CombatUnit, t: CombatUnit, status: String) -> float:
+static func _buff_value(u: CombatUnit, t: CombatUnit, status: String, units: Array = []) -> float:
 	if t.team != u.team or t.has_status(status):
 		return 0.0
 	match status:
 		CombatRules.STATUS_GUIDED:
 			return 5.0 if t != u and not t.acted else 0.0
+		CombatRules.STATUS_TAUNT:
+			# pull the foes onto a piece that can take it, while they're close enough to matter
+			if u.hp * 2 < u.max_hp:
+				return 0.0
+			var near := 0
+			for o: CombatUnit in units:
+				if o.alive() and o.team != u.team and CombatRules.dist(o.cell, t.cell) <= TAUNT_RANGE:
+					near += 1
+			return 4.0 * near
 	return 5.0 if t.hp < t.max_hp else 0.0
 
 

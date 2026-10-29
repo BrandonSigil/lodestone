@@ -36,7 +36,8 @@ Code: `game/scripts/combat/`. Rules math is in `combat_rules.gd` (pure, no nodes
 - Push: some skills shove the target 1 tile straight away from the attacker. Blocked by rock, a unit, the map edge or a step up of 2+: the target takes 2 bump damage instead. Pushed off a ledge: 2 damage per level dropped beyond the first.
 - Statuses: GUARD, MOON SKIN and STAR (guided, +15% crit) last until the owner's next phase. STUCK (rooted) means 0 move and wears off at the end of the owner's next phase. NAP (sleep) skips the owner's next phase entirely and can't hit back; any damage (a hit, a bump or a fall) wakes it.
 - Hexes always land: they deal no damage and only add their status (MOON NAP).
-- Cooldowns: a skill with cooldown N can be used again after N of the owner's phases.
+- Job resources ([USER] c9, c16, step 5; no cooldowns): each class spends one resource, set in its ClassDef (`resource`, `resource_max`, `resource_every`). MANA (mage, wizard, lich, strange thing; 10) starts full and a fifth comes back at the start of each of the owner's phases. RAGE (knight, Lewith & Flark, bandit; 5) starts at 0 and builds 1 per hit dealt or taken. GO charges (the dog 3, one back every 3 phases; hunter and archer 2, every 2; wolf 2, every 3) start full. A skill's price is the `cost` column of `abilities.csv`; the basic hit, AID and KNOCK OUT are free. Resources reset every fight. The bar shows under each piece's HP in the frame and the party strip (mana blue, rage red, charges gold); the menu shows each skill's price.
+- TAUNT (the dog's BARK): until the taunter's next phase, any foe that can reach it must hit it. SLOW (the dog's BITE): -2 move for a phase.
 - Stardrop's skittish check runs at the start of each player phase.
 
 ## Terrain and height
@@ -70,8 +71,8 @@ Casters pick their spells. A class has a `spell_pool` and `spell_slots` (both 2 
 
 | Class | Pool (defaults first) |
 |---|---|
-| Moon mage (Stardrop) | MOON BOOM, MOON SKIN, MOON NAP (hex: sleep, range 2-3, cooldown 4), MOON WAVE (range 1-3, -3 damage, pushes 2, cooldown 3), STAR POINT (ally within 3 gets +15% crit, cooldown 2) |
-| Wizard | FIRE BOOM, FIX, FIRE ZAP (single target range 2-4, +2 damage, cooldown 2), COLD STUCK (range 2-3, -2 damage, roots, cooldown 3) |
+| Moon mage (Stardrop) | MOON BOOM, MOON SKIN, MOON NAP (hex: sleep, range 2-3, 5 mana), MOON WAVE (range 1-3, -3 damage, pushes 2, 4 mana), STAR POINT (ally within 3 gets +15% crit, 3 mana) |
+| Wizard | FIRE BOOM, FIX, FIRE ZAP (single target range 2-4, +2 damage, 3 mana), COLD STUCK (range 2-3, -2 damage, roots, 4 mana) |
 
 Where to pick: in the sandbox, the right panel's SPELLS section has a picker per slot for each caster placed on the map. Picks are saved with the map. Trail fights use the character's default loadout for now; a picker in the village is a follow-up.
 
@@ -80,14 +81,15 @@ Where to pick: in the sandbox, the right panel's SPELLS section has a picker per
 ## Skills (graybox set, `data/abilities.csv`)
 | Class | Skills |
 |---|---|
-| Knight (Lead) | PUSH HIT: melee, +2 hit, -2 damage, push 1, cooldown 2 |
-| Moon mage (Stardrop) | spells only (see above). MOON BOOM: range 2-3, plus-shaped area, -1 damage, magic, cooldown 3 (hits friends too). MOON SKIN: ally within 3 gets +1 armor, cooldown 3 |
-| Hunter | GOOD SHOT: weapon range, +3 hit, +1 damage, cooldown 2. TRAP: range 2-3, roots the target, cooldown 3 |
-| Wizard | spells only (see above). FIRE BOOM: like MOON BOOM at full damage. FIX: heal an ally within 2 for 4, cooldown 2 |
+| Knight (Lead) | PUSH HIT: melee, +10% crit, -2 damage, push 1, 2 rage |
+| Moon mage (Stardrop) | spells only (see above). MOON BOOM: range 2-3, plus-shaped area, -1 damage, magic, 4 mana (hits friends too). MOON SKIN: ally within 3 gets +1 armor, 4 mana |
+| Hunter | GOOD SHOT: weapon range, +15% crit, +1 damage, 1 charge. TRAP: range 2-3, roots the target, 1 charge |
+| Wizard | spells only (see above). FIRE BOOM: like MOON BOOM at full damage. FIX: heal an ally within 2 for 4, 3 mana |
 | Archer (Skeleton) | GOOD SHOT |
 | Duo (Lewith & Flark) | PUSH HIT |
-| Wolf | JUMP BITE: +2 hit, +1 damage, cooldown 3 |
-| Bandit | DIRTY KICK: +1 hit, -1 damage, push 1, cooldown 3 |
+| Wolf | JUMP BITE: +10% crit, +1 damage, 1 charge |
+| Dog | BITE: melee, the foe is SLOW for a phase, 1 charge. BARK: TAUNT until the dog's next phase, 1 charge ([USER] c4: bite slows, bark taunts) |
+| Bandit | DIRTY KICK: +5% crit, -1 damage, push 1, 2 rage |
 
 Adding a skill: add a row to `data/abilities.csv` and its name key to `text/placeholder.csv`, then list its id in the class's `abilities` array in the inspector. A new spell instead goes into a caster class's `spell_pool`. Columns: `kind` attack/hex/heal/buff, `target` enemy/ally/self/cell, `range_min/max` (0/0 = the unit's weapon range), `radius` (1 = plus shape), `power`, `hit`, `cooldown`, `push`, `status`, `status_turns`, `magic`, `element`.
 

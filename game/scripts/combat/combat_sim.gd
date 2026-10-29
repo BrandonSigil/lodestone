@@ -27,6 +27,8 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 ## supplies: counts that pack belts for pieces without one (CombatUnit.pack_belts).
 static func fight(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, supplies: Dictionary = {}) -> Dictionary:
 	CombatUnit.pack_belts(units, supplies)
+	for u: CombatUnit in units:
+		u.reset_resource()
 	var rounds := 0
 	while rounds < MAX_ROUNDS:
 		rounds += 1

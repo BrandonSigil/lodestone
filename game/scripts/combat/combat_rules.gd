@@ -17,8 +17,10 @@ const STATUS_VEIL := "veil"
 const STATUS_ROOTED := "rooted"
 const STATUS_SLEEP := "sleep"  ## skips the owner's next phase, can't hit back; any damage wakes it
 const STATUS_GUIDED := "guided"  ## STAR POINT: more crit chance until the owner's next phase
+const STATUS_TAUNT := "taunt"  ## foes that can reach the taunter must hit it, until the taunter's next phase
+const STATUS_SLOW := "slow"  ## less move for a phase
 ## Cleared when the owner's next phase starts (they protect through the enemy phase).
-const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED]
+const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT]
 
 ## Combat traits (one per roster character, a few for enemy classes). Ids live in the .tres traits arrays.
 const TRAIT_SHIELD_WALL := &"shield_wall"  ## Lead: allies standing next to them get more armor
@@ -64,7 +66,7 @@ static func height_levels(grid: CombatGrid, from: Vector2i, to: Vector2i) -> int
 static func move_points(u: CombatUnit) -> int:
 	if u.has_status(STATUS_ROOTED) or u.has_status(STATUS_SLEEP):
 		return 0
-	return maxi(1, u.move + (SPOOKED_MOVE if u.spooked else 0))
+	return maxi(1, u.move + (SPOOKED_MOVE if u.spooked else 0) + (int(num("slow_move")) if u.has_status(STATUS_SLOW) else 0))
 
 
 static func unit_at(units: Array, c: Vector2i) -> CombatUnit:
@@ -181,7 +183,7 @@ static func can_attack(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from:
 	return in_reach(grid, from, tgt.cell, ability_range(att, null))
 
 
-## Can this unit use this ability right now (cooldown)? An item also has to be on the unit's own belt
+## Can this unit use this ability right now (enough mana, rage or charges)? An item also has to be on the unit's own belt
 ## ([USER] 2026-10-29: in a fight a piece uses only what is on its belt, and using it is its action).
 static func usable(u: CombatUnit, a: Ability) -> bool:
 	if not u.can_use(a):
@@ -202,6 +204,14 @@ static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Arr
 			if in_reach(grid, from, g.cell, r):
 				out.append(g.cell)
 		return out
+	if a.hostile():
+		# a taunting foe in reach must be the target ([USER] 2026-10-29, combat build step 5)
+		var taunts: Array[Vector2i] = []
+		for o: CombatUnit in units:
+			if o.alive() and o.team != u.team and o.has_status(STATUS_TAUNT) and in_reach(grid, from, o.cell, r):
+				taunts.append(o.cell)
+		if not taunts.is_empty():
+			return taunts
 	match a.target:
 		"self":
 			out.append(from)
@@ -434,8 +444,8 @@ static func forecast(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector
 ## Item costs are paid from the user's belt here.
 static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector2i, units: Array, allow_counter := true) -> Array:
 	var events := []
-	if a.cooldown > 0:
-		u.cooldowns[a.id] = a.cooldown
+	if a.res_cost > 0:
+		u.res = maxi(0, u.res - a.res_cost)
 	if a.is_item():
 		u.belt.take(a.spends, a.cost)
 	var hit_list := affected_units(grid, u, a, center, units, u.cell)
@@ -485,6 +495,9 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 		var crit := rng.randf() < crit_chance(grid, u, t, units, u.cell, a)
 		var dmg := damage(grid, u, t, u.cell, a, units, rng.randi_range(-w, w)) * (int(num("crit_mult")) if crit else 1)
 		t.hp = maxi(0, t.hp - dmg)
+		for o: CombatUnit in [u, t]:  # rage builds on every hit dealt or taken
+			if o.res_kind == "rage":
+				o.res = mini(o.res_max, o.res + int(num("rage_per_hit")))
 		t.statuses.erase(STATUS_SLEEP)
 		events.append({"type": "hit", "src": u, "unit": t, "amount": dmg, "crit": crit})
 	if t.alive() and a.status != "":
@@ -532,7 +545,7 @@ static func guard(u: CombatUnit) -> void:
 	u.statuses[STATUS_GUARD] = 1
 
 
-## Start of a team's phase: fresh actions, cooldowns tick, guard and veil end, sleepers lose the turn.
+## Start of a team's phase: fresh actions, mana and charges come back, guard and veil end, sleepers lose the turn.
 ## Returns heal events for traits that regrow, so the board can show them.
 static func begin_phase(units: Array, team: int) -> Array:
 	var events := []
@@ -555,10 +568,14 @@ static func begin_phase(units: Array, team: int) -> Array:
 			events.append({"type": "heal", "src": u, "unit": u, "amount": REGROW})
 		for s in STATUS_UNTIL_OWN_PHASE:
 			u.statuses.erase(s)
-		for id in u.cooldowns.keys():
-			u.cooldowns[id] = int(u.cooldowns[id]) - 1
-			if u.cooldowns[id] <= 0:
-				u.cooldowns.erase(id)
+		match u.res_kind:  # the job's resource comes back ([USER] c9, c16)
+			"mana":
+				u.res = mini(u.res_max, u.res + ceili(u.res_max * num("mana_regen_pct") / 100.0))
+			"charges":
+				u.res_tick += 1
+				if u.res_every > 0 and u.res_tick >= u.res_every:
+					u.res_tick = 0
+					u.res = mini(u.res_max, u.res + 1)
 	return events
 
 

@@ -87,7 +87,7 @@ func _refresh_hud() -> void:
 	for u: CombatUnit in battle.units:
 		if u.team == 0:
 			entries.append({"name": Txt.t(u.name_key), "hp": u.hp, "max_hp": u.max_hp, "tint": u.tint,
-				"note": Txt.t("TAG_SPOOKED") if u.spooked else ""})
+				"note": Txt.t("TAG_SPOOKED") if u.spooked else "", "res_kind": u.res_kind, "res": u.res, "res_max": u.res_max})
 	hud.set_party(entries)
 	hud.set_pack(Game.run.pack)
 

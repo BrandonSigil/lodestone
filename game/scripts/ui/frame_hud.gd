@@ -188,6 +188,23 @@ func _layout_leaf() -> void:
 	_pin(side, 1, 0, 1, 1, -RIGHT_W + 14, TOP_H, -14, -clear - 58)
 
 
+const RES_COLORS := {"mana": Color(0.35, 0.55, 1.0), "rage": Color(0.9, 0.3, 0.25), "charges": Color(0.95, 0.8, 0.3)}
+
+
+## The job's resource as a thin bar in its own colour (mana blue, rage red, charges gold).
+func _res_bar(e: Dictionary, size: Vector2) -> ProgressBar:
+	var bar := ProgressBar.new()
+	bar.max_value = maxi(1, int(e.res_max))
+	bar.value = int(e.res)
+	bar.show_percentage = false
+	bar.custom_minimum_size = size
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = RES_COLORS.get(String(e.res_kind), Color.WHITE)
+	bar.add_theme_stylebox_override("fill", fill)
+	return bar
+
+
 ## One member in the leaf frame's party panel: pawn, name, HP bar and numbers.
 func _leaf_member(e: Dictionary) -> Control:
 	var box := HBoxContainer.new()
@@ -211,12 +228,15 @@ func _leaf_member(e: Dictionary) -> Control:
 	bar.custom_minimum_size = Vector2(44, 6)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(bar)
+	if e.get("res_kind", "") != "":
+		col.add_child(_res_bar(e, Vector2(44, 4)))
 	col.add_child(_label("%d / %d%s" % [e.hp, e.max_hp, ("  " + e.note) if e.get("note", "") != "" else ""], 10))
 	box.add_child(col)
 	return box
 
 
-## entries: [{"name": String, "hp": int, "max_hp": int, "tint": Color, "note": String}]
+## entries: [{"name": String, "hp": int, "max_hp": int, "tint": Color, "note": String}], plus in a fight
+## "res_kind" ("mana", "rage", "charges" or ""), "res" and "res_max": the job's bar under the HP.
 func set_party(entries: Array) -> void:
 	for c in party_box.get_children().slice(1):
 		c.queue_free()
@@ -235,6 +255,8 @@ func set_party(entries: Array) -> void:
 		bar.show_percentage = false
 		bar.custom_minimum_size = Vector2(120, 8)
 		col.add_child(bar)
+		if e.get("res_kind", "") != "":
+			col.add_child(_res_bar(e, Vector2(120, 5)))
 		var hp_text := "%d / %d" % [e.hp, e.max_hp]
 		if e.get("note", "") != "":
 			hp_text += "  " + e.note

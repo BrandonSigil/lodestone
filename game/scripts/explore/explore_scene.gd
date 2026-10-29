@@ -1045,7 +1045,7 @@ func _end_fight() -> void:
 		u.acted = false
 		u.spooked = false
 		u.statuses.clear()
-		u.cooldowns.clear()
+		u.reset_resource()
 	# The others fall back in with the leader, who walks on alone.
 	var lead := leader()
 	for u: CombatUnit in party:
@@ -1116,7 +1116,8 @@ func _refresh_hud() -> void:
 	var entries := []
 	for u: CombatUnit in party:
 		entries.append({"name": Txt.t(u.name_key), "hp": u.hp, "max_hp": u.max_hp, "tint": u.tint,
-			"note": Txt.t("TAG_SPOOKED") if u.spooked else ""})
+			"note": Txt.t("TAG_SPOOKED") if u.spooked else "", "res_kind": u.res_kind if battle != null else "",
+			"res": u.res, "res_max": u.res_max})
 	hud.set_party(entries)
 	hud.set_pack(Game.run.pack)
 	var tools := [{"id": "pack", "text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]

@@ -43,7 +43,11 @@ var acted := false
 var spooked := false
 var move_origin := Vector2i(-1000, -1000)  ## where this piece began its phase (set by CombatRules.begin_phase)
 var left_guard := false  ## walked away from a guard this phase and took the free hit, so the move can't be undone
-var cooldowns := {}  ## ability id -> own phases left
+var res_kind := ""  ## the job's resource: "mana", "rage", "charges" or "" (see ClassDef.resource)
+var res_max := 0
+var res := 0  ## what's left to spend this fight
+var res_every := 0  ## charges: one back every this many own phases
+var res_tick := 0  ## charges: own phases since the last one came back
 var statuses := {}  ## status id -> turns left (see CombatRules.STATUS_*)
 
 # View state, animated by CombatBoard.
@@ -85,6 +89,10 @@ func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 		if a:
 			abilities.append(a)
 	traits = c.traits.duplicate()
+	res_kind = c.resource
+	res_max = c.resource_max
+	res_every = c.resource_every
+	reset_resource()
 	set_spells(c.default_spells())
 
 
@@ -187,8 +195,15 @@ func has_status(s: String) -> bool:
 	return statuses.get(s, 0) > 0
 
 
+## Enough of the job's resource left for this skill? Free skills (the basic hit, AID) always are.
 func can_use(a: Ability) -> bool:
-	return int(cooldowns.get(a.id, 0)) <= 0
+	return a.res_cost <= 0 or (res_kind != "" and res >= a.res_cost)
+
+
+## A fight's start: mana and charges full, rage empty.
+func reset_resource() -> void:
+	res = 0 if res_kind == "rage" else res_max
+	res_tick = 0
 
 
 func sync_view() -> void:

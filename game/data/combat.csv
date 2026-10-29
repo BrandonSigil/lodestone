@@ -18,3 +18,6 @@ bleed_turns,3,a downed party piece can be helped up for this many of its own pha
 aid_pct,25,AID brings a downed piece back at this % of its max HP
 help_damage,1,a teammate next to the same foe adds this to a hit (no wobble and no crit)
 teamup_opposite,1,1: two teammates on opposite sides of a foe team up too ([USER] c19); 0: they must also be next to each other
+mana_regen_pct,20,mana comes back this % of its max at the start of each of the owner's phases
+rage_per_hit,1,rage gained for each hit dealt or taken
+slow_move,-2,SLOW takes this off a piece's move for a phase

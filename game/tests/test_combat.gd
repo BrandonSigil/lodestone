@@ -240,17 +240,84 @@ func test_guard_and_phase_clear() -> void:
 	ok(not k.has_status("guard"), "guard ends at own next phase")
 
 
-func test_cooldown_ticks() -> void:
+## [USER] c9, c16 (combat build step 5): skills cost the job's resource; no cooldowns.
+func test_rage_builds_on_hits() -> void:
 	var g := CombatGrid.flat(4, 1)
 	var k := _unit("knight", 0, Vector2i(0, 0), g)
 	var b := _unit("bandit", 1, Vector2i(1, 0), g)
+	b.max_hp = 99
+	b.hp = 99
 	var shove := _ab("shove")
+	eq(k.res_kind, "rage")
+	eq(k.res, 0, "rage starts empty")
+	ok(not k.can_use(shove), "no rage, no shove")
+	CombatRules.counters = false
+	CombatRules.resolve(RandomNumberGenerator.new(), g, k, k.abilities[0], b.cell, [k, b])
+	CombatRules.resolve(RandomNumberGenerator.new(), g, b, b.abilities[0], k.cell, [k, b])
+	CombatRules.reset_switches()
+	eq(k.res, 2, "one hit dealt, one taken")
+	ok(k.can_use(shove))
 	CombatRules.resolve(RandomNumberGenerator.new(), g, k, shove, b.cell, [k, b])
-	ok(not k.can_use(shove), "on cooldown")
-	for i in shove.cooldown:
-		CombatRules.begin_phase([k, b], 0)
-	ok(k.can_use(shove), "ready after %d phases" % shove.cooldown)
+	eq(k.res, 1, "shove spends 2, its own hit gives 1 back")
 
+
+func test_mana_starts_full_and_comes_back() -> void:
+	var g := CombatGrid.flat(6, 3)
+	var s := CombatUnit.from_def(Db.character(&"stardrop"), {}, ["moonbeam"])
+	s.place(Vector2i(0, 1), 0)
+	var b := _unit("bandit", 1, Vector2i(3, 1), g)
+	eq(s.res_kind, "mana")
+	eq(s.res, s.res_max, "mana starts full")
+	var beam := _ab("moonbeam")
+	CombatRules.resolve(RandomNumberGenerator.new(), g, s, beam, b.cell, [s, b])
+	eq(s.res, s.res_max - beam.res_cost)
+	CombatRules.begin_phase([s, b], 0)
+	eq(s.res, s.res_max - beam.res_cost + ceili(s.res_max / 5.0), "a fifth back each phase")
+
+
+func test_the_dogs_charges() -> void:
+	var g := CombatGrid.flat(4, 1)
+	var dog := _unit("dog", 0, Vector2i(0, 0), g)
+	var b := _unit("bandit", 1, Vector2i(1, 0), g)
+	b.max_hp = 99
+	b.hp = 99
+	eq(dog.res, 3, "three to spend")
+	var bite := _ab("bite")
+	for i in 3:
+		CombatRules.resolve(RandomNumberGenerator.new(), g, dog, bite, b.cell, [dog, b], false)
+	ok(not dog.can_use(bite), "spent")
+	ok(b.has_status(CombatRules.STATUS_SLOW), "the bite slows")
+	eq(CombatRules.move_points(b), maxi(1, b.move - 2))
+	for i in 2:
+		CombatRules.begin_phase([dog, b], 0)
+	eq(dog.res, 0)
+	CombatRules.begin_phase([dog, b], 0)
+	eq(dog.res, 1, "one back every 3 phases")
+
+
+func test_a_bark_pulls_the_foes() -> void:
+	var g := CombatGrid.flat(6, 3)
+	var dog := _unit("dog", 0, Vector2i(2, 1), g)
+	var hunter := _unit("hunter", 0, Vector2i(3, 2), g)
+	var b := _unit("bandit", 1, Vector2i(3, 1), g)  # next to both
+	var units := [dog, hunter, b]
+	eq(CombatRules.target_cells(g, b, b.abilities[0], units, b.cell).size(), 2)
+	CombatRules.resolve(RandomNumberGenerator.new(), g, dog, _ab("bark"), dog.cell, units)
+	eq(CombatRules.target_cells(g, b, b.abilities[0], units, b.cell), [dog.cell] as Array[Vector2i], "only the barking dog")
+	CombatRules.begin_phase(units, 0)
+	eq(CombatRules.target_cells(g, b, b.abilities[0], units, b.cell).size(), 2, "the taunt ends at the dog's next phase")
+
+
+func test_every_skill_has_something_to_pay_with() -> void:
+	for f in DirAccess.get_files_at("res://data/classes"):
+		if not f.ends_with(".tres"):
+			continue
+		var c: ClassDef = load("res://data/classes/" + f)
+		for id in c.abilities:
+			var a := _ab(String(id))
+			ok(a != null and (a.res_cost == 0 or c.resource != ""), "%s pays for %s" % [f, id])
+	for d in [Db.character(&"stardrop"), Db.character(&"wizard")]:
+		eq(d.class_def.resource, "mana", "casters spend mana")
 
 func test_push_fall_and_bump() -> void:
 	var g := CombatGrid.flat(5, 1)

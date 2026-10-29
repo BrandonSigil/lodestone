@@ -12,6 +12,11 @@ extends Resource
 @export var defense: int = 10  ## old d20 target; unused in fights, armor took its place
 @export var armor: int = 0  ## taken off every hit (0 to 3)
 @export var crit: int = 0  ## % crit chance on top of the base
+## What this job spends on skills ([USER] c9, c16): "mana" (starts full, a fifth back each phase), "rage"
+## (starts at 0, +1 a hit dealt or taken), "charges" (start full, one back every resource_every phases), or "".
+@export var resource := ""
+@export var resource_max := 0
+@export var resource_every := 0
 @export var damage: int = 3
 @export var range_min: int = 1
 @export var range_max: int = 1

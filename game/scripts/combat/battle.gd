@@ -66,6 +66,8 @@ func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0
 	units = p_units
 	rng.seed = seed_value
 	CombatUnit.pack_belts(p_units, p_supplies)
+	for u: CombatUnit in p_units:
+		u.reset_resource()  # mana and charges full, rage empty, every fight
 	for u: CombatUnit in units:
 		u.sync_view()
 	if p_board != null:
@@ -510,8 +512,8 @@ func _place_menu() -> void:
 
 func _ability_label(u: CombatUnit, a: Ability) -> String:
 	var label := Txt.t(a.name_key)
-	if not u.can_use(a):
-		label += "  (%d)" % int(u.cooldowns[a.id])
+	if a.res_cost > 0 and u.res_kind != "":
+		label += "  (%s %d)" % [Txt.t("RES_" + u.res_kind.to_upper()), a.res_cost]
 	return label
 
 
@@ -812,6 +814,8 @@ func unit_text(u: CombatUnit) -> String:
 	var lines: PackedStringArray = [Txt.t(u.name_key)]
 	lines.append("HP %d/%d  MOVE %d  JUMP %d" % [u.hp, u.max_hp, CombatRules.move_points(u), u.jump])
 	lines.append("DMG %d  ARMOR %d  CRIT +%d%%  RNG %d-%d" % [u.damage, u.armor, u.crit, u.range_min, u.range_max])
+	if u.res_kind != "":
+		lines.append("%s %d/%d" % [Txt.t("RES_" + u.res_kind.to_upper()), u.res, u.res_max])
 	var skills: PackedStringArray = []
 	for a in u.abilities.slice(1):
 		skills.append(_ability_label(u, a))

@@ -12,7 +12,7 @@ var range_max := 0
 var radius := 0  ## 0 = one unit, 1 = plus shape around the aimed cell
 var power := 0  ## added to the unit's damage for attacks; the amount healed for heals
 var crit := 0  ## % crit chance this skill adds to its hits
-var cooldown := 0  ## own phases to wait before using it again
+var res_cost := 0  ## what one use costs of the user's job resource (mana, rage or charges); no cooldowns
 var push := 0  ## tiles the target is shoved away from the user
 var status := ""  ## rooted, veil, guard
 var status_turns := 0
@@ -34,7 +34,7 @@ static func from_row(row: Dictionary) -> Ability:
 	a.radius = int(row.radius)
 	a.power = int(row.power)
 	a.crit = int(row.crit)
-	a.cooldown = int(row.cooldown)
+	a.res_cost = int(row.cost)
 	a.push = int(row.push)
 	a.status = row.status
 	a.status_turns = int(row.status_turns)
