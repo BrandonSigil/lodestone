@@ -143,10 +143,13 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 - **Stats are rolled each level from each character's own growth odds** (pc-7), Fire Emblem style. A tank mostly gains HP or defense, now and then attack, and never a stat it can't use.
 - **Skills grow on their own; ranks add something new** (pc-8). A skill gets stronger with the character's stats even if never ranked. Choosing to rank it adds an effect: a stronger slow, a bleed at rank 2.
 - **The weapon is the job; switch in the village, starting that job at 0** (pc-9). Take a different weapon at the smithy to change job (so you can bring a companion who fills your old role). Later weapon types can be powerful new jobs. This replaces the draft of a job at level 5.
+- **The party of four changes only at home** (pc-10). Every companion lives somewhere in the village; walk up to one to invite them, or use the edit-party prompt at the gate on the way out (one key to go, one to edit). So a dog sent home with a load leaves a party of three for the rest of the trip.
+- **Sneaking wins the first strike, as today** (pc-11). Rogue and sneaky characters get skills that feel stealthy in a fight (a shadowstep, a vanish).
 
 ### Gaps these answers open
 - **What "start that job at 0" resets** (from pc-9): only the job's own level (its skills and ranks), or the hero's whole level and stats too? *Proposal:* the hero keeps one character level (HP and stats); each job has its own job level that sets its skill ranks and resource size. Next batch.
 - **The level 10 branch** (from pc-9): the draft's two branches per job (knight to guardian or vanguard, and so on) are still `[AI]`. With jobs switchable, do branches stay? Next batch.
+- **Companions' homes** (from pc-10): each companion needs a place in the village to be found and invited. A job for the map builder once companions exist; it fits the `[USER]` 2026-10-27 line that settlers are village NPCs (companions also live there, but join the party).
 - **Rank interval** (from pc-8): *proposal:* a rank to spend every 4 levels, up to 3 ranks a skill. What ranks cost (nothing, or a village trainer and materials) ties to the one-more-run theme.
 - **Growth odds are data** (from pc-7): a per-character, per-job table of odds in `game/data/`.
 - **Who goes on a trip:** four slots, a growing roster (survivors who join, hostile characters talked round). Card pc-10.
@@ -169,10 +172,18 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 | `design-pc-7-stats` | Stats each level: rolled on their own, a pick each level, or a small rise plus a pick? | Rolled, from each character's growth odds |
 | `design-pc-8-skillup` | Skill upgrades: a rank at set levels, ranks bought in the village with materials, or a choice of two upgrades per rank? | Skills scale on their own; a chosen rank adds an effect |
 | `design-pc-9-jobs` | The hero's job: the draft tree (job at 5, branch at 10), set by the starting weapon, or switchable in the village? | Weapon is the job; switch in the village, new job starts at 0 |
-| `design-pc-10-roster` | When can you change who's in the four: only at home, at camps on the map, or at home with the bench running errands? | open |
-| `design-pc-11-sneak` | How much sneaking matters on explore maps: a first strike only, slipping past fights, or none? | open |
+| `design-pc-10-roster` | When can you change who's in the four: only at home, at camps on the map, or at home with the bench running errands? | Only at home: invite in the village, or edit at the gate |
+| `design-pc-11-sneak` | How much sneaking matters on explore maps: a first strike only, slipping past fights, or none? | First strike; stealth skills for rogues |
 
-Queued: gear builds (smithy upgrades, the earmarked trinket) go with the one-more-run theme.
+### Batch 3 (posted 2026-10-29)
+| Card | Question | Answer |
+|---|---|---|
+| `design-pc-12-jobreset` | Switching job: only the job's level starts at 0, stats shift to the new job, or back to level 1? | open |
+| `design-pc-13-branch` | Does a job split in two later: two branches, one promotion, or no branches (new weapons are the growth)? | open |
+| `design-pc-14-weapons` | How a weapon gets better: smithy upgrades, found weapons with traits, or both? | open |
+| `design-pc-15-elites` | How elite fights show: marked on the map and avoidable, seen only up close, or a hunter that roams? | open |
+
+After this batch: the player-choice build card, then the one-more-run theme.
 
 ## One more run
 First link, from the inventory theme (inv-5): a recruited character returns to the village and unlocks a pack upgrade, which costs materials brought home. Packing decides how many materials a trip can bring home (inv-4).
