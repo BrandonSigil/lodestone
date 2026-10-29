@@ -144,6 +144,7 @@ def main():
     ap.add_argument("sheet")
     ap.add_argument("--id", required=True, help="character id (game/data/characters/<id>.tres)")
     ap.add_argument("--dir", required=True, choices=["s", "se", "e", "ne", "n", "sw", "w", "nw"])
+    ap.add_argument("--out", help="folder that holds <id>/ (default game/art/source/characters); stage drafts elsewhere")
     ap.add_argument("--rows", help="rows of this sheet as anim:frames,... (default: the full animation sheet);"
                     " e.g. ready:4,advance:6 for sheet-character-stance.txt")
     args = ap.parse_args()
@@ -168,7 +169,7 @@ def main():
     idle_h = float(np.median([body_height(alpha, b) for b in boxes[0]]))
     scale = HERO_H / idle_h
 
-    out = OUT / args.id
+    out = (Path(args.out) if args.out else OUT) / args.id
     out.mkdir(parents=True, exist_ok=True)
     meta_path = out / (args.id + ".json")
     meta = json.loads(meta_path.read_text()) if meta_path.exists() else {
