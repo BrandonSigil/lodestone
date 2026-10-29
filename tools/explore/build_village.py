@@ -2,9 +2,12 @@
 """Builds the starting village explore maps: the hero's home, the village outside, and two interiors.
 
 - home:     the hero's one-room cottage (the run starts here); its door leads out to the village.
-- village:  a quiet, half-empty village around a big flat square: town hall up a terrace at the back,
-            two homes up a bluff in the north-east, the smithy on the river bank with the weapon rack,
-            the tavern, five more homes, a gate out to the trail at the front. Fully visible (no fog).
+- village:  a quiet, half-empty village in a valley that falls toward the front: a big flat square, the town
+            hall up a terrace at the back, a stream that falls off a high wood and winds past the smithy
+            shelf (weapon rack in its yard), round the hero's cottage and under the gate road, two homes up
+            a bluff in the north-east (a ledge half way up), the tavern, the dog's house over a footbridge,
+            two more homes, an irregular outline. Fully visible (no fog). Checked as it is built
+            (check_village); `--dump` prints the map as text.
 - house_ne: an ordinary home a little off the square, with an inner room; the hidden book sits on a
             shelf against its back wall, out of sight from the door (docs/design/empty-village.md s7).
 - tavern:   the tavern's ground floor.
@@ -21,7 +24,9 @@ nearest the camera stand only one level tall so the room reads from above, like 
 Run again after editing: python3 tools/explore/build_village.py
 """
 import json
+import math
 import os
+import sys
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "game", "data", "explore")
 
@@ -91,125 +96,463 @@ def room(m, x0, y0, x1, y1, floor="s", h=1, wall=2):
         m.put(x1, y, "r", h + 1)
 
 
+BLOCKED = "ru."  # rock, rubble and void can't be walked (CombatGrid.STEP_COST)
+JUMP, STAIRS_CLIMB, INTERACT_CLIMB = 1, 2, 2  # the lead's jump; CombatGrid and ExploreRules
+
+
+def _prop_cells(m):
+    cells = {}
+    for pr in m.props:
+        for dy in range(pr["foot"][1]):
+            for dx in range(pr["foot"][0]):
+                cells[(pr["cell"][0] + dx, pr["cell"][1] + dy)] = pr
+    return cells
+
+
+def check_village(m):
+    """The rules the game walks by, checked as the map is built: every walkable cell reachable from the
+    start on jump 1, every thing usable, buildings on flat clear ground, and stair flights that read the way
+    they climb (MapDress.stair_run picks the axis with the most stairs and height change)."""
+    problems = []
+    props = _prop_cells(m)
+    W, H = m.w, m.h
+
+    def ok_cell(c):
+        x, y = c
+        return 0 <= x < W and 0 <= y < H
+
+    def passable(c):
+        p = props.get(c)
+        return ok_cell(c) and m.terrain[c[1]][c[0]] not in BLOCKED and (p is None or p["walk"])
+
+    def hgt(c):
+        return m.height[c[1]][c[0]]
+
+    def can_step(a, b):
+        limit = JUMP + (STAIRS_CLIMB if "t" in (m.terrain[a[1]][a[0]], m.terrain[b[1]][b[0]]) else 0)
+        return abs(hgt(a) - hgt(b)) <= limit
+
+    def reach(start, blocked):
+        seen, todo = {start}, [start]
+        while todo:
+            c = todo.pop()
+            for d in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                n = (c[0] + d[0], c[1] + d[1])
+                if n not in seen and passable(n) and n not in blocked and can_step(c, n):
+                    seen.add(n)
+                    todo.append(n)
+        return seen
+
+    start = tuple(m.start[0])
+    if not passable(start):
+        problems.append("start %s is not walkable" % (start,))
+    everywhere = reach(start, set())
+    lost = [(x, y) for y in range(H) for x in range(W) if passable((x, y)) and (x, y) not in everywhere]
+    if lost:
+        problems.append("%d walkable cells can't be reached: %s" % (len(lost), lost[:12]))
+    thing_cells = {tuple(t["cell"]) for t in m.things} - {start}
+    walked = reach(start, thing_cells)
+    for t in m.things:
+        tc = tuple(t["cell"])
+        if not any((tc[0] + dx, tc[1] + dy) in walked and abs(hgt((tc[0] + dx, tc[1] + dy)) - hgt(tc)) <= INTERACT_CLIMB
+                   for dx in (-1, 0, 1) for dy in (-1, 0, 1) if (dx, dy) != (0, 0)) and tc != start:
+            problems.append("thing %s at %s can't be used" % (t["id"], tc))
+    # Buildings: flat, on ground, nothing else on them; their door cell open.
+    for pr in m.props:
+        x0, y0 = pr["cell"]
+        fx, fy = pr["foot"]
+        cells = [(x0 + dx, y0 + dy) for dy in range(fy) for dx in range(fx)]
+        for c in cells:
+            if not ok_cell(c) or m.terrain[c[1]][c[0]] in ".wt":
+                problems.append("%s at %s stands on %s" % (pr["sprite"], (x0, y0), "void/water/stairs"))
+                break
+        if len({hgt(c) for c in cells if ok_cell(c)}) > 1:
+            problems.append("%s at %s straddles a height change" % (pr["sprite"], (x0, y0)))
+        for c in cells:
+            if props.get(c) is not pr:
+                problems.append("%s at %s overlaps %s" % (pr["sprite"], (x0, y0), props[c]["sprite"]))
+                break
+        if not pr["sprite"].startswith(("b_", "ph_")) and m.terrain[y0][x0] in "dt":
+            problems.append("%s at %s sits on a lane or stair" % (pr["sprite"], (x0, y0)))
+    # Stair flights: the run axis the board will draw must be the flight's own, with a slope to show.
+    for (x, y), axis in FLIGHTS.items():
+        h = hgt((x, y))
+        best, best_score = None, 0.0
+        for d in ((1, 0), (0, 1)):
+            score = 0.0
+            for e in (d, (-d[0], -d[1])):
+                n = (x + e[0], y + e[1])
+                if not passable(n):
+                    continue
+                if m.terrain[n[1]][n[0]] == "t":
+                    score += 100
+                score += abs(hgt(n) - h)
+            if score > best_score:
+                best, best_score = d, score
+        if best != axis:
+            problems.append("stair %s reads along %s, not %s" % ((x, y), best, axis))
+    for msg in problems:
+        print("  CHECK", msg)
+    if problems:
+        raise SystemExit("village: %d problems" % len(problems))
+    print("village checks out: %d walkable cells, all reachable" % len(everywhere))
+
+
+def dump(m):
+    """The map as text, terrain and height side by side (python3 build_village.py --dump)."""
+    for y in range(m.h):
+        props = _prop_cells(m)
+        row_t = "".join("#" if (x, y) in props and m.props and props[(x, y)]["sprite"].startswith("b_")
+                        else ("*" if (x, y) in props else m.terrain[y][x]) for x in range(m.w))
+        row_h = "".join(str(m.height[y][x]) if m.terrain[y][x] != "." else " " for x in range(m.w))
+        print("%2d %s   %s" % (y, row_t, row_h))
+
+
 # --- the village ------------------------------------------------------------------------------------
 # Rot 0: +x runs down-right on screen, +y down-left; the front (nearest the camera) is high x + y.
 # Every building's door is on its left front wall, so it opens toward +y.
-# Levels: 0 the stream bed, 1 the flat ground (square, lanes, yards), 2 the town hall terrace and the
-# stairs up to it, 3 the bluff in the north-east. Each step is one level, so every climb reads from above.
+#
+# The town sits in a valley that falls from the back (top of the screen) to the front:
+#   5  the high wood in the north-west, where the stream rises, and the bluff in the north-east (two homes)
+#   3  the town hall terrace at the back, the smithy shelf over the stream, the ledge half way up the bluff
+#   1  the square, the lanes, the yards and the meadows
+#   0  the stream: it falls off the high wood, runs past the smithy, bends round the hero's cottage and
+#      across the front under the gate road, and spills off the south edge.
+# Every two-level climb has a stair flight (the lead's jump is 1); flights are two cells long, cut into
+# the higher ground, so their sides stay level with the top (MapDress.stair_run then lays the treads the
+# right way). The gate road, the statue, the hall stair and the hall door sit on one line (x 20 to 21),
+# so the town hall is in view from the gate and from the square.
+
+def _seg_dist(px, py, ax, ay, bx, by):
+    dx, dy = bx - ax, by - ay
+    t = 0.0 if dx == 0 and dy == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+
+
+def ribbon(m, pts, r, t=None, h=None, only=None):
+    """Cells whose centre lies within r of the polyline. `only`: a test (x, y) -> bool to limit it."""
+    out = []
+    for y in range(m.h):
+        for x in range(m.w):
+            if only is not None and not only(x, y):
+                continue
+            if any(_seg_dist(x + 0.5, y + 0.5, *pts[i], *pts[i + 1]) <= r for i in range(len(pts) - 1)):
+                out.append((x, y))
+                m.put(x, y, t, h)
+    return out
+
+
+def poly(m, pts, t=None, h=None):
+    """Cells whose centre lies inside the polygon (corner coordinates)."""
+    out = []
+    for y in range(m.h):
+        for x in range(m.w):
+            px, py, inside = x + 0.5, y + 0.5, False
+            for i in range(len(pts)):
+                (ax, ay), (bx, by) = pts[i], pts[i - 1]
+                if (ay > py) != (by > py) and px < ax + (py - ay) * (bx - ax) / (by - ay):
+                    inside = not inside
+            if inside:
+                out.append((x, y))
+                m.put(x, y, t, h)
+    return out
+
+
+FLIGHTS = {}  # stair cell -> the axis its flight runs along, for check_village
+
+
+def flight(m, cells, top):
+    """A stair flight: `cells` is a list of rows from the top of the flight down, each row a list of cells
+    side by side (one or two). The first row stands at `top`, each next one a level lower."""
+    a, b = cells[0][0], cells[1][0]
+    axis = (1, 0) if a[0] != b[0] else (0, 1)
+    for i, row in enumerate(cells):
+        for x, y in row:
+            m.put(x, y, "t", top - i)
+            FLIGHTS[(x, y)] = axis
+
+
+def _bump(v, spans):
+    """Edge inset at position v along an edge: the deepest of the spans (lo, hi, depth), rounded at the ends."""
+    d = 0
+    for lo, hi, depth in spans:
+        if lo <= v <= hi:
+            d = max(d, min(depth, 1 + min(v - lo, hi - v)))
+    return d
+
 
 V = Map("village", 40, 38)
-# Ground: grass at level 1, a ring of trees, a stream down the west side.
 V.fill(0, 0, 39, 37, "g", 1)
-for y in range(38):
-    for x in range(40):
-        edge = min(x, y, 39 - x, 37 - y)
-        if edge == 0 or (edge == 1 and (x * 7 + y * 3) % 3 != 0) or (edge == 2 and (x * 5 + y * 11) % 5 == 0):
+
+# The outline: the valley floor breaks into bays and points instead of a rectangle.
+EDGE_N = [(12, 18, 2), (25, 28, 3)]  # y = 0 edge, along x: behind the hall, the notch between hall and bluff
+EDGE_S = [(8, 15, 2), (24, 28, 2)]  # y = 37 edge (the front), along x
+EDGE_W = [(9, 14, 1)]  # x = 0 edge, along y
+EDGE_E = [(11, 16, 3), (21, 25, 2)]  # x = 39 edge, along y
+OPEN = set()  # cells the outline must leave alone (the gate road, the stream's mouth)
+
+
+def is_void(x, y):
+    if (x, y) in OPEN:
+        return False
+    return (y < _bump(x, EDGE_N) or 37 - y < _bump(x, EDGE_S) or x < _bump(y, EDGE_W)
+            or 39 - x < _bump(y, EDGE_E) or x + y < 3 or (39 - x) + y < 4 or x + (37 - y) < 7
+            or (39 - x) + (37 - y) < 6)
+
+
+# Heights first; the outline, the woods and the paving go over them.
+# The high wood (5) in the north-west.
+# The smithy shelf (3) under it, over the stream.
+poly(V, [(6, 7), (15, 7), (15, 13), (14, 15), (6, 15)], "g", 3)
+poly(V, [(0, 0), (14, 0), (14, 9), (10, 9), (10, 8), (5, 8), (5, 9), (0, 9)], "f", 5)  # the high wood
+# The town hall terrace (3) at the back.
+poly(V, [(14, 0), (26, 0), (26, 10), (24, 12), (16, 12), (14, 10)], "g", 3)
+V.fill(17, 12, 24, 13, "g", 3)  # the bastion the hall stair is cut into
+# The bluff (5) in the north-east, and the ledge (3) half way up it.
+poly(V, [(29, 0), (40, 0), (40, 10), (29, 10)], "g", 5)
+poly(V, [(28, 10), (36, 10), (36, 14), (35, 16), (28, 16)], "g", 3)
+# A rise (2) on the far bank, over the bend of the stream.
+poly(V, [(1, 25), (5, 24), (7, 27), (6, 31), (1, 32)], "g", 2)
+# A knoll (2) across the stream, west of the gate road.
+poly(V, [(3, 33), (9, 31.5), (16, 32), (18, 34), (18, 37), (3, 37)], "g", 2)
+
+# The stream (0) and its head in the high wood (4); it falls four levels off the wood's edge.
+HEAD = ribbon(V, [(6.5, -1), (6.5, 3), (5.8, 6), (5.6, 7.9)], 0.75, "w", 4)
+STREAM_PTS = [(5.4, 8.6), (4.5, 11), (4.4, 14), (5.8, 16.6), (8, 19.5), (8.2, 23.5), (9, 26.5), (11, 29.4),
+              (14.5, 31.6), (19, 32.8), (24, 33.6), (28, 35), (30.5, 36.4), (31.5, 38.5)]
+STREAM = ribbon(V, STREAM_PTS, 0.95, "w", 0)
+for c in STREAM:
+    if c[1] >= 34:
+        OPEN.add(c)
+
+# The square (1): one big flat floor, an octagon with the lanes leaving its corners.
+SQUARE = []
+for y in range(V.h):
+    for x in range(V.w):
+        dx, dy = abs(x + 0.5 - 21), abs(y + 0.5 - 20)
+        if dx <= 7 and dy <= 6 and dx + dy <= 10.5:
+            SQUARE.append((x, y))
+            V.put(x, y, "s", 1)
+
+# The hall stair: on the line of the statue and the gate road, cut into the bastion.
+flight(V, [[(20, 12), (21, 12)], [(20, 13), (21, 13)]], 3)
+V.fill(17, 8, 24, 11, "s", 3)  # the hall's forecourt
+# The smithy: its yard drops to the square by a stair, and a stair climbs from the yard to the high wood.
+flight(V, [[(12, 13), (13, 13)], [(12, 14), (13, 14)]], 3)
+flight(V, [[(11, 7), (12, 7)], [(11, 8), (12, 8)]], 5)
+V.fill(11, 9, 14, 12, "s", 3)  # the yard
+V.fill(9, 13, 11, 14, "d", 3)  # from the smithy door to the stair
+V.fill(9, 14, 9, 14, "d")
+# The bluff: the east lane climbs to the ledge (an overlook on the square), then on to the top.
+flight(V, [[(29, 14), (30, 14)], [(29, 15), (30, 15)]], 3)
+flight(V, [[(31, 8), (32, 8)], [(31, 9), (32, 9)]], 5)
+V.fill(29, 10, 33, 13, "d", 3)  # ledge path between the flights
+V.fill(31, 5, 32, 7, "d", 5)  # up top, to the quiet house
+V.fill(33, 7, 35, 7, "d", 5)  # and along to the second home
+
+# Lanes (packed dirt, level 1).
+ribbon(V, [(21, 26), (21, 37.5)], 0.6, "d", 1)  # the gate road, straight at the statue and the hall
+V.fill(20, 32, 21, 33, "s", 1)  # its bridge over the stream
+V.fill(19, 32, 19, 33, "s", 1)
+V.fill(22, 32, 22, 33, "s", 1)
+for x in (19, 20, 21, 22):
+    for y in (36, 37):
+        OPEN.add((x, y))
+ribbon(V, [(13.5, 21.5), (9.5, 21.8), (6, 21.8), (4.2, 21.5)], 0.75, "d", 1)  # the west lane to the far bank
+V.fill(7, 21, 8, 22, "s", 1)  # its footbridge
+ribbon(V, [(12.6, 15.4), (14.6, 16.6)], 0.7, "d", 1)  # smithy stair to the square
+ribbon(V, [(28, 17), (36.5, 17)], 0.6, "d", 1)  # the east lane past the tavern
+ribbon(V, [(25.5, 25.5), (27, 28.5), (30, 29.3), (33, 30.3), (35.5, 31.5)], 0.7, "d", 1)  # south-east lane to the homes
+ribbon(V, [(12.5, 28.5), (15.5, 29.5), (18, 28.8), (20, 28.5)], 0.65, "d", 1)  # the hero's path
+ribbon(V, [(25.6, 14.4), (26.5, 12), (27, 8), (27, 4.5)], 0.6, "d", 1)  # the glade behind the hall
+
+# Woods: a band of forest round the rim, thinner where the town presses against it.
+for y in range(V.h):
+    for x in range(V.w):
+        if is_void(x, y):
+            V.put(x, y, ".", 0)
+for y in range(V.h):
+    for x in range(V.w):
+        if V.terrain[y][x] not in "gf":
+            continue
+        near = min((abs(x - a) + abs(y - b) for b in range(max(0, y - 3), min(V.h, y + 4))
+                    for a in range(max(0, x - 3), min(V.w, x + 4)) if V.terrain[b][a] == "."), default=99)
+        near = min(near, x + 1, y + 1, V.w - x, V.h - y)
+        if near <= 1 or (near == 2 and (x * 7 + y * 3) % 3 != 0) or (near == 3 and (x * 5 + y * 11) % 7 == 0):
             V.put(x, y, "f")
-V.fill(3, 0, 4, 37, "w", 0)  # the stream
-V.fill(2, 0, 2, 37, "g", 1)  # its bank
-V.fill(3, 21, 4, 21, "s", 1)  # footbridge on the west lane
-V.fill(0, 0, 1, 37, "f", 1)
-# A ridge above the stream, level 3: the smithy and a home stand on its cliff top. Stairs take the
-# ridge down to the lane (row 20) and to the square (row 15).
-V.fill(5, 8, 11, 19, "g", 3)
+# The high wood is forest except a clearing at the head of the falls (an overlook on the town).
+poly(V, [(8, 2), (12, 2), (13, 4), (13, 7), (9, 7), (8, 5)], "g", 5)
+V.put(7, 4, "g")
+V.put(7, 5, "g")
 
-# The bluff in the north-east: a flat top at level 3, reached by a two-high stair from the east lane.
-V.fill(30, 3, 37, 11, "g", 4)
-V.fill(28, 7, 29, 9, "t", 2)  # stairs up from the lane to the bluff
-V.fill(30, 6, 30, 8, "d")  # up-top path from the stairs (keeps level 3)
-V.fill(31, 6, 35, 6, "d")  # along the front of the two bluff homes
-V.prop("prop_fence", 34, 8, tall=0.6)
-V.prop("prop_hay", 37, 7, tall=0.65)
-V.prop("prop_tree", 36, 10, tall=1.6, sight=1.0)
-V.prop("prop_tree", 33, 10, tall=1.6, sight=1.0)
-quiet_door = V.building("b_home_c", 30, 3, 4, 3, 1)  # the quiet house (the hidden book), on the bluff
-bluff_door = V.building("b_home_a", 34, 3, 3, 3, 1)  # a second home on the bluff
+# Buildings. Footprints are cleared to grass at their own level; door cells get a dirt step.
+BUILT = []
 
-# Town square: one big flat floor at level 1, open in the middle; the well is the only centrepiece.
-V.fill(12, 14, 27, 25, "s", 1)
-V.prop("prop_well", 20, 19, tall=1.25, sight=1.0)
-V.prop("prop_stall", 14, 15, tall=1.2)
-V.prop("prop_crates", 15, 15, tall=0.8)
-V.prop("prop_stall", 25, 23, tall=1.2)
-V.prop("prop_barrel", 24, 23, tall=0.7)
-for x, y in [(12, 14), (27, 14), (12, 25), (27, 25)]:
-    V.prop("prop_lamp", x, y, tall=1.5)
-V.prop("prop_bench", 16, 21, tall=0.6)
-V.prop("prop_bench", 23, 17, tall=0.6)
-V.prop("prop_planter", 17, 23, tall=0.8)
-V.prop("prop_planter", 23, 21, tall=0.8)
+
+def house(sprite, x, y, fx, fy, door_dx):
+    h = V.height[y][x]
+    V.fill(x, y, x + fx - 1, y + fy - 1, "g", h)
+    BUILT.append((sprite, x, y, fx, fy))
+    door = V.building(sprite, x, y, fx, fy, door_dx)
+    V.put(door[0], door[1], "d", h)
+    return door
+
+
+hall_door = house("b_townhall", 17, 3, 5, 5, 3)  # door at (20, 8), on the line of the stair and the statue
+smithy_door = house("b_smithy", 8, 9, 3, 4, 1)  # on the shelf, the stream below its back wall
+quiet_door = house("b_home_c", 30, 2, 4, 3, 1)  # the quiet house (the hidden book), up on the bluff
+bluff_door = house("b_home_a", 34, 4, 3, 3, 1)  # a second home on the bluff
+tavern_door = house("b_tavern", 31, 18, 4, 4, 1)  # east of the square, its garden facing the front
+west_door = house("b_home_a", 2, 18, 3, 3, 1)  # the dog's house, over the footbridge on the far bank
+hero_door = house("b_home_hero", 11, 25, 3, 3, 1)  # the hero's cottage, on the bend of the stream
+south_east_door = house("b_home_b", 28, 25, 4, 3, 2)
+far_door = house("b_home_a", 34, 28, 3, 3, 1)
+
+V.fill(20, 9, 21, 11, "s")  # the forecourt runs straight from the hall door to the stair
+
+
+def p(sprite, x, y, tall, sight=0.0, foot=(1, 1)):
+    if V.terrain[y][x] == "f":
+        V.put(x, y, "g")
+    V.prop(sprite, x, y, foot, tall=tall, sight=sight)
+
+
+TREE = {"prop_tree": 1.6, "prop_tree_2": 1.6, "prop_tree_3": 1.6, "prop_tree_4": 1.5, "prop_tree_5": 1.5,
+        "prop_tree_bare": 1.5, "prop_pine_1": 1.25, "prop_pine_2": 1.25, "prop_pine_3": 1.25}
+
+
+def tree(sprite, x, y):
+    p(sprite, x, y, TREE[sprite], 1.0)
+
+
+def bush(x, y, n=1):
+    p("prop_bush" if n == 1 else "prop_bush_%d" % n, x, y, 0.55, 0.5)
+
+
+# The square: open in the middle; the statue on the line from the gate to the hall.
 # The statue that wasn't there yesterday (an elf woman holding out the Lodestone): a placeholder blob.
 V.prop("ph_statue", 20, 21, (2, 2), tall=2.2, sight=2.0)
+p("prop_well", 16, 18, 1.25, 1.0)
+p("prop_stall", 24, 15, 1.2)
+p("prop_crates", 25, 15, 0.8)
+p("prop_stall", 16, 23, 1.2)
+p("prop_barrel", 15, 23, 0.7)
+for x, y in [(15, 21), (26, 23)]:
+    p("prop_lamp", x, y, 1.5)
+p("prop_bench", 18, 19, 0.6)
+p("prop_bench", 24, 21, 0.6)
+p("prop_planter", 18, 24, 0.8)
+p("prop_planter", 23, 24, 0.8)
+p("prop_planter", 19, 15, 0.8)
+p("prop_planter", 22, 15, 0.8)
 
-# Lanes (packed dirt) out of the square.
-V.fill(19, 13, 22, 13, "d")  # up to the town hall stair
-V.fill(19, 26, 22, 37, "d")  # south road to the gate
-V.fill(5, 21, 11, 22, "d")  # west lane over the bridge
-V.fill(27, 19, 36, 20, "d")  # east lane past the tavern
-V.fill(27, 9, 27, 13, "d")  # north lane up to the bluff stairs
+# The hall terrace: the notice board by the door, fall trees at its corners.
+p("prop_board", 23, 9, 1.0)
+p("prop_planter", 18, 10, 0.8)
+p("prop_planter", 23, 11, 0.8)
+tree("prop_tree_3", 16, 3)
+tree("prop_tree_4", 24, 3)
+tree("prop_tree", 25, 6)
+tree("prop_tree_2", 16, 8)
+bush(15, 10, 2)
+bush(24, 12, 3)
+p("prop_lamp", 19, 11, 1.5)
+p("prop_lamp", 22, 11, 1.5)
 
-# Town hall on a raised terrace at the back (level 2), a stair down to the square.
-V.fill(14, 3, 25, 11, "g", 3)
-V.fill(17, 10, 23, 11, "s", 3)
-V.fill(19, 12, 22, 12, "t", 2)
-hall_door = V.building("b_townhall", 17, 5, 5, 5, 3)
-V.prop("prop_board", 23, 10, tall=1.0)
-V.prop("prop_tree", 15, 4, tall=1.6, sight=1.0)
-V.prop("prop_tree", 24, 4, tall=1.6, sight=1.0)
-V.prop("prop_planter", 16, 10, tall=0.8)
+# The smithy yard (its anvil and forge are in the building art): the rack, a grindstone, the rope barrel.
+p("prop_rack", 12, 11, 1.0)
+p("prop_grindstone", 13, 10, 0.85)
+p("prop_barrel", 14, 9, 0.7)
+p("prop_crates", 14, 12, 0.8)
+p("prop_hay", 7, 13, 0.65)
 
-# Smithy on the river ridge: the stream is two cells west, and the yard drops to the square by stairs.
-smithy_door = V.building("b_smithy", 6, 10, 3, 4, 1)
-V.fill(9, 10, 11, 14, "s")
-V.fill(7, 15, 8, 15, "d")  # from the smithy door down toward the square
-V.fill(9, 15, 11, 15, "t", 2)  # stairs from the yard down to the square
-V.prop("prop_grindstone", 9, 10, tall=0.85)
-V.prop("prop_rack", 10, 12, tall=1.0)
-V.prop("prop_anvil", 10, 14, tall=0.75)
-V.prop("prop_barrel", 11, 10, tall=0.7)
+# The high wood's clearing at the head of the falls.
+p("prop_bench", 9, 4, 0.6)
+p("prop_boulder", 8, 6, 0.6, 1.0)
+p("prop_stump", 12, 3, 0.5)
+tree("prop_pine_2", 13, 5)
 
-# Tavern east of the square.
-tavern_door = V.building("b_tavern", 29, 15, 4, 4, 1)
-V.prop("prop_barrel", 33, 16, tall=0.7)
-V.prop("prop_barrel", 33, 17, tall=0.7)
-V.prop("prop_crates", 34, 15, tall=0.8)
-V.prop("prop_bench", 28, 17, tall=0.6)
+# The far bank: the dog's house with its garden.
+p("prop_fence", 2, 22, 0.6)
+p("prop_hay", 1, 20, 0.65)
+p("prop_planter", 5, 23, 0.8)
+bush(1, 22, 2)
+# The rise: a few fall trees and a bench looking over the stream at the hero's cottage.
+tree("prop_tree_5", 2, 26)
+tree("prop_tree_3", 3, 29)
+tree("prop_tree_bare", 5, 30)
+p("prop_bench", 5, 27, 0.6)
+p("prop_stump", 2, 28, 0.5)
+p("prop_boulder_2", 6, 25, 0.6, 1.0)
 
-# Homes. The hero's cottage south-west of the square (the run starts inside it).
-hero_door = V.building("b_home_hero", 10, 26, 3, 3, 1)
-V.fill(11, 29, 11, 31, "d")
-V.fill(11, 31, 18, 31, "d")  # path from the cottage to the south road
-V.prop("prop_fence", 9, 30, tall=0.6)
-V.prop("prop_fence", 13, 30, tall=0.6)
-V.prop("prop_hay", 14, 27, tall=0.65)
-V.prop("prop_stump", 9, 25, tall=0.5)
+# The hero's cottage on the bend.
+p("prop_fence", 14, 27, 0.6)
+p("prop_hay", 14, 25, 0.65)
+p("prop_stump", 10, 25, 0.5)
+bush(10, 26, 3)
+tree("prop_tree_2", 16, 26)
 
-# More homes on the west bank and in the south-east (doors stuck for now).
-west_door = V.building("b_home_a", 6, 17, 3, 3, 1)
-V.fill(5, 20, 11, 20, "t", 2)  # stairs up the ridge from the west lane
-south_east_door = V.building("b_home_b", 29, 24, 4, 3, 2)
-V.fill(23, 27, 31, 27, "d")  # lane from the south road to the south-east home
-far_door = V.building("b_home_a", 31, 30, 3, 3, 1)
-V.fill(32, 33, 32, 34, "d")
-V.fill(23, 34, 32, 34, "d")
+# The bluff: an overlook at its west end, a hay yard at the back of the second home.
+p("prop_bench", 29, 6, 0.6)
+p("prop_hay", 37, 5, 0.65)
+p("prop_fence", 37, 7, 0.6)
+tree("prop_tree_4", 36, 8)
+tree("prop_tree_2", 33, 9)
+bush(34, 2, 2)
+# The ledge half way up: a bench looking over the square.
+p("prop_bench", 28, 12, 0.6)
+p("prop_lamp", 28, 14, 1.5)
+p("prop_barrel", 34, 11, 0.7)
+tree("prop_tree_5", 35, 13)
 
-# Fifty years of quiet: a broken cart in the lane, fallen fence, crumbled garden walls, stumps.
-V.prop("prop_cart", 24, 29, tall=0.8)
-V.prop("prop_fence", 25, 30, tall=0.6)
-V.prop("prop_stump", 36, 25, tall=0.5)
-V.prop("prop_stump", 8, 33, tall=0.5)
-for x, y in [(6, 27), (7, 27), (24, 31)]:
+# The glade behind the hall: a quiet nook between the terrace and the bluff.
+tree("prop_tree_bare", 28, 6)
+p("prop_boulder", 28, 4, 0.6, 1.0)
+p("prop_stump", 28, 9, 0.5)
+bush(27, 14, 1)
+
+# The tavern: barrels on its east side, a garden of benches at its front.
+p("prop_barrel", 35, 19, 0.7)
+p("prop_barrel", 35, 20, 0.7)
+p("prop_crates", 35, 21, 0.8)
+p("prop_bench", 34, 23, 0.6)
+p("prop_bench", 31, 23, 0.6)
+p("prop_lamp", 30, 22, 1.5)
+tree("prop_tree_3", 36, 22)
+
+# The south-east: two homes, an old cart, an orchard going wild toward the front.
+p("prop_cart", 25, 29, 0.8)
+p("prop_fence", 26, 30, 0.6)
+p("prop_stump", 33, 27, 0.5)
+for s, x, y in [("prop_tree_2", 32, 32), ("prop_tree_4", 34, 33), ("prop_tree_3", 31, 34), ("prop_tree", 36, 32),
+                ("prop_tree_5", 33, 35)]:
+    tree(s, x, y)
+bush(37, 30, 2)
+
+# The front: boulders at the stream, the knoll's pines, the gate posts.
+p("prop_boulder", 16, 30, 0.6, 1.0)
+p("prop_boulder_2", 24, 32, 0.6, 1.0)
+p("prop_boulder", 9, 30, 0.6, 1.0)
+tree("prop_pine_3", 13, 34)
+tree("prop_tree_4", 7, 33)
+tree("prop_tree_2", 10, 34)
+p("prop_boulder", 5, 33, 0.6, 1.0)
+p("prop_stump", 9, 33, 0.5)
+tree("prop_pine_1", 15, 35)
+tree("prop_tree_bare", 16, 33)
+p("prop_lamp", 19, 35, 1.5)
+p("prop_lamp", 22, 35, 1.5)
+p("prop_fence", 18, 36, 0.6)
+p("prop_fence", 23, 36, 0.6)
+tree("prop_tree_4", 24, 30)
+bush(25, 35, 3)
+
+# Fifty years of quiet: tumbled garden walls.
+for x, y in [(36, 25), (37, 26), (24, 27)]:
     V.put(x, y, "u")
-for x, y in [(34, 27), (12, 6), (6, 31), (23, 36), (36, 34)]:
-    V.prop("prop_tree", x, y, tall=1.6, sight=1.0)
-V.fill(5, 25, 8, 28, "d")  # an old yard gone to dirt
-V.fill(33, 22, 36, 23, "u")  # tumbled wall along the east lane
-V.put(35, 22, "d")
 
 # The gate: the south road runs out of the village to the overworld (only once the Lodestone is taken).
 V.thing(id="gate", kind="exit", event="village_gate", cell=[20, 37])
-V.put(20, 37, "d")
-V.put(21, 37, "d")
 
 V.thing(id="hero_home", kind="enter", event="", cell=hero_door, to="home", at=[3, 5])
 V.thing(id="quiet_house", kind="enter", event="", cell=quiet_door, to="house_ne", at=[3, 7])
@@ -219,21 +562,21 @@ V.thing(id="smithy_door", kind="enter", event="door_stuck", cell=smithy_door)
 # The dog's house: the door is locked until he is out; the window on the right front wall gets you in.
 V.thing(id="west_door", kind="enter", event="door_dog", cell=west_door, to="house_dog", at=[3, 5], once="met_dog")
 V.thing(id="west_door_open", kind="enter", event="", cell=west_door, to="house_dog", at=[3, 5], when="met_dog")
-V.thing(id="dog_window", kind="window", event="dog_window", cell=[9, 18], to="house_dog", at=[5, 3], once="met_dog")
+V.thing(id="dog_window", kind="window", event="dog_window", cell=[5, 19], to="house_dog", at=[5, 3], once="met_dog")
 V.thing(id="se_door", kind="enter", event="door_stuck", cell=south_east_door)
 V.thing(id="far_door", kind="enter", event="door_stuck", cell=far_door)
 V.thing(id="bluff_door", kind="enter", event="door_stuck", cell=bluff_door)
-V.thing(id="weapon_rack", kind="rack", event="smithy_rack", cell=[10, 12],
+V.thing(id="weapon_rack", kind="rack", event="smithy_rack", cell=[12, 11],
         once="weapon_sword|weapon_daggers|weapon_bow")
 V.thing(id="statue", kind="statue", event="statue_lodestone", cell=[21, 22], once="has_lodestone")
-V.thing(id="food_barrel", kind="cache", event="cache_food", cell=[33, 17], once="got_food_barrel")
-V.thing(id="smithy_rope", kind="cache", event="cache_rope", cell=[11, 10], once="got_rope")
-for c in [hero_door, quiet_door, tavern_door, hall_door, smithy_door, west_door, south_east_door, far_door,
-          bluff_door]:
-    if V.terrain[c[1]][c[0]] in "gfu":
-        V.put(c[0], c[1], "d")
+V.thing(id="food_barrel", kind="cache", event="cache_food", cell=[35, 19], once="got_food_barrel")
+V.thing(id="smithy_rope", kind="cache", event="cache_rope", cell=[14, 9], once="got_rope")
 V.start = [hero_door]
+if "--dump" in sys.argv:
+    dump(V)
+check_village(V)
 V.save(fog=False)  # the whole town is in view: fog of war is for the bigger maps
+
 
 
 # --- interiors (the village_in set: plank floors, plaster walls) ----------------------------------------

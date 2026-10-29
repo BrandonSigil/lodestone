@@ -162,6 +162,28 @@ func test_village_things_reachable() -> void:
 	ok(_reach(h, h.start[0], "home_chest"))
 
 
+## No stranded ground: every walkable cell of the town can be walked to from the cottage door on jump 1
+## (stairs are the only way up a two-level step).
+func test_village_ground_all_reachable() -> void:
+	var g := ExploreMap.load_named("village").grid
+	var start: Vector2i = ExploreMap.load_named("village").start[0]
+	var seen := {start: true}
+	var todo: Array[Vector2i] = [start]
+	while not todo.is_empty():
+		var c: Vector2i = todo.pop_back()
+		for d in CombatRules.DIRS:
+			var n: Vector2i = c + d
+			if not seen.has(n) and g.passable(n) and g.can_step(c, n, 1):
+				seen[n] = true
+				todo.append(n)
+	var lost: Array[Vector2i] = []
+	for y in g.h:
+		for x in g.w:
+			if g.passable(Vector2i(x, y)) and not seen.has(Vector2i(x, y)):
+				lost.append(Vector2i(x, y))
+	eq(lost.size(), 0, "village ground nobody can reach: %s" % str(lost.slice(0, 8)))
+
+
 func test_boss_ends_the_test() -> void:
 	var c := ExploreMap.load_named("crypt")
 	var bosses := c.groups.filter(func(g: Dictionary) -> bool: return g.end)
