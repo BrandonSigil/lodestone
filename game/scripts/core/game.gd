@@ -122,7 +122,7 @@ func save_meta() -> void:
 
 static func _fresh_meta() -> Dictionary:
 	return {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": [],
-		"levels": {}, "pack": {}}
+		"levels": {}, "pack": {}, "materials": {}}
 
 
 func reset_meta() -> void:
@@ -322,13 +322,27 @@ func wake_in_town(fell: bool) -> void:
 	go(EXPLORE)
 
 
-## The party is home (woken in the square, or walked into the village): whoever was sent home rejoins.
+## The party is home (woken in the square, or walked into the village): whoever was sent home rejoins
+## and unpacks, then the materials go to the village's count (meta.materials).
 func home_again() -> void:
-	if run == null or run.away.is_empty():
+	if run == null:
 		return
-	run.come_home()
-	refresh_party()
-	save_adventure()
+	var back := not run.away.is_empty()
+	if back:
+		run.come_home()
+		refresh_party()
+	var banked := run.bank_materials()
+	for id: String in banked:
+		meta.materials[id] = int(meta.materials.get(id, 0)) + int(banked[id])
+	if back or not banked.is_empty():
+		save_adventure()  # saves meta too
+		if not run.adventure:
+			save_meta()
+
+
+## How much of a material the village has banked.
+func material_count(id: String) -> int:
+	return int(meta.materials.get(id, 0))
 
 
 ## Apply an action's side effects that touch meta (unlocks, the Wall flag).

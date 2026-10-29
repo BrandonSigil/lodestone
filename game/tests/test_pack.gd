@@ -296,3 +296,53 @@ func test_home_brings_the_dog_back_in_the_game() -> void:
 	Game.meta = saved
 	Game.save_enabled = was_on
 	Game.run = null
+
+
+# --- step 4: coming home --------------------------------------------------------------------
+
+func test_materials_bank_themselves_at_home() -> void:
+	_db()
+	eq(String(Db.items["stuff"].kind), "material", "a placeholder material exists")
+	var saved := Game.meta.duplicate(true)
+	var was_on := Game.save_enabled
+	Game.save_enabled = false
+	Game.meta.flags = ["met_dog"]
+	Game.meta.pack = {}
+	Game.meta.materials = {}
+	Game.start_adventure()
+	var run := Game.run
+	TrailRules.apply_effects(run, "stuff:+7;rope:+1;food:+12;medicine:+2")
+	eq(run.item_count("stuff"), 7, "7 stuff takes 2 cells (5 a cell)")
+	run.pack.take("stuff", 2)
+	run.members[0].belt.put("stuff", RunState.shape_of("stuff"), 2, 5)
+	Game.home_again()
+	eq(Game.material_count("stuff"), 7, "pack and belt materials go to the village")
+	eq(run.item_count("stuff"), 0)
+	eq(run.item_count("rope"), 1, "gear stays packed")
+	eq(run.food, 12, "and so do supplies")
+	eq(run.medicine, 2)
+	TrailRules.apply_effects(run, "stuff:+3")
+	Game.home_again()
+	eq(Game.material_count("stuff"), 10, "the village count adds up")
+	Game.meta = saved
+	Game.save_enabled = was_on
+	Game.run = null
+
+
+func test_the_dog_brings_materials_home_too() -> void:
+	_db()
+	var saved := Game.meta.duplicate(true)
+	var was_on := Game.save_enabled
+	Game.save_enabled = false
+	Game.meta.flags = ["met_dog"]
+	Game.meta.pack = {}
+	Game.meta.materials = {}
+	Game.start_adventure()
+	Game.run.open_courier_bag().put("stuff", RunState.shape_of("stuff"), 4, 5)
+	Game.run.send_home(Game.run.courier())
+	Game.home_again()
+	eq(Game.material_count("stuff"), 4)
+	eq(Game.run.members.size(), 2)
+	Game.meta = saved
+	Game.save_enabled = was_on
+	Game.run = null

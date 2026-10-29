@@ -108,6 +108,11 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 			close.call())
 		return
 	_label(box, Txt.f("UI_PACK_GOLD", run.gold), 14)
+	var store: PackedStringArray = []
+	for id: String in Game.meta.materials:
+		store.append("%s %d" % [Txt.t(String(Db.items[id].name_key)), int(Game.meta.materials[id])])
+	if not store.is_empty():
+		_label(box, Txt.f("UI_VILLAGE_STORE", "  ".join(store)), 14)
 	_label(box, Txt.f("UI_PACK_WEAPON", Txt.t(String(Db.weapons.get(Game.weapon_id(), {}).get("name_key", "")))), 14)
 	_label(box, Txt.f("UI_SLOTS_USED", [run.pack.used_cells(), run.pack.capacity()]), 12)
 	if not run.lines.is_empty():

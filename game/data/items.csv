@@ -9,3 +9,4 @@ books,ITEM_BOOKS,book,##/#.,0,0,0,0,1
 rope,ITEM_ROPE,gear,##,0,0,0,0,1
 meat,ITEM_MEAT,food,#,0,1,0,0,10
 potion,ITEM_POTION,med,#,0,0,1,0,3
+stuff,ITEM_STUFF,material,#,0,0,0,0,5

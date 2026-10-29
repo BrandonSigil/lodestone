@@ -66,6 +66,8 @@ func run(s: Node, f: int, step: String) -> bool:
 				if belt.count("potion") == 0:
 					run.pack.take("potion", 2)
 					belt.put("potion", RunState.shape_of("potion"), 2, 3)
+				run.add_item("stuff", 3)
+				s.get_node("/root/Game").meta.materials["stuff"] = 9  # what earlier trips banked (not saved)
 				s._refresh_hud()
 				s._open_menu("pack")
 			return f == 30

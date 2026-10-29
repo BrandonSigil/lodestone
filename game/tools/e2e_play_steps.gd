@@ -92,6 +92,7 @@ func play(t: SceneTree) -> void:
 	_check(game.run.item_count("rope") == rope and game.run.gold == gold, "kept every item")
 	_check(game.run.members.all(func(m: Dictionary) -> bool: return m.hp == game.run.max_hp(m)), "everyone at full HP")
 	_check(game.has_flag("lodestone_revealed"), "a fall reveals the Lodestone")
+	_check(game.material_count("stuff") >= 4 and game.run.item_count("stuff") == 0, "the stuff found on the way went to the village pile")
 
 	# A beaten boss stays beaten: back in the crypt after the fall, the throne is empty.
 	game.explore_map = "crypt"
@@ -228,6 +229,15 @@ func _through(s: Node, id: String) -> void:
 
 
 ## Press button n of the scene's open box.
+## What a fall keeps: everything carried but materials, which bank at home.
+func _kept(items: Dictionary) -> Dictionary:
+	var out := {}
+	for id: String in items:
+		if String(Db.items[id].kind) != "material":
+			out[id] = items[id]
+	return out
+
+
 func _press(s: Node, n: int) -> void:
 	var d: Node = s.get("_dialog")
 	if d == null:
@@ -307,14 +317,14 @@ func _fight(s: Node, group_id: String) -> Node:
 ## The party fell: OK through the defeat box and check the wake-up in the square with everything kept.
 func _fell(what: String) -> Node:
 	falls += 1
-	var items: Dictionary = game.run.items.duplicate()
+	var items: Dictionary = _kept(game.run.items)
 	print("  lost %s: the Lodestone brings the party home" % what)
 	var cur := tree.current_scene
 	if String(cur.scene_file_path).ends_with("explore.tscn"):
 		await _press(cur, 0)
 	var v: Node = await _explore("village")
 	_check(v.leader().cell == game.SQUARE, "woke in the square")
-	_check(game.run.items == items, "kept every item")
+	_check(_kept(game.run.items) == items, "kept every item (materials go to the village pile)")
 	_check(game.run.members.all(func(m: Dictionary) -> bool: return m.hp == game.run.max_hp(m)), "everyone at full HP")
 	return v
 

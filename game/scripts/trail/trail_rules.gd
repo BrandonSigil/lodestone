@@ -223,8 +223,8 @@ static func apply_effects(run: RunState, effects: String) -> Dictionary:
 			"combat": out.combat = val
 			"unlock": out.unlocks.append(val)
 			_:
-				if String(Db.items.get(key, {}).get("kind", "")) == "gear":
-					run.add_item(key, n)  # rope:+1
+				if Db.items.has(key):
+					run.add_item(key, n)  # rope:+1, stuff:+3: any carried thing in data/items.csv
 				else:
 					push_warning("unknown effect '%s'" % key)
 	return out

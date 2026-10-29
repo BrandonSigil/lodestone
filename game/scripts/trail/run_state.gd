@@ -246,6 +246,23 @@ func belts_save() -> Dictionary:
 	return out
 
 
+## Home: every village material leaves the pack, the belts and FOUND for the village's own count
+## ([USER] 2026-10-29: materials bank themselves; gear and supplies stay packed). Returns id -> count.
+func bank_materials() -> Dictionary:
+	var out := {}
+	var all := grids()
+	all.append(found)
+	for g in all:
+		for i in range(g.items.size() - 1, -1, -1):
+			var it: Dictionary = g.items[i]
+			if String(Db.items[it.id].kind) == "material":
+				out[it.id] = int(out.get(it.id, 0)) + int(it.get("n", 1))
+				g.remove(i)
+	for id: String in out:
+		note(Txt.f("LOG_BANKED", [int(out[id]), Txt.t(String(Db.items[id].name_key))]))
+	return out
+
+
 ## FOUND, the courier's open bag and who is away, for the save.
 func waiting_save() -> Dictionary:
 	var gone := []
