@@ -167,6 +167,17 @@ textarea { width: 100%; min-height: 70px; border: 1.5px solid var(--rule); borde
 
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 8px 16px; border-radius: 8px; font-size: 14px; z-index: 30; }
 
+/* Pictures attached to an answer or a note */
+.attach { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.attach:empty { display: none; }
+.att { position: relative; width: 84px; height: 64px; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--paper); flex: none; }
+.att img { width: 100%; height: 100%; object-fit: cover; display: block; cursor: zoom-in; }
+.att em { position: absolute; inset: auto 0 0 0; font-size: 10px; font-style: normal; text-align: center; background: color-mix(in srgb, var(--sheet) 85%, transparent); }
+.att button { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%; border: 0; padding: 0; background: var(--ink); color: var(--paper); font-size: 13px; line-height: 20px; }
+.attach small { color: var(--muted); font-size: 12px; }
+.attach-add { cursor: pointer; }
+textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
+
 /* Rooms */
 .rooms { padding-block: 0 0; display: flex; gap: 4px; justify-content: flex-start; }
 .rooms a { color: var(--leaf-ink); text-decoration: none; padding: 8px 14px 9px; border-radius: 8px 8px 0 0; font-size: 14px; opacity: .78; }
@@ -315,6 +326,56 @@ function shotsHtml(images) {
   if (!images?.length) return "";
   return `<div class="shots">${images.map((im) => `<figure class="shot"><button data-zoom="${esc(im.url)}" data-cap="${esc(im.caption)}" aria-label="Enlarge: ${esc(im.caption)}"><img src="${esc(im.url)}" alt="${esc(im.caption)}" loading="lazy"></button>${im.caption ? `<figcaption>${esc(im.caption)}</figcaption>` : ""}</figure>`).join("")}</div>`;
 }
+/* ---------- pictures in answers and notes ---------- */
+function attachHtml(key) {
+  const ims = S.drafts[key]?.images || [];
+  return `<div class="attach" id="att-${esc(key)}">${ims.map((im, i) => `<span class="att"><img src="${esc(im.url || im.local)}" alt="Attached picture" data-zoom="${esc(im.url || im.local)}" data-cap="Your picture">${im.url ? "" : `<em>Uploading…</em>`}<button type="button" data-act="unattach" data-key="${esc(key)}" data-i="${i}" aria-label="Remove picture">×</button></span>`).join("")}${S.assets ? `<label class="btn small attach-add">Add picture<input type="file" accept="image/*" multiple hidden data-attach="${esc(key)}"></label><small>or paste or drop one into the box</small>` : ""}</div>`;
+}
+function renderAttach(key) { const el = document.getElementById("att-" + key); if (el) el.outerHTML = attachHtml(key); }
+function shownImages(images) {
+  return images?.length ? `<div class="attach">${images.map((im) => `<span class="att"><img src="${esc(im.url)}" alt="Attached picture" data-zoom="${esc(im.url)}" data-cap="Your picture" loading="lazy"></span>`).join("")}</div>` : "";
+}
+const attached = (key) => (S.drafts[key]?.images || []).filter((i) => i.url).map((i) => ({ url: i.url, id: i.id }));
+const stillUploading = (key) => (S.drafts[key]?.images || []).some((i) => !i.url);
+async function attachFiles(key, files) {
+  const imgs = [...(files || [])].filter((f) => f.type?.startsWith("image/"));
+  if (!imgs.length) return false;
+  if (!S.assets) { toast("Pictures can't be added from this view."); return true; }
+  const dr = (S.drafts[key] ||= {}); dr.images ||= [];
+  for (const f of imgs) {
+    const slot = { local: URL.createObjectURL(f) };
+    dr.images.push(slot); renderAttach(key);
+    try { const r = await S.assets.upload(f); slot.url = r.url; slot.id = r.id; }
+    catch { dr.images.splice(dr.images.indexOf(slot), 1); toast("Couldn't add that picture. Try a smaller one."); }
+    renderAttach(key);
+  }
+  return true;
+}
+function attachKeyFor(el) {
+  if (!el || el.tagName !== "TEXTAREA") return null;
+  if (el.id?.startsWith("why-")) return el.id.slice(4);
+  if (el.id === "note-role" && S.openRole) return "note:" + S.openRole;
+  return null;
+}
+document.addEventListener("paste", (e) => {
+  const key = attachKeyFor(e.target);
+  if (!key) return;
+  const files = [...(e.clipboardData?.files || [])];
+  if (files.some((f) => f.type.startsWith("image/"))) { e.preventDefault(); attachFiles(key, files); }
+});
+document.addEventListener("dragover", (e) => { const key = attachKeyFor(e.target); if (key) { e.preventDefault(); e.target.classList.add("dropping"); } });
+document.addEventListener("dragleave", (e) => { if (e.target.tagName === "TEXTAREA") e.target.classList.remove("dropping"); });
+document.addEventListener("drop", (e) => {
+  const key = attachKeyFor(e.target);
+  if (!key) return;
+  e.target.classList.remove("dropping");
+  if ([...(e.dataTransfer?.files || [])].length) { e.preventDefault(); attachFiles(key, e.dataTransfer.files); }
+});
+document.addEventListener("change", (e) => {
+  const key = e.target.dataset?.attach;
+  if (key) { attachFiles(key, e.target.files); e.target.value = ""; }
+});
+
 function dia(n) { return `<span class="dia" aria-label="${n} of 5">${[1,2,3,4,5].map((i) => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`; }
 
 function answerSummary(d) {
@@ -329,7 +390,7 @@ function answerSummary(d) {
     const n = (k) => v.filter((x) => x.verdict === k).length;
     what = `${n("approve")} approved, ${n("redo")} redo, ${n("reject")} rejected`;
   } else if (d.kind === "todo") what = "Done";
-  return `<div class="answered"><span><b>You:</b> ${esc(what)}</span>${a.why ? `<span>“${esc(a.why)}”</span>` : ""}<small>${esc(ago(a.at))}${d.status === "answered" ? " · waiting for " + esc(roleName(d.role)) + " to pick it up" : ""}</small></div>`;
+  return `<div class="answered"><span><b>You:</b> ${esc(what)}</span>${a.why ? `<span>“${esc(a.why)}”</span>` : ""}${shownImages(a.images)}<small>${esc(ago(a.at))}${d.status === "answered" ? " · waiting for " + esc(roleName(d.role)) + " to pick it up" : ""}</small></div>`;
 }
 
 function cardHtml(d) {
@@ -343,13 +404,13 @@ function cardHtml(d) {
       body += `<div class="opts">${(d.options || []).map((o) => `<button class="opt" data-act="pick" data-id="${esc(d.id)}" data-opt="${esc(o.id)}" aria-pressed="${picks.includes(o.id)}">${o.image ? `<img src="${esc(o.image)}" alt="">` : ""}<b>${esc(o.label)}</b>${o.detail ? `<span>${esc(o.detail)}</span>` : ""}</button>`).join("")}
         <button class="opt neither" data-act="pick" data-id="${esc(d.id)}" data-opt="neither" aria-pressed="${picks.includes("neither")}"><b>Neither</b><span>Tell the team why</span></button></div>`;
       const needWhy = picks.includes("neither");
-      body += `<div class="why"><textarea id="why-${esc(d.id)}" placeholder="${needWhy ? "What's wrong with these? (needed)" : "Anything to add? (optional)"}">${esc(draft.why || "")}</textarea>
+      body += `<div class="why"><textarea id="why-${esc(d.id)}" placeholder="${needWhy ? "What's wrong with these? (needed)" : "Anything to add? (optional)"}">${esc(draft.why || "")}</textarea>${attachHtml(d.id)}
         <div class="row"><button class="btn primary" data-act="send" data-id="${esc(d.id)}" ${picks.length ? "" : "disabled"}>Send answer</button>${multi ? `<small style="color:var(--muted)">Pick as many as you like.</small>` : ""}</div></div>`;
     } else if (d.kind === "go") {
       const b = d.batch || {};
       body += `<dl class="batch">${b.prompt ? `<dt>Prompt</dt><dd>${esc(b.prompt)}</dd>` : ""}${b.model ? `<dt>Model</dt><dd>${esc(b.model)}</dd>` : ""}${b.count ? `<dt>Pictures</dt><dd>${esc(b.count)}</dd>` : ""}${b.cost ? `<dt>Cost</dt><dd>${esc(b.cost)}</dd>` : ""}</dl>`;
       if (b.refs?.length) body += `<div><small style="color:var(--muted)">References sent with it</small>${shotsHtml(b.refs)}</div>`;
-      body += `<div class="why"><textarea id="why-${esc(d.id)}" placeholder="Notes for the art runner (optional)">${esc(draft.why || "")}</textarea>
+      body += `<div class="why"><textarea id="why-${esc(d.id)}" placeholder="Notes for the art runner (optional)">${esc(draft.why || "")}</textarea>${attachHtml(d.id)}
         <div class="row"><button class="btn go" data-act="go" data-id="${esc(d.id)}">Go ahead</button><button class="btn" data-act="nogo" data-id="${esc(d.id)}">Not now</button></div></div>`;
     } else if (d.kind === "review") {
       const iv = draft.items || {};
@@ -365,7 +426,7 @@ function cardHtml(d) {
           <input id="note-${esc(d.id)}-${esc(it.id)}" data-act="itemnote" data-id="${esc(d.id)}" data-item="${esc(it.id)}" placeholder="Note on this one" value="${esc(iv[it.id]?.note || "")}">
         </div>`;}).join("")}</div>`;
       const all = (d.items || []).every((it) => iv[it.id]?.verdict);
-      body += `<div class="why"><textarea id="why-${esc(d.id)}" placeholder="Overall notes (optional)">${esc(draft.why || "")}</textarea>
+      body += `<div class="why"><textarea id="why-${esc(d.id)}" placeholder="Overall notes (optional)">${esc(draft.why || "")}</textarea>${attachHtml(d.id)}
         <div class="row"><button class="btn primary" data-act="sendreview" data-id="${esc(d.id)}" ${all ? "" : "disabled"}>Stamp and send</button><small style="color:var(--muted)">${all ? "" : "Give every picture a verdict first."}</small></div></div>`;
     } else if (d.kind === "todo") {
       body += `<div class="row"><button class="btn primary" data-act="todo" data-id="${esc(d.id)}">Mark done</button></div>`;
@@ -440,9 +501,9 @@ function renderTeam() {
       ${open ? `<div class="role-more">
         ${r.next ? `<div style="font-size:13px"><b>Up next:</b> ${esc(r.next)}</div>` : ""}
         ${log.length ? `<ul class="log">${log.map((l) => `<li><time>${esc(ago(l.at))}</time><span>${esc(l.text)}</span>${l.image ? `<img src="${esc(l.image)}" alt="" data-zoom="${esc(l.image)}" data-cap="${esc(l.text)}" loading="lazy">` : ""}</li>`).join("")}</ul>` : `<div style="font-size:13px;color:var(--muted)">No log entries yet.</div>`}
-        ${notes.length ? `<div><b style="font-size:13px">Your notes waiting for this role</b><ul class="notes-list">${notes.map((n) => `<li>${esc(n.text)}</li>`).join("")}</ul></div>` : ""}
+        ${notes.length ? `<div><b style="font-size:13px">Your notes waiting for this role</b><ul class="notes-list">${notes.map((n) => `<li>${esc(n.text)}${shownImages(n.images)}</li>`).join("")}</ul></div>` : ""}
         <label for="note-role" style="font-size:13px;font-weight:600">Leave a note on their desk</label>
-        <textarea id="note-role" placeholder="e.g. try the arch with a mossier top">${esc(noteDraft || "")}</textarea>
+        <textarea id="note-role" placeholder="e.g. try the arch with a mossier top">${esc(noteDraft || "")}</textarea>${attachHtml("note:" + r.id)}
         <div class="row"><button class="btn small primary" data-act="leavenote" data-id="${esc(r.id)}">Leave note</button></div>
       </div>` : ""}
     </div>`;
@@ -526,32 +587,46 @@ document.addEventListener("click", async (ev) => {
       }
       case "send": {
         const w = why();
-        if ((dr.picks || []).includes("neither") && !w) { toast("Say why neither works, so the team knows what to change."); $("why-" + id)?.focus(); return; }
-        await save(id, { status: "answered", answer: { picks: dr.picks, why: w, at: new Date().toISOString() } }, "Sent to " + roleName(d?.role));
+        if (stillUploading(id)) { toast("Wait for the picture to finish uploading."); return; }
+        if ((dr.picks || []).includes("neither") && !w && !attached(id).length) { toast("Say why neither works, so the team knows what to change."); $("why-" + id)?.focus(); return; }
+        await save(id, { status: "answered", answer: { picks: dr.picks, why: w, images: attached(id), at: new Date().toISOString() } }, "Sent to " + roleName(d?.role));
         break;
       }
-      case "go": await save(id, { status: "answered", answer: { pick: "go", why: why(), at: new Date().toISOString() } }, "Go-ahead sent"); break;
-      case "nogo": await save(id, { status: "answered", answer: { pick: "nogo", why: why(), at: new Date().toISOString() } }, "Held off"); break;
+      case "go": case "nogo": {
+        if (stillUploading(id)) { toast("Wait for the picture to finish uploading."); return; }
+        const go = t.dataset.act === "go";
+        await save(id, { status: "answered", answer: { pick: go ? "go" : "nogo", why: why(), images: attached(id), at: new Date().toISOString() } }, go ? "Go-ahead sent" : "Held off");
+        break;
+      }
+      case "unattach": {
+        const k = t.dataset.key, list = S.drafts[k]?.images;
+        if (list) { list.splice(Number(t.dataset.i), 1); renderAttach(k); }
+        break;
+      }
       case "verdict": {
         dr.why = why(); dr.items ||= {};
         const it = t.dataset.item, cur = dr.items[it] || {};
         dr.items[it] = { ...cur, verdict: cur.verdict === t.dataset.v ? undefined : t.dataset.v };
         renderDesk(); break;
       }
-      case "sendreview": await save(id, { status: "answered", answer: { items: dr.items, why: why(), at: new Date().toISOString() } }, "Review stamped and sent"); break;
+      case "sendreview":
+        if (stillUploading(id)) { toast("Wait for the picture to finish uploading."); return; }
+        await save(id, { status: "answered", answer: { items: dr.items, why: why(), images: attached(id), at: new Date().toISOString() } }, "Review stamped and sent");
+        break;
       case "todo": await save(id, { status: "done", answer: { at: new Date().toISOString() } }, "Marked done"); break;
       case "reopen": {
         const a = d?.answer || {};
-        S.drafts[id] = { picks: a.picks || [], why: a.why || "", items: a.items || {} };
-        await save(id, { status: "open" }); S.drafts[id] = { picks: a.picks || [], why: a.why || "", items: a.items || {} };
+        const back = () => ({ picks: a.picks || [], why: a.why || "", items: a.items || {}, images: (a.images || []).map((i) => ({ ...i })) });
+        await save(id, { status: "open" }); S.drafts[id] = back();
         setTab("open"); break;
       }
       case "role": S.openRole = S.openRole === id ? null : id; renderTeam(); break;
       case "folder": S.openFolder = S.openFolder === id ? null : id; renderLib(); break;
       case "leavenote": {
-        const txt = ($("note-role")?.value || "").trim();
-        if (!txt) return;
-        try { await S.db.collection("notes").add({ role: id, text: txt, at: new Date().toISOString(), status: "new" }); $("note-role").value = ""; toast("Note left for " + roleName(id)); }
+        const txt = ($("note-role")?.value || "").trim(), nk = "note:" + id;
+        if (stillUploading(nk)) { toast("Wait for the picture to finish uploading."); return; }
+        if (!txt && !attached(nk).length) return;
+        try { await S.db.collection("notes").add({ role: id, text: txt, images: attached(nk), at: new Date().toISOString(), status: "new" }); $("note-role").value = ""; delete S.drafts[nk]; renderTeam(); toast("Note left for " + roleName(id)); }
         catch { toast("Couldn't leave the note. Try again in a moment."); }
         break;
       }
@@ -586,6 +661,7 @@ function watch(coll, key) {
 }
 (async () => {
   try { S.db = await window.claude?.use?.("db"); } catch { S.db = null; }
+  try { S.assets = await window.claude?.use?.("assets"); } catch { S.assets = null; }
   if (!S.db) { renderAll(); return; }
   watch("desk", "desk"); watch("roles", "roles"); watch("log", "log"); watch("notes", "notes"); watch("refs", "refs"); watch("library", "library");
 })();

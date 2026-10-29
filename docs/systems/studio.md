@@ -18,7 +18,7 @@ Read and write them with the `ArtifactData` tool and the URL above. Pin every wr
 | `desk` | a card | `kind` (`choice`, `go`, `review`, `todo`), `title`, `role`, `ask`, `context`, `images` [{url, caption}], `priority` (low first), `created` (ISO), `status` (`open`, `answered`, `done`), `answer`, `result` |
 | `roles` | a chair | `name`, `job`, `status` (`working`, `waiting`, `idle`, `blocked`), `now`, `next`, `updated`, `order` |
 | `log` | one line of a role's work | `role`, `at`, `text`, `image` (optional) |
-| `notes` | a note Brandon left a role | `role`, `text`, `at`, `status` (`new`, `seen`) |
+| `notes` | a note Brandon left a role | `role`, `text`, `images` [{url, id}], `at`, `status` (`new`, `seen`) |
 | `refs` | a group on the References wall | `title`, `used_for`, `warning`, `images` [{url, caption, path, slot}], `prompts`, `order`, `retired` |
 | `library` | a shelf | `title`, `path`, `kind` (`ingame`, `raw`, `code`), `status`, `note`, `items` [{url, name}], `order` |
 
@@ -27,6 +27,8 @@ Card kinds:
 - `go` (Picsart go-ahead): `batch` {prompt, model, count, cost, refs [{url, caption}]}. Answer: `{pick: "go" | "nogo", why, at}`.
 - `review` (Picsart results): `items` [{id, url, caption, score 1-5, notes}]. Score each against the References wall, honestly. Answer: `{items: {id: {verdict: "approve" | "redo" | "reject", note}}, why, at}`.
 - `todo`: Brandon marks it done himself.
+
+Pictures from Brandon: any answer, and any note, may carry `images` [{url, id}] that he pasted, dropped or picked into the box. Look at every one before acting: read it with the Artifact tool (`action: "read"`, the studio `url`, `path` = the picture's `id`, the 32 hex characters after `/_blob/`), which saves it to a local file, then open that file with Read.
 
 ## How a session uses it
 1. At the start of a turn, read `desk` cards with `status: "answered"` for your role, and `notes` with `status: "new"`. Act on them.
