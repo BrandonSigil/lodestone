@@ -189,6 +189,15 @@ Every design call goes here, newest at the bottom of its section.
 - [USER] 2026-10-29 A well-levelled job splits into one of two branches, Fire Emblem promotion style (picked "Two branches per job"). (Brandon, design grilling, card design-pc-13-branch)
 - [USER] 2026-10-29 A weapon gets better by upgrades at the smithy, paid in materials (picked "Upgrade it at the smithy"). (Brandon, design grilling, card design-pc-14-weapons)
 - [USER] 2026-10-29 Elite fights are marked and avoidable: "elite fights should be in areas that you can back out of or find a different path and have a badge to warn." (Brandon, design grilling, card design-pc-15-elites)
+- [USER] 2026-10-29 Build player choice after the combat build, in four steps: growth (rolled stats, skill ranks every 4 levels); the weapon is the job (job levels, switching at the smithy, branches); the party changes at home (edit at the gate, invite in the village); elite fights with badges. Smithy upgrades wait for materials (picked "All four, after the combat build"). (Brandon, design grilling, card design-choice-build)
+
+## One more run
+- [USER] 2026-10-29 Trips bring home a few kinds of material: "I'd say a few, there'd be food, potion materials, resource mats like metals or wood, etc." (Brandon, design grilling, card design-omr-1-materials)
+- [USER] 2026-10-29 A village build restores the buildings already standing, step by step; the town visibly comes back (picked "Restore the buildings that are there"). (Brandon, design grilling, card design-omr-2-builds)
+- [USER] 2026-10-29 Builds unlock better starts to a trip, through the settlers who run them: "Better starts, the ability to make better food (you find a chef, you upgrade the inn/tavern which gives them a full kitchen to work with, which opens up new recipes) You find the blacksmith, he moves in to his home but needs help getting the forge up and running. Next he could use materials for a sharpening stone, etc." (Brandon, design grilling, card design-omr-3-unlocks)
+- [USER] 2026-10-29 A trip runs 30 to 45 minutes, "but with a robust save system so people without that kind of time can put a bookmark in it." (Brandon, design grilling, card design-omr-4-length)
+- [USER] 2026-10-29 The next goal stays in view all three ways: "All three! I think of Stardew Valley's community center. You can go to each corner of the center and check what items each thing needs, or there's a menu you can pop up and get a global view of all the open and completed tasks, and then flag 1-X as trackable goals" (Brandon, design grilling, card design-omr-5-goal)
+- [USER] 2026-10-29 Trips build up temporary power: "Blessings, camp meals, yes yes yes, I think this should be one of the primary things the random encounters give. Going through and exploring the handmade maps add long lasting upgrades, and random encounters provide boons or disadvantages." (Brandon, design grilling, card design-omr-6-boons)
 
 ## Battle map art
 - [USER] 2026-10-26 Battle maps take their look from Brandon's isometric reference: mossy stone cliff blocks, temple stair, waterfalls, pines, a floating island on cream paper.

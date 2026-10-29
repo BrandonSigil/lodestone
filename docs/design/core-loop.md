@@ -186,8 +186,8 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 | `design-pc-14-weapons` | How a weapon gets better: smithy upgrades, found weapons with traits, or both? | Smithy upgrades |
 | `design-pc-15-elites` | How elite fights show: marked on the map and avoidable, seen only up close, or a hunter that roams? | Marked with a badge, avoidable |
 
-### Build order (card `design-choice-build`)
-*Proposal:* after the inventory build, the bottom UI frame and the combat build, because jobs lean on combat step 5 (resources by job).
+### Build order (card `design-choice-build`, approved 2026-10-29: all four, after the combat build; handed to the systems developer)
+After the inventory build, the bottom UI frame and the combat build, because jobs lean on combat step 5 (resources by job).
 1. **Growth.** A level every 100 XP; stats rolled each level from per-character (and per-job) growth odds in `game/data/`, never a stat the character can't use; skills scale with stats on their own; a skill rank to spend every 4 levels (up to 3 a skill) from the Lodestone menu, each rank adding an effect from data. Replaces +1 HP a level and the health / attack / magic pick.
 2. **The weapon is the job.** The smithy weapon sets the hero's job from the start (sword knight, daggers rogue, bow archer, the book mage); each job has its own job level; switching weapons at the smithy keeps the character level, shifts stats to the new job's base, and starts its ranks at 0. Branch choice at job level 10 (two per job; skills for them come later).
 3. **Party at home.** Edit the four at the gate (one key to go, one to edit), and invite a companion by walking up to them in the village.
@@ -204,17 +204,47 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 - Elite fights are marked, avoidable and give better rewards (pc-6, pc-15).
 - Gold and a shop arrive once a blacksmith or merchant settles (2026-10-27).
 
-So the chain has its shape: **trip, then materials, then a settler's build, then a stronger party or a bigger pack, then a deeper trip.** Batch 1 asks what fills each box.
+So the chain has its shape: **trip, then materials, then a settler's build, then a stronger party or a bigger pack, then a deeper trip.**
+
+### Decided in the grilling
+- **A few kinds of material** (omr-1): food, potion materials, and resource materials like metal and wood.
+- **Builds restore the buildings already standing, step by step** (omr-2), so the town visibly comes back.
+- **Builds unlock better starts, through settlers** (omr-3). Brandon's chain, in his examples: find a chef, upgrade the inn or tavern into a full kitchen, which opens new recipes; find the blacksmith, he moves into his home but needs help getting the forge running, then wants materials for a sharpening stone, and so on. Each settler opens a line of restore steps, and each step adds a service, a recipe or an upgrade.
+- **A trip runs 30 to 45 minutes, with a robust save** (omr-4) so a player can bookmark a trip and come back.
+- **The goal stays in view all three ways** (omr-5), like Stardew's community center: each building shows what its next step needs; a menu gives the global view of open and done steps; the player flags any number of them as tracked goals; settlers ask for things.
+- **Temporary power comes from the road; lasting power from the hand-made maps** (omr-6). Random encounters give blessings and camp meals, and also disadvantages. Exploring the hand-made explore maps gives long-lasting upgrades.
+
+The chain, filled in: **a 30 to 45 minute trip; random road encounters give trip-long blessings and setbacks; the hand-made maps give lasting upgrades; the pack brings home food, potion materials, metal and wood; at home a settler's building takes them for its next restore step; that step gives a better start (better food, a sharper weapon, a bigger pack); you pin the next step and go again.**
+
+### Gaps these answers open
+- **How blessings are offered** and how long they last (a trip, or until a fall). Batch 2.
+- **What disadvantages are** and how you get them. Batch 2.
+- **Camp meals:** cooked on the road from raw food, made at home by the chef, or both. Batch 2.
+- **What the hand-made maps' lasting upgrades are.** Batch 2.
+- **The save:** suspend anywhere, save at places, or both. Today the game saves on every scene change. Batch 2.
+- **How a restore step works:** paid and done at once, done after the next trip, or asking for specific items. Batch 2.
+- **Food is both a supply and a material** (omr-1). Raw food you carry eats pack room either way; it's spent on the road, cooked into meals, or banked for the kitchen.
+- **Only "better starts" was picked** of the five unlock kinds, but Brandon's examples are services (a kitchen, a forge). *Reading:* builds unlock settler services that make trips start stronger; no new overworld places, room-for-companions or flat perks from builds.
 
 ### Batch 1 (posted 2026-10-29)
 | Card | Question | Answer |
 |---|---|---|
-| `design-omr-1-materials` | How many kinds of material: one, a few, or new ones per region? | open |
-| `design-omr-2-builds` | What a village build is: fixed buildings restored, a board of projects, or free placement on plots? | open |
-| `design-omr-3-unlocks` | What builds unlock beyond pack and weapon upgrades (multi): new places, trip starts, new companions, shops, fight perks | open |
-| `design-omr-4-length` | How long one trip should be: 15 to 20 minutes, 30 to 45, or an hour or more? | open |
-| `design-omr-5-goal` | How the next goal stays in view: a build board with what's missing, a pinned wish list, or settlers who ask? | open |
-| `design-omr-6-boons` | Power that lasts only for a trip: blessings found on the road, camp meals, or none? | open |
+| `design-omr-1-materials` | How many kinds of material: one, a few, or new ones per region? | A few: food, potion materials, metal and wood |
+| `design-omr-2-builds` | What a village build is: fixed buildings restored, a board of projects, or free placement on plots? | Restore the buildings that are there |
+| `design-omr-3-unlocks` | What builds unlock beyond pack and weapon upgrades (multi): new places, trip starts, new companions, shops, fight perks | Better starts, through settlers' services (chef's kitchen, smith's forge) |
+| `design-omr-4-length` | How long one trip should be: 15 to 20 minutes, 30 to 45, or an hour or more? | 30 to 45 minutes, with a robust save |
+| `design-omr-5-goal` | How the next goal stays in view: a build board with what's missing, a pinned wish list, or settlers who ask? | All three, like Stardew's community center |
+| `design-omr-6-boons` | Power that lasts only for a trip: blessings found on the road, camp meals, or none? | Blessings and meals from random encounters, plus setbacks; hand-made maps give lasting upgrades |
+
+### Batch 2 (posted 2026-10-29)
+| Card | Question | Answer |
+|---|---|---|
+| `design-omr-7-blessings` | How blessings are offered: pick one of three, given at random, or a blessing with a price? | open |
+| `design-omr-8-setbacks` | Where setbacks come from: bad event outcomes, trades you choose, or lost fights and ambushes? | open |
+| `design-omr-9-meals` | Camp meals: cooked on the road, made at home by the chef, or the chef's recipes cooked on the road? | open |
+| `design-omr-10-lasting` | What the hand-made maps give for good (multi): stat items, rare materials for big restore steps, skill ranks, keys and shortcuts | open |
+| `design-omr-11-save` | The save: suspend anywhere, save at places, or both? | open |
+| `design-omr-12-restore` | A restore step: done the moment you pay, done after your next trip, or asks for specific items? | open |
 
 ## Inventory
 ### Brandon's opening (2026-10-29)
