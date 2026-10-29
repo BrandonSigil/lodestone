@@ -4,23 +4,23 @@
 	"enemies": [
 		{
 			"id": "bandit",
-			"x": 25,
-			"y": 2
+			"x": 16,
+			"y": 4
 		},
 		{
 			"id": "bandit",
-			"x": 23,
-			"y": 1
+			"x": 12,
+			"y": 6
 		},
 		{
 			"id": "bandit_archer",
-			"x": 24,
-			"y": 2
+			"x": 8,
+			"y": 8
 		},
 		{
 			"id": "wolf",
-			"x": 25,
-			"y": 3
+			"x": 10,
+			"y": 4
 		}
 	],
 	"enemy_mods": {
@@ -39,8 +39,8 @@
 			"00000888888888877777788888",
 			"00088888888886688777788888",
 			"00866668888886688887788888",
-			"08886668888666667887788888",
-			"08888668888666667887777888",
+			"08886668888776667887788888",
+			"08888668888766667887777888",
 			"08888668866666667668877886",
 			"88886686666666666668877776",
 			"88884666666666666666686773",
@@ -70,11 +70,11 @@
 			".....rggggfggggwwwwwwffgfg",
 			"...ffffffggggggggwwwwffggg",
 			"...wwwwfgggggggggddwwggggg",
-			".rggwwwfffggggggttfwwggggg",
-			".ggggwwfffggggggtdgwwwwggg",
+			".rggwwwfffgttgggttfwwggggg",
+			".ggggwwfffgttgggtdgwwwwggg",
 			".rffgwwffgggggggtggggwwggg",
 			"ggffwwggggggggggtggggwwwwg",
-			"ggffwttgggggggggdggggfgwwg",
+			"ggffwttgggggggggdgggtfgwwg",
 			"ffggwwttggggggggdggggfgwwf",
 			"fffgwwgttggggddddggggfgwwg",
 			"ffggwwggtggggdwwwggttttwww",
@@ -85,12 +85,12 @@
 			"ggffwwwwdggggdggggggwwwwww",
 			"ggffgdssssgggdggggggggwwww",
 			"gggggdwwwwwgtdggggggggwwgg",
-			"ggffgdggwwwrttdggggwwwwwr.",
+			"ggffgdggwwwrttdtgggwwwwwr.",
 			"rgfffdggfwwwwttdgggwwwww..",
 			"gfgdddgggggwwggdggwwgggg..",
 			"...gggggggrwwwwdggwwgggr..",
-			"...gggffggggrwwggwwwgggg..",
-			"...ggggggffffwwfgwwwrg...."
+			"...gggffggggrwwggwwwggtg..",
+			"...ggggtgffffwwfgwwwrg...."
 		],
 		"w": 26
 	},
@@ -99,18 +99,18 @@
 	"party": [
 		{
 			"id": "lead",
-			"x": 0,
-			"y": 22
+			"x": 16,
+			"y": 21
 		},
 		{
 			"id": "stardrop",
-			"x": 3,
-			"y": 25
+			"x": 16,
+			"y": 22
 		},
 		{
 			"id": "hunter",
-			"x": 4,
-			"y": 25
+			"x": 14,
+			"y": 22
 		}
 	],
 	"party_mods": {

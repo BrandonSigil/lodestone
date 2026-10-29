@@ -13,7 +13,7 @@ Catalog: `game/data/catalog.csv`. Scene: `scenes/map_maker.tscn`.
 - **F8 from any screen**, the launch menu's MAKE buttons (F7; "Edit the village" opens that map straight away), or F6 on `scenes/map_maker.tscn` in the editor. It reopens the last map.
 
 ## Screen
-- **Top bar** (icons, tooltips name them): new, open, save, undo, redo; the map's name (`*` unsaved); painted
+- **Top bar** (icons, tooltips name them): new, open, save, save as, undo, redo; the map's name (`*` unsaved); painted
   terrain (K, on), grid lines, height numbers, names over things; turn the view (editing only), fit, hide
   panels; **Play test**.
 - **Tool rail** (left): Select V, Place B, Erase X, Party U, Enemy E | Raise 1, Lower 2, Level 3, Smooth 4, Tidy 5,
@@ -119,21 +119,26 @@ recoloured to on load, marks kept; the snow set's road borrows the base sand ton
 Drag paints, right drag does the opposite. Shift drag, middle drag or two fingers pan; arrows pan; wheel or
 pinch zooms; space fits. Tools: V B X 1 2 3 4 P L W T C F Z. R turn, M mirror, Del delete, Esc deselect,
 ctrl D copy to the stamp, alt click pick up, [ ] brush, Q turn the view (editing only), K painted terrain or
-plain blocks, G grid, H hide panels, ctrl Z undo, ctrl shift Z redo (80 steps), ctrl S save. Tidy 5, Pillar 6.
+plain blocks, G grid, H hide panels, ctrl Z undo, ctrl shift Z redo (80 steps), ctrl S save, ctrl shift S save as. Tidy 5, Pillar 6.
 
 ## Saving
 - Battle maps save to `game/data/maps/<name>.json`, explore maps to `game/data/explore/<name>.json`
   (`user://` when the project folder is read-only). Things, start, groups and the rest of the file are kept.
+- **Save as** (ctrl shift S): type a new name, or pick a map of the same kind from the list to write over
+  it. The card says where the file goes and turns the button into "Overwrite <name>" when the name is
+  another map's. The map under its old name stays as it was; the maker carries on with the new one.
 - Props save their extras only when set: `face`, `flip`, `id`, `blob`, `name`, `note`
   (`CombatGrid.PROP_EXTRA`). Things save `note` alongside the fields the explore scene reads.
 
 ## Play test
 Play test saves, then a battle map opens in the combat sandbox with the fight started, an explore map in the
-explore scene at its start. F8 comes back.
+explore scene at its start. F8, or BACK TO MAKER in the fight's top bar, comes back. Moving pieces or
+fighting there never changes the map file.
 
 ## Command line
 From `game/`:
 - Screenshot the maker: `godot --path . -s res://tools/maker_shot.gd -- out.png explore/home "item:blob_2x2,stamp:5:4"`
+  (`saveas:<name>` shows the save as card)
   (steps in `tools/maker_shot.gd`; `view:soft` shows the plain blocks). In the cloud:
   `xvfb-run -a godot --rendering-driver opengl3 --resolution 1600x1000 ...`.
 - Screenshot a map with its look: `godot --path . -s res://tools/map_shot.gd -- out.png <map> [turn] [grid] [blocks]`

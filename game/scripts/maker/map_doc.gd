@@ -79,6 +79,12 @@ static func list_all() -> Array[String]:
 	return out
 
 
+## Is there a saved map of this kind with this name (in data/... or user://)?
+static func exists(p_kind: String, p_name: String) -> bool:
+	var f := SandboxSetup.safe_name(p_name) + ".json"
+	return FileAccess.file_exists(DIRS[p_kind] + f) or FileAccess.file_exists(USER_DIRS[p_kind] + f)
+
+
 func key() -> String:
 	return ("maps/" if kind == "battle" else "explore/") + SandboxSetup.safe_name(map_name)
 

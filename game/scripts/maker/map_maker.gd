@@ -105,6 +105,13 @@ var _title: Label
 var _status: Label
 var _help: Label
 var _open_menu: PopupMenu
+# save as
+var _save_box: Control  ## dims the screen behind the save as card; hidden when it's closed
+var _save_name: LineEdit
+var _save_list: ItemList
+var _save_where: Label
+var _save_warn: Label
+var _save_ok: Button
 var _view_buttons := {}
 # options bar
 var _opt_groups := {}
@@ -243,6 +250,62 @@ func save() -> void:
 	Game.maker_map = doc.key()
 	_say(("saved " + path) if path != "" else "save failed")
 	_refresh_marks()
+
+
+## Save under a new name, or over another map of the same kind. The map under its old name stays as it was.
+func save_as(new_name: String) -> void:
+	doc.map_name = SandboxSetup.safe_name(new_name)
+	_syncing = true
+	_name_edit.text = doc.map_name
+	_syncing = false
+	save()
+
+
+func open_save_as() -> void:
+	if hide_ui:
+		hide_ui = false
+		_root.visible = true
+		_fit_view()
+	_save_name.text = doc.map_name
+	_save_list.clear()
+	var prefix := doc.key().get_slice("/", 0) + "/"
+	for key in MapDoc.list_all():
+		if key.begins_with(prefix):
+			_save_list.add_item(key.substr(prefix.length()))
+	_save_where.text = "%s maps go in %s" % [doc.kind, MapDoc.DIRS[doc.kind].trim_prefix("res://")]
+	_save_box.visible = true
+	_on_save_name(_save_name.text)
+	_save_name.grab_focus()
+	_save_name.select_all()
+
+
+func _close_save_as() -> void:
+	_save_box.visible = false
+	_save_name.release_focus()
+
+
+func _confirm_save_as() -> void:
+	if not _save_ok.disabled:
+		_close_save_as()
+		save_as(_save_name.text)
+
+
+## Says where the map lands and whether that writes over another map.
+func _on_save_name(t: String) -> void:
+	var n := SandboxSetup.safe_name(t)
+	var taken := MapDoc.exists(doc.kind, n)
+	var other := taken and n != SandboxSetup.safe_name(doc.map_name)
+	_save_ok.disabled = t.strip_edges() == ""
+	_save_ok.text = ("Overwrite " + n) if other else "Save"
+	if t.strip_edges() == "":
+		_save_warn.text = ""
+	elif other:
+		_save_warn.text = "%s/%s already exists; saving replaces it" % [doc.key().get_slice("/", 0), n]
+	elif taken:
+		_save_warn.text = "saves over this map"
+	else:
+		_save_warn.text = "new map: %s%s.json" % [MapDoc.DIRS[doc.kind].trim_prefix("res://"), n]
+	_save_warn.add_theme_color_override("font_color", MakerUI.BAD if other else MakerUI.DIM)
 
 
 ## Play the map: save it, then a battle map opens in the combat sandbox with its fight started, an
@@ -447,7 +510,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var k := event as InputEventKey
-	if k == null or not k.pressed or k.is_echo() or _typing():
+	if k == null or not k.pressed or k.is_echo():
+		return
+	if _save_box.visible:
+		if k.keycode == KEY_ESCAPE:
+			_close_save_as()
+		return
+	if _typing():
 		return
 	var cmd := k.ctrl_pressed or k.meta_pressed
 	if cmd:
@@ -460,7 +529,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			KEY_Y:
 				redo()
 			KEY_S:
-				save()
+				if k.shift_pressed:
+					open_save_as()
+				else:
+					save()
 			KEY_D:
 				_copy_to_stamp()
 		return
@@ -1323,8 +1395,52 @@ func _build_ui() -> void:
 	_help.size_flags_stretch_ratio = 2.0
 	_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	sb.add_child(_help)
+	_build_save_as()
 	_set_tool(tool)
 	_show_page("assets")
+
+
+## The save as card, centred over a dimmed screen: a name, the maps of this kind to pick one to overwrite.
+func _build_save_as() -> void:
+	_save_box = ColorRect.new()
+	(_save_box as ColorRect).color = Color(0, 0, 0, 0.45)
+	_save_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_save_box.mouse_filter = Control.MOUSE_FILTER_STOP
+	_save_box.visible = false
+	_root.add_child(_save_box)
+	var card := PanelContainer.new()
+	card.add_theme_stylebox_override("panel", MakerUI.box(MakerUI.BG, 10, 16.0, MakerUI.LINE))
+	card.custom_minimum_size = Vector2(420, 0)
+	card.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	card.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	card.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_save_box.add_child(card)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	card.add_child(col)
+	col.add_child(MakerUI.label("Save as", 17, MakerUI.ACCENT, true))
+	_save_name = LineEdit.new()
+	_save_name.placeholder_text = "map name, e.g. highland_02"
+	_save_name.text_changed.connect(_on_save_name)
+	_save_name.text_submitted.connect(func(_t: String) -> void: _confirm_save_as())
+	col.add_child(_save_name)
+	_save_warn = MakerUI.label("", 12, MakerUI.DIM)
+	col.add_child(_save_warn)
+	_save_where = MakerUI.label("", 12, MakerUI.DIM)
+	col.add_child(_save_where)
+	col.add_child(MakerUI.label("or pick one to overwrite:", 12, MakerUI.DIM))
+	_save_list = ItemList.new()
+	_save_list.custom_minimum_size = Vector2(0, 220)
+	_save_list.item_selected.connect(func(i: int) -> void:
+		_save_name.text = _save_list.get_item_text(i)
+		_on_save_name(_save_name.text))
+	_save_list.item_activated.connect(func(_i: int) -> void: _confirm_save_as())
+	col.add_child(_save_list)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	col.add_child(row)
+	_text_button(row, "Cancel", _close_save_as)
+	_save_ok = _text_button(row, "Save", _confirm_save_as)
 
 
 func _card(radius := 10) -> PanelContainer:
@@ -1368,6 +1484,7 @@ func _build_top() -> void:
 		_open_menu.position = Vector2i(open.get_screen_position() + Vector2(0, open.size.y + 4))
 		_open_menu.popup())
 	_icon(bar, "save", "Save  (ctrl S)", save)
+	_icon(bar, "save", "Save as: a new name, or over another map  (ctrl shift S)", open_save_as, 34.0, "Save as")
 	bar.add_child(MakerUI.spacer(6))
 	bar.add_child(MakerUI.separator(true))
 	bar.add_child(MakerUI.spacer(6))
@@ -2183,7 +2300,7 @@ func _build_map_page(body: VBoxContainer) -> void:
 	var keys := MakerUI.Drawer.new("map/keys", "Keys", -1, not _closed.has("map/keys"), 14)
 	keys.toggled_open.connect(_on_drawer)
 	body.add_child(keys)
-	var k := MakerUI.label("Drag paints, right drag does the opposite.\nShift drag, middle drag or two fingers: pan. Arrows pan too.\nWheel or pinch: zoom. Space: fit.\nV select, B place, X erase, 1-4 sculpt, P ground, L path, W river, T stairs, C cut, F fill, Z zone.\nR turn, M mirror, Del delete, Esc deselect, ctrl D copy to the stamp, alt click pick up.\n[ ] brush size, Q turn the view, G grid, H hide panels.\nctrl Z undo, ctrl shift Z redo, ctrl S save. F8 comes back here after a play test.", 12, MakerUI.DIM)
+	var k := MakerUI.label("Drag paints, right drag does the opposite.\nShift drag, middle drag or two fingers: pan. Arrows pan too.\nWheel or pinch: zoom. Space: fit.\nV select, B place, X erase, 1-4 sculpt, P ground, L path, W river, T stairs, C cut, F fill, Z zone.\nR turn, M mirror, Del delete, Esc deselect, ctrl D copy to the stamp, alt click pick up.\n[ ] brush size, Q turn the view, G grid, H hide panels.\nctrl Z undo, ctrl shift Z redo, ctrl S save, ctrl shift S save as. F8 comes back here after a play test.", 12, MakerUI.DIM)
 	k.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	keys.body.add_child(k)
 

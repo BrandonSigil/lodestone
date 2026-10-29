@@ -8,6 +8,11 @@ func run(m: Node, script: String) -> void:
 		match a[0]:
 			"tool":
 				m.call("_set_tool", a[1])
+			"saveas":  # open the save as card, optionally with a name typed
+				m.call("open_save_as")
+				if a.size() > 1:
+					(m.get("_save_name") as LineEdit).text = a[1]
+					m.call("_on_save_name", a[1])
 			"item":
 				m.call("pick_item", MakerCatalog.by_id(a[1]))
 			"page":

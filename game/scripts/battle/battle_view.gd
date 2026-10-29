@@ -3,7 +3,8 @@ extends Node2D
 ## maker's Play test and for the screenshot tools. Maps are edited in the map maker (F8).
 ##
 ## Opens the map in Game.sandbox_map (set by the map maker's Play test) or else data/maps/highland.json.
-## R restarts the fight with new dice. The HUD is a round label, END TURN, the last info line and a short log.
+## R restarts the fight with new dice. The HUD is a round label, END TURN, BACK TO MAKER, the last info line and
+## a short log.
 ## The labels are developer labels, not player-facing text, so they don't go through Txt, except the round line.
 
 const HUD_H := 44.0
@@ -91,6 +92,7 @@ func _build_hud() -> void:
 	row.add_child(_phase)
 	row.add_child(_button("RESTART (R)", func() -> void: _start()))
 	row.add_child(_button("END TURN (E)", func() -> void: if battle: battle.end_player_phase()))
+	row.add_child(_button("BACK TO MAKER (F8)", func() -> void: Game.go(Game.MAKER)))
 	_info = Label.new()
 	_info.add_theme_font_size_override("font_size", 13)
 	_info.add_theme_color_override("font_color", Color(0.9, 0.92, 0.87))

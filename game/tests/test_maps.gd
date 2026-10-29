@@ -395,6 +395,34 @@ func test_map_maker_edits_and_undo() -> void:
 	tree.root.get_node("Game").set("maker_map", keep)
 
 
+func test_map_maker_save_as() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	var keep: String = tree.root.get_node("Game").get("maker_map")
+	var maker: Node = load("res://scenes/map_maker.tscn").instantiate()
+	tree.root.add_child(maker)
+	maker.call("_open", MapDoc.create("battle", "test_tmp_a", _island(8, 1)))
+	maker.call("save")
+	maker.call("open_save_as")
+	ok((maker.get("_save_box") as Control).visible, "ctrl shift S opens the card")
+	maker.call("_on_save_name", "test_tmp_a")
+	eq((maker.get("_save_ok") as Button).text, "Save", "its own name just saves")
+	maker.call("_close_save_as")
+	maker.call("save_as", "Test Tmp B")
+	eq(maker.get("doc").map_name, "test_tmp_b", "names are made file-safe")
+	ok(MapDoc.exists("battle", "test_tmp_a") and MapDoc.exists("battle", "test_tmp_b"), "the old name stays, the new one is written")
+	eq(String(tree.root.get_node("Game").get("maker_map")), "maps/test_tmp_b", "the maker reopens the new name")
+	maker.call("open_save_as")
+	maker.call("_on_save_name", "test_tmp_a")
+	eq((maker.get("_save_ok") as Button).text, "Overwrite test_tmp_a", "another map's name warns before overwriting")
+	maker.call("_close_save_as")
+	for n in ["test_tmp_a", "test_tmp_b"]:
+		for dir in [MapDoc.DIRS.battle, MapDoc.USER_DIRS.battle]:
+			DirAccess.remove_absolute(dir + n + ".json")
+	tree.root.remove_child(maker)
+	maker.free()
+	tree.root.get_node("Game").set("maker_map", keep)
+
+
 func test_prop_extras_round_trip() -> void:
 	var g := _island(6)
 	g.add_prop(Vector2i(1, 1), "ph_lich_king_throne", Vector2i(2, 2), 1.0, 2.0, false, {"blob": true, "name": "Lich king throne", "id": "blob_01", "note": "big", "face": 1, "flip": true})
