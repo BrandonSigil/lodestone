@@ -106,6 +106,8 @@ func _ready() -> void:
 	for g in groups:
 		if settled.has(String(g.def.id)):
 			g.state = settled[String(g.def.id)]
+		elif ExploreRules.stays_beaten(map.map_name, g.def, Game.meta.flags):
+			g.state = "gone"
 	var done_before: Array = memory.get("done", [])
 	for t in map.things:
 		var copy := t.duplicate()
@@ -997,6 +999,8 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	for f: Dictionary in foes:
 		f.state = "gone"
 		downed += f.units.size()
+		if f.def.get("boss", false):
+			Game.set_flag(ExploreRules.beaten_flag(map.map_name, String(f.def.id)))
 		boss = boss or bool(f.def.get("boss", false))
 		ends = ends or bool(f.def.get("end", false))
 		if f.def.loot != "":

@@ -18,6 +18,17 @@ const JOIN_RANGE := 3  ## other groups this close to a fight join it
 const MAP_EFFECTS := ["open", "remove", "noise", "reveal", "exit", "fight", "sneak_attack", "ambushed", "pacify", "travel"]
 
 
+## A beaten boss stays beaten for good, through falls and new trips in ([USER] 2026-10-29: once the
+## Lich King is cleared the party doesn't fight through his map again unless it wants to). Other groups
+## come back after a fall or a trip out, as before.
+static func beaten_flag(map_name: String, group_id: String) -> String:
+	return "beaten_%s_%s" % [map_name, group_id]
+
+
+static func stays_beaten(map_name: String, group: Dictionary, flags: Array) -> bool:
+	return bool(group.get("boss", false)) and flags.has(beaten_flag(map_name, String(group.id)))
+
+
 static func dist(a: Vector2i, b: Vector2i) -> float:
 	return Vector2(a).distance_to(Vector2(b))
 

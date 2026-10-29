@@ -93,6 +93,13 @@ func play(t: SceneTree) -> void:
 	_check(game.run.members.all(func(m: Dictionary) -> bool: return m.hp == game.run.max_hp(m)), "everyone at full HP")
 	_check(game.has_flag("lodestone_revealed"), "a fall reveals the Lodestone")
 
+	# A beaten boss stays beaten: back in the crypt after the fall, the throne is empty.
+	game.explore_map = "crypt"
+	game.explore_entry = Vector2i(-1, -1)
+	game.go(game.EXPLORE)
+	s = await _explore("crypt")
+	_check(s.get("groups").any(func(g: Dictionary) -> bool: return g.def.id == "throne" and g.state == "gone"), "the Lich King stays beaten")
+
 	print("E2E %s: %d failed checks" % ["PASS" if fails == 0 else "FAIL", fails])
 	finished = true
 
@@ -256,7 +263,7 @@ func _road_to_pass() -> Node:
 	for attempt in TRIES:
 		s.call("_start_leg", "pass")
 		_check(s.call("walking"), "on the road to the pass")
-		var food_before: int = game.run.food
+		var eaten := 0  ## food the meals on the walk took (finds and foraging add some back)
 		var foraged := false
 		var fell := false
 		_heal_up()
@@ -274,10 +281,12 @@ func _road_to_pass() -> Node:
 			if s.get("_busy"):
 				await _press(s, 0)
 			else:
+				var food: int = game.run.food
 				s.call("fast_forward")
+				eaten += maxi(0, food - game.run.food)
 		if not fell:
 			_check(game.travel.get("at", "") == "pass", "arrived at the pass")
-			_check(game.run.food < food_before + 6, "food drained on the walk")
+			_check(eaten > 0, "food drained on the walk")
 			return s
 		var v := await _fell("a road fight")
 		await _use(v, "gate", "OPT_GO_ON")

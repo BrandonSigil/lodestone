@@ -359,3 +359,15 @@ func test_village_maps_link_up() -> void:
 	var door: Dictionary = q.things.filter(func(t: Dictionary) -> bool: return t.kind == "enter")[0]
 	var inside: Vector2i = door.cell + Vector2i(0, -1)
 	ok(not q.grid.line_of_sight(inside, book[0].cell), "the book can't be seen from the door")
+
+
+func test_a_beaten_boss_stays_beaten() -> void:
+	var throne := {"id": "throne", "boss": true}
+	var cave := {"id": "cave", "boss": false}
+	var flag := ExploreRules.beaten_flag("crypt", "throne")
+	ok(not ExploreRules.stays_beaten("crypt", throne, []), "the boss is there before he's beaten")
+	ok(ExploreRules.stays_beaten("crypt", throne, [flag]), "once beaten he stays gone")
+	ok(not ExploreRules.stays_beaten("crypt", cave, [ExploreRules.beaten_flag("crypt", "cave")]), "other groups come back")
+	ok(not ExploreRules.stays_beaten("snow_pass", throne, [flag]), "the flag is per map")
+	var crypt := _crypt()
+	ok(crypt.groups.any(func(g: Dictionary) -> bool: return g.id == "throne" and g.boss), "the crypt's throne group is a boss")
