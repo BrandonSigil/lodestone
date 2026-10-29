@@ -213,16 +213,34 @@ So the chain has its shape: **trip, then materials, then a settler's build, then
 - **A trip runs 30 to 45 minutes, with a robust save** (omr-4) so a player can bookmark a trip and come back.
 - **The goal stays in view all three ways** (omr-5), like Stardew's community center: each building shows what its next step needs; a menu gives the global view of open and done steps; the player flags any number of them as tracked goals; settlers ask for things.
 - **Temporary power comes from the road; lasting power from the hand-made maps** (omr-6). Random encounters give blessings and camp meals, and also disadvantages. Exploring the hand-made explore maps gives long-lasting upgrades.
+- **Blessings are given at random** (omr-7) by road encounters, and last the trip.
+- **Setbacks come from bad outcomes of road events** (omr-8). Road fights cost something too: the party spends food and potions caring for itself before it even reaches the explore map.
+- **Meals: the chef's recipes are prepared at home and cooked at a camp on the road** (omr-9). At home a recipe turns ingredients into a meal item that takes a full pack slot; on the road, "stop and make camp" cooks it over the fire for the buff.
+- **The hand-made maps give rare materials, keys and shortcuts, and stat items** (omr-10): materials for home upgrades and weapon upgrades.
+- **Save and quit anywhere outside a fight; a quit fight restarts from its first turn** (omr-11).
+- **A restore step asks for specific items and is done when you come back from your next trip** (omr-12).
 
-The chain, filled in: **a 30 to 45 minute trip; random road encounters give trip-long blessings and setbacks; the hand-made maps give lasting upgrades; the pack brings home food, potion materials, metal and wood; at home a settler's building takes them for its next restore step; that step gives a better start (better food, a sharper weapon, a bigger pack); you pin the next step and go again.**
+The chain, filled in: **a 30 to 45 minute trip; random road encounters give trip-long blessings, setbacks and the chance to cook a meal at camp; the hand-made maps give lasting upgrades; the pack brings home food, potion materials, metal and wood; at home a settler's building takes them for its next restore step; that step gives a better start (better food, a sharper weapon, a bigger pack); you pin the next step and go again.**
 
-### Gaps these answers open
-- **How blessings are offered** and how long they last (a trip, or until a fall). Batch 2.
-- **What disadvantages are** and how you get them. Batch 2.
-- **Camp meals:** cooked on the road from raw food, made at home by the chef, or both. Batch 2.
-- **What the hand-made maps' lasting upgrades are.** Batch 2.
-- **The save:** suspend anywhere, save at places, or both. Today the game saves on every scene change. Batch 2.
-- **How a restore step works:** paid and done at once, done after the next trip, or asking for specific items. Batch 2.
+### Defaults for what's left (proposals, tunable in data)
+- **Blessings and setbacks** last until the party is home (GO HOME or a fall); up to 5 blessings at once; a road encounter that gives one draws it at random from a pool in `game/data/`. Start with about 10 blessings and 6 setbacks, placeholder text. Examples of kind, not content: rage builds faster, crits heal 1, +1 move; food spoils faster, -1 armor, start fights with less mana.
+- **Camp:** once per overworld leg, from the road menu; it costs a little walking time (food drains as usual). Cooking a meal there gives its buff for the next 2 fights. A meal is one pack cell or bigger, by recipe.
+- **Restore steps** list exact items (3 metal, 2 wood, 1 rare find). Paying starts the step; it finishes the next time the party comes home. A building's ladder opens once its settler has moved in.
+- **Tracked goals:** any number can be flagged; the frame shows the tracked steps' missing items on a trip, and a pickup that counts says so.
+- **Lasting map rewards:** a stat item gives one character +2 HP or +1 to one stat for good; a key opens a door, cache or shortcut on its map for good.
+
+### Gaps (content, not blocking the build)
+- **Which buildings, which settlers, which steps.** Brandon's examples: the inn kitchen (a chef, recipes) and the smithy (the blacksmith, the forge, a sharpening stone, then weapon upgrades). Which settler unlocks the pack upgrade is open. Settlers and their buildings are Brandon's to name; the build uses placeholders.
+- **The blessing and setback pools** need real content once the system is in.
+
+### Build order (card `design-omr-build`)
+*Proposal:* after the player-choice build.
+1. **Bookmark save.** Save and quit anywhere outside a fight; a fight quit midway restarts from its first turn on load. Small, and it protects every test after it.
+2. **Restore loop.** Material items (food ingredients, potion materials, metal, wood, rare finds) in the pack; village buildings with restore ladders in data (exact items, finished on the next return home, opened by their settler); each building shows its next step's needs; a global list with tracked goals; tracked needs in the frame on trips.
+3. **The first two ladders.** The smithy (forge, sharpening stone, then weapon upgrades +1 to +3, which finishes Player choice's "smithy weapon upgrades") and the inn kitchen (recipes). The pack upgrade goes on a ladder once Brandon names its settler.
+4. **Meals and camp.** At home, cook a recipe into a meal item; on the road, MAKE CAMP once a leg to eat it for a 2-fight buff.
+5. **Blessings and setbacks.** Road encounters draw a random blessing; bad event outcomes give a setback; both last until home and show in the Lodestone menu.
+6. **Lasting map rewards.** Stat items, keys and rare materials as things on explore maps; the map builder places them.
 - **Food is both a supply and a material** (omr-1). Raw food you carry eats pack room either way; it's spent on the road, cooked into meals, or banked for the kitchen.
 - **Only "better starts" was picked** of the five unlock kinds, but Brandon's examples are services (a kitchen, a forge). *Reading:* builds unlock settler services that make trips start stronger; no new overworld places, room-for-companions or flat perks from builds.
 
@@ -239,12 +257,12 @@ The chain, filled in: **a 30 to 45 minute trip; random road encounters give trip
 ### Batch 2 (posted 2026-10-29)
 | Card | Question | Answer |
 |---|---|---|
-| `design-omr-7-blessings` | How blessings are offered: pick one of three, given at random, or a blessing with a price? | open |
-| `design-omr-8-setbacks` | Where setbacks come from: bad event outcomes, trades you choose, or lost fights and ambushes? | open |
-| `design-omr-9-meals` | Camp meals: cooked on the road, made at home by the chef, or the chef's recipes cooked on the road? | open |
-| `design-omr-10-lasting` | What the hand-made maps give for good (multi): stat items, rare materials for big restore steps, skill ranks, keys and shortcuts | open |
-| `design-omr-11-save` | The save: suspend anywhere, save at places, or both? | open |
-| `design-omr-12-restore` | A restore step: done the moment you pay, done after your next trip, or asks for specific items? | open |
+| `design-omr-7-blessings` | How blessings are offered: pick one of three, given at random, or a blessing with a price? | Given at random |
+| `design-omr-8-setbacks` | Where setbacks come from: bad event outcomes, trades you choose, or lost fights and ambushes? | Bad event outcomes; road fights already cost supplies |
+| `design-omr-9-meals` | Camp meals: cooked on the road, made at home by the chef, or the chef's recipes cooked on the road? | Prepared at home (a pack slot), cooked at a camp on the road |
+| `design-omr-10-lasting` | What the hand-made maps give for good (multi): stat items, rare materials for big restore steps, skill ranks, keys and shortcuts | Rare materials, keys, stat items |
+| `design-omr-11-save` | The save: suspend anywhere, save at places, or both? | Anywhere outside fights; a quit fight restarts |
+| `design-omr-12-restore` | A restore step: done the moment you pay, done after your next trip, or asks for specific items? | Specific items, done when you come back |
 
 ## Inventory
 ### Brandon's opening (2026-10-29)
