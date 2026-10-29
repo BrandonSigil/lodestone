@@ -206,9 +206,10 @@ html.locked { overflow: hidden; }
 .pill.pickup { color: var(--gem); background: var(--gem-soft); }
 /* Quick actions in the masthead, and their windows */
 .qa { display: flex; gap: 8px; flex-wrap: wrap; }
-.qa button { border: 1.5px solid color-mix(in srgb, var(--parchment-ink) 30%, transparent); background: color-mix(in srgb, #fff 45%, var(--parchment)); color: var(--parchment-ink); border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: 14px; display: inline-flex; gap: 7px; align-items: center; }
-.qa button:hover { border-color: var(--parchment-ink); background: #fff; }
-.qa button span { color: #2f6fb5; font-size: 12px; }
+.qa a { text-decoration: none; }
+.qa button, .qa a { border: 1.5px solid color-mix(in srgb, var(--parchment-ink) 30%, transparent); background: color-mix(in srgb, #fff 45%, var(--parchment)); color: var(--parchment-ink); border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: 14px; display: inline-flex; gap: 7px; align-items: center; }
+.qa button:hover, .qa a:hover { border-color: var(--parchment-ink); background: #fff; }
+.qa button span, .qa a span { color: #2f6fb5; font-size: 12px; }
 .qa-body { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; max-width: 760px; }
 .rep h4 { font-family: var(--display); font-weight: 400; font-size: 18px; margin: 18px 0 6px; }
 .rep p { margin: 0 0 8px; font-size: 16px; line-height: 1.55; }
@@ -304,7 +305,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
     </div>
     <div class="qa" aria-label="Quick actions">
       <button data-act="qa-report"><span aria-hidden="true">◆</span> Status report</button>
-      <button data-act="qa-launch"><span aria-hidden="true">▶</span> Launch game</button>
+      <a href="lodestone://launch" target="_blank" rel="noopener" data-act="qa-launch"><span aria-hidden="true">▶</span> Launch game</a>
       <button data-act="qa-roadmap"><span aria-hidden="true">◇</span> Roadmap</button>
     </div>
     <div class="tally" aria-live="polite">
@@ -787,22 +788,25 @@ function roadmapHtml() {
   }).join("");
 }
 
-// Launch: the page can't start programs on the Mac, so it asks the project manager, who opens the game.
+// Launch: the button is a lodestone://launch link that the Lodestone Launcher app on the Mac answers
+// (tools/launcher/build_launcher.sh). If the link can't reach it, the project manager can launch the game.
 function launchHtml() {
   const last = [...S.requests].filter((r) => r.kind === "launch").sort((a, b) => String(b.at).localeCompare(String(a.at)))[0];
-  const state = !last ? `<p>Sending the request…</p>`
-    : last.status === "done" ? `<p><b>Launched</b> ${esc(ago(last.done_at || last.at))}. ${esc(last.result || "")}</p>`
-    : `<p><b>Asked the project manager</b> ${esc(ago(last.at))}. The game opens on your screen at its next check, within 15 minutes. To have it now, say "launch" in the Lodestone chat.</p>`;
+  const pending = last && last.status !== "done" && Date.now() - new Date(last.at).getTime() < 30 * 60000;
+  const state = pending ? `<p><b>Asked the project manager</b> ${esc(ago(last.at))}. The game opens on your screen at its next check, within 15 minutes, or at once if you say "launch" in the Lodestone chat.</p>`
+    : `<p><b>Opening the game…</b> The Lodestone Launcher starts it on your screen. The first time, your Mac may ask whether to open the Launcher; allow it.</p>
+       <div class="row"><button class="btn small" data-act="qa-launch-pm">Nothing opened? Ask the project manager</button></div>`;
   return `<div class="launch-state">${state}</div>
     <p class="rep-meta">Or start it yourself in Terminal:</p>
     <div class="cmd"><code id="launch-cmd">open -n -a Godot --args --path ~/lodestone/game</code><button class="btn small" data-act="qa-copy">Copy</button></div>`;
 }
 async function requestLaunch() {
-  openQa("launch");
   const recent = S.requests.find((r) => r.kind === "launch" && r.status === "new" && Date.now() - new Date(r.at).getTime() < 15 * 60000);
-  if (recent) return;
-  try { await S.db.collection("requests").add({ kind: "launch", status: "new", at: new Date().toISOString() }); }
-  catch { toast("Couldn't send the launch request. Try again in a moment."); }
+  if (!recent) {
+    try { await S.db.collection("requests").add({ kind: "launch", status: "new", at: new Date().toISOString() }); }
+    catch { toast("Couldn't send the launch request. Try again in a moment."); return; }
+  }
+  renderQa();
 }
 
 function renderAll() { renderTally(); renderDesk(); renderTeam(); renderRefs(); renderLib(); if (S.openRole) renderRoleView(); if (S.qa && S.qa !== "report") renderQa(); }
@@ -872,7 +876,8 @@ document.addEventListener("click", async (ev) => {
       case "closerole": closeRole(); break;
       case "qa-report": runReport(); break;
       case "qa-roadmap": openQa("roadmap"); break;
-      case "qa-launch": requestLaunch(); break;
+      case "qa-launch": openQa("launch"); break;  // the link itself opens the Launcher; this shows what's happening
+      case "qa-launch-pm": requestLaunch(); break;
       case "closeqa": closeQa(); break;
       case "qa-copy": {
         const txt = $("launch-cmd")?.textContent || "";
