@@ -31,6 +31,7 @@ Exported 2026-10-27 (PR #12), refreshed 2026-10-27 11:30 UTC after the night's w
 Open the HTML files in a browser. They are self-contained except for Google Fonts.
 
 Published originals (Brandon's account only):
+- Lodestone Studio (home base: desk, team, references, library; source `tools/studio-page/index.html`): https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7
 - Studio Playbook: https://claude.ai/artifact/YLjyZGiFGzjF819zwAyJTy
 - Style Lab: https://claude.ai/artifact/Q3D7yYdUAeS9eEs7cS5XsK
 - Battle Map Guide: https://claude.ai/artifact/JjxHePXisJfFFTxoddXjYB

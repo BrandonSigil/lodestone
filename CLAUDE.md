@@ -15,6 +15,11 @@ Read `docs/context/README.md` first, then `docs/context/current-state.md`. Toget
 - After a change, run `tools/check.sh` (headless import, unit tests, scene smoke runs) and fix every error.
 - Any Godot run that opens a window (the `game/tools/*_shot.gd` screenshot scripts) goes through `tools/godot.sh <args>`, never the bare binary. It opens the window on Brandon's second display and hands focus back, so his screen doesn't jump. Headless runs can use either.
 
+## Lodestone Studio (Brandon's home base page)
+- Decisions Brandon owes go on his desk at https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 as cards with screenshots (pick one, or Neither with a why). Picsart batches get a "go" card before the run and a "review" card after, each picture scored against the References wall, for his stamp.
+- At the start of a turn, read answered cards and new notes for your role; mark them done when you've acted. Keep your role's status and log current.
+- How: `docs/systems/studio.md`.
+
 ## Layout
 - `docs/decisions.md`: every design call, tagged and dated.
 - `docs/style-bible.md`: Brandon's art rules. Read it before touching shaders or visuals.
