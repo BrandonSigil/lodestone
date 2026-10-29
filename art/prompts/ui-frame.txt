@@ -1,0 +1,36 @@
+LODESTONE UI FRAME (the border around the game screen; style bible R9, section 11)
+
+REFERENCES
+- Image 1: docs/art/references/ui-frame-leaf-reference.png. This is the look: match its bands, double rules, leaf sprigs, diamond stamps and rods, colours, outline and paper closely.
+- Image 2: art/templates/ui/ui-frame-layout.png. This is the layout: keep every band, socket, diamond, sprig and the window exactly where and how big they are. Its greys are placeholders; paint them in image 1's look.
+- Do not attach the old ornate mock-up or any other frame picture: models copy them line for line.
+
+WHAT TO DRAW
+A decorative frame for a 2D game screen, flat and straight on, 16:9, 1920 x 1080, with a thin margin of cream paper around it. The frame is the only thing in the picture. The big window inside it is one flat fill of pure magenta #ff00ff with nothing in it, so it can be cut out.
+- Top and sides: a thin deep green band with a pale double rule along both edges, like image 1. Small blue diamonds and thin pale rods with diamond ends run along it.
+- Top centre: a blue diamond medallion that breaks the band's edges, with a small leaf sprig on each side.
+- Each top corner: a small diamond block, with a leaf sprig running a short way down the side.
+- Middle of each side: a blue diamond clasp that sticks out past both edges of the band, the same on both sides.
+- The window's bottom corners curve in, and the band fills each curve with a cluster of leaves, like image 1's bottom corners.
+- Bottom: a deeper band that holds the game's UI, inside the frame:
+  1. Left: one rounded-square empty socket for the bag button, then one diamond and one rod.
+  2. Centre: a large blue diamond medallion that rises above the band's top edge, with a long leaf sprig spreading to each side along the band, like image 1's bottom centre. Its middle is an EMPTY dark diamond socket: no crystal, no symbol, no glow. The Lodestone is drawn separately and placed there.
+  3. Right: four equal rounded-square empty portrait sockets in a row, each with two empty bar troughs below it.
+- Every socket and trough is EMPTY: a flat recessed fill a shade darker than the band, with a pale rim. No icons, faces or bars filled in. Those are drawn separately.
+
+THE LOOK (match image 1)
+- Flat colour fills with one soft painted shadow tone; a light, even paper and print grain over the whole frame.
+- One soft dark outline around each band, socket, diamond and leaf. Never pure black.
+- Leaves are simple almond shapes in two greens with a centre vein, on thin stems.
+- Clean, symmetrical, calm: big plain stretches of band between ornaments. Left and right halves mirror each other except for the bag and portrait sockets.
+
+COLOUR (sampled from image 1)
+- Band: deep green #234d48 to #28544e.
+- Diamonds and the inner rule: blue #42679b, with pale blue #90afcd highlights; dark socket blue #29496e.
+- Leaves: sage green #8b9b68 with a lighter #a9b884 side.
+- Double rules, rods and socket rims: cream #e0ddcf.
+- Paper: #f5eedc.
+- Outline: dark plum-grey #373335.
+
+AVOID
+Wolves, animal heads, animals, people, statues, shrines, arches, knotwork, braids, filigree, baroque scrolls, gold, metal shine, gems, crystals, glow, bevels, gradients, drop shadows, 3d render, photo, perspective, orange, red, pure black, icons, faces or characters in the sockets, filled health bars, bags, text, letters, numbers, labels, logos, watermark, anything inside the magenta window.

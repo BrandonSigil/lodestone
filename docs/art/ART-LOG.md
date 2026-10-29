@@ -42,6 +42,9 @@ The generated outputs are not in git, so a second machine can't see them. The re
 | Hades look concepts (ring, mountain, cutaway, shade) | `art/picsart/out/hades-concepts/` | Picsart | **reference** | Look only, never shipped; local only. |
 | Surround examples (crypt, snow) | `docs/art/references/surround-*-example.png` | Picsart | reference | Mood examples for the wallpaper. |
 | Temple and zone test kits | `art/picsart/out/temple_*`, `kit_*`, `zones-*` | Picsart tests | **archived** | Early tests; kept for comparison. |
+| UI frame v1 (flat bands, round medallion) | `art/picsart/out/ui-frame/ui-frame_v1.png` | Brandon in Picsart, `art/prompts/ui-frame.txt` | **archived**, local only | Superseded by the leaf look (`ui-frame-leaf-reference.png`). |
+| UI frame mock-up and shrine concept | `docs/art/references/ui-frame-mockup.png`, `ui-frame-shrine-concept.png` | Brandon | **reference** | Earlier ideas, kept on file; the shrine centre was dropped for the diamond. Never attach them to a frame prompt (models copy them). |
+| UI frame leaf reference | `docs/art/references/ui-frame-leaf-reference.png` | Brandon | **reference** | The look for the frame (thin green bands, leaves, blue diamonds); `ui-frame.txt` uses it as image 1. |
 
 ## Batch log
 

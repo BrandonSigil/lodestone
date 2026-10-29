@@ -18,6 +18,7 @@ Paste a style block once into a Text node in a Picsart workflow (or keep it as a
 | `sheet-prop-grid.txt` | 16 props on one 4 x 4 sheet for a setting (`[ZONE]`, `[LIST]`); used by `tools/art/picsart_village.py`, cut by `tools/art/village_cut.py` |
 | `sheet-character-concepts.txt` | 8 candidate characters on one 4 x 2 grid (three-quarter SE view, 1K, no reference) to choose a design before any sheets. Edit the eight `THIS RUN` lines per run. Check the grid with `tools/art/silhouette_check.py` |
 | `sheet-building.txt` | One whole building on a square footprint, roof on, door on the left front wall (`[ZONE]` = the building) |
+| `ui-frame.txt` | The screen border that holds the UI (bottom band with bag, Lodestone socket, four portrait sockets). Image 1 is Brandon's leaf frame `docs/art/references/ui-frame-leaf-reference.png` (the look), image 2 the grey layout `art/templates/ui/ui-frame-layout.png` (from `tools/art/ui_frame_layout.py`). Never attach the old ornate mock-up |
 | `ask-*.txt` | Example asks in caveman-free plain words, to copy and edit |
 
 Rules behind every block: `docs/art/battle-maps.md` (B1 to B32) and `docs/art/characters.md` (C1 to C29). If a rule changes there, change the block here too.
