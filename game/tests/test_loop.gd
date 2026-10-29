@@ -291,3 +291,29 @@ func test_settled_groups_stay_settled() -> void:
 	s.free()
 	Game.explore_memory.clear()
 	Game.explore_map = "home"
+
+
+## Playtester bug 01 (2026-10-29): a second start_fight while a fight was on made a second Battle, and the
+## first one played on with no owner, throwing script errors when it ended. One fight at a time.
+func test_one_fight_at_a_time() -> void:
+	_db()
+	Game.save_enabled = false
+	Game.reset_meta()
+	Game.run = null
+	var tree := Engine.get_main_loop() as SceneTree
+	Game.explore_map = "snow_pass"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	var auto := Battle.auto_fight
+	Battle.auto_fight = true  # the fight begins at once, as in the robot
+	s.start_fight(s.groups[0], "party")
+	var first: Variant = s.battle
+	s.start_fight(s.groups[0], "party")
+	s.start_fight(s.groups[1], "party")
+	Battle.auto_fight = auto
+	ok(first != null and s.battle == first, "the fight on stays the fight")
+	eq(s.find_children("*", "Battle", false, false).size(), 1, "one Battle in the scene")
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"

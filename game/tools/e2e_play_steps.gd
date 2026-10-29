@@ -141,9 +141,9 @@ func _explore(map_name: String) -> Node:
 			finished = true
 			await tree.create_timer(9999).timeout
 		s = await _scene("explore")
-	# Close the wake-up line if there is one.
+	# Close the wake-up line if there is one (or back off from a group that saw the party arrive).
 	if s.get("_dialog") != null:
-		await _press(s, 0)
+		await _dismiss(s)
 	print("-- %s" % map_name)
 	return s
 
@@ -177,11 +177,20 @@ func _use(s: Node, id: String, key: String) -> void:
 	s.set("mode", 2)  # DIALOG, as if the box were open
 	s.call("choose", picked[0], {"thing": t})
 	await _frames(2)
-	if is_instance_valid(s) and s.get("_dialog") != null and tree.current_scene == s:
-		await _press(s, 0)
+	# The result box, and maybe a group that came into sight meanwhile asking what to do. Back off from
+	# those: the robot fights with _fight, on purpose. (Pressing FIGHT there left a fight running behind
+	# the next door: the playtester's bug 01.)
+	for i in 2:
+		if not is_instance_valid(s) or s.get("_dialog") == null or tree.current_scene != s:
+			break
+		if i == 0:
+			await _dismiss(s)
+		else:
+			await _press_text(s, Txt.t("OPT_BACK_OFF"))
 
 
 func _through(s: Node, id: String) -> void:
+	_check(s.get("battle") == null, "no fight running when leaving through " + id)
 	s.call("_travel", _thing(s, id))
 	await _frames(2)
 
@@ -195,6 +204,26 @@ func _press(s: Node, n: int) -> void:
 	if n < buttons.size():
 		(buttons[n] as Button).pressed.emit()
 	await _frames(2)
+
+
+## Close the open box: BACK OFF when a group is asking what to do (the robot starts its fights with
+## _fight), otherwise its first button.
+func _dismiss(s: Node) -> void:
+	if not await _press_text(s, Txt.t("OPT_BACK_OFF")):
+		await _press(s, 0)
+
+
+## Press the open box's button with this text. False when it has none.
+func _press_text(s: Node, text: String) -> bool:
+	var d: Node = s.get("_dialog")
+	if d == null:
+		return false
+	for b in d.find_children("*", "Button", true, false):
+		if (b as Button).text == text:
+			(b as Button).pressed.emit()
+			await _frames(2)
+			return true
+	return false
 
 
 ## A fight on the explore map against one group, played on auto, then OK through the result.
@@ -213,6 +242,7 @@ func _fight(s: Node, group_id: String) -> Node:
 		var xp: int = game.level_state("lead").xp + game.level_state("lead").level * 1000
 		_heal_up()
 		_approach(s, g)
+		_check(s.get("battle") == null, "no fight already running before the %s fight" % group_id)
 		s.call("start_fight", g, "party")
 		var waited := 0.0
 		while s.get("battle") == null or s.get("battle").state != Battle.S.OVER:

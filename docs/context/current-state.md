@@ -83,6 +83,7 @@
 - Rotate the Picsart key.
 
 ## Gotchas for Claude sessions
+- `tools/check.sh` finds Godot on PATH or at `/Applications/Godot.app/Contents/MacOS/Godot`, and fails if it finds neither (it used to pass silently with no tests run).
 - Auto fights (`Battle.auto_fight`) end in a stalemate as a win after a while with nobody hurt, so the game moves on as if won. The E2E robot counts that as a failed check, on road fights and explore fights alike; it is not a fall (the old seed 3 "hang" was this).
 - `CombatBoard` draws through child "slab" nodes; every draw helper paints on `_ci` (the slab being drawn). A `draw_*` call on `self` from those helpers fails. Ground and props are cached per depth row; `grid.version` and the fog tell the board what to redraw.
 - Godot in the cloud rewrites every art `.import` file; `git checkout -- game/art` before committing. Godot 4.7 on Brandon's machines edits project files too; don't commit those edits.

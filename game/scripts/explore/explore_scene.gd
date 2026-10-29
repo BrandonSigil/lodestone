@@ -863,6 +863,8 @@ func _close_dialog() -> void:
 ## first and everyone starts at the leader's side). Groups close by join in.
 ## The party deploys first: everyone but the leader gets a spot around the leader.
 func start_fight(g: Dictionary, how: String) -> void:
+	if battle != null or mode == M.DEPLOY:
+		return  # one fight at a time: a second Battle would leave the first one playing with no owner
 	_walk_token += 1
 	walking_now = false
 	_close_dialog()
