@@ -52,12 +52,23 @@ The run and the village
 - **Combos come from characters, not one system** (c4). A balanced mix of shoving, teamwork, reacting ground and a meter. Each character has 3 or 4 skills of their own; some share an effect under another name (the dog's bark and another fighter's goad both taunt). The fun is picking teammates whose skills fit your play style. Skills should also do something on the road or while exploring where they can (a goal, not a rule): some characters are mostly explorers (the dog: bite slows, bark taunts, but his worth is sniffing out treasure and rare food), some mostly fighters (plus brute-force checks like smashing a door).
 - **Three sizes of fight** (c5): quick, simple maps for random road encounters; medium fights on the walkable explore maps; big showpiece battles for bosses.
 - **Dropping is bleeding out, never death** (c6). A downed piece can be helped up by an AID action from a teammate right next to it; a support character may revive from further away. If nobody reaches it in time, it's out for the fight and stands up after the fight with low HP, as today.
+- **High ground adds damage; flanking adds crit chance** (c7). Climbing is a sure gain, surrounding is a gamble for a big hit.
+- **Defense is a flat cut to every hit; GUARD raises it; the cover bonus goes** (c8). Standing behind something only matters by blocking line of sight: ranged foes can't shoot what they can't see. Cover is not an action. The picture: a big knight jumps into the middle, guards, and takes the round of hits for the team.
+- **Each kind of character pays for skills its own way** (c9), WoW / D&D style. Examples Brandon gave: a mage has mana that starts full and refills a little each turn; the dog has 3 special actions to spend any way (bark 3 times, or bite twice and bark once) that come back slowly; a warrior's rage grows as he hits and gets hit.
+
+### Pushback on c8 (Brandon asked to be argued with)
+Flat armor plus a stronger GUARD is a good fit for sure hits: it's readable, it shows in the forecast, and it gives a tank a real job. Three worries:
+1. **A guarding knight won't draw the hits on his own.** The enemy AI picks whatever deals the most damage. With sure hits and armor shown, every foe walks past the guarding knight to hit the archer. To "take that round of hits for his team" the knight needs a pull: a taunt (his goad), a zone of control (foes next to him must attack him, or take a free hit when they walk away, like D&D's opportunity attacks), or GUARD also shielding the allies next to him (today's shield_wall). *Proposal:* GUARD adds armor, and foes that start next to a guarding piece must attack it or take a free hit to leave. First card of combat batch 3.
+2. **Sight-only cover makes terrain matter less for melee**, and forest becomes just slow ground. That may be fine: height and pushes still shape melee.
+3. **Sight-only cover is all or nothing, and hard to read from one fixed view.** One step sideways and the archer hits in full. The player needs to see which tiles a ranged foe can't see (a sight preview on hover, already on the "not yet" list). *Alternative:* brush and low walls keep a half cover that takes 1 off ranged hits only. Asked in batch 3.
+
+Numbers to watch: with armor 0 to 3 and hits of 3 to 5, a wobble of plus or minus 1 is a big share of each hit, and every hit should still do at least 1.
 
 ### Gaps these answers open
-- **To-hit bonuses have nothing to change** (from c3): height, flanking, STAR POINT, cover, GUARD, SPOOKED, steady_aim, the luck streak and hexes all worked on the hit roll. Batch 2 cards c7 and c8.
+- **To-hit bonuses have nothing to change** (from c3). Height, flanking, cover and GUARD are now settled (c7, c8). Still to convert: STAR POINT (+2 hit), SPOOKED (-3 hit), steady_aim (+2 hit), the luck streak (now pointless) and hexes like MOON NAP that rolled to hit. *Proposal:* hit bonuses become crit chance, hit penalties become -1 damage, hexes always land. Batch 3.
 - **New statuses from c4:** TAUNT (foes must go for the taunter) and SLOW (less move) don't exist yet. Taunt changes the enemy AI's target pick and should show in the danger zone or on the foe.
 - **3 or 4 skills per character vs the job tree** (from c4): today a class has 1 or 2 skills; the hero's jobs (level 5 and 10) are an `[AI]` draft. Where a character's skills come from (fixed per character, learned through jobs, picked at level-ups) is a player-choice question.
-- **Skill economy** (from c4): with 3 or 4 skills each, cooldowns alone may be too much to track. Batch 2 card c9.
+- **Skill economy** (from c9): each kind of character gets its own resource. Open: is the resource tied to the job (every knight has rage) or to the character; do cooldowns stay on top; how the bars show in the frame; and the enemy AI must understand each. Each resource is a small rules module to build; start with the three Brandon named (mana, action charges, rage).
 - **Fight sizes need numbers** (from c5). *Proposal:* road 3 to 4 rounds, explore 5 to 7, showpiece 8 to 12; map sizes to match. Retag to `[USER]` or change.
 - **Bleed-out details** (from c6): how many turns, what HP AID brings back, and whether foes can finish a downed piece early. Batch 2 card c11. "Low health" after the fight is 1 HP today.
 - **Counters always land now**, so trading blows in melee is a sure cost. Check that "ranged picks at melee for free" still feels fair.
@@ -76,21 +87,23 @@ The run and the village
 ### Batch 2 (posted 2026-10-29)
 | Card | Question | Answer |
 |---|---|---|
-| `design-c7-position` | What height and flanking give now that hits always land: damage, crit chance, or height = damage and flanking = crit? | open |
-| `design-c8-defense` | What defense, cover and GUARD do: take points off each hit, block or halve one hit, or only cut crits? | open |
-| `design-c9-skills` | How skills are paid for: cooldowns, a slowly filling pool, or uses per fight? | open |
+| `design-c7-position` | What height and flanking give now that hits always land: damage, crit chance, or height = damage and flanking = crit? | Height = damage, flanking = crit |
+| `design-c8-defense` | What defense, cover and GUARD do: take points off each hit, block or halve one hit, or only cut crits? | Armor takes points off; GUARD raises it; cover only blocks sight (argue with him) |
+| `design-c9-skills` | How skills are paid for: cooldowns, a slowly filling pool, or uses per fight? | Neither: a resource per kind of character (mana, action charges, rage) |
 | `design-c10-goals` | Win conditions beyond defeat all (multi): beat the leader, hold out, reach the exit, protect something | open |
 | `design-c11-bleed` | Bleed-out: how long, and can foes finish a downed piece early? | open |
 | `design-c12-systems` | Board-wide rules on top of skills (multi): reacting ground, a party meter, sandwich follow-ups | open |
 
 ### Queued for batch 3
-Crit size and the damage wobble's width; boss shapes (fortress, objective, several parts, minions); foe types and behaviours (charger, guard, ambusher); actions per turn (move + act is still `[AI]`); a mercy rewind for misclicks; how strong height is overall.
+How a guard pulls hits (zone of control, taunt, or shielding neighbours); half cover or sight only; converting the leftover hit bonuses; whether resources belong to the job or the character; crit size and the damage wobble's width; boss shapes (fortress, objective, several parts, minions); foe types and behaviours (charger, guard, ambusher); actions per turn (move + act is still `[AI]`); a mercy rewind for misclicks; how strong height is overall.
 
 ## Player choice
 Not started. Queued: party size and who comes; how the level pick and the job tree fit; skill and gear builds (few slots and upgrades vs loot); route choice on the overworld; risk and reward (opt-in harder fights, Hades-style vows); sneak, talk or fight; grinding (level caps or not).
 
 ## One more run
-Not started. Queued: what a trip brings home (one material or several); what the village builds; what a building unlocks (classes, gear upgrades, new places, trip-only boons); what a fall costs, if anything, beyond the decided "nothing"; how long one run should be.
+First link, from the inventory theme (inv-5): a recruited character returns to the village and unlocks a pack upgrade, which costs materials brought home. Packing decides how many materials a trip can bring home (inv-4).
+
+Not started as its own theme. Queued: what a trip brings home (one material or several); what the village builds; what a building unlocks (classes, gear upgrades, new places, trip-only boons); what a fall costs, if anything, beyond the decided "nothing"; how long one run should be.
 
 ## Inventory
 ### Brandon's opening (2026-10-29)
@@ -100,6 +113,19 @@ Settled by that: items have shapes, are packed by hand and can be turned. A way 
 
 ### Decided in the grilling
 - **Everything carried shares the grid** (inv-1): gear, food, potions, finds and village materials. Each member's weapon, and maybe one trinket or accessory, sits on that member instead (the trinket is earmarked, not to be built yet). So hauling materials home competes with supplies for room.
+- **One party pack, plus a small belt per character** (inv-2).
+- **In a fight, only what's on a piece's belt; using it is the piece's action** (inv-3).
+- **Packing decides what you bring out and what you bring home** (inv-4). Brandon's model is Stardew Valley's mines: before heading out you choose how much food and how many helpful items (bombs) to bring, knowing it leaves less room for what you collect.
+- **A bigger pack is a village build** (inv-5): find the right character, they come back to the village, that unlocks the upgrade, and the upgrade costs materials. This is the first concrete link in the one-more-run chain.
+- **Full on the map: throw something away for good, or send it home with the dog** (inv-6). The dog is then out of the party until you go home yourself.
+
+### Gaps these answers open
+- **Belt size and shape:** how many cells, and whether shapes matter on it. Batch 2.
+- **The dog as courier:** how much he carries, and whether a walk home by GO HOME or a fall both count as "going home". He's out for every fight until then, which is a real cost on a big map. Batch 2.
+- **Stacking:** whether materials and food stack in a cell decides how tight hauling gets. Batch 2.
+- **Arriving home:** what happens to the pack (auto-bank materials, unpack by hand into a stash). Batch 2.
+- **Starting size** and **auto-sort**. Batch 2.
+- **Spending supplies in a fight** now needs belt room, so the live rule (any piece spends the pack's food or potions) changes.
 
 ### What's on file and built
 - `[USER]` 2026-10-26: the village has a Tetris-like grid inventory.
@@ -113,11 +139,18 @@ Falling keeps every item (`[USER]` 2026-10-28), so a tight pack can't create fea
 | Card | Question | Answer |
 |---|---|---|
 | `design-inv-1-what` | Everything carried, materials in a pouch, or food and potions as counts too? | Everything carried, except each member's weapon and maybe a trinket, which sit on the member |
-| `design-inv-2-who` | One party pack, a bag each, or a party pack plus a belt each? | open |
-| `design-inv-3-fight` | In a fight: anything usable, belt only, or no items? | open |
-| `design-inv-4-pressure` | What packing decides (pick 2): what you bring home, what you bring out, layout as build, just a tidy | open |
-| `design-inv-5-grow` | Bigger pack from a village build, the shop, or found on the map? | open |
-| `design-inv-6-full` | Full on the map: drop it and it stays, throw something away, or the dog takes it home? | open |
+| `design-inv-2-who` | One party pack, a bag each, or a party pack plus a belt each? | Party pack plus a belt each |
+| `design-inv-3-fight` | In a fight: anything usable, belt only, or no items? | Belt only, costs the action |
+| `design-inv-4-pressure` | What packing decides (pick 2): what you bring home, what you bring out, layout as build, just a tidy | Bring out and bring home (Stardew mines) |
+| `design-inv-5-grow` | Bigger pack from a village build, the shop, or found on the map? | Village build, unlocked by a settler, paid in materials |
+| `design-inv-6-full` | Full on the map: drop it and it stays, throw something away, or the dog takes it home? | Throw away, or the dog takes it home and is out until you return |
 
-### Queued for batch 2
-Starting size; auto-sort or hand-packing only; a village stash and how it relates to the pack; what a left-behind item costs; follow-ups on whatever card 4 picks (adjacency rules if "layout is the build").
+### Batch 2 (posted 2026-10-29)
+| Card | Question | Answer |
+|---|---|---|
+| `design-inv-7-size` | Starting pack: 4 x 3, 5 x 4 or 6 x 5? | open |
+| `design-inv-8-belt` | Belt: 2 small cells, a 2 x 1 strip where shapes count, or one slot of any size? | open |
+| `design-inv-9-stack` | Do things stack in a cell: big stacks, small stacks, or never? | open |
+| `design-inv-10-home` | Coming home: materials bank themselves, unpack by hand into a stash, or everything banks and you repack? | open |
+| `design-inv-11-sort` | Hand packing only, auto-place on pickup, or a tidy button too? | open |
+| `design-inv-12-dog` | The dog as courier: one item, a 2 x 2 saddlebag, or whatever the pack could hold? | open |
