@@ -3,7 +3,7 @@
 Code: `game/scripts/combat/`. Rules math is in `combat_rules.gd` (pure, no nodes). Numbers live in `docs/decisions.md` and in `game/data/`. The research behind this design is in `docs/research/tactical-combat.md`.
 
 ## Files
-- `combat_rules.gd`: movement, reach, to-hit, damage, counters, pushes, statuses, the danger zone, and `resolve()`, which applies any skill or item and returns a list of events.
+- `combat_rules.gd`: movement, reach, damage, armor, crits, counters, pushes, statuses, the danger zone, and `resolve()`, which applies any skill or item and returns a list of events.
 - `ability.gd`: one skill or item. Skills come from `data/abilities.csv`, fight items from `data/combat_items.csv` (column `item`: the pack item it spends, e.g. salve spends 1 potion, snack 3 meat).
 - `combat_unit.gd`: one piece. Stats are copied from its class and then scaled by the fight's difficulty dials.
 - `enemy_ai.gd`: scores every reachable tile times every ready skill times every target, picks the best.
@@ -18,27 +18,31 @@ Code: `game/scripts/combat/`. Rules math is in `combat_rules.gd` (pure, no nodes
 - Menu: **MOVE** (hides the menu and lights the blue tiles it can walk to; click one, or **CANCEL** at the bottom to go back to the menu), **HIT** (basic attack), the class's **skills**, **items** (only what's on this piece's own 2 x 1 belt, spent from it; using one is the action. [USER] 2026-10-29), **GUARD** (+3 defense until your next turn), **UNDO MOVE** (before acting), **WAIT** (end this piece).
 - Piece bodies can be clicked even when a tree or block hides their feet (the body is the pick).
 - **AUTO FIGHT (testing)**: the top-right button makes the party play its own turns with the same AI the enemies use (the setting is kept across fights). A fight where nobody is hurt for 8 rounds in a row ends as a party win, because the greedy AI can't path around walls yet. Off by default; exploration skips the deploy step while it is on.
-- Pick an action, then hover a lit target to see the forecast: hit chance, damage, HP before and after, every modifier ("ATK 4 HIGH +2 FLANK +2 vs DEF 11 COVER +2") and whether they will hit back. Click to commit.
+- Pick an action, then hover a lit target to see the forecast: the damage range and crit chance, HP before and after, every part ("DMG 3  HIGH +1  -  ARMOR 1  GUARD 2", "CRIT: BASE 10%  FLANK +20%") and whether they will hit back. Click to commit.
+- Hovering a ranged piece (yours or a foe's) shades the tiles in its range it can't see (`CombatRules.blind_cells`).
 - Clicking a red-lit foe straight from the menu is a shortcut for HIT (first click aims and shows the forecast, second click swings).
 - Keys: Esc or right click = back / undo move, D = danger zone (every tile the enemy can hit next phase), Tab = next ready piece, E = end turn.
 
 ## Rules
-- Attack: d20 + attack (+2 per level above the target up to 2 levels, +2 flank, -3 spooked, + skill bonus, + luck) vs defense (+ cover unless magic, +3 guard, +2 moon skin). Damage = unit damage + skill power + height levels, at least 1. Natural 20 doubles damage.
+- Hits always land ([USER] 2026-10-29, combat build step 1; the d20 stays for checks outside fights). Damage = unit damage + skill power + height (+1 a level above the target, up to +2; -1 a level below, down to -2) + traits, wobbling a point either way, minus armor, at least 1. Spooked hits for 1 less.
+- Armor: the class's armor (0 to 3; the old defense minus 10), +2 GUARD, +1 MOON SKIN, +1 the Lead's shield wall, and +1 half cover (brush, low walls, forest) against ranged hits only.
+- Crits double the damage: 10% base, +20% on a flank (an ally already next to the target), plus the skill's crit (`abilities.csv` column `crit`), the piece's own (`ClassDef.crit`, and 5% a point of attack bonus from weapons and the MORE HIT pick), +15% steady aim, +15% STAR POINT.
+- Every blow pops its damage over the target; a crit's number is bigger and ends in "!".
+- All these numbers are data: `data/combat.csv`, read through `CombatRules.num`.
 - Counterattack: a unit that is hit by a single-target attack and can reach the attacker with its own basic attack swings back once (no chain). Area skills never draw a counter. So melee hits melee at a price, and ranged picks at melee for free.
 - Push: some skills shove the target 1 tile straight away from the attacker. Blocked by rock, a unit, the map edge or a step up of 2+: the target takes 2 bump damage instead. Pushed off a ledge: 2 damage per level dropped beyond the first.
-- Statuses: GUARD, MOON SKIN and STAR (guided, +2 to hit) last until the owner's next phase. STUCK (rooted) means 0 move and wears off at the end of the owner's next phase. NAP (sleep) skips the owner's next phase entirely and can't hit back; any damage (a hit, a bump or a fall) wakes it.
-- Hexes are spells that roll to hit like an attack but deal no damage; on a hit they only add their status (MOON NAP).
+- Statuses: GUARD, MOON SKIN and STAR (guided, +15% crit) last until the owner's next phase. STUCK (rooted) means 0 move and wears off at the end of the owner's next phase. NAP (sleep) skips the owner's next phase entirely and can't hit back; any damage (a hit, a bump or a fall) wakes it.
+- Hexes always land: they deal no damage and only add their status (MOON NAP).
 - Cooldowns: a skill with cooldown N can be used again after N of the owner's phases.
-- Luck (anti-streak): each party miss in a row gives the next party roll +1, up to +3; a hit resets it. Shown in the forecast as LUCK. Enemies don't get it. The sandbox can switch it off.
 - Stardrop's skittish check runs at the start of each player phase.
 
 ## Terrain and height
 - Heights run 0 to 8 in the editor and saved maps (the random generator stays at 0 to 4).
 - Climbing: a piece steps up or down at most its Jump per tile. **STAIRS** add +2 to that when either end is a stair, so a Jump 1 knight can take a 3 level stair but not a 3 level cliff. Stairs are the chokepoints of tall maps.
 - **Line of sight**: anything with reach over 1 (bows, spells, area skills) needs a clear line from one level above the attacker to the target's body. Cliffs, trees (0.8 of a level), boulders (1 level) and **RUIN** walls (2 levels) block it. Standing high lets you shoot over things, and someone standing back from a cliff edge can't be seen from below.
-- High ground still gives +2 to hit and +1 damage per level (counting 2 levels), and +1 bow and spell range per level, now capped at +3.
+- High ground gives +1 damage per level (counting 2 levels) and +1 bow and spell range per level, capped at +3.
 - Pushes off tall ledges hurt more: 2 damage per level dropped beyond the first.
-- Terrain types: grass, forest (cost 2, +2 cover), shallow water (cost 3, -2 defense), road, **stone** (paved ruin floor), **stairs**, rock and **ruin** (both impassable).
+- Terrain types: grass, forest (cost 2, half cover against ranged), shallow water (cost 3), road, **stone** (paved ruin floor), **stairs**, rock and **ruin** (both impassable).
 - The camera turns in quarter steps (**Q**, Shift+Q back, or the TURN button), like FFT. Saved maps remember the angle they open at.
 - The look (graybox, all drawn in code): stone courses on cliff faces, moss hanging over grassy ledges, waterfalls wherever water meets a drop, stair treads, ruin walls with arches, contact shadows under tall neighbours, and a faint outline of any piece hidden behind a wall.
 - Win: loot from `data/encounters.csv`, downed members stand back up with 1 HP. Lose: the Lodestone recalls the party. Items used in a fight are gone from the belt they were on (`CombatUnit.belt` is the member's belt, spent in place).
@@ -48,9 +52,9 @@ Every roster character has one combat trait (`traits` in their `.tres`), shown w
 
 | Character | Trait | Effect | Why |
 |---|---|---|---|
-| Lead (knight) | shield_wall | allies next to the Lead get +2 defense (shown as SHIELD in the forecast) | gives the frontliner a reason to anchor a formation |
-| Stardrop (moon mage) | starlit | spells get +1 hit and +1 damage when cast from height 2 or more | ties the star reader to the new tall maps |
-| Hunter | steady_aim | +2 to hit when attacking without having moved this turn | rewards picking a perch and holding it |
+| Lead (knight) | shield_wall | allies next to the Lead get +1 armor (shown as SHIELD in the forecast) | gives the frontliner a reason to anchor a formation |
+| Stardrop (moon mage) | starlit | spells get +1 damage when cast from height 2 or more | ties the star reader to the new tall maps |
+| Hunter | steady_aim | +15% crit when attacking without having moved this turn | rewards picking a perch and holding it |
 | Wizard | scholar | spells deal +1 damage, FIX heals +1 | the books are worth carrying |
 | Bushberry | deep_roots | can't be pushed; regrows 1 HP at the start of each own phase | a bush holds a chokepoint |
 | Bushberry | flammable (existing perk) | takes +2 damage from fire spells | the old perk now matters in fights |
@@ -63,7 +67,7 @@ Casters pick their spells. A class has a `spell_pool` and `spell_slots` (both 2 
 
 | Class | Pool (defaults first) |
 |---|---|
-| Moon mage (Stardrop) | MOON BOOM, MOON SKIN, MOON NAP (hex: sleep, range 2-3, cooldown 4), MOON WAVE (range 1-3, -3 damage, pushes 2, cooldown 3), STAR POINT (ally within 3 gets +2 to hit, cooldown 2) |
+| Moon mage (Stardrop) | MOON BOOM, MOON SKIN, MOON NAP (hex: sleep, range 2-3, cooldown 4), MOON WAVE (range 1-3, -3 damage, pushes 2, cooldown 3), STAR POINT (ally within 3 gets +15% crit, cooldown 2) |
 | Wizard | FIRE BOOM, FIX, FIRE ZAP (single target range 2-4, +2 damage, cooldown 2), COLD STUCK (range 2-3, -2 damage, roots, cooldown 3) |
 
 Where to pick: in the sandbox, the right panel's SPELLS section has a picker per slot for each caster placed on the map. Picks are saved with the map. Trail fights use the character's default loadout for now; a picker in the village is a follow-up.
@@ -74,7 +78,7 @@ Where to pick: in the sandbox, the right panel's SPELLS section has a picker per
 | Class | Skills |
 |---|---|
 | Knight (Lead) | PUSH HIT: melee, +2 hit, -2 damage, push 1, cooldown 2 |
-| Moon mage (Stardrop) | spells only (see above). MOON BOOM: range 2-3, plus-shaped area, -1 damage, magic, cooldown 3 (hits friends too). MOON SKIN: ally within 3 gets +2 defense, cooldown 3 |
+| Moon mage (Stardrop) | spells only (see above). MOON BOOM: range 2-3, plus-shaped area, -1 damage, magic, cooldown 3 (hits friends too). MOON SKIN: ally within 3 gets +1 armor, cooldown 3 |
 | Hunter | GOOD SHOT: weapon range, +3 hit, +1 damage, cooldown 2. TRAP: range 2-3, roots the target, cooldown 3 |
 | Wizard | spells only (see above). FIRE BOOM: like MOON BOOM at full damage. FIX: heal an ally within 2 for 4, cooldown 2 |
 | Archer (Skeleton) | GOOD SHOT |

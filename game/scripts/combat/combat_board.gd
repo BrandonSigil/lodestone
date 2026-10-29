@@ -82,7 +82,7 @@ var _covered := {}  ## units something in front hides this frame -> true when a 
 var _paint_button := 0
 var hover := NONE
 var selected: CombatUnit = null
-var _floaters: Array[Dictionary] = []  # {"text", "pos", "t", "color"}
+var _floaters: Array[Dictionary] = []  # {"text", "pos", "t", "color", "size"}
 var _time := 0.0
 var rot := 0  ## camera quarter turns, 0-3 (Q turns it)
 ## Fog of war for exploration maps: cell -> 1 (seen before, drawn dim) or 2 (in sight now).
@@ -781,8 +781,9 @@ func _paint_top() -> void:
 				_ci.draw_arc(base + Vector2(0, -26.0 * 1.22), 26.0 * 0.3, 0, TAU, 20, Color(ring, 0.7), 2.0, true)
 	for f in _floaters:
 		var a := clampf(f.t, 0.0, 1.0)
-		_ci.draw_string_outline(font, f.pos, f.text, HORIZONTAL_ALIGNMENT_CENTER, 120, 16, 4, Color(0, 0, 0, a))
-		_ci.draw_string(font, f.pos, f.text, HORIZONTAL_ALIGNMENT_CENTER, 120, 16, Color(f.color, a))
+		var fs := int(f.get("size", 16))
+		_ci.draw_string_outline(font, f.pos, f.text, HORIZONTAL_ALIGNMENT_CENTER, 120, fs, maxi(4, fs / 4), Color(0, 0, 0, a))
+		_ci.draw_string(font, f.pos, f.text, HORIZONTAL_ALIGNMENT_CENTER, 120, fs, Color(f.color, a))
 
 
 ## Not drawn: never seen under fog of war, or off screen on a big map.
@@ -2996,8 +2997,9 @@ func face(u: CombatUnit, toward: Vector2i) -> void:
 	u.facing = Vector2i(signi(v.x), 0) if absi(v.x) >= absi(v.y) else Vector2i(0, signi(v.y))
 
 
-func float_text(c: Vector2i, text: String, color := Color.WHITE) -> void:
-	_floaters.append({"text": text, "pos": cell_top(c) + Vector2(-60, -56), "t": 1.2, "color": color})
+## A number or word that rises off a cell and fades. size: font size (a crit's number is bigger).
+func float_text(c: Vector2i, text: String, color := Color.WHITE, size := 16) -> void:
+	_floaters.append({"text": text, "pos": cell_top(c) + Vector2(-60, -56), "t": 1.2, "color": color, "size": size})
 
 
 # --- animation -------------------------------------------------------------------

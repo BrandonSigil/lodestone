@@ -98,11 +98,11 @@ func test_shield_wall_guards_neighbours() -> void:
 	var hunter := _char("hunter", 0, Vector2i(2, 1), g)
 	var b := _cls("bandit", 1, Vector2i(3, 1), g)
 	var units := [lead, hunter, b]
-	var base := hunter.defense
-	eq(CombatRules.target_number(g, b, hunter, null, units), base + CombatRules.SHIELD_WALL_DEF)
+	var wall := int(CombatRules.num("shield_wall_armor"))
+	eq(CombatRules.armor_parts(g, b, hunter, b.cell, null, units), [["MOD_ARMOR", hunter.armor], ["MOD_SHIELD", wall]])
 	hunter.place(Vector2i(4, 1), 0)
-	eq(CombatRules.target_number(g, b, hunter, null, units), base, "too far from the Lead")
-	eq(CombatRules.target_number(g, b, lead, null, units), lead.defense, "the Lead doesn't shield itself")
+	eq(CombatRules.armor_parts(g, b, hunter, Vector2i(3, 1), null, units), [["MOD_ARMOR", hunter.armor]], "too far from the Lead")
+	ok(CombatRules.armor_parts(g, b, lead, Vector2i(2, 1), null, units).all(func(p: Array) -> bool: return p[0] != "MOD_SHIELD"), "the Lead doesn't shield itself")
 
 
 func test_steady_aim_only_when_still() -> void:
@@ -110,10 +110,11 @@ func test_steady_aim_only_when_still() -> void:
 	var h := _char("hunter", 0, Vector2i(0, 1), g)
 	var b := _cls("bandit", 1, Vector2i(3, 1), g)
 	var units := [h, b]
-	var still := CombatRules.hit_bonus(g, h, b, units, h.cell)
-	eq(CombatRules.hit_bonus(g, h, b, units, Vector2i(1, 1)), still - CombatRules.STEADY_AIM_HIT, "previewing a move loses it")
+	var still := CombatRules.crit_chance(g, h, b, units, h.cell)
+	var steady := CombatRules.num("crit_steady") / 100.0
+	eq(CombatRules.crit_chance(g, h, b, units, Vector2i(1, 1)), still - steady, "previewing a move loses it")
 	h.moved = true
-	eq(CombatRules.hit_bonus(g, h, b, units, h.cell), still - CombatRules.STEADY_AIM_HIT)
+	eq(CombatRules.crit_chance(g, h, b, units, h.cell), still - steady)
 
 
 func test_starlit_needs_height() -> void:
@@ -125,14 +126,14 @@ func test_starlit_needs_height() -> void:
 	g.set_height(Vector2i(0, 1), 2)
 	g.set_height(Vector2i(3, 1), 2)
 	eq(CombatRules.damage(g, s, b, s.cell, beam), low + 1)
-	eq(CombatRules.damage(g, s, b, s.cell, s.abilities[0]), s.damage, "the basic hit is not a spell")
+	eq(CombatRules.damage(g, s, b, s.cell, s.abilities[0]), s.damage - b.armor, "the basic hit is not a spell")
 
 
 func test_scholar_boosts_spells() -> void:
 	var g := CombatGrid.flat(6, 3)
 	var w := _char("wizard", 0, Vector2i(0, 1), g)
 	var b := _cls("bandit", 1, Vector2i(3, 1), g)
-	eq(CombatRules.damage(g, w, b, w.cell, Db.ability("firebolt")), w.damage + 2 + 1)
+	eq(CombatRules.damage(g, w, b, w.cell, Db.ability("firebolt")), w.damage + 2 + 1 - b.armor)
 	eq(CombatRules.heal_amount(w, Db.ability("mend")), 5)
 
 
@@ -154,6 +155,8 @@ func test_flammable_takes_more_fire() -> void:
 	var bush := _char("bushberry", 0, Vector2i(3, 1), g)
 	var lead := _char("lead", 0, Vector2i(3, 0), g)
 	var fire := Db.ability("firebolt")
+	bush.armor = 0
+	lead.armor = 0
 	eq(CombatRules.damage(g, w, bush, w.cell, fire) - CombatRules.damage(g, w, lead, w.cell, fire), CombatRules.FLAMMABLE_DMG)
 
 
@@ -162,6 +165,7 @@ func test_bones_shrug_off_arrows() -> void:
 	var skel := _char("skeleton_archer", 0, Vector2i(0, 1), g)
 	var archer := _cls("bandit_archer", 1, Vector2i(3, 1), g)
 	var bandit := _cls("bandit", 1, Vector2i(1, 1), g)
+	skel.armor = 0
 	eq(CombatRules.damage(g, archer, skel, archer.cell), maxi(1, archer.damage - CombatRules.BONES_DR))
 	eq(CombatRules.damage(g, bandit, skel, bandit.cell), bandit.damage, "melee hits full")
 
@@ -176,12 +180,16 @@ func test_double_strike_swings_twice() -> void:
 	var units := [duo, b]
 	var f := CombatRules.forecast(g, duo, duo.abilities[0], b.cell, units, duo.cell)
 	eq(f.targets[0].swings, 2)
-	eq(f.targets[0].dmg, duo.damage - 1)
+	eq(f.targets[0].dmg, duo.damage - 1 - b.armor)
 	CombatRules.counters = false
 	var ev := CombatRules.resolve(_plain_rng(), g, duo, duo.abilities[0], b.cell, units)
 	CombatRules.reset_switches()
-	eq(ev.filter(func(e: Dictionary) -> bool: return e.type == "hit").size(), 2)
-	eq(b.hp, 99 - 2 * (duo.damage - 1))
+	var hits := ev.filter(func(e: Dictionary) -> bool: return e.type == "hit")
+	eq(hits.size(), 2)
+	var taken := 0
+	for e: Dictionary in hits:
+		taken += int(e.amount)
+	eq(b.hp, 99 - taken, "both blows land")
 
 
 func test_wolf_pack_bites_harder_when_flanking() -> void:

@@ -1,0 +1,16 @@
+key,value,note
+wobble,1,every hit does its damage plus or minus this much
+min_damage,1,a hit always does at least this after armor
+crit_base,10,% chance any hit is a crit
+crit_flank,20,% added when an ally already stands next to the target
+crit_mult,2,a crit multiplies the damage
+crit_per_attack,5,% crit for each point of attack bonus (weapons and the MORE HIT pick)
+crit_steady,15,% added by steady aim (the hunter attacking without having moved)
+crit_guided,15,% added by STAR POINT (the guided status)
+height_damage,1,damage per level above the target (taken off per level below)
+height_levels_max,2,levels of height that count either way
+guard_armor,2,GUARD adds this armor until the piece's next phase
+veil_armor,1,moon veil adds this armor
+shield_wall_armor,1,the lead's shield wall adds this armor to allies next to them
+cover_ranged,1,brush and low walls and forest take this off ranged hits
+spooked_damage,-1,a spooked piece hits for this much less

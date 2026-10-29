@@ -19,7 +19,9 @@ var max_hp := 1
 var move := 4
 var jump := 1
 var attack := 0
-var defense := 10
+var defense := 10  ## old d20 target, shown nowhere in fights now
+var armor := 0  ## taken off every hit
+var crit := 0  ## % crit chance on top of the base: the class, plus 5% a point of attack bonus (weapons, MORE HIT)
 var damage := 1
 var range_min := 1
 var range_max := 1
@@ -35,7 +37,6 @@ var spooked := false
 var move_origin := Vector2i.ZERO
 var cooldowns := {}  ## ability id -> own phases left
 var statuses := {}  ## status id -> turns left (see CombatRules.STATUS_*)
-var miss_streak := 0  ## consecutive misses, feeds the party's mercy bonus
 
 # View state, animated by CombatBoard.
 var vis := Vector2.ZERO  ## fractional grid position
@@ -51,6 +52,7 @@ var shown_hp := 1  ## HP the board draws; trails hp while hits animate
 
 
 ## mods: {"hp_pct": 100, "attack": 0, "defense": 0, "damage": 0, "move": 0}. Missing keys mean no change.
+## Hits always land, so an attack bonus turns into crit chance and a defense bonus into armor.
 ## Levels and gear add flat "hp", "range_min", "range_max" and "magic_power" (see LevelRules, Game.weapon_mods).
 func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 	cls = c
@@ -59,6 +61,8 @@ func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 	jump = c.jump
 	attack = c.attack + int(mods.get("attack", 0))
 	defense = c.defense + int(mods.get("defense", 0))
+	armor = maxi(0, c.armor + int(mods.get("defense", 0)))
+	crit = c.crit + int(mods.get("attack", 0)) * int(CombatRules.num("crit_per_attack"))
 	damage = maxi(1, c.damage + int(mods.get("damage", 0)))
 	range_min = maxi(1, c.range_min + int(mods.get("range_min", 0)))
 	range_max = maxi(range_min, c.range_max + int(mods.get("range_max", 0)))

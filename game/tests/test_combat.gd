@@ -15,19 +15,51 @@ func test_height_levels_clamp() -> void:
 	eq(CombatRules.height_levels(g, Vector2i(1, 0), Vector2i(0, 0)), -2)
 
 
-func test_high_ground_helps_hit_and_damage() -> void:
+## [USER] 2026-10-29: high ground adds damage, +1 a level up to +2; low ground takes it off the same way.
+func test_high_ground_adds_damage() -> void:
 	var g := CombatGrid.flat(5, 5)
 	var a := _unit("knight", 0, Vector2i(1, 1), g)
 	var b := _unit("bandit", 1, Vector2i(2, 1), g)
-	var units := [a, b]
-	var flat_p := CombatRules.hit_chance(g, a, b, units, a.cell)
 	var flat_d := CombatRules.damage(g, a, b, a.cell)
 	g.set_height(Vector2i(1, 1), 1)
-	ok(CombatRules.hit_chance(g, a, b, units, a.cell) > flat_p, "higher hits more")
 	eq(CombatRules.damage(g, a, b, a.cell), flat_d + 1)
 	g.set_height(Vector2i(1, 1), 2)
-	eq(CombatRules.damage(g, a, b, a.cell), flat_d + 1, "two levels up still adds only 1 damage")
-	eq(CombatRules.damage(g, b, a, b.cell), maxi(1, CombatRules.damage(CombatGrid.flat(5, 5), b, a, b.cell) - 1), "and takes only 1 from below")
+	eq(CombatRules.damage(g, a, b, a.cell), flat_d + 2, "two levels up: +2")
+	g.set_height(Vector2i(1, 1), 3)
+	eq(CombatRules.damage(g, a, b, a.cell), flat_d + 2, "no more than +2")
+	g.set_height(Vector2i(1, 1), 2)
+	var flat_up := CombatRules.damage(CombatGrid.flat(5, 5), b, a, b.cell)
+	eq(CombatRules.damage(g, b, a, b.cell), maxi(1, flat_up - 2), "and -2 from below, never under 1")
+
+
+## [USER] 2026-10-29: hits always land; damage wobbles a point either way, armor comes off, at least 1;
+## about 1 hit in 10 is a crit for double.
+func test_hits_always_land_wobble_and_crit() -> void:
+	var g := CombatGrid.flat(3, 1)
+	var k := _unit("knight", 0, Vector2i(0, 0), g)
+	var b := _unit("bandit", 1, Vector2i(1, 0), g)
+	var r := CombatRules.damage_range(g, k, b, k.cell)
+	eq(r, Vector2i(CombatRules.damage(g, k, b, k.cell) - 1, CombatRules.damage(g, k, b, k.cell) + 1), "a point either way")
+	eq(CombatRules.damage(g, k, b, k.cell), k.damage - b.armor, "armor comes off")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var crits := 0
+	var seen := {}
+	for i in 400:
+		b.hp = b.max_hp
+		var ev: Dictionary = CombatRules.resolve(rng, g, k, k.abilities[0], b.cell, [k, b], false)[0]
+		eq(ev.type, "hit")
+		var plain: int = ev.amount / (2 if ev.crit else 1)
+		ok(plain >= r.x and plain <= r.y, "inside the range")
+		seen[plain] = true
+		crits += 1 if ev.crit else 0
+	eq(seen.size(), 3, "all three wobbles happen")
+	ok(crits > 20 and crits < 70, "about 10%% crits (%d of 400)" % crits)
+	var wolf := _unit("wolf", 1, Vector2i(1, 0), g)
+	var mage := _unit("mage", 0, Vector2i(0, 0), g)
+	mage.damage = 1
+	wolf.armor = 3
+	eq(CombatRules.damage_range(g, mage, wolf, mage.cell), Vector2i(1, 1), "never under 1")
 
 
 func test_melee_cant_reach_cliff() -> void:
@@ -70,24 +102,28 @@ func test_bow_min_range() -> void:
 	ok(not CombatRules.can_attack(g, a, b, a.cell))
 
 
-func test_forest_cover_and_magic() -> void:
-	var g := CombatGrid.flat(5, 5)
+## [USER] c14: brush, low walls and forest take 1 off ranged hits; melee ignores it.
+func test_half_cover_against_ranged() -> void:
+	var g := CombatGrid.flat(6, 5)
 	var knight := _unit("knight", 0, Vector2i(1, 1), g)
-	var mage := _unit("mage", 0, Vector2i(0, 2), g)
+	var hunter := _unit("hunter", 0, Vector2i(0, 3), g)
 	var b := _unit("bandit", 1, Vector2i(2, 1), g)
-	var tn := CombatRules.target_number(g, knight, b)
+	var melee := CombatRules.damage(g, knight, b, knight.cell)
+	var shot := CombatRules.damage(g, hunter, b, hunter.cell)
 	g.terrain[g.idx(b.cell)] = CombatGrid.T.FOREST
-	eq(CombatRules.target_number(g, knight, b), tn + 2)
-	eq(CombatRules.target_number(g, mage, b), b.cls.defense, "magic ignores cover")
+	eq(CombatRules.damage(g, knight, b, knight.cell), melee, "melee ignores cover")
+	eq(CombatRules.damage(g, hunter, b, hunter.cell), maxi(1, shot - 1), "a shot loses 1")
 
 
-func test_flank_bonus() -> void:
+## [USER] 2026-10-29: flanking adds crit chance (an ally already next to the target).
+func test_flank_adds_crit() -> void:
 	var g := CombatGrid.flat(5, 5)
 	var a := _unit("knight", 0, Vector2i(1, 2), g)
 	var b := _unit("bandit", 1, Vector2i(2, 2), g)
-	var base := CombatRules.hit_bonus(g, a, b, [a, b], a.cell)
+	var base := CombatRules.crit_chance(g, a, b, [a, b], a.cell)
+	eq(base, CombatRules.num("crit_base") / 100.0)
 	var c := _unit("knight", 0, Vector2i(3, 2), g)
-	eq(CombatRules.hit_bonus(g, a, b, [a, b, c], a.cell), base + CombatRules.FLANK_HIT)
+	ok(absf(CombatRules.crit_chance(g, a, b, [a, b, c], a.cell) - base - CombatRules.num("crit_flank") / 100.0) < 0.001)
 
 
 func test_reach_respects_jump_cost_and_enemies() -> void:
@@ -197,9 +233,9 @@ func test_guard_and_phase_clear() -> void:
 	var g := CombatGrid.flat(4, 1)
 	var k := _unit("knight", 0, Vector2i(0, 0), g)
 	var b := _unit("bandit", 1, Vector2i(1, 0), g)
-	var tn := CombatRules.target_number(g, b, k)
+	var hit := CombatRules.damage(g, b, k, b.cell, null, [], 3)
 	CombatRules.guard(k)
-	eq(CombatRules.target_number(g, b, k), tn + CombatRules.GUARD_DEF)
+	eq(CombatRules.damage(g, b, k, b.cell, null, [], 3), maxi(1, hit - int(CombatRules.num("guard_armor"))), "GUARD adds armor")
 	CombatRules.begin_phase([k, b], 1)
 	ok(k.has_status("guard"), "guard lasts through the enemy phase")
 	CombatRules.begin_phase([k, b], 0)
@@ -276,28 +312,14 @@ func test_heal_item_spends_from_the_belt() -> void:
 	eq(k.hp, k.max_hp, "heal caps at max")
 
 
-func test_mercy_bonus() -> void:
-	CombatRules.reset_switches()
-	var g := CombatGrid.flat(3, 1)
-	var k := _unit("knight", 0, Vector2i(0, 0), g)
-	var b := _unit("bandit", 1, Vector2i(1, 0), g)
-	var base := CombatRules.hit_bonus(g, k, b, [k, b], k.cell)
-	k.miss_streak = 5
-	eq(CombatRules.hit_bonus(g, k, b, [k, b], k.cell), base + CombatRules.MERCY_MAX)
-	b.miss_streak = 5
-	eq(CombatRules.hit_bonus(g, b, k, [k, b], b.cell), CombatRules.hit_bonus(g, b, k, [k, b], b.cell), "enemies get no mercy")
-	ok(CombatRules.hit_parts(g, b, k, [k, b], b.cell).all(func(p: Array) -> bool: return p[0] != "MOD_MERCY"))
-	CombatRules.mercy = false
-	eq(CombatRules.hit_bonus(g, k, b, [k, b], k.cell), base)
-	CombatRules.reset_switches()
-
-
 func test_scaling_mods() -> void:
 	var c: ClassDef = load("res://data/classes/bandit.tres")
 	var u := CombatUnit.enemy(c, {"hp_pct": 150, "attack": 2, "defense": 1, "damage": 1, "move": -1})
 	eq(u.max_hp, int(round(c.max_hp * 1.5)))
 	eq(u.attack, c.attack + 2)
 	eq(u.defense, c.defense + 1)
+	eq(u.armor, c.armor + 1, "a defense bonus is armor now")
+	eq(u.crit, c.crit + 2 * int(CombatRules.num("crit_per_attack")), "an attack bonus is crit chance now")
 	eq(u.damage, c.damage + 1)
 	eq(u.move, c.move - 1)
 

@@ -8,8 +8,10 @@ extends Resource
 @export var max_hp: int = 10
 @export var move: int = 4
 @export var jump: int = 1  ## max height change per step
-@export var attack: int = 3  ## added to the d20 to-hit roll
-@export var defense: int = 10  ## number the attacker must reach
+@export var attack: int = 3  ## old d20 to-hit; unused in fights since hits always land (2026-10-29)
+@export var defense: int = 10  ## old d20 target; unused in fights, armor took its place
+@export var armor: int = 0  ## taken off every hit (0 to 3)
+@export var crit: int = 0  ## % crit chance on top of the base
 @export var damage: int = 3
 @export var range_min: int = 1
 @export var range_max: int = 1

@@ -16,6 +16,7 @@ signal changed
 signal finished(won: bool)
 
 enum S { IDLE, MENU, TARGET, BUSY, OVER }
+const SIGHT_SHADE := Color(0.05, 0.06, 0.12, 0.45)  ## tiles a hovered ranged piece can't see
 
 const MOVE_COLOR := Color(0.35, 0.6, 1.0, 0.35)
 const ENEMY_COLOR := Color(1.0, 0.3, 0.25, 0.45)
@@ -304,15 +305,15 @@ func _use(u: CombatUnit, a: Ability, aim: Vector2i) -> void:
 func _play(ev: Dictionary) -> void:
 	var t: CombatUnit = ev.unit
 	match ev.type:
-		"hit", "miss":
+		"hit":
 			var src: CombatUnit = ev.src
-			var hit: bool = ev.type == "hit"
-			await board.animate_attack(src, t, hit)
-			var text := ("-%d" % ev.amount) if hit else Txt.t("UI_MISS")
-			if ev.roll.crit:
-				text += "!"
-			board.float_text(t.cell, text, Color(1, 0.85, 0.5) if hit else Color(0.8, 0.8, 0.8))
-			log_line.emit("  %s > %s  %s" % [Txt.t(src.name_key), Txt.t(t.name_key), Dice.describe(ev.roll)])
+			await board.animate_attack(src, t, true)
+			# every blow pops its number; a crit's is bigger ([USER] 2026-10-29)
+			if ev.crit:
+				board.float_text(t.cell, "-%d!" % ev.amount, Color(1, 0.55, 0.3), 26)
+			else:
+				board.float_text(t.cell, "-%d" % ev.amount, Color(1, 0.85, 0.5))
+			log_line.emit("  %s > %s  -%d%s" % [Txt.t(src.name_key), Txt.t(t.name_key), ev.amount, ("  " + Txt.t("UI_CRIT")) if ev.crit else ""])
 			t.shown_hp = maxi(0, t.shown_hp - int(ev.amount))
 			if t.shown_hp <= 0:
 				log_line.emit(Txt.f("LOG_DOWN", Txt.t(t.name_key)))
@@ -321,7 +322,7 @@ func _play(ev: Dictionary) -> void:
 			board.float_text(t.cell, "+%d" % ev.amount, Color(0.5, 1.0, 0.6))
 			await get_tree().create_timer(0.25).timeout
 		"status":
-			if ev.has("roll"):
+			if ev.get("struck", false):
 				await board.animate_attack(ev.src, t, true)
 			board.float_text(t.cell, Txt.t("TAG_" + String(ev.status).to_upper()), Color(0.75, 0.85, 1.0))
 			await get_tree().create_timer(0.2).timeout
@@ -676,10 +677,22 @@ func _on_cell_hovered(c: Vector2i) -> void:
 			_forecast.visible = false
 		return
 	var u := CombatRules.unit_at(units, c)
+	_show_sight(u)
 	if u:
 		info.emit(unit_text(u))
 	else:
 		info.emit(tile_text(c))
+
+
+## Hovering a ranged piece while nothing else is lit shades the tiles in its range it can't see ([USER] c14).
+func _show_sight(u: CombatUnit) -> void:
+	for k in board.highlights.keys():
+		if board.highlights[k] == SIGHT_SHADE:
+			board.highlights.erase(k)
+	if u == null or not u.alive() or state != S.IDLE or not board.highlights.is_empty():
+		return
+	for k in CombatRules.blind_cells(grid, u, u.cell):
+		board.highlights[k] = SIGHT_SHADE
 
 
 func _show_forecast(u: CombatUnit, a: Ability, c: Vector2i) -> void:
@@ -692,23 +705,23 @@ func _show_forecast(u: CombatUnit, a: Ability, c: Vector2i) -> void:
 		var t: CombatUnit = e.unit
 		match a.kind:
 			"attack":
-				var after := maxi(0, t.hp - int(e.dmg) * int(e.swings))
-				lines.append("%s  HP %d > %d" % [Txt.t(t.name_key), t.hp, after])
-				var line := Txt.f("UI_HIT_PREVIEW", [int(round(e.hit * 100)), e.dmg])
+				var lo := maxi(0, t.hp - int(e.dmg_max) * int(e.swings))
+				var hi := maxi(0, t.hp - int(e.dmg_min) * int(e.swings))
+				lines.append("%s  HP %d > %s" % [Txt.t(t.name_key), t.hp, str(hi) if lo == hi else "%d-%d" % [lo, hi]])
+				var line := Txt.f("UI_DMG_PREVIEW", [_range_text(e), int(round(e.crit * 100))])
 				if e.swings > 1:
 					line += "  " + Txt.f("UI_SWINGS", e.swings)
 				lines.append("  " + line)
-				lines.append("  " + _parts_text(e.hit_parts) + "  vs  " + _parts_text(e.def_parts))
+				lines.append("  " + _parts_text(e.dmg_parts) + _minus_text(e.armor_parts))
+				lines.append("  " + Txt.t("UI_CRIT") + ": " + _parts_text(e.crit_parts, "%"))
 			"hex":
 				lines.append("%s  %s" % [Txt.t(t.name_key), Txt.t("TAG_" + a.status.to_upper())])
-				lines.append("  " + Txt.f("UI_HEX_PREVIEW", int(round(e.hit * 100))))
-				lines.append("  " + _parts_text(e.hit_parts) + "  vs  " + _parts_text(e.def_parts))
 			"heal":
 				lines.append("%s  HP %d > %d" % [Txt.t(t.name_key), t.hp, t.hp + int(e.heal)])
 			"buff":
 				lines.append("%s  %s" % [Txt.t(t.name_key), Txt.t("TAG_" + a.status.to_upper())])
 	if not f.counter.is_empty():
-		var c_line := Txt.f("UI_COUNTER_PREVIEW", [int(round(f.counter.hit * 100)), f.counter.dmg])
+		var c_line := Txt.f("UI_COUNTER_PREVIEW", [_range_text(f.counter), int(round(float(f.counter.crit) * 100))])
 		if int(f.counter.get("swings", 1)) > 1:
 			c_line += "  " + Txt.f("UI_SWINGS", f.counter.swings)
 		lines.append(c_line)
@@ -717,11 +730,26 @@ func _show_forecast(u: CombatUnit, a: Ability, c: Vector2i) -> void:
 	_forecast.reset_size()
 
 
-static func _parts_text(parts: Array) -> String:
+static func _parts_text(parts: Array, unit := "") -> String:
 	var out: PackedStringArray = []
 	for p in parts:
-		out.append("%s %+d" % [Txt.t(p[0]), p[1]] if out.size() > 0 else "%s %d" % [Txt.t(p[0]), p[1]])
+		out.append(("%s %+d" if out.size() > 0 else "%s %d") % [Txt.t(p[0]), p[1]] + unit)
 	return "  ".join(out)
+
+
+## What armor takes off, as "  - ARMOR 1  GUARD 2", or "" when nothing does.
+static func _minus_text(parts: Array) -> String:
+	if parts.is_empty():
+		return ""
+	var out: PackedStringArray = []
+	for p in parts:
+		out.append("%s %d" % [Txt.t(p[0]), p[1]])
+	return "  -  " + "  ".join(out)
+
+
+## "3" or "2-4": one blow's damage before a crit.
+static func _range_text(e: Dictionary) -> String:
+	return str(e.dmg_min) if int(e.dmg_min) == int(e.dmg_max) else "%d-%d" % [e.dmg_min, e.dmg_max]
 
 
 func _refresh_danger() -> void:
@@ -731,7 +759,7 @@ func _refresh_danger() -> void:
 func unit_text(u: CombatUnit) -> String:
 	var lines: PackedStringArray = [Txt.t(u.name_key)]
 	lines.append("HP %d/%d  MOVE %d  JUMP %d" % [u.hp, u.max_hp, CombatRules.move_points(u), u.jump])
-	lines.append("ATK +%d  DEF %d  DMG %d  RNG %d-%d" % [u.attack, u.defense, u.damage, u.range_min, u.range_max])
+	lines.append("DMG %d  ARMOR %d  CRIT +%d%%  RNG %d-%d" % [u.damage, u.armor, u.crit, u.range_min, u.range_max])
 	var skills: PackedStringArray = []
 	for a in u.abilities.slice(1):
 		skills.append(_ability_label(u, a))

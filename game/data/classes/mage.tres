@@ -11,6 +11,7 @@ move = 4
 jump = 1
 attack = 4
 defense = 10
+armor = 0
 damage = 4
 range_min = 2
 range_max = 3

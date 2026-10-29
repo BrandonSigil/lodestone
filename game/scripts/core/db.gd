@@ -15,6 +15,7 @@ var abilities: Dictionary = {}  # id -> Ability, from data/abilities.csv
 var combat_items: Dictionary = {}  # id -> Ability, from data/combat_items.csv
 var explore_events: Dictionary = {}  # id -> event, from data/explore_events.csv (see ExploreRules.parse_events)
 var levels: Dictionary = {}  # key -> number, from data/levels.csv (see LevelRules)
+var combat: Dictionary = {}  # key -> number, from data/combat.csv (see CombatRules.num)
 var weapons: Dictionary = {}  # id -> row of data/weapons.csv: the smithy weapons and what they add
 var travel_events: Array[Dictionary] = []  # overworld encounters, data/travel_events.csv (events.csv format)
 var world_nodes: Dictionary = {}  # id -> row of data/overworld_nodes.csv
@@ -47,6 +48,9 @@ func reload() -> void:
 	levels.clear()
 	for row in CsvTable.load_rows("res://data/levels.csv"):
 		levels[row.key] = float(row.value)
+	combat.clear()
+	for row in CsvTable.load_rows("res://data/combat.csv"):
+		combat[row.key] = float(row.value)
 	weapons.clear()
 	for row in CsvTable.load_rows("res://data/weapons.csv"):
 		weapons[row.id] = row
