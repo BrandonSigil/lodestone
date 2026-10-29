@@ -348,3 +348,27 @@ func test_a_place_still_to_clear_blocks_the_road() -> void:
 	eq(TravelRules.route(paths, nodes, "a", "c", []), [] as Array[String], "can't walk past b before it's done")
 	eq(TravelRules.route(paths, nodes, "a", "b", []), ["a", "b"] as Array[String], "but can walk to it")
 	eq(TravelRules.route(paths, nodes, "a", "c", ["beat_b"]), ["a", "b", "c"] as Array[String], "and past it once it's done")
+
+
+## [USER] 2026-10-29: Brandon's leaf frame along the bottom: the inventory button in the left square, the
+## party in the right panel, and the map's click area kept clear of the band.
+func test_leaf_frame_holds_pack_and_party() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	var hud := FrameHud.new()
+	tree.root.add_child(hud)
+	hud.use_leaf_frame()
+	hud._layout_leaf()
+	var vs := hud.root.get_viewport_rect().size
+	var s := vs.x / 2000.0
+	ok(absf(hud.bottom_h - (261.0 - FrameHud.LEAF_BAND_TOP) * s) < 0.5, "the band is the bottom border")
+	ok(hud.center_rect().end.y <= vs.y - hud.bottom_h + 0.5, "the map stops at the band")
+	ok(hud.clear_rect().end.y < hud.center_rect().end.y, "a fitted map also clears the diamond")
+	var pressed := [0]
+	hud.set_tools([{"id": "pack", "text": "PACK", "cb": func() -> void: pressed[0] += 1}, {"text": "STONE", "cb": func() -> void: pass}])
+	hud.leaf_pack.pressed.emit()
+	eq(pressed[0], 1, "the left square opens PACK")
+	eq(hud.tools_box.get_child_count(), 1, "only the other tools sit above the frame")
+	hud.set_party([{"name": "A", "hp": 3, "max_hp": 5, "tint": Color.RED}, {"name": "B", "hp": 0, "max_hp": 5, "tint": Color.BLUE}])
+	eq(hud.leaf_party.get_child_count(), 2, "the party in the right panel")
+	ok(Rect2(Vector2.ZERO, vs).encloses(Rect2(hud.leaf_pack.position, hud.leaf_pack.size)), "the button is on screen")
+	hud.free()

@@ -126,6 +126,7 @@ func _ready() -> void:
 
 	hud = FrameHud.new()
 	add_child(hud)
+	hud.use_leaf_frame()
 	_ui = CanvasLayer.new()
 	_ui.layer = 4
 	add_child(_ui)
@@ -1118,7 +1119,7 @@ func _refresh_hud() -> void:
 			"note": Txt.t("TAG_SPOOKED") if u.spooked else ""})
 	hud.set_party(entries)
 	hud.set_pack(Game.run.pack)
-	var tools := [{"text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]
+	var tools := [{"id": "pack", "text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]
 	if Game.has_flag("has_lodestone"):
 		tools.append({"text": Txt.t("UI_LODESTONE"), "cb": _open_menu.bind("lodestone"), "glow": Game.pending_picks() > 0})
 	hud.set_tools(tools)

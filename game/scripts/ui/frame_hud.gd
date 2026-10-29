@@ -9,6 +9,14 @@ const RIGHT_W := 250.0
 const TOP_H := 40.0
 const BOTTOM_H := 78.0
 const PACK_CELL := 15.0  ## the bottom bar's copy of the pack grid
+## Brandon's leaf frame ([USER] 2026-10-29), and spots in its own pixels (2000 x 261).
+const LEAF_ART := "res://art/source/ui/frame_bottom.webp"
+const LEAF_BAND_TOP := 102.0  ## the solid band starts here; above it only leaves and the diamond poke up
+const LEAF_PACK := Rect2(128, 133, 130, 108)  ## inside the left square's rim: the inventory button
+const LEAF_PARTY := Rect2(1295, 132, 495, 104)  ## inside the right panel's rim: the party, up to 4
+const LEAF_PARTY_MAX := 4
+const LEAF_DECOR_TOP := 50.0  ## the corner leaves reach up to here; buttons above the frame sit higher
+const LEAF_DIAMOND_TOP := 2.0  ## the centre diamond's tip
 const FRAME := Color(0.17, 0.23, 0.22)
 const PANEL := Color(0.23, 0.29, 0.28)
 const INK := Color(0.9, 0.92, 0.87)
@@ -20,6 +28,15 @@ var slots_label: Label
 var side: VBoxContainer
 var tools_box: HBoxContainer  ## bottom-right buttons: PACK, and the Lodestone once it is found
 var root: Control
+var bottom_h := BOTTOM_H  ## the bottom border; the leaf frame's band is taller
+var clear_h := BOTTOM_H  ## the bottom border plus whatever art pokes above it (the leaf frame's diamond)
+var leaf: Control = null  ## the leaf frame along the bottom (explore maps and the overworld walk), or null
+var leaf_pack: Button
+var leaf_party: HBoxContainer
+var _leaf_art: TextureRect
+var _leaf_block: Control
+var _leaf_pack_cb := Callable()
+var _border: StyleBoxFlat
 
 
 func _init() -> void:
@@ -40,6 +57,7 @@ func _init() -> void:
 	sb.set_border_width(SIDE_TOP, int(TOP_H))
 	sb.set_border_width(SIDE_BOTTOM, int(BOTTOM_H))
 	border.add_theme_stylebox_override("panel", sb)
+	_border = sb
 	root.add_child(border)
 
 	top_label = _label("", 18)
@@ -96,7 +114,106 @@ func _label(text: String, font_size := 16) -> Label:
 ## The play area inside the border, in viewport coordinates.
 func center_rect() -> Rect2:
 	var vs := root.get_viewport_rect().size
-	return Rect2(LEFT_W, TOP_H, vs.x - LEFT_W - RIGHT_W, vs.y - TOP_H - BOTTOM_H)
+	return Rect2(LEFT_W, TOP_H, vs.x - LEFT_W - RIGHT_W, vs.y - TOP_H - bottom_h)
+
+
+## The play area with nothing drawn over it: center_rect less the art that pokes above the bottom band.
+## For screens laid out to fit (the overworld map); a scrolling map can run under the leaves.
+func clear_rect() -> Rect2:
+	var r := center_rect()
+	r.size.y -= clear_h - bottom_h
+	return r
+
+
+## Swaps the bottom bar for Brandon's leaf frame: the band scaled to the screen width, the inventory
+## button in its left square, the party in its right panel. The long bar and the centre diamond stay
+## bare art for now (the Lodestone medallion goes in the diamond later). Clicks on the band don't reach
+## the map. set_tools gives the entry with "id": "pack" to the square; the rest sit above the frame.
+func use_leaf_frame() -> void:
+	if leaf != null:
+		return
+	leaf = Control.new()
+	leaf.set_anchors_preset(Control.PRESET_FULL_RECT)
+	leaf.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(leaf)
+	_leaf_block = Control.new()
+	_leaf_block.mouse_filter = Control.MOUSE_FILTER_STOP
+	leaf.add_child(_leaf_block)
+	_leaf_art = TextureRect.new()
+	_leaf_art.texture = load(LEAF_ART)
+	_leaf_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_leaf_art.stretch_mode = TextureRect.STRETCH_SCALE
+	_leaf_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	leaf.add_child(_leaf_art)
+	leaf_pack = Button.new()
+	leaf_pack.text = Txt.t("UI_PACK")
+	leaf_pack.flat = true
+	leaf_pack.add_theme_color_override("font_color", INK)
+	leaf_pack.add_theme_font_size_override("font_size", 18)
+	leaf_pack.pressed.connect(func() -> void:
+		if _leaf_pack_cb.is_valid():
+			_leaf_pack_cb.call())
+	leaf.add_child(leaf_pack)
+	leaf_party = HBoxContainer.new()
+	leaf_party.add_theme_constant_override("separation", 4)
+	leaf_party.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	leaf.add_child(leaf_party)
+	slots_label.visible = false
+	slots_box.visible = false
+	leaf.resized.connect(_layout_leaf)
+	_layout_leaf()
+
+
+func _layout_leaf() -> void:
+	var vs := leaf.size if leaf.size.x > 0.0 else root.get_viewport_rect().size
+	var art := _leaf_art.texture.get_size()
+	var s := vs.x / art.x
+	var top := vs.y - art.y * s
+	_leaf_art.position = Vector2(0, top)
+	_leaf_art.size = art * s
+	bottom_h = (art.y - LEAF_BAND_TOP) * s
+	clear_h = (art.y - LEAF_DIAMOND_TOP) * s
+	_leaf_block.position = Vector2(0, vs.y - bottom_h)
+	_leaf_block.size = Vector2(vs.x, bottom_h)
+	leaf_pack.position = Vector2(0, top) + LEAF_PACK.position * s
+	leaf_pack.size = LEAF_PACK.size * s
+	leaf_party.position = Vector2(0, top) + LEAF_PARTY.position * s
+	leaf_party.size = LEAF_PARTY.size * s
+	for c in leaf_party.get_children():
+		(c as Control).custom_minimum_size.x = leaf_party.size.x / LEAF_PARTY_MAX - 4.0
+	_border.set_border_width(SIDE_BOTTOM, int(bottom_h))
+	_pin(party_box, 0, 0, 0, 1, 12, TOP_H, LEFT_W - 12, -bottom_h)
+	var clear := (art.y - LEAF_DECOR_TOP) * s + 6.0
+	_pin(tools_box, 1, 1, 1, 1, -RIGHT_W + 14, -clear - 52, -14, -clear)
+	_pin(side, 1, 0, 1, 1, -RIGHT_W + 14, TOP_H, -14, -clear - 58)
+
+
+## One member in the leaf frame's party panel: pawn, name, HP bar and numbers.
+func _leaf_member(e: Dictionary) -> Control:
+	var box := HBoxContainer.new()
+	box.add_theme_constant_override("separation", 2)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.custom_minimum_size.x = leaf_party.size.x / LEAF_PARTY_MAX - 4.0
+	var icon := PawnIcon.new()
+	icon.tint = e.tint
+	icon.dim = e.hp <= 0
+	icon.custom_minimum_size = Vector2(22, 30)
+	box.add_child(icon)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 0)
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_child(_label(e.name, 11))
+	var bar := ProgressBar.new()
+	bar.max_value = e.max_hp
+	bar.value = e.hp
+	bar.show_percentage = false
+	bar.custom_minimum_size = Vector2(44, 6)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(bar)
+	col.add_child(_label("%d / %d%s" % [e.hp, e.max_hp, ("  " + e.note) if e.get("note", "") != "" else ""], 10))
+	box.add_child(col)
+	return box
 
 
 ## entries: [{"name": String, "hp": int, "max_hp": int, "tint": Color, "note": String}]
@@ -124,6 +241,11 @@ func set_party(entries: Array) -> void:
 		col.add_child(_label(hp_text, 11))
 		row.add_child(col)
 		party_box.add_child(row)
+	if leaf != null:
+		for c in leaf_party.get_children():
+			c.queue_free()
+		for e in entries.slice(0, LEAF_PARTY_MAX):
+			leaf_party.add_child(_leaf_member(e))
 
 
 ## The party pack along the bottom: a small copy of the grid, and what's in it in words.
@@ -153,6 +275,9 @@ func set_tools(entries: Array) -> void:
 	for c in tools_box.get_children():
 		c.queue_free()
 	for e: Dictionary in entries:
+		if leaf != null and e.get("id", "") == "pack":
+			_leaf_pack_cb = e.cb
+			continue
 		var b := Button.new()
 		b.text = e.text
 		b.custom_minimum_size = Vector2(100, 52)

@@ -36,7 +36,7 @@ func play(t: SceneTree) -> void:
 	_check(game.run.item_count("rope") == 1 and game.run.food >= 8, "rope and food in the pack")
 	await _use(s, "statue", "OPT_TAKE_STONE")
 	_check(game.has_flag("has_lodestone"), "the Lodestone is taken")
-	_check(s.hud.tools_box.get_child_count() >= 2, "the Lodestone button is on the bar")
+	_check(s.hud.tools_box.get_children().any(func(b: Node) -> bool: return (b as Button).text == Txt.t("UI_LODESTONE")), "the Lodestone button is on the bar")
 	await _use(s, "dog_window", "OPT_CLIMB_IN")
 
 	s = await _explore("house_dog")

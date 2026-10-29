@@ -43,6 +43,7 @@ func _ready() -> void:
 		Game.travel = {"at": "town"}
 	hud = FrameHud.new()
 	add_child(hud)
+	hud.use_leaf_frame()
 	_ui = CanvasLayer.new()
 	_ui.layer = 4
 	add_child(_ui)
@@ -272,7 +273,7 @@ func party_pos() -> Vector2:
 # --- drawing --------------------------------------------------------------------------------------
 
 func _view() -> Dictionary:
-	var r := hud.center_rect()
+	var r := hud.clear_rect()
 	var k := minf(r.size.x / SIZE.x, r.size.y / SIZE.y)
 	return {"k": k, "o": r.get_center() - SIZE * k * 0.5}
 
@@ -483,7 +484,7 @@ func _refresh_side() -> void:
 func _refresh_hud() -> void:
 	hud.set_party(FrameHud.party_entries_from_run(Game.run))
 	hud.set_pack(Game.run.pack)
-	var tools := [{"text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]
+	var tools := [{"id": "pack", "text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]
 	if Game.has_flag("has_lodestone"):
 		tools.append({"text": Txt.t("UI_LODESTONE"), "cb": _open_menu.bind("lodestone"), "glow": Game.pending_picks() > 0})
 	hud.set_tools(tools)
