@@ -58,6 +58,7 @@ const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
 const WINDOW_MIN := 0.12  ## the prop's alpha in the open middle
 const WINDOW_CELL := 8.0  ## mesh cell size the window's soft edge is drawn with
 const WINDOW_RING_ONLY := true  ## a piece only props hide gets its foot ring, not the tinted x-ray copy
+const WINDOW_TINT := Color(0.55, 0.75, 1.0, 0.22)  ## a flat wash in the prop's shape where the window clears it
 const FG_FADE := 0.05  ## how far the band's top edge feathers up into the wallpaper, as a share of the view
 const WALL_SKY := 0.22  ## where the wallpaper's horizon sits, as a share of the view's height from the top
 const WALL_HORIZON := 0.38  ## where the picture's mountains start, as a share of the picture's height (the stand-in skyline)
@@ -212,7 +213,7 @@ func _sink_colour() -> Color:
 static var _silhouettes := {}  ## flat silhouettes made from the tree sprites, by sprite and colour
 
 
-## A tree sprite as a flat silhouette: its shape in one colour, hard edged, made once and kept.
+## A sprite as a flat silhouette (skirt trees, the see-through window's tint): its shape in one colour, hard edged, made once and kept.
 func _silhouette(tex: Texture2D, col: Color) -> Texture2D:
 	var key := "%d|%s" % [tex.get_instance_id(), col.to_html()]
 	if not _silhouettes.has(key):
@@ -2023,24 +2024,29 @@ func _draw_windowed(tex: Texture2D, dst: Rect2, col: Color, holes: Array, uv := 
 	var ny := clampi(ceili(dst.size.y / WINDOW_CELL), 4, 64)
 	var pts := PackedVector2Array()
 	var cols := PackedColorArray()
+	var tints := PackedColorArray()
 	var uvs := PackedVector2Array()
 	for j in ny + 1:
 		for i in nx + 1:
 			var f := Vector2(i / float(nx), j / float(ny))
 			var q := dst.position + dst.size * f
-			var a := 1.0
+			var open := 0.0  # 1 in the window's clear middle, 0 outside it
 			for h: Vector2 in holes:
-				a = minf(a, lerpf(WINDOW_MIN, 1.0, smoothstep(WINDOW_R * WINDOW_CLEAR, WINDOW_R, q.distance_to(h))))
+				open = maxf(open, 1.0 - smoothstep(WINDOW_R * WINDOW_CLEAR, WINDOW_R, q.distance_to(h)))
 			pts.append(q)
-			cols.append(Color(col, col.a * a))
+			cols.append(Color(col, col.a * lerpf(1.0, WINDOW_MIN, open)))
+			tints.append(Color(WINDOW_TINT, WINDOW_TINT.a * col.a * open))
 			uvs.append(uv.position + uv.size * Vector2(1.0 - f.x if flip else f.x, f.y))
 	var idx := PackedInt32Array()
 	for j in ny:
 		for i in nx:
 			var k := j * (nx + 1) + i
 			idx.append_array([k, k + 1, k + nx + 2, k, k + nx + 2, k + nx + 1])
-	RenderingServer.canvas_item_add_triangle_array(_ci.get_canvas_item(), idx, pts, cols, uvs,
-		PackedInt32Array(), PackedFloat32Array(), tex.get_rid())
+	var item := _ci.get_canvas_item()
+	RenderingServer.canvas_item_add_triangle_array(item, idx, pts, cols, uvs, PackedInt32Array(), PackedFloat32Array(), tex.get_rid())
+	var shape := _silhouette(tex, Color.WHITE)
+	if WINDOW_TINT.a > 0.0:  # what the window clears still shows as a faint tint
+		RenderingServer.canvas_item_add_triangle_array(item, idx, pts, tints, uvs, PackedInt32Array(), PackedFloat32Array(), shape.get_rid())
 
 
 ## A graybox block over grid rect [lo, hi] from level z0 up to z1: its two camera-facing sides and its top.
