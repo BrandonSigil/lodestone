@@ -440,3 +440,63 @@ func test_blend_maps_load_and_connect() -> void:
 			zones[z] = true
 		ok(zones.size() >= 2, "%s mixes tile sets" % name)
 		ok(g.terrain.has(CombatGrid.T.VOID), "%s has an island outline" % name)
+
+
+# --- guard zones ([USER] c13, combat build step 2) ----------------------------------------------
+
+func _guard_scene() -> Dictionary:
+	var g := CombatGrid.flat(7, 5)
+	var knight := _unit("knight", 0, Vector2i(2, 2), g)
+	var archer := _unit("hunter", 0, Vector2i(4, 2), g)
+	var bandit := _unit("bandit", 1, Vector2i(3, 2), g)  # next to the knight
+	var units := [knight, archer, bandit]
+	CombatRules.guard(knight)
+	CombatRules.begin_phase(units, 1)
+	return {"g": g, "knight": knight, "archer": archer, "bandit": bandit, "units": units}
+
+
+func test_a_guard_holds_the_foe_next_to_it() -> void:
+	var s := _guard_scene()
+	var bandit: CombatUnit = s.bandit
+	eq(bandit.move_origin, bandit.cell, "the phase start is remembered")
+	eq(CombatRules.holders(s.g, bandit, s.units), [s.knight] as Array[CombatUnit])
+	var strike := bandit.abilities[0]
+	# next to the knight and to the archer: only the guard can be hit
+	eq(CombatRules.target_cells(s.g, bandit, strike, s.units, bandit.cell), [s.knight.cell] as Array[Vector2i], "it can only hit the guard")
+	var ring := CombatRules.guard_ring(s.g, s.units, 0)
+	ok(ring.has(Vector2i(3, 2)) and ring.has(Vector2i(1, 2)) and ring.size() == 4, "the ring is the guard's four neighbours")
+
+
+func test_walking_away_costs_a_free_hit() -> void:
+	var s := _guard_scene()
+	var bandit: CombatUnit = s.bandit
+	var rng := RandomNumberGenerator.new()
+	eq(CombatRules.leave_hits(rng, s.g, bandit, s.units, Vector2i(2, 1)), [], "staying next to the guard is free")
+	var hp := bandit.hp
+	var ev := CombatRules.leave_hits(rng, s.g, bandit, s.units, Vector2i(5, 3))
+	eq(ev[0].type, "free_hit")
+	eq(ev[1].type, "hit")
+	ok(bandit.hp < hp, "the guard's free hit lands")
+	ok(bandit.left_guard, "and the move can't be undone")
+	bandit.place(Vector2i(5, 3), 0)
+	eq(CombatRules.held_at(s.g, bandit, s.units, bandit.cell), [] as Array[CombatUnit], "walked away: free to pick")
+
+
+func test_no_hold_without_an_awake_guard() -> void:
+	var s := _guard_scene()
+	var knight: CombatUnit = s.knight
+	knight.statuses[CombatRules.STATUS_SLEEP] = 1
+	eq(CombatRules.holders(s.g, s.bandit, s.units), [] as Array[CombatUnit], "a sleeping guard holds nobody")
+	knight.statuses.clear()
+	eq(CombatRules.holders(s.g, s.bandit, s.units), [] as Array[CombatUnit], "nor one that isn't guarding")
+
+
+func test_the_ai_hits_the_guard_or_pays_to_leave() -> void:
+	var s := _guard_scene()
+	var bandit: CombatUnit = s.bandit
+	for i in 5:
+		var p := EnemyAi.plan(s.g, bandit, s.units)
+		var held := CombatRules.dist(p.move, s.knight.cell) == 1
+		if held and p.ability != null:
+			eq(p.aim, s.knight.cell, "held: it swings at the guard")
+		ok(held or EnemyAi.leave_cost(s.g, bandit, s.units, p.move) > 0.0, "walking away was weighed")

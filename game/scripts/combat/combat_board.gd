@@ -70,6 +70,7 @@ var art_set := ""  ## tile set subfolder (see BattleArt); "" = base art
 var highlights := {}  # cell -> Color
 var danger := {}  # cell -> true, the enemy's reach next phase
 var area := {}  # cell -> true, cells a skill would hit
+var guard_ring := {}  # cell -> true, next to a guarding piece: foes starting here must hit it or pay to leave
 var show_coords := false
 var edit_void := false  ## map editor: show VOID cells as faint outlines and let them be picked
 var island := true  ## rims hang ragged rock below the base, water spills off the edge
@@ -564,7 +565,7 @@ func _sync_slabs() -> void:
 	_dirty_props.clear()
 	# What moves: bucket this frame's overlays and pieces by depth, then redraw those slabs.
 	_over_by_depth.clear()
-	for dict: Dictionary in [highlights, danger, area]:
+	for dict: Dictionary in [highlights, danger, area, guard_ring]:
 		for c: Vector2i in dict:
 			_bucket(_over_by_depth, c)
 	if hover != NONE and grid.in_bounds(hover):
@@ -1880,6 +1881,12 @@ func _draw_over(c: Vector2i) -> void:
 		_ci.draw_colored_polygon(top, Color(1, 1, 1, 0.18))
 	if danger.has(c):
 		_ci.draw_polyline(ring, Color(1.0, 0.5, 0.1, 0.7), 1.5, true)
+	if guard_ring.has(c):
+		var inner := PackedVector2Array()
+		var mid := (top[0] + top[2]) * 0.5
+		for p in ring:
+			inner.append(mid + (p - mid) * 0.82)
+		_ci.draw_polyline(inner, Color(0.55, 0.8, 1.0, 0.9), 2.0, true)
 
 
 ## What stands on the cell (LIVE slab: props fade when a piece is behind them): placed props, the tile

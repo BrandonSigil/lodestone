@@ -18,6 +18,9 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var best_cell := u.cell
 	var best_ability: Ability = null
 	var best_aim := u.cell
+	var leave := {}  # cell -> what walking away from guards costs there ([USER] c13)
+	for cell: Vector2i in cost:
+		leave[cell] = leave_cost(grid, u, units, cell)
 	for cell: Vector2i in cost:
 		for a in u.abilities:
 			if not CombatRules.usable(u, a):
@@ -26,7 +29,7 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 				var s := score(grid, u, a, aim, units, cell)
 				if s <= -INF:
 					continue
-				s += grid.height_at(cell) * HEIGHT_PULL - int(cost[cell]) * 0.2
+				s += grid.height_at(cell) * HEIGHT_PULL - int(cost[cell]) * 0.2 - float(leave[cell])
 				if s > best_score:
 					best_score = s
 					best_cell = cell
@@ -34,7 +37,7 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 					best_aim = aim
 	var guard := false
 	if best_ability == null:
-		best_cell = _approach(grid, u, units, cost)
+		best_cell = _approach(grid, u, units, cost, leave)
 		guard = u.hp * 2 < u.max_hp
 	var target := CombatRules.unit_at(units, best_aim) if best_ability else null
 	return {"move": best_cell, "ability": best_ability, "aim": best_aim, "target": target,
@@ -89,6 +92,19 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 	return s
 
 
+## What ending the move on `cell` costs in free hits from guards u walks away from, on the attack score's
+## scale; a hit that could down u costs a lot more.
+static func leave_cost(grid: CombatGrid, u: CombatUnit, units: Array, cell: Vector2i) -> float:
+	var total := 0.0
+	var worst := 0
+	for g in CombatRules.left_at(grid, u, units, cell):
+		total += CombatRules.expected_damage(grid, g, u, g.cell, null, units)
+		worst += CombatRules.damage_range(grid, g, u, g.cell, null, units).y * int(CombatRules.num("crit_mult"))
+	if total <= 0.0:
+		return 0.0
+	return total * COUNTER_FEAR * 2.0 + (KILL_BONUS * 2.0 if worst >= u.hp else 0.0)
+
+
 ## Average damage of one blow from a forecast entry: the middle of the range, crits counted.
 static func _avg(e: Dictionary) -> float:
 	return (int(e.dmg_min) + int(e.dmg_max)) * 0.5 * (1.0 + float(e.crit) * (CombatRules.num("crit_mult") - 1.0))
@@ -116,7 +132,7 @@ static func _buff_value(u: CombatUnit, t: CombatUnit, status: String) -> float:
 ## Nobody in reach: walk toward the nearest foe by the way there on foot (round cliffs, up the stairs),
 ## not in a straight line, which left pieces stuck at the foot of a wall with the foe on top.
 ## Foes nobody can walk to: the straight-line distance, as before.
-static func _approach(grid: CombatGrid, u: CombatUnit, units: Array, cost: Dictionary) -> Vector2i:
+static func _approach(grid: CombatGrid, u: CombatUnit, units: Array, cost: Dictionary, leave := {}) -> Vector2i:
 	var walk := walk_distance(grid, u, units)
 	var best := u.cell
 	var best_d := INF
@@ -130,6 +146,7 @@ static func _approach(grid: CombatGrid, u: CombatUnit, units: Array, cost: Dicti
 				if t.team != u.team and t.alive():
 					d = minf(d, 1000.0 + CombatRules.dist(cell, t.cell))
 		d -= grid.height_at(cell) * 0.1
+		d += float(leave.get(cell, 0.0)) * 0.2
 		if d < best_d:
 			best_d = d
 			best = cell

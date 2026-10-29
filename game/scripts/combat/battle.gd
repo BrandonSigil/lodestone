@@ -252,6 +252,8 @@ func _auto_player_phase() -> void:
 ## One piece's turn played by the AI: move, then use a skill or guard.
 func _ai_turn(u: CombatUnit) -> void:
 	var plan := EnemyAi.plan(grid, u, units)
+	if not await _leave_guards(u, plan.move):
+		return
 	if plan.move != u.cell:
 		await board.animate_move(u, plan.path)
 		u.place(plan.move, grid.height_at(plan.move))
@@ -279,6 +281,18 @@ func _show_phase_events(events: Array) -> void:
 
 
 ## Resolve an action and play its events. Returns after the animation.
+## Guards u walks away from by moving to dest each get a free hit first ([USER] c13). False if u went down.
+func _leave_guards(u: CombatUnit, dest: Vector2i) -> bool:
+	var events := CombatRules.leave_hits(rng, grid, u, units, dest)
+	for ev in events:
+		await _play(ev)
+	if not events.is_empty():
+		for o: CombatUnit in units:
+			o.sync_view()
+		changed.emit()
+	return u.alive()
+
+
 func _use(u: CombatUnit, a: Ability, aim: Vector2i) -> void:
 	var prev := state
 	state = S.BUSY
@@ -333,6 +347,10 @@ func _play(ev: Dictionary) -> void:
 			board.float_text(t.cell, "%s -%d" % [Txt.t("UI_" + String(ev.type).to_upper()), ev.amount], Color(1, 0.7, 0.4))
 			log_line.emit("  %s %s -%d" % [Txt.t(t.name_key), Txt.t("UI_" + String(ev.type).to_upper()), ev.amount])
 			await get_tree().create_timer(0.25).timeout
+		"free_hit":
+			board.float_text(ev.src.cell, Txt.t("UI_FREE_HIT"), Color(1, 1, 1))
+			log_line.emit(Txt.f("LOG_FREE_HIT", [Txt.t(ev.src.name_key), Txt.t(t.name_key)]))
+			await get_tree().create_timer(0.2).timeout
 		"counter":
 			board.float_text(ev.src.cell, Txt.t("UI_COUNTER"), Color(1, 1, 1))
 			await get_tree().create_timer(0.2).timeout
@@ -452,7 +470,7 @@ func _open_menu() -> void:
 			var label := "%s  (%s %d)" % [Txt.t(it.name_key), Txt.t(String(Db.items[it.spends].name_key)), have]
 			_menu_item(label, CombatRules.usable(u, it) and _has_targets(u, it), _start_targeting.bind(it))
 		_menu_item(Txt.t("ACT_GUARD"), true, _on_guard)
-	if u.moved and not u.acted:
+	if u.moved and not u.acted and not u.left_guard:  # a free hit taken on the way can't be undone
 		_menu_item(Txt.t("ACT_UNDO"), true, _undo_move)
 	_menu_item(Txt.t("ACT_WAIT"), true, _on_wait)
 	_menu.visible = true
@@ -652,6 +670,10 @@ func _move_selected(c: Vector2i) -> void:
 	_refresh_cancel()
 	board.highlights = {}
 	var path := CombatRules.path_to(reach.prev, u.cell, c)
+	if not await _leave_guards(u, c):
+		if not _check_end():
+			_finish_unit()
+		return
 	await board.animate_move(u, path)
 	u.place(c, grid.height_at(c))
 	u.moved = true
@@ -754,6 +776,12 @@ static func _range_text(e: Dictionary) -> String:
 
 func _refresh_danger() -> void:
 	board.danger = CombatRules.danger_zone(grid, units, 1) if show_danger and state != S.OVER else {}
+	# the zones guarding pieces hold, both sides ([USER] c13: draw the ring)
+	var ring := {}
+	if state != S.OVER:
+		for team in [0, 1]:
+			ring.merge(CombatRules.guard_ring(grid, units, team))
+	board.guard_ring = ring
 
 
 func unit_text(u: CombatUnit) -> String:

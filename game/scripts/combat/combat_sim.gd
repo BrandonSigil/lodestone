@@ -8,11 +8,14 @@ const MAX_ROUNDS := 40
 ## Runs one AI turn for unit u: move, then act or guard. Returns the plan plus the events.
 static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var plan := EnemyAi.plan(grid, u, units)
+	var events := CombatRules.leave_hits(rng, grid, u, units, plan.move)
+	if not u.alive():
+		plan["events"] = events
+		return plan
 	u.place(plan.move, grid.height_at(plan.move))
 	u.moved = true
-	var events := []
 	if plan.ability != null:
-		events = CombatRules.resolve(rng, grid, u, plan.ability, plan.aim, units)
+		events.append_array(CombatRules.resolve(rng, grid, u, plan.ability, plan.aim, units))
 	elif plan.guard:
 		CombatRules.guard(u)
 	u.acted = true

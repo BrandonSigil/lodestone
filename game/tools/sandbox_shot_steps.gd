@@ -65,6 +65,10 @@ func run(s: Node, _frames: int, _step: String) -> void:
 						best = c
 				u.place(best, b.grid.height_at(best))
 				u.moved = true
+			"guard":
+				# The first piece guards: its ring of held cells shows ([USER] c13).
+				b._select(u)
+				b._on_guard()
 			"danger":
 				b.show_danger = true
 				b._refresh_danger()

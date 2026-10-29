@@ -2,7 +2,7 @@ extends SceneTree
 ## Drives the combat sandbox into a state and saves a PNG, so visual work can be checked headless.
 ## Args after "--": <png path> <step> [map name in data/maps] [tile set, a subfolder of art/source/battle]
 ## Steps: edit, menu (select first party piece), aim (aim its first skill at the nearest foe),
-## danger (danger zone on), moved (walk the first piece forward, then open its menu)
+## danger (danger zone on), guard (the first piece guards), moved (walk the first piece forward, then open its menu)
 
 var _frames := 0
 var _out := ""

@@ -187,6 +187,13 @@ static func usable(u: CombatUnit, a: Ability) -> bool:
 static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Array, from: Vector2i) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	var r := ability_range(u, a)
+	var held := held_at(grid, u, units, from) if a.hostile() else ([] as Array[CombatUnit])
+	if not held.is_empty():
+		# [USER] c13: a piece still next to a guard that held it at the start of its phase can only attack the guard
+		for g in held:
+			if in_reach(grid, from, g.cell, r):
+				out.append(g.cell)
+		return out
 	match a.target:
 		"self":
 			out.append(from)
@@ -507,6 +514,8 @@ static func begin_phase(units: Array, team: int) -> Array:
 			continue
 		u.moved = false
 		u.acted = false
+		u.move_origin = u.cell
+		u.left_guard = false
 		if u.has_status(STATUS_SLEEP):
 			u.moved = true
 			u.acted = true
@@ -533,6 +542,61 @@ static func end_phase(units: Array, team: int) -> void:
 			u.statuses[s] = int(u.statuses[s]) - 1
 			if u.statuses[s] <= 0:
 				u.statuses.erase(s)
+
+
+# --- guard zones ([USER] c13, combat build step 2) ------------------------------------------------------
+
+## Guarding foes next to the cell u began its phase on, awake and able to hit it there. They hold u: while u
+## stays next to one it can only attack the guard; walking away costs a free hit from each.
+static func holders(grid: CombatGrid, u: CombatUnit, units: Array) -> Array[CombatUnit]:
+	var out: Array[CombatUnit] = []
+	for g: CombatUnit in units:
+		if g.alive() and g.team != u.team and g.has_status(STATUS_GUARD) and not g.has_status(STATUS_SLEEP) \
+				and dist(g.cell, u.move_origin) == 1 and in_reach(grid, g.cell, u.move_origin, ability_range(g, null)):
+			out.append(g)
+	return out
+
+
+## The holders u would still stand next to at `from`.
+static func held_at(grid: CombatGrid, u: CombatUnit, units: Array, from: Vector2i) -> Array[CombatUnit]:
+	var out: Array[CombatUnit] = []
+	for g in holders(grid, u, units):
+		if dist(g.cell, from) == 1:
+			out.append(g)
+	return out
+
+
+## The holders u would walk away from by ending its move on `dest`.
+static func left_at(grid: CombatGrid, u: CombatUnit, units: Array, dest: Vector2i) -> Array[CombatUnit]:
+	var out: Array[CombatUnit] = []
+	for g in holders(grid, u, units):
+		if dist(g.cell, dest) > 1:
+			out.append(g)
+	return out
+
+
+## Each guard u walks away from by moving to `dest` gets one free basic hit as u leaves (no counter).
+## Resolve before u moves; if it goes down it stays put.
+static func leave_hits(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, units: Array, dest: Vector2i) -> Array:
+	var events := []
+	for g in left_at(grid, u, units, dest):
+		if not u.alive():
+			break
+		u.left_guard = true
+		events.append({"type": "free_hit", "src": g, "unit": u})
+		events.append_array(_swing(rng, grid, g, g.abilities[0], u, units))
+	return events
+
+
+## Cells next to every guarding piece of `team`: the zone the board rings.
+static func guard_ring(grid: CombatGrid, units: Array, team: int) -> Dictionary:
+	var out := {}
+	for g: CombatUnit in units:
+		if g.alive() and g.team == team and g.has_status(STATUS_GUARD) and not g.has_status(STATUS_SLEEP):
+			for d in DIRS:
+				if grid.in_bounds(g.cell + d) and grid.passable(g.cell + d):
+					out[g.cell + d] = true
+	return out
 
 
 ## Every cell a team could hit next phase (Fire Emblem's danger zone).

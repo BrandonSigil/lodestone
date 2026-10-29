@@ -34,7 +34,8 @@ var traits: Array[StringName] = []  ## combat traits from the class and the char
 var moved := false
 var acted := false
 var spooked := false
-var move_origin := Vector2i.ZERO
+var move_origin := Vector2i(-1000, -1000)  ## where this piece began its phase (set by CombatRules.begin_phase)
+var left_guard := false  ## walked away from a guard this phase and took the free hit, so the move can't be undone
 var cooldowns := {}  ## ability id -> own phases left
 var statuses := {}  ## status id -> turns left (see CombatRules.STATUS_*)
 
