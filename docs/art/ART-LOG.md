@@ -50,6 +50,7 @@ The generated outputs are not in git, so a second machine can't see them. The re
 | UI frame leaf reference | `docs/art/references/ui-frame-leaf-reference.png` | Brandon | **retired** (2026-10-30) | The full-border look (thin green bands, leaves, blue diamonds). The game now uses only the bottom band, `game/art/source/ui/frame_bottom.webp`; the side and top bands and the grey full-border layout are retired. |
 | Bustling city layout | `docs/art/references/city-bustle-street.webp`, `city-bustle-overview.webp` | Brandon | **reference** | 2026-10-29: layout target for the city prototype (tight winding streets, stairs up onto roofs, houses on bridges you walk under). Layout only: never attach to a Picsart prompt. |
 | Character sheet layout | `docs/art/references/character-sheet-layout.webp` | Brandon | **reference** | 2026-10-30: layout target for the character sheet (Fire Emblem style: portrait, level, stats, four moves). Layout only: never attach to a Picsart prompt. |
+| Interior walls target | `docs/art/references/interior-walls-target.webp` | Brandon | **reference** | 2026-10-30: the look for interior back walls (plaster, timber posts, window, doorway) and the floor. Our own floor edge tile stays. A guide for the interior and dungeon wall kits. |
 | UI frame, bottom band | `game/art/source/ui/frame_bottom.webp` (2000 x 261, transparent above) | Brandon | **approved** | Brandon, 2026-10-29: goes along the bottom of the player screen; left square = inventory button, right panel = party and health. |
 
 ## Batch log
