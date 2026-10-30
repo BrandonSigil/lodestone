@@ -36,8 +36,9 @@ BUILDINGS = {
     # footprint), homes are less generic and have windows on their east (right) walls, and the village
     # should look less like a stock fantasy village.
     # Home B: the house with a low lean-to woodshed on the front right end.
+    # Its door sits on a cell centre (door_dx 1 -> 1.5): at 1.2 it was painted half a cell off its doorstep.
     "home_b": {"foot": (4, 3), "parts": [
-        {"box": (0, 0, 4, 2.3), "h": STOREY, "roof": "x", "rh": 4.5, "door": ("left", 1.2),
+        {"box": (0, 0, 4, 2.3), "h": STOREY, "roof": "x", "rh": 4.5, "door": ("left", 1.5),
          "windows": [("right", 1.15)]},
         {"box": (2.4, 2.3, 4, 3), "h": 3.4, "roof": "shed", "rh": 1.8, "windows": [("right", 2.65)]},
         {"box": (0.5, 0.9, 1.0, 1.4), "h": STOREY + 6.0, "roof": None, "chimney": True}]},
