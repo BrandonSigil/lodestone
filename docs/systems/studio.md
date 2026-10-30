@@ -20,7 +20,7 @@ Read and write them with the `ArtifactData` tool and the URL above. Pin every wr
 | `log` | one line of a role's work | `role`, `at`, `text`, `image` (optional) |
 | `notes` | a note Brandon left a role | `role`, `text`, `images` [{url, id}], `at`, `status` (`new`, `seen`) |
 | `roadmap` | a track on the Roadmap (quick action) | `title`, `order`, `owner` (role id), `items` [{title, status (`done`, `doing`, `next`, `later`), ref (commit)}] |
-| `chat` | one message in the Studio chat (the round button bottom right) | `from` (`brandon`, `pm` or a role id), `text`, `images` [{url, id}], `at`, `status` (Brandon's: `new`, `seen` while the PM works on it, `answered`) |
+| `chat` | one message in the Studio chat (the round button bottom right) | `from` (`brandon`, `pm` or a role id), `text`, `images` [{url, id}], `at`, `status` (Brandon's: `new`, `seen` while the PM works on it, `answered`), `ask` (true when it waits on Brandon) |
 | `requests` | a quick-action request from the page | `kind` (`launch`), `status` (`new`, `done`), `at`, `result`, `done_at` |
 | `refs` | a group on the References wall | `title`, `used_for`, `warning`, `images` [{url, caption, path, slot}], `prompts`, `order`, `retired` |
 | `library` | a shelf | `title`, `path`, `kind` (`ingame`, `raw`, `code`), `status`, `note`, `items` [{url, name}], `order` |
@@ -42,7 +42,7 @@ Pictures from Brandon: any answer, and any note, may carry `images` [{url, id}] 
 5. Approved art still goes into `docs/art/ART-LOG.md` and `game/art/source` as before; the stamp on the page is the approval to record.
 
 ## The chat
-Brandon talks to the project manager from the chat button on the page instead of the Claude window. Each message is a `chat` doc. Sending also posts a comment to Claude on the chat header, which wakes the PM session at once while it watches the artifact (the header says "Answers here in a minute or two"); otherwise the hourly desk watch answers it ("Picks this up within the hour"). The PM marks his message `seen`, does the work, writes its reply as a new doc with `from: "pm"`, then marks his `answered`. Other roles may post with their own role id when they have something for him, sparingly. The comment threads it leaves behind are only the wake-up signal; the conversation is the `chat` collection.
+Brandon talks to the project manager from the chat button on the page instead of the Claude window. Each message is a `chat` doc. Sending also posts a comment to Claude on the chat header, which wakes the PM session at once while it watches the artifact (the header says "Answers here in a minute or two"); otherwise the hourly desk watch answers it ("Picks this up within the hour"). The PM marks his message `seen`, does the work, writes its reply as a new doc with `from: "pm"`, then marks his `answered`. Brandon works from this chat instead of the Claude window (2026-10-30: "start putting all of our chat in here"), so every PM reply to him goes here, even when he wrote in the Claude window. A message that waits on him (a question, a go he owes) carries `ask: true`: the chat button wears a pulsing amber pip and the bubble says "Waiting on you" until he writes back. Other roles may post with their own role id when they have something for him, sparingly. The comment threads it leaves behind are only the wake-up signal; the conversation is the `chat` collection.
 
 ## Keep the walls true
 - References: when a prompt starts sending a different picture, change its group on the wall the same day. If it isn't on the wall, Claude isn't using it.

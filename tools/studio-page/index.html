@@ -247,6 +247,12 @@ html.locked { overflow: hidden; }
 .chat-fab svg { width: 26px; height: 26px; }
 .chat-fab .dot { position: absolute; top: 2px; right: 2px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--stamp); color: #fff; font-size: 12px; font-weight: 600; line-height: 20px; }
 .chat { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 38; width: min(380px, calc(100vw - 32px)); height: min(560px, calc(100vh - 120px)); background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow), 0 12px 32px rgba(20,30,24,.22); display: flex; flex-direction: column; overflow: hidden; }
+.chat-fab .pip { position: absolute; bottom: 0; left: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--amber); border: 2px solid var(--paper); }
+.chat-fab .pip::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--amber); animation: pip 1.6s ease-out infinite; }
+@keyframes pip { from { transform: scale(1); opacity: .9; } to { transform: scale(2.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .chat-fab .pip::after { animation: none; } }
+.msg.ask .bubble { border-left: 3px solid var(--amber); }
+.msg .flag { display: inline-block; margin-top: 3px; font-size: 11.5px; font-weight: 600; color: var(--amber); }
 .chat-head { background: var(--chat); color: var(--chat-ink); padding: 10px 12px 10px 16px; display: flex; align-items: center; gap: 10px; }
 .chat-head h2 { font-family: var(--display); font-weight: 400; font-size: 17px; margin: 0; }
 .chat-head small { display: block; font-size: 12px; opacity: .85; }
@@ -407,7 +413,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
   <p id="lb-cap"></p>
 </div>
 <div class="toast" id="toast" hidden></div>
-<button class="chat-fab" id="chat-fab" aria-label="Chat with the project manager" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="dot" id="chat-dot" hidden></span></button>
+<button class="chat-fab" id="chat-fab" aria-label="Chat with the project manager" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="dot" id="chat-dot" hidden></span><span class="pip" id="chat-pip" hidden></span></button>
 <section class="chat" id="chat" hidden aria-labelledby="chat-h">
   <div class="chat-head" id="chat-anchor"><div><h2 id="chat-h">Project manager</h2><small id="chat-sub">Opening…</small></div><button id="chat-x" aria-label="Close chat">×</button></div>
   <div class="chat-log" id="chat-log" aria-live="polite"></div>
@@ -995,7 +1001,8 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ---------- chat with the project manager ---------- */
-// Messages live in the `chat` collection: {from: "brandon" | a role id, text, images, at, status}.
+// Messages live in the `chat` collection: {from: "brandon" | a role id, text, images, at, status, ask}.
+// `ask: true` on a team message means it waits on Brandon: the button wears an amber pip until he writes back.
 // The PM marks Brandon's message "seen" while working on it and "answered" when it replies.
 // Sending also posts a comment to Claude, which wakes the PM session at once; without that, the hourly desk watch picks it up.
 const CHAT_SEEN_KEY = "studio-chat-seen";
@@ -1011,6 +1018,9 @@ function renderChat() {
   const unread = S.chat.filter((m) => m.from !== "brandon" && String(m.at) > chatSeen()).length;
   $("chat-dot").hidden = chatOpen() || !unread; $("chat-dot").textContent = unread > 9 ? "9+" : unread;
   const lastMine = [...S.chat].reverse().find((m) => m.from === "brandon");
+  const asks = S.chat.filter((m) => m.ask && m.from !== "brandon" && String(m.at) > String(lastMine?.at || ""));
+  $("chat-pip").hidden = !asks.length;
+  $("chat-fab").setAttribute("aria-label", asks.length ? "Chat with the project manager: waiting on you" : "Chat with the project manager");
   const working = lastMine && lastMine.status === "seen";
   $("chat-typing").hidden = !working; $("chat-typing").textContent = working ? "Project manager is on it…" : "";
   if (!chatOpen()) return;
@@ -1018,7 +1028,8 @@ function renderChat() {
   log.innerHTML = S.chat.length ? S.chat.map((m) => {
     const mine = m.from === "brandon";
     const ims = (m.images || []).map((im) => ({ url: im.url, caption: im.caption || "" }));
-    return `<div class="msg${mine ? " mine" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Project manager" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.text ? `<div class="bubble">${esc(m.text)}</div>` : ""}${shotsHtml(ims)}</div>`;
+    const waiting = asks.includes(m);
+    return `<div class="msg${mine ? " mine" : ""}${waiting ? " ask" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Project manager" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.text ? `<div class="bubble">${esc(m.text)}</div>` : ""}${shotsHtml(ims)}${waiting ? `<span class="flag">Waiting on you</span>` : ""}</div>`;
   }).join("") : `<div class="empty">Talk to the project manager here like a teammate: ask what's going on, pass on a decision, or paste a picture.</div>`;
   if (atEnd || S.chatJump) { log.scrollTop = log.scrollHeight; S.chatJump = false; }
   markChatSeen();
