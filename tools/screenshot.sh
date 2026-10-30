@@ -2,7 +2,7 @@
 # Saves a PNG of each screen so Claude can look at visual work instead of guessing.
 # Needs a display; on a headless Linux box it uses xvfb-run.
 # Usage: GODOT=/path/to/godot tools/screenshot.sh [out_dir]
-# Runs through tools/godot.sh so the windows open on the second display without taking focus.
+# Runs through tools/godot.sh, whose focus-free Godot never takes Brandon's focus.
 set -euo pipefail
 export GODOT_BIN="${GODOT:-${GODOT_BIN:-}}"
 GODOT="$(cd "$(dirname "$0")" && pwd)/godot.sh"

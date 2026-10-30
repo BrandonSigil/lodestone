@@ -13,7 +13,7 @@ Read `docs/context/README.md` first, then `docs/context/current-state.md`. Toget
 - Game data lives in `game/data/` (`.tres` Resources and `.csv` tables), not hardcoded in scripts.
 - Rules math lives in pure scripts (`CombatRules`, `TrailRules`, `Dice`) so tests can run it headless.
 - After a change, run `tools/check.sh` (headless import, unit tests, scene smoke runs) and fix every error.
-- Any Godot run that opens a window (the `game/tools/*_shot.gd` screenshot scripts) goes through `tools/godot.sh <args>`, never the bare binary. It opens the window on Brandon's second display and hands focus back, so his screen doesn't jump. Headless runs can use either.
+- Any Godot run that opens a window (the `game/tools/*_shot.gd` screenshot scripts) goes through `tools/godot.sh <args>`, never the bare binary. It runs a private focus-free copy of Godot (built by `tools/nofocus/setup.sh`) that can never become the front app, so Brandon's windows, keyboard and mouse are never touched. Never run a windowed Godot any other way. Headless runs can use either.
 
 ## Lodestone Studio (Brandon's home base page)
 - Decisions Brandon owes go on his desk at https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 as cards with screenshots (pick one, or Neither with a why). Picsart batches get a "go" card before the run and a "review" card after, each picture scored against the References wall, for his stamp.

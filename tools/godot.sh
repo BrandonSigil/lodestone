@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
-# Runs Godot for Claude's windowed runs (screenshot scripts) without pulling Brandon's screen around.
-# On a Mac with two displays the window opens on the second one (the laptop), and focus goes straight
-# back to whatever app was in front: Godot always makes itself the front app at launch, and a window
-# on the main display flips a full-screen Space over to the desktop. Headless runs pass straight through.
+# Runs Godot for Claude's windowed runs (screenshot scripts) without touching Brandon's screen.
+# On a Mac the run uses a private focus-free copy of Godot (tools/nofocus/setup.sh builds it in
+# ~/.lodestone/nofocus): it is marked background-only and a small library stops it activating itself,
+# so it never becomes the front app, never moves his windows and never takes his keyboard or mouse.
+# Brandon (2026-10-30): "there has to be another way to grab a screenshot then making my windows fly
+# around constantly and unfocus my mouse". If the focus-free copy can't be built, the run is refused.
 # Every run goes through tools/mem_guard.sh: over GODOT_MEM_CAP_MB (default 6144) it is killed, not left to fill the Mac.
 # Usage: tools/godot.sh <godot args...>
-# Env: GODOT_BIN (the real binary), GODOT_SCREEN (display index, default 1), GODOT_MEM_CAP_MB.
+# Env: GODOT_BIN (the real binary, non-Mac and headless runs), GODOT_SCREEN (display index, default 1), GODOT_MEM_CAP_MB.
 set -uo pipefail
-GUARD="$(cd "$(dirname "$0")" && pwd)/mem_guard.sh"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+GUARD="$HERE/mem_guard.sh"
 BIN="${GODOT_BIN:-}"
 if [ -z "$BIN" ]; then
 	BIN="$(command -v godot || true)"
@@ -18,10 +21,9 @@ if [ "$(uname)" != Darwin ] || [[ " $* " == *" --headless "* ]]; then
 	exec "$GUARD" "$BIN" "$@"
 fi
 
-# Brandon (2026-10-30): windowed runs keep pulling his windows and focus around. Until the
-# focus-free capture is in, refuse them outright.
-if [ -z "${GODOT_ALLOW_WINDOW:-}" ]; then
-	echo "tools/godot.sh: windowed Godot runs are paused (they steal Brandon's focus). Use headless runs, or ask the PM." >&2
+NF="$HOME/.lodestone/nofocus"
+if ! "$HERE/nofocus/setup.sh" >/dev/null 2>&1; then
+	echo "tools/godot.sh: couldn't build the focus-free Godot (tools/nofocus/setup.sh); windowed run refused so Brandon's screen isn't disturbed." >&2
 	exit 3
 fi
 
@@ -29,25 +31,4 @@ args=("$@")
 if [[ " $* " != *" --screen "* ]]; then
 	args=(--screen "${GODOT_SCREEN:-1}" "${args[@]}")
 fi
-
-front_field() { lsappinfo info -only "$1" "$(lsappinfo front)" 2>/dev/null | sed -n 's/.*="*\([^"]*\)"*$/\1/p'; }
-prev="$(front_field bundleid)"
-
-"$GUARD" "$BIN" "${args[@]}" &
-pid=$!  # the guard; Godot is its child
-trap 'kill $pid 2>/dev/null' INT TERM
-
-# Hand focus back once, as soon as Godot grabs it (give up after about 10 seconds).
-if [ -n "$prev" ] && [ "$prev" != org.godotengine.godot ]; then
-	for _ in $(seq 1 200); do
-		kill -0 $pid 2>/dev/null || break
-		gpid="$(pgrep -P $pid | head -1)"
-		if [ -n "$gpid" ] && [ "$(front_field pid)" = "$gpid" ]; then
-			open -b "$prev"
-			break
-		fi
-		sleep 0.05
-	done
-fi
-
-wait $pid
+exec "$GUARD" "$NF/launch" "$NF/Godot.app/Contents/MacOS/Godot" "$NF/nofocus.dylib" "${args[@]}"
