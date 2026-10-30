@@ -406,13 +406,15 @@ for x in (4, 6, 8):
 V.prop("ph_crypt_gate", 5, 19, (2, 1), tall=1.5, sight=2.0)
 for x, y in [(x, 11) for x in range(3, 10)] + [(2, y) for y in range(12, 18)]:  # an iron fence round the graves' north and west
     V.prop("prop_iron_fence", x, y, (1, 1), tall=0.8, sight=0.0)
+    if y == 11:
+        V.props[-1]["flip"] = True  # the art runs down-left; along the x axis it is mirrored
 p("prop_tree_bare", 10, 17, 1.5, 1.0)
 KEEP_OPEN.update((x, y) for x in range(2, 13) for y in range(4, 21))
 
 # The farm (windmill and fields).
 V.prop("ph_windmill", 9, 32, (2, 2), tall=3.0, sight=3.0)
-for y in (35, 37):
-    V.prop("prop_crops", 3, y, (3, 1), tall=0.7, sight=0.0)
+for x in (3, 5):  # the beds' long side runs along the grid's y axis (down-left on screen), so the footprint is 1 x 3
+    V.prop("prop_crops", x, 35, (1, 3), tall=0.7, sight=0.0)
 p("prop_hay", 8, 36, 0.65, 0.5)
 KEEP_OPEN.update((x, y) for x in range(2, 13) for y in range(29, 39))
 
