@@ -37,6 +37,7 @@ Pictures from Brandon: any answer, and any note, may carry `images` [{url, id}] 
 
 ## How a session uses it
 1. At the start of a turn, read `desk` cards with `status: "answered"` for your role, and `notes` with `status: "new"`. Act on them.
+2. Reworking a card that's still on his desk (he answered with a tweak, or asked for more): set `working` on it to a few plain words of what you're changing (the desk shows "<role> is reworking this: ..."), do the work, then delete `working` in the same write that lands the new version. Brandon (2026-10-30): "There's no way for me to tell because it's still on my desk."
 2. When you've acted, update the card: `status: "done"` and a one-line `result`. Mark notes `seen`.
 3. Post progress: update your `roles` doc (`status`, `now`, `next`, `updated`) every time you start a new item, not only when you finish, and take `updated` from the clock (`date -u +%Y-%m-%dT%H:%M:%SZ`), never a guess. The project manager's desk watch also copies your live working/idle state from the Claude app every 15 minutes and add `log` lines for real milestones (a commit, a batch back), with a screenshot when there is one.
 4. Pictures: upload with the Artifact tool (`url`, `asset: true`, `file_paths`), then use the returned `/_blob/<id>` url in the record. Make web copies first (`magick in.png -resize '1600x1600>' -quality 82 out.webp`); several art files on the Mac are Git LFS stubs and won't convert.

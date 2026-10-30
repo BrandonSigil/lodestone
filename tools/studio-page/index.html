@@ -85,6 +85,7 @@ button { cursor: pointer; }
 .chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .chip.kind-choice { background: var(--gem-soft); color: var(--gem); }
 .chip.kind-go { background: var(--amber-soft); color: var(--amber); }
+.working { display: inline-block; margin: 2px 0 6px; padding: 4px 10px; border-radius: 6px; background: var(--amber-soft); color: var(--ink); font-size: 13.5px; }
 .chip.kind-present { background: var(--chat-soft); color: var(--chat); }
 .chip.kind-review { background: var(--amber-soft); color: var(--amber); }
 .chip.kind-todo { background: var(--leaf-soft); color: var(--muted); }
@@ -645,6 +646,7 @@ function cardHtml(d) {
     <div class="card-top"><span class="chip kind-${esc(d.kind)}">${esc(KIND[d.kind] || d.kind)}</span>${st !== "open" ? `<span class="chip st-${esc(st)}">${st === "answered" ? "Answered" : "Done"}</span>` : ""}<span>from ${esc(roleName(d.role))} · ${esc(ago(d.created))}</span></div>
     <div class="card-body">
       <h3>${esc(d.title)}</h3>
+      ${d.working && st === "open" ? `<p class="working">${esc(roleName(d.role))} is reworking this: ${esc(d.working)}</p>` : ""}
       ${d.ask ? `<p class="ask">${esc(d.ask)}</p>` : ""}
       ${d.context ? `<p class="ctx">${esc(d.context)}</p>` : ""}
       ${d.kind !== "review" ? shotsHtml(d.images) : ""}
