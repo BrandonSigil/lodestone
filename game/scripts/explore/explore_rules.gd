@@ -25,6 +25,13 @@ static func beaten_flag(map_name: String, group_id: String) -> String:
 	return "beaten_%s_%s" % [map_name, group_id]
 
 
+## Set when the party gets past a boss, beaten or escaped by its fight's exit: what completes the region and opens
+## what comes after ([USER] 2026-10-30 design-world-gate: sneaking past the Lich King is fine too). Only beating
+## him pays the boss XP and his loot.
+static func passed_flag(map_name: String, group_id: String) -> String:
+	return "passed_%s_%s" % [map_name, group_id]
+
+
 ## The flag that keeps a lasting reward taken for good ([USER] omr-10): stat items, keys, rare caches.
 static func taken_flag(map_name: String, thing_id: String) -> String:
 	return "got_%s_%s" % [map_name, thing_id]

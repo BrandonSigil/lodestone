@@ -177,11 +177,14 @@ static func node_for_map(nodes: Dictionary, map_name: String) -> String:
 	return "town"
 
 
-## A place is cleared once its clear_flag is set (the pass: the Lich King beaten). [USER] 2026-10-29: a
+## A place is cleared once its clear_flag is set (the pass: past the Lich King, beaten or escaped). Several
+## flags split by | mean any of them (beat_lich: saves from before an escape counted). [USER] 2026-10-29: a
 ## cleared place shows as done on the big map and the place past it comes into view.
 static func cleared(node: Dictionary, flags: Array) -> bool:
-	var f := String(node.get("clear_flag", ""))
-	return f != "" and flags.has(f)
+	for f in String(node.get("clear_flag", "")).split("|", false):
+		if flags.has(f):
+			return true
+	return false
 
 
 ## A place shows on the map unless it waits behind another one (after) that isn't cleared yet.

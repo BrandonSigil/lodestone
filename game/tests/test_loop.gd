@@ -501,7 +501,7 @@ func test_a_cleared_place_opens_the_road_past_it() -> void:
 	ok(not TravelRules.cleared(nodes.pass, []), "the pass isn't done before the boss")
 	ok(not TravelRules.visible(nodes, "beyond", []), "the place past it is hidden")
 	eq(TravelRules.route(paths, nodes, "town", "beyond", []), [] as Array[String], "no way there yet")
-	var flags := [String(nodes.pass.clear_flag)]
+	var flags := [String(nodes.pass.clear_flag).split("|")[0]]
 	ok(TravelRules.cleared(nodes.pass, flags), "the boss flag clears the pass")
 	ok(TravelRules.visible(nodes, "beyond", flags), "and shows the place past it")
 	eq(TravelRules.route(paths, nodes, "town", "beyond", flags), ["town", "pass", "beyond"] as Array[String], "the road runs past the pass")
@@ -694,7 +694,8 @@ func test_map_groups_keep_their_fight_data() -> void:
 
 
 ## [USER] c10: escaping the Lich King pays some XP, but it isn't beating him: no loot, no beaten flag, no end
-## screen, and he's waiting there next time (the map builder's catch).
+## screen, and he's waiting there next time (the map builder's catch). [USER] design-world-gate: it does complete
+## the crypt, so the places after it open.
 func test_an_escape_is_not_a_beating() -> void:
 	var saved := _fresh_game()
 	Game.explore_map = "crypt"
@@ -709,8 +710,10 @@ func test_an_escape_is_not_a_beating() -> void:
 	var xp_before := int(Game.level_state("lead").xp) + int(Game.level_state("lead").level) * 100
 	s._on_fight_over(true, [throne])
 	ok(not Game.has_flag(ExploreRules.beaten_flag("crypt", "throne")), "not beaten")
-	ok(not Game.has_flag("beat_lich"), "no loot, so the pass isn't cleared")
+	ok(not Game.has_flag("beat_lich"), "no loot")
 	ok(not Game.has_flag("e2e_done"), "no end screen")
+	ok(Game.has_flag(ExploreRules.passed_flag("crypt", "throne")), "but the party is past him")
+	ok(TravelRules.cleared(Db.world_nodes["pass"], Game.meta.flags), "so the crypt is complete and what's after opens")
 	eq(throne.state, "escaped", "he's still there, leaving the party be for now")
 	ok(int(Game.level_state("lead").xp) + int(Game.level_state("lead").level) * 100 > xp_before, "some XP")
 	b.free()

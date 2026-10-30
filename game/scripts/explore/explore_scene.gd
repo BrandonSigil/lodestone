@@ -1216,6 +1216,8 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	var escaped: bool = battle.outcome.how == "exit"
 	for f: Dictionary in foes:
 		f.state = "escaped" if escaped else "gone"  # beaten, fled or talked round: done with the party
+		if f.def.get("boss", false):
+			Game.set_flag(ExploreRules.passed_flag(map.map_name, String(f.def.id)))  # past him either way
 		for u: CombatUnit in f.units:
 			if not u.alive():
 				downed += 1
