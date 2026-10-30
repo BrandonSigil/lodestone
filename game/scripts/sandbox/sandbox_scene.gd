@@ -72,6 +72,12 @@ func _ready() -> void:
 	if Game.sandbox_map != "":  # a play test from the map maker
 		setup = SandboxSetup.load_file(Game.sandbox_map)
 		Game.sandbox_map = ""
+	if Game.scale_test and setup != null:  # the scale C test: knight, fast rogue, slow ranged mage on the map's party cells
+		Game.scale_test = false
+		setup.scale_c = true
+		var ids := ["lead", "class:job_rogue", "wizard"]
+		for i in mini(ids.size(), setup.party.size()):
+			setup.party[i].id = ids[i]
 	if setup == null:
 		for p in SandboxSetup.list_maps():
 			if p.get_file() == "default.json":

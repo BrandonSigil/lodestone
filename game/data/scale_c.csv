@@ -1,0 +1,12 @@
+kind,id,move,range_min,range_max,note
+class,knight,5,1,1,regular pace: move 4 x1.25
+class,job_rogue,8,1,1,fast: base move 5 x1.5
+class,wizard,4,2,4,slow: move 3 x1.25; basic reach 3 x1.25
+class,bandit,5,1,1,move 4 x1.25
+class,bandit_archer,5,2,8,move 4 x1.25; reach 5 x1.5 (long)
+class,wolf,9,1,1,fast: move 6 x1.5
+ability,firebolt,,2,6,reach 4 x1.5 (long)
+ability,fireball,,2,6,reach 4 x1.5 (long)
+ability,frost_bind,,2,4,reach 3 x1.25
+ability,mend,,0,3,reach 2 x1.25
+ability,shadow_swap,,1,4,reach 3 x1.25

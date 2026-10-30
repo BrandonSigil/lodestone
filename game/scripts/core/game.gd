@@ -36,6 +36,7 @@ var explore_memory := {}
 var maker_map := ""  ## the map file the map maker reopens (it comes back here after a play test)
 var sandbox_map := ""  ## a map file the combat sandbox opens instead of default.json (map maker play test)
 var sandbox_play := false  ## ...and starts the fight straight away
+var scale_test := false  ## ...as the scale C test: a knight, a fast rogue and a slow ranged mage, with scale C's numbers (ScaleTest)
 ## The overworld: {"at": node id} when standing at a place, or a leg in progress
 ## {"from", "to", "t": seconds walked, "stops": encounter times left, "acts": activity id -> time used}.
 var travel := {"at": "town"}

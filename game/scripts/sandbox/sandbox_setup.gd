@@ -26,6 +26,7 @@ var seed_value := 1
 var strangeness := 0.0
 var art_set := ""  ## battle tile set (a subfolder of BattleArt.DIR), "" = base art
 var counters := true
+var scale_c := false  ## lay the scale C numbers (data/scale_c.csv) over the pieces: the scale test fight
 var view := 0  ## camera quarter turns the map opens with
 
 
@@ -130,6 +131,17 @@ func build_units() -> Array:
 	var units: Array = []
 	var taken := {}
 	for p in party:
+		if String(p.id).begins_with("class:"):  # a class as a party piece (the scale test's rogue)
+			var cd: ClassDef = Db.class_def(String(p.id).substr(6))
+			if cd != null and grid.passable(p.cell) and not taken.has(p.cell):
+				var cu := CombatUnit.enemy(cd, party_mods)
+				cu.team = 0
+				cu.facing = Vector2i(1, 0)
+				cu.tint = Color(0.45, 0.55, 0.85)
+				cu.place(p.cell, grid.height_at(p.cell))
+				taken[p.cell] = true
+				units.append(cu)
+			continue
 		var d := Db.character(StringName(p.id))
 		if d == null or not grid.passable(p.cell) or taken.has(p.cell):
 			continue
@@ -158,6 +170,8 @@ func build_units() -> Array:
 		u.place(c, grid.height_at(c))
 		taken[c] = true
 		units.append(u)
+	if scale_c:
+		ScaleTest.apply(units)
 	return units
 
 

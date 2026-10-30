@@ -75,6 +75,7 @@ func _sections_row() -> HBoxContainer:
 		]],
 		["FIGHT", [
 			["Trail fight", "debug encounter", _trail_fight],
+			["Scale C test", "knight, fast rogue, slow ranged mage vs 5 foes on a 21 x 18 arena", _scale_c],
 		]],
 		["+MAKE", [
 			["Map maker", "build or edit any map", _go.bind(Game.MAKER)],
@@ -139,6 +140,14 @@ func _trail() -> void:
 func _trail_fight() -> void:
 	Game.ensure_run()
 	Game.go(Game.COMBAT)
+
+
+## The scale C test fight ([USER] 2026-10-30 design-scale): the arena, the test party and scale C's numbers, straight in.
+func _scale_c() -> void:
+	Game.sandbox_map = "res://data/maps/arena_c.json"
+	Game.sandbox_play = true
+	Game.scale_test = true
+	Game.go(Game.SANDBOX)
 
 
 ## Open a map in the map maker.

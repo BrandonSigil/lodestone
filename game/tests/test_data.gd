@@ -169,3 +169,28 @@ func test_archetypes_load() -> void:
 
 
 const BASIC_ACTIONS := ["guard", "move", "wait", "talk", "aid"]
+
+
+## The scale C test set (data/scale_c.csv): every row names a real class or ability, and laying it over a fight changes
+## the pieces and copies of abilities, never the shipped ones.
+func test_scale_c_set() -> void:
+	if Db.explore_events.is_empty():
+		Db.reload()
+	for r in ScaleTest.rows():
+		if r.kind == "class":
+			ok(ResourceLoader.exists("res://data/classes/%s.tres" % r.id), "class %s" % r.id)
+		else:
+			ok(Db.abilities.has(String(r.id)), "ability %s" % r.id)
+	var g := CombatGrid.flat(6, 6)
+	var rogue := CombatUnit.enemy(load("res://data/classes/job_rogue.tres"))
+	var mage := CombatUnit.from_def(Db.character(&"wizard"))
+	var before := Db.ability("fireball").range_max
+	ScaleTest.apply([rogue, mage])
+	eq(rogue.move, 8, "the fast rogue")
+	eq(mage.move, 4, "the slow mage")
+	var ball: Ability = mage.abilities.filter(func(a: Ability) -> bool: return a.id == "fireball")[0]
+	eq(ball.range_max, 6, "a long reach")
+	eq(Db.ability("fireball").range_max, before, "the shipped ability is untouched")
+	var setup := SandboxSetup.load_file("res://data/maps/arena_c.json")
+	ok(setup != null and setup.enemies.size() >= 4, "the arena has its foes")
+	g.w = g.w

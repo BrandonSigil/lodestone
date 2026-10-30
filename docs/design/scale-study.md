@@ -228,3 +228,6 @@ Same generator seed in each (the valley is seeded per size, so the terrain diffe
 | ![B](scale-study/b.jpg) | ![C](scale-study/c.jpg) |
 
 (The hunter is already "fast and long" so B and C show it the same; C's difference is the other pieces, who walk 5 instead of 6.)
+
+## Scale C test fight (2026-10-30)
+Launch screen, FIGHT column, "Scale C test": the 21 x 18 arena (`data/maps/arena_c.json`), a knight (move 5, melee), a fast rogue (move 8) and a slow ranged mage (move 4, spells to 6 tiles) against five foes (three bandits at move 5, an archer reaching 8, a wolf at move 9). The numbers are `data/scale_c.csv`, laid over the pieces only for this fight (`ScaleTest`); shipped classes and maps are unchanged. Screenshot: `tools/godot.sh --path game --script res://tools/scale_test_shot.gd -- <png> [piece]`.
