@@ -330,6 +330,8 @@ Falling keeps every item (`[USER]` 2026-10-28), so a tight pack can't create fea
 | `design-inv-11-sort` | Hand packing only, auto-place on pickup, or a tidy button too? | Auto-place, rearrange by hand on the walk |
 | `design-inv-12-dog` | The dog as courier: one item, a 2 x 2 saddlebag, or whatever the pack could hold? | 2 x 2 saddlebag |
 
+**Update (07:55):** with bug 03 fixed (a helped-up piece now acts), the book beats the Lich 83% and daggers 65% (step away only from foes that hit next to it, poison 1). Sword and bow stay at about 42%. Card `design-boss-spread` asks Brandon whether builds should be even against a boss.
+
 ## Bosses, foes and the village (batch posted 2026-10-30)
 The follow-ups left open after the four themes: what makes a boss different, what each foe asks of the player, and what the village grows into. Ranked so the most load-bearing come first.
 
