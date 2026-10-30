@@ -393,7 +393,8 @@ static func _tidy_set(grid: CombatGrid, c: Vector2i, k: int) -> void:
 ## One rock pillar (rule V10): the cell rises two levels over its highest neighbour into a lone column, in the
 ## top's own ground (the soft look rounds it into a snow-capped pillar; rock would grow a boulder on it).
 ## `down` lowers one back to its neighbours. False when the cell can't hold one.
-static func pillar(grid: CombatGrid, c: Vector2i, down := false) -> bool:
+## `cap`: the highest a pillar may stand; the map maker's tool goes to MAX_HEIGHT, dressing keeps PILLAR_MAX.
+static func pillar(grid: CombatGrid, c: Vector2i, down := false, cap := CombatGrid.MAX_HEIGHT) -> bool:
 	if not grid.solid(c) or grid.terrain_at(c) in [T.WATER, T.STAIRS]:
 		return false
 	var top := -1
@@ -405,7 +406,7 @@ static func pillar(grid: CombatGrid, c: Vector2i, down := false) -> bool:
 	if down:
 		grid.set_height(c, top)
 		return true
-	if top + 2 > CombatGrid.MAX_HEIGHT:
+	if top + 2 > cap:
 		return false
 	var a := grid.prop_anchor(c)
 	if a != CombatGrid.NONE_CELL:
@@ -417,6 +418,10 @@ static func pillar(grid: CombatGrid, c: Vector2i, down := false) -> bool:
 
 ## Place up to `count` pillars (rule V10) on high rims and in front of cliffs, at least four cells apart, off
 ## roads, water, stairs and `keep`, never cutting a piece of the walkable map off. Returns their cells.
+## Dressing keeps the pillars it always placed: no higher than PILLAR_MAX, whatever MAX_HEIGHT allows (raising
+## the cap to 24 must not change a re-dressed map: the map builder, 2026-10-30).
+const PILLAR_MAX := 8
+
 static func pillars(grid: CombatGrid, seed_value: int, count := 3, keep := {}) -> Array[Vector2i]:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
@@ -455,7 +460,7 @@ static func pillars(grid: CombatGrid, seed_value: int, count := 3, keep := {}) -
 		var before := reach(grid, start, 1)
 		var h0 := grid.height_at(c)
 		var t0 := grid.terrain_at(c)
-		if not pillar(grid, c):
+		if not pillar(grid, c, false, PILLAR_MAX):
 			continue
 		var after := reach(grid, start if start != c else Vector2i(-1, -1), 1)
 		var lost := false

@@ -244,3 +244,14 @@ func test_tall_heights_save_and_play() -> void:
 	CombatRules.push(g, [shover, top], shover.cell, top, 1)
 	eq(top.cell, Vector2i(3, 0), "shoved off a 16-level drop")
 	eq(top.hp, maxi(0, hp - 15 * CombatRules.FALL_DAMAGE), "a long fall hurts by the level")
+
+
+## Dressing keeps its old pillars on any map: no higher than MapOps.PILLAR_MAX (8), whatever the height cap.
+func test_dressed_pillars_keep_their_old_cap() -> void:
+	var g := CombatGrid.flat(5, 5)
+	for y in 5:
+		for x in 5:
+			g.set_height(Vector2i(x, y), 7)
+	ok(not MapOps.pillar(g, Vector2i(2, 2), false, MapOps.PILLAR_MAX), "7 + 2 is over the dressing cap")
+	ok(MapOps.pillar(g, Vector2i(2, 2)), "the map maker's tool goes higher")
+	eq(g.height_at(Vector2i(2, 2)), 9)
