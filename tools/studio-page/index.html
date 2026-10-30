@@ -247,10 +247,7 @@ html.locked { overflow: hidden; }
 .chat-fab svg { width: 26px; height: 26px; }
 .chat-fab .dot { position: absolute; top: 2px; right: 2px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--stamp); color: #fff; font-size: 12px; font-weight: 600; line-height: 20px; }
 .chat { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 38; width: min(380px, calc(100vw - 32px)); height: min(560px, calc(100vh - 120px)); background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow), 0 12px 32px rgba(20,30,24,.22); display: flex; flex-direction: column; overflow: hidden; }
-.chat-fab .pip { position: absolute; bottom: 0; left: 0; width: 18px; height: 18px; border-radius: 50%; background: var(--amber); border: 2px solid var(--paper); }
-.chat-fab .pip::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--amber); animation: pip 1.6s ease-out infinite; }
-@keyframes pip { from { transform: scale(1); opacity: .9; } to { transform: scale(2.2); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .chat-fab .pip::after { animation: none; } }
+.chat-fab .pip { position: absolute; bottom: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--amber); border: 2px solid var(--paper); }
 .msg.ask .bubble { border-left: 3px solid var(--amber); }
 .msg .flag { display: inline-block; margin-top: 3px; font-size: 11.5px; font-weight: 600; color: var(--amber); }
 .chat-head { background: var(--chat); color: var(--chat-ink); padding: 10px 12px 10px 16px; display: flex; align-items: center; gap: 10px; }
@@ -1002,7 +999,7 @@ document.addEventListener("keydown", (e) => {
 
 /* ---------- chat with the project manager ---------- */
 // Messages live in the `chat` collection: {from: "brandon" | a role id, text, images, at, status, ask}.
-// `ask: true` on a team message means it waits on Brandon: the button wears an amber pip until he writes back.
+// `ask: true` on a team message means a chat-only question waits on Brandon (never a desk card): a still amber pip on the button until he writes back.
 // The PM marks Brandon's message "seen" while working on it and "answered" when it replies.
 // Sending also posts a comment to Claude, which wakes the PM session at once; without that, the hourly desk watch picks it up.
 const CHAT_SEEN_KEY = "studio-chat-seen";
