@@ -297,6 +297,16 @@
     31,
     22
    ]
+  },
+  {
+   "id": "chef",
+   "kind": "settler",
+   "event": "settler_chef",
+   "cell": [
+    9,
+    3
+   ],
+   "once": "settler_chef"
   }
  ]
 }

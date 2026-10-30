@@ -1668,6 +1668,34 @@
    ]
   },
   {
+   "id": "smithy_restore",
+   "kind": "restore",
+   "event": "smithy",
+   "cell": [
+    11,
+    9
+   ]
+  },
+  {
+   "id": "smith",
+   "kind": "settler",
+   "event": "settler_smith",
+   "cell": [
+    14,
+    11
+   ],
+   "once": "settler_smith"
+  },
+  {
+   "id": "inn_restore",
+   "kind": "restore",
+   "event": "inn",
+   "cell": [
+    33,
+    22
+   ]
+  },
+  {
    "id": "weapon_rack",
    "kind": "rack",
    "event": "smithy_rack",

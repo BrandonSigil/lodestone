@@ -599,6 +599,11 @@ V.thing(id="dog_home", kind="companion", event="companion_dog", cell=[3, 23], wh
 V.thing(id="se_door", kind="enter", event="door_stuck", cell=south_east_door)
 V.thing(id="far_door", kind="enter", event="door_stuck", cell=far_door)
 V.thing(id="bluff_door", kind="enter", event="door_stuck", cell=bluff_door)
+# The restore loop ([USER] omr-5): walk up to a building to see its next step. The settlers who run them
+# move in by a placeholder WELCOME and are gone once welcomed (unlock:<flag>;remove, then `once`).
+V.thing(id="smithy_restore", kind="restore", event="smithy", cell=[11, 9])  # the yard's back corner, at the forge
+V.thing(id="smith", kind="settler", event="settler_smith", cell=[14, 11], once="settler_smith")
+V.thing(id="inn_restore", kind="restore", event="inn", cell=[33, 22])  # beside the tavern door
 V.thing(id="weapon_rack", kind="rack", event="smithy_rack", cell=[12, 11],
         once="weapon_sword|weapon_daggers|weapon_bow")
 V.thing(id="statue", kind="statue", event="statue_lodestone", cell=[21, 22], once="has_lodestone")
@@ -692,5 +697,6 @@ for x, y in [(3, 6), (4, 4), (7, 4), (8, 6), (7, 7), (9, 8)]:
 T.prop("prop_broken_chair", 5, 8, tall=0.75)
 T.prop("village/prop_barrel", 10, 9, tall=0.7)  # village_in has no barrel of its own
 T.thing(id="out", kind="enter", event="", cell=[3, 10], to="village", at=tavern_door)
+T.thing(id="chef", kind="settler", event="settler_chef", cell=[9, 3], once="settler_chef")  # at the hearth
 T.start = [[3, 9]]
 T.save()
