@@ -40,14 +40,14 @@
    "fgggdggdggggggggwwggggggggggggddgggggggggggdgggggttttttg",
    "fgggfffttgggggggwwgggggggggggggdgggggggggggdgggggggggggg",
    "fggggggttgggggggwwgggggggggggggttggggggggggdggggggggggfg",
-   "gggggggttgggggggwwgggggggggggggttggggggggggdgggggggggggf",
+   "fggggggttgggggggwwgggggggggggggttggggggggggdgggggggggggf",
    "fggggggttgggggggwwgggggggggggggttggggggggggdgggggggggggg",
    "gggggdgttgggggggwwgggggggggggggttgggggddddddggggdggggggf",
-   "fgggggggggggggggwwgggggggggggggttgggggggggdttttddgggggfg",
+   "fggggggggggggfggwwgggggggggggggttgggggggggdttttddgggggfg",
    "gggggggggggggggtwwgggggggggggggddggggggggggttttgddgggggg",
    "gggggggggggggggtwgggggggggggggggdggggggggggggggggdgggggf",
    "ffggggggggddgfggwggggggggggdtttddgggggggggggggggggggggg.",
-   ".fggggggggggggggggggggggggggtttdttgggggggggfggggggggggg.",
+   ".fggggggggggggggggggggggggggtttdttggggggggggggggggggggg.",
    ".ffgggggggggggggwggggggggggggggdttggggggggggggggggggggg.",
    ".ffggggggggggggwwggggggggggggggdttdgggggggggggggggggg...",
    "..fggggggggggggwwgggggggggggggggggddgggggggggggggdggg...",
@@ -71,7 +71,7 @@
    "00000000000033gg33366cooooooooooooooo6300000000000000000",
    "00000000000333gg669ciooooooooooooooooo633000000000000000",
    "00000000006669ggccilooooooooooooooooooc33000000000000000",
-   "000000000oooogggffilooooooooooooooooooi93330000000000000",
+   "000000000oooogggffnlooooooooooooooooooi93330000000000000",
    "00000000oooooggggilloooooooooooooooooolf6330000000000000",
    "0000000ooooooggggglllooooooooooooooooolii933300000000000",
    "000000oooooooggggglllloooooooooooooooliiiii3330000000000",
@@ -88,7 +88,7 @@
    "6oooooooooooolbbbbeeiiiiiiiiiiiiiiiiiiiiiiiiiiiiiffc6333",
    "3oooooooooooolbbbbddiiiiiiiiiiiiiiiiiiiiiiiiiiiiiffc6333",
    "39ioooooooooolbbbbcciiiiiiiiiiiiiiiiiiiiiiiiiiiiffc96333",
-   "3kfoooooooooolbbbbbbiiiiiiiiiiiiiiiiiiiiiiiiiffffc996333",
+   "39foooooooooolbbbbbbiiiiiiiiiiiiiiiiiiiiiiiiiffffc996333",
    "3iiiiiiionnnikbbbbbiiiiiiiiiiiiiiiiiiiiiiiifffedc9966333",
    "iiiiiiiiimmmijbbbbbiiiiiiiiiiiiiiiiiiiiiiiffffedc9966333",
    "iiiiiiiiillliibbbbbiiiiiiiiiiiiiiiiiiiiiiff9999999666543",
@@ -97,15 +97,15 @@
    "39iiiiiiiiiiiff5555fiiiiiiiiiiiiiiihgfedddd9999999876543",
    "3dddiiiiiiiidcc5555ffiiiiiiiiiiiiiiiddddddddddd999876543",
    "3ddddddiiiiidcc5555ffiiiiiiiiiiiidddddddddddddd999999993",
-   "dddddddhhddddd55555ffffffffffffiidddddddddddddd9999999b3",
-   "dddddddggddddd55555fffffffffcddhhdddddddddddddd999999999",
+   "dddddddhhddddd55555ffffffffffffiidddddddddddddd999999993",
+   "fddddddggddddd55555fffffffffcddhhdddddddddddddd999999999",
    "dddddddffddddd55555ccccffccccddggdddddddddddddd999999999",
    "dddddddeeddddd55555ccccccccccddffddddddddddddd9999999999",
-   "dddddddddddddd55555999999cccccdeedddddddddddcba999999999",
+   "dddddddddddddf55555999999cccccdeedddddddddddcba999999999",
    "dddddddddddddd555556699999999ccdddddddddddddcba999999999",
    "dddddddddddddd54555666666669999cddddddddddddddd999999999",
    "3dddddddddddd63353333333366ccba9ccddddddddddddd999999990",
-   "03ddddddddd2222111111333366ccba9cc9cddccdddfd99999999990",
+   "03ddddddddd2222111111333366ccba9cc9cddccddddd99999999990",
    "036dddddddd222210111111336699999bb99cc99cc99999999999990",
    "033dddddd22222100112222229999999aa9999999999999999999000",
    "0022222dd22222100112222229999999999999999999999999999000",
@@ -829,7 +829,7 @@
     "arch": true
    },
    {
-    "sprite": "ph_grave",
+    "sprite": "prop_headstone",
     "cell": [
      4,
      12
@@ -838,12 +838,12 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.75,
     "sight": 0.3,
     "walk": false
    },
    {
-    "sprite": "ph_grave",
+    "sprite": "prop_grave_mound",
     "cell": [
      4,
      14
@@ -852,12 +852,12 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.75,
     "sight": 0.3,
     "walk": false
    },
    {
-    "sprite": "ph_grave",
+    "sprite": "prop_headstone",
     "cell": [
      4,
      16
@@ -866,12 +866,12 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.75,
     "sight": 0.3,
     "walk": false
    },
    {
-    "sprite": "ph_grave",
+    "sprite": "prop_grave_mound",
     "cell": [
      6,
      12
@@ -880,12 +880,12 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.75,
     "sight": 0.3,
     "walk": false
    },
    {
-    "sprite": "ph_grave",
+    "sprite": "prop_headstone",
     "cell": [
      6,
      14
@@ -894,12 +894,12 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.75,
     "sight": 0.3,
     "walk": false
    },
    {
-    "sprite": "ph_grave",
+    "sprite": "prop_grave_mound",
     "cell": [
      6,
      16
@@ -908,12 +908,12 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.75,
     "sight": 0.3,
     "walk": false
    },
    {
-    "sprite": "ph_grave",
+    "sprite": "prop_headstone",
     "cell": [
      8,
      12
@@ -922,12 +922,12 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.75,
     "sight": 0.3,
     "walk": false
    },
    {
-    "sprite": "ph_grave",
+    "sprite": "prop_grave_mound",
     "cell": [
      8,
      14
@@ -936,12 +936,12 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.75,
     "sight": 0.3,
     "walk": false
    },
    {
-    "sprite": "ph_grave",
+    "sprite": "prop_headstone",
     "cell": [
      8,
      16
@@ -950,7 +950,7 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.75,
     "sight": 0.3,
     "walk": false
    },
@@ -966,6 +966,188 @@
     ],
     "tall": 1.5,
     "sight": 2.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     3,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     4,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     5,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     6,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     7,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     8,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     9,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     2,
+     12
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     2,
+     13
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     2,
+     14
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     2,
+     15
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     2,
+     16
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_iron_fence",
+    "cell": [
+     2,
+     17
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.8,
+    "sight": 0.0,
     "walk": false
    },
    {
@@ -997,7 +1179,7 @@
     "walk": false
    },
    {
-    "sprite": "ph_crops",
+    "sprite": "prop_crops",
     "cell": [
      3,
      35
@@ -1006,12 +1188,12 @@
      3,
      1
     ],
-    "tall": 0.3,
+    "tall": 0.7,
     "sight": 0.0,
     "walk": false
    },
    {
-    "sprite": "ph_crops",
+    "sprite": "prop_crops",
     "cell": [
      3,
      37
@@ -1020,7 +1202,7 @@
      3,
      1
     ],
-    "tall": 0.3,
+    "tall": 0.7,
     "sight": 0.0,
     "walk": false
    },
@@ -1053,7 +1235,7 @@
     "walk": false
    },
    {
-    "sprite": "ph_boat",
+    "sprite": "prop_rowboat",
     "cell": [
      8,
      45
@@ -1062,12 +1244,12 @@
      1,
      2
     ],
-    "tall": 0.4,
+    "tall": 0.7,
     "sight": 0.0,
     "walk": false
    },
    {
-    "sprite": "ph_reeds",
+    "sprite": "prop_reeds",
     "cell": [
      14,
      40
@@ -1076,12 +1258,12 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.8,
     "sight": 0.0,
     "walk": false
    },
    {
-    "sprite": "ph_reeds",
+    "sprite": "prop_reeds",
     "cell": [
      17,
      42
@@ -1090,7 +1272,7 @@
      1,
      1
     ],
-    "tall": 0.4,
+    "tall": 0.8,
     "sight": 0.0,
     "walk": false
    },
