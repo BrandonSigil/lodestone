@@ -211,6 +211,21 @@ def flight(u0, i, axis):
                 made += [(x, y), (nx, ny)]
                 break
             x, y = nx, ny
+    # Two wide where the lane beside lands on the same two terraces at the same place (playtest recheck 2026-10-30):
+    # a one-wide flight reads as loose blocks on the snow.
+    if made:
+        (ax, ay), (bx, by) = made
+        for side in (1, -1):
+            sx, sy = (0, side) if axis == "x" else (side, 0)
+            a2, b2 = (ax + sx, ay + sy), (bx + sx, by + sy)
+            below = (2 * a2[0] - b2[0], 2 * a2[1] - b2[1])  # the ground the flight starts from
+            above = (2 * b2[0] - a2[0], 2 * b2[1] - a2[1])  # and the ground it climbs onto
+            if all(P.inb(*c) and P.t(*c) in "gd" for c in (a2, b2, below, above)) and P.ht(*a2) == lo \
+                    and P.ht(*below) == lo and P.ht(*b2) == hi and P.ht(*above) == hi:
+                P.put(*a2, "t", lo + 1)
+                P.put(*b2, "t", hi)
+                made += [a2, b2]
+                break
     return made
 
 
@@ -495,6 +510,54 @@ GODOT = os.environ.get("GODOT") or shutil.which("godot") or "/Applications/Godot
 GAME = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "game"))
 subprocess.run([GODOT, "--headless", "--path", GAME, "-s", "res://tools/dress_explore.gd", "--",
                 "snow_pass", "pass_exit", "crypt_stair", "3"], check=True)
+
+
+def wood_strays(path, most=2):
+    """After the dressing: one- and two-cell bits of open ground nobody can walk to (tidy leftovers, pillar tops)
+    grow woods, so they don't read as places (playtest recheck 2026-10-30). The game's walking: jump 1, a stair
+    2 more, water and woods WALK_OUT, doors, rubble and hidden ways opened. Bigger pieces (the rope ledge) stay."""
+    with open(path) as f:
+        data = json.load(f)
+    g = data["grid"]
+    ter = [list(r) for r in g["terrain"]]
+    hts = [[HEIGHT_DIGITS.index(c) for c in r] for r in g["heights"]]
+    w, h = g["w"], g["h"]
+    blocked = {(p["cell"][0] + dx, p["cell"][1] + dy) for p in g["props"] if not p.get("walk")
+               for dy in range(p.get("foot", [1, 1])[1]) for dx in range(p.get("foot", [1, 1])[0])}
+    opened = {tuple(t["cell"]) for t in data["things"] if t["kind"] in ("door", "rubble", "hidden")}
+    ok = lambda c: (0 <= c[0] < w and 0 <= c[1] < h and (ter[c[1]][c[0]] not in "ru.wf" or c in opened)
+                    and c not in blocked)
+    start = tuple(int(v) for v in data["start"][0])
+    seen, todo = {start}, [start]
+    while todo:
+        x, y = todo.pop()
+        for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if n not in seen and ok(n) and abs(hts[n[1]][n[0]] - hts[y][x]) <= JUMP + (
+                    STAIRS_CLIMB if "t" in (ter[y][x], ter[n[1]][n[0]]) else 0):
+                seen.add(n)
+                todo.append(n)
+    lost = {(x, y) for y in range(h) for x in range(w) if ok((x, y)) and (x, y) not in seen}
+    while lost:
+        c = lost.pop()
+        piece, todo = {c}, [c]
+        while todo:
+            x, y = todo.pop()
+            for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                if n in lost and abs(hts[n[1]][n[0]] - hts[y][x]) <= 1:
+                    lost.discard(n)
+                    piece.add(n)
+                    todo.append(n)
+        if len(piece) <= most:
+            for x, y in piece:
+                if ter[y][x] in "gds":
+                    ter[y][x] = "f"
+    g["terrain"] = ["".join(r) for r in ter]
+    with open(path, "w") as f:
+        json.dump(data, f, indent=1)
+        f.write("\n")
+
+
+wood_strays(os.path.normpath(os.path.join(OUT_DIR, "snow_pass.json")))
 if __name__ == "__main__":
     P.dump()
     print("start", start, "den_mouth", den, "den front", DEN_FRONT, "rope", rope_cell, "->", ledge_front,

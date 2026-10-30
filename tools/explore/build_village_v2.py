@@ -183,15 +183,20 @@ def kit_flight(hi_c, lo_c, free, wide=True, high_first=False):
             continue
         out = {c: h for c, (h, _) in cells.items()}
         sides = wide if isinstance(wide, list) else [(e[1], e[0]), (-e[1], -e[0])] if wide else []
-        twin = []
+        twin, build = [], {}
         for side in sides:
             sh = lambda c: (c[0] + side[0], c[1] + side[1])
-            if all(free(sh(c)) and sh(c) not in LANDINGS and lo <= V.height[sh(c)[1]][sh(c)[0]] <= hi for c in cells) \
-                    and all(_ground_at(sh(c), h) for c, h in ends):
-                out.update({sh(c): h for c, (h, _) in cells.items()})
-                twin = [sh(c) for c, _ in ends]
-                break
-        return out, ((1, 0) if e[0] else (0, 1)), [c for c, _ in ends] + twin
+            if not all(free(sh(c)) and sh(c) not in LANDINGS and lo <= V.height[sh(c)[1]][sh(c)[0]] <= hi for c in cells):
+                continue
+            # its ends land on the same ground; one end cell may be built up or cut down to it when it's free grass
+            off = [(sh(c), h) for c, h in ends if not _ground_at(sh(c), h)]
+            if len(off) > 1 or any(not (free(c) and c not in LANDINGS and V.terrain[c[1]][c[0]] == "g") for c, _ in off):
+                continue
+            out.update({sh(c): h for c, (h, _) in cells.items()})
+            twin = [sh(c) for c, _ in ends]
+            build = dict(off)
+            break
+        return out, ((1, 0) if e[0] else (0, 1)), [c for c, _ in ends] + twin, build
     return None
 
 
@@ -216,6 +221,8 @@ def road(pts, t="d", wide=True, high_first=False):
         LANDINGS.update(got[2])
         for c, h in got[0].items():
             stairs[c] = (h, got[1])
+        for (x, y), h in got[3].items():
+            V.put(x, y, None, h)
     for c in cells:
         x, y = c
         if V.terrain[y][x] == "w":
@@ -570,8 +577,10 @@ def connect_shelves(start, rounds=200):
             if any(V.terrain[y][x] != "f" for x, y in comp):
                 return sorted(comp)
             continue
-        cells, axis, ends = best[1]
+        cells, axis, ends, build = best[1]
         _flight(list(cells), list(cells.values()), axis)
+        for (x, y), h in build.items():
+            V.put(x, y, None, h)
         LANDINGS.update(ends)
     return sorted(set(_walk_places(start)[1]) - _walk_places(start)[0])
 

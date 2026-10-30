@@ -63,6 +63,9 @@ facing is the same piece turned.**
 - The tread size is per map data, not a constant: `MapLook.stair_treads`, set by `"look": {"stairs": 1}` in a map's
   JSON grid (or a `stairs` column in `data/looks.csv`), 1 to 6. 1 is the block-step look, 3 the fine one.
   Brandon picked block steps (2026-10-30), so 1 is the default on every map.
+- The treads' ground is per look too: `stair_top` in `data/looks.csv` (or a map's `look`), a map letter. `d` (road,
+  the default) draws dressed steps; `g` (the snow and alpine looks) draws the map's own snow on each tread with the
+  cliff's rock on each riser, so a flight reads as cut into the terrace (playtest recheck 2026-10-30).
 - The ledge lines under a stair's neighbours (`_seg_foot`) start at the same `_stair_low`, so they meet the bottom tread.
 - The block look (`_stair_steps`, the plain staging combat maps use) is unchanged: it still centres its treads on
   `MapDress.stair_run`. Converting it waits for Brandon's pick.
@@ -74,6 +77,7 @@ facing is the same piece turned.**
 
 ## Village v2 on the kit (2026-10-30)
 `tools/explore/build_village_v2.py` builds every flight with `kit_flight()` (see `docs/systems/explore.md`). No
-stubs: every flight is at least 2 cells (a 2-level cliff needs 2). Of 20 flights, 16 are two or three wide. One wide:
-the footbridge's (as wide as the bridge), two short ones on ledges by the gorge, and the long one from the gorge
-floor up to the plateau, where neither side has ground for a twin to land on.
+stubs: every flight is at least 2 cells (a 2-level cliff needs 2). A twin row may build up or cut down one of its two
+landing cells to match, so 18 of 20 flights are two or three wide. The two left one wide climb to ground that is
+itself one cell wide: a ledge strip beside the cemetery stair (x13) and the gorge stream's bank (x15).
+The snow pass's four flights are two wide too.

@@ -2032,8 +2032,10 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 		downs = [-up]
 	low = clampf(low, h - 3.0, h - 1.0)
 	var zone := grid.zone_at(c)
-	var tread_tex := BattleArt.top(CombatGrid.T.ROAD, zone)
-	var tread_tint := _tint(CombatGrid.T.ROAD)
+	var tread_t: int = CombatGrid.LETTERS.find_key(look.stair_top) if CombatGrid.LETTERS.values().has(look.stair_top) else CombatGrid.T.ROAD
+	var cut := tread_t != CombatGrid.T.ROAD  # treads of the ground itself: the risers are the cliff's rock
+	var tread_tex := BattleArt.top(tread_t, zone)
+	var tread_tint := _tint(tread_t)
 	var rock := BattleArt.side_body(CombatGrid.T.GRASS, zone)
 	var rock_tint := _tint(CombatGrid.T.GRASS)
 	var anchor := h
@@ -2084,7 +2086,8 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 			var d := front_dir(shade)
 			var e := _side(lo, hi, d)
 			var nv := Vector2(d)
-			if downs.has(d) or not (lo.x <= c.x + 0.001 and d.x < 0 or hi.x >= c.x + 0.999 and d.x > 0 or lo.y <= c.y + 0.001 and d.y < 0 or hi.y >= c.y + 0.999 and d.y > 0):
+			var riser := downs.has(d) or not (lo.x <= c.x + 0.001 and d.x < 0 or hi.x >= c.x + 0.999 and d.x > 0 or lo.y <= c.y + 0.001 and d.y < 0 or hi.y >= c.y + 0.999 and d.y > 0)
+			if riser and not cut:
 				# a riser: the tread's own front (inside the cell, or on the flight's low edge)
 				var m := Color(tread_tint * (0.8 if not shade else 0.62), 1.0)
 				var uv := PackedVector2Array([e[0] / BattleArt.TOP_TILES, e[1] / BattleArt.TOP_TILES,
@@ -2094,7 +2097,7 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 					_ci.draw_polygon(quad, PackedColorArray([m, m, m, m]), uv, tread_tex)
 				else:
 					_ci.draw_colored_polygon(quad, _terrain_color(CombatGrid.T.ROAD) * m)
-			else:  # the flight's side: the cliff's rock
+			else:  # the flight's side, or a riser cut into the ground: the cliff's rock
 				_soft_face(e[0], e[1], nv, nv, sh, base, rock, rock_tint, CLIFF, anchor)
 		var cap := PackedVector2Array([iso(lo.x, lo.y, sh), iso(hi.x, lo.y, sh), iso(hi.x, hi.y, sh), iso(lo.x, hi.y, sh)])
 		var lift := Color(tread_tint * 1.04, 1.0)
@@ -2103,7 +2106,7 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 				hi / BattleArt.TOP_TILES, Vector2(lo.x, hi.y) / BattleArt.TOP_TILES])
 			_ci.draw_polygon(cap, PackedColorArray([lift, lift, lift, lift]), uv, tread_tex)
 		else:
-			_ci.draw_colored_polygon(cap, _terrain_color(CombatGrid.T.ROAD).lightened(0.05))
+			_ci.draw_colored_polygon(cap, _terrain_color(tread_t).lightened(0.05))
 		for d in downs:
 			var nose := _side(lo, hi, d)
 			if Vector2(d).dot(Vector2(front_dir(false) + front_dir(true))) > 0.0:
