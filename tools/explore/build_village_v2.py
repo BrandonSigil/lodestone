@@ -324,6 +324,12 @@ V.thing(id="dog_home", kind="companion", event="companion_dog", cell=[7, 24], wh
 V.thing(id="food_barrel", kind="cache", event="cache_food", cell=[43, 30], once="got_food_barrel")
 V.thing(id="smithy_rope", kind="cache", event="cache_rope", cell=[47, 15], once="got_rope")
 V.thing(id="dock_fish", kind="fish", event="fish_dock", cell=[DOCK_END[0], DOCK_END[1] + 1])  # off the dock's end
+# Two shore spots, west and east, on the water beside the shore (a spot rests until the next trip out: 306accc).
+shore = [(x, y) for y in range(40, H - 1) for x in range(1, 26) if V.terrain[y][x] == "g" and V.height[y][x] == 1
+         and (x, y) not in _prop_cells(V) and any(V.terrain[y + dy][x + dx] == "w" for dx, dy in ((0, 1), (1, 0), (-1, 0), (0, -1)))]
+for i, (sx, sy) in enumerate([min(shore), max(shore)]):
+    wx, wy = next((sx + dx, sy + dy) for dx, dy in ((0, 1), (1, 0), (-1, 0), (0, -1)) if V.terrain[sy + dy][sx + dx] == "w")
+    V.thing(id="shore_fish_%d" % i, kind="fish", event="fish_dock", cell=[wx, wy])
 V.start = [list(hero_door)]
 for t in V.things:
     KEEP_OPEN.add(tuple(t["cell"]))

@@ -2459,20 +2459,6 @@
    },
    {
     "cell": [
-     20,
-     51
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "sight": 1.0,
-    "sprite": "prop_tree_3",
-    "tall": 1.6,
-    "walk": false
-   },
-   {
-    "cell": [
      27,
      51
     ],
@@ -2576,7 +2562,7 @@
    "...gdgggggggddwwggggggggggggggddggddggggggggggggffg.....",
    "...ggggggggddgwwddddgggggggggggggddggggggggggggfffg.....",
    "....gggggggdwwwwwggdttddddddgggggdggggggggggggffffg.....",
-   ".....fwwwwddwwwwwwwggggddggggggggdggggggggggggggg.......",
+   "....ggwwwwddwwwwwwwggggddggggggggdggggggggggggggg.......",
    ".....wwwwwddwwwwwwwwggggggggggggddgggggggggffffgg.......",
    ".....wwwwwddwwwwwwwwwgggggggggggddgggggggfggfff.........",
    "......wwwwddwwwwwwwwwggggggggggggdddgggfggfff...........",
@@ -2783,6 +2769,24 @@
    ],
    "event": "fish_dock",
    "id": "dock_fish",
+   "kind": "fish"
+  },
+  {
+   "cell": [
+    5.0,
+    48.0
+   ],
+   "event": "fish_dock",
+   "id": "shore_fish_0",
+   "kind": "fish"
+  },
+  {
+   "cell": [
+    20.0,
+    50.0
+   ],
+   "event": "fish_dock",
+   "id": "shore_fish_1",
    "kind": "fish"
   }
  ],
