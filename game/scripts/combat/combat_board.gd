@@ -2707,7 +2707,7 @@ func _update_wakes() -> void:
 		var c := Vector2i(roundi(u.vis.x), roundi(u.vis.y))
 		if not grid.in_bounds(c) or grid.terrain_at(c) != CombatGrid.T.WATER or hidden(c):
 			continue
-		var moving := not u.vis.is_equal_approx(Vector2(u.cell))
+		var moving := not u.vis.is_equal_approx(Vector2(CombatGrid.ground(u.cell)))
 		wakes.append(Vector4(u.vis.x + 0.5, u.vis.y + 0.5, 1.0 if moving else 0.6, float(u.get_instance_id() % 97) / 97.0))
 	var count := wakes.size()
 	for i in MAX_WAKES - count:
@@ -3044,11 +3044,11 @@ func animate_move(u: CombatUnit, path: Array[Vector2i]) -> void:
 	if path.size() > 1:
 		play_anim(u, "walk")
 	for i in range(1, path.size()):
-		var a := Vector2(path[i - 1])
-		var b := Vector2(path[i])
+		var a := Vector2(CombatGrid.ground(path[i - 1]))
+		var b := Vector2(CombatGrid.ground(path[i]))
 		var ha := float(grid.height_at(path[i - 1]))
 		var hb := float(grid.height_at(path[i]))
-		u.facing = path[i] - path[i - 1]
+		u.facing = Vector2i(b - a)
 		# Sprites walk, so they only hop to climb; pawns hop every tile like a lifted piece.
 		var lift := (2.0 if walker else 10.0) + absf(hb - ha) * HS * 0.6
 		var step := func(t: float) -> void:
@@ -3065,8 +3065,8 @@ func animate_move(u: CombatUnit, path: Array[Vector2i]) -> void:
 ## Slide without a hop: shoved, not walking.
 func animate_push(u: CombatUnit, path: Array) -> void:
 	for i in range(1, path.size()):
-		var a := Vector2(path[i - 1])
-		var b := Vector2(path[i])
+		var a := Vector2(CombatGrid.ground(path[i - 1]))
+		var b := Vector2(CombatGrid.ground(path[i]))
 		var ha := float(grid.height_at(path[i - 1]))
 		var hb := float(grid.height_at(path[i]))
 		var step := func(t: float) -> void:

@@ -54,7 +54,8 @@ static func num(key: String) -> float:
 
 
 static func dist(a: Vector2i, b: Vector2i) -> int:
-	return absi(a.x - b.x) + absi(a.y - b.y)
+	var d := CombatGrid.ground(a) - CombatGrid.ground(b)
+	return absi(d.x) + absi(d.y)
 
 
 static func height_levels(grid: CombatGrid, from: Vector2i, to: Vector2i) -> int:
@@ -97,21 +98,21 @@ static func reachable(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictiona
 				bi = i
 		var c: Vector2i = open.pop_at(bi)
 		for d in DIRS:
-			var n: Vector2i = c + d
-			if not grid.passable(n):
-				continue
-			if not grid.can_step(c, n, u.jump):
-				continue
-			var other := occupant(units, n)
-			if other != null and other.team != u.team:
-				continue
-			var nc: int = cost[c] + grid.step_cost(n)
-			if nc > budget or (cost.has(n) and nc >= cost[n]):
-				continue
-			cost[n] = nc
-			prev[n] = c
-			if not open.has(n):
-				open.append(n)
+			for n in grid.places_next(c, d):
+				if not grid.passable(n):
+					continue
+				if not grid.can_step(c, n, u.jump):
+					continue
+				var other := occupant(units, n)
+				if other != null and other.team != u.team:
+					continue
+				var nc: int = cost[c] + grid.step_cost(n)
+				if nc > budget or (cost.has(n) and nc >= cost[n]):
+					continue
+				cost[n] = nc
+				prev[n] = c
+				if not open.has(n):
+					open.append(n)
 	for c: Vector2i in cost.keys():
 		if c != u.cell and occupant(units, c) != null:
 			cost.erase(c)

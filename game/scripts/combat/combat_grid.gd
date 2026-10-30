@@ -28,6 +28,7 @@ const DECK_CLEAR := 2  ## a deck stands at least this many levels over its groun
 ## For sight, a deck is a slab DECK_THICK levels thick under its floor: a line through the cell between
 ## h - DECK_THICK and h is blocked; above it (on the deck) or below it (in the lane) it passes.
 const DECK_THICK := 1
+const NO_PLACE := Vector2i(-1, -1)  ## step_place found nowhere to stand
 
 var w := 0
 var h := 0
@@ -214,6 +215,25 @@ func places_at(c: Vector2i) -> Array[Vector2i]:
 	if has_deck(c):
 		out.append(deck_of(c))
 	return out
+
+
+## The places one step along d from place p: the ground of that cell and its deck if it has one.
+func places_next(p: Vector2i, d: Vector2i) -> Array[Vector2i]:
+	return places_at(ground(p) + d)
+
+
+## Of the places at cell c, the one a piece with this Jump standing on `from` steps onto: the walkable one
+## nearest its own height that it may climb to, or NO_PLACE. Free walking uses it to keep a walker on its deck.
+func step_place(from: Vector2i, c: Vector2i, jump: int, blocked := {}) -> Vector2i:
+	if ground(c) == ground(from):
+		return from
+	var best := NO_PLACE
+	for p in places_at(c):
+		if not passable(p) or blocked.has(p) or not can_step(from, p, jump):
+			continue
+		if best == NO_PLACE or absi(height_at(p) - height_at(from)) < absi(height_at(best) - height_at(from)):
+			best = p
+	return best
 
 
 func idx(c: Vector2i) -> int:

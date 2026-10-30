@@ -225,5 +225,5 @@ func sync_view() -> void:
 
 func place(c: Vector2i, height: int) -> void:
 	cell = c
-	vis = Vector2(c)
+	vis = Vector2(CombatGrid.ground(c))
 	vis_h = height

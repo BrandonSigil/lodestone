@@ -57,7 +57,7 @@ static func elites_left(maps: Array, flags: Array) -> int:
 
 
 static func dist(a: Vector2i, b: Vector2i) -> float:
-	return Vector2(a).distance_to(Vector2(b))
+	return Vector2(CombatGrid.ground(a)).distance_to(Vector2(CombatGrid.ground(b)))
 
 
 # --- sight ------------------------------------------------------------------------
@@ -88,7 +88,7 @@ static func sees(grid: CombatGrid, from: Array, to: Array, radius: int) -> bool:
 
 # --- locked rooms -----------------------------------------------------------------
 
-## Every cell a walker with this Jump can get to from the `from` cells, on the steps walking takes.
+## Every place (cells and decks) a walker with this Jump can get to from the `from` places, on the steps walking takes.
 static func reach(grid: CombatGrid, from: Array, jump: int) -> Dictionary:
 	var out := {}
 	var todo: Array[Vector2i] = []
@@ -99,10 +99,10 @@ static func reach(grid: CombatGrid, from: Array, jump: int) -> Dictionary:
 	while not todo.is_empty():
 		var c: Vector2i = todo.pop_back()
 		for d in STEPS:
-			var n: Vector2i = c + d
-			if not out.has(n) and can_step_dir(grid, c, d, jump):
-				out[n] = true
-				todo.append(n)
+			for n in grid.places_next(c, d):
+				if not out.has(n) and can_step_to(grid, c, n, jump):
+					out[n] = true
+					todo.append(n)
 	return out
 
 
@@ -334,17 +334,14 @@ static func find_path(grid: CombatGrid, from: Vector2i, to: Vector2i, jump: int,
 		if int(item[0]) > int(cost[c]):
 			continue
 		for d in (STEPS if diagonal else CombatRules.DIRS):
-			var n: Vector2i = c + d
-			if d.x != 0 and d.y != 0:
-				if not can_step_dir(grid, c, d, jump, blocked, known):
+			for n in grid.places_next(c, d):
+				if not can_step_to(grid, c, n, jump, blocked, known):
 					continue
-			elif not _open(grid, n, blocked, known) or not grid.can_step(c, n, jump):
-				continue
-			var nc: int = int(cost[c]) + grid.step_cost(n) * (14 if d.x != 0 and d.y != 0 else 10)
-			if not cost.has(n) or nc < int(cost[n]):
-				cost[n] = nc
-				prev[n] = c
-				frontier.append([nc, n])
+				var nc: int = int(cost[c]) + grid.step_cost(n) * (14 if d.x != 0 and d.y != 0 else 10)
+				if not cost.has(n) or nc < int(cost[n]):
+					cost[n] = nc
+					prev[n] = c
+					frontier.append([nc, n])
 	if not cost.has(to):
 		return none
 	var path: Array[Vector2i] = [to]
@@ -354,7 +351,7 @@ static func find_path(grid: CombatGrid, from: Vector2i, to: Vector2i, jump: int,
 
 
 static func _open(grid: CombatGrid, c: Vector2i, blocked: Dictionary, known: Dictionary) -> bool:
-	return grid.passable(c) and not blocked.has(c) and (known.is_empty() or known.has(c))
+	return grid.passable(c) and not blocked.has(c) and (known.is_empty() or known.has(CombatGrid.ground(c)))
 
 
 # --- free walking (WASD) ------------------------------------------------------------
@@ -367,9 +364,11 @@ const BODY := 0.26  ## the leader's half-width in cells: what bumps into walls o
 ## cell c spans c to c + 1), one axis at a time so it slides along walls. When only a corner is in the way
 ## it eases sideways into the open lane instead of stopping, so nobody has to line up with a doorway.
 ## Climbing follows the cell rules: every cell the body touches must be a step the walker can take from
-## the cell under its middle.
-static func slide(grid: CombatGrid, pos: Vector2, move: Vector2, body: float, jump: int, blocked := {}) -> Vector2:
+## the place under its middle. `at` is that place when the walker stands on a deck (see CombatGrid.DECK).
+static func slide(grid: CombatGrid, pos: Vector2, move: Vector2, body: float, jump: int, blocked := {}, at := CombatGrid.NO_PLACE) -> Vector2:
 	var from := Vector2i(pos.floor())
+	if CombatGrid.ground(at) == from:
+		from = at
 	var p := pos
 	for axis in 2:
 		var d: float = move[axis]
@@ -396,14 +395,11 @@ static func slide(grid: CombatGrid, pos: Vector2, move: Vector2, body: float, ju
 	return p
 
 
-## Does a body centred on `q` touch only cells it may stand in, coming from cell `from`?
+## Does a body centred on `q` touch only cells it may stand in, coming from place `from`?
 static func body_fits(grid: CombatGrid, from: Vector2i, q: Vector2, body: float, jump: int, blocked := {}) -> bool:
 	for y in range(floori(q.y - body + 0.001), floori(q.y + body - 0.001) + 1):
 		for x in range(floori(q.x - body + 0.001), floori(q.x + body - 0.001) + 1):
-			var c := Vector2i(x, y)
-			if c == from:
-				continue
-			if not grid.passable(c) or blocked.has(c) or not grid.can_step(from, c, jump):
+			if grid.step_place(from, Vector2i(x, y), jump, blocked) == CombatGrid.NO_PLACE:
 				return false
 	return true
 
@@ -413,24 +409,29 @@ const STEPS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1),
 	Vector2i(1, 1), Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1)]
 
 
-## Can the leader take one step from `from` along d? A diagonal can't cut a corner: both cells beside it
-## must be walkable on the way.
-static func can_step_dir(grid: CombatGrid, from: Vector2i, d: Vector2i, jump: int, blocked := {}, known := {}) -> bool:
-	var to := from + d
+## Can the leader take one step from place `from` onto the next place `to` (diagonals too)? A diagonal can't
+## cut a corner: on both sides there must be a place it could step through on the way.
+static func can_step_to(grid: CombatGrid, from: Vector2i, to: Vector2i, jump: int, blocked := {}, known := {}) -> bool:
 	if not _open(grid, to, blocked, known):
 		return false
+	var d := CombatGrid.ground(to) - CombatGrid.ground(from)
 	if d.x == 0 or d.y == 0:
 		return grid.can_step(from, to, jump)
 	for side: Vector2i in [Vector2i(d.x, 0), Vector2i(0, d.y)]:
-		var mid := from + side
-		if not _open(grid, mid, blocked, known) or not grid.can_step(from, mid, jump) or not grid.can_step(mid, to, jump):
+		var through := false
+		for mid in grid.places_next(from, side):
+			if _open(grid, mid, blocked, known) and grid.can_step(from, mid, jump) and grid.can_step(mid, to, jump):
+				through = true
+				break
+		if not through:
 			return false
 	return true
 
 
 ## Can someone standing at `at` use the thing at `thing`? Next to it (diagonals count) and not a cliff apart.
 static func can_use_from(grid: CombatGrid, at: Vector2i, thing: Vector2i) -> bool:
-	if maxi(absi(at.x - thing.x), absi(at.y - thing.y)) > 1 or at == thing:
+	var g := CombatGrid.ground(at) - CombatGrid.ground(thing)
+	if maxi(absi(g.x), absi(g.y)) > 1 or at == thing:
 		return false
 	return absi(grid.height_at(at) - grid.height_at(thing)) <= INTERACT_CLIMB
 
@@ -443,12 +444,12 @@ static func path_to_use(grid: CombatGrid, from: Vector2i, thing: Vector2i, jump:
 		return best
 	for dy in range(-1, 2):
 		for dx in range(-1, 2):
-			var c := thing + Vector2i(dx, dy)
-			if not grid.in_bounds(c) or not can_use_from(grid, c, thing):
-				continue
-			var p := find_path(grid, from, c, jump, blocked, known, diagonal)
-			if not p.is_empty() and (best.is_empty() or p.size() < best.size()):
-				best = p
+			for c in grid.places_next(thing, Vector2i(dx, dy)):
+				if not grid.in_bounds(c) or not can_use_from(grid, c, thing):
+					continue
+				var p := find_path(grid, from, c, jump, blocked, known, diagonal)
+				if not p.is_empty() and (best.is_empty() or p.size() < best.size()):
+					best = p
 	return best
 
 
@@ -474,12 +475,12 @@ static func deploy_cells(grid: CombatGrid, lead: Vector2i, u: CombatUnit, radius
 		if int(steps[c]) >= radius:
 			continue
 		for d in CombatRules.DIRS:
-			var n: Vector2i = c + d
-			if steps.has(n) or not grid.passable(n) or blocked.has(n) or not grid.can_step(c, n, u.jump):
-				continue
-			steps[n] = int(steps[c]) + 1
-			queue.append(n)
-			out.append(n)
+			for n in grid.places_next(c, d):
+				if steps.has(n) or not grid.passable(n) or blocked.has(n) or not grid.can_step(c, n, u.jump):
+					continue
+				steps[n] = int(steps[c]) + 1
+				queue.append(n)
+				out.append(n)
 	return out
 
 

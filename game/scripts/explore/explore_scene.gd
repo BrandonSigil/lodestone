@@ -332,10 +332,12 @@ func _wasd(delta: float) -> void:
 	follow = true
 	var dir := _screen_to_grid(want).normalized()
 	var at := lead.vis + Vector2(0.5, 0.5)
-	var to := ExploreRules.slide(grid, at, dir * ExploreRules.WALK_SPEED * delta, ExploreRules.BODY, lead.jump, _blocked())
+	var to := ExploreRules.slide(grid, at, dir * ExploreRules.WALK_SPEED * delta, ExploreRules.BODY, lead.jump, _blocked(), lead.cell)
 	lead.facing = Vector2i(roundi(dir.x), roundi(dir.y))
 	lead.vis = to - Vector2(0.5, 0.5)
-	var cell := Vector2i(to.floor())
+	var cell := grid.step_place(lead.cell, Vector2i(to.floor()), lead.jump)
+	if cell == CombatGrid.NO_PLACE:
+		cell = Vector2i(to.floor())
 	lead.vis_h = move_toward(lead.vis_h, float(grid.height_at(cell)), CLIMB_RATE * delta)
 	if cell != lead.cell:
 		lead.cell = cell
@@ -559,16 +561,17 @@ func _glide(u: CombatUnit, to: Vector2i, spare: float) -> float:
 	var from := u.vis
 	var from_h := u.vis_h
 	var to_h := float(grid.height_at(to))
-	var length := maxf(0.01, from.distance_to(Vector2(to)))
+	var dest := Vector2(CombatGrid.ground(to))
+	var length := maxf(0.01, from.distance_to(dest))
 	var rise := absf(to_h - from_h)
 	if to != u.cell:
-		u.facing = to - u.cell
+		u.facing = CombatGrid.ground(to) - CombatGrid.ground(u.cell)
 	var gone := spare
 	while gone < length:
 		await get_tree().process_frame
 		gone += get_process_delta_time() * ExploreRules.WALK_SPEED
 		var t := minf(1.0, gone / length)
-		u.vis = from.lerp(Vector2(to), t)
+		u.vis = from.lerp(dest, t)
 		u.vis_h = lerpf(from_h, to_h, t)
 		u.hop = sin(t * PI) * rise * CombatBoard.HS * 0.6 if rise > 0.01 else 0.0
 	u.hop = 0.0
@@ -1053,7 +1056,7 @@ func start_fight(g: Dictionary, how: String) -> void:
 	var heights := 0.0
 	var fighters := _deployed() + enemies
 	for u: CombatUnit in fighters:
-		sum += Vector2(u.cell) + Vector2(0.5, 0.5)
+		sum += Vector2(CombatGrid.ground(u.cell)) + Vector2(0.5, 0.5)
 		heights += grid.height_at(u.cell)
 	focus = sum / fighters.size()
 	focus_h = heights / fighters.size()

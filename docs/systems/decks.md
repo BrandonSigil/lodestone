@@ -13,8 +13,13 @@
 - A prop whose anchor is a deck place stands on the deck (a house on the bridge): its footprint blocks the deck, not the lane.
 - In the map JSON: `grid.decks` `[{"x", "y", "h", "t"}]` (t a terrain letter), and a prop entry with `"deck": true`.
 
+## Walking (step 2)
+- Every walk looks one step along a direction at `grid.places_next(place, d)`: the next cell's ground and its deck. So paths, reach, deploy rings, combat moves (`CombatRules.reachable`), the AI's walk distances and `MapOps.reach` all go over a bridge and under it, and a path can hold deck places.
+- Free walking (WASD) keeps the walker's level: `ExploreRules.slide` takes the leader's place, and `grid.step_place(from, cell, jump)` picks the place at the next cell it steps onto (the walkable one nearest its own height). From the bank that is the deck; from the lane it is the lane.
+- Distances (`CombatRules.dist`, `ExploreRules.dist`) and drawing positions (`unit.vis`, move and push animations, facing) use `ground()`. Seen cells (`known`) are ground cells: seeing a cell is seeing its deck until step 5.
+
 ## Sight (rule for map checks; built in step 5)
 A deck is a slab `DECK_THICK` (1) level thick under its floor. A sight line through the cell between `h - 1` and `h` is blocked; above it (on the deck) or below it (in the lane) it passes.
 
 ## Still to come
-2. Walking and pathing on and under decks (explore, deploy, fights). 3. Fights on two levels (reach, guard zones, pushes and falls off a deck, the AI). 4. Drawing the deck slab and what stands on it (with the map builder; the see-through window opens it over a piece underneath). 5. Sight and fog per layer. 6. The map maker paints decks (map builder). Until step 4, a map with decks loads and saves but doesn't draw them.
+3. Fights on two levels (reach, guard zones, pushes and falls off a deck, the AI). 4. Drawing the deck slab and what stands on it (with the map builder; the see-through window opens it over a piece underneath). 5. Sight and fog per layer. 6. The map maker paints decks (map builder). Until step 4, a map with decks loads and saves but doesn't draw them.

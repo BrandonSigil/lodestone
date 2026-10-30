@@ -480,10 +480,10 @@ static func reach(grid: CombatGrid, from: Vector2i, jump := 1) -> Dictionary:
 		var c: Vector2i = queue[i]
 		i += 1
 		for d: Vector2i in CombatRules.DIRS:
-			var nb := c + d
-			if not seen.has(nb) and grid.passable(nb) and grid.can_step(c, nb, jump):
-				seen[nb] = true
-				queue.append(nb)
+			for nb in grid.places_next(c, d):
+				if not seen.has(nb) and grid.passable(nb) and grid.can_step(c, nb, jump):
+					seen[nb] = true
+					queue.append(nb)
 	return seen
 
 

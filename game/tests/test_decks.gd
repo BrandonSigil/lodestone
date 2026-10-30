@@ -67,3 +67,64 @@ func test_decks_and_deck_props_save() -> void:
 	ok(not back.passable(CombatGrid.deck_of(Vector2i(2, 2))), "the house is back on the deck")
 	ok(back.passable(Vector2i(2, 2)))
 	eq(back.resized(4, 4).decks.size(), 2, "decks survive a resize")
+
+
+# --- step 2: walking and pathing --------------------------------------------------------
+
+func _walker(g: CombatGrid, c: Vector2i, team := 0) -> CombatUnit:
+	var u := CombatUnit.enemy(load("res://data/classes/bandit.tres"))
+	u.team = team
+	u.jump = 1
+	u.move = 4
+	u.place(c, g.height_at(c))
+	return u
+
+
+func test_explore_paths_cross_the_bridge_and_run_under_it() -> void:
+	var g := _bridge()
+	var deck := CombatGrid.deck_of(Vector2i(2, 2))
+	eq(ExploreRules.find_path(g, Vector2i(2, 1), Vector2i(2, 3), 1), [Vector2i(2, 1), deck, Vector2i(2, 3)] as Array[Vector2i], "over the deck, bank to bank")
+	var under := ExploreRules.find_path(g, Vector2i(0, 2), Vector2i(4, 2), 1)
+	ok(under.has(Vector2i(2, 2)) and not under.has(deck), "along the lane, under the deck")
+	ok(ExploreRules.find_path(g, Vector2i(2, 1), Vector2i(2, 2), 1).is_empty(), "no way down into the lane from the bank")
+	ok(not ExploreRules.find_path(g, Vector2i(1, 1), Vector2i(3, 3), 1, {}, {}, true).is_empty(), "diagonal walking crosses too")
+	var known := {Vector2i(2, 1): true, Vector2i(2, 2): true, Vector2i(2, 3): true}
+	eq(ExploreRules.find_path(g, Vector2i(2, 1), Vector2i(2, 3), 1, {}, known).size(), 3, "seeing the cell is seeing its deck")
+	var r := ExploreRules.reach(g, [Vector2i(0, 0)], 1)
+	ok(r.has(deck) and not r.has(Vector2i(2, 2)), "the banks reach the deck, not the lane")
+
+
+func test_free_walking_keeps_its_level() -> void:
+	var g := _bridge()
+	var deck := CombatGrid.deck_of(Vector2i(2, 2))
+	eq(g.step_place(Vector2i(2, 1), Vector2i(2, 2), 1), deck, "from the bank: onto the deck")
+	eq(g.step_place(Vector2i(1, 2), Vector2i(2, 2), 1), Vector2i(2, 2), "from the lane: under it")
+	eq(g.step_place(Vector2i(2, 2), Vector2i(2, 1), 1), CombatGrid.NO_PLACE, "the bank is a cliff from the lane")
+	var p := ExploreRules.slide(g, Vector2(2.5, 1.5), Vector2(0, 1), ExploreRules.BODY, 1)
+	ok(is_equal_approx(p.y, 2.5), "walks out onto the bridge")
+	p = ExploreRules.slide(g, Vector2(2.5, 2.5), Vector2(0, 1), ExploreRules.BODY, 1, {}, deck)
+	ok(is_equal_approx(p.y, 3.5), "and off the far end")
+	p = ExploreRules.slide(g, Vector2(2.5, 2.5), Vector2(0, 1), ExploreRules.BODY, 1, {}, Vector2i(2, 2))
+	ok(p.y < 2.75, "in the lane the bank is a wall")
+	p = ExploreRules.slide(g, Vector2(0.5, 2.5), Vector2(2, 0), ExploreRules.BODY, 1, {}, Vector2i(0, 2))
+	ok(is_equal_approx(p.x, 2.5), "walks the lane under the bridge")
+
+
+func test_fight_moves_and_deploys_on_both_levels() -> void:
+	var g := _bridge()
+	var deck := CombatGrid.deck_of(Vector2i(2, 2))
+	var top := _walker(g, Vector2i(2, 1))
+	var low := _walker(g, Vector2i(0, 2))
+	eq(top.vis, Vector2(2, 1))
+	var rt: Dictionary = CombatRules.reachable(g, top, [top, low]).cost
+	ok(rt.has(deck) and rt.has(Vector2i(2, 3)) and not rt.has(Vector2i(2, 2)), "on top: across the bridge")
+	var rl: Dictionary = CombatRules.reachable(g, low, [top, low]).cost
+	ok(rl.has(Vector2i(2, 2)) and not rl.has(deck), "below: under it")
+	top.place(deck, 3)
+	eq(top.vis, Vector2(2, 2), "a piece on a deck is drawn at its cell")
+	var foe := _walker(g, Vector2i(2, 3), 1)
+	ok(CombatRules.reachable(g, low, [top, low, foe]).cost.has(Vector2i(2, 2)), "a piece on the deck doesn't block the lane")
+	eq(CombatRules.dist(deck, Vector2i(2, 3)), 1)
+	eq(int(EnemyAi.walk_distance(g, foe, [top, low, foe]).get(Vector2i(2, 4), -1)), 2, "the AI measures over the bridge")
+	var cells := ExploreRules.deploy_cells(g, deck, _walker(g, Vector2i(0, 0)), 1)
+	ok(cells.has(Vector2i(2, 1)) and cells.has(Vector2i(2, 3)) and not cells.has(Vector2i(2, 2)), "deploy round a leader on the deck")

@@ -185,12 +185,12 @@ static func walk_distance(grid: CombatGrid, u: CombatUnit, units: Array) -> Dict
 		var c: Vector2i = queue[i]
 		i += 1
 		for d in CombatRules.DIRS:
-			var n: Vector2i = c + d
-			if out.has(n) or not grid.passable(n) or not grid.can_step(c, n, u.jump):
-				continue
-			var other := CombatRules.unit_at(units, n)
-			if other != null and other.team != u.team:
-				continue
-			out[n] = int(out[c]) + 1
-			queue.append(n)
+			for n in grid.places_next(c, d):
+				if out.has(n) or not grid.passable(n) or not grid.can_step(c, n, u.jump):
+					continue
+				var other := CombatRules.unit_at(units, n)
+				if other != null and other.team != u.team:
+					continue
+				out[n] = int(out[c]) + 1
+				queue.append(n)
 	return out

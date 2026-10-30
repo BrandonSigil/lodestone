@@ -326,7 +326,7 @@ func _use(u: CombatUnit, a: Ability, aim: Vector2i) -> void:
 	for ev in events:
 		if ev.type == "push":
 			var start: Vector2i = ev.path[0]
-			ev.unit.vis = Vector2(start)
+			ev.unit.vis = Vector2(CombatGrid.ground(start))
 			ev.unit.vis_h = grid.height_at(start)
 	for ev in events:
 		await _play(ev)

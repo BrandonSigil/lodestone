@@ -282,12 +282,12 @@ func test_auto_deploy_gives_each_member_a_free_spot() -> void:
 
 func test_wasd_diagonals_dont_cut_corners() -> void:
 	var g := CombatGrid.flat(5, 5)
-	ok(ExploreRules.can_step_dir(g, Vector2i(2, 2), Vector2i(1, 1), 1), "open ground: diagonal ok")
+	ok(ExploreRules.can_step_to(g, Vector2i(2, 2), Vector2i(2, 2) + Vector2i(1, 1), 1), "open ground: diagonal ok")
 	g.set_terrain(Vector2i(3, 2), CombatGrid.T.ROCK)
-	ok(not ExploreRules.can_step_dir(g, Vector2i(2, 2), Vector2i(1, 1), 1), "a wall beside it blocks the diagonal")
-	ok(ExploreRules.can_step_dir(g, Vector2i(2, 2), Vector2i(0, 1), 1), "straight still fine")
+	ok(not ExploreRules.can_step_to(g, Vector2i(2, 2), Vector2i(2, 2) + Vector2i(1, 1), 1), "a wall beside it blocks the diagonal")
+	ok(ExploreRules.can_step_to(g, Vector2i(2, 2), Vector2i(2, 2) + Vector2i(0, 1), 1), "straight still fine")
 	g.set_height(Vector2i(2, 1), 3)
-	ok(not ExploreRules.can_step_dir(g, Vector2i(2, 2), Vector2i(0, -1), 1), "no climbing a cliff")
+	ok(not ExploreRules.can_step_to(g, Vector2i(2, 2), Vector2i(2, 2) + Vector2i(0, -1), 1), "no climbing a cliff")
 
 
 func test_free_walk_slides_and_rounds_corners() -> void:
