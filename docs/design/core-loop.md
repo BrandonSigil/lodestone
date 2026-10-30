@@ -364,7 +364,7 @@ Tensions to watch: an ambusher bends danger-zone-only (c2); a boss big-move warn
 
 ### First build (handed to the systems developer and the map builder, 2026-10-30)
 1. The Lich's big move with its warning (windup 1, cooldown 3, a 5-cell plus, power 4, hits his own minions too).
-2. The Lich's minions: built (`raise_dead`) but off his class. Every version measured sank a party of two (0 to 10% for most builds), so two gentler versions get measured and go to Brandon on a card.
+2. The Lich's minions: built (`raise_dead`) but off his class. Every version measured sank a party of two (0 to 10% for most builds), so two gentler versions were measured. Late minions fail. Blockers (they never attack) pass only with an AI that weighs a kill by the target's threat. Brandon's call: `design-lich-minions`.
 3. Foe tags (`data/tags.csv`; wolves beast, the Lich and his minions undead).
 4. The ambusher (hidden until seen within 3 cells; its first strike from hiding counts as a flank).
 5. Check that escaping the Lich completes the crypt the way a kill does, without the boss XP or loot.
