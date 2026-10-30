@@ -2033,7 +2033,7 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 	low = clampf(low, h - 3.0, h - 1.0)
 	var zone := grid.zone_at(c)
 	var tread_t: int = CombatGrid.LETTERS.find_key(look.stair_top) if CombatGrid.LETTERS.values().has(look.stair_top) else CombatGrid.T.ROAD
-	var cut := tread_t != CombatGrid.T.ROAD  # treads of the ground itself: the risers are the cliff's rock
+	var cut := look.stair_rise == "r"  # a path cut into the terrace: the risers are the cliff's rock
 	var tread_tex := BattleArt.top(tread_t, zone)
 	var tread_tint := _tint(tread_t)
 	var rock := BattleArt.side_body(CombatGrid.T.GRASS, zone)
@@ -2096,7 +2096,7 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 				if tread_tex != null:
 					_ci.draw_polygon(quad, PackedColorArray([m, m, m, m]), uv, tread_tex)
 				else:
-					_ci.draw_colored_polygon(quad, _terrain_color(CombatGrid.T.ROAD) * m)
+					_ci.draw_colored_polygon(quad, _terrain_color(tread_t) * m)
 			else:  # the flight's side, or a riser cut into the ground: the cliff's rock
 				_soft_face(e[0], e[1], nv, nv, sh, base, rock, rock_tint, CLIFF, anchor)
 		var cap := PackedVector2Array([iso(lo.x, lo.y, sh), iso(hi.x, lo.y, sh), iso(hi.x, hi.y, sh), iso(lo.x, hi.y, sh)])

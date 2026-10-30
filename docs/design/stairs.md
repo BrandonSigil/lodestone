@@ -62,13 +62,15 @@ facing is the same piece turned.**
   direction and corner rule as above, `MapDress.stair_run` only as the last fallback.
 - The tread size is per map data, not a constant: `MapLook.stair_treads`, set by `"look": {"stairs": 1}` in a map's
   JSON grid (or a `stairs` column in `data/looks.csv`), 1 to 6. 1 is the block-step look, 3 the fine one.
-  Brandon picked block steps (2026-10-30), so 1 is the default on every map.
-- The treads' ground is per look too: `stair_top` in `data/looks.csv` (or a map's `look`), a map letter. `d` (road,
-  the default) draws dressed steps; `g` (the snow and alpine looks) draws the map's own snow on each tread with the
-  cliff's rock on each riser, so a flight reads as cut into the terrace (playtest recheck 2026-10-30).
+  Brandon first picked block steps, then on the real village v2 fine treads (2026-10-30): 3 is the default, and the
+  natural looks (forest, alpine, snow, canyon, marsh) take 6 in `looks.csv`, so their flights read close to a slope.
+- The treads' ground is per look too: `stair_top` in `data/looks.csv` (or a map's `look`), a map letter. Every look
+  uses `d`, its biome's path, so a flight reads as the way on (Brandon 2026-10-30: in the snow the stairs should look
+  like the path). `stair_rise` says what the risers are: `d` the tread's own ground (dressed steps, the built looks) or
+  `r` the cliff's rock (the natural looks: a path cut into the terrace).
 - The ledge lines under a stair's neighbours (`_seg_foot`) start at the same `_stair_low`, so they meet the bottom tread.
 - The block look (`_stair_steps`, the plain staging combat maps use) is unchanged: it still centres its treads on
-  `MapDress.stair_run`. Converting it waits for Brandon's pick.
+  `MapDress.stair_run`. Converting it is on the systems developer's list.
 - Live maps after the switch: the village and snow pass flights are already built one level a cell down from the
   upper ground, so they draw as kit flights with no map change.
 - A piece standing on a stair cell stands at its top tread (the cell's height), as before.
