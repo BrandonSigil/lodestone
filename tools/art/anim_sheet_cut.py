@@ -145,6 +145,7 @@ def main():
     ap.add_argument("--id", required=True, help="character id (game/data/characters/<id>.tres)")
     ap.add_argument("--dir", required=True, choices=["s", "se", "e", "ne", "n", "sw", "w", "nw"])
     ap.add_argument("--out", help="folder that holds <id>/ (default game/art/source/characters); stage drafts elsewhere")
+    ap.add_argument("--height", type=float, default=0.0, help="idle body height in art px (default HERO_H; the small size class, head at about 1.5 levels as in docs/art/characters/01-sizes.png, is about 56)")
     ap.add_argument("--rows", help="rows of this sheet as anim:frames,... (default: the full animation sheet);"
                     " e.g. ready:4,advance:6 for sheet-character-stance.txt")
     args = ap.parse_args()
@@ -167,7 +168,7 @@ def main():
     # One scale per sheet: the first row's figures (idle or ready) come out HERO_H tall, measured on the
     # body only so a sword held over the head doesn't shrink the character.
     idle_h = float(np.median([body_height(alpha, b) for b in boxes[0]]))
-    scale = HERO_H / idle_h
+    scale = (args.height or HERO_H) / idle_h
 
     out = (Path(args.out) if args.out else OUT) / args.id
     out.mkdir(parents=True, exist_ok=True)
