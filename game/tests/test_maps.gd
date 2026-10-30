@@ -403,6 +403,26 @@ func test_valley_every_shelf_has_a_stair_up() -> void:
 	ok(bridged >= 5, "shelves facing across a gap get bridges (%d of 80 seeds)" % bridged)
 
 
+## A river that splits the map is crossable near the middle ([USER] 2026-10-30): where two banks face each other
+## within 6 cells of the centre, the walk between them is short (12 steps or fewer) for the nearest pair.
+func test_valley_river_has_a_bridge_near_the_middle() -> void:
+	var checked := 0
+	for s in 80:
+		var g := MapGen.valley(s, MapGen.FIGHT_W, MapGen.FIGHT_H, "snow")
+		var centre := Vector2(g.w - 1, g.h - 1) * 0.5
+		var best := 99
+		var best_d := INF
+		for pair: Array in MapOps.river_crossings(g):
+			var d := (Vector2(pair[0] + pair[1]) * 0.5).distance_to(centre)
+			if d <= 6.0 and d < best_d:
+				best_d = d
+				best = int(pair[2])
+		if best_d < INF:
+			checked += 1
+			ok(best <= MapOps.CROSS_WALK, "seed %d: the banks nearest the middle are %d steps apart" % [s, best])
+	ok(checked >= 20, "enough seeds had a river near the middle to check (%d)" % checked)
+
+
 func test_map_doc_files() -> void:
 	var g := MapGen.valley(2, 14, 12)
 	var battle := MapDoc.create("battle", "Test Map!", g, "alpine").to_dict()

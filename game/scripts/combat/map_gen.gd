@@ -27,6 +27,7 @@ static func valley(seed_value: int, w := FIGHT_W, h := FIGHT_H, look_id := "alpi
 	_river(g, rng)
 	_dress(g, seed_value, rng)
 	MapOps.link(g, seed_value + 5)
+	MapOps.cross_river(g)
 	MapOps.pillars(g, seed_value + 9, clampi(w * h / 160, 2, 4))
 	MapOps.seal_unreachable(g)
 	_roads(g, rng)

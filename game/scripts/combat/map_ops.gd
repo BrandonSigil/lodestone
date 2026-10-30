@@ -595,6 +595,103 @@ static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
 	return placed
 
 
+## Steps from `from` to every cell it can walk to (stairs help, as in `reach`).
+static func walk_steps(grid: CombatGrid, from: Vector2i, jump := 1) -> Dictionary:
+	var dist := {from: 0}
+	var queue: Array[Vector2i] = [from]
+	var i := 0
+	while i < queue.size():
+		var c: Vector2i = queue[i]
+		i += 1
+		for d: Vector2i in CombatRules.DIRS:
+			for nb in grid.places_next(c, d):
+				if not dist.has(nb) and grid.passable(nb) and grid.can_step(c, nb, jump):
+					dist[nb] = int(dist[c]) + 1
+					queue.append(nb)
+	return dist
+
+
+## Pairs of dry cells facing each other across 1 to 3 water cells, with their walk between (99 when there is none):
+## [a, b, walk]. A bridge there (banks within a level) or a ford (the water cells stepped between the banks) would
+## shorten a crossing.
+static func river_crossings(grid: CombatGrid, jump := 1) -> Array:
+	var out: Array = []
+	for y in grid.h:
+		for x in grid.w:
+			var a := Vector2i(x, y)
+			if not grid.passable(a) or grid.terrain_at(a) in [T.WATER, T.STAIRS]:
+				continue
+			var steps := {}
+			for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+				for k in range(2, 5):
+					var b := a + d * k
+					if not grid.solid(b):
+						break
+					var wet := true
+					for j in range(1, k):
+						if grid.terrain_at(a + d * j) != T.WATER:
+							wet = false
+					if not wet:
+						break
+					if not grid.passable(b) or grid.terrain_at(b) in [T.WATER, T.STAIRS] or absi(grid.height_at(a) - grid.height_at(b)) > k - 1:
+						continue  # banks level enough for a bridge, or a ford can step down between them
+					if steps.is_empty():
+						steps = walk_steps(grid, a, jump)
+					out.append([a, b, int(steps.get(b, 99))])
+	return out
+
+
+## Make sure a river that splits the map can be crossed near the middle ([USER] 2026-10-30: "this section should have a
+## bridge over the river or else it'll be a pain to get around the whole map"): of the places two banks face each other
+## with a long walk between (CROSS_FAR or more steps), the one nearest the middle gets a deck bridge (or a ford where
+## the banks differ by more than a level), then a second one
+## well apart from it. Returns how many bridges it laid.
+const CROSS_FAR := 10
+const CROSS_WALK := 12  ## a crossing near the middle is at most this many steps after
+
+
+static func cross_river(grid: CombatGrid, count := 2) -> int:
+	var centre := Vector2(grid.w - 1, grid.h - 1) * 0.5
+	var laid: Array[Vector2i] = []
+	var n := 0
+	for round_ in count:
+		var best: Array = []
+		var best_d := INF
+		for pair: Array in river_crossings(grid):
+			if int(pair[2]) < CROSS_FAR:
+				continue
+			var a: Vector2i = pair[0]
+			var b: Vector2i = pair[1]
+			var mid := Vector2(a + b) * 0.5
+			if laid.any(func(l: Vector2i) -> bool: return Vector2(l).distance_to(mid) < 7.0):
+				continue
+			var d := mid.distance_to(centre)
+			if absi(grid.height_at(a) - grid.height_at(b)) <= 1:
+				d -= 3.0  # a bridge is better than a ford
+			if d < best_d:
+				best_d = d
+				best = pair
+		if best.is_empty():
+			break
+		var a: Vector2i = best[0]
+		var b: Vector2i = best[1]
+		var step := Vector2i(signi(b.x - a.x), signi(b.y - a.y))
+		var ha := grid.height_at(a)
+		var hb := grid.height_at(b)
+		var c := a + step
+		var j := 1
+		while c != b:
+			if absi(ha - hb) <= 1:
+				grid.add_deck(c, mini(ha, hb), T.STONE)
+			else:  # a ford: the water steps from one bank's height to the other's, a level a cell
+				grid.set_height(c, ha + signi(hb - ha) * mini(j, absi(hb - ha) - 1))
+			n += 1
+			c += step
+			j += 1
+		laid.append((a + b) / 2)
+	return n
+
+
 ## Walkable cells the main ground can't reach (a pillar's top, a nook) become rock, so no one stands cut off.
 static func seal_unreachable(grid: CombatGrid, jump := 1) -> int:
 	var start := _biggest_walk(grid, jump)
