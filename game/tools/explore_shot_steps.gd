@@ -98,6 +98,32 @@ func run(s: Node, f: int, step: String) -> bool:
 			s.leader().vis += Vector2(0.4, 0.4)
 			s.zoom = 2.0
 		return f == 40
+	if step.begins_with("reach:"):
+		# reach:<group id>:<x>,<y> - the hero as an archer fights that group from x,y: his menu open and
+		# GOOD SHOT hovered, its range drawn in blue ([USER] 2026-10-30).
+		var parts := step.split(":")
+		if f == 3:
+			var game: Node = s.get_node("/root/Game")
+			game.save_enabled = false
+			game.take_weapon("bow")
+			s._rebuild_party()
+		if f == 5:
+			var xy := parts[2].split(",")
+			_put(s, Vector2i(int(xy[0]), int(xy[1])))
+			for g: Dictionary in s.groups:
+				if String(g.def.id) == parts[1]:
+					s.start_fight(g, "party")
+		if f == 25:
+			s._begin_battle()
+		if f == 45:
+			s.battle._select(s.party[0])
+		if f == 50:  # keys onto GOOD SHOT, as the player would: its focus draws the range
+			for a: Ability in (s.party[0] as CombatUnit).abilities:
+				if a.id == "aimed_shot":
+					for btn: Button in s.battle._menu_box.get_children():
+						if btn.text.begins_with(Txt.t(a.name_key)):
+							btn.grab_focus()
+		return f == 65
 	if step.begins_with("goal:"):
 		# goal:<group id>:<x>,<y> - the lead at x,y fights that group: the goal line, a BOSS tag, green exit cells.
 		var parts := step.split(":")

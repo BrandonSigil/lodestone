@@ -237,6 +237,25 @@ static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Arr
 	return out
 
 
+## Every place an ability used from `from` could aim at, foe or not ([USER] 2026-10-30, Brandon: hovering an
+## action shows its range): the cells in its reach by the same height and sight rules as targeting. A
+## self-only skill reaches its own cell.
+static func reach_cells(grid: CombatGrid, u: CombatUnit, a: Ability, from: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if a.target == "self":
+		out.append(from)
+		return out
+	var r := ability_range(u, a)
+	var g := CombatGrid.ground(from)
+	var span := r.y + HIGH_RANGE_MAX + 1
+	for y in range(maxi(0, g.y - span), mini(grid.h, g.y + span + 1)):
+		for x in range(maxi(0, g.x - span), mini(grid.w, g.x + span + 1)):
+			for c in grid.places_at(Vector2i(x, y)):
+				if c != from and grid.terrain_at(c) != CombatGrid.T.VOID and in_reach(grid, from, c, r):
+					out.append(c)
+	return out
+
+
 ## Cells hit when aiming at `center` (a plus shape for radius 1). On a deck the blast stays on the deck where
 ## the deck goes on and spills to the ground past its edge; in the lane under a deck the deck shields what's on it.
 static func area(grid: CombatGrid, a: Ability, center: Vector2i) -> Array[Vector2i]:

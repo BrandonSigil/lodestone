@@ -22,6 +22,7 @@ Code: `game/scripts/combat/`. Rules math is in `combat_rules.gd` (pure, no nodes
 - Hovering a ranged piece (yours or a foe's) shades the tiles in its range it can't see (`CombatRules.blind_cells`).
 - Clicking a red-lit foe straight from the menu is a shortcut for HIT (first click aims and shows the forecast, second click swings).
 - Keys: Esc or right click = back / undo move, D = danger zone (every tile the enemy can hit next phase), Tab = next ready piece, E = end turn.
+- An action's range ([USER] 2026-10-30, Brandon: "hovering over or being on the Good shot option should show me its range"): hovering an action in the menu, or moving onto it with the keys, draws every place it could aim at (`CombatRules.reach_cells`, by the same height and sight rules as aiming) in the danger zone's look in the player's blue, foes in reach marked stronger (`CombatBoard.reach`). HIT, GOOD SHOT, every skill and belt item; MOVE, GUARD and WAIT clear it, and so does leaving the menu. Shot: `explore_shot.gd -- out.png reach:<group id>:<x>,<y> <map>`.
 
 ## Rules
 - Hits always land ([USER] 2026-10-29, combat build step 1; the d20 stays for checks outside fights). Damage = unit damage + skill power + height (+1 a level above the target, up to +2; -1 a level below, down to -2) + traits, wobbling a point either way, minus armor, at least 1. Spooked hits for 1 less.

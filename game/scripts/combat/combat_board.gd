@@ -60,6 +60,7 @@ const FG_HEIGHT := 0.16  ## the solid foreground band's height as a share of the
 const GLOW := Color(1.0, 0.97, 0.82)  ## a door's light when the party is close: warm white, to read on golden grass
 const GLOW_RINGS := 6
 const NAVY_DEPTH := 6000.0  ## how far down (board pixels) the navy under the front treeline reaches: past any view
+const REACH := Color(0.35, 0.6, 1.0)  ## the player's colour: an action's range while it's hovered in the menu
 const FOOT := 0.3  ## a piece's feet (and its ring) reach this far from its middle, in cells
 const WINDOW_R := 56.0  ## see-through window round a piece behind a prop: radius on screen
 const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
@@ -78,6 +79,7 @@ var strangeness := 0.0
 var art_set := ""  ## tile set subfolder (see BattleArt); "" = base art
 var highlights := {}  # cell -> Color
 var danger := {}  # cell -> true, the enemy's reach next phase
+var reach := {}  # cell -> 1 in reach of the hovered action, 2 a foe in reach (Battle's menu preview)
 var area := {}  # cell -> true, cells a skill would hit
 var guard_ring := {}  # cell -> true, next to a guarding piece: foes starting here must hit it or pay to leave
 var goal_cells := {}  # cell -> true, a fight's way out (FightGoals exit), ringed in green
@@ -598,7 +600,7 @@ func _sync_slabs() -> void:
 	# What moves: bucket this frame's overlays and pieces by depth, then redraw those slabs.
 	_over_by_depth.clear()
 	_deck_over.clear()
-	for dict: Dictionary in [highlights, danger, area, guard_ring, goal_cells, glow]:
+	for dict: Dictionary in [highlights, danger, reach, area, guard_ring, goal_cells, glow]:
 		for c: Vector2i in dict:
 			_bucket(_deck_over if CombatGrid.on_deck(c) else _over_by_depth, c)
 	if hover != NONE and grid.in_bounds(hover):
@@ -2085,6 +2087,10 @@ func _draw_over(c: Vector2i) -> void:
 		_ci.draw_colored_polygon(top, Color(1, 1, 1, 0.18))
 	if danger.has(c):
 		_ci.draw_polyline(ring, Color(1.0, 0.5, 0.1, 0.7), 1.5, true)
+	if reach.has(c):  # the hovered action's range: the danger zone's look in the player's blue, foes marked
+		var foe: bool = int(reach[c]) == 2
+		_ci.draw_colored_polygon(top, Color(REACH, 0.42 if foe else 0.22))
+		_ci.draw_polyline(ring, Color(REACH, 0.95 if foe else 0.7), 2.5 if foe else 1.5, true)
 	if goal_cells.has(c):
 		_ci.draw_colored_polygon(top, Color(0.4, 0.95, 0.5, 0.18))
 		_ci.draw_polyline(ring, Color(0.45, 1.0, 0.55, 0.9), 2.0, true)

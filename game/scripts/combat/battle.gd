@@ -496,19 +496,19 @@ func _open_menu() -> void:
 		_menu_item(Txt.t("ACT_MOVE"), true, _begin_move)
 	if not u.acted:
 		for a in u.abilities:
-			_menu_item(_ability_label(u, a), _has_targets(u, a) and u.can_use(a), _start_targeting.bind(a))
+			_menu_item(_ability_label(u, a), _has_targets(u, a) and u.can_use(a), _start_targeting.bind(a), a)
 		if _talk_target(u) != null:
 			_menu_item(Txt.t("ACT_TALK"), true, _on_talk)
 		for a in CombatRules.extra_actions(u):  # AID, only while a downed teammate lies next to this piece
 			if _has_targets(u, a):
-				_menu_item(Txt.t(a.name_key), true, _start_targeting.bind(a))
+				_menu_item(Txt.t(a.name_key), true, _start_targeting.bind(a), a)
 		for id: String in Db.combat_items:  # only what's on this piece's own belt
 			var it: Ability = Db.combat_items[id]
 			var have := u.belt.count(it.spends) if u.belt != null else 0
 			if have <= 0:
 				continue
 			var label := "%s  (%s %d)" % [Txt.t(it.name_key), Txt.t(String(Db.items[it.spends].name_key)), have]
-			_menu_item(label, CombatRules.usable(u, it) and _has_targets(u, it), _start_targeting.bind(it))
+			_menu_item(label, CombatRules.usable(u, it) and _has_targets(u, it), _start_targeting.bind(it), it)
 		_menu_item(Txt.t("ACT_GUARD"), true, _on_guard)
 	if u.moved and not u.acted and not u.left_guard:  # a free hit taken on the way can't be undone
 		_menu_item(Txt.t("ACT_UNDO"), true, _undo_move)
@@ -535,7 +535,8 @@ func _ability_label(u: CombatUnit, a: Ability) -> String:
 	return label
 
 
-func _menu_item(text: String, enabled: bool, cb: Callable) -> void:
+## a: the action's ability, if it aims at something: hovering it (mouse or keys) shows its range on the board.
+func _menu_item(text: String, enabled: bool, cb: Callable, a: Ability = null) -> void:
 	var b := Button.new()
 	b.text = text
 	b.disabled = not enabled
@@ -543,7 +544,45 @@ func _menu_item(text: String, enabled: bool, cb: Callable) -> void:
 	b.custom_minimum_size = Vector2(96, 24)
 	b.add_theme_font_size_override("font_size", 13)
 	b.pressed.connect(cb)
+	b.mouse_entered.connect(preview_reach.bind(a))
+	b.focus_entered.connect(preview_reach.bind(a))
+	b.mouse_exited.connect(_end_preview.bind(b))
+	b.focus_exited.connect(_end_preview.bind(b))
 	_menu_box.add_child(b)
+
+
+func _process(_delta: float) -> void:
+	if not board.reach.is_empty() and (_menu == null or not _menu.visible):
+		board.reach = {}  # the menu went away (an action picked, a step back, the phase over): so does the preview
+
+
+## The range of action a for the selected piece ([USER] 2026-10-30): every place it could aim at in blue,
+## foes in reach marked. null (MOVE, GUARD, WAIT) clears it.
+func preview_reach(a: Ability) -> void:
+	var out := {}
+	var u := selected
+	if a != null and u != null and state != S.TARGET:
+		for c in CombatRules.reach_cells(grid, u, a, u.cell):
+			out[c] = 1
+		if a.hostile():
+			for o: CombatUnit in units:
+				if o.alive() and o.team != u.team and out.has(o.cell):
+					out[o.cell] = 2
+	board.reach = out
+
+
+## Off an action: its range goes, unless the pointer or focus already moved onto another (which drew its own).
+func _end_preview(b: Button) -> void:
+	await get_tree().process_frame
+	if not is_instance_valid(b) or not _menu.visible:
+		board.reach = {}
+		return
+	var on := false
+	for c in _menu_box.get_children():
+		if c is Button and (c.has_focus() or c.is_hovered()):
+			on = true
+	if not on:
+		board.reach = {}
 
 
 func _has_targets(u: CombatUnit, a: Ability) -> bool:
@@ -566,6 +605,7 @@ func _start_targeting(a: Ability) -> void:
 	targeting = a
 	state = S.TARGET
 	_menu.visible = false
+	board.reach = {}
 	board.highlights = {}
 	var col := ENEMY_COLOR if a.hostile() else ALLY_COLOR
 	if a.target == "cell":

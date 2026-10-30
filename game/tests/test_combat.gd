@@ -747,3 +747,37 @@ func test_talk_in_a_battle() -> void:
 	eq(b.state, Battle.S.OVER)
 	eq(b.outcome.how, "talk", "talked the group into leaving")
 	b.free()
+
+
+## Brandon (2026-10-30): hovering HIT or GOOD SHOT in the action menu shows what it can reach, by the same
+## height and sight rules as aiming.
+func test_an_actions_reach() -> void:
+	var g := CombatGrid.flat(7, 7)
+	var k := _unit("knight", 0, Vector2i(3, 3), g)
+	var hit := CombatRules.reach_cells(g, k, k.abilities[0], k.cell)
+	eq(hit.size(), 4, "melee: the four cells beside it")
+	g.set_height(Vector2i(4, 3), 3)
+	ok(not CombatRules.reach_cells(g, k, k.abilities[0], k.cell).has(Vector2i(4, 3)), "not up a cliff it can't hit")
+	var arch := _unit("archer", 0, Vector2i(0, 3), g)
+	var shot := CombatRules.reach_cells(g, arch, arch.abilities[0], arch.cell)
+	var r := CombatRules.ability_range(arch, arch.abilities[0])
+	ok(shot.all(func(c: Vector2i) -> bool: return CombatRules.dist(c, arch.cell) >= r.x and CombatRules.dist(c, arch.cell) <= r.y), "inside the bow's band")
+	g.set_terrain(Vector2i(1, 3), CombatGrid.T.ROCK)
+	g.set_height(Vector2i(1, 3), 4)
+	ok(not CombatRules.reach_cells(g, arch, arch.abilities[0], arch.cell).has(Vector2i(2, 3)), "a wall in the way: out of sight, out of reach")
+
+
+func test_hovering_an_action_shows_its_reach() -> void:
+	var s := _goal_units()
+	var b := Battle.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(b)
+	b.setup(s.g, s.units, 1)
+	b.selected = s.hero
+	s.hero.place(Vector2i(3, 1), 0)
+	b.preview_reach(s.hero.abilities[0])
+	eq(b.board.reach.size(), 4, "HIT's reach: the four cells beside him")
+	eq(b.board.reach.get(s.boss.cell, 0), 2, "the bandit next to him is marked")
+	eq(b.board.reach.get(Vector2i(2, 1), 0), 1, "an empty cell in reach is plain")
+	b.preview_reach(null)
+	eq(b.board.reach, {}, "WAIT or GUARD: nothing")
+	b.free()
