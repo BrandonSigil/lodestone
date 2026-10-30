@@ -151,9 +151,17 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 			grid.choosing = RunState.MED_ITEM
 			grid.flash = "UI_WHO_DRINK"
 			grid.queue_redraw())
+		if run.item_count("tonic") > 0:  # mana and charges back, on the walk or at camp
+			var short := run.members.any(func(m: Dictionary) -> bool:
+				var r := Game.member_res(m)
+				return r.kind != "" and int(r.res) < int(r.res_max))
+			_use_row(box, Txt.f("UI_PACK_TONIC", run.item_count("tonic")), Txt.t("UI_DRINK"), short, func() -> void:
+				if Game.tonic_effect():
+					run.add_item("tonic", -1)
+				changed.call())
 		var finds := run.items
 		for id: String in finds:
-			if id != RunState.FOOD_ITEM and id != RunState.MED_ITEM:
+			if id != RunState.FOOD_ITEM and id != RunState.MED_ITEM and id != "tonic":
 				_label(box, "%s  x%d" % [Txt.t(String(Db.items[id].name_key)), int(finds[id])], 14)
 	_label(box, Txt.t("UI_PACK_HELP_RUN"), 12)
 	var cell := FULL_CELL if full else PACK_CELL
