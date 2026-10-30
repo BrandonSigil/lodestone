@@ -1109,6 +1109,19 @@ func test_the_dock_bar_and_its_pop_up_columns() -> void:
 	hud._pop_slots[0].entry.cb.call()
 	eq(fired, ["strike", mage.abilities[1].id])
 	hud.queue_free()
+	# BELT (Brandon, 2026-10-30): the box is belt item 1 and fires it; its column holds item 2 on
+	var hud2 := ActionHud.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(hud2)
+	var belt := [add.call("MOVE", "move"), add.call("A", "item", mage.abilities[0]), add.call("B", "item", mage.abilities[1]),
+		add.call("C", "item", mage.abilities[2]), add.call("WAIT", "wait")]
+	hud2.show_for(mage, belt, Vector2.ZERO, Rect2(0, 0, 1280, 640))
+	var bar2: Array = hud2.hand_entries()
+	eq(bar2.map(func(e: Dictionary) -> String: return String(e.kind)), ["move", "item", "wait"], "BELT is the first item")
+	eq((bar2[1].pop as Array).size(), 2, "items 2 and 3 pop up over it")
+	fired.clear()
+	ok(hud2.press_key(1), "key 2: the first belt item")
+	eq(fired, [mage.abilities[0].id])
+	hud2.queue_free()
 
 
 ## Ice pillars (Brandon, 2026-10-30; built, not on the Lich yet): raised 2 steps from a party piece and next to none,

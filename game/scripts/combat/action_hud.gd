@@ -77,7 +77,7 @@ func show_for(u: CombatUnit, entries: Array, _at: Vector2, area: Rect2) -> void:
 
 ## The bar's boxes, in order ([USER] 2026-10-30, Brandon's picture on dev-action-dock): MOVE (UNDO once moved), HIT,
 ## TRICKS, BELT, WAIT. Each may carry a column ("pop") that pops up above it: GUARD (and AID, TALK) over HIT, the
-## spells over TRICKS, the belt over BELT.
+## spells over TRICKS, belt items 2 on over BELT (the box itself is belt item 1).
 func hand_entries() -> Array:
 	var out := []
 	var first := _entries.filter(func(e: Dictionary) -> bool: return e.kind == "undo")
@@ -98,8 +98,9 @@ func hand_entries() -> Array:
 			"cb": Callable(), "kind": "group", "ability": null, "count": skills.size(), "icon": skills[0].ability.id, "pop": skills})
 	var items := _entries.filter(func(e: Dictionary) -> bool: return e.kind == "item")
 	if not items.is_empty():
-		out.append({"text": Txt.t("ACT_BELT"), "enabled": items.any(func(e: Dictionary) -> bool: return e.enabled),
-			"cb": Callable(), "kind": "group", "ability": null, "count": items.size(), "icon": items[0].ability.spends, "pop": items})
+		var belt: Dictionary = items[0].duplicate()  # [USER] 2026-10-30: the box is the first item, the column holds the rest
+		belt["pop"] = items.slice(1)
+		out.append(belt)
 	out.append_array(_entries.filter(func(e: Dictionary) -> bool: return e.kind == "wait"))
 	return out
 
