@@ -37,7 +37,9 @@ static func lines(u: CombatUnit, a: Ability) -> PackedStringArray:
 			nums.append(Txt.t("TIP_COMMAND"))
 		"swap":
 			nums.append(Txt.t("TIP_SWAP"))
-	if a.status != "":
+	if a.status == CombatRules.STATUS_WARD:  # it ends at the caster's next turn, not after a count (playtest)
+		nums.append(Txt.t("TAG_WARD") + " " + Txt.t("TIP_WARD_TIME"))
+	elif a.status != "":
 		nums.append(Txt.f("TIP_STATUS", [Txt.t("TAG_" + a.status.to_upper()), a.status_turns]))
 	if a.magic:
 		nums.append(Txt.t("TIP_MAGIC") + ((" " + Txt.t("ELEM_" + a.element.to_upper())) if a.element != "" and Txt.has("ELEM_" + a.element.to_upper()) else ""))

@@ -30,8 +30,8 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var marked := CombatRules.marks(units)
 	for cell: Vector2i in cost:
 		leave[cell] = leave_cost(grid, u, units, cell) + mark_cost(grid, u, units, cell, marked)
-	if u.has_trait(CombatRules.TRAIT_STAND_WATCH) and u.move_spent == 0:  # standing still readies the watch shot
-		leave[u.cell] = float(leave[u.cell]) - watch_value(grid, u, units)
+	if u.has_trait(CombatRules.TRAIT_STAND_WATCH) and u.move_spent == 0 and not _foe_reach(grid, u, units).has(u.cell):
+		leave[u.cell] = float(leave[u.cell]) - watch_value(grid, u, units)  # standing still readies the watch shot, out of harm's way
 	var actions: Array[Ability] = u.abilities.duplicate()
 	actions.append_array(CombatRules.extra_actions(u))  # AID or a knock-out too
 	var extra := {}  # CARRY's destination and set-down cell, when a clutch tool wins
@@ -104,17 +104,25 @@ static func _clutch(grid: CombatGrid, u: CombatUnit, units: Array, cost: Diction
 					best = f
 			if best != null:
 				out.append({"ability": a, "cell": u.cell, "aim": best.cell, "score": best_s})
-		elif a.kind == "swap":  # SHADOW SWAP: pull a friend who is down, or low next to a foe, to where the rogue stands
-			var threat := _foe_reach(grid, u, units)
+		elif a.kind == "swap" and u.move_spent == 0:  # SHADOW SWAP is the rogue's move (playtest, 2026-10-30): from where it
+			var threat := _foe_reach(grid, u, units)  # stands, pull a friend who is down, or low next to a foe, to safety
 			for f: CombatUnit in units:
 				if f == u or f.team != u.team or not (f.downed() or (f.alive() and f.hp * 4 < f.max_hp and _next_to_foe(f, units))):
 					continue
-				for cell: Vector2i in cost:
-					if CombatRules.dist(cell, f.cell) > a.range_max:
+				if CombatRules.dist(u.cell, f.cell) > a.range_max:
+					continue
+				var s := (SWAP_DOWNED if f.downed() else SWAP_HURT) + (15.0 if threat.has(f.cell) else 0.0) \
+					- (15.0 if threat.has(u.cell) else 0.0) - float(leave[u.cell])
+				var then := 0.0  # it's the move: the rogue still strikes from the friend's cell, next to the foe there
+				for b in u.abilities:
+					if b.kind != "attack" or not CombatRules.usable(u, b) or b.boss_move():
 						continue
-					var s := (SWAP_DOWNED if f.downed() else SWAP_HURT) + (15.0 if threat.has(f.cell) else 0.0) \
-						- (15.0 if threat.has(cell) else 0.0) - int(cost[cell]) * 0.2 - float(leave[cell])
-					out.append({"ability": a, "cell": cell, "aim": f.cell, "score": s})
+					for o: CombatUnit in units:
+						if o.team != u.team and o.alive() and CombatRules.dist(o.cell, f.cell) == 1:
+							var hit := score(grid, u, b, o.cell, units, f.cell)
+							if hit > then:
+								then = hit
+				out.append({"ability": a, "cell": u.cell, "aim": f.cell, "score": s + then})
 		elif a.kind == "carry":
 			var marked := CombatRules.marks(units)
 			var guarded := CombatRules.guard_ring(grid, units, 1 - u.team)

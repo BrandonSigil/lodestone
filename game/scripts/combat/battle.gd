@@ -320,7 +320,16 @@ func _ai_turn(u: CombatUnit) -> void:
 		plan.ability = again.ability
 		plan.aim = again.aim
 		plan.guard = again.guard
-	if plan.ability != null and plan.ability.kind in ["carry", "command", "swap"]:
+	if plan.ability != null and plan.ability.kind == "swap":  # the rogue's move; then it acts from where it landed
+		await _use_clutch(u, plan.ability, plan.aim, plan.dest, plan.spot)
+		u.moved = true
+		u.move_spent = CombatRules.move_points(u)
+		var then := EnemyAi.plan(grid, u, units)
+		if then.ability != null and then.ability.kind not in ["carry", "command", "swap"] and u.alive():
+			await _use(u, then.ability, then.aim)
+		elif then.guard:
+			CombatRules.guard(u)
+	elif plan.ability != null and plan.ability.kind in ["carry", "command", "swap"]:
 		await _use_clutch(u, plan.ability, plan.aim, plan.dest, plan.spot)
 	elif plan.ability != null:
 		await _use(u, plan.ability, plan.aim)
@@ -717,7 +726,8 @@ func _entries(u: CombatUnit) -> Array:
 		add.call(Txt.t("ACT_MOVE"), true, _begin_move, "move")
 	if not u.acted:
 		for a in u.abilities:
-			add.call(_ability_label(u, a) if _hud.layout == "list" else Txt.t(a.name_key), _has_targets(u, a) and u.can_use(a), _start_targeting.bind(a), "skill", a)
+			var ok_now := _has_targets(u, a) and CombatRules.usable(u, a) and not (a.kind == "swap" and u.moved)  # a swap is the move
+			add.call(_ability_label(u, a) if _hud.layout == "list" else Txt.t(a.name_key), ok_now, _start_targeting.bind(a), "skill", a)
 		if _talk_target(u) != null:
 			add.call(Txt.t("ACT_TALK"), true, _on_talk, "talk")
 		for a in CombatRules.extra_actions(u):  # AID, only while a downed teammate lies next to this piece
@@ -1085,6 +1095,14 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 					_cancel.visible = false
 					await _use_clutch(who, a, c, c, c)
 					if _check_end():
+						return
+					if a.kind == "swap":  # SHADOW SWAP was its move: it can still strike or AID
+						who.moved = true
+						who.move_spent = CombatRules.move_points(who)
+						if who.acted:
+							_finish_unit()
+						else:
+							_select(who)
 						return
 					_after_action(who)
 					return
