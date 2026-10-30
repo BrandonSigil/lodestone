@@ -2,6 +2,7 @@
  "name": "crypt",
  "art_set": "ruins",
  "strangeness": 0.0,
+ "level": 3,
  "view": 0,
  "walls": true,
  "wall_kit": "dungeon",

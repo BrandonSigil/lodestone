@@ -99,9 +99,9 @@ class Map:
                     return True
         return False
 
-    def save(self, strangeness=0.0, view=0, turn=False, fog=True, walls=False):
+    def save(self, strangeness=0.0, view=0, turn=False, fog=True, walls=False, level=1):
         data = {
-            "name": self.name, "art_set": self.art_set, "strangeness": strangeness, "view": view,
+            "name": self.name, "art_set": self.art_set, "strangeness": strangeness, "view": view, "level": level,
             **({"walls": True, "wall_kit": "dungeon"} if walls else {}), "turn": turn, "fog": fog,
             "grid": {"w": self.w, "h": self.h,
                      "terrain": ["".join(r) for r in self.terrain],
@@ -499,8 +499,8 @@ for y in range(23, 31):
         if P.t(x, y) == "g":
             P.put(x, y, "f")
 
-P.save(strangeness=0.1)
-W.save(walls=True)  # plain gray walls (ExploreMap.walls)
+P.save(strangeness=0.1)  # level 1 (design-to-builder-map-levels)
+W.save(walls=True, level=2)  # plain gray walls (ExploreMap.walls); foes a level deeper than the pass
 
 # The painted look's authoring rules (V9 tidy edges, V10 pillars, V12 a beige road from the foot of the pass
 # to the crypt stair) come from the game's own MapOps, as the map maker's Generate menu applies them.

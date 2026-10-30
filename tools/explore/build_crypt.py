@@ -143,6 +143,7 @@ data = {
     "name": "crypt",
     "art_set": "ruins",
     "strangeness": 0.0,
+    "level": 3,  # foes by depth (design-to-builder-map-levels): two deeper than the snow pass
     "view": 0,
     "walls": True,  # plain gray walls (ExploreMap.walls)
     "wall_kit": "dungeon",  # thin stone back walls from the dungeon wall kit ([USER] 2026-10-30)

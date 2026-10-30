@@ -3,6 +3,7 @@
  "art_set": "dungeon",
  "strangeness": 0.0,
  "view": 0,
+ "level": 2,
  "walls": true,
  "wall_kit": "dungeon",
  "turn": false,
