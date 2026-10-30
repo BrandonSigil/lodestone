@@ -159,3 +159,23 @@ Visual overview: https://claude.ai/artifact/8rdAXgqcZogHZDsFVjsUgU (the Class Ma
 | tinker | bomb, caltrops, patch, smoke_bomb (blocks sight on a 3x3 for a phase) |
 
 The wizard branch's `wall_of_fire` becomes "ignite lines last 3 phases and hit harder", since ignite is now a line already.
+
+## Rework (2026-10-30, card design-kits-fourth)
+`[USER]` Evolved classes upgrade a single skill, and a class may carry a passive instead of a fourth ability ("Polearm fighter can attack in melee an additional tile away", "A dagger character can use their attack twice"). Ember's flame wall: one branch adds damage plus a burn for X turns, the other circles the caster and follows her for X turns (his working name: Amber).
+
+`[AI]` The ten kits under that rule. A branch names the one base skill it upgrades.
+
+| Archetype | Kit | Evolved A (upgrade) | Evolved B (upgrade) |
+| --- | --- | --- | --- |
+| bulwark | guard zone, goad, shield_wall, command | guardian: guard zone reaches 2 tiles, +2 armor while guarding | vanguard: command also gives the ally +2 damage and the bulwark 2 rage |
+| reaver | cleave, shove, second_wind, passive long_reach (melee reaches one more tile) | warlord: cleave sweeps radius 2 | berserker: second_wind also +2 damage until its next phase |
+| shade | backstab, poison blades, shadow_swap, passive quick_hands (regular attack twice) | assassin: backstab doubles on a foe that has not acted | thief: shadow_swap also lifts an item off an adjacent foe |
+| sharpshooter | aimed_shot, volley, snare, overwatch | hunter: snared beasts and fliers take +2 from the party | marksman: aimed_shot ignores 2 armor, reaches 1 further |
+| tracker | trap, snare, lure, call_companion | beastmaster: call_companion adds a second beast | trapper: trap lays 3 hidden tiles in a row |
+| ember | firebolt, fireball, flame_wall (a line of 2 to 3 tiles), flash | cinder: flame_wall also damages when lit, then burns 2 phases | halo: the wall circles the caster and follows her 3 phases |
+| moon | moonbeam, moon_sleep, star_guide, moon_veil | seer: star_guide reaches every ally within 3 | hexer: moon_sleep lasts 2 phases, wakes on a crit |
+| mender | mend, ward, renew, aid from range | cleric: mend also +2 armor for a phase | medic: aid revives at 40% |
+| chanter | rally, inspire, last_stand, passive silver_tongue (+2 persuade and TALK) | herald: rally also +1 damage | diplomat: silver_tongue lets TALK work on a second foe |
+| tinker | bomb, caltrops, smoke_bomb, patch | bomber: bomb radius 2 | engineer: caltrops also shoot foes within 2 for 2 phases |
+
+This replaces the evolved-class table above. Dropped: the ember healer branch (the mender covers healing), the old wall_of_fire branch (now halo and cinder), chanter's dissonance, and reaver's leap and shade's kick (swap them back in over a passive if he prefers).
