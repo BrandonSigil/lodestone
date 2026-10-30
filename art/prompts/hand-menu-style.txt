@@ -1,0 +1,60 @@
+PROMPT 1 (direction A)
+
+Image 1 = the game's bottom frame: deep green mottled panels inside a pale silver and soft blue bevelled rim, small blue diamond studs, a tall diamond crest, olive-green leaf sprigs at the ends. Every piece here must belong with it: the same colours, the same rim, the same leaves and diamonds.
+The lines are HAND-DRAWN: a soft, slightly wobbly hand-inked outline, neater and a little more formal and ornate than a quick doodle, like a carefully drawn storybook border. Soft flat painted fills with a little mottle, no heavy rendering.
+
+WHAT THIS IS: the menu kit for a cosy fantasy tactics game, used everywhere: the main menu, character sheets, the inventory, options, dialogue boxes and the world map. This picture shows ONE direction:
+DIRECTION A, FRAME GREEN: the bottom frame's own look carried onto every piece. Deep green mottled fill like image 1's panels; a slim pale silver and soft blue double rim; at each corner a small blue diamond stud with two little olive-green leaves. Rich and formal, for the main menu, character sheets and the world map.
+
+LAYOUT: aspect 3:2, plain flat cream paper (#eae8d6) background, no title, no labels, no text, no letters anywhere. Four separate pieces laid out with wide empty cream gaps between them, nothing overlapping:
+   left half: one big EMPTY PANEL, a tall rectangle about 3 wide by 4 tall, its middle completely plain and empty;
+   top right: one TITLE PLATE, a long thin plate about 5 wide by 1 tall, empty (no words);
+   middle right: one BUTTON, a short rounded plate about 3 wide by 1 tall, empty (no words);
+   bottom right: one TOOLTIP BOX, a small plain rectangle about 3 wide by 2 tall with a small pointer on its bottom edge, empty.
+Straight on, flat, no perspective, no tilt. Every line is drawn like a dip pen: rounded ends, a slight natural tremor, a little thicker and thinner along its length; the paper of each piece may be a very slightly irregular hand-cut shape, never ragged or torn.
+
+NINE-SLICE (essential, the game stretches these to any size): all ornament sits in the FOUR CORNERS only. The edges between the corners are a plain straight border of even width that could be repeated or stretched, with nothing in the middle of an edge (no crest, no centre gem, no leaf in the middle). The inside of each piece is one plain flat fill, no picture, no pattern, no vignette. Corners are compact, about one eighth of the panel's width.
+
+Avoid: text, letters, runes, numbers, icons inside the pieces, ornaments in the middle of edges, gradients, glossy bevels, 3d render, metal photo textures, heavy shadows, drop shadows, perspective, torn or ragged edges, pixel art, pure black, saturated neon colours.
+
+=====
+
+PROMPT 2 (direction B)
+
+Image 1 = the game's bottom frame: deep green mottled panels inside a pale silver and soft blue bevelled rim, small blue diamond studs, a tall diamond crest, olive-green leaf sprigs at the ends. Every piece here must belong with it: the same colours, the same rim, the same leaves and diamonds.
+The lines are HAND-DRAWN: a soft, slightly wobbly hand-inked outline, neater and a little more formal and ornate than a quick doodle, like a carefully drawn storybook border. Soft flat painted fills with a little mottle, no heavy rendering.
+
+WHAT THIS IS: the menu kit for a cosy fantasy tactics game, used everywhere: the main menu, character sheets, the inventory, options, dialogue boxes and the world map. This picture shows ONE direction:
+DIRECTION B, INKED PARCHMENT: light and easy to read. Warm cream parchment fill, a little mottled; a neat hand-inked double border in dark warm charcoal (#373335); at each corner a small curling hand-drawn flourish with one tiny blue diamond and one small olive leaf, tying it to the frame. For dialogue, tooltips and long text.
+
+LAYOUT: aspect 3:2, plain flat cream paper (#eae8d6) background, no title, no labels, no text, no letters anywhere. Four separate pieces laid out with wide empty cream gaps between them, nothing overlapping:
+   left half: one big EMPTY PANEL, a tall rectangle about 3 wide by 4 tall, its middle completely plain and empty;
+   top right: one TITLE PLATE, a long thin plate about 5 wide by 1 tall, empty (no words);
+   middle right: one BUTTON, a short rounded plate about 3 wide by 1 tall, empty (no words);
+   bottom right: one TOOLTIP BOX, a small plain rectangle about 3 wide by 2 tall with a small pointer on its bottom edge, empty.
+Straight on, flat, no perspective, no tilt. Every line is drawn like a dip pen: rounded ends, a slight natural tremor, a little thicker and thinner along its length; the paper of each piece may be a very slightly irregular hand-cut shape, never ragged or torn.
+
+NINE-SLICE (essential, the game stretches these to any size): all ornament sits in the FOUR CORNERS only. The edges between the corners are a plain straight border of even width that could be repeated or stretched, with nothing in the middle of an edge (no crest, no centre gem, no leaf in the middle). The inside of each piece is one plain flat fill, no picture, no pattern, no vignette. Corners are compact, about one eighth of the panel's width.
+
+Avoid: text, letters, runes, numbers, icons inside the pieces, ornaments in the middle of edges, gradients, glossy bevels, 3d render, metal photo textures, heavy shadows, drop shadows, perspective, torn or ragged edges, pixel art, pure black, saturated neon colours.
+
+=====
+
+PROMPT 3 (direction C)
+
+Image 1 = the game's bottom frame: deep green mottled panels inside a pale silver and soft blue bevelled rim, small blue diamond studs, a tall diamond crest, olive-green leaf sprigs at the ends. Every piece here must belong with it: the same colours, the same rim, the same leaves and diamonds.
+The lines are HAND-DRAWN: a soft, slightly wobbly hand-inked outline, neater and a little more formal and ornate than a quick doodle, like a carefully drawn storybook border. Soft flat painted fills with a little mottle, no heavy rendering.
+
+WHAT THIS IS: the menu kit for a cosy fantasy tactics game, used everywhere: the main menu, character sheets, the inventory, options, dialogue boxes and the world map. This picture shows ONE direction:
+DIRECTION C, PARCHMENT IN A GREEN FRAME: the two together. A cream parchment middle inside a slim deep-green border band edged with the pale silver line of image 1, and a small silver leaf-and-diamond ornament at each corner. Inked hand-drawn edges, not machine-perfect. One look that works for every menu.
+
+LAYOUT: aspect 3:2, plain flat cream paper (#eae8d6) background, no title, no labels, no text, no letters anywhere. Four separate pieces laid out with wide empty cream gaps between them, nothing overlapping:
+   left half: one big EMPTY PANEL, a tall rectangle about 3 wide by 4 tall, its middle completely plain and empty;
+   top right: one TITLE PLATE, a long thin plate about 5 wide by 1 tall, empty (no words);
+   middle right: one BUTTON, a short rounded plate about 3 wide by 1 tall, empty (no words);
+   bottom right: one TOOLTIP BOX, a small plain rectangle about 3 wide by 2 tall with a small pointer on its bottom edge, empty.
+Straight on, flat, no perspective, no tilt. Every line is drawn like a dip pen: rounded ends, a slight natural tremor, a little thicker and thinner along its length; the paper of each piece may be a very slightly irregular hand-cut shape, never ragged or torn.
+
+NINE-SLICE (essential, the game stretches these to any size): all ornament sits in the FOUR CORNERS only. The edges between the corners are a plain straight border of even width that could be repeated or stretched, with nothing in the middle of an edge (no crest, no centre gem, no leaf in the middle). The inside of each piece is one plain flat fill, no picture, no pattern, no vignette. Corners are compact, about one eighth of the panel's width.
+
+Avoid: text, letters, runes, numbers, icons inside the pieces, ornaments in the middle of edges, gradients, glossy bevels, 3d render, metal photo textures, heavy shadows, drop shadows, perspective, torn or ragged edges, pixel art, pure black, saturated neon colours.

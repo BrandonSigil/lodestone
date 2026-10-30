@@ -27,6 +27,7 @@ Read and write them with the `ArtifactData` tool and the URL above. Pin every wr
 Card kinds:
 - `choice`: `options` [{id, label, detail, image}], `multi` for pick-many. The page always adds **Neither** with a required "why". Answer: `{picks, why, at}`.
 - `go` (Picsart go-ahead): `batch` {prompt, model, count, cost, refs [{url, caption}]}. The cost on the card is a ceiling: if a run would go past it, stop and post a new `go` card for the rest. Answer: `{pick: "go" | "nogo", why, at}`.
+  - Run by hand (Brandon, 2026-10-30: "have it on my desk with a prompt and one image reference if needed. Then I'll do that part manually with my picsart subscription"; "You can do that as much as you want, I have a big picsart budget"): a `go` card whose `batch.prompt` is the full copy-ready prompt (written for at most one reference, saved as `art/prompts/hand-*.txt`), `batch.refs` holds that one picture from the References wall (or none), `batch.count` the settings (GPT image, 2K, aspect, how many), and `batch.cost` reads "your Picsart subscription". Brandon runs it, answers Go and pastes the pictures into the answer; the art runner reads each one, cuts and scores it and brings a review card as usual. No cost ceiling applies, so use these freely for redos, extra tries and variants; batch related asks onto one card.
 - `review` (Picsart results): `items` [{id, url, caption, score 1-5, notes}]. Score each against the References wall, honestly. Answer: `{items: {id: {verdict: "approve" | "redo" | "reject", note}}, why, at}`.
 - `todo`: Brandon marks it done himself.
 

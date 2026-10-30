@@ -1,0 +1,11 @@
+Image 1 = a snowy cliff painting. Copy ONLY its rock paint: soft flat warm-grey paint laid in faint flat dabs with chippy edges, very low contrast, calm. Do NOT copy its snow, its dark lines, its cracks, its edges, its shapes, its water or trees.
+
+WHAT THIS IS: a plain painted texture swatch that a game repeats many times across and down tall cliff faces; the game draws the cracks and lines over it itself. It must have NOTHING that can be seen to repeat: no lines, no cracks, no slabs, no edges, no shapes, no spots, no single patch lighter or darker than the rest. Only faint flat dabs of two or three very close tones of one rock colour, each dab a little taller than wide with slightly chippy edges, evenly spread over the whole square, like paint on paper. Calm and low contrast; most of the square is the middle tone. Light even everywhere.
+SEAMLESS: the left edge flows into the right edge and the top edge into the bottom edge with no visible join; no darker or lighter rim, no vignette, no border, no gradient across the square.
+
+LAYOUT: aspect 3:2, plain flat cream paper (#eae8d6), no title, no labels, no text. THREE equal SQUARE swatches in one row, side by side, with a clear cream gap between them and cream above and below; each swatch filled edge to edge; nothing crosses a swatch edge.
+   left: neutral warm grey like image 1's rock (about #8c827d middle, dabs #847a75 and #938a85);
+   middle: warm grey-brown like old village stone (about #9f8874 middle, dabs #968070 and #a88f7c);
+   right: cool grey (about #868188 middle, dabs #7f7a82 and #8e8a91).
+
+Avoid: lines, outlines, cracks, slabs, ridges, rocks, stones, pebbles, bricks, blocks, strata, bands, ledges, moss, grass, snow, shapes of any kind, high contrast, dark spots, speckle, noise, a vignette, a frame, darker edges, a lighter centre, a gradient, pixel art, 3d render, photo, text.
