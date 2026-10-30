@@ -244,7 +244,7 @@ func test_boss_ends_the_test() -> void:
 
 func test_loop_data_is_whole() -> void:
 	_db()
-	for name in ["village", "home", "house_dog", "snow_pass", "wolf_den", "crypt"]:
+	for name in ["village", "home", "house_dog", "snow_pass", "wolf_den", "crypt", "village_v2"]:
 		var m := ExploreMap.load_named(name)
 		for t in m.things:
 			if String(t.kind) == "restore":
@@ -315,7 +315,7 @@ const ROPE_GATED := {"snow_pass": ["ledge_chest", "rope_down"]}  ## down the led
 
 func test_every_door_and_thing_reachable_and_usable() -> void:
 	_db()
-	for name in ["village", "home", "house_dog", "house_ne", "tavern", "snow_pass", "wolf_den", "crypt", "city_proto"]:
+	for name in ["village", "home", "house_dog", "house_ne", "tavern", "snow_pass", "wolf_den", "crypt", "city_proto", "village_v2"]:
 		var m := ExploreMap.load_named(name)
 		var g := m.grid
 		var all := {}

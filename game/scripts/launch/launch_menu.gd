@@ -64,6 +64,7 @@ func _sections_row() -> HBoxContainer:
 		["EXPLORE", [
 			["Hero's cottage", "home (the start)", _explore.bind("home")],
 			["Village square", "the open village map", _explore.bind("village")],
+			["Village v2", "second village build: terraces, ruins, lake (layout test)", _explore.bind("village_v2")],
 			["House NE", "the quiet house, hidden book", _explore.bind("house_ne")],
 			["Dog's house", "the dog shut in (E2E loop)", _explore.bind("house_dog")],
 			["Snow pass", "the climb, the wolf den, the crypt", _explore.bind("snow_pass")],
