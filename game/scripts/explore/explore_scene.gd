@@ -291,14 +291,15 @@ func _process(delta: float) -> void:
 		_open_menu("pack")  # a pickup found no room: the player decides before walking on
 	var pan := Vector2.ZERO
 	_wasd(delta)
-	if Input.is_key_pressed(KEY_LEFT):
-		pan.x -= 1
-	if Input.is_key_pressed(KEY_RIGHT):
-		pan.x += 1
-	if Input.is_key_pressed(KEY_UP):
-		pan.y -= 1
-	if Input.is_key_pressed(KEY_DOWN):
-		pan.y += 1
+	if get_viewport().gui_get_focus_owner() == null:  # the arrows move along a focused menu (the fight's dock) instead
+		if Input.is_key_pressed(KEY_LEFT):
+			pan.x -= 1
+		if Input.is_key_pressed(KEY_RIGHT):
+			pan.x += 1
+		if Input.is_key_pressed(KEY_UP):
+			pan.y -= 1
+		if Input.is_key_pressed(KEY_DOWN):
+			pan.y += 1
 	if pan != Vector2.ZERO:
 		follow = false
 		focus += _screen_to_grid(pan.normalized() * PAN_SPEED * delta / zoom)

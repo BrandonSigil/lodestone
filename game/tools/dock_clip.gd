@@ -1,7 +1,7 @@
 extends SceneTree
-## Frames of the fight's dock in use ([USER] 2026-10-30), for a clip: the hero's dock comes up, ATTACK is pointed at,
-## TRICKS opens the spells, FIRE ZAP is rested on until its details fill the corner panel, WAIT is pressed and the
-## dog's dock comes up by itself, then SWAP goes back to the hero... who has waited, so it stays on the dog.
+## Frames of the fight's dock in use ([USER] 2026-10-30), for a clip: the hero's dock comes up, HIT pops GUARD,
+## TRICKS pops the spells, up to FIRE ZAP and rest until its details fill the corner panel, then WAIT, and the dog's
+## dock comes up by itself.
 ## godot --path game -s res://tools/dock_clip.gd -- <out prefix>. Needs a window (tools/godot.sh). Writes
 ## <out prefix>_000.png and on. Never writes the save.
 
@@ -31,11 +31,11 @@ func _process(_delta: float) -> bool:
 	var hud = s.battle._hud
 	match _f:
 		45:
-			hud._slots[1].grab_focus()  # ATTACK
+			hud._bar_slots[1].grab_focus()  # HIT: GUARD pops up over it
 		70:
-			hud._open("skills")  # TRICKS
+			hud._bar_slots[2].grab_focus()  # TRICKS: the spells pop up
 		80:
-			hud._slots[0].grab_focus()  # FIRE ZAP: rest on it
+			hud._pop_slots[0].grab_focus()  # up to FIRE ZAP: rest on it
 		160:
 			hud._hide_tip()
 			s.battle._on_wait()  # WAIT: the dog comes up by itself

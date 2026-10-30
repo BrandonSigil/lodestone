@@ -1081,31 +1081,33 @@ func test_action_hover_card_reads_the_data() -> void:
 	eq(ActionInfo.wait_text(dog, Db.ability("bite")), Txt.f("TIP_CHARGE_BACK", dog.res_every))
 
 
-## The dock ([USER] 2026-10-30, dev-action-tips): MOVE, ATTACK, TRICKS, then WAIT; TRICKS opens a second row of the
-## piece's skills over the first, and keys 1 to 0 press the top row's boxes.
-func test_the_dock_has_two_rows_and_keys_press_the_top_one() -> void:
+## The dock (Brandon's pictures, dev-action-dock): MOVE, HIT, TRICKS, BELT, WAIT; GUARD pops up over HIT and the
+## spells over TRICKS, the first nearest the bar; keys 1 to 0 pick a bar box, and up goes into its column.
+func test_the_dock_bar_and_its_pop_up_columns() -> void:
 	var hud := ActionHud.new()
 	(Engine.get_main_loop() as SceneTree).root.add_child(hud)
 	var g := CombatGrid.flat(6, 3)
 	var mage := _unit("mage", 0, Vector2i(1, 1), g)
 	var fired := []
-	var entries := [{"text": "MOVE", "enabled": true, "cb": func() -> void: fired.append("move"), "kind": "move", "ability": null, "count": 0}]
+	var add := func(text: String, kind: String, a: Ability = null) -> Dictionary:
+		return {"text": text, "enabled": true, "cb": func() -> void: fired.append(a.id if a else kind), "kind": kind, "ability": a, "count": 0}
+	var entries := [add.call("MOVE", "move")]
 	for a in mage.abilities:
-		entries.append({"text": Txt.t(a.name_key), "enabled": true, "cb": func() -> void: fired.append(a.id), "kind": "skill", "ability": a, "count": 0})
-	entries.append({"text": "WAIT", "enabled": true, "cb": func() -> void: fired.append("wait"), "kind": "wait", "ability": null, "count": 0})
+		entries.append(add.call(Txt.t(a.name_key), "skill", a))
+	entries.append(add.call("GUARD", "guard"))
+	entries.append(add.call("WAIT", "wait"))
 	hud.show_for(mage, entries, Vector2.ZERO, Rect2(0, 0, 1280, 640))
-	eq(hud.hand_entries().map(func(e: Dictionary) -> String: return String(e.kind)), ["move", "skill", "group", "wait"],
-		"MOVE, ATTACK, TRICKS, WAIT (no items on this one)")
-	eq(hud._slots.size(), 4)
-	ok(hud.press_key(1), "key 2: ATTACK")
+	var bar: Array = hud.hand_entries()
+	eq(bar.map(func(e: Dictionary) -> String: return String(e.kind)), ["move", "skill", "group", "wait"], "MOVE, HIT, TRICKS, WAIT (no belt here)")
+	eq((bar[1].pop as Array).map(func(e: Dictionary) -> String: return String(e.kind)), ["guard"], "GUARD tucked under HIT")
+	ok(hud.press_key(1), "key 2: HIT")
 	eq(fired, ["strike"])
-	hud.press_key(2)  # TRICKS
-	eq(hud.second_entries().size(), mage.abilities.size() - 1, "the skills in a second row")
-	eq(hud._slots.size(), 4 + mage.abilities.size() - 1, "over the first")
-	hud.press_key(0)
-	eq(fired, ["strike", mage.abilities[1].id], "key 1 now presses the second row's first")
-	hud._open("skills")
-	eq(hud.second_entries().size(), 0, "TRICKS again shuts it")
+	hud.press_key(2)  # TRICKS: pops its column and goes up into it
+	eq(hud.second_entries().size(), mage.abilities.size() - 1, "the spells pop up over TRICKS")
+	ok(hud._pop_slots[0].has_focus(), "focus goes up to the first, nearest the bar")
+	eq(hud._pop_slots[0].entry.ability, mage.abilities[1])
+	hud._pop_slots[0].entry.cb.call()
+	eq(fired, ["strike", mage.abilities[1].id])
 	hud.queue_free()
 
 

@@ -336,7 +336,7 @@ func run(s: Node, f: int, step: String) -> bool:
 		_ when step.begins_with("dock"):
 			# The fight's dock above the Lodestone diamond ([USER] 2026-10-30) in a real fight, frame and party on
 			# screen: the hero with the book's spells and the dog along (in memory only).
-			# dock:<second row: main|skills|items>:<box of the top row to point at, -1 none>
+			# dock:<column to pop: main (none)|hit|tricks|belt>:<box to point at, -1 none>
 			var parts := step.split(":")
 			if f == 3:
 				var game: Node = s.get_node("/root/Game")
@@ -344,6 +344,9 @@ func run(s: Node, f: int, step: String) -> bool:
 				game.take_weapon("book")
 				game.meta.flags.append("met_dog")
 				game.refresh_party()
+				var belt: InventoryGrid = game.run.members[0].belt  # something on the hero's belt for BELT's column
+				for it in [RunState.MED_ITEM, RunState.FOOD_ITEM]:
+					belt.put(it, RunState.shape_of(it), 2, RunState.stack_of(it))
 				s._rebuild_party()
 			if f == 5:
 				s.grid.set_terrain(Vector2i(26, 18), CombatGrid.T.ROAD)
@@ -354,10 +357,15 @@ func run(s: Node, f: int, step: String) -> bool:
 				s._begin_battle()
 			if f == 25:
 				s.battle._select(s.party[0])
-			if f == 28 and parts.size() > 1 and parts[1] != "main":
-				s.battle._hud._open(parts[1])
-			if f == 31 and parts.size() > 2 and int(parts[2]) >= 0 and int(parts[2]) < s.battle._hud._slots.size():
-				s.battle._hud._slots[int(parts[2])].grab_focus()
+			var hud: ActionHud = s.battle._hud if f >= 28 and s != null and s.battle != null else null
+			if f == 28 and hud != null and parts.size() > 1 and parts[1] != "main":  # pop a bar box's column: hit, tricks or belt
+				var which := {"hit": 1, "tricks": 2, "belt": 3}.get(parts[1], -1) as int
+				if which >= 0 and which < hud._bar_slots.size():
+					hud._bar_slots[which].grab_focus()
+			if f == 31 and hud != null and parts.size() > 2 and int(parts[2]) >= 0:  # point at a box: in the column if one is up, else the bar
+				var row: Array = hud._pop_slots if not hud._pop_slots.is_empty() else hud._bar_slots
+				if int(parts[2]) < row.size():
+					row[int(parts[2])].grab_focus()
 			return f == 150  # past the hover delay at any frame rate
 		"deploy", "fight":
 			if f == 5:

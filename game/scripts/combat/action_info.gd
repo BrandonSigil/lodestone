@@ -79,10 +79,17 @@ static func recharge(u: CombatUnit, a: Ability) -> float:
 	return 1.0 - float(u.res_tick) / float(u.res_every)
 
 
-## An action's icon: its own id, else for an item the pack item it spends (the sheet names items by item id).
+## Approved spare icons standing in for actions the sheet hasn't painted yet (art runner, 2026-10-30).
+const SPARES := {"ward": "shield", "shadow_swap": "teleport", "carry": "dash", "command": "rally", "overwatch": "focus"}
+
+
+## An action's icon: its own id, else for an item the pack item it spends (the sheet names items by item id), else a
+## spare that fits.
 static func icon_for(a: Ability) -> Texture2D:
 	var t := icon(a.id)
-	return t if t != null or not a.is_item() else icon(a.spends)
+	if t == null and a.is_item():
+		t = icon(a.spends)
+	return t if t != null else icon(String(SPARES.get(a.id, "")))
 
 
 static var _icons := {}  ## id -> Texture2D or null, loaded once (loading mid-draw gives a blank texture)
