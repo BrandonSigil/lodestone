@@ -22,14 +22,15 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var best_cell := u.cell
 	var best_ability: Ability = null
 	var best_aim := u.cell
-	var leave := {}  # cell -> what walking away from guards costs there ([USER] c13)
+	var leave := {}  # cell -> what walking away from guards, or ending on a boss's marked tiles, costs there ([USER] c13)
+	var marked := CombatRules.marks(units)
 	for cell: Vector2i in cost:
-		leave[cell] = leave_cost(grid, u, units, cell)
+		leave[cell] = leave_cost(grid, u, units, cell) + mark_cost(grid, u, units, cell, marked)
 	var actions: Array[Ability] = u.abilities.duplicate()
 	actions.append_array(CombatRules.extra_actions(u))  # AID or a knock-out too
 	for cell: Vector2i in cost:
 		for a in actions:
-			if not CombatRules.usable(u, a):
+			if not CombatRules.usable(u, a) or a.boss_move():
 				continue
 			for aim in _aims(grid, u, a, units, cell):
 				var s := score(grid, u, a, aim, units, cell)
@@ -60,10 +61,11 @@ static func retreat(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary
 	var cost: Dictionary = reach.cost
 	var zone := hit_reach(grid, u, units, true) if CombatRules.num("run_melee_only") > 0.0 \
 		else CombatRules.danger_zone(grid, units, 1 - u.team)
+	var marks := CombatRules.marks(units)
 	var best := u.cell
 	if zone.has(u.cell):
 		for cell: Vector2i in cost:
-			if zone.has(cell) or leave_cost(grid, u, units, cell) > 0.0:
+			if zone.has(cell) or leave_cost(grid, u, units, cell) > 0.0 or marks.has(cell):
 				continue
 			if best == u.cell or int(cost[cell]) < int(cost[best]):
 				best = cell
@@ -155,6 +157,40 @@ static func leave_cost(grid: CombatGrid, u: CombatUnit, units: Array, cell: Vect
 	if total <= 0.0:
 		return 0.0
 	return total * COUNTER_FEAR * 2.0 + (KILL_BONUS * 2.0 if worst >= u.hp else 0.0)
+
+
+## What ending the move on `cell` costs when a big move is marked on it: the blow it would take, as ending in
+## reach of a guard costs, so the sim's pieces read the warning as a player would (game designer 2026-10-30).
+static func mark_cost(grid: CombatGrid, u: CombatUnit, units: Array, cell: Vector2i, marked: Dictionary) -> float:
+	var total := 0.0
+	var worst := 0
+	for m: Dictionary in marked.get(cell, []):
+		var src: CombatUnit = m.src
+		if src == u:
+			continue
+		total += CombatRules.expected_damage(grid, src, u, src.cell, m.ability, units)
+		worst += CombatRules.damage_range(grid, src, u, src.cell, m.ability, units).y * int(CombatRules.num("crit_mult"))
+	if total <= 0.0:
+		return 0.0
+	return total * COUNTER_FEAR * 2.0 + (KILL_BONUS * 2.0 if worst >= u.hp else 0.0)
+
+
+## Where boss `u` marks its big move `a`: the cell in reach whose tiles catch the most standing foes right now
+## (its own called pieces count against it). NONE_CELL when it would catch nobody.
+static func mark_aim(grid: CombatGrid, u: CombatUnit, a: Ability, units: Array) -> Vector2i:
+	var best := CombatGrid.NONE_CELL
+	var best_s := 0.0
+	for c in CombatRules.reach_cells(grid, u, a, u.cell):
+		var s := 0.0
+		for t in CombatRules.area(grid, a, c):
+			var o := CombatRules.unit_at(units, t)
+			if o == null or o == u or not o.alive():
+				continue
+			s += 10.0 if o.team != u.team else -4.0
+		if s > best_s:
+			best_s = s
+			best = c
+	return best if best_s >= 10.0 else CombatGrid.NONE_CELL
 
 
 ## Average damage of one blow from a forecast entry: the middle of the range, crits counted.

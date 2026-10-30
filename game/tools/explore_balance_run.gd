@@ -129,12 +129,4 @@ func _near(grid: CombatGrid, c: Vector2i, blocked: Dictionary) -> Vector2i:
 
 
 func _play(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, first: int) -> Dictionary:
-	var rounds := 0
-	while rounds < CombatSim.MAX_ROUNDS:
-		rounds += 1
-		for team in [first, 1 - first]:
-			CombatRules.begin_phase(units, team)
-			if CombatSim.play_phase(rng, grid, units, team):
-				return {"winner": team, "rounds": rounds}
-			CombatRules.end_phase(units, team)
-	return {"winner": -1, "rounds": rounds}
+	return CombatSim.fight(rng, grid, units, {}, first)

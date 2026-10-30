@@ -45,23 +45,35 @@ static func play_phase(rng: RandomNumberGenerator, grid: CombatGrid, units: Arra
 	return false
 
 
+## One whole phase of `team`: its start (statuses tick, a boss's marked move lands, his pieces come), every
+## piece's turn, a boss's new mark, its end. Returns the winning team once a side is gone, else -1.
+static func run_phase(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, team: int) -> int:
+	CombatRules.begin_phase(units, team)
+	CombatRules.boss_start(rng, grid, units, team)
+	for side in [team, 1 - team]:  # poison or a big move can finish a side before anyone moves
+		if not CombatRules.team_alive(units, side):
+			return 1 - side
+	for u: CombatUnit in units:
+		if u.team == team and u.alive():
+			CombatRules.skittish_check(rng, u, units)
+	if play_phase(rng, grid, units, team):
+		return team
+	CombatRules.boss_end(grid, units, team)
+	CombatRules.end_phase(units, team)
+	return -1
+
+
 ## Fights until one side falls. Mutates the units. Returns {"winner": 0, 1 or -1 for a stall, "rounds": int}.
-## supplies: counts that pack belts for pieces without one (CombatUnit.pack_belts).
-static func fight(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, supplies: Dictionary = {}) -> Dictionary:
+## supplies: counts that pack belts for pieces without one (CombatUnit.pack_belts). first: the side that moves first.
+static func fight(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, supplies: Dictionary = {}, first := 0) -> Dictionary:
 	CombatUnit.pack_belts(units, supplies)
 	for u: CombatUnit in units:
 		u.reset_resource()
 	var rounds := 0
 	while rounds < MAX_ROUNDS:
 		rounds += 1
-		for team in [0, 1]:
-			CombatRules.begin_phase(units, team)
-			if not CombatRules.team_alive(units, team):  # poison can finish a side at the start of its phase
-				return {"winner": 1 - team, "rounds": rounds}
-			for u: CombatUnit in units:
-				if u.team == team and u.alive():
-					CombatRules.skittish_check(rng, u, units)
-			if play_phase(rng, grid, units, team):
-				return {"winner": team, "rounds": rounds}
-			CombatRules.end_phase(units, team)
+		for team in [first, 1 - first]:
+			var w := run_phase(rng, grid, units, team)
+			if w >= 0:
+				return {"winner": w, "rounds": rounds}
 	return {"winner": -1, "rounds": rounds}

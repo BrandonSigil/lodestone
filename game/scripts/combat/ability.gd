@@ -19,6 +19,14 @@ var status_turns := 0
 var bleed := 0  ## phases of BLEED a hit adds (a skill rank's effect, data/skill_ranks.csv)
 var magic := false  ## ignores cover
 var element := ""  ## fire, moon, frost or empty. Some traits care (flammable takes more from fire).
+## A boss's big moves ([USER] 2026-10-30 design-boss-warning, design-boss-shape). windup > 0: marked on the user's
+## phase besides its action and landing that many of its phases later. summon: a class id it calls `count` of.
+var windup := 0
+var cooldown := 0  ## own phases from one use to the next
+var first := 1  ## the user's own phase it can first be used on
+var summon := ""
+var count := 0
+var limit := 0  ## at most this many called pieces standing at once
 ## Items only: the pack item it spends from the user's belt (data/items.csv id) and how many.
 var spends := ""
 var cost := 0
@@ -50,6 +58,12 @@ static func from_row(row: Dictionary) -> Ability:
 	a.status_turns = int(row.status_turns)
 	a.magic = row.magic == "1"
 	a.element = row.get("element", "")
+	a.windup = int(row.get("windup", "0"))
+	a.cooldown = int(row.get("cooldown", "0"))
+	a.first = maxi(1, int(row.get("first", "1")))
+	a.summon = row.get("summon", "")
+	a.count = int(row.get("count", "0"))
+	a.limit = int(row.get("limit", "0"))
 	return a
 
 
@@ -75,6 +89,11 @@ func uses_weapon_range() -> bool:
 
 func is_item() -> bool:
 	return spends != ""
+
+
+## Played by the boss rules at a phase's edges (CombatRules.boss_start, boss_end), never picked as the action.
+func boss_move() -> bool:
+	return windup > 0 or kind == "summon"
 
 
 func hostile() -> bool:

@@ -111,6 +111,7 @@ func _ready() -> void:
 			u.place(e.cell, grid.height_at(e.cell))
 			u.leader = bool(e.get("leader", false))  # FightGoals: beat this one to win a "leader" fight
 			u.talk_to = g.has("talk") and int(g.talk.get("unit", -1)) == g.units.find(e)
+			u.summon_cells = g.get("summon", [] as Array[Vector2i])
 			units.append(u)
 		groups.append({"def": g, "units": units, "state": "idle"})
 	var memory: Dictionary = Game.explore_memory.get(map.map_name, {})
@@ -1233,6 +1234,9 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	for u: CombatUnit in party:
 		u.member.hp = maxi(1, u.hp)  # downed members get back up after a win
 	var xp := LevelRules.fight_xp(downed, boss, Db.levels, standing if escaped else 0)
+	# a boss's called pieces the party beat (not the ones that crumbled with him): a little XP each
+	xp += battle.units.filter(func(u: CombatUnit) -> bool: return u.summoner != null and not u.alive() and not u.crumbled).size() \
+		* int(Db.levels.get("xp_minion", 0))
 	if elite:
 		xp = xp * int(CombatRules.num("elite_xp_pct")) / 100  # better rewards; loot waits on the one-more-run theme
 	var lines := Game.award_xp(xp)

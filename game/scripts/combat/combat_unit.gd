@@ -13,7 +13,14 @@ var hp := 1:
 	set(v):
 		if v <= 0 and hp > 0 and team == 0:
 			bleed = int(CombatRules.num("bleed_turns"))
+		var fell := v <= 0 and hp > 0
 		hp = v
+		if fell:
+			mark = {}
+			for m: CombatUnit in minions:  # the pieces it called crumble with it
+				if m.hp > 0:
+					m.crumbled = true
+					m.hp = 0
 var bleed := 0  ## own phases left to be helped up while downed; 0 = standing, or out for the fight
 var tint := Color.GRAY
 var deficiency: StringName = &""
@@ -57,6 +64,14 @@ var rage_bonus := 0  ## extra rage per hit dealt or taken (a blessing)
 var crit_heal := 0  ## HP a crit heals the striker (a blessing)
 var start_res := 0  ## mana, rage or charges added (or taken) at a fight's start (blessings and setbacks)
 var statuses := {}  ## status id -> turns left (see CombatRules.STATUS_*)
+# A boss's big moves (CombatRules.boss_start, boss_end).
+var phase_no := 0  ## own phases begun this fight
+var ready_at := {}  ## boss move id -> the own phase it can next be used on
+var mark := {}  ## a big move marked and waiting: {"ability", "cells": Array[Vector2i], "left": own phases to go}
+var summon_cells: Array[Vector2i] = []  ## where its called pieces stand, if its map marks any; else near it
+var minions: Array = []  ## the pieces it called, standing or not
+var summoner: CombatUnit = null  ## who called this piece
+var crumbled := false  ## fell because its summoner did, not to the party
 
 # View state, animated by CombatBoard.
 var vis := Vector2.ZERO  ## fractional grid position

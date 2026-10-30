@@ -901,3 +901,109 @@ func test_a_piece_helped_up_mid_phase_still_acts() -> void:
 	CombatSim.play_phase(RandomNumberGenerator.new(), g, units, 0)
 	ok(hero.alive(), "the dog helped him up")
 	ok(hero.done(), "and he still took his turn")
+
+
+## Runs `team`'s phase edges only (no turns): begin, the boss's start step, then his end step. The events.
+func _boss_phase(g: CombatGrid, units: Array, team: int) -> Array:
+	CombatRules.begin_phase(units, team)
+	var ev := CombatRules.boss_start(RandomNumberGenerator.new(), g, units, team)
+	ev.append_array(CombatRules.boss_end(g, units, team))
+	CombatRules.end_phase(units, team)
+	return ev
+
+
+## The Lich's big move (game designer 2026-10-30, [USER] design-boss-warning): marked on his 2nd phase on the
+## tiles that catch the party, it lands at the start of his next one on everyone there, his own pieces too,
+## then waits 3 of his phases.
+func test_lich_marks_his_big_move_and_it_lands_next_phase() -> void:
+	var g := CombatGrid.flat(12, 5)
+	var lich := _unit("lich", 1, Vector2i(1, 2), g)
+	var knight := _unit("knight", 0, Vector2i(4, 2), g)
+	var units := [lich, knight]
+	_boss_phase(g, units, 1)
+	ok(CombatRules.marks(units).is_empty(), "nothing marked on his 1st phase")
+	var ev := _boss_phase(g, units, 1)
+	eq(ev.filter(func(e: Dictionary) -> bool: return e.type == "mark").size(), 1, "his 2nd phase marks it")
+	var marked := CombatRules.marks(units)
+	ok(marked.has(knight.cell), "on the knight")
+	eq(marked.size(), 5, "a 5-cell plus")
+	ok(not CombatRules.danger_zone(g, units, 1).has(Vector2i(9, 2)), "the big move stays out of the danger zone")
+	var bone := _unit("lich_minion", 1, Vector2i(0, 0), g)
+	for c: Vector2i in marked:
+		if c != knight.cell and CombatRules.unit_at(units, c) == null:
+			bone.place(c, 0)  # one of his own pieces wanders onto it
+			break
+	units.append(bone)
+	var hp := knight.hp
+	ev = _boss_phase(g, units, 1)
+	ok(knight.hp < hp, "it lands on the knight at the start of his next phase")
+	ok(bone.hp < bone.max_hp, "and on his own piece standing there")
+	ok(ev.any(func(e: Dictionary) -> bool: return e.type == "land"), "a land event plays")
+	ok(not ev.any(func(e: Dictionary) -> bool: return e.type == "mark"), "no new mark on that phase: cooldown")
+	_boss_phase(g, units, 1)
+	ok(CombatRules.marks(units).is_empty(), "nor the next")
+	ev = _boss_phase(g, units, 1)
+	ok(ev.any(func(e: Dictionary) -> bool: return e.type == "mark"), "3 of his phases after the first mark, the next")
+
+
+## The party's AI reads the warning: it doesn't end its move on a marked tile when it has somewhere else to go.
+func test_the_party_ai_steps_off_marked_tiles() -> void:
+	var g := CombatGrid.flat(9, 5)
+	var lich := _unit("lich", 1, Vector2i(0, 0), g)
+	var knight := _unit("knight", 0, Vector2i(5, 2), g)
+	var units := [lich, knight]
+	lich.mark = {"ability": Db.ability("lich_doom"), "cells": CombatRules.area(g, Db.ability("lich_doom"), knight.cell), "left": 1}
+	CombatRules.begin_phase(units, 0)
+	var p := EnemyAi.plan(g, knight, units)
+	ok(not CombatRules.marks(units).has(p.move), "the knight ends its move off the marked tiles")
+	CombatRules.begin_phase(units, 1)
+	p = EnemyAi.plan(g, lich, units)
+	ok(p.ability == null or not p.ability.boss_move(), "the big moves are never his plain action")
+
+
+## The Lich's minions (game designer 2026-10-30): 2 every 3rd of his phases from his 3rd, within 2 of him,
+## at most 4 standing; they wait a phase before acting and crumble when he falls.
+func test_lich_calls_minions_and_they_crumble_with_him() -> void:
+	var g := CombatGrid.flat(9, 7)
+	var lich := _unit("lich", 1, Vector2i(4, 3), g)
+	lich.abilities.append(Db.ability("raise_dead"))  # off his class until the game designer's call (2026-10-30)
+	var knight := _unit("knight", 0, Vector2i(8, 6), g)
+	var units := [lich, knight]
+	_boss_phase(g, units, 1)
+	_boss_phase(g, units, 1)
+	eq(lich.minions.size(), 0, "none before his 3rd phase")
+	CombatRules.begin_phase(units, 1)
+	var ev := CombatRules.boss_start(RandomNumberGenerator.new(), g, units, 1)
+	eq(ev.filter(func(e: Dictionary) -> bool: return e.type == "summon").size(), 2, "2 on his 3rd phase")
+	for m: CombatUnit in lich.minions:
+		ok(units.has(m) and m.team == 1, "on the board, on his side")
+		ok(CombatRules.dist(m.cell, lich.cell) <= 2, "within 2 of him")
+		ok(m.done(), "acting from their next phase")
+	CombatRules.end_phase(units, 1)
+	for i in 3:
+		_boss_phase(g, units, 1)
+	eq(lich.minions.size(), 4, "2 more on his 6th")
+	for i in 3:
+		_boss_phase(g, units, 1)
+	eq(lich.minions.size(), 4, "never more than 4 standing")
+	lich.minions[0].hp = 0
+	for i in 3:
+		_boss_phase(g, units, 1)
+	eq(lich.minions.filter(func(m: CombatUnit) -> bool: return m.alive()).size(), 4, "one fell, one more comes")
+	lich.hp = 0
+	ok(lich.minions.all(func(m: CombatUnit) -> bool: return not m.alive()), "they crumble when he falls")
+	ok(lich.minions[0].crumbled == false and lich.minions[1].crumbled, "the one the party beat isn't crumbled")
+
+
+## A map can mark where they come (a group's `summon` cells), for the map builder.
+func test_minions_come_on_the_maps_summon_cells() -> void:
+	var g := CombatGrid.flat(9, 7)
+	var lich := _unit("lich", 1, Vector2i(1, 1), g)
+	lich.abilities.append(Db.ability("raise_dead"))
+	var knight := _unit("knight", 0, Vector2i(8, 6), g)
+	var units := [lich, knight]
+	lich.summon_cells = [Vector2i(7, 0), Vector2i(8, 6), Vector2i(6, 0)] as Array[Vector2i]
+	lich.phase_no = 2
+	CombatRules.begin_phase(units, 1)
+	CombatRules.boss_start(RandomNumberGenerator.new(), g, units, 1)
+	eq(lich.minions.map(func(m: CombatUnit) -> Vector2i: return m.cell), [Vector2i(7, 0), Vector2i(6, 0)], "the empty summon cells, in order")

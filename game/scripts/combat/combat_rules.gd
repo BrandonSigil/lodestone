@@ -617,6 +617,8 @@ static func begin_phase(units: Array, team: int) -> Array:
 		u.move_origin = u.cell
 		u.move_spent = 0
 		u.left_guard = false
+		if u.alive():
+			u.phase_no += 1
 		for s: String in [STATUS_BLEED, STATUS_POISON]:  # through armor
 			if u.alive() and u.has_status(s):
 				var n := mini(int(num(s + "_damage")), u.hp)
@@ -657,6 +659,114 @@ static func end_phase(units: Array, team: int) -> void:
 			u.statuses[s] = int(u.statuses[s]) - 1
 			if u.statuses[s] <= 0:
 				u.statuses.erase(s)
+
+
+# --- a boss's big moves ([USER] 2026-10-30 design-boss-warning, design-boss-shape) ---------------------------
+
+## Is boss move `a` ready on u's current phase? From its `first` phase, then `cooldown` phases after each use.
+static func boss_ready(u: CombatUnit, a: Ability) -> bool:
+	return u.phase_no >= int(u.ready_at.get(a.id, a.first))
+
+
+## The start of `team`'s phase, after begin_phase: a marked big move whose wind-up is over lands on everyone on
+## its tiles (the caster's own side too), before anyone moves; then each caller due calls its pieces.
+static func boss_start(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, team: int) -> Array:
+	var events := []
+	for u: CombatUnit in units.duplicate():
+		if u.team != team or not u.alive():
+			continue
+		if not u.mark.is_empty():
+			u.mark.left = int(u.mark.left) - 1
+			if int(u.mark.left) <= 0:
+				var a: Ability = u.mark.ability
+				var cells: Array = u.mark.cells
+				u.mark = {}
+				events.append({"type": "land", "src": u, "ability": a, "cells": cells})
+				for c: Vector2i in cells:
+					var t := unit_at(units, c)
+					if t != null and t != u and t.alive():
+						for ev in _swing(rng, grid, u, a, t, units):
+							ev["big"] = true  # from the sky, not a lunge
+							events.append(ev)
+		for a in u.abilities:
+			if a.kind == "summon" and u.alive() and boss_ready(u, a):
+				u.ready_at[a.id] = u.phase_no + a.cooldown
+				events.append_array(summon(grid, u, a, units))
+	return events
+
+
+## The end of `team`'s phase, before end_phase: a caster with a big move ready and nothing marked marks it,
+## aimed where it would catch most of the other side right now. It lands `windup` of its phases later.
+static func boss_end(grid: CombatGrid, units: Array, team: int) -> Array:
+	var events := []
+	for u: CombatUnit in units:
+		if u.team != team or not u.alive() or not u.mark.is_empty():
+			continue
+		for a in u.abilities:
+			if a.windup <= 0 or not boss_ready(u, a):
+				continue
+			var aim := EnemyAi.mark_aim(grid, u, a, units)
+			if aim == CombatGrid.NONE_CELL:
+				continue  # nobody to catch: it tries again next phase
+			u.ready_at[a.id] = u.phase_no + a.cooldown
+			u.mark = {"ability": a, "cells": area(grid, a, aim), "left": a.windup}
+			events.append({"type": "mark", "src": u, "ability": a, "cells": u.mark.cells})
+			break
+	return events
+
+
+## u's summon `a`: `count` pieces of its class into empty cells (the map's summon cells for u if it has any,
+## else within 2 of u, nearest first), never more than `limit` standing. They act from their next phase.
+static func summon(grid: CombatGrid, u: CombatUnit, a: Ability, units: Array) -> Array:
+	var events := []
+	var cls := Db.class_def(StringName(a.summon))
+	if cls == null:
+		return events
+	var standing := u.minions.filter(func(m: CombatUnit) -> bool: return m.alive()).size()
+	var n := mini(a.count, a.limit - standing) if a.limit > 0 else a.count
+	var spots: Array[Vector2i] = []
+	if not u.summon_cells.is_empty():
+		spots = u.summon_cells.duplicate()
+	else:
+		var g := CombatGrid.ground(u.cell)
+		for y in range(g.y - 2, g.y + 3):
+			for x in range(g.x - 2, g.x + 3):
+				if not grid.in_bounds(Vector2i(x, y)):
+					continue
+				for c in grid.places_at(Vector2i(x, y)):
+					if c != u.cell and dist(c, u.cell) <= 2:
+						spots.append(c)
+		spots.sort_custom(func(p: Vector2i, q: Vector2i) -> bool:
+			return dist(p, u.cell) < dist(q, u.cell) if dist(p, u.cell) != dist(q, u.cell) else (p.y < q.y if p.y != q.y else p.x < q.x))
+	for c in spots:
+		if n <= 0:
+			break
+		if not grid.passable(c) or occupant(units, c) != null:
+			continue
+		var m := CombatUnit.enemy(cls)
+		m.team = u.team
+		m.place(c, grid.height_at(c))
+		m.moved = true
+		m.acted = true
+		m.summoner = u
+		u.minions.append(m)
+		units.append(m)
+		n -= 1
+		events.append({"type": "summon", "src": u, "unit": m})
+	return events
+
+
+## Every marked tile -> [{"src", "ability", "left"}], the boss warnings standing now.
+static func marks(units: Array) -> Dictionary:
+	var out := {}
+	for u: CombatUnit in units:
+		if not u.alive() or u.mark.is_empty():
+			continue
+		for c: Vector2i in u.mark.cells:
+			if not out.has(c):
+				out[c] = []
+			out[c].append({"src": u, "ability": u.mark.ability, "left": int(u.mark.left)})
+	return out
 
 
 # --- helping strikes ([USER] c12, c15, c19, combat build step 4) ------------------------------------------
@@ -763,7 +873,7 @@ static func danger_zone(grid: CombatGrid, units: Array, team: int) -> Dictionary
 		var froms: Array = CombatRules.reachable(grid, u, units).cost.keys()
 		var ranges: Array[Vector2i] = []
 		for a in u.abilities:
-			if a.hostile() and u.can_use(a):
+			if a.hostile() and u.can_use(a) and not a.boss_move():  # a big move shows as its marked tiles instead
 				var r := ability_range(u, a)
 				if a.target == "cell":
 					r.y += a.radius

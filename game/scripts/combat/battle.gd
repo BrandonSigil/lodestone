@@ -222,8 +222,11 @@ func _enemy_phase() -> void:
 	board.danger = {}
 	phase_changed.emit(1)
 	_show_phase_events(CombatRules.begin_phase(units, 1))
+	await _boss_events(CombatRules.boss_start(rng, grid, units, 1))  # a marked big move lands, his pieces come
+	if _check_end():
+		return
 	for e: CombatUnit in units:
-		if e.team != 1 or not e.alive() or state == S.OVER:
+		if e.team != 1 or not e.alive() or e.done() or state == S.OVER:  # done: called this phase, acts next
 			continue
 		if e.has_status(CombatRules.STATUS_SLEEP):
 			board.float_text(e.cell, Txt.t("TAG_SLEEP"), Color(0.75, 0.85, 1.0))
@@ -231,6 +234,7 @@ func _enemy_phase() -> void:
 		await _ai_turn(e)
 		if _check_end():
 			return
+	await _boss_events(CombatRules.boss_end(grid, units, 1))
 	CombatRules.end_phase(units, 1)
 	rounds_done += 1
 	if _check_end():
@@ -297,6 +301,17 @@ func _on_auto_toggled(on: bool) -> void:
 		_auto_player_phase()
 
 
+## A boss's big moves at a phase's edges (CombatRules.boss_start, boss_end): play them, then redraw the marks.
+func _boss_events(events: Array) -> void:
+	for ev in events:
+		await _play(ev)
+	for o: CombatUnit in units:
+		o.sync_view()
+	_refresh_danger()
+	if not events.is_empty():
+		changed.emit()
+
+
 ## Regrowth and the like at the start of a phase: no animation, just numbers.
 func _show_phase_events(events: Array) -> void:
 	for ev in events:
@@ -349,11 +364,14 @@ func _use(u: CombatUnit, a: Ability, aim: Vector2i) -> void:
 
 
 func _play(ev: Dictionary) -> void:
-	var t: CombatUnit = ev.unit
+	var t: CombatUnit = ev.get("unit")  # a big move's mark and landing have none
 	match ev.type:
 		"hit":
 			var src: CombatUnit = ev.src
-			await board.animate_attack(src, t, true)
+			if ev.get("big", false):
+				await get_tree().create_timer(0.15).timeout
+			else:
+				await board.animate_attack(src, t, true)
 			# every blow pops its number; a crit's is bigger ([USER] 2026-10-29)
 			if ev.crit:
 				board.float_text(t.cell, "-%d!" % ev.amount, Color(1, 0.55, 0.3), 26)
@@ -363,6 +381,10 @@ func _play(ev: Dictionary) -> void:
 			t.shown_hp = maxi(0, t.shown_hp - int(ev.amount))
 			if t.shown_hp <= 0:
 				log_line.emit(Txt.f("LOG_DOWN", Txt.t(t.name_key)))
+				for m: CombatUnit in t.minions:  # its called pieces fell with it
+					if m.crumbled and m.shown_hp > 0:
+						m.shown_hp = 0
+						board.float_text(m.cell, Txt.t("UI_CRUMBLE"), Color(0.9, 0.6, 1.0))
 		"heal":
 			t.shown_hp = mini(t.max_hp, t.shown_hp + int(ev.amount))
 			board.float_text(t.cell, "+%d" % ev.amount, Color(0.5, 1.0, 0.6))
@@ -400,6 +422,21 @@ func _play(ev: Dictionary) -> void:
 		"counter":
 			board.float_text(ev.src.cell, Txt.t("UI_COUNTER"), Color(1, 1, 1))
 			await get_tree().create_timer(0.2).timeout
+		"mark":
+			log_line.emit(Txt.f("LOG_MARK", [Txt.t(ev.src.name_key), Txt.t(ev.ability.name_key)]))
+			board.float_text(ev.src.cell, Txt.t(ev.ability.name_key), Color(0.9, 0.6, 1.0))
+			_refresh_danger()
+			await get_tree().create_timer(0.4).timeout
+		"land":
+			log_line.emit("%s: %s" % [Txt.t(ev.src.name_key), Txt.t(ev.ability.name_key)])
+			board.float_text(ev.src.cell, Txt.t(ev.ability.name_key), Color(0.9, 0.6, 1.0), 22)
+			board.marks = {}
+			await get_tree().create_timer(0.4).timeout
+		"summon":
+			log_line.emit(Txt.f("LOG_SUMMON", Txt.t(ev.src.name_key)))
+			t.sync_view()
+			board.float_text(t.cell, Txt.t("UI_SUMMONED"), Color(0.9, 0.6, 1.0))
+			await get_tree().create_timer(0.25).timeout
 
 
 func _check_end() -> bool:
@@ -417,6 +454,7 @@ func _finish(won: bool) -> void:
 	state = S.OVER
 	_deselect()
 	board.danger = {}
+	board.marks = {}
 	board.combat_stance = false
 	_banner.text = Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT")
 	changed.emit()
@@ -845,7 +883,10 @@ func _on_cell_hovered(c: Vector2i) -> void:
 		return
 	var u := CombatRules.unit_at(units, c)
 	_show_sight(u)
-	if u:
+	var marked: Array = CombatRules.marks(units).get(c, [])
+	if u and not marked.is_empty():
+		info.emit(unit_text(u) + "\n" + tile_text(c))
+	elif u:
 		info.emit(unit_text(u))
 	else:
 		info.emit(tile_text(c))
@@ -925,6 +966,12 @@ static func _range_text(e: Dictionary) -> String:
 
 func _refresh_danger() -> void:
 	board.danger = CombatRules.danger_zone(grid, units, 1) if show_danger and state != S.OVER else {}
+	var marked := {}  # a boss's big move shows all the time, not only with D ([USER] design-boss-warning)
+	if state != S.OVER:
+		var m := CombatRules.marks(units)
+		for c: Vector2i in m:
+			marked[c] = m[c].map(func(x: Dictionary) -> int: return int(x.left)).min()
+	board.marks = marked
 	# the zones guarding pieces hold, both sides ([USER] c13: draw the ring)
 	var ring := {}
 	if state != S.OVER:
@@ -953,4 +1000,7 @@ func unit_text(u: CombatUnit) -> String:
 
 func tile_text(c: Vector2i) -> String:
 	var t: int = grid.terrain_at(c)
+	var m: Array = CombatRules.marks(units).get(c, [])
+	if not m.is_empty():  # what lands here, and when
+		return Txt.f("UI_MARK", [Txt.t(m[0].ability.name_key), int(m[0].left)])
 	return "%s  H%d  COST %d  COVER %+d" % [CombatGrid.T.keys()[t], grid.height_at(c), grid.step_cost(c) if grid.passable(c) else 0, grid.cover(c)]

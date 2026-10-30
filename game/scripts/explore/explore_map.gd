@@ -62,13 +62,17 @@ static func from_dict(d: Dictionary) -> ExploreMap:
 		m.start.append(_cell(c))
 	for g: Dictionary in d.get("groups", []):
 		var units: Array[Dictionary] = []
+		var summon: Array[Vector2i] = []  # where a boss in the group calls its pieces (empty: next to it)
+		for c in g.get("summon", []):
+			summon.append(_cell(c))
 		for u: Dictionary in g.get("units", []):
 			units.append({"id": String(u.id), "cell": _cell(u.cell), "leader": bool(u.get("leader", false))})
 		# goals, exit and talk: how the fight is won (FightGoals); elite: a tougher, badged group ([USER] pc-15)
 		m.groups.append({"id": String(g.get("id", "group%d" % m.groups.size())), "event": String(g.get("event", "spot_people")),
 			"sight": int(g.get("sight", ExploreRules.ENEMY_SIGHT)), "loot": String(g.get("loot", "")), "units": units,
 			"boss": bool(g.get("boss", false)), "end": bool(g.get("end", false)), "goals": String(g.get("goals", "")),
-			"exit": Array(g.get("exit", [])), "talk": Dictionary(g.get("talk", {})), "elite": bool(g.get("elite", false))})
+			"exit": Array(g.get("exit", [])), "talk": Dictionary(g.get("talk", {})), "elite": bool(g.get("elite", false)),
+			"summon": summon})
 	for t: Dictionary in d.get("things", []):
 		m.things.append({"id": String(t.get("id", "thing%d" % m.things.size())), "kind": String(t.get("kind", "chest")),
 			"event": String(t.get("event", "")), "cell": _cell(t.cell), "floor": String(t.get("floor", "s")),

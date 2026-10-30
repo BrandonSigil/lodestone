@@ -60,6 +60,7 @@ const FG_HEIGHT := 0.16  ## the solid foreground band's height as a share of the
 const GLOW := Color(1.0, 0.97, 0.82)  ## a door's light when the party is close: warm white, to read on golden grass
 const GLOW_RINGS := 6
 const NAVY_DEPTH := 6000.0  ## how far down (board pixels) the navy under the front treeline reaches: past any view
+const MARK := Color(0.85, 0.3, 1.0)  ## a boss's marked tiles: violet, apart from the danger zone's orange
 const REACH := Color(0.35, 0.6, 1.0)  ## the player's colour: an action's range while it's hovered in the menu
 const FENCE_THIN := 0.12  ## a wall between two floors: this deep in cells ([USER] 2026-10-30: not thick)
 const BLINK_MIN := 2.5  ## a standing piece blinks after this many seconds at the soonest
@@ -86,6 +87,7 @@ var reach := {}  # cell -> 1 in reach of the hovered action, 2 a foe in reach (B
 var area := {}  # cell -> true, cells a skill would hit
 var guard_ring := {}  # cell -> true, next to a guarding piece: foes starting here must hit it or pay to leave
 var goal_cells := {}  # cell -> true, a fight's way out (FightGoals exit), ringed in green
+var marks := {}  # cell -> own phases left before a boss's marked big move lands there (always shown)
 var glow := {}  # cell -> true, a door the party is close to: a warm pool of light on its doorstep (ExploreOverlay)
 var show_coords := false
 var edit_void := false  ## map editor: show VOID cells as faint outlines and let them be picked
@@ -611,7 +613,7 @@ func _sync_slabs() -> void:
 	# What moves: bucket this frame's overlays and pieces by depth, then redraw those slabs.
 	_over_by_depth.clear()
 	_deck_over.clear()
-	for dict: Dictionary in [highlights, danger, reach, area, guard_ring, goal_cells, glow]:
+	for dict: Dictionary in [highlights, danger, reach, area, guard_ring, goal_cells, glow, marks]:
 		for c: Vector2i in dict:
 			_bucket(_deck_over if CombatGrid.on_deck(c) else _over_by_depth, c)
 	if hover != NONE and grid.in_bounds(hover):
@@ -2213,6 +2215,14 @@ func _draw_over(c: Vector2i) -> void:
 		var foe: bool = int(reach[c]) == 2
 		_ci.draw_colored_polygon(top, Color(REACH, 0.42 if foe else 0.22))
 		_ci.draw_polyline(ring, Color(REACH, 0.95 if foe else 0.7), 2.5 if foe else 1.5, true)
+	if marks.has(c):  # a boss's big move lands here ([USER] design-boss-warning): its own colour, the phases left
+		var pulse := 0.8 + 0.2 * sin(_time * 4.0)
+		_ci.draw_colored_polygon(top, Color(MARK, 0.32 * pulse))
+		_ci.draw_polyline(ring, Color(MARK, 0.95), 2.5, true)
+		var font := ThemeDB.fallback_font
+		var mid := (top[0] + top[2]) * 0.5
+		_ci.draw_string_outline(font, mid + Vector2(-20, 6), str(marks[c]), HORIZONTAL_ALIGNMENT_CENTER, 40, 16, 4, Color(0, 0, 0, 0.8))
+		_ci.draw_string(font, mid + Vector2(-20, 6), str(marks[c]), HORIZONTAL_ALIGNMENT_CENTER, 40, 16, Color(1, 0.9, 1))
 	if goal_cells.has(c):
 		_ci.draw_colored_polygon(top, Color(0.4, 0.95, 0.5, 0.18))
 		_ci.draw_polyline(ring, Color(0.45, 1.0, 0.55, 0.9), 2.0, true)
