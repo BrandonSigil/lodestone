@@ -214,11 +214,15 @@ func test_scale_standard_switch() -> void:
 			ok(Db.abilities.has(id), "ability %s" % id)
 	var off := CombatUnit.enemy(load("res://data/classes/wolf.tres"))
 	eq(off.move, 6, "off: the wolf walks 6")
+	var paused := Engine.has_meta(ScaleTest.PAUSE_META)
+	Engine.remove_meta(ScaleTest.PAUSE_META)
 	Db.combat["scale_standard"] = 1.0
 	var on := CombatUnit.enemy(load("res://data/classes/wolf.tres"), {"move": 1})
 	var archer := CombatUnit.enemy(load("res://data/classes/bandit_archer.tres"))
 	var mage := CombatUnit.from_def(Db.character(&"wizard"))
 	Db.combat["scale_standard"] = 0.0
+	if paused:
+		Engine.set_meta(ScaleTest.PAUSE_META, true)
 	eq(on.move, 10, "on: 9 for the wolf, and its gear's +1 kept")
 	eq(archer.range_max, 8, "on: the archer reaches 8")
 	var ball: Ability = mage.abilities.filter(func(a: Ability) -> bool: return a.id == "fireball")[0]

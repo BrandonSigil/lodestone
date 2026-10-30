@@ -32,6 +32,7 @@ func _process(_delta: float) -> bool:
 	if _done:
 		return false
 	_done = true
+	Engine.set_meta("no_scale_standard", true)  # the suites assume the old move and reach (ScaleTest.PAUSE_META)
 	var total := 0
 	var failed: Array[String] = []
 	for path in SUITES:

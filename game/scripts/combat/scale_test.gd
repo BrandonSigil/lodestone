@@ -39,6 +39,10 @@ static func apply(units: Array) -> void:
 # reach x1.25; a base move of 5 or more, or a reach of 4 or more, x1.5; melee reach stays 1). The switch is combat.csv
 # `scale_standard` (0 = off): flip it to 1 once the fight areas are resized, and every piece built after that has them.
 
+## The unit tests were written for the old numbers, so the runner sets this meta on the engine and `standard` does
+## nothing; the tests of the standard itself take it off for a moment.
+const PAUSE_META := "no_scale_standard"
+
 static var _standard: Dictionary = {}
 
 
@@ -52,7 +56,7 @@ static func standard_rows() -> Dictionary:
 ## Called when a piece has been built (class, spells and all): with the switch on, its move and reach are scale C's.
 ## Gear and levels that added to the class's numbers keep their addition; abilities become copies with the new reach.
 static func standard(u: CombatUnit) -> void:
-	if CombatRules.num("scale_standard") <= 0.0 or u.scaled or u.cls == null:
+	if CombatRules.num("scale_standard") <= 0.0 or u.scaled or u.cls == null or Engine.has_meta(PAUSE_META):
 		return
 	u.scaled = true
 	var rows := standard_rows()
