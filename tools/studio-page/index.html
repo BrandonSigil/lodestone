@@ -271,6 +271,13 @@ html.locked { overflow: hidden; }
 .chat-form { border-top: 1px solid var(--rule); padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 6px; }
 .chat-form .attach { margin: 0; }
 .chat-row { display: flex; gap: 8px; align-items: flex-end; }
+.chat-form .attach:not(:has(.att)) { display: none; }
+.chat-round { flex: none; width: 34px; height: 34px; margin-bottom: 3px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.chat-round svg { width: 18px; height: 18px; }
+.chat-plus { border: 1.5px solid var(--rule); background: var(--sheet); color: var(--muted); }
+.chat-plus:hover { border-color: var(--chat); color: var(--chat); }
+.chat-go { border: 0; background: var(--chat); color: var(--chat-ink); }
+.chat-go[disabled] { opacity: .5; cursor: default; }
 .chat-row textarea { flex: 1; resize: none; min-height: 40px; max-height: 140px; border: 1.5px solid var(--rule); border-radius: 8px; padding: 8px 10px; background: var(--sheet); }
 .chat-row textarea.dropping { border-color: var(--chat); }
 .chat-row textarea:focus-visible { outline-color: var(--chat); }
@@ -418,7 +425,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
   <div class="chat-typing" id="chat-typing" hidden></div>
   <form class="chat-form" id="chat-form">
     <div id="chat-att"></div>
-    <div class="chat-row"><textarea id="chat-in" rows="1" placeholder="Message Pip" aria-label="Message"></textarea><button class="btn primary" id="chat-send" type="submit">Send</button></div>
+    <div class="chat-row"><label class="chat-round chat-plus" id="chat-plus" aria-label="Add a picture" title="Add a picture" hidden><input type="file" accept="image/*" multiple hidden data-attach="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></label><textarea id="chat-in" rows="1" placeholder="Message Pip" aria-label="Message"></textarea><button class="chat-round chat-go" id="chat-send" type="submit" aria-label="Send" title="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div>
   </form>
 </section>
 
@@ -451,7 +458,7 @@ function shotsHtml(images) {
 /* ---------- pictures in answers and notes ---------- */
 function attachHtml(key) {
   const ims = S.drafts[key]?.images || [];
-  return `<div class="attach" id="att-${esc(key)}">${ims.map((im, i) => `<span class="att"><img src="${esc(im.url || im.local)}" alt="Attached picture" data-zoom="${esc(im.url || im.local)}" data-cap="Your picture">${im.url ? "" : `<em>Uploading…</em>`}<button type="button" data-act="unattach" data-key="${esc(key)}" data-i="${i}" aria-label="Remove picture">×</button></span>`).join("")}${S.assets ? `<label class="btn small attach-add">Add picture<input type="file" accept="image/*" multiple hidden data-attach="${esc(key)}"></label><small>or paste or drop one into the box</small>` : ""}</div>`;
+  return `<div class="attach" id="att-${esc(key)}">${ims.map((im, i) => `<span class="att"><img src="${esc(im.url || im.local)}" alt="Attached picture" data-zoom="${esc(im.url || im.local)}" data-cap="Your picture">${im.url ? "" : `<em>Uploading…</em>`}<button type="button" data-act="unattach" data-key="${esc(key)}" data-i="${i}" aria-label="Remove picture">×</button></span>`).join("")}${S.assets && key !== "chat" ? `<label class="btn small attach-add">Add picture<input type="file" accept="image/*" multiple hidden data-attach="${esc(key)}"></label><small>or paste or drop one into the box</small>` : ""}</div>`;
 }
 // While a role window is open its cards repeat ones on the desk behind it, so look inside the window first.
 function byId(x) { return (S.openRole ? $("rv") : document).querySelector("#" + CSS.escape(x)); }
@@ -1040,7 +1047,7 @@ async function checkWake() {
 }
 function toggleChat(open) {
   $("chat").hidden = !open; $("chat-fab").setAttribute("aria-expanded", String(open));
-  if (open) { S.chatJump = true; if (!$("att-chat")) $("chat-att").innerHTML = attachHtml("chat"); renderChat(); checkWake(); $("chat-in").focus(); }
+  if (open) { S.chatJump = true; $("chat-plus").hidden = !S.assets; if (!$("att-chat")) $("chat-att").innerHTML = attachHtml("chat"); renderChat(); checkWake(); $("chat-in").focus(); }
   else renderChat();
 }
 function wakePm(text, pics) {
