@@ -15,6 +15,7 @@ Paste a style block once into a Text node in a Picsart workflow (or keep it as a
 | `sheet-zones.txt` | Many zones (flat simple style) on one reference sheet (diorama plus 5 x 5 swatches each), to explore looks |
 | `sheet-tile-kit.txt` | One zone as a game-ready 5 x 5 kit (tops, sides, props) with no text; see `terrain-sheets.md` |
 | `sheet-character-anim.txt` | One facing of a character as a 5-row animation sheet (idle 4 + blink 1, walk 6, swing 6, cast 6, hurt 2 + down 2); attach `docs/art/characters/00-reference-sheet.png`, run it with `tools/art/char_sheet.py` (1K by default; `--sheet stance` for `sheet-character-stance.txt`), cut with `tools/art/anim_sheet_cut.py` or `--cut` |
+| `sheet-character-builds.txt` | The hero once per weapon build (sword, two daggers, bow, book) in one row, SE facing, for the smithy weapon rack sheets. Image 1 the key art, image 2 `art/picsart/out/anim-lead-se_v2.png`; run with `tools/art/picsart_sheet.py --aspect 3:2 --resolution 2K`, cut with `props_cut.py --grid 4x1` |
 | `sheet-prop-grid.txt` | 16 props on one 4 x 4 sheet for a setting (`[ZONE]`, `[LIST]`); used by `tools/art/picsart_village.py`, cut by `tools/art/village_cut.py` |
 | `sheet-character-concepts.txt` | 8 candidate characters on one 4 x 2 grid (three-quarter SE view, 1K, no reference) to choose a design before any sheets. Edit the eight `THIS RUN` lines per run. Check the grid with `tools/art/silhouette_check.py` |
 | `sheet-building.txt` | One whole building on a square footprint, roof on, door on the left front wall (`[ZONE]` = the building) |

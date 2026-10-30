@@ -1,0 +1,17 @@
+LODESTONE HERO, ONE POSE PER WEAPON BUILD (the smithy weapon rack character sheets; four figures on one picture so they match)
+
+Image 1 = the character key art (docs/art/characters/00-reference-sheet.png). Draw THIS character and nobody else: same messy brown hair, green hooded cloak with a round gold clasp, blue tunic, cream undershirt, brown belt and pouches, dark trousers, brown boots, a rolled pack on the back. Same chibi proportions (about 2.3 heads tall), same flat colours, same simple shading. Copy the drawing style of image 1; do not add detail.
+Image 2 = the approved animation sheet of the same hero (art/picsart/out/anim-lead-se_v2.png). Copy his face from it: the fringe a little shorter and parted so BOTH EYES SHOW, two simple dark oval eyes with a tiny light catch-light, set wide on the face. Copy its line art and its facing.
+
+FACING for every figure: SE, a three-quarter front view, each figure faces toward the LOWER RIGHT of the picture. We see the face, the front of the body and the right side. Seen from the high game camera of image 1 (2:1 dimetric, looking down about 30 degrees, no perspective).
+
+LAYOUT: aspect 3:2, plain flat cream paper (#eae8d6). FOUR figures in one row, evenly spaced left to right, each fully separate from its neighbours with wide clear empty cream between them and round them. Every figure is the same size and stands on the same invisible baseline, feet in the same place. Each figure is the same hero in a calm, ready standing pose for a character sheet portrait, holding a different weapon; only the weapon, how he holds it and what hangs on his back change:
+   1 SWORD: the sword of image 1 drawn and held ready in his right hand, point down and forward; the empty sheath on his back with the pack.
+   2 TWO DAGGERS: a short plain dagger held low in each hand, knees a little bent, light on his feet; no sword or sheath on his back, only the pack.
+   3 BOW: a simple curved wooden short bow held upright in his left hand, an arrow held loosely in the right; a small brown quiver of arrows on his back with the pack instead of the sword.
+   4 BOOK: a small worn brown leather book held open in his left hand, his right hand raised a little with a small round blue spark above it like the cast frames of image 2; no sword or sheath on his back, only the pack.
+
+LINE ART (essential, the house style): a soft, imperfect paint-marker outline round each whole figure, its big parts and the weapon, dark warm charcoal (#373335, not pure black), slightly wobbly and uneven in weight like a felt marker drawn by hand. Not a thin, even vector hairline.
+
+Rules: no text, no labels, no numbers, no borders, no grid lines, no floor, no tiles, no ground shadow, no grass, no scenery, no extra characters, no weapons lying around. Only the spark of figure 4 is an effect; nothing else glows. Keep each figure clean and simple.
+Avoid: perspective, different camera angles between figures, a different facing in any figure, armour, helmets, a costume change, extra detail, texture, eyes hidden under the hair, big white eyes, thin even hairline outlines, pure black outlines, 3d render, photo, motion blur, speed lines, text.

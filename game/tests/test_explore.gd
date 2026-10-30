@@ -405,6 +405,11 @@ func test_only_full_height_props_see_through() -> void:
 	ok(CombatBoard.see_through({"sprite": "prop_well", "tall": 1.8}), "a roofed well taller than a piece")
 	ok(not CombatBoard.see_through({"sprite": "prop_well", "tall": 0.8}), "a low well")
 	ok(not CombatBoard.see_through({"sprite": "prop_stall", "tall": 0.9 - 0.01}), "a stall no taller than a piece")
+	for low in ["prop_bench", "prop_table", "prop_stool", "prop_barrel", "prop_fence", "prop_board", "prop_lamp", "prop_planter"]:
+		ok(not CombatBoard.see_through({"sprite": low, "tall": 1.5}), low + " stays solid whatever its height")
+	ok(CombatBoard.see_through({"sprite": "prop_well", "tall": 1.8}), "a roofed well taller than a piece")
+	ok(not CombatBoard.see_through({"sprite": "prop_well", "tall": 0.8}), "a low well")
+	ok(not CombatBoard.see_through({"sprite": "prop_stall", "tall": 0.9 - 0.01}), "a stall no taller than a piece")
 
 
 ## Brandon's bug (2026-10-30, note bug-f-key-no-interact): a "!" with its F hint by a wall, and F did nothing.

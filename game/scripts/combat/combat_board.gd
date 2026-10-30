@@ -2968,8 +2968,8 @@ func _find_cover() -> void:
 
 
 ## Does this prop open the see-through window round a piece behind it? Only full-height things do ([USER]
-## 2026-10-30: rocks, bushes, carts and crates stay solid): buildings, arches, what the catalog marks `see`
-## (trees, walls, pillars, stalls...), and a prop the catalog doesn't list when it's taller than a piece.
+## 2026-10-30: rocks, bushes, carts, crates and benches stay solid): buildings, arches, and what's taller than
+## a piece and either marked `see` in the catalog (trees, walls, pillars, a roofed well or stall) or not listed.
 static func see_through(p: Dictionary) -> bool:
 	if float(p.tall) <= 0.0 or p.get("arch", false):
 		return true
@@ -2980,7 +2980,7 @@ static func see_through(p: Dictionary) -> bool:
 				_see[full.substr(full.rfind("/") + 1)] = row.get("see", "") == "1"
 	var stem := String(p.sprite)
 	stem = stem.substr(stem.rfind("/") + 1)
-	return bool(_see[stem]) if _see.has(stem) else float(p.tall) >= WINDOW_TALL
+	return float(p.tall) >= WINDOW_TALL and bool(_see.get(stem, true))
 
 
 ## A deck draws after the lane's pieces at its depth, so it (and what stands on it) can hide a piece under or
