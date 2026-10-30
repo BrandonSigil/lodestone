@@ -97,6 +97,7 @@ func _on_finished(won: bool) -> void:
 	for u: CombatUnit in battle.units:
 		if u.team == 0:
 			u.member.hp = u.hp
+			Game.store_res(u)
 	Game.fight_done()  # one fight less on a camp meal's buff
 	if won:
 		var fx := TrailRules.apply_effects(Game.run, loot)

@@ -105,6 +105,8 @@ func _advance_to(t1: float) -> void:
 	for i in TravelRules.meals_between(float(tr.t) + rest, t1 + rest):
 		TravelRules.eat(Game.run)
 		_refresh_hud()
+	if Game.trickle(maxf(0.0, t1 - float(tr.t)), "trickle_seconds"):
+		_refresh_hud()
 	tr.t = t1
 	if t1 >= stop - 0.001:
 		if stop >= seconds:
@@ -253,6 +255,28 @@ func make_camp() -> void:
 			_close_dialog()
 			_side())
 		box.add_child(b)
+	var cost := int(Db.levels.get("camp_food", 5))  # a rest: all mana and charges, half HP, for a ration
+	var rest_btn := Button.new()
+	rest_btn.text = Txt.f("UI_CAMP_REST", cost)
+	rest_btn.disabled = Game.run.food < cost
+	rest_btn.pressed.connect(func() -> void:
+		if Game.camp_rest():
+			_say(Txt.t("UI_CAMP_RESTED"))
+		_close_dialog()
+		_refresh_hud()
+		_side())
+	box.add_child(rest_btn)
+	if Game.run.item_count("tonic") > 0:
+		var tonic := Button.new()
+		tonic.text = Txt.t("UI_CAMP_TONIC")
+		tonic.pressed.connect(func() -> void:
+			if Game.tonic_effect():
+				Game.run.add_item("tonic", -1)
+				_say(Txt.t("UI_CAMP_TONIC_DONE"))
+			_close_dialog()
+			_refresh_hud()
+			_side())
+		box.add_child(tonic)
 	var go := Button.new()
 	go.text = Txt.t("UI_CONTINUE")
 	go.pressed.connect(func() -> void:

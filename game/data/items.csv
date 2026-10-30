@@ -19,3 +19,4 @@ meal_stew,MEAL_STEW,meal,##,0,0,0,0,1
 meal_roast,MEAL_ROAST,meal,##,0,0,0,0,1
 meal_feast,MEAL_FEAST,meal,##/##,0,0,0,0,1
 rod,ITEM_ROD,gear,###,6,0,0,1,1
+tonic,ITEM_TONIC,tonic,#,5,0,0,1,3

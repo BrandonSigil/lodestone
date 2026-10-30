@@ -460,5 +460,7 @@ static func party_entries_from_run(run: RunState) -> Array:
 	var out := []
 	for m in run.members:
 		var d: CharacterDef = m.def
-		out.append({"name": Txt.t(d.name_key), "figure": d.id, "hp": m.hp, "max_hp": run.max_hp(m), "tint": d.tint, "note": ""})
+		var r := Game.member_res(m)  # the mana or charges carried (the overworld and the trail show them too)
+		out.append({"name": Txt.t(d.name_key), "figure": d.id, "hp": m.hp, "max_hp": run.max_hp(m), "tint": d.tint, "note": "",
+			"res_kind": r.kind, "res": r.res, "res_max": r.res_max})
 	return out

@@ -644,6 +644,8 @@ func _after_step() -> bool:
 					board.float_text(u.cell, Txt.t("UI_AMBUSH"), Color(1.0, 0.5, 0.4), 22)
 	var spotted := check_groups()
 	_refresh_units()
+	if Game.trickle(1.0, "trickle_steps"):
+		_refresh_hud()
 	return spotted
 
 
@@ -1245,6 +1247,7 @@ func _on_fight_changed() -> void:
 func _on_fight_over(won: bool, foes: Array) -> void:
 	for u: CombatUnit in party:
 		u.member.hp = u.hp
+		Game.store_res(u)  # mana and charges carry to the next fight
 	Game.fight_done()  # one fight less on a camp meal's buff
 	for u: CombatUnit in battle.units:  # one fight with a boss, any end, and the party knows him
 		if u.boss:
@@ -1324,7 +1327,6 @@ func _end_fight() -> void:
 		u.acted = false
 		u.spooked = false
 		u.statuses.clear()
-		u.reset_resource()
 	# The others fall back in with the leader, who walks on alone.
 	var lead := leader()
 	for u: CombatUnit in party:
@@ -1552,7 +1554,7 @@ func _refresh_hud() -> void:
 	var entries := []
 	for u: CombatUnit in party:
 		entries.append({"name": Txt.t(u.name_key), "id": _member_id(u), "figure": u.figure, "hp": u.hp, "max_hp": u.max_hp, "tint": u.tint,
-			"note": Txt.t("TAG_SPOOKED") if u.spooked else "", "res_kind": u.res_kind if battle != null else "",
+			"note": Txt.t("TAG_SPOOKED") if u.spooked else "", "res_kind": u.res_kind,
 			"res": u.res, "res_max": u.res_max})
 	hud.set_party(entries)
 	hud.set_pack(Game.run.pack)

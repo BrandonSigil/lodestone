@@ -12,3 +12,9 @@ party_max,4,how many fight: the hero and up to three companions ([USER] pc-1)
 camp_seconds,20,MAKE CAMP stands the party still this long on the road clock (meals still come due)
 meal_fights,2,a meal cooked at camp lasts this many fights
 blessing_max,5,the party carries at most this many blessings at once ([USER] omr-7)
+trickle_steps,10,tiles walked on an explore map for one mana or one charge back to each piece that is short ([USER] 2026-10-30 fights must cost)
+trickle_seconds,8,seconds walked on the overworld for the same
+camp_hp_pct,50,% of max HP a camp rest gives back
+camp_food,5,food a camp rest costs: a ration
+tonic_mana,3,mana a tonic gives (and one charge, `tonic_charges`)
+tonic_charges,1,

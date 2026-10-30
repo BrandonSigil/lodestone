@@ -99,3 +99,52 @@ func test_shared_menu_theme_is_in_the_default() -> void:
 	for st in ["normal", "hover", "pressed", "disabled"]:
 		ok(t.has_stylebox(st, "Button"), "buttons: " + st)
 	ok(ThemeDB.get_default_theme().has_stylebox("panel", "DialogPanel"), "Game merged it into the default theme")
+
+
+## Mana and charges carry between fights on an outing ([USER] 2026-10-30, "Fights must cost"): what a fight leaves is
+## what the next one starts with, a trickle, a camp rest, a tonic and a wake-up bring them back, rage resets.
+func test_resources_carry_between_fights() -> void:
+	var saved := _fresh()
+	var dog: Dictionary = Game.run.members.filter(func(m: Dictionary) -> bool: return (m.def as CharacterDef).id == &"dog")[0]
+	var u := CombatUnit.from_member(dog)
+	eq(u.res, u.res_max, "a fresh member starts full")
+	u.res = 1
+	Game.store_res(u)
+	var again := CombatUnit.from_member(dog)
+	eq(again.res, 1, "the next fight starts with what was left")
+	ok(again.keep_res, "and Battle leaves it be")
+	var b := Battle.new()
+	b.setup(CombatGrid.flat(4, 4), [again], 1)
+	eq(again.res, 1, "setup does not refill it")
+	b.free()
+	# the trickle: one back for every `trickle_steps` tiles
+	var steps := int(Db.levels.trickle_steps)
+	ok(not Game.trickle(float(steps) - 1.0, "trickle_steps"), "short of a trickle: nothing")
+	ok(Game.trickle(1.0, "trickle_steps"), "a full trickle gives one")
+	eq(Game.member_res(dog).res, 2, "one charge back")
+	# a tonic
+	dog.res = 0
+	ok(Game.tonic_effect(), "a tonic helps a piece that is short")
+	eq(Game.member_res(dog).res, int(Db.levels.tonic_charges), "the dog gets a charge")
+	# a camp rest: costs food, refills, heals half
+	dog.res = 0
+	dog.hp = 2
+	Game.run.food = 20
+	var food: int = Game.run.food
+	ok(Game.camp_rest(), "a camp rest")
+	eq(Game.run.food, food - int(Db.levels.camp_food), "it costs a ration's worth of food")
+	eq(Game.member_res(dog).res, Game.member_res(dog).res_max, "and refills")
+	ok(dog.hp > 2, "and heals")
+	Game.run.food = 0
+	ok(not Game.camp_rest(), "no food, no rest")
+	# a wake-up refills everything
+	dog.res = 0
+	Game.wake_in_town(true)
+	eq(Game.member_res(dog).res, Game.member_res(dog).res_max, "the village refills it")
+	# rage is not carried
+	var knight := CombatUnit.enemy(load("res://data/classes/job_knight.tres"))
+	knight.res = 3
+	Game.run.members[0].res = 3
+	var lead := CombatUnit.from_member(Game.run.members[0])
+	ok(not lead.keep_res or lead.res_kind != "rage", "rage resets every fight")
+	_restore(saved)

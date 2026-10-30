@@ -418,7 +418,86 @@ func start_adventure() -> void:
 		var id := String((m.def as CharacterDef).id)
 		if hp.has(id):
 			m.hp = clampi(int(hp[id]), 1, run.max_hp(m))
+		var saved: Dictionary = pack.get("res", {})
+		if saved.has(id):
+			m.res = int(saved[id][0])
+			m.res_tick = int(saved[id][1])
 	run.on_pickup = _on_pickup  # from here on, pickups that count toward a tracked step say so
+
+
+# --- mana and charges carry on an outing ([USER] 2026-10-30, "Fights must cost"; docs/design/outing-tuning.md) ------
+# A member's `res` is what its mana or charges had left after the last fight (-1 or absent: full), `res_tick` the
+# charge clock. Rage resets every fight. Ways back: a trickle while walking, a camp rest, a tonic, and a wake-up.
+
+func store_res(u: CombatUnit) -> void:
+	if u.member.is_empty() or not u.res_kind in ["mana", "charges"]:
+		return
+	u.member.res = u.res
+	u.member.res_tick = u.res_tick
+
+
+func member_res(m: Dictionary) -> Dictionary:
+	var c: ClassDef = (m.def as CharacterDef).class_def
+	var kind := String(c.resource)
+	var most := int(c.resource_max) if kind in ["mana", "charges"] else 0
+	var have := most if int(m.get("res", -1)) < 0 else clampi(int(m.res), 0, most)
+	return {"kind": kind if most > 0 else "", "res": have, "res_max": most}
+
+
+## Put every piece's mana and charges back to full.
+func refill_resources() -> void:
+	if run == null:
+		return
+	for m in run.members:
+		m.erase("res")
+		m.erase("res_tick")
+
+
+var _trickle := 0.0
+
+
+## `amount` of walking (tiles on a map, seconds on the overworld): one mana or charge back to each piece that is short
+## for every `per` of it. `key` names the levels.csv row for `per`.
+func trickle(amount: float, key: String) -> bool:
+	if run == null or not run.adventure:
+		return false
+	_trickle += amount / maxf(1.0, float(Db.levels.get(key, 10)))
+	var gave := false
+	while _trickle >= 1.0:
+		_trickle -= 1.0
+		for m in run.members:
+			var r := member_res(m)
+			if r.kind != "" and int(r.res) < int(r.res_max):
+				m.res = int(r.res) + 1
+				gave = true
+	return gave
+
+
+## A tonic: some mana or a charge back to every piece that is short. True when it did anything.
+func tonic_effect() -> bool:
+	var did := false
+	for m in run.members:
+		var r := member_res(m)
+		if r.kind == "":
+			continue
+		var gain := int(Db.levels.get("tonic_mana" if r.kind == "mana" else "tonic_charges", 1))
+		if int(r.res) < int(r.res_max):
+			m.res = mini(int(r.res_max), int(r.res) + gain)
+			did = true
+	return did
+
+
+## A camp rest: costs camp_food, everyone's mana and charges are back and camp_hp_pct of max HP. False if it can't be paid.
+func camp_rest() -> bool:
+	var cost := int(Db.levels.get("camp_food", 5))
+	if run == null or run.food < cost:
+		return false
+	run.food -= cost
+	refill_resources()
+	for m in run.members:
+		if int(m.hp) > 0:
+			m.hp = mini(run.max_hp(m), int(m.hp) + int(ceil(run.max_hp(m) * float(Db.levels.get("camp_hp_pct", 50)) / 100.0)))
+	return true
 
 
 ## Adds companions whose flag just got set (at full HP) and recomputes everyone's level and gear bonus.
@@ -600,7 +679,11 @@ func save_adventure() -> void:
 	var hp := {}
 	for m in run.members:
 		hp[String((m.def as CharacterDef).id)] = int(m.hp)
-	meta.pack = {"grid": run.pack.to_save(), "belts": run.belts_save(), "waiting": run.waiting_save(), "gold": run.gold, "hp": hp,
+	var res := {}
+	for m in run.members:
+		if int(m.get("res", -1)) >= 0:
+			res[String((m.def as CharacterDef).id)] = [int(m.res), int(m.get("res_tick", 0))]
+	meta.pack = {"grid": run.pack.to_save(), "belts": run.belts_save(), "waiting": run.waiting_save(), "gold": run.gold, "hp": hp, "res": res,
 		"meal": run.meal.duplicate(), "boons": run.boons.duplicate()}
 	save_meta()
 
@@ -612,6 +695,7 @@ func wake_in_town(fell: bool) -> void:
 	home_again()
 	for m in run.members:
 		m.hp = run.max_hp(m)
+	refill_resources()  # a wake-up in the village refills everything
 	if fell:
 		meta.runs = int(meta.runs) + 1
 		pending_lines = [Txt.t("UI_WAKE_FIRST") if set_flag("lodestone_revealed") else Txt.t("UI_WAKE")]

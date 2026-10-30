@@ -78,7 +78,8 @@ func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0
 	rng.seed = seed_value
 	CombatUnit.pack_belts(p_units, p_supplies)
 	for u: CombatUnit in p_units:
-		u.reset_resource()  # mana and charges full, rage empty, every fight
+		if not u.keep_res:
+			u.reset_resource()  # mana and charges full, rage empty, every fight (a carried bar is left as it is)
 	for u: CombatUnit in units:
 		u.sync_view()
 	if p_board != null:
