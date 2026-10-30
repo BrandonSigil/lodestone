@@ -73,6 +73,9 @@ Flat armor plus a stronger GUARD is a good fit for sure hits: it's readable, it 
 
 Numbers to watch: with armor 0 to 3 and hits of 3 to 5, a wobble of plus or minus 1 is a big share of each hit, and every hit should still do at least 1.
 
+### Scale C (adopted 2026-10-30, `[USER]`)
+Brandon played the test board and said it feels right (card `dev-scale-c-test`). Fight areas grow from a 14 x 12 valley to **21 x 18** (start gap about 18 tiles). Move and ranged reach are multiplied and rounded to the nearest tile: **most pieces x1.25, fast (move 5 or more) and long-range (reach 4 or more) pieces x1.5**; melee reach and jump stay as they are. Example move: knight or bandit 4 to 5, wizard 3 to 4, wolf 6 to 9, dog or hunter 5 to 8; hunter reach 2-5 to 2-8. The study (`docs/design/scale-study.md`) measured wins at 99 to 100% with no stalls, and the duo's close fights up to about 66% against bandits, so tune foes and early levels rather than shrinking the map. Map makers: plan fight areas at 21 x 18 for road fights, and expect explore-map fights to start with more room; jump was not scaled, so check ledges a faster piece cannot climb.
+
 ### Defaults for the open numbers (proposals, tunable in data)
 These fill the gaps the answers leave so the build can start; each is `[AI]` until Brandon stamps it.
 - **Damage:** hits do their damage plus or minus 1, at least 1 after armor. Armor 0 to 3 by class; GUARD +2 armor until the piece's next phase.
