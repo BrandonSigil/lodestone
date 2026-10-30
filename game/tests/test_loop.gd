@@ -234,6 +234,30 @@ func test_village_ground_all_reachable() -> void:
 	eq(lost.size(), 0, "village ground nobody can reach: %s" % str(lost.slice(0, 8)))
 
 
+## [USER] 2026-10-30, village v2 pass 3: "make sure that all these places are accessible and stairs get built".
+## Every walkable place on village_v2, decks and the lanes under them too, is reached from the start on Jump 1.
+func test_village_v2_every_shelf_reachable() -> void:
+	var m := ExploreMap.load_named("village_v2")
+	var g := m.grid
+	var start: Vector2i = m.start[0]
+	var seen := {start: true}
+	var todo: Array[Vector2i] = [start]
+	while not todo.is_empty():
+		var p: Vector2i = todo.pop_back()
+		for d in CombatRules.DIRS:
+			for q in g.places_next(p, d):
+				if not seen.has(q) and g.walkable(q) and g.can_step(p, q, 1):
+					seen[q] = true
+					todo.append(q)
+	var lost: Array[Vector2i] = []
+	for y in g.h:
+		for x in g.w:
+			for q in g.places_at(Vector2i(x, y)):
+				if g.walkable(q) and not seen.has(q) and not g.perch(q):  # a rock pillar's top is no shelf
+					lost.append(q)
+	eq(lost.size(), 0, "village_v2 shelves nobody can reach: %s" % str(lost.slice(0, 8)))
+
+
 func test_boss_ends_the_test() -> void:
 	var c := ExploreMap.load_named("crypt")
 	var bosses := c.groups.filter(func(g: Dictionary) -> bool: return g.end)
