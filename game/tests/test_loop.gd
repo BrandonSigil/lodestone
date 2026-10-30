@@ -718,6 +718,7 @@ func test_an_escape_is_not_a_beating() -> void:
 	ok(Game.has_flag(ExploreRules.passed_flag("crypt", "throne")), "but the party is past him")
 	ok(TravelRules.cleared(Db.world_nodes["pass"], Game.meta.flags), "so the crypt is complete and what's after opens")
 	eq(throne.state, "escaped", "he's still there, leaving the party be for now")
+	ok(Game.has_flag(ExploreRules.learned_flag("lich")), "and the party knows him now, escaped or not")
 	ok(int(Game.level_state("lead").xp) + int(Game.level_state("lead").level) * 100 > xp_before, "some XP")
 	b.free()
 	s.free()
@@ -1173,5 +1174,27 @@ func test_bonds_grow_in_fights_and_boost_teamups() -> void:
 	Game.meta.bonds["dog+lead"] = 9
 	b.award_bonds()
 	eq(CombatUnit.from_member(Game.run.members[0]).bonds, {"dog": 1}, "a level carries into the next fight")
+	b.free()
+	_restore(saved)
+
+
+## You learn him ([USER] design-boss-retry): before the first fight with a boss his card shows ? for HP and only the
+## moves he has used; after it, everything, for good.
+func test_an_unknown_boss_shows_only_what_he_has_used() -> void:
+	var saved := _fresh_game()
+	var lich := CombatUnit.enemy(Db.class_def("lich"))
+	lich.boss = true
+	var b := Battle.new()
+	b.units = [lich]
+	var text := b.unit_text(lich)
+	ok(text.contains("HP ?/?"), "HP hidden")
+	ok(not text.contains(Txt.t("SKILL_DOOM")), "his big move not shown before he uses it")
+	b._saw(lich, Db.ability("lich_doom"))
+	ok(b.unit_text(lich).contains(Txt.t("SKILL_DOOM")), "shown once he has used it")
+	Game.set_flag(ExploreRules.learned_flag("lich"))
+	text = b.unit_text(lich)
+	ok(text.contains("HP %d/%d" % [lich.hp, lich.max_hp]) and text.contains(Txt.t("SKILL_FIREBOLT")), "learned: everything")
+	var bandit := CombatUnit.enemy(Db.class_def("bandit"))
+	ok(Battle.known(bandit), "a plain foe is always known")
 	b.free()
 	_restore(saved)

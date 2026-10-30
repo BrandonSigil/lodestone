@@ -110,6 +110,7 @@ func _ready() -> void:
 			u.elite = elite
 			u.place(e.cell, grid.height_at(e.cell))
 			u.leader = bool(e.get("leader", false))  # FightGoals: beat this one to win a "leader" fight
+			u.boss = bool(g.get("boss", false))
 			u.talk_to = g.has("talk") and int(g.talk.get("unit", -1)) == g.units.find(e)
 			u.summon_cells = g.get("summon", [] as Array[Vector2i])
 			u.hiding = bool(e.get("hidden", false))
@@ -687,7 +688,7 @@ func _enemy_text(g: Dictionary) -> String:
 	var names: PackedStringArray = []
 	for u: CombatUnit in g.units:
 		if u.alive():
-			names.append("%s  HP %d" % [Txt.t(u.name_key), u.hp])
+			names.append("%s  HP %s" % [Txt.t(u.name_key), str(u.hp) if Battle.known(u) else "?"])
 	if g.state == "calm":
 		names.append(Txt.t("UI_EX_PACIFIED"))
 	return "\n".join(names)
@@ -1208,6 +1209,9 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	for u: CombatUnit in party:
 		u.member.hp = u.hp
 	Game.fight_done()  # one fight less on a camp meal's buff
+	for u: CombatUnit in battle.units:  # one fight with a boss, any end, and the party knows him
+		if u.boss:
+			Game.set_flag(ExploreRules.learned_flag(String(u.cls.id)))
 	var box := _new_dialog(Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT"))
 	if not won:
 		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall())

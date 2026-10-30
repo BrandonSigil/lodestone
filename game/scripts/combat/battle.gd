@@ -41,6 +41,7 @@ var goals := FightGoals.new()  ## how this fight is won (the host sets it before
 var talk_open := false  ## the host says TALK is open (the fight is written for it and its flag is set)
 var outcome := {"how": "", "joined": []}  ## after the end: the goal met, and flags set by foes talked round
 var enemy_speed := 1.0  ## animation speed multiplier for the enemy phase
+var used := {}  ## piece -> ability ids it has used this fight: an unknown boss's card lists only these
 var deeds := {}  ## bond pair key -> {"help_up", "teamup"}: what party pieces did for each other this fight (BondRules)
 
 var _ui: CanvasLayer
@@ -318,6 +319,18 @@ func _spot(u: CombatUnit) -> void:
 	_refresh_danger()
 
 
+## Does the party know this piece? Everyone but a boss it hasn't fought before ([USER] design-boss-retry).
+static func known(u: CombatUnit) -> bool:
+	return not u.boss or u.cls == null or Game.has_flag(ExploreRules.learned_flag(String(u.cls.id)))
+
+
+func _saw(u: CombatUnit, a: Ability) -> void:
+	if not used.has(u):
+		used[u] = []
+	if not used[u].has(a.id):
+		used[u].append(a.id)
+
+
 ## Two party pieces did something for each other: it counts toward their bond after the fight.
 func _deed(a: CombatUnit, b: CombatUnit, what: String) -> void:
 	if a == null or b == null or a == b or a.team != 0 or b.team != 0 or a.member.is_empty() or b.member.is_empty():
@@ -398,6 +411,7 @@ func _use(u: CombatUnit, a: Ability, aim: Vector2i) -> void:
 	board.highlights = {}
 	_forecast.visible = false
 	log_line.emit("%s: %s" % [Txt.t(u.name_key), Txt.t(a.name_key)])
+	_saw(u, a)
 	var events := CombatRules.resolve(rng, grid, u, a, aim, units)
 	# Pushed units are already moved in the rules; draw them where they started until the push plays.
 	for ev in events:
@@ -480,6 +494,7 @@ func _play(ev: Dictionary) -> void:
 			log_line.emit(Txt.f("LOG_AMBUSH", Txt.t(t.name_key)))
 			await get_tree().create_timer(0.35).timeout
 		"mark":
+			_saw(ev.src, ev.ability)
 			log_line.emit(Txt.f("LOG_MARK", [Txt.t(ev.src.name_key), Txt.t(ev.ability.name_key)]))
 			board.float_text(ev.src.cell, Txt.t(ev.ability.name_key), Color(0.9, 0.6, 1.0))
 			_refresh_danger()
@@ -1034,7 +1049,10 @@ func _show_forecast(u: CombatUnit, a: Ability, c: Vector2i) -> void:
 			"attack":
 				var lo := maxi(0, t.hp - int(e.dmg_max) * int(e.swings) - int(e.help))
 				var hi := maxi(0, t.hp - int(e.dmg_min) * int(e.swings) - int(e.help))
-				lines.append("%s  HP %d > %s" % [Txt.t(t.name_key), t.hp, str(hi) if lo == hi else "%d-%d" % [lo, hi]])
+				if known(t):
+					lines.append("%s  HP %d > %s" % [Txt.t(t.name_key), t.hp, str(hi) if lo == hi else "%d-%d" % [lo, hi]])
+				else:
+					lines.append("%s  HP ? > ?" % Txt.t(t.name_key))
 				var line := Txt.f("UI_DMG_PREVIEW", [_range_text(e), int(round(e.crit * 100))])
 				if e.swings > 1:
 					line += "  " + Txt.f("UI_SWINGS", e.swings)
@@ -1101,7 +1119,8 @@ func _refresh_danger() -> void:
 
 func unit_text(u: CombatUnit) -> String:
 	var lines: PackedStringArray = [Txt.t(u.name_key)]
-	lines.append("HP %d/%d  MOVE %d  JUMP %d" % [u.hp, u.max_hp, CombatRules.move_points(u), u.jump])
+	var know := known(u)
+	lines.append(("HP %d/%d" % [u.hp, u.max_hp] if know else "HP ?/?") + "  MOVE %d  JUMP %d" % [CombatRules.move_points(u), u.jump])
 	lines.append("DMG %d  ARMOR %d  CRIT +%d%%  RNG %d-%d" % [u.damage, u.armor, u.crit, u.range_min, u.range_max])
 	if u.res_kind != "":
 		lines.append("%s %d/%d" % [Txt.t("RES_" + u.res_kind.to_upper()), u.res, u.res_max])
@@ -1109,7 +1128,8 @@ func unit_text(u: CombatUnit) -> String:
 		lines.append(", ".join(u.tags.map(func(t: StringName) -> String: return Txt.t("FOE_" + String(t).to_upper()))))
 	var skills: PackedStringArray = []
 	for a in u.abilities.slice(1):
-		skills.append(_ability_label(u, a))
+		if know or used.get(u, []).has(a.id):  # an unknown boss shows only the moves he has used
+			skills.append(_ability_label(u, a))
 	if not skills.is_empty():
 		lines.append(", ".join(skills))
 	for t in u.traits:

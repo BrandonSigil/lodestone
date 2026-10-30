@@ -54,6 +54,7 @@ var move_origin := Vector2i(-1000, -1000)  ## where this piece began its phase (
 var move_spent := 0  ## move points walked this phase (hit and run walks the rest after a hit)
 var leader := false  ## a fight's leader: beating it wins a "leader" fight (FightGoals)
 var elite := false  ## from an elite group: tougher, and wears an ELITE badge
+var boss := false  ## from a boss group: its card hides HP and unseen moves until the party has fought it once
 var protect := false  ## must not fall: if it does, the fight is lost (FightGoals)
 var talk_to := false  ## the foe the hero can TALK to in this fight (FightGoals.talk)
 var left_guard := false  ## walked away from a guard this phase and took the free hit, so the move can't be undone

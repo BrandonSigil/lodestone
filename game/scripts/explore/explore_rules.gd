@@ -32,6 +32,12 @@ static func passed_flag(map_name: String, group_id: String) -> String:
 	return "passed_%s_%s" % [map_name, group_id]
 
 
+## Set after the party's first fight with a boss of this class, won, lost or escaped ([USER] design-boss-retry,
+## "you learn him"): from then on his card shows his HP and every move, for good.
+static func learned_flag(class_id: String) -> String:
+	return "learned_%s" % class_id
+
+
 ## The flag that keeps a lasting reward taken for good ([USER] omr-10): stat items, keys, rare caches.
 static func taken_flag(map_name: String, thing_id: String) -> String:
 	return "got_%s_%s" % [map_name, thing_id]
