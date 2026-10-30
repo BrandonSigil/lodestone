@@ -145,7 +145,8 @@ static func locked_cells(grid: CombatGrid, open: Dictionary, doors: Array, jump:
 # --- walls ------------------------------------------------------------------------
 
 const WALL_TALL := 3  ## a back wall stands this many levels over the floor beside it
-const WALL_HALF := 1  ## a wall between two floors stands this high
+const WALL_HALF := 1  ## a block standing in a room (a tomb, an altar) stands this high
+const FENCE_RUN := 3  ## a wall between two floors at least this long (or joining a wall) is a fence (CombatGrid.fences)
 
 
 ## Walls maps ([USER] 2026-10-29). Rock beside ground is a wall: WALL_TALL over that ground where nothing walkable
@@ -161,7 +162,8 @@ const WALL_HALF := 1  ## a wall between two floors stands this high
 ## `kit` ([USER] 2026-10-30, a map's wall_kit): back walls are thin wall pieces from a kit, not blocks. Their cells
 ## stay at the floor's height and the board stands a piece on each, on the edge it shares with the room.
 ## Returns {"walls": rock cells drawn as walls, "rims": front-edge floor cells, "backs": back-wall cell -> the
-## directions toward the room it faces (two at a corner)}.
+## directions toward the room it faces (two at a corner), "fences": walls between two floors, now
+## CombatGrid.fences}.
 static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := WALL_TALL, kit := false) -> Dictionary:
 	var f0: Vector2i = front[0]
 	var f1: Vector2i = front[1]
@@ -170,6 +172,7 @@ static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := 
 	var rims := {}
 	var floors := {}
 	var backs := {}
+	var fences: Array[Vector2i] = []
 	var mass: Array[Vector2i] = []
 	var world := _world(grid)
 	for y in grid.h:
@@ -206,20 +209,64 @@ static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := 
 			elif _open_front(grid, c, f0, f1):
 				rims[c] = c + back[behind]
 			else:
-				heights[c] = floor_h + WALL_HALF
+				fences.append(c)
 	for c: Vector2i in _joining_rims(grid, rims):
 		rims.erase(c)
+		fences.append(c)
+	# A wall between two floors is a fence ([USER] 2026-10-30): the higher floor's ground with a very short,
+	# thin wall along it, still solid (CombatGrid.fences). A lone block or a pair standing in a room (a tomb, an
+	# altar) is no wall: it keeps its half-wall block, unless it runs on into a wall.
+	var short := _short_runs(fences, heights, FENCE_RUN)
+	for c: Vector2i in short:
+		fences.erase(c)
 		heights[c] = int(floors[c]) + WALL_HALF
+	var looks := {}
+	for c: Vector2i in fences:
+		var best := c
+		for d in STEPS:
+			if _ground(grid, c + d) and (best == c or grid.height_at(c + d) > grid.height_at(best)):
+				best = c + d
+		looks[c] = best
 	for c in mass:
 		grid.set_terrain(c, CombatGrid.T.VOID)
 	for c: Vector2i in heights:
 		grid.set_height(c, int(heights[c]))
+	for c: Vector2i in looks:
+		grid.set_terrain(c, grid.terrain_at(looks[c]))
+		grid.set_height(c, int(floors[c]))
+		grid.fences[c] = true
 	for c: Vector2i in rims:
 		var from: Vector2i = rims[c]
 		grid.set_terrain(c, grid.terrain_at(from))
 		grid.set_height(c, grid.height_at(from))
 		rims[c] = true
-	return {"walls": heights, "rims": rims, "backs": backs}
+	return {"walls": heights, "rims": rims, "backs": backs, "fences": grid.fences}
+
+
+## Fence cells in runs (4-neighbour) shorter than `run` that touch no wall cell.
+static func _short_runs(cells: Array[Vector2i], walls: Dictionary, run: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var left := {}
+	for c in cells:
+		left[c] = true
+	while not left.is_empty():
+		var start: Vector2i = left.keys()[0]
+		var part: Array[Vector2i] = [start]
+		left.erase(start)
+		var i := 0
+		var joined := false
+		while i < part.size():
+			for d in CombatRules.DIRS:
+				var n: Vector2i = part[i] + d
+				if left.has(n):
+					left.erase(n)
+					part.append(n)
+				elif walls.has(n):
+					joined = true
+			i += 1
+		if part.size() < run and not joined:
+			out.append_array(part)
+	return out
 
 
 ## The sides of a back-wall cell that face the room: the front directions with floor beyond them, or both at a
@@ -316,7 +363,7 @@ static func _open_front(grid: CombatGrid, c: Vector2i, f0: Vector2i, f1: Vector2
 
 
 static func _ground(grid: CombatGrid, c: Vector2i) -> bool:
-	return grid.in_bounds(c) and grid.step_cost(c) < CombatGrid.BLOCKED
+	return grid.in_bounds(c) and grid.step_cost(c) < CombatGrid.BLOCKED and not grid.fences.has(c)
 
 
 # --- walking ----------------------------------------------------------------------

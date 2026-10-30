@@ -61,6 +61,7 @@ const GLOW := Color(1.0, 0.97, 0.82)  ## a door's light when the party is close:
 const GLOW_RINGS := 6
 const NAVY_DEPTH := 6000.0  ## how far down (board pixels) the navy under the front treeline reaches: past any view
 const REACH := Color(0.35, 0.6, 1.0)  ## the player's colour: an action's range while it's hovered in the menu
+const FENCE_THIN := 0.12  ## a wall between two floors: this deep in cells ([USER] 2026-10-30: not thick)
 const FOOT := 0.3  ## a piece's feet (and its ring) reach this far from its middle, in cells
 const WINDOW_R := 56.0  ## see-through window round a piece behind a prop: radius on screen
 const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
@@ -718,6 +719,8 @@ func _has_fall(c: Vector2i) -> bool:
 func _has_props(c: Vector2i) -> bool:
 	if not grid.in_bounds(c):
 		return false
+	if grid.fences.has(c):
+		return true
 	var t := grid.terrain_at(c)
 	if t == CombatGrid.T.VOID:
 		return false
@@ -1299,6 +1302,36 @@ func _rim_walls(c: Vector2i) -> void:
 		_ci.draw_colored_polygon(cap, WALL_TOP)
 		cap.append(cap[0])
 		_ci.draw_polyline(cap, Color(WALL_TOP, 1.0), 1.0, true)  # no 2D antialiasing: a hairline in its own colour
+
+
+## A wall between two floors ([USER] 2026-10-30: "very short and not thick"): a thin low wall FENCE_THIN deep
+## and CombatGrid.FENCE_HIGH tall along the cell's middle, running the way the wall runs (between the two
+## floors), on the floor the cell shows.
+func _fence(c: Vector2i) -> void:
+	var along_x := _fence_end(c + Vector2i(1, 0)) or _fence_end(c + Vector2i(-1, 0))
+	if not along_x and not (_fence_end(c + Vector2i(0, 1)) or _fence_end(c + Vector2i(0, -1))):
+		along_x = _walkable(c + Vector2i(0, 1)) and _walkable(c + Vector2i(0, -1))  # a lone one: across its floors
+	var lo := Vector2(c)
+	var hi := lo + Vector2.ONE
+	if along_x:
+		lo.y += 0.5 - FENCE_THIN * 0.5
+		hi.y = lo.y + FENCE_THIN
+	else:
+		lo.x += 0.5 - FENCE_THIN * 0.5
+		hi.x = lo.x + FENCE_THIN
+	var h0 := _surf(c)
+	var h1 := h0 + CombatGrid.FENCE_HIGH
+	for shade in [false, true]:
+		var fd := front_dir(shade)
+		var e := _side(lo, hi, fd)
+		_ci.draw_colored_polygon(PackedVector2Array([iso(e[0].x, e[0].y, h1), iso(e[1].x, e[1].y, h1), iso(e[1].x, e[1].y, h0), iso(e[0].x, e[0].y, h0)]),
+			Color(WALL_SIDE * _face_light(Vector2(fd)), 1.0))
+	_ci.draw_colored_polygon(PackedVector2Array([iso(lo.x, lo.y, h1), iso(hi.x, lo.y, h1), iso(hi.x, hi.y, h1), iso(lo.x, hi.y, h1)]), WALL_TOP)
+
+
+## Does a fence run on into this cell (another fence or a wall)?
+func _fence_end(n: Vector2i) -> bool:
+	return grid.fences.has(n) or _wall(n)
 
 
 ## Swap one cell's outline line ends in _pen_ends for its current ones.
@@ -2135,6 +2168,9 @@ func _draw_props(c: Vector2i) -> void:
 	var top_col := _terrain_color(t).lightened(minf(h, 6.0) * 0.025)
 	var top_tex := BattleArt.top(t, zone)
 	var mid := cell_top(c)
+	if grid.fences.has(c):
+		_fence(c)
+		return
 	if _kit_wall(c):
 		_wall_piece(c)
 		return

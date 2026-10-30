@@ -46,6 +46,11 @@ var props := {}
 var look := {}
 var version := 0  ## goes up on every height or terrain edit, so drawing caches know to rebuild
 var decks := {}  ## ground cell -> {"h": deck floor height, "t": T} (see DECK)
+## Cells a very short, thin wall stands on ([USER] 2026-10-30, card dev-crypt-half-walls: the walls between two
+## floors "very short and not thick"): the cell shows as floor with the wall along its middle, nobody walks
+## on it, and sight passes FENCE_HIGH over it. Walls maps set them (ExploreRules.shape_walls); not saved.
+var fences := {}
+const FENCE_HIGH := 0.5
 var _prop_at := {}  ## every footprint cell -> its anchor (deck props: deck places -> deck anchor)
 var _sight := {}  ## line of sight cache, cleared on any edit
 
@@ -484,7 +489,7 @@ func cover(c: Vector2i) -> int:
 
 
 func passable(c: Vector2i) -> bool:
-	if not in_bounds(c) or step_cost(c) >= BLOCKED:
+	if not in_bounds(c) or step_cost(c) >= BLOCKED or fences.has(c):
 		return false
 	if not on_deck(c) and has_deck(c) and int(decks[c].h) - height_at(c) < DECK_CLEAR:
 		return false  # a deck too low over the ground leaves no room underneath
@@ -528,7 +533,8 @@ func can_step(a: Vector2i, b: Vector2i, jump: int) -> bool:
 ## Highest point of the cell for line of sight: ground plus whatever stands on it.
 func sight_top(c: Vector2i) -> float:
 	var p := prop_at(c)
-	return height_at(c) + maxf(SIGHT_BLOCK[terrain_at(c)], 0.0 if p.is_empty() or under_arch(c) else float(p.sight))
+	var block: float = FENCE_HIGH if fences.has(c) else float(SIGHT_BLOCK[terrain_at(c)])
+	return height_at(c) + maxf(block, 0.0 if p.is_empty() or under_arch(c) else float(p.sight))
 
 
 func top_height() -> int:

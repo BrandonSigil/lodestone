@@ -172,7 +172,8 @@ func test_a_front_rim_never_joins_two_rooms() -> void:
 	ok(not rims.has(Vector2i(3, 3)), "the front row under the dividing wall stays a wall")
 	ok(not g.passable(Vector2i(2, 3)) and not g.passable(Vector2i(4, 3)), "so does the rest of that row")
 	ok(ExploreRules.find_path(g, Vector2i(1, 1), Vector2i(5, 1), 1).is_empty(), "the rooms stay apart")
-	eq(g.height_at(Vector2i(3, 3)), 1 + ExploreRules.WALL_HALF, "a half wall")
+	ok(g.fences.has(Vector2i(3, 3)), "a fence: very short and thin, but as solid as a wall ([USER] 2026-10-30)")
+	eq(g.height_at(Vector2i(3, 3)), 1, "it stands on the floor's own level")
 
 
 func test_path_goes_through_the_gap() -> void:
@@ -462,3 +463,18 @@ func test_trees_block_walking() -> void:
 	var u := CombatUnit.enemy(load("res://data/classes/bandit.tres"))
 	u.place(Vector2i(1, 1), 0)
 	ok(CombatRules.reachable(g, u, [u]).cost.has(Vector2i(2, 1)), "in a fight a piece can still step into the trees")
+
+
+## [USER] 2026-10-30 (card dev-crypt-half-walls): a wall between two floors is drawn very short and thin (a
+## fence), and stays as solid as a wall; a lone block standing in a room (a tomb) keeps its block.
+func test_walls_between_floors_are_fences() -> void:
+	var g := _walled(9, 9, func(c: Vector2i) -> bool:
+		return c.x >= 1 and c.x <= 7 and c.y >= 1 and c.y <= 7 and c.y != 4 and c != Vector2i(3, 2))
+	ExploreRules.shape_walls(g, [Vector2i(0, 1), Vector2i(1, 0)])
+	ok(g.fences.has(Vector2i(4, 4)), "the dividing row is a fence")
+	ok(not g.passable(Vector2i(4, 4)), "nobody steps on it")
+	ok(ExploreRules.find_path(g, Vector2i(1, 3), Vector2i(1, 5), 1).is_empty(), "the two floors stay apart")
+	eq(g.height_at(Vector2i(4, 4)), 1, "it stands on the floor")
+	ok(g.line_of_sight(Vector2i(4, 3), Vector2i(4, 5)), "and is low enough to see over")
+	ok(not g.fences.has(Vector2i(3, 2)), "a lone block in the room is no fence")
+	eq(g.height_at(Vector2i(3, 2)), 1 + ExploreRules.WALL_HALF, "it keeps its block")
