@@ -1734,6 +1734,15 @@
     9
    ],
    "once": "got_rope"
+  },
+  {
+   "id": "stream_rod",
+   "kind": "find",
+   "event": "rod:+1",
+   "cell": [
+    9,
+    29
+   ]
   }
  ]
 }

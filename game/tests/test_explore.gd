@@ -356,6 +356,8 @@ func test_village_maps_link_up() -> void:
 		for t in m.things:
 			if t.kind == "restore":  # a village building: its event names the building's restore ladder
 				ok(not RestoreRules.ladder(Db.restore, String(t.event)).is_empty(), "%s/%s: a ladder for %s" % [n, t.id, t.event])
+			elif String(t.kind) in ExploreRules.LASTING_KINDS:
+				ok(t.event != "", "%s/%s: holds its reward" % [n, t.id])  # its event is the effects, not a row
 			elif t.event != "":
 				ok(Db.explore_events.has(t.event), "%s/%s: event %s exists" % [n, t.id, t.event])
 			if t.to != "":

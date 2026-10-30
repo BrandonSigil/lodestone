@@ -324,6 +324,8 @@ V.thing(id="dog_home", kind="companion", event="companion_dog", cell=[7, 24], wh
 V.thing(id="food_barrel", kind="cache", event="cache_food", cell=[43, 30], once="got_food_barrel")
 V.thing(id="smithy_rope", kind="cache", event="cache_rope", cell=[47, 15], once="got_rope")
 V.thing(id="dock_fish", kind="fish", event="fish_dock", cell=[DOCK_END[0], DOCK_END[1] + 1])  # off the dock's end
+rod = next((DOCK[0][0] - 1, y) for y in range(DOCK[0][1], 0, -1) if V.terrain[y][DOCK[0][0] - 1] == "g")
+V.thing(id="dock_rod", kind="find", event="rod:+1", cell=list(rod))  # the first fishing rod, on the shore by the dock's root (5130f86)
 # Two shore spots, west and east, on the water beside the shore (a spot rests until the next trip out: 306accc).
 shore = [(x, y) for y in range(40, H - 1) for x in range(1, 26) if V.terrain[y][x] == "g" and V.height[y][x] == 1
          and (x, y) not in _prop_cells(V) and any(V.terrain[y + dy][x + dx] == "w" for dx, dy in ((0, 1), (1, 0), (-1, 0), (0, -1)))]
