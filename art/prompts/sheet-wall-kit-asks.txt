@@ -2,7 +2,7 @@ ASKS FOR sheet-wall-kit.txt (each THIS KIT line fills [ZONE] through --zones)
 
 One kit per picture, 1:1 at 2K, two tries (--count 2). Image 1 Brandon's target room, image 2 the flat forest panel. Cut the 3 x 3 grid, check every repeating piece with tile_seam_check.py, bring the better try to the desk.
 
-Cut names (the map builder's wiring; each piece 512 square; one square = 2 cells x 4 levels on a wall, walls stand 6 levels: the bottom square carries plain, worn, window or doorway, plain fills above, the wall's top 2 levels use the upper half of the top piece, so its beam or capping sits on the top edge; wall_foot's bottom fifth runs along the foot of dungeon walls; corners are thin posts wearing wall_timber or wall_corner; a window or doorway covers the cell it's placed on and the next one; the board's code is a528a91):
+Cut names (the map builder's wiring; each piece 512 square; one square = 2 cells x 4 levels on a wall, walls stand 6 levels: the bottom square carries plain, worn, window or doorway, plain fills above, the wall's top 2 levels use the upper half of the top piece, so its beam or capping sits on the top edge; wall_foot's bottom fifth runs along the foot of dungeon walls; corners are thin posts wearing wall_timber or wall_corner; a window or doorway covers the cell it's placed on and the next one; the board's code is a528a91 and 0f2070c):
   interior -> game/art/source/battle/village_in/: wall_plain, wall_worn, wall_timber / wall_window, wall_door, wall_top / top_stone (plank), top_stone_b (worn plank), side_masonry (floor edge)
   dungeon  -> game/art/source/battle/dungeon/:    wall_plain, wall_cracked, wall_corner / wall_door, wall_cap, wall_foot / top_stone, top_stone_b, side_masonry
 
