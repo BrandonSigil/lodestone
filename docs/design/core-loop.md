@@ -358,15 +358,15 @@ Tensions to watch: an ambusher bends danger-zone-only (c2); a boss big-move warn
 - **Retry:** after the first fight with a boss, his card shows his HP and all his moves for good.
 - **Foe scale:** by depth. A place's foes are set by its level and never change.
 - **Foe roles, in order:** ambusher, caster/support, charger, guard.
-- **Weakness:** a few tags (undead, beast, armored, flying), each a small damage change for some attack kinds. Whether the Lich himself is undead is on the desk (`design-lich-tag`); he has no tag until Brandon answers.
+- **Weakness:** a few tags (undead, beast, armored, flying), each a small damage change for some attack kinds. The Lich is undead (fire +2, arrows -2; `design-lich-tag`), so the book gets stronger against him and the bow weaker. He's re-measured against the 15% floor.
 - **Village:** restore only, with one twist: a settler's service can come with a plot by their house (a garden for crops, a pen for animals).
-- Still open: `design-village-life`.
+- **Settlers:** bonds grow between pairs in the party (fights together, help-ups, team-ups). Three levels; each adds +1 team-up damage for the pair and opens a talk at home. The talks are Brandon's to write. Built after the first boss and foe build.
 
 ### First build (handed to the systems developer and the map builder, 2026-10-30)
 1. The Lich's big move with its warning (windup 1, cooldown 3, a 5-cell plus, power 4, hits his own minions too).
 2. The Lich's minions (2 every 3rd phase, at most 4 standing, they crumble when he falls).
-3. Foe tags (`data/tags.csv`; wolves beast, minions undead).
+3. Foe tags (`data/tags.csv`; wolves beast, the Lich and his minions undead).
 4. The ambusher (hidden until seen within 3 cells; its first strike from hiding counts as a flank).
 5. Check that escaping the Lich completes the crypt the way a kill does, without the boss XP or loot.
 
-Then re-measure the Lich at level 5 with all four builds: each must win about 15% or more, with no stalls. Later, in order: learn him, foes by depth, caster/support, charger, guard, boss phases, parts, objective, village plots. The numbers are the `[AI]` lines of 2026-10-30 in `docs/decisions.md`.
+Then re-measure the Lich at level 5 with all four builds: each must win about 15% or more, with no stalls. Later, in order: learn him, foes by depth, caster/support, charger, guard, boss phases, parts, objective, village plots, bonds. The numbers are the `[AI]` lines of 2026-10-30 in `docs/decisions.md`.
