@@ -687,3 +687,41 @@ func test_paying_tracking_and_coming_home() -> void:
 		Game.counts.disconnect(c.callable)
 	Db.reload()  # the real ladders back
 	_restore(saved)
+
+
+## The first ladders ([USER] omr-3, pc-14; one-more-run step 3): the smithy, then each weapon's upgrades,
+## and the inn's kitchen. All their needs are real items and every name has text.
+func test_the_first_ladders() -> void:
+	_db()
+	var buildings := RestoreRules.buildings(Db.restore)
+	for b in ["smithy", "inn", "sword", "daggers", "bow", "book"]:
+		ok(buildings.has(b), "a ladder for " + b)
+		ok(Txt.has("BUILDING_" + b.to_upper()), "a name for " + b)
+	for r: Dictionary in Db.restore:
+		ok(Txt.has(String(r.name_key)), "text for " + String(r.id))
+		for id in RestoreRules.parse_needs(String(r.needs)):
+			ok(Db.items.has(id) and String(Db.items[id].kind) == "material", "%s needs a material: %s" % [r.id, id])
+	eq(RestoreRules.ladder(Db.restore, "sword").size(), 3, "upgrades +1 to +3")
+	ok(not RestoreRules.is_open(Db.restore, "smithy", []), "the smithy waits for its smith")
+	ok(RestoreRules.is_open(Db.restore, "smithy", ["settler_smith"]))
+	ok(not RestoreRules.is_open(Db.restore, "sword", ["settler_smith"]), "upgrades wait for the sharpening stone")
+	ok(RestoreRules.is_open(Db.restore, "sword", ["smithy_stone"]))
+
+
+func test_a_sharper_sword_hits_harder() -> void:
+	var saved := _fresh_game()
+	Game.take_weapon("sword")
+	var before := int(Game.weapon_mods("lead").damage)
+	Game.meta.restore["sword_1"] = {"state": "done", "trip": 0}
+	Game.meta.restore["sword_2"] = {"state": "done", "trip": 0}
+	eq(Game.weapon_level("sword"), 2)
+	eq(int(Game.weapon_mods("lead").damage), before + 2, "+1 damage a level")
+	Game.take_weapon("bow")
+	eq(Game.weapon_level("bow"), 0, "each weapon has its own upgrades")
+	_restore(saved)
+
+
+func test_a_shut_ladder_says_why() -> void:
+	_db()
+	eq(RestoreRules.opened_by(Db.restore, "sword").id, "smithy_2", "the sharpening stone opens the sword's upgrades")
+	eq(RestoreRules.opened_by(Db.restore, "smithy"), {}, "the smith moving in opens the smithy")

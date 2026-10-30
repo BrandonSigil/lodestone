@@ -1,1 +1,18 @@
 id,building,step,name_key,needs,gives,settler,note
+smithy_1,smithy,1,RESTORE_SMITHY_1,metal:3;wood:4,unlock:smithy_forge,settler_smith,[USER] omr-3: get the forge running
+smithy_2,smithy,2,RESTORE_SMITHY_2,metal:2;rare:1,unlock:smithy_stone,settler_smith,a sharpening stone; opens the weapon upgrades
+inn_1,inn,1,RESTORE_INN_1,wood:3;metal:2,unlock:kitchen_1,settler_chef,[USER] omr-3: the inn's kitchen; opens the first recipes
+inn_2,inn,2,RESTORE_INN_2,metal:2;herb:2,unlock:kitchen_2,settler_chef,more recipes
+inn_3,inn,3,RESTORE_INN_3,wood:2;ingredient:3;rare:1,unlock:kitchen_3,settler_chef,the full kitchen: more recipes
+sword_1,sword,1,RESTORE_SWORD_1,metal:2;wood:1,,smithy_stone,weapon upgrade +1 (pc-14): +1 damage a level
+sword_2,sword,2,RESTORE_SWORD_2,metal:3;rare:1,,smithy_stone,
+sword_3,sword,3,RESTORE_SWORD_3,metal:4;rare:2,,smithy_stone,
+daggers_1,daggers,1,RESTORE_DAGGERS_1,metal:2;wood:1,,smithy_stone,
+daggers_2,daggers,2,RESTORE_DAGGERS_2,metal:3;rare:1,,smithy_stone,
+daggers_3,daggers,3,RESTORE_DAGGERS_3,metal:4;rare:2,,smithy_stone,
+bow_1,bow,1,RESTORE_BOW_1,wood:3;metal:1,,smithy_stone,
+bow_2,bow,2,RESTORE_BOW_2,wood:3;rare:1,,smithy_stone,
+bow_3,bow,3,RESTORE_BOW_3,wood:4;rare:2,,smithy_stone,
+book_1,book,1,RESTORE_BOOK_1,herb:3;wood:1,,smithy_stone,the book is mended at the smithy too
+book_2,book,2,RESTORE_BOOK_2,herb:3;rare:1,,smithy_stone,
+book_3,book,3,RESTORE_BOOK_3,herb:4;rare:2,,smithy_stone,

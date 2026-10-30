@@ -667,13 +667,16 @@ func _open_thing(t: Dictionary) -> void:
 ## A building's next restore step ([USER] omr-5: walk up to it to see what it needs): the items with what
 ## the village pile holds, GIVE when it's all there, and WATCH to track it on trips.
 func _restore_box(building: String) -> void:
+	if building == "smithy" and RestoreRules.next_step(Db.restore, "smithy", Game.meta.restore).is_empty() \
+			and not RestoreRules.ladder(Db.restore, Game.weapon_id()).is_empty():
+		building = Game.weapon_id()  # forge and stone done: the smith works on the weapon in hand ([USER] pc-14)
 	mode = M.DIALOG
 	var name := Txt.t("BUILDING_" + building.to_upper())
 	var lines: PackedStringArray = [name]
 	var row := RestoreRules.next_step(Db.restore, building, Game.meta.restore)
 	var box: VBoxContainer
 	if not RestoreRules.is_open(Db.restore, building, Game.meta.flags):
-		lines.append(Txt.t("UI_RESTORE_LOCKED"))
+		lines.append(Game.locked_text(building))
 	elif row.is_empty():
 		lines.append(Txt.t("UI_RESTORE_ALL_DONE"))
 	elif RestoreRules.status(Game.meta.restore, String(row.id)) == "paid":

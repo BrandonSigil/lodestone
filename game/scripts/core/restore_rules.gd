@@ -44,6 +44,19 @@ static func is_open(rows: Array, building: String, flags: Array) -> bool:
 	return settler == "" or flags.has(settler)
 
 
+## The step that opens a building's ladder (the one whose gives sets its settler flag), or {} when a settler
+## moving in opens it.
+static func opened_by(rows: Array, building: String) -> Dictionary:
+	var steps := ladder(rows, building)
+	if steps.is_empty():
+		return {}
+	var flag := String(steps[0].get("settler", ""))
+	for r: Dictionary in rows:
+		if flag != "" and ("unlock:" + flag) in String(r.get("gives", "")).split(";", false):
+			return r
+	return {}
+
+
 static func status(state: Dictionary, id: String) -> String:
 	return String((state.get(id, {}) as Dictionary).get("state", ""))
 
@@ -82,6 +95,11 @@ static func pay(row: Dictionary, state: Dictionary, pile: Dictionary, trip: int)
 			pile.erase(id)
 	state[String(row.id)] = {"state": "paid", "trip": trip}
 	return true
+
+
+## How many of a building's steps are done (a weapon's upgrade level).
+static func done_count(rows: Array, building: String, state: Dictionary) -> int:
+	return ladder(rows, building).filter(func(r: Dictionary) -> bool: return status(state, String(r.id)) == "done").size()
 
 
 ## Coming home: every step paid on an earlier trip is done. Returns the rows that finished.

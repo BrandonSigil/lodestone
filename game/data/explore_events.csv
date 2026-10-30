@@ -27,3 +27,5 @@ snow_secret,EX_SNOW_SECRET,OPT_DIG,,none,0,medicine:+2;food:+3;unlock:got_snow_s
 den_bones,EX_DEN_BONES,OPT_RUMMAGE,,none,0,gold:+10;rope:+1;rare:+1;ingredient:+2;unlock:got_den_bones;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,
 spot_boss,EX_SPOT_BOSS,OPT_FIGHT,,none,0,fight,,OPT_BACK_OFF,,none,0,,,,,,,,,,,,,,,,,,,,
 companion_dog,EX_COMPANION,OPT_INVITE,noparty:dog,none,0,invite:dog,,OPT_SEND_HOME,party:dog,none,0,dismiss:dog,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,
+settler_smith,EX_SETTLER_SMITH,OPT_WELCOME,noflag:settler_smith,none,0,unlock:settler_smith;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,
+settler_chef,EX_SETTLER_CHEF,OPT_WELCOME,noflag:settler_chef,none,0,unlock:settler_chef;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,

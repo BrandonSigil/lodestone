@@ -82,7 +82,7 @@ static func restore_list(box: VBoxContainer, changed: Callable, close: Callable)
 	for building in RestoreRules.buildings(Db.restore):
 		_label(box, Txt.t("BUILDING_" + building.to_upper()), 15)
 		if not RestoreRules.is_open(Db.restore, building, Game.meta.flags):
-			_label(box, "  " + Txt.t("UI_RESTORE_LOCKED"), 12)
+			_label(box, "  " + Game.locked_text(building), 12)
 			continue
 		for r: Dictionary in RestoreRules.ladder(Db.restore, building):
 			var id := String(r.id)

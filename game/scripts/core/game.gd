@@ -429,7 +429,14 @@ func weapon_mods(id: String) -> Dictionary:
 	var out := {}
 	for k in ["attack", "damage", "move", "range_min", "range_max"]:
 		out[k] = int(row.get(k, 0))
+	# the smithy's upgrades for this weapon ([USER] pc-14; its own ladder in data/restore.csv)
+	out.damage += weapon_level(weapon_id()) * int(CombatRules.num("upgrade_damage"))
 	return out
+
+
+## A weapon's upgrade level: the steps of its smithy ladder that are done (0 to 3).
+func weapon_level(id: String) -> int:
+	return RestoreRules.done_count(Db.restore, id, meta.restore)
 
 
 ## The weapon the hero holds now: the one whose flag is set (take_weapon keeps it to one).
@@ -583,6 +590,13 @@ signal counts(text: String)  ## a pickup counts toward a tracked step: screens s
 func start_trip() -> void:
 	meta.trips = int(meta.trips) + 1
 	save_meta()
+
+
+## Why a ladder is shut: nobody lives there yet, or another step has to be done first (the weapons wait
+## for the smithy's sharpening stone).
+func locked_text(building: String) -> String:
+	var first := RestoreRules.opened_by(Db.restore, building)
+	return Txt.f("UI_RESTORE_NEEDS_FIRST", Txt.t(String(first.name_key))) if not first.is_empty() else Txt.t("UI_RESTORE_LOCKED")
 
 
 ## Pay a building's next step from the village pile. False when it can't be paid.

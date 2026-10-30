@@ -84,18 +84,14 @@ func run(s: Node, f: int, step: String) -> bool:
 				s.open_event(String(g.def.event), {"group": g})
 			return f == 30
 		"restore":
-			# Village work ([USER] omr-5): a sample ladder (in memory only), one step tracked: the list, and the
+			# Village work ([USER] omr-5): the smith and the chef moved in (in memory only), one step tracked: the list, and the
 			# frame's long bar showing what the tracked step still misses.
 			if f == 5:
 				var game: Node = s.get_node("/root/Game")
 				game.save_enabled = false
-				var db: Node = s.get_node("/root/Db")
-				db.restore.assign([
-					{"id": "smithy_1", "building": "smithy", "step": "1", "name_key": "RESTORE_SMITHY_1", "needs": "metal:3;wood:2", "gives": "", "settler": ""},
-					{"id": "smithy_2", "building": "smithy", "step": "2", "name_key": "RESTORE_SMITHY_2", "needs": "metal:2;rare:1", "gives": "", "settler": ""}])
-				game.meta.materials = {"metal": 2, "wood": 2}
+				game.meta.materials = {"metal": 2, "wood": 4, "herb": 2}
 				game.meta.tracked = ["smithy_1"]
-				game.meta.flags.append("has_lodestone")
+				game.meta.flags.append_array(["has_lodestone", "settler_smith", "settler_chef"])
 				s._refresh_hud()
 				s._open_menu("restore")
 			return f == 30
