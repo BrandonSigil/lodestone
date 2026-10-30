@@ -533,7 +533,7 @@ func test_leaf_frame_holds_pack_and_party() -> void:
 	hud._layout_leaf()
 	var vs := hud.root.get_viewport_rect().size
 	var s := vs.x / 2000.0
-	ok(absf(hud.bottom_h - (261.0 - FrameHud.LEAF_BAND_TOP) * s) < 0.5, "the band is the bottom border")
+	ok(absf(hud.bottom_h - (264.0 - FrameHud.LEAF_BAND_TOP) * s) < 0.5, "the band is the bottom border")
 	ok(hud.center_rect().end.y <= vs.y - hud.bottom_h + 0.5, "the map stops at the band")
 	ok(hud.clear_rect().end.y < hud.center_rect().end.y, "a fitted map also clears the diamond")
 	var pressed := [0]

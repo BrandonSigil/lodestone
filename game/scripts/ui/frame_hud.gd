@@ -9,15 +9,15 @@ const RIGHT_W := 250.0
 const TOP_H := 40.0
 const BOTTOM_H := 78.0
 const PACK_CELL := 15.0  ## the bottom bar's copy of the pack grid
-## Brandon's leaf frame ([USER] 2026-10-29), and spots in its own pixels (2000 x 261).
-const LEAF_ART := "res://art/source/ui/frame_bottom.webp"
-const LEAF_BAND_TOP := 102.0  ## the solid band starts here; above it only leaves and the diamond poke up
-const LEAF_PACK := Rect2(128, 133, 130, 108)  ## inside the left square's rim: the inventory button
-const LEAF_PARTY := Rect2(1295, 132, 495, 104)  ## inside the right panel's rim: the party, up to 4
-const LEAF_BAR := Rect2(345, 134, 380, 48)  ## the long bar's top half (its ornament runs below): tracked goals
+## Brandon's leaf frame ([USER] 2026-10-29), and spots in its own pixels (2000 x 264).
+const LEAF_ART := "res://art/source/ui/frame_bottom.png"
+const LEAF_BAND_TOP := 84.0  ## the solid band starts here; above it only leaves and the diamond poke up
+const LEAF_PACK := Rect2(128, 114, 130, 110)  ## inside the left square's rim: the inventory button
+const LEAF_PARTY := Rect2(1225, 116, 555, 98)  ## inside the right panel's rim: the party, up to 4
+const LEAF_BAR := Rect2(365, 118, 430, 42)  ## the long bar's top half (its ornament runs below): tracked goals
 const LEAF_PARTY_MAX := 4
-const LEAF_DECOR_TOP := 50.0  ## the corner leaves reach up to here; buttons above the frame sit higher
-const LEAF_DIAMOND_TOP := 2.0  ## the centre diamond's tip
+const LEAF_DECOR_TOP := 10.0  ## the corner leaves reach up to here; buttons above the frame sit higher
+const LEAF_DIAMOND_TOP := 62.0  ## the centre diamond's tip
 const FRAME := Color(0.17, 0.23, 0.22)
 const PANEL := Color(0.23, 0.29, 0.28)
 const INK := Color(0.9, 0.92, 0.87)
