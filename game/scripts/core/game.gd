@@ -49,6 +49,7 @@ func _ready() -> void:
 	# back to (a root-window theme doesn't reach Controls under a CanvasLayer); riso screens still set their own.
 	ThemeDB.get_default_theme().merge_with(UiTheme.make())
 	load_meta()
+	_apply_settings()
 	get_tree().auto_accept_quit = false  # closing the window bookmarks first (_notification)
 
 
@@ -215,6 +216,24 @@ static func _fresh_meta() -> Dictionary:
 	return {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": [],
 		"levels": {}, "pack": {}, "materials": {}, "benched": [], "bookmark": {}, "restore": {}, "tracked": [], "trips": 0,
 		"bonds": {}, "talks_heard": [], "settings": {}}
+
+
+## Saves one option (the options screen) and applies it.
+func set_setting(key: String, value: Variant) -> void:
+	var st: Dictionary = meta.get("settings", {})
+	st[key] = value
+	meta["settings"] = st
+	save_meta()
+	_apply_settings()
+
+
+func _apply_settings() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var full := bool(meta.get("settings", {}).get("fullscreen", false))
+	var want := DisplayServer.WINDOW_MODE_FULLSCREEN if full else DisplayServer.WINDOW_MODE_WINDOWED
+	if DisplayServer.window_get_mode() != want and (full or DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN):
+		DisplayServer.window_set_mode(want)
 
 
 func reset_meta() -> void:

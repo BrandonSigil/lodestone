@@ -676,10 +676,7 @@ func _next_layout() -> void:
 
 func set_layout(l: String) -> void:
 	_hud.layout = l
-	var st: Dictionary = Game.meta.get("settings", {})
-	st["action_ui"] = l
-	Game.meta["settings"] = st
-	Game.save_meta()
+	Game.set_setting("action_ui", l)
 	_show_layout()
 	if selected != null and _menu_shown():
 		_hud.clear()

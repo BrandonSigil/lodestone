@@ -1039,6 +1039,7 @@ func _sync_party_hp() -> void:
 
 
 func _new_dialog(text: String, top := false) -> VBoxContainer:
+	var fresh := _dialog == null  # a menu opening animates; one rebuilt in place does not
 	if _dialog:
 		_dialog.queue_free()
 	_dialog = PanelContainer.new()
@@ -1057,6 +1058,8 @@ func _new_dialog(text: String, top := false) -> VBoxContainer:
 	_dialog.position = Vector2(r.get_center().x - 220, r.position.y + 16 if top else r.end.y - 230)
 	if text == "":
 		l.queue_free()
+	if fresh:
+		UiTheme.pop_in.call_deferred(_dialog)
 	return box
 
 
@@ -1072,7 +1075,7 @@ func _dialog_button(box: VBoxContainer, text: String, cb: Callable) -> void:
 
 func _close_dialog() -> void:
 	if _dialog:
-		_dialog.queue_free()
+		UiTheme.pop_out(_dialog)
 		_dialog = null
 
 
@@ -1377,6 +1380,7 @@ func _show_sheet(pages: Array, at := 0, states: Array = []) -> void:
 	var k := minf(1.0, minf(r.size.x / CharacterSheet.SIZE.x, r.size.y / CharacterSheet.SIZE.y) * 0.96)
 	sheet.scale = Vector2.ONE * k
 	sheet.position = r.get_center() - CharacterSheet.SIZE * k * 0.5
+	UiTheme.fade_in(sheet)
 	sheet.closed.connect(func() -> void:
 		_close_sheet()
 		mode = M.WALK)
@@ -1549,5 +1553,7 @@ func _open_menu(which: String) -> void:
 		AdventureMenu.pack(box, changed, close)
 	elif which == "restore":
 		AdventureMenu.restore_list(box, changed, close)
+	elif which == "options":
+		AdventureMenu.options(box, changed, _open_menu.bind("lodestone"))
 	else:
-		AdventureMenu.lodestone(box, changed, close, map.map_name != "village", _open_menu.bind("restore"))
+		AdventureMenu.lodestone(box, changed, close, map.map_name != "village", _open_menu.bind("restore"), _open_menu.bind("options"))

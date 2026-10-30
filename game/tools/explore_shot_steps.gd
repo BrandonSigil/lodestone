@@ -232,6 +232,12 @@ func run(s: Node, f: int, step: String) -> bool:
 				s._apply_map_fx(["exit"], {})
 				s._party_editor()
 			return f == 30
+		"options":
+			# The options screen off the Lodestone menu (shared menu theme, 2026-10-30).
+			if f == 5:
+				s.get_node("/root/Game").save_enabled = false  # a shot never writes the real save
+				s._open_menu("options")
+			return f == 30
 		"lodestone":
 			# The Lodestone menu with a skill rank waiting for the dog (rolled stats show in each line).
 			if f == 5:

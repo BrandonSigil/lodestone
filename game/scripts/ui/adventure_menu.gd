@@ -12,7 +12,7 @@ const FULL_CELL := 46.0  ## smaller when FOUND and the courier's bag share the b
 ## [USER] 2026-10-28: the Lodestone opens from its bottom-bar button at any time: skill ranks waiting, head back
 ## to town ([USER] 2026-10-29: stats roll on their own each level; every 4 levels a rank for one of the
 ## character's own skills). home: false hides GO HOME (in town already, or mid-fight).
-static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, home := true, open_list := Callable()) -> void:
+static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, home := true, open_list := Callable(), open_options := Callable()) -> void:
 	_label(box, Txt.t("UI_LODESTONE"), 20)
 	for m in Game.run.members:
 		var d: CharacterDef = m.def
@@ -72,6 +72,8 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 			Game.wake_in_town(false))
 	if open_list.is_valid():
 		_button(box, Txt.t("UI_LS_RESTORE"), open_list)
+	if open_options.is_valid():
+		_button(box, Txt.t("UI_OPTIONS"), open_options)
 	_button(box, Txt.t("UI_LS_SAVE_QUIT"), func() -> void:
 		# [USER] omr-4, omr-11: put a bookmark in; Continue on the launch menu comes back right here
 		var tree := Engine.get_main_loop() as SceneTree
@@ -218,6 +220,32 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	if not run.lines.is_empty():
 		_label(box, run.lines[run.lines.size() - 1], 12)
 	_button(box, Txt.t("UI_CLOSE_MENU"), close)
+
+
+## Options ([USER] 2026-10-30 listed them among the menus that share one look): the fight menu's layout and the
+## window. Each pick saves at once (Game.meta.settings); back returns to the Lodestone menu.
+static func options(box: VBoxContainer, changed: Callable, back: Callable) -> void:
+	_label(box, Txt.t("UI_OPTIONS"), 20)
+	_label(box, Txt.t("UI_OPT_FIGHT_MENU"), 15)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	for l: String in ActionHud.LAYOUTS:
+		var b := Button.new()
+		b.text = Txt.t("UI_LAYOUT_" + l.to_upper())
+		b.toggle_mode = true
+		b.button_pressed = Battle.action_layout() == l
+		b.custom_minimum_size = Vector2(108, 30)
+		b.pressed.connect(func() -> void:
+			Game.set_setting("action_ui", l)
+			changed.call())
+		row.add_child(b)
+	box.add_child(row)
+	_label(box, Txt.t("UI_OPT_WINDOW"), 15)
+	var full := bool(Game.meta.get("settings", {}).get("fullscreen", false))
+	_button(box, Txt.t("UI_OPT_WINDOWED") if full else Txt.t("UI_OPT_FULL"), func() -> void:
+		Game.set_setting("fullscreen", not full)
+		changed.call())
+	_button(box, Txt.t("UI_OPT_BACK"), back)
 
 
 ## The party's bonds (BondRules): each pair with points, its level, and a TALK per level reached. Talks happen at

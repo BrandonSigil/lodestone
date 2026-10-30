@@ -587,11 +587,14 @@ func _open_menu(which: String) -> void:
 		AdventureMenu.pack(box, changed, close)
 	elif which == "restore":
 		AdventureMenu.restore_list(box, changed, close)
+	elif which == "options":
+		AdventureMenu.options(box, changed, _open_menu.bind("lodestone"))
 	else:
-		AdventureMenu.lodestone(box, changed, close, true, _open_menu.bind("restore"))
+		AdventureMenu.lodestone(box, changed, close, true, _open_menu.bind("restore"), _open_menu.bind("options"))
 
 
 func _new_dialog(text: String) -> VBoxContainer:
+	var fresh := _dialog == null  # a menu opening animates; one rebuilt in place does not
 	if _dialog:
 		_dialog.queue_free()
 	_dialog = PanelContainer.new()
@@ -609,6 +612,8 @@ func _new_dialog(text: String) -> VBoxContainer:
 	_ui.add_child(_dialog)
 	var r := hud.center_rect()
 	_dialog.position = Vector2(r.get_center().x - 230, r.position.y + 24)
+	if fresh:
+		UiTheme.pop_in.call_deferred(_dialog)
 	return box
 
 
@@ -624,7 +629,7 @@ func _button(box: VBoxContainer, text: String, cb: Callable) -> void:
 
 func _close_dialog() -> void:
 	if _dialog:
-		_dialog.queue_free()
+		UiTheme.pop_out(_dialog)
 		_dialog = null
 	_busy = false
 	_refresh_hud()

@@ -12,13 +12,13 @@ signal taken(index: int)  ## TAKE on page index
 signal closed
 
 const SIZE := Vector2(720, 430)
-const GREEN := Color(0.11, 0.2, 0.18)  ## the frame's deep green
-const GREEN_LIGHT := Color(0.2, 0.31, 0.28)
-const PARCHMENT := Color(0.93, 0.88, 0.74)
-const PARCHMENT_DARK := Color(0.84, 0.77, 0.6)
-const INK := Color(0.2, 0.18, 0.16)
-const RULE := Color(0.93, 0.88, 0.74, 0.9)
-const DIAMOND := Color(0.45, 0.68, 0.95)
+const GREEN := UiTheme.GREEN  ## the palette lives in UiTheme now (one look for every menu)
+const GREEN_LIGHT := UiTheme.GREEN_LIGHT
+const PARCHMENT := UiTheme.PARCHMENT
+const PARCHMENT_DARK := UiTheme.PARCHMENT_DARK
+const INK := UiTheme.INK
+const RULE := UiTheme.RULE
+const DIAMOND := UiTheme.DIAMOND
 const PORTRAIT_DIR := "res://art/source/portraits/"
 const PORTRAIT := Rect2(24, 64, 200, 210)  ## the portrait slot, inside the sheet
 const SPLIT := 244.0  ## where the right column starts
@@ -95,17 +95,7 @@ func _button(text: String, r: Rect2, cb: Callable) -> Button:
 	b.position = r.position
 	b.size = r.size
 	b.focus_mode = Control.FOCUS_NONE
-	b.add_theme_font_override("font", _font)
-	b.add_theme_font_size_override("font_size", 15)
-	for st in ["normal", "hover", "pressed", "disabled"]:
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = {"normal": GREEN_LIGHT, "hover": GREEN_LIGHT.lightened(0.15), "pressed": GREEN, "disabled": GREEN.darkened(0.2)}[st]
-		sb.border_color = RULE
-		sb.set_border_width_all(2)
-		sb.set_corner_radius_all(4)
-		b.add_theme_stylebox_override(st, sb)
-	b.add_theme_color_override("font_color", PARCHMENT)
-	b.add_theme_color_override("font_disabled_color", PARCHMENT.darkened(0.35))
+	b.add_theme_font_size_override("font_size", 15)  # the look is UiTheme's button
 	b.pressed.connect(cb)
 	add_child(b)
 	return b
@@ -118,11 +108,7 @@ func _draw() -> void:
 		return
 	var s: Dictionary = pages[page]
 	# The frame: deep green, a double parchment rule, blue diamonds at the corners.
-	draw_rect(Rect2(Vector2.ZERO, SIZE), GREEN)
-	draw_rect(Rect2(Vector2(6, 6), SIZE - Vector2(12, 12)), RULE, false, 2.0)
-	draw_rect(Rect2(Vector2(11, 11), SIZE - Vector2(22, 22)), RULE, false, 1.0)
-	for c in [Vector2(8, 8), Vector2(SIZE.x - 8, 8), Vector2(8, SIZE.y - 8), SIZE - Vector2(8, 8)]:
-		_diamond(c, 7.0)
+	UiTheme.frame(self, Rect2(Vector2.ZERO, SIZE))
 	# Left: the name plate, the portrait, the stats.
 	_plate(Rect2(24, 22, 200, 34), GREEN_LIGHT)
 	_text(Txt.t(s.name), Vector2(124, 46), 20, PARCHMENT, HORIZONTAL_ALIGNMENT_CENTER, 196)
@@ -184,16 +170,11 @@ func _draw() -> void:
 
 
 func _plate(r: Rect2, col: Color) -> void:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = col
-	sb.border_color = Color(INK, 0.35)
-	sb.set_border_width_all(1)
-	sb.set_corner_radius_all(6)
-	draw_style_box(sb, r)
+	UiTheme.plate(self, r, col)
 
 
 func _diamond(c: Vector2, r: float) -> void:
-	draw_colored_polygon(PackedVector2Array([c + Vector2(0, -r), c + Vector2(r, 0), c + Vector2(0, r), c + Vector2(-r, 0)]), DIAMOND)
+	UiTheme.diamond(self, c, r)
 
 
 func _text(t: String, at: Vector2, fs: int, col: Color, align := HORIZONTAL_ALIGNMENT_LEFT, width := -1) -> void:
