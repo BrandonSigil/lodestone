@@ -1,0 +1,114 @@
+{
+ "counters": true,
+ "enemies": [
+  {
+   "id": "bandit",
+   "x": 19,
+   "y": 7
+  },
+  {
+   "id": "bandit",
+   "x": 19,
+   "y": 9
+  },
+  {
+   "id": "bandit_archer",
+   "x": 19,
+   "y": 2
+  },
+  {
+   "id": "wolf",
+   "x": 18,
+   "y": 11
+  },
+  {
+   "id": "bandit",
+   "x": 20,
+   "y": 8
+  }
+ ],
+ "enemy_mods": {
+  "attack": 0,
+  "damage": 0,
+  "defense": 0,
+  "hp_pct": 100,
+  "move": 0
+ },
+ "extra_enemies": 0,
+ "map": {
+  "w": 21,
+  "h": 18,
+  "terrain": [
+   "gggggggggrrrggggggggg",
+   "gggggggfgrrrgffgggggg",
+   "gggggggfgrrrgffgggggg",
+   "gggggggggrrrggggggggg",
+   "gggggrgggrrrgggrggggg",
+   "ggggggggggggggggggggg",
+   "gggggggggrrgggggggggg",
+   "ggggffggggggggggggggg",
+   "ddddffdddddddrddddddd",
+   "dddddddrddddddffddddd",
+   "ggggggggggggggffggggg",
+   "ggggggggggrrggggggggg",
+   "ggggggggggggggggggggg",
+   "gggggrgggrrrgggrggggg",
+   "gggggggggrrrggggggggg",
+   "ggggggffgrrrggffggggg",
+   "ggggggffgrrrggffggggg",
+   "gggggggggrrrggggggggg"
+  ],
+  "heights": [
+   "000000000333000000110",
+   "000000000333000001220",
+   "000000000333000001220",
+   "000000000333000000110",
+   "000002000333000200000",
+   "000000000000000000000",
+   "000000000220000000000",
+   "000000000000000000000",
+   "000000000000020000000",
+   "000000020000000000000",
+   "000000000000000000000",
+   "000000000022000000000",
+   "000000000000000000000",
+   "011002000333000200000",
+   "022100000333000000000",
+   "022100000333000000000",
+   "011000000333000000000",
+   "000000000333000000000"
+  ]
+ },
+ "mercy": true,
+ "name": "arena_c",
+ "party": [
+  {
+   "id": "lead",
+   "x": 1,
+   "y": 8
+  },
+  {
+   "id": "stardrop",
+   "x": 0,
+   "y": 9
+  },
+  {
+   "id": "hunter",
+   "x": 1,
+   "y": 10
+  }
+ ],
+ "party_mods": {
+  "attack": 0,
+  "damage": 0,
+  "defense": 0,
+  "hp_pct": 100,
+  "move": 0
+ },
+ "seed": 1,
+ "strangeness": 0.0,
+ "supplies": {
+  "food": 10,
+  "medicine": 3
+ }
+}
