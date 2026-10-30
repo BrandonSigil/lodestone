@@ -1152,24 +1152,16 @@ func _kit_wall(c: Vector2i) -> bool:
 
 
 ## A back wall from the map's wall kit ([USER] 2026-10-30, docs/art/references/interior-walls-target.webp): a
-## thin wall on the cell's edge toward the room, not a block. The piece is a placed prop's sprite (wall_window,
-## wall_door...) or else wall_plain, wall_corner where two walls meet; the art is drawn for a wall facing the lit
-## side and mirrored for the shade side. Until the kit's art lands, a graybox plane PIECE_HIGH tall.
-func _wall_piece(c: Vector2i, sprite: String) -> void:
+## thin wall on the cell's edge toward the room, PIECE_HIGH tall, not a block. The kit's flat textures wrap onto
+## it like a cliff's side (one square = BattleArt.SIDE_TILES cells by SIDE_LEVELS levels): the bottom square is
+## the cell's piece (plain; a window or doorway placed as a prop spans its cell and the next along the wall), plain
+## above it, the kit's top along the top edge, a foot strip if the kit has one, and a corner post where two walls
+## meet. Until the kit's art lands, a graybox plane with a dark window or doorway.
+func _wall_piece(c: Vector2i) -> void:
 	var faces: Array = backs.get(c, [])
-	var kind := sprite.substr(sprite.rfind("/") + 1) if sprite != "" else ("wall_corner" if faces.size() > 1 else "wall_plain")
 	var col := Color(0.45, 0.46, 0.52) if fog_on and fog.get(c, 2) == 1 else Color.WHITE
 	var h := _surf(c)
-	var tex := BattleArt.texture(kind, false, wall_kit)
-	if tex != null:
-		var r := _prop_rect(c, {"foot": Vector2i.ONE, "tall": 0.0}, tex)
-		if faces.size() == 1 and faces[0] == front_dir(true):
-			_ci.draw_set_transform(Vector2(r.get_center().x * 2.0, 0.0), 0.0, Vector2(-1, 1))
-			_ci.draw_texture_rect(tex, r, false, col)
-			_ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-		else:
-			_ci.draw_texture_rect(tex, r, false, col)
-		return
+	var plain := BattleArt.texture("wall_plain", true, wall_kit)
 	for d: Vector2i in faces:
 		var lo := Vector2(c)
 		var hi := lo + Vector2.ONE
@@ -1181,19 +1173,70 @@ func _wall_piece(c: Vector2i, sprite: String) -> void:
 			lo.y = hi.y - PIECE_THIN
 		elif d.y < 0:
 			hi.y = lo.y + PIECE_THIN
+		var mod := Color(_face_light(Vector2(d)) * col.r, _face_light(Vector2(d)) * col.g, _face_light(Vector2(d)) * col.b, 1.0)
 		_box(lo, hi, h, h + PIECE_HIGH, Color(WALL_SIDE.lightened(0.25), 1.0) * col)
 		var e: Array = _side(lo, hi, d)
-		var hole := Rect2()  # (along the face 0..1, up from the floor in levels)
-		if kind == "wall_window":
-			hole = Rect2(0.3, 2.6, 0.4, 1.6)
-		elif kind == "wall_door":
-			hole = Rect2(0.25, 0.0, 0.5, 4.0)
-		if hole.size != Vector2.ZERO:
-			var a: Vector2 = e[0].lerp(e[1], hole.position.x)
-			var b: Vector2 = e[0].lerp(e[1], hole.end.x)
-			_ci.draw_colored_polygon(PackedVector2Array([iso(a.x, a.y, h + hole.end.y), iso(b.x, b.y, h + hole.end.y),
-				iso(b.x, b.y, h + hole.position.y), iso(a.x, a.y, h + hole.position.y)]), Color(0.12, 0.11, 0.1) * col)
+		var along := Vector2i(1, 0) if is_equal_approx(e[0].y, e[1].y) else Vector2i(0, 1)
+		var piece := _piece_at(c, along)
+		if plain == null:
+			if piece.kind != "":
+				var hole: Rect2 = Rect2(0.3, 2.6, 0.4, 1.6) if piece.kind == "wall_window" else Rect2(0.25, 0.0, 0.5, 4.0)
+				var u0: float = hole.position.x * 2.0 - float(piece.half)
+				var u1: float = hole.end.x * 2.0 - float(piece.half)
+				if u1 > 0.0 and u0 < 1.0:
+					var pa: Vector2 = e[0].lerp(e[1], clampf(u0, 0.0, 1.0))
+					var pb: Vector2 = e[0].lerp(e[1], clampf(u1, 0.0, 1.0))
+					_ci.draw_colored_polygon(PackedVector2Array([iso(pa.x, pa.y, h + hole.end.y), iso(pb.x, pb.y, h + hole.end.y),
+						iso(pb.x, pb.y, h + hole.position.y), iso(pa.x, pa.y, h + hole.position.y)]), Color(0.12, 0.11, 0.1) * col)
+			continue
+		var top := h + BattleArt.SIDE_LEVELS
+		var tex: Texture2D = BattleArt.texture(String(piece.kind), true, wall_kit) if piece.kind != "" else null
+		if tex != null:
+			# a window or doorway: its own square, anchored on the cell it's placed on
+			var ua: float = 0.5 * float(piece.half)
+			var pts := PackedVector2Array([iso(e[0].x, e[0].y, top), iso(e[1].x, e[1].y, top), iso(e[1].x, e[1].y, h), iso(e[0].x, e[0].y, h)])
+			var uvs := PackedVector2Array([Vector2(ua, 0.0), Vector2(ua + 0.5, 0.0), Vector2(ua + 0.5, 1.0), Vector2(ua, 1.0)])
+			_ci.draw_polygon(pts, PackedColorArray([mod, mod, mod, mod]), uvs, tex)
+		else:
+			var worn := BattleArt.texture("wall_worn" if wall_kit == "village_in" else "wall_cracked", true, wall_kit)
+			_face(e[0], e[1], top, h, Color.WHITE, 0, false, false, worn if worn != null and _hash(c) % 5 == 0 else plain, mod)
+		_face(e[0], e[1], h + PIECE_HIGH, top, Color.WHITE, 0, false, false, plain, mod)
+		var foot := BattleArt.texture("wall_foot", true, wall_kit)
+		if foot != null:
+			_face(e[0], e[1], h + 0.6, h, Color.WHITE, 0, false, false, foot, mod)
+		var cap := BattleArt.texture("wall_top" if wall_kit == "village_in" else "wall_cap", true, wall_kit)
+		if cap != null:
+			var z := h + PIECE_HIGH
+			var q := PackedVector2Array([iso(lo.x, lo.y, z), iso(hi.x, lo.y, z), iso(hi.x, hi.y, z), iso(lo.x, hi.y, z)])
+			var k := Vector2(lo) / BattleArt.SIDE_TILES
+			var w := (Vector2(hi) - Vector2(lo)) / BattleArt.SIDE_TILES
+			_ci.draw_polygon(q, PackedColorArray([col, col, col, col]), PackedVector2Array([k, k + Vector2(w.x, 0), k + w, k + Vector2(0, w.y)]), cap)
+	if faces.size() > 1:
+		# the post where the two back walls meet
+		var post := BattleArt.texture("wall_timber" if wall_kit == "village_in" else "wall_corner", true, wall_kit)
+		var at := Vector2(c) + Vector2.ONE - Vector2(PIECE_THIN, PIECE_THIN) * 1.6
+		var plo := at
+		var phi := Vector2(c) + Vector2.ONE
+		if post == null:
+			_box(plo, phi, h, h + PIECE_HIGH + 0.3, Color(WALL_SIDE, 1.0) * col)
+		else:
+			for d2: Vector2i in [front_dir(false), front_dir(true)]:
+				var e2: Array = _side(plo, phi, d2)
+				_face(e2[0], e2[1], h + PIECE_HIGH + 0.3, h, Color.WHITE, 0, false, false, post, Color(_face_light(Vector2(d2)) * col.r, _face_light(Vector2(d2)) * col.g, _face_light(Vector2(d2)) * col.b, 1.0))
 
+
+## The kit piece a back-wall cell shows: a window or doorway prop on it ("half" 0), or on the cell before it along
+## the wall, whose two-cell piece runs on to it ("half" 1); else plain ("kind" "").
+func _piece_at(c: Vector2i, along: Vector2i) -> Dictionary:
+	for k in 2:
+		var cell := c - along * k
+		var a := grid.prop_anchor(cell)
+		if a == cell:
+			var stem := String(grid.props[a].sprite)
+			stem = stem.substr(stem.rfind("/") + 1)
+			if stem == "wall_window" or stem == "wall_door":
+				return {"kind": stem, "half": k}
+	return {"kind": "", "half": 0}
 
 func _walkable(c: Vector2i) -> bool:
 	return grid.in_bounds(c) and grid.step_cost(c) < CombatGrid.BLOCKED
@@ -2063,8 +2106,7 @@ func _draw_props(c: Vector2i) -> void:
 	var top_tex := BattleArt.top(t, zone)
 	var mid := cell_top(c)
 	if _kit_wall(c):
-		var a := grid.prop_anchor(c)
-		_wall_piece(c, String(grid.props[a].sprite) if a == c else "")
+		_wall_piece(c)
 		return
 	if grid.prop_anchor(c) != CombatGrid.NONE_CELL:
 		_placed(c)
