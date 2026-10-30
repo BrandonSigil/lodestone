@@ -333,6 +333,37 @@ func run(s: Node, f: int, step: String) -> bool:
 			if f == 8:
 				s.walk([Vector2i(25, 11), Vector2i(24, 11), Vector2i(24, 10)] as Array[Vector2i])
 			return f == 40
+		_ when step.begins_with("cards"):
+			# The fight's hand of cards ([USER] 2026-10-30) in a real fight, frame and party on screen: the hero with the
+			# book's spells and the dog along (in memory only).
+			# cards:<hand main|skills|items>:<card to point at, -1 none>:<tip mode delay|corner>
+			var parts := step.split(":")
+			if f == 3:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false  # a shot never writes the real save
+				game.take_weapon("book")
+				game.meta.flags.append("met_dog")
+				game.refresh_party()
+				s._rebuild_party()
+			if f == 5:
+				s.grid.set_terrain(Vector2i(26, 18), CombatGrid.T.ROAD)
+				_thing(s, "gate").done = true
+				_put(s, Vector2i(25, 13))
+				s.start_fight(s.groups[0], "party")
+			if f == 15:
+				s._begin_battle()
+			if f == 25:
+				var b: Battle = s.battle
+				b._hud.tip_mode = parts[3] if parts.size() > 3 else "delay"
+				b._select(s.party[0])
+			if f == 28 and parts.size() > 1 and parts[1] != "main":
+				s.battle._hud._open(parts[1])
+			if f == 31 and parts.size() > 2 and int(parts[2]) >= 0 and int(parts[2]) < s.battle._hud._slots.size():
+				var slot: ActionSlot = s.battle._hud._slots[int(parts[2])]
+				slot.grab_focus()
+				if parts.size() > 3 and parts[3] == "corner":
+					slot.info_asked.emit()  # the pointer on the card's info corner
+			return f == 150  # past the hover delay at any frame rate
 		"deploy", "fight":
 			if f == 5:
 				s.grid.set_terrain(Vector2i(26, 18), CombatGrid.T.ROAD)

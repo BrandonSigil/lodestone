@@ -136,11 +136,15 @@ func _build_ui() -> void:
 	_auto.add_theme_font_size_override("font_size", 12)
 	_auto.toggled.connect(_on_auto_toggled)
 	_ui.add_child(_auto)
+	var hand_layer := CanvasLayer.new()  # under the bottom frame (layer 2): the cards peek over it and rise on a point
+	hand_layer.layer = 1
+	add_child(hand_layer)
 	_hud = ActionHud.new()
 	_hud.layout = action_layout()
+	_hud.tip_mode = String(Game.meta.get("settings", {}).get("tip_mode", "delay"))
 	_hud.on_hover = preview_reach
 	_hud.on_unhover = func() -> void: board.reach = {}
-	_ui.add_child(_hud)
+	hand_layer.add_child(_hud)
 	_hud.visible = false
 	_layout_btn = Button.new()  # testing: switch the action layout ([USER] 2026-10-30, three to pick from)
 	_layout_btn.custom_minimum_size = Vector2(AUTO_SIZE.x, AUTO_SIZE.y)
@@ -623,7 +627,7 @@ func _open_menu() -> void:
 	if _hud.layout != "list":
 		_hide_menu()
 		_hud.show_for(u, entries, board.cell_screen_pos(u.cell), _rect if _rect.has_area() else get_viewport_rect())
-		_banner.visible = _hud.layout == "ring"  # the bar and the hand sit where the banner does
+		_banner.visible = false  # the hand sits where the banner does
 		return
 	for e in entries:
 		_menu_item(String(e.text), bool(e.enabled), e.cb, e.get("ability"))
@@ -665,8 +669,8 @@ func _entries(u: CombatUnit) -> Array:
 
 ## The action layout from the settings ([USER] 2026-10-30: three versions; the losers go once Brandon picks).
 static func action_layout() -> String:
-	var l := String(Game.meta.get("settings", {}).get("action_ui", "list"))
-	return l if l in ActionHud.LAYOUTS else "list"
+	var l := String(Game.meta.get("settings", {}).get("action_ui", "cards"))
+	return l if l in ActionHud.LAYOUTS else "cards"
 
 
 func _next_layout() -> void:
@@ -912,7 +916,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_ESCAPE:
 			_back()
 		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_0:
-			if _hud.visible and state == S.MENU:  # the slot keys of the bar, ring and hand
+			if _hud.visible and state == S.MENU:  # the keys of the hand
 				_hud.press_key((event.keycode - KEY_1) if event.keycode != KEY_0 else 9)
 		KEY_D:
 			show_danger = not show_danger

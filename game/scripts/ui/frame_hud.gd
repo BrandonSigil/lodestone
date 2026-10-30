@@ -46,7 +46,7 @@ signal member_pressed(id: String)  ## a party slot with an "id" was clicked
 
 
 func _init() -> void:
-	layer = 1
+	layer = 2  # over the fight's hand of cards (layer 1), which rises from behind the frame
 	root = Control.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE

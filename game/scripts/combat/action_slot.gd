@@ -1,13 +1,21 @@
 class_name ActionSlot
 extends Button
-## One fight action as an icon (the action bar, the ring) or a card (the hand): the art runner's icon when there is
-## one (ActionInfo.icon), else a graybox tile coloured by what it does with a short glyph. Greyed when it can't be
-## used, with a sweep for a charge on its way back. `entry` is Battle's: {text, enabled, cb, ability, kind, key}.
+## One fight action as a card in the hand (ActionHud): the art runner's icon when there is one (ActionInfo.icon_for),
+## else a graybox tile coloured by what it does with a short glyph; the name, the cost and the caveman line. Greyed
+## when it can't be used, with a sweep for a charge on its way back. `entry` is Battle's: {text, enabled, cb, ability,
+## kind, key}. With info_corner, pointing at the card's top-right corner asks for its details (info_asked).
+
+signal info_asked
+
+const INFO := 22.0  ## the info corner's size
+## The art runner's spare icons for the plain cards (2026-10-30, approved with the sheet).
+const BASIC_ICONS := {"move": "dash", "guard": "guard", "wait": "focus", "undo": "counter", "talk": "rally"}
 
 var entry: Dictionary = {}
 var unit: CombatUnit
 var card := false  ## draw as a card from the hand: frame, icon, name, cost and the caveman line
 var lift := 0.0  ## the card rises this much while hovered
+var info_corner := false
 
 
 static func tint(e: Dictionary) -> Color:
@@ -23,6 +31,10 @@ static func tint(e: Dictionary) -> Color:
 			return Color(0.25, 0.6, 0.55)
 		"item":
 			return Color(0.6, 0.45, 0.28)
+		"group":
+			return Color(0.45, 0.35, 0.6)
+		"back":
+			return Color(0.35, 0.35, 0.38)
 	if a == null:
 		return Color(0.5, 0.5, 0.5)
 	match a.element:
@@ -53,7 +65,7 @@ static func glyph(e: Dictionary) -> String:
 ## Draws the icon for entry e into rect r on canvas item ci.
 static func paint(ci: CanvasItem, r: Rect2, e: Dictionary, u: CombatUnit, hot: bool) -> void:
 	var a: Ability = e.get("ability")
-	var tex := ActionInfo.icon_for(a) if a != null else null
+	var tex := ActionInfo.icon_for(a) if a != null else ActionInfo.icon(String(e.get("icon", BASIC_ICONS.get(String(e.kind), ""))))
 	if tex != null:
 		ci.draw_rect(r, Color(0.13, 0.13, 0.15))  # a backing, so the icon's clear edges read on any board
 		ci.draw_texture_rect(tex, r.grow(-2), false)
@@ -98,6 +110,16 @@ func _ready() -> void:
 	focus_exited.connect(queue_redraw)
 
 
+## The info corner, in the card's own space (raised with it).
+func info_rect() -> Rect2:
+	return Rect2(Vector2(size.x - INFO - 4, 4 - lift), Vector2(INFO, INFO))
+
+
+func _gui_input(event: InputEvent) -> void:
+	if info_corner and event is InputEventMouseMotion and info_rect().grow(4).has_point(event.position):
+		info_asked.emit()
+
+
 func _draw() -> void:
 	var hot := is_hovered() or has_focus()
 	if not card:
@@ -124,5 +146,10 @@ func _draw() -> void:
 		var desc := "DESC_" + a.id.to_upper()
 		if Txt.has(desc):
 			draw_multiline_string(font, Vector2(r.position.x + 8, y + 32), Txt.t(desc), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, 10, 4, Color(0.25, 0.18, 0.1))
+	if info_corner:
+		var cr := info_rect()
+		draw_circle(cr.get_center(), INFO * 0.5, UiTheme.GREEN)
+		draw_arc(cr.get_center(), INFO * 0.5, 0, TAU, 16, UiTheme.RULE, 1.5)
+		draw_string(font, Vector2(cr.position.x, cr.get_center().y + 5), "i", HORIZONTAL_ALIGNMENT_CENTER, INFO, 14, UiTheme.PARCHMENT)
 	if not bool(entry.enabled):
 		draw_rect(r, Color(0, 0, 0, 0.35))

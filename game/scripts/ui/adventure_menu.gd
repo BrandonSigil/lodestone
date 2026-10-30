@@ -240,6 +240,21 @@ static func options(box: VBoxContainer, changed: Callable, back: Callable) -> vo
 			changed.call())
 		row.add_child(b)
 	box.add_child(row)
+	_label(box, Txt.t("UI_TIP_MODE"), 15)
+	var tips := HBoxContainer.new()
+	tips.add_theme_constant_override("separation", 6)
+	var mode := String(Game.meta.get("settings", {}).get("tip_mode", "delay"))
+	for m: String in ActionHud.TIP_MODES:
+		var b := Button.new()
+		b.text = Txt.t("UI_TIP_" + m.to_upper())
+		b.toggle_mode = true
+		b.button_pressed = mode == m
+		b.custom_minimum_size = Vector2(160, 30)
+		b.pressed.connect(func() -> void:
+			Game.set_setting("tip_mode", m)
+			changed.call())
+		tips.add_child(b)
+	box.add_child(tips)
 	_label(box, Txt.t("UI_OPT_WINDOW"), 15)
 	var full := bool(Game.meta.get("settings", {}).get("fullscreen", false))
 	_button(box, Txt.t("UI_OPT_WINDOWED") if full else Txt.t("UI_OPT_FULL"), func() -> void:

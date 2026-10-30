@@ -82,6 +82,8 @@ static var _icons := {}  ## id -> Texture2D or null, loaded once (loading mid-dr
 
 ## The icon's file when the art runner's sheet has one (named by ability or item id), else null: graybox.
 static func icon(id: String) -> Texture2D:
+	if id == "":
+		return null
 	if not _icons.has(id):
 		var p := ICON_DIR + id + ".png"
 		_icons[id] = load(p) if ResourceLoader.exists(p) else null

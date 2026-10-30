@@ -1,6 +1,6 @@
 extends SceneTree
 ## Screenshots the fight's action layouts ([USER] 2026-10-30, three to pick from) for the desk card.
-## Args after "--": <png path> <layout: list|bar|ring|cards> [slot to hover, -1 none] [map, default highland]
+## Args after "--": <png path> <layout: cards|list> [card to point at, -1 none] [map, default highland]. For the real frame, use explore_shot.gd cards:...
 ## Run it windowed through tools/godot.sh. Never writes the save.
 
 var _frames := 0
