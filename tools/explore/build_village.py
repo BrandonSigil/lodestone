@@ -349,7 +349,7 @@ V.thing(id="stream_fish", kind="fish", event="fish_dock", cell=[11, 30])  # a fi
 V.start = [hero_door]
 if "--dump" in sys.argv:
     dump(V)
-check_village(V)
+check_village(V, wood_lost=True)  # pockets behind buildings and across the stream grow woods (playtest sweep 2026-10-30)
 V.save(fog=False)  # the whole town is in view: fog of war is for the bigger maps
 
 
@@ -395,9 +395,8 @@ H.save()
 # The quiet house: a front room and an inner room behind a wall, the book on a shelf at the back.
 Q = interior("house_ne", 11, 9)
 room(Q, 0, 0, 10, 8)
-Q.fill(6, 0, 6, 8, "r", 3)  # inner wall between the front room (x < 6) and the inner room (x > 6)
-Q.put(6, 8, "r", 2)
-Q.put(6, 6, "s", 1)  # gap into the inner room, near the front
+Q.fill(6, 0, 6, 7, "r", 3)  # inner wall between the front room (x < 6) and the inner room (x > 6), one run (a fence)
+Q.put(6, 8, "s", 1)  # the way into the inner room, along the front (a shorter piece in front would draw as a block)
 Q.put(3, 8, "s", 1)  # front door
 window(Q, 3, 0)
 window(Q, 0, 5)

@@ -121,10 +121,11 @@ def _prop_cells(m):
     return cells
 
 
-def check_village(m, decks=None):
+def check_village(m, decks=None, wood_lost=False):
     """The rules the game walks by, checked as the map is built: every walkable cell reachable from the
     start on jump 1, every thing usable, buildings on flat clear ground, and stair flights that read the way
-    they climb (MapDress.stair_run picks the axis with the most stairs and height change)."""
+    they climb (the stair kit's climb rule, docs/design/stairs.md). `wood_lost`: grass nobody can reach (a pocket
+    behind a building, a bank across the stream) grows woods instead of reading as a place."""
     problems = []
     props = _prop_cells(m)
     W, H = m.w, m.h
@@ -180,6 +181,12 @@ def check_village(m, decks=None):
         problems.append("start %s is not walkable" % (start,))
     everywhere = reach(start, set())
     lost = [(x, y) for y in range(H) for x in range(W) if passable((x, y)) and (x, y) not in everywhere]
+    if wood_lost:
+        held = {tuple(t["cell"]) for t in m.things}
+        for x, y in lost:
+            if m.terrain[y][x] == "g" and (x, y) not in held:
+                m.put(x, y, "f")
+        lost = [(x, y) for y in range(H) for x in range(W) if passable((x, y)) and (x, y) not in everywhere]
     if lost:  # since woods block walking (3aa981f) a pocket behind a building can be cut off; a note, not a fault
         print("  NOTE %d walkable cells can't be reached: %s" % (len(lost), lost[:12]))
     thing_cells = {tuple(t["cell"]) for t in m.things} - {start}

@@ -477,6 +477,13 @@ for t in P.things:
     if t["id"] == "den_mouth":
         t["at"] = W.start[0]
 
+# The strip across the stream from the exit, on the map's edge: water is WALK_OUT in the game, so nobody walks
+# there. It grows woods instead of reading as a place (playtest sweep, 2026-10-30).
+for y in range(23, 31):
+    for x in range(33, 38):
+        if P.t(x, y) == "g":
+            P.put(x, y, "f")
+
 P.save(strangeness=0.1)
 W.save(walls=True)  # plain gray walls (ExploreMap.walls)
 
