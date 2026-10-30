@@ -1,0 +1,10 @@
+ASKS FOR sheet-menu-style.txt (one direction per picture, passed as picsart_sheet.py --zones)
+
+  cd tools/art && ~/.lodestone/venv/bin/python picsart_sheet.py --name menu_<dir> --prompt-file ../../art/prompts/sheet-menu-style.txt \
+      --zones "$(sed -n 's/^<dir>: //p' ../../art/prompts/sheet-menu-style-asks.txt)" --ref ../../game/art/source/ui/frame_bottom.webp \
+      --ref ../../docs/art/references/menu-label-forest.png --ref ../../docs/art/references/style-flat-forest.png --aspect 3:2 --resolution 2K --count 2 --out-dir ../../art/picsart/out/menu
+  Brandon picks a direction; the pieces are then cut into nine-slice textures (corner size measured per piece) and the slice margins go to the systems developer.
+
+green: DIRECTION A, FRAME GREEN: the bottom frame's own look carried onto every piece. Deep green mottled fill like image 1's panels; a slim pale silver and soft blue double rim; at each corner a small blue diamond stud with two little olive-green leaves. Rich and formal, for the main menu, character sheets and the world map.
+parchment: DIRECTION B, INKED PARCHMENT: light and easy to read. Warm cream parchment fill, a little mottled; a neat hand-inked double border in dark warm charcoal (#373335) like image 2 but tidier; at each corner a small curling hand-drawn flourish with one tiny blue diamond and one small olive leaf, tying it to the frame. For dialogue, tooltips and long text.
+inlay: DIRECTION C, PARCHMENT IN A GREEN FRAME: the two together. A cream parchment middle inside a slim deep-green border band edged with the pale silver line of image 1, and a small silver leaf-and-diamond ornament at each corner. Inked hand-drawn edges, not machine-perfect. One look that works for every menu.

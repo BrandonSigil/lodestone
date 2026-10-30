@@ -1,0 +1,13 @@
+LODESTONE ICON SHEET (24 small game icons on one picture; picsart_sheet.py --zones fills the list below from sheet-icons-asks.txt)
+
+Image 1 = Brandon's icon look (docs/art/references/icon-style-props.webp): soft painted objects on cream paper. Copy its finish exactly: soft flat painted fills with a little soft mottle, one lighter and one darker tone per shape, a soft slightly wobbly dark warm charcoal outline (#373335, never pure black) like a felt marker, simple chunky readable shapes, gentle warm colours. Image 2 = docs/art/references/style-flat-forest.png, the house finish; nothing here may be more detailed than it.
+
+WHAT THIS IS: inventory and skill icons for a cosy fantasy tactics game, shown small (about 48 pixels) in menus and on the battle bar. Each icon is ONE simple object or symbol, big and centred, filling most of its cell, readable as a silhouette at a glance. Seen straight on or a slight three-quarter view, like image 1's props.
+
+LAYOUT: aspect 3:2, plain flat cream paper (#eae8d6) everywhere, a grid of 6 columns and 4 rows = 24 icons, evenly spaced, each icon well separated from its neighbours by wide empty cream paper. NO grid lines, no cell borders, no boxes, no round badges or frames behind the icons, no ground, no shadows under them. Icons go left to right, top row first, in exactly this order (one icon per number, never skip or repeat one):
+[ZONE]
+
+Effects (fire, ice, light, magic) are drawn as soft flat painted shapes with the same charcoal outline, never glowing photo effects. Magic colours: moon magic soft lavender and pale silver-blue; fire warm orange and gold; frost pale icy blue; poison soft green; dark magic muted purple.
+
+Rules: no text, no letters, no numbers, no labels, no Zz, no symbols made of letters anywhere. Nothing crosses into another icon's space.
+Avoid: pixel art, 3d render, glossy, photo, neon, glow halos, lens flare, gradients, busy detail, tiny parts, thin hairline outlines, pure black, round icon frames, square tiles behind icons, drop shadows, text.
