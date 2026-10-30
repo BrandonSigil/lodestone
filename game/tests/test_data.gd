@@ -147,7 +147,10 @@ func test_archetypes_load() -> void:
 					ok(Db.abilities.has(String(r.ability)), "%s: %s is in abilities.csv" % [id, r.ability])
 					ok(Txt.has("DESC_" + String(r.ability).to_upper()), "%s: a line for %s" % [id, r.ability])
 				"trait":
-					ok([CombatRules.TRAIT_SHIELD_WALL, CombatRules.TRAIT_POISON_BLADES].has(StringName(r.ability)), "%s: %s is a combat trait" % [id, r.ability])
+					if r.built == "1":
+						ok([CombatRules.TRAIT_SHIELD_WALL, CombatRules.TRAIT_POISON_BLADES].has(StringName(r.ability)), "%s: %s is a combat trait" % [id, r.ability])
+					else:
+						ok(String(r.needs) != "", "%s: the unbuilt trait %s says what it needs" % [id, r.ability])
 				"action":
 					ok(BASIC_ACTIONS.has(String(r.ability)), "%s: %s is a basic action" % [id, r.ability])
 				_:
