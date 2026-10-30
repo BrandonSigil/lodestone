@@ -610,6 +610,7 @@ def save_all():
     with open(path) as f:
         data = json.load(f)
     data["grid"]["decks"] = [{"x": x, "y": y, "h": h, "t": "s"} for (x, y), h in sorted(DECKS.items())]
+    data["grid"]["look"] = {"cliff_strips": True}  # the painted cliff strips ([USER] 2026-10-30, cliff-no-breaks)
     data["companion_spots"] = SPOTS
     with open(path, "w") as f:
         json.dump(data, f, indent=1)

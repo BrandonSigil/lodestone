@@ -224,6 +224,36 @@ static func side_body(t: int, from_set := "") -> Dictionary:
 	return res
 
 
+const STRIP_CELLS := 3.0  ## a painted cliff strip spans 3 cells across a face
+static var _strips := {}  # set + stems -> {"texs", "hs", "w"}
+
+
+## The painted cliff strips for a terrain's faces (the `strips` column: stems split by "|"): {"texs": textures,
+## "hs": each one's height in levels, "w": cells across}, or {} when the set has none or their art isn't in yet
+## (the faces then keep the side texture). A strip is drawn at the side texture's density, 2 levels a cell.
+static func side_strips(t: int, from_set := "") -> Dictionary:
+	var stems := String(_row(t, from_set).get("strips", ""))
+	if stems == "":
+		return {}
+	var key := "%s|%s" % [from_set if from_set != "" else art_set, stems]
+	if _strips.has(key):
+		return _strips[key]
+	var texs: Array[Texture2D] = []
+	var hs: Array[float] = []
+	for stem in stems.split("|", false):
+		var src := texture(stem, false, from_set)
+		if src == null:
+			continue
+		var img := src.get_image()
+		img.decompress()
+		img.generate_mipmaps()
+		texs.append(ImageTexture.create_from_image(img))
+		hs.append(STRIP_CELLS * SIDE_LEVELS / SIDE_TILES * float(img.get_height()) / img.get_width())
+	var res := {} if texs.is_empty() else {"texs": texs, "hs": hs, "w": STRIP_CELLS}
+	_strips[key] = res
+	return res
+
+
 ## An image made to tile: a quarter of its width (then height) is cut off its far edge and faded in over its
 ## near edge, so the end runs straight on into the start.
 static func _tileable(img: Image) -> Image:

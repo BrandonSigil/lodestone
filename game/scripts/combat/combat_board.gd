@@ -1392,7 +1392,7 @@ func _draw_ground_soft(c: Vector2i) -> void:
 			_gap_floor(c, k, r[k])
 	# River walls are the rock around them, not the set's masonry.
 	var side_t := CombatGrid.T.GRASS if t == CombatGrid.T.WATER else t
-	var body := ({"tex": _kit_plain(), "u": BattleArt.SIDE_TILES, "v": BattleArt.SIDE_LEVELS} if _kit_plain() != null else {}) if wall else BattleArt.side_body(side_t, zone)
+	var body := ({"tex": _kit_plain(), "u": BattleArt.SIDE_TILES, "v": BattleArt.SIDE_LEVELS} if _kit_plain() != null else {}) if wall else _cliff_body(side_t, zone)
 	var built := t == CombatGrid.T.STONE or t == CombatGrid.T.RUIN
 	var face := WALL_SIDE if wall else (MASONRY if built else CLIFF).lerp(ALIEN_CLIFF, strangeness)
 	# Faces, and the runs of shown segments that drop (each gets one unbroken lip).
@@ -1809,6 +1809,9 @@ func _soft_face(a: Vector2, b: Vector2, na: Vector2, nb: Vector2, top: float, fo
 		return
 	var quad := PackedVector2Array([iso(a.x, a.y, top), iso(b.x, b.y, top), iso(b.x, b.y, foot), iso(a.x, a.y, foot)])
 	var light := _face_light(na + nb)
+	if body.has("strips") and anchor == INF:
+		_strip_face(a, b, na + nb, top, foot, body.strips, Color(tint * light, 1.0))
+		return
 	if body.is_empty():
 		_ci.draw_colored_polygon(quad, Color(col * light, 1.0))
 		return
@@ -1821,6 +1824,120 @@ func _soft_face(a: Vector2, b: Vector2, na: Vector2, nb: Vector2, top: float, fo
 	var vb := (from - foot) / float(body.v)
 	_ci.draw_polygon(quad, PackedColorArray([ca, cb, cb, ca]),
 		PackedVector2Array([Vector2(ua, vt), Vector2(ub, vt), Vector2(ub, vb), Vector2(ua, vb)]), body.tex)
+
+
+## The rock of a cliff face: the set's side texture, and its painted strips when the map's look asks for them.
+func _cliff_body(t: int, zone: String) -> Dictionary:
+	var body := BattleArt.side_body(t, zone)
+	if look != null and look.cliff_strips:
+		var strips := BattleArt.side_strips(t, zone)
+		if not strips.is_empty():
+			body = body.duplicate()
+			body["strips"] = strips
+	return body
+
+
+## Painted cliff strips ([USER] 2026-10-30, card cliff-no-breaks; docs/systems/cliff-strips.md). Each straight
+## line of faces (its facing, where it stands, its lip height) is cut into windows 1 to 3 cells long at hashed
+## spots, so the same cliff always comes out the same and no two cliffs match. A window shows one strip, picked
+## by hash, read from a hashed column offset (never tiled sideways) and a hashed depth, running on down the face
+## and mirrored where the strip runs out (the strips aren't seamless top to bottom). The window before carries
+## on over the first STRIP_FADE of each window and fades out, so the joins are soft.
+const STRIP_FADE := 0.18  ## cells over which one window's strip fades into the next
+const STRIP_RUNS := 8  ## at most this many strip lengths down one face (a strip is ~24 levels; maps are 24 tall)
+
+
+func _strip_face(a: Vector2, b: Vector2, n: Vector2, top: float, foot: float, s: Dictionary, col: Color) -> void:
+	var along_x := absf(n.y) >= absf(n.x)  # facing ±y, the face runs along x
+	var pa := a.x if along_x else a.y
+	var pb := b.x if along_x else b.y
+	if absf(pb - pa) < 0.0001:
+		return
+	var line := "%d|%d|%d|%d" % [1 if along_x else 0, signf(n.y if along_x else n.x), roundi(a.y if along_x else a.x), roundi(top * 4.0)]
+	var w := _strip_window(line, floori((pa + pb) * 0.5))
+	var ua := _strip_u(line, w, pa, s)
+	var ub := _strip_u(line, w, pb, s)
+	var k := _strip_pick(line, w.x, s)
+	_strip_quad(a, b, top, foot, ua, ub, _strip_h(line, w.x, 3) * s.hs[k], s.hs[k], s.texs[k], col, col)
+	# the window before, carried on over this one's first STRIP_FADE and fading out
+	var t0 := clampf((float(w.x) - pa) / (pb - pa), 0.0, 1.0)
+	var t1 := clampf((float(w.x) + STRIP_FADE - pa) / (pb - pa), 0.0, 1.0)
+	if absf(t1 - t0) < 0.001:
+		return
+	var p := a.lerp(b, t0)
+	var q := a.lerp(b, t1)
+	var pp := lerpf(pa, pb, t0)
+	var pq := lerpf(pa, pb, t1)
+	var prev := _strip_window(line, w.x - 1)
+	var kp := _strip_pick(line, prev.x, s)
+	var fade := func(pos: float) -> Color:
+		return Color(col, clampf(1.0 - (pos - float(w.x)) / STRIP_FADE, 0.0, 1.0))
+	_strip_quad(p, q, top, foot, _strip_u(line, prev, pp, s), _strip_u(line, prev, pq, s),
+		_strip_h(line, prev.x, 3) * s.hs[kp], s.hs[kp], s.texs[kp], fade.call(pp), fade.call(pq))
+
+
+## A hashed number in 0..1 for a window start on a line (salt picks which roll).
+func _strip_h(line: String, k: int, salt: int) -> float:
+	return float(("%s|%d|%d" % [line, k, salt]).hash() & 0xffff) / 65536.0
+
+
+## Is there a window cut at cell k of this line? About half the cells, and never three in a row without one,
+## so windows are 1 to 3 cells long.
+func _strip_cut(line: String, k: int) -> bool:
+	return _strip_h(line, k, 0) < 0.5 or (_strip_h(line, k - 1, 0) >= 0.5 and _strip_h(line, k - 2, 0) >= 0.5)
+
+
+## The window holding cell i: (its first cell, its length).
+func _strip_window(line: String, i: int) -> Vector2i:
+	var start := i
+	for n in 3:  # a cut is never more than 2 cells away (_strip_cut)
+		if _strip_cut(line, start):
+			break
+		start -= 1
+	var end := i + 1
+	for n in 3:
+		if _strip_cut(line, end):
+			break
+		end += 1
+	return Vector2i(start, end - start)
+
+
+func _strip_pick(line: String, start: int, s: Dictionary) -> int:
+	return int(_strip_h(line, start, 1) * s.texs.size()) % s.texs.size()
+
+
+## The strip column (0..1) at position pos along the line, in window w: a hashed offset into the strip, so a
+## shorter window shows a different part of it, and every other window mirrored.
+func _strip_u(line: String, w: Vector2i, pos: float, s: Dictionary) -> float:
+	var width: float = s.w
+	var off := _strip_h(line, w.x, 2) * maxf(0.0, width - float(w.y))
+	var u := clampf((off + pos - float(w.x)) / width, 0.0, 1.0)
+	return 1.0 - u if _strip_h(line, w.x, 4) < 0.5 else u
+
+
+## A strip quad from p to q (face points), top to foot, its columns u0..u1, read from depth d0 levels into the
+## strip (sh levels tall) and mirrored each time it runs out, so it's split where the reading turns.
+func _strip_quad(p: Vector2, q: Vector2, top: float, foot: float, u0: float, u1: float, d0: float, sh: float,
+		tex: Texture2D, cp: Color, cq: Color) -> void:
+	if sh < 0.5 or top <= foot:
+		return
+	# Runs of the strip by an integer count (k), each split at the strip's end, so the loop always ends.
+	var k0 := floori(d0 / sh)
+	var k1 := mini(floori((d0 + top - foot) / sh), k0 + STRIP_RUNS - 1)
+	for k in range(k0, k1 + 1):
+		var da := maxf(d0, float(k) * sh)  # depth into the strip where this run starts and ends
+		var db := minf(d0 + top - foot, float(k + 1) * sh)
+		if db - da < 0.0001:
+			continue
+		var fa := da / sh - float(k)
+		var fb := db / sh - float(k)
+		var v1 := fa if k % 2 == 0 else 1.0 - fa  # even runs read down the strip, odd ones back up it
+		var v2 := fb if k % 2 == 0 else 1.0 - fb
+		var ya := top - (da - d0)
+		var yb := top - (db - d0)
+		var quad := PackedVector2Array([iso(p.x, p.y, ya), iso(q.x, q.y, ya), iso(q.x, q.y, yb), iso(p.x, p.y, yb)])
+		_ci.draw_polygon(quad, PackedColorArray([cp, cq, cq, cp]),
+			PackedVector2Array([Vector2(u0, v1), Vector2(u1, v1), Vector2(u1, v2), Vector2(u0, v2)]), tex)
 
 
 ## The lower ground showing where corner k was rounded off: the neighbour's own top (same texture at the same
@@ -1846,7 +1963,7 @@ func _gap_floor(c: Vector2i, k: int, r: float) -> void:
 		var ck: Vector2 = Vector2(c) + TerrainShape.CORNERS[k]
 		var along := (poly[poly.size() - 1] if low == c + TerrainShape.NORMALS[k] else poly[1]) - ck
 		var side_t := CombatGrid.T.GRASS if t == CombatGrid.T.WATER else t
-		_soft_face(ck, ck + along, n, n, gh, lh, BattleArt.side_body(side_t, zone), _tint(side_t), CLIFF)
+		_soft_face(ck, ck + along, n, n, gh, lh, _cliff_body(side_t, zone), _tint(side_t), CLIFF)
 
 
 ## A piece of another cell's top drawn inside this one (a rounded-off corner's lower ground, a fillet): the
@@ -1886,7 +2003,7 @@ func _fillet(c: Vector2i, k: int, r: float) -> void:
 		var nb: Vector2 = -s.nb
 		if (na + nb).dot(toward) <= 0.02:
 			continue
-		_soft_face(s.a, s.b, na, nb, gh, h, BattleArt.side_body(t, zone), tint, CLIFF)
+		_soft_face(s.a, s.b, na, nb, gh, h, _cliff_body(t, zone), tint, CLIFF)
 		run.append([{"a": s.a, "b": s.b, "na": na, "nb": nb}, h])
 	var lip := _soft_lip_depth(t, zone)
 	if lip > 0.0 and not run.is_empty():

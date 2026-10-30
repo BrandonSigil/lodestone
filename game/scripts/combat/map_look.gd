@@ -32,6 +32,9 @@ var stair_top := "d"
 ## What a stair's risers are: "d" the tread's own ground (dressed steps), "r" the cliff's rock (the natural looks:
 ## a path cut into the terrace).
 var stair_rise := "d"
+## Cliff faces in the set's painted strips (BattleArt.side_strips, docs/systems/cliff-strips.md) where it has
+## them: a map turns it on with "cliff_strips" in its look (village v2; [USER] 2026-10-30, card cliff-no-breaks).
+var cliff_strips := false
 
 static var _rows := {}
 
@@ -71,6 +74,7 @@ static func resolve(map_look: Dictionary, art_set: String, strangeness := 0.0) -
 	m.stair_treads = clampi(int(map_look.get("stairs", row.get("stairs", "3"))), 1, 6)
 	m.stair_top = String(map_look.get("stair_top", row.get("stair_top", "d")))
 	m.stair_rise = String(map_look.get("stair_rise", row.get("stair_rise", "d")))
+	m.cliff_strips = str(map_look.get("cliff_strips", row.get("cliff_strips", ""))).to_lower() in ["true", "1"]
 	for stem in String(row.get("trees", "prop_pine_1")).split("|", false):
 		m.trees.append(stem)
 	var alien: Dictionary = _rows.get(ALIEN, row)
@@ -86,4 +90,4 @@ func color(k: String) -> Color:
 
 ## A stable key for caching what this look draws.
 func key() -> String:
-	return "%s|%s|%s|%s|%s|%s|%s" % [id, staging, floor_h, skirt, stair_treads, stair_top, stair_rise]
+	return "%s|%s|%s|%s|%s|%s|%s|%s" % [id, staging, floor_h, skirt, stair_treads, stair_top, stair_rise, cliff_strips]
