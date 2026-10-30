@@ -1,0 +1,16 @@
+Image 1 = a snowy cliff painting. Copy its ROCK exactly: the tall cliff faces of warm grey rock, soft flat paint in faint dabs with chippy edges, a few thick dark charcoal crack lines running straight down the face, a slightly darker strip beside some cracks, broad vertical planes a shade lighter or darker. Same brushwork, same amount of detail, same soft hand-painted feel. Do NOT copy its snow, its water, its trees, its stairs or its camera angle.
+
+WHAT THIS IS: cliff-face pieces for a game. The game cuts these pieces out and places them side by side and one above the other along every cliff, picking at random, so the cliffs look hand-painted everywhere. Each piece is a flat FRONT VIEW of one rock cliff face, seen perfectly straight on: a plain rectangle of rock, no top surface, no grass, no snow, no ground at the bottom, no sky, no perspective, no corner.
+
+LAYOUT: tall portrait picture (aspect 2:3), plain flat cream paper (#eae8d6) background, no title, no labels, no numbers, no text. FIVE ROWS of pieces, FOUR pieces in each row, every piece a rectangle with a clear cream gap all round it; nothing crosses into another piece. All pieces are the SAME WIDTH. Their heights grow row by row:
+   row 1 (top): four SHORT pieces, each about 2.7 times wider than tall;
+   row 2: four pieces, each about 1.3 times wider than tall;
+   row 3: four pieces, each a little taller than wide (about 1.1 times);
+   row 4: four pieces, each about 1.5 times taller than wide;
+   row 5 (bottom): four TALL pieces, each about 1.9 times taller than wide.
+The four pieces in a row are four different versions of the same rock: the cracks in different places, the planes in different places, so no two look alike.
+
+THE PIECES MUST JOIN (essential): the left and right edges of every piece are plain rock in the middle tone, with no crack touching the side edges, so any piece can sit beside any other with no visible join. The top edge is plain rock (the game adds a grass lip over it) and the bottom edge is plain rock (the game adds the ground). Inside a piece: one or two thick dark cracks at most, here and there, at different positions in each version, running from near the top most of the way down; faint dabs everywhere; light even from top to bottom.
+Colour: warm grey rock like image 1 (about #8c827d for the middle tone, a little lighter and darker for the planes), dark warm charcoal cracks (#373335, never pure black).
+
+Avoid: snow, grass, moss, ground, sky, water, borders or frames around the pieces, outlines round the pieces, cracks touching the left or right edge, horizontal bands, ledges, bricks, blocks, strata, perspective, isometric blocks, top surfaces, corners, shadows cast on the paper, gradients, pixel art, 3d render, photo, text.
