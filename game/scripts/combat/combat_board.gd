@@ -811,6 +811,8 @@ func _draw_deck(c: Vector2i) -> void:
 	var t := grid.terrain_at(p)
 	var zone := grid.zone_at(c)
 	var col := Color(1, 1, 1, 0.35 if _fade.has(p) else 1.0)
+	if fog_on and fog.get(c, 2) == 1:
+		col = Color(0.45, 0.46, 0.52, col.a)  # remembered, out of sight: the veil's wash
 	var lo := Vector2(c)
 	var hi := lo + Vector2.ONE
 	for shade in [false, true]:
@@ -820,8 +822,8 @@ func _draw_deck(c: Vector2i) -> void:
 			continue
 		var e: Array = _side(lo, hi, fd)
 		var side_tex := BattleArt.side(t, zone)
-		var mod := Color(_tint(t).darkened(0.25 if shade else 0.1), col.a)
-		_face(e[0], e[1], h, h - CombatGrid.DECK_THICK, Color(MASONRY.darkened(0.3 if shade else 0.12), col.a), _hash(c), false, true, side_tex, mod)
+		var mod := _tint(t).darkened(0.25 if shade else 0.1) * col
+		_face(e[0], e[1], h, h - CombatGrid.DECK_THICK, MASONRY.darkened(0.3 if shade else 0.12) * col, _hash(c), false, true, side_tex, mod)
 	var top := _diamond(p, h)
 	var top_tex := BattleArt.top(t, zone)
 	if top_tex != null:  # the same stone as the ground's, at the same world spot
@@ -830,10 +832,10 @@ func _draw_deck(c: Vector2i) -> void:
 			uvs[i] /= BattleArt.TOP_TILES
 		var cols := PackedColorArray()
 		cols.resize(4)
-		cols.fill(Color(_tint(t) * (1.0 + minf(h, 6.0) * 0.025), col.a))
+		cols.fill(Color(_tint(t) * (1.0 + minf(h, 6.0) * 0.025), 1.0) * col)
 		_ci.draw_polygon(top, cols, uvs, top_tex)
 	else:
-		_ci.draw_colored_polygon(top, Color(_terrain_color(t).lightened(minf(h, 6.0) * 0.025), col.a))
+		_ci.draw_colored_polygon(top, Color(_terrain_color(t).lightened(minf(h, 6.0) * 0.025), 1.0) * col)
 	if t == CombatGrid.T.STAIRS:  # stair lines across a stair deck, as on the ground
 		for i in range(1, 4):
 			_ci.draw_line(top[0].lerp(top[3], i / 4.0), top[1].lerp(top[2], i / 4.0), Color(INK, 0.3 * col.a), 1.0, true)

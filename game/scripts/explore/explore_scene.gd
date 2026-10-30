@@ -423,12 +423,15 @@ func _refresh_sight() -> void:
 				lit[c] = 2
 		board.fog = lit
 		return
+	var near := {}  # the cells in sight: seeing a deck or the lane under it shows that cell on the board
 	for c in in_sight:
+		near[CombatGrid.ground(c)] = true
+	for c in near:
 		seen[c] = true
 	var fog := {}
 	for c in seen:
 		if not locked.has(c):
-			fog[c] = 2 if in_sight.has(c) else 1
+			fog[c] = 2 if near.has(c) else 1
 	board.fog = fog
 
 
@@ -625,7 +628,7 @@ func _on_cell_hovered(c: Vector2i) -> void:
 	var g := group_at(c)
 	if not g.is_empty() and (in_sight.has(c) or not fogged()) and not locked.has(c):
 		for s in ExploreRules.sight(grid, _group_cells(g), int(g.def.sight)):
-			if seen.has(s):
+			if seen.has(CombatGrid.ground(s)):
 				board.highlights[s] = WATCH_COLOR
 		_info.text = _enemy_text(g)
 		return

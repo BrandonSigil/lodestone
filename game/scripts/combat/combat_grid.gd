@@ -532,7 +532,7 @@ func top_height() -> int:
 ## Clear line from an eye one level above `from` to the body of whoever stands on `to`?
 ## Walks the straight line between cell centres; any cell in between whose top rises above the line blocks it.
 func line_of_sight(from: Vector2i, to: Vector2i) -> bool:
-	var key := ((from.y * w + from.x) << 16) | (to.y * w + to.x)
+	var key := (_sight_idx(from) << 24) | _sight_idx(to)
 	if _sight.has(key):
 		return _sight[key]
 	var clear := _trace_sight(from, to)
@@ -540,9 +540,16 @@ func line_of_sight(from: Vector2i, to: Vector2i) -> bool:
 	return clear
 
 
+## A place as one number for the sight cache: its cell, and whether it is the deck.
+func _sight_idx(p: Vector2i) -> int:
+	return idx(ground(p)) * 2 + (1 if on_deck(p) else 0)
+
+
 func _trace_sight(from: Vector2i, to: Vector2i) -> bool:
-	var a := Vector2(from) + Vector2(0.5, 0.5)
-	var b := Vector2(to) + Vector2(0.5, 0.5)
+	var ga := ground(from)
+	var gb := ground(to)
+	var a := Vector2(ga) + Vector2(0.5, 0.5)
+	var b := Vector2(gb) + Vector2(0.5, 0.5)
 	var ha := height_at(from) + 1.0
 	var hb := height_at(to) + 0.6
 	var steps := int(ceil(a.distance_to(b) * 4.0))
@@ -550,11 +557,26 @@ func _trace_sight(from: Vector2i, to: Vector2i) -> bool:
 		var t := float(i) / steps
 		var p := a.lerp(b, t)
 		var c := Vector2i(int(floor(p.x)), int(floor(p.y)))
-		if c == from or c == to or not in_bounds(c):
+		if c == ga or c == gb or not in_bounds(c):
 			continue
-		if sight_top(c) > lerpf(ha, hb, t) + 0.05:
+		var z := lerpf(ha, hb, t)
+		if sight_top(c) > z + 0.05 or _deck_blocks(c, z):
 			return false
 	return true
+
+
+## Does the deck over cell c stop a sight line passing through it at height z? Its slab (DECK_THICK under the
+## floor) does, and so does whatever stands on it, up to that prop's sight height. Above or below, it passes.
+func _deck_blocks(c: Vector2i, z: float) -> bool:
+	if not has_deck(c):
+		return false
+	var p := deck_of(c)
+	var dh := float(height_at(p))
+	var top := dh
+	var pr := prop_at(p)
+	if not pr.is_empty() and not under_arch(p):
+		top += float(pr.sight)
+	return z > dh - DECK_THICK - 0.05 and z < top + 0.05
 
 ## Can a unit with this jump walk from the left deploy zone to the right one?
 func connected(jump: int) -> bool:

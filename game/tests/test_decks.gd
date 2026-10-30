@@ -173,3 +173,43 @@ func test_guard_ring_only_where_the_guard_can_hit() -> void:
 	var ring := CombatRules.guard_ring(g, [gd], 0)
 	ok(ring.has(Vector2i(2, 1)) and ring.has(Vector2i(2, 3)), "the banks beside the bridge")
 	ok(not ring.has(Vector2i(1, 2)) and not ring.has(Vector2i(3, 2)), "not the lane three levels down")
+
+
+# --- step 5: sight ------------------------------------------------------------------------
+
+## A row at 0 with a deck over its middle at 3 (slab from 2 to 3) and posts at 3 on both ends.
+func _sight_row() -> CombatGrid:
+	var g := CombatGrid.flat(5, 1)
+	g.add_deck(Vector2i(2, 0), 3)
+	return g
+
+
+func test_the_deck_slab_blocks_sight_through_it() -> void:
+	var g := _sight_row()
+	ok(g.line_of_sight(Vector2i(0, 0), Vector2i(4, 0)), "under the deck, along the lane")
+	g.set_height(Vector2i(4, 0), 4)
+	ok(not g.line_of_sight(Vector2i(0, 0), Vector2i(4, 0)), "a line rising through the slab is cut")
+	g.remove_deck(Vector2i(2, 0))
+	ok(g.line_of_sight(Vector2i(0, 0), Vector2i(4, 0)), "the same line with no deck")
+
+
+func test_over_the_deck_and_what_stands_on_it() -> void:
+	var g := _sight_row()
+	g.set_height(Vector2i(0, 0), 3)
+	g.set_height(Vector2i(4, 0), 3)
+	ok(g.line_of_sight(Vector2i(0, 0), Vector2i(4, 0)), "bank to bank over the bridge")
+	g.add_prop(CombatGrid.deck_of(Vector2i(2, 0)), "ph_house")
+	ok(not g.line_of_sight(Vector2i(0, 0), Vector2i(4, 0)), "a house on the bridge blocks it")
+	ok(g.line_of_sight(Vector2i(1, 0), Vector2i(3, 0)), "but not the lane under it")
+
+
+func test_sight_tells_the_deck_from_the_lane() -> void:
+	var g := _bridge()
+	var deck := CombatGrid.deck_of(Vector2i(2, 2))
+	var seen := ExploreRules.sight(g, [Vector2i(2, 0)], 4)
+	ok(seen.has(deck), "the bank sees the bridge's top")
+	g.add_prop(deck, "ph_house")
+	ok(g.line_of_sight(Vector2i(0, 2), Vector2i(4, 2)), "the lane runs on under the house")
+	ok(not g.line_of_sight(Vector2i(2, 0), Vector2i(2, 4)), "the house hides the far bank")
+	var low := ExploreRules.sight(g, [deck], 2)
+	ok(low.has(deck) and low.has(Vector2i(2, 1)), "an eye on the deck looks out from up there")

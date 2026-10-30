@@ -32,8 +32,11 @@
 - Picking returns the deck place where the deck's top is under the mouse, the lane cell elsewhere. Drawing helpers (`_diamond`, `cell_top`, `_depth_at`, `hidden`, prop rects) take places and draw at the ground cell.
 - Test picture: `tools/godot.sh --path game -s res://tools/map_shot.gd -- out.png demo:bridge 0 [nowindow]`.
 
-## Sight (rule for map checks; built in step 5)
-A deck is a slab `DECK_THICK` (1) level thick under its floor. A sight line through the cell between `h - 1` and `h` is blocked; above it (on the deck) or below it (in the lane) it passes.
+## Sight (step 5)
+- The rule: a deck is a slab `DECK_THICK` (1) level thick under its floor. A sight line through the cell between `h - 1` and `h` is blocked; above it (on the deck) or below it (in the lane) it passes. A prop standing on the deck blocks from the slab up to its own sight height, as props on the ground do. `CombatGrid._deck_blocks`, used by `line_of_sight` for every cell a line crosses.
+- Lines start and end at places, so an eye on a deck looks from deck height and a target on a deck is seen at deck height. The sight cache keys places, so a cell's lane and deck never share an answer.
+- `ExploreRules.sight` returns places: the lane and the deck over it are seen apart, so an enemy on a bridge only shows when its deck place is in sight. The board's fog stays per cell: a cell is lit when either of its places is in sight, and a remembered deck takes the veil's wash.
+- Ranged reach (`CombatRules.in_reach`, the blind cells) goes through `line_of_sight`, so it follows the same rule.
 
 ## Still to come
-5. Sight and fog per layer. 6. The map maker paints decks (map builder), and real deck art.
+6. The map maker paints decks (map builder), the city's real bridges, and real deck art.

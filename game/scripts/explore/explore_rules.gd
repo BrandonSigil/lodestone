@@ -62,18 +62,19 @@ static func dist(a: Vector2i, b: Vector2i) -> float:
 
 # --- sight ------------------------------------------------------------------------
 
-## Every cell within radius of any eye that the eye has a clear line to.
+## Every place within radius of any eye that the eye has a clear line to (a deck and the lane under it apart).
 static func sight(grid: CombatGrid, eyes: Array, radius: int) -> Dictionary:
 	var out := {}
 	for e: Vector2i in eyes:
 		out[e] = true
-		for y in range(maxi(0, e.y - radius), mini(grid.h, e.y + radius + 1)):
-			for x in range(maxi(0, e.x - radius), mini(grid.w, e.x + radius + 1)):
-				var c := Vector2i(x, y)
-				if out.has(c) or dist(e, c) > radius + 0.25:
-					continue
-				if grid.line_of_sight(e, c):
-					out[c] = true
+		var g := CombatGrid.ground(e)
+		for y in range(maxi(0, g.y - radius), mini(grid.h, g.y + radius + 1)):
+			for x in range(maxi(0, g.x - radius), mini(grid.w, g.x + radius + 1)):
+				for c in grid.places_at(Vector2i(x, y)):  # a deck and the lane under it are seen apart
+					if out.has(c) or dist(e, c) > radius + 0.25:
+						continue
+					if grid.line_of_sight(e, c):
+						out[c] = true
 	return out
 
 
