@@ -182,6 +182,19 @@ func _show_pending() -> void:
 
 # --- queries the overlay and tests use ------------------------------------------------
 
+## Doors the party is close to, lit on the board ([USER] 2026-10-30: a door glows instead of a "!", and
+## nothing shows from afar): shown, on a lit cell, within HINT_RANGE of the leader, while walking.
+func lit_doors() -> Dictionary:
+	var out := {}
+	var lead := leader()
+	if lead == null or not walking():
+		return out
+	for t: Dictionary in things:
+		if not t.done and ExploreOverlay.NO_MARK_KINDS.has(String(t.kind)) and shown(t) \
+				and board.fog.get(t.cell, 0) == 2 and ExploreRules.dist(lead.cell, t.cell) <= ExploreRules.HINT_RANGE:
+			out[t.cell] = true
+	return out
+
 func leader() -> CombatUnit:
 	return party[0] if not party.is_empty() else null
 

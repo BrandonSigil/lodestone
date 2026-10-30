@@ -53,6 +53,8 @@ const INK := Color(0.216, 0.2, 0.208)  ## the art's outline colour (#373335, B14
 const WATER_INSET := 0.3  ## water sits this many levels below its banks, so the banks show a little earth
 const PLATE_SCALE := 1.35  ## a painted backdrop plate's width as a multiple of the board's footprint
 const FG_HEIGHT := 0.16  ## the solid foreground band's height as a share of the view
+const GLOW := Color(1.0, 0.97, 0.82)  ## a door's light when the party is close: warm white, to read on golden grass
+const GLOW_RINGS := 6
 const FOOT := 0.3  ## a piece's feet (and its ring) reach this far from its middle, in cells
 const WINDOW_R := 56.0  ## see-through window round a piece behind a prop: radius on screen
 const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
@@ -74,6 +76,7 @@ var danger := {}  # cell -> true, the enemy's reach next phase
 var area := {}  # cell -> true, cells a skill would hit
 var guard_ring := {}  # cell -> true, next to a guarding piece: foes starting here must hit it or pay to leave
 var goal_cells := {}  # cell -> true, a fight's way out (FightGoals exit), ringed in green
+var glow := {}  # cell -> true, a door the party is close to: a warm pool of light on its doorstep (ExploreOverlay)
 var show_coords := false
 var edit_void := false  ## map editor: show VOID cells as faint outlines and let them be picked
 var island := true  ## rims hang ragged rock below the base, water spills off the edge
@@ -588,7 +591,7 @@ func _sync_slabs() -> void:
 	# What moves: bucket this frame's overlays and pieces by depth, then redraw those slabs.
 	_over_by_depth.clear()
 	_deck_over.clear()
-	for dict: Dictionary in [highlights, danger, area, guard_ring, goal_cells]:
+	for dict: Dictionary in [highlights, danger, area, guard_ring, goal_cells, glow]:
 		for c: Vector2i in dict:
 			_bucket(_deck_over if CombatGrid.on_deck(c) else _over_by_depth, c)
 	if hover != NONE and grid.in_bounds(hover):
@@ -1974,6 +1977,17 @@ func _draw_over(c: Vector2i) -> void:
 	if goal_cells.has(c):
 		_ci.draw_colored_polygon(top, Color(0.4, 0.95, 0.5, 0.18))
 		_ci.draw_polyline(ring, Color(0.45, 1.0, 0.55, 0.9), 2.0, true)
+	if glow.has(c):  # a door the party is close to ([USER] 2026-10-30: doors glow instead of a "!")
+		var pulse := 0.75 + 0.25 * sin(_time * 3.0)
+		var mid := (top[0] + top[2]) * 0.5
+		for i in GLOW_RINGS:  # soft pool: stacked diamonds, wide and faint to small and bright
+			var k := 1.0 - 0.85 * float(i) / GLOW_RINGS
+			var pool := PackedVector2Array()
+			for q in top:
+				pool.append(mid + (q - mid) * k)
+			_ci.draw_colored_polygon(pool, Color(GLOW, 0.16 * pulse))
+		_ci.draw_polyline(ring, Color(GLOW, 0.3 * pulse), 6.0, true)
+		_ci.draw_polyline(ring, Color(GLOW, 0.85 * pulse), 2.0, true)
 	if guard_ring.has(c):
 		var inner := PackedVector2Array()
 		var mid := (top[0] + top[2]) * 0.5

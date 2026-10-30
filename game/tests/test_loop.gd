@@ -956,3 +956,26 @@ func test_no_leaving_town_unarmed() -> void:
 	s.free()
 	Game.reset_meta()
 	Game.explore_map = "home"
+
+
+## [USER] 2026-10-30: doors get no "!"; a door glows when the party is close, and nothing shows from afar.
+func test_doors_glow_when_close() -> void:
+	_db()
+	Game.save_enabled = false
+	Game.reset_meta()
+	Game.run = null
+	Game.explore_map = "village"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	var g: CombatGrid = s.grid
+	var door := Vector2i(29, 28)  # the mossy home's door
+	s.leader().place(Vector2i(29, 29), g.height_at(Vector2i(29, 29)))
+	s._refresh_sight()
+	ok(s.lit_doors().has(door), "next to the door: it glows")
+	s.leader().place(Vector2i(20, 22), g.height_at(Vector2i(20, 22)))
+	s._refresh_sight()
+	ok(not s.lit_doors().has(door), "from across town: nothing")
+	ok(ExploreOverlay.NO_MARK_KINDS.has("enter"), "and a doorway never gets a \"!\"")
+	s.free()
+	Game.explore_map = "home"

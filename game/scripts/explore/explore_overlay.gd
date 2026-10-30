@@ -24,6 +24,7 @@ func _draw() -> void:
 	var lead: CombatUnit = scene.leader()
 	var font := ThemeDB.fallback_font
 	var use: Dictionary = scene.nearest_thing() if lead != null and scene.walking() else {}  # the one F uses gets the F
+	board.glow = scene.lit_doors()  # doors glow on the board, under the pieces
 	for t: Dictionary in scene.things:
 		if t.done or not scene.shown(t):
 			continue
@@ -41,9 +42,15 @@ func _draw() -> void:
 				PlaceholderFigure.draw(self, p, 26.0, StringName(who), 0, "idle", _time, false, Color(0.4, 0.7, 1.0), dim)
 		if dim or lead == null or not scene.walking():
 			continue
-		if NO_MARK_KINDS.has(String(t.kind)):
-			continue  # doors get no "!" ([USER] 2026-10-30); F still opens them
 		var near := ExploreRules.dist(lead.cell, c) <= ExploreRules.HINT_RANGE
+		if NO_MARK_KINDS.has(String(t.kind)):
+			# doors get no "!" ([USER] 2026-10-30): they glow when the party is close (lit_doors), nothing from
+			# afar; the F shows over the one F would open
+			if near and use.get("id") == t.id and use.cell == t.cell:
+				var at := p + Vector2(-30, -30)
+				draw_string_outline(font, at, "F", HORIZONTAL_ALIGNMENT_CENTER, 60, 12, 3, Color(0, 0, 0, 0.8))
+				draw_string(font, at, "F", HORIZONTAL_ALIGNMENT_CENTER, 60, 12, ICON)
+			continue
 		var hovered := board.hover == c
 		if near or hovered:
 			# The interact icon: a bobbing bubble with a "!" over anything the party can use.
