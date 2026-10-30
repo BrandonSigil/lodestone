@@ -42,6 +42,9 @@ var _leaf_pack_cb := Callable()
 var _border: StyleBoxFlat
 
 
+signal member_pressed(id: String)  ## a party slot with an "id" was clicked
+
+
 func _init() -> void:
 	layer = 1
 	root = Control.new()
@@ -254,6 +257,12 @@ func _member_size() -> Vector2:
 func _leaf_member(e: Dictionary) -> Control:
 	var frame := PanelContainer.new()
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if e.has("id"):  # a click opens the member's character sheet
+		frame.mouse_filter = Control.MOUSE_FILTER_STOP
+		frame.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		frame.gui_input.connect(func(ev: InputEvent) -> void:
+			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
+				member_pressed.emit(String(e.id)))
 	frame.custom_minimum_size = _member_size()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.05, 0.12, 0.12, 0.55)
@@ -293,7 +302,8 @@ func _leaf_member(e: Dictionary) -> Control:
 	return frame
 
 
-## entries: [{"name": String, "hp": int, "max_hp": int, "tint": Color, "note": String}], plus in a fight
+## entries: [{"name": String, "hp": int, "max_hp": int, "tint": Color, "note": String}], "id" (the member, to
+## click for their character sheet), plus in a fight
 ## "res_kind" ("mana", "rage", "charges" or ""), "res" and "res_max": the job's bar under the HP.
 func set_party(entries: Array) -> void:
 	for c in party_box.get_children().slice(1):

@@ -50,6 +50,25 @@ func run(s: Node, f: int, step: String) -> bool:
 			else:
 				s._go_use(_thing(s, step.substr(4)))
 		return f == 90
+	if step.begins_with("sheet:") or step.begins_with("rack:"):
+		# sheet:<member> - that member's character sheet (the dog met first); rack:<page> - the smithy rack's
+		# sheets turned to that page (0 sword, 1 daggers, 2 bow, 3 the book).
+		if f == 5:
+			var game: Node = s.get_node("/root/Game")
+			game.save_enabled = false
+			if not game.meta.flags.has("met_dog"):
+				game.meta.flags.append("met_dog")
+			game.refresh_party()
+			s._refresh_party_units() if s.has_method("_refresh_party_units") else null
+			if step.begins_with("sheet:"):
+				s.open_sheet(step.substr(6))
+			else:
+				for t: Dictionary in s.things:
+					if t.kind == "rack":
+						s._rack_sheets(t)
+				for i in int(step.substr(5)):
+					s.sheet.flip(1)
+		return f == 30
 	if step.begins_with("hold:"):
 		# hold:<x>,<y>:<keys> - the lead stands at x,y and holds WASD keys (e.g. "a" or "wa") for a second:
 		# where it ends up shows what walking lets it into (the bank of a stream, the edge of a wood).

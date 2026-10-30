@@ -423,17 +423,55 @@ func refresh_party() -> void:
 		m.hp = clampi(int(m.hp) + maxi(0, run.max_hp(m) - before), 0, run.max_hp(m))
 
 
-## What the picked smithy weapon adds (data/weapons.csv). Only the hero carries one.
-func weapon_mods(id: String) -> Dictionary:
+## What the picked smithy weapon adds (data/weapons.csv). Only the hero carries one. weapon: another
+## weapon to try instead of the one in hand (the rack's character sheets).
+func weapon_mods(id: String, weapon := "") -> Dictionary:
 	if id != "lead":
 		return {}
-	var row: Dictionary = Db.weapons.get(weapon_id(), {})
+	var w := weapon if weapon != "" else weapon_id()
+	var row: Dictionary = Db.weapons.get(w, {})
 	var out := {}
 	for k in ["attack", "damage", "move", "range_min", "range_max"]:
 		out[k] = int(row.get(k, 0))
 	# the smithy's upgrades for this weapon ([USER] pc-14; its own ladder in data/restore.csv)
-	out.damage += weapon_level(weapon_id()) * int(CombatRules.num("upgrade_damage"))
+	out.damage += weapon_level(w) * int(CombatRules.num("upgrade_damage"))
 	return out
+
+
+## A character sheet (SheetRules.build) for a party member as they stand now, or for the hero holding
+## `weapon` instead (the smithy rack shows one per build before the player picks): that job's class, the
+## weapon's numbers and that job's own ranks. Nothing is changed or saved.
+func sheet(id: String, weapon := "") -> Dictionary:
+	ensure_run()
+	var s := level_state(id)
+	var def: CharacterDef = Db.character(StringName(id))
+	var ranks: Dictionary = rank_state(id).ranks
+	var w := weapon if weapon != "" else (weapon_id() if id == "lead" else "")
+	var job := String(Db.weapons.get(w, {}).get("job", "")) if id == "lead" else ""
+	if id == "lead":
+		def = _hero_as(job)
+		ranks = s.jobs.get(job, LevelRules.fresh_job()).ranks if job != "" else s.ranks
+	var bonus := LevelRules.merge(LevelRules.merge(LevelRules.merge(LevelRules.bonus(s, Db.levels), weapon_mods(id, w)), meal_mods()), boon_mods())
+	var hp := 9999
+	for m in run.members:
+		if String((m.def as CharacterDef).id) == id:
+			hp = int(m.hp)
+	var u := CombatUnit.from_member({"def": def, "bonus": bonus, "ranks": ranks, "hp": hp})
+	var row: Dictionary = Db.weapons.get(w, {})
+	return SheetRules.build(u, {"name": def.name_key, "job": String(Db.jobs[job].name_key) if Db.jobs.has(job) else def.class_def.name_key,
+		"level": int(s.level), "xp": int(s.xp), "xp_next": int(Db.levels.get("xp_per_level", 100)),
+		"weapon": String(row.get("name_key", "")) if w != "none" else "", "portrait": StringName(id),
+		"weapon_id": w})
+
+
+## The hero on another job's class, for a look (sheet); hero_def is the one he plays.
+func _hero_as(job: String) -> CharacterDef:
+	if job == job_id():
+		return hero_def()
+	var d: CharacterDef = Db.character(&"lead").duplicate()
+	d.class_def = load("res://data/classes/%s.tres" % (String(Db.jobs[job].class) if Db.jobs.has(job) else "nobody"))
+	d.traits = []
+	return d
 
 
 ## A weapon's upgrade level: the steps of its smithy ladder that are done (0 to 3).

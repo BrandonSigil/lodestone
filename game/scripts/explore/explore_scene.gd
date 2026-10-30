@@ -48,6 +48,7 @@ var _stepping := false
 var _drag := false
 var _ui: CanvasLayer
 var _dialog: PanelContainer
+var sheet: CharacterSheet  ## the open character sheet, if any
 var _info: Label
 var _log_label: Label
 var _phase: Label
@@ -135,6 +136,7 @@ func _ready() -> void:
 	hud = FrameHud.new()
 	add_child(hud)
 	hud.use_leaf_frame()
+	hud.member_pressed.connect(open_sheet)
 	_ui = CanvasLayer.new()
 	_ui.layer = 4
 	add_child(_ui)
@@ -508,6 +510,10 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 	if not t.is_empty():
 		_go_use(t)
 		return
+	for u: CombatUnit in party:  # a party piece (the dog at his heels): its character sheet
+		if u.cell == c and board.units.has(u):
+			open_sheet(_member_id(u))
+			return
 	if not group_at(c).is_empty():
 		return
 	var lead := leader()
@@ -677,6 +683,9 @@ func _open_thing(t: Dictionary) -> void:
 		return
 	if t.kind == "restore":
 		_restore_box(String(t.event))  # a village building's ladder: its event names the building
+		return
+	if t.kind == "rack":
+		_rack_sheets(t)  # a sheet per build to compare before taking one ([USER] 2026-10-30)
 		return
 	if String(t.kind) in ExploreRules.LASTING_KINDS:
 		_lasting(t)
@@ -1255,6 +1264,65 @@ func _have() -> Dictionary:
 		"party": Game.adventure_defs().map(func(d: CharacterDef) -> String: return String(d.id))}
 
 
+# --- character sheets ([USER] 2026-10-30: the dog's, and one per build at the smithy rack) -------------------
+
+func _member_id(u: CombatUnit) -> String:
+	return String((u.member.def as CharacterDef).id) if not u.member.is_empty() else String(u.figure)
+
+
+## A party member's character sheet: clicked on the map or in the party frame.
+func open_sheet(id: String) -> void:
+	if mode != M.WALK:
+		return
+	_show_sheet([Game.sheet(id)])
+
+
+## The smithy rack: a sheet per build (the hero holding that weapon, the moves its job gives), flipped with
+## the arrows; TAKE picks it through the rack event's own option.
+func _rack_sheets(t: Dictionary) -> void:
+	var ev: Dictionary = Db.explore_events.get(String(t.event), {})
+	var builds := ExploreRules.rack_builds(ev, _defs(), _have())
+	if builds.is_empty():
+		open_event(String(t.event), {"thing": t})
+		return
+	var pages := []
+	var states := []
+	var at := 0
+	for i in builds.size():
+		var w := String(builds[i].weapon)
+		pages.append(Game.sheet("lead", w))
+		states.append("held" if w == Game.weapon_id() else ("take" if builds[i].open else "locked"))
+		if w == Game.weapon_id():
+			at = i
+	_show_sheet(pages, at, states)
+	sheet.taken.connect(func(i: int) -> void:
+		_close_sheet()
+		mode = M.DIALOG
+		choose(builds[i].option, {"thing": t}))
+
+
+func _show_sheet(pages: Array, at := 0, states: Array = []) -> void:
+	_close_sheet()
+	mode = M.DIALOG
+	walking_now = false
+	sheet = CharacterSheet.new()
+	_ui.add_child(sheet)
+	sheet.show_pages(pages, at, states)
+	var r := hud.center_rect()
+	var k := minf(1.0, minf(r.size.x / CharacterSheet.SIZE.x, r.size.y / CharacterSheet.SIZE.y) * 0.96)
+	sheet.scale = Vector2.ONE * k
+	sheet.position = r.get_center() - CharacterSheet.SIZE * k * 0.5
+	sheet.closed.connect(func() -> void:
+		_close_sheet()
+		mode = M.WALK)
+
+
+func _close_sheet() -> void:
+	if sheet:
+		sheet.queue_free()
+		sheet = null
+
+
 ## A way out of the village with nobody armed: Brandon's line, and the party stays ([USER] 2026-10-30).
 func _need_weapon() -> void:
 	mode = M.DIALOG
@@ -1384,7 +1452,7 @@ func _log(line: String) -> void:
 func _refresh_hud() -> void:
 	var entries := []
 	for u: CombatUnit in party:
-		entries.append({"name": Txt.t(u.name_key), "hp": u.hp, "max_hp": u.max_hp, "tint": u.tint,
+		entries.append({"name": Txt.t(u.name_key), "id": _member_id(u), "hp": u.hp, "max_hp": u.max_hp, "tint": u.tint,
 			"note": Txt.t("TAG_SPOOKED") if u.spooked else "", "res_kind": u.res_kind if battle != null else "",
 			"res": u.res, "res_max": u.res_max})
 	hud.set_party(entries)

@@ -607,6 +607,18 @@ static func need_met(need: String, defs: Array, have := {}) -> bool:
 	return false
 
 
+## The builds a weapon rack offers ([USER] 2026-10-30, the rack's character sheets): every option of its event
+## whose effect takes a weapon, in the event's order, open or not (the book waits until it's found):
+## [{"weapon": id, "option": the option, "open": bool}].
+static func rack_builds(ev: Dictionary, defs: Array, have := {}) -> Array:
+	var out := []
+	for o: Dictionary in ev.get("options", []):
+		for part in String(o.win).split(";", false):
+			if part.strip_edges().begins_with("weapon:"):
+				out.append({"weapon": part.strip_edges().substr(7), "option": o, "open": need_met(o.need, defs, have)})
+	return out
+
+
 ## The options this party can pick.
 static func options_for(ev: Dictionary, defs: Array, have := {}) -> Array:
 	return ev.options.filter(func(o: Dictionary) -> bool: return need_met(o.need, defs, have))

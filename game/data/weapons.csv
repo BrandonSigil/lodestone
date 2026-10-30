@@ -1,6 +1,6 @@
-id,flag,name_key,job,attack,damage,move,range_min,range_max,note
-none,,ITEM_NO_WEAPON,,0,-1,0,0,0,bare hands before the smithy
-sword,weapon_sword,ITEM_SWORD,knight,1,1,0,0,0,
-daggers,weapon_daggers,ITEM_DAGGERS,rogue,2,0,1,0,0,
-bow,weapon_bow,ITEM_BOW,archer,0,0,0,1,2,shoots 2 to 3 cells
-book,weapon_book,ITEM_BOOK_WEAPON,mage,0,0,0,0,0,the hidden book from the house by the square; the mage hits with spells
+id,flag,name_key,job,attack,damage,move,range_min,range_max,look,note
+none,,ITEM_NO_WEAPON,,0,-1,0,0,0,,bare hands before the smithy
+sword,weapon_sword,ITEM_SWORD,knight,1,1,0,0,0,sword,
+daggers,weapon_daggers,ITEM_DAGGERS,rogue,2,0,1,0,0,daggers,
+bow,weapon_bow,ITEM_BOW,archer,0,0,0,1,2,bow,shoots 2 to 3 cells
+book,weapon_book,ITEM_BOOK_WEAPON,mage,0,0,0,0,0,book,the hidden book from the house by the square; the mage hits with spells
