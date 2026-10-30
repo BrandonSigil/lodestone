@@ -537,3 +537,33 @@ func test_the_gate_asks_go_or_edit() -> void:
 	Game.explore_memory.clear()
 	Game.explore_map = "home"
 	_restore(saved)
+
+
+# --- elite fights ([USER] pc-6, pc-15; player-choice step 4) ---------------------------------------
+
+func test_elite_groups_are_tougher_badged_and_stay_beaten() -> void:
+	_db()
+	var bandit: ClassDef = Db.class_def(&"bandit")
+	var plain := CombatUnit.enemy(bandit)
+	var elite := CombatUnit.enemy(bandit, ExploreRules.elite_mods())
+	ok(elite.max_hp > plain.max_hp and elite.damage > plain.damage and elite.armor > plain.armor, "tougher all round")
+	var g := {"id": "camp", "elite": true}
+	ok(not ExploreRules.stays_beaten("snow_pass", g, []))
+	ok(ExploreRules.stays_beaten("snow_pass", g, [ExploreRules.beaten_flag("snow_pass", "camp")]), "beaten once, gone for good")
+	eq(ExploreRules.elites_left(["snow_pass", "wolf_den", "crypt"], []), 0, "no elite placed on today's maps yet")
+
+
+## The map loader keeps a group's goals, way out, TALK, elite mark and leader (they were dropped before).
+func test_map_groups_keep_their_fight_data() -> void:
+	_db()
+	var grid := CombatGrid.flat(4, 4)
+	var d := {"grid": grid.to_dict() if grid.has_method("to_dict") else {}, "groups": [{"id": "boss_camp", "goals": "leader|exit",
+		"exit": [[0, 0]], "talk": {"unit": 0, "times": 2, "result": "flee"}, "elite": true,
+		"units": [{"id": "bandit", "cell": [2, 2], "leader": true}]}]}
+	var m := ExploreMap.from_dict(d)
+	var g: Dictionary = m.groups[0]
+	eq(g.goals, "leader|exit")
+	eq(g.exit, [[0, 0]])
+	eq(int(g.talk.times), 2)
+	ok(g.elite)
+	ok(g.units[0].leader, "the leader mark reaches the unit entry")

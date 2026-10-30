@@ -23,3 +23,7 @@ rage_per_hit,1,rage gained for each hit dealt or taken
 slow_move,-2,SLOW takes this off a piece's move for a phase
 talk_range,3,the hero can TALK to the foe written for it from this many tiles away
 bleed_damage,1,BLEED takes this much at the start of each of the bleeding piece's phases
+elite_hp_pct,150,an elite group's foes have this % of their HP ([USER] pc-6, pc-15)
+elite_damage,1,and hit this much harder
+elite_armor,1,and take this much less
+elite_xp_pct,150,a won fight against an elite group pays this % of the XP

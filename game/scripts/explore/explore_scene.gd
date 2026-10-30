@@ -98,7 +98,9 @@ func _ready() -> void:
 			var cls := Db.class_def(e.id)
 			if cls == null or not grid.passable(e.cell):
 				continue
-			var u := CombatUnit.enemy(cls)
+			var elite := bool(g.get("elite", false))
+			var u := CombatUnit.enemy(cls, ExploreRules.elite_mods() if elite else {})
+			u.elite = elite
 			u.place(e.cell, grid.height_at(e.cell))
 			u.leader = bool(e.get("leader", false))  # FightGoals: beat this one to win a "leader" fight
 			u.talk_to = g.has("talk") and int(g.talk.get("unit", -1)) == g.units.find(e)
@@ -692,7 +694,10 @@ func open_event(id: String, ctx: Dictionary) -> void:
 	mode = M.DIALOG
 	walking_now = false
 	board.highlights = {}
-	var box := _new_dialog(Txt.t(ev.text_key))
+	var text := Txt.t(ev.text_key)
+	if ctx.get("group", {}).get("def", {}).get("elite", false):
+		text = Txt.t("UI_ELITE_WARN") + "\n" + text  # [USER] pc-15: a badge to warn
+	var box := _new_dialog(text)
 	for o: Dictionary in ExploreRules.options_for(ev, _defs(), _have()):
 		var label := Txt.t(o.key)
 		if o.check != "none":
@@ -1022,6 +1027,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		return
 	var downed := 0
 	var standing := 0
+	var elite := false
 	var boss := false
 	var ends := false
 	for flag: String in battle.outcome.joined:
@@ -1033,8 +1039,9 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 				downed += 1
 			elif battle.units.has(u):
 				standing += 1
-		if f.def.get("boss", false):
+		if f.def.get("boss", false) or f.def.get("elite", false):
 			Game.set_flag(ExploreRules.beaten_flag(map.map_name, String(f.def.id)))
+		elite = elite or bool(f.def.get("elite", false))
 		boss = boss or bool(f.def.get("boss", false))
 		ends = ends or bool(f.def.get("end", false))
 		if f.def.loot != "":
@@ -1043,6 +1050,8 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	for u: CombatUnit in party:
 		u.member.hp = maxi(1, u.hp)  # downed members get back up after a win
 	var xp := LevelRules.fight_xp(downed, boss, Db.levels, standing if battle.outcome.how == "exit" else 0)
+	if elite:
+		xp = xp * int(CombatRules.num("elite_xp_pct")) / 100  # better rewards; loot waits on the one-more-run theme
 	var lines := Game.award_xp(xp)
 	lines.insert(0, Txt.f("UI_XP_GAIN", xp))
 	_sync_party_hp()

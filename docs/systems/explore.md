@@ -45,3 +45,5 @@ A map editor (maps are JSON or the builder script for now; the sandbox editor ca
 ## Balance tools
 - `godot --headless --path game -s res://tools/explore_balance.gd -- [fights level weapon]`: AI-vs-AI win rates for the hero and the dog against every group on the E2E maps and the road-fight pairs. Quick, but it guesses where the party stands.
 - `godot --headless --path game -s res://tools/fight_probe.gd -- <map> <group> [tries]`: the real thing. Starts the map, walks the leader in from the start with the real walk, and lets the fight play on auto. This is what showed the pass wolves winning 12 of 12 from the meadow below their shelf.
+
+Group data (in each map's JSON) also takes `goals`, `exit`, `talk` and `elite`, and a unit entry `leader: true` (fight goals and TALK: `docs/systems/combat.md`; elites: `docs/systems/overworld.md`). `ExploreMap` keeps them (it dropped them before 2026-10-30).

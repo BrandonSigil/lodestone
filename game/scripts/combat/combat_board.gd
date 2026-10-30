@@ -2945,6 +2945,8 @@ func _draw_unit(u: CombatUnit) -> void:
 	var tags := ""
 	if u.leader and u.team == 1:
 		tags += Txt.t("TAG_LEADER") + " "
+	if u.elite and u.team == 1:
+		tags += Txt.t("TAG_ELITE") + " "
 	for s in u.statuses:
 		tags += Txt.t("TAG_" + String(s).to_upper()) + " "
 	if u.spooked:

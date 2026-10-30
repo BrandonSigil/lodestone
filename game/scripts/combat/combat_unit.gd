@@ -43,6 +43,7 @@ var acted := false
 var spooked := false
 var move_origin := Vector2i(-1000, -1000)  ## where this piece began its phase (set by CombatRules.begin_phase)
 var leader := false  ## a fight's leader: beating it wins a "leader" fight (FightGoals)
+var elite := false  ## from an elite group: tougher, and wears an ELITE badge
 var protect := false  ## must not fall: if it does, the fight is lost (FightGoals)
 var talk_to := false  ## the foe the hero can TALK to in this fight (FightGoals.talk)
 var left_guard := false  ## walked away from a guard this phase and took the free hit, so the move can't be undone

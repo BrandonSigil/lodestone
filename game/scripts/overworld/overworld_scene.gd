@@ -30,12 +30,15 @@ var _busy := false  ## a box is up: the clock stops
 var _menu_open := false
 var _time := 0.0
 var _hover := ""
+var _elites := {}  ## place id -> elite groups still standing on its maps (the red badge)
 var _note := ""  ## a short line under the party (PATH SHUT, a talk line)
 var _note_time := 0.0
 var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
+	for id in Db.world_nodes:
+		_elites[id] = ExploreRules.elites_left(Array(String(Db.world_nodes[id].maps).split("|")), Game.meta.flags)
 	Game.ensure_run()
 	Game.refresh_party()
 	_rng.randomize()  # talk lines only; encounters roll on the run's dice
@@ -402,6 +405,12 @@ func _draw_node(id: String, k: float) -> void:
 		"far":
 			for i in 3:
 				draw_circle(p + Vector2(-8 + i * 8, 2) * k, 2.5 * k + 1.0, Color(INK, 0.6))
+	if _elites.get(id, 0) > 0:
+		# [USER] pc-15: an elite fight waits here; a red badge on the other rim, so the party can choose
+		var e := p + Vector2(-r * 0.72, -r * 0.72)
+		draw_circle(e, 9.0 * k + 2.0, Color(0.8, 0.22, 0.2))
+		draw_arc(e, 9.0 * k + 2.0, 0, TAU, 20, INK, 1.5, true)
+		_label(e + Vector2(0, 4), "!", 12, Color(1, 1, 1))
 	if TravelRules.cleared(n, Game.meta.flags):
 		# Done: a gold seal on the rim, like a cleared level on an old console map.
 		var b := p + Vector2(r * 0.72, -r * 0.72)

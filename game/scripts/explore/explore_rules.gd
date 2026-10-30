@@ -25,8 +25,27 @@ static func beaten_flag(map_name: String, group_id: String) -> String:
 	return "beaten_%s_%s" % [map_name, group_id]
 
 
+## Bosses and elite groups, once beaten, stay beaten.
 static func stays_beaten(map_name: String, group: Dictionary, flags: Array) -> bool:
-	return bool(group.get("boss", false)) and flags.has(beaten_flag(map_name, String(group.id)))
+	return (bool(group.get("boss", false)) or bool(group.get("elite", false))) and flags.has(beaten_flag(map_name, String(group.id)))
+
+
+## The stat mods an elite group's foes fight with (data/combat.csv: tougher; [USER] pc-6, pc-15).
+static func elite_mods() -> Dictionary:
+	return {"hp_pct": int(CombatRules.num("elite_hp_pct")), "damage": int(CombatRules.num("elite_damage")),
+		"defense": int(CombatRules.num("elite_armor"))}
+
+
+## Elite groups on these maps still standing: what the overworld's elite badge warns of.
+static func elites_left(maps: Array, flags: Array) -> int:
+	var n := 0
+	for name: String in maps:
+		if name == "":
+			continue
+		for g: Dictionary in ExploreMap.load_named(name).groups:
+			if g.get("elite", false) and not flags.has(beaten_flag(name, String(g.id))):
+				n += 1
+	return n
 
 
 static func dist(a: Vector2i, b: Vector2i) -> float:

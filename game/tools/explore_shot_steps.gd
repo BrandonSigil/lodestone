@@ -46,6 +46,18 @@ func run(s: Node, f: int, step: String) -> bool:
 	match step:
 		"start":
 			return f == 20
+		"elite":
+			# A group marked elite ([USER] pc-15): the ELITE badge over its pieces and the warning in its box.
+			if f == 5:
+				var g: Dictionary = s.groups[0]
+				g.def["elite"] = true
+				for u: CombatUnit in g.units:
+					u.elite = true
+				s.focus = Vector2(g.units[0].cell) + Vector2(0.5, 0.5)
+				s.follow = false
+				s._refresh_units()
+				s.open_event(String(g.def.event), {"group": g})
+			return f == 30
 		"gate":
 			# The village gate's prompt ([USER] pc-10): GO (F) or EDIT PARTY (P); then the party editor.
 			if f == 5:
