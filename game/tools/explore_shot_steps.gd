@@ -83,6 +83,16 @@ func run(s: Node, f: int, step: String) -> bool:
 				s._refresh_units()
 				s.open_event(String(g.def.event), {"group": g})
 			return f == 30
+		"boons":
+			# Blessings and setbacks from the road ([USER] omr-7, omr-8), listed in the Lodestone menu.
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false
+				game.meta.flags.append("has_lodestone")
+				game.call("absorb_boons", {"blessings": 2, "setbacks": 1})
+				s._refresh_hud()
+				s._open_menu("lodestone")
+			return f == 30
 		"restore":
 			# Village work ([USER] omr-5): the smith and the chef moved in (in memory only), one step tracked: the list, and the
 			# frame's long bar showing what the tracked step still misses.

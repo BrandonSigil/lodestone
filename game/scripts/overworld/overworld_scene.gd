@@ -176,6 +176,7 @@ func _encounter() -> void:
 func _choose(o: Dictionary) -> void:
 	var fx := TrailRules.resolve_option(Game.run, o)
 	Game.absorb(fx.unlocks)
+	var boon_lines := Game.absorb_boons(fx)  # [USER] omr-7, omr-8: the road gives blessings and setbacks
 	_refresh_hud()
 	var lines: PackedStringArray = []
 	if not fx.check.is_empty():
@@ -184,6 +185,7 @@ func _choose(o: Dictionary) -> void:
 	var shown := String(o.win if fx.success else o.lose)
 	if shown != "" and fx.combat == "":
 		lines.append(shown.replace(";", "  "))
+	lines.append_array(boon_lines)
 	if fx.combat != "":
 		var p := leg()
 		Game.start_combat(fx.combat, String(p.get("art_set", "")), Game.OVERWORLD)

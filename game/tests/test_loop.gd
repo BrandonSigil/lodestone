@@ -247,7 +247,9 @@ func test_loop_data_is_whole() -> void:
 	for name in ["village", "home", "house_dog", "snow_pass", "wolf_den", "crypt"]:
 		var m := ExploreMap.load_named(name)
 		for t in m.things:
-			if String(t.event) != "":
+			if String(t.kind) == "restore":
+				ok(not RestoreRules.next_step(Db.restore, String(t.event), {}).is_empty(), "%s: restore %s" % [name, t.event])
+			elif String(t.event) != "":
 				ok(Db.explore_events.has(t.event), "%s: event %s" % [name, t.event])
 			if String(t.to) != "":
 				ok(FileAccess.file_exists(ExploreMap.DIR + String(t.to) + ".json"), "%s: %s leads to %s" % [name, t.id, t.to])
@@ -750,3 +752,53 @@ func test_cook_at_home_eat_at_camp() -> void:
 	ok(Game.run.meal.is_empty(), "two fights and it's gone")
 	eq(Game.run.max_hp(hero), hp)
 	_restore(saved)
+
+
+# --- blessings and setbacks ([USER] omr-6, omr-7, omr-8; one-more-run step 5) ----------------------
+
+func test_blessings_and_setbacks_last_till_home() -> void:
+	var saved := _fresh_game()
+	_db()
+	eq(Db.boons.keys().filter(func(id: String) -> bool: return Db.boons[id].kind == "blessing").size(), 10, "about ten blessings")
+	eq(Db.boons.keys().filter(func(id: String) -> bool: return Db.boons[id].kind == "setback").size(), 6, "about six setbacks")
+	var out := TrailRules.apply_effects(Game.run, "blessing:any;setback:any")
+	eq([out.blessings, out.setbacks], [1, 1])
+	var lines := Game.absorb_boons({"blessings": 7})
+	eq(lines.size(), 5, "five blessings at most")
+	eq(Game.run.boons.size(), 5)
+	Game.run.boons.assign(["strong_arms", "spoiled_food"])
+	Game.refresh_party()
+	var hero := CombatUnit.from_member(Game.run.members[0])
+	ok(Game.run.food_need() > 0 and Game.run.food_extra == 1, "spoiled food: each meal costs one more")
+	Game.run.boons.clear()
+	Game.refresh_party()
+	eq(hero.damage, CombatUnit.from_member(Game.run.members[0]).damage + 1, "strong arms: +1 damage")
+	Game.run.boons.assign(["hot_blood"])
+	Game.home_again()
+	ok(Game.run.boons.is_empty(), "home: gone")
+	_restore(saved)
+
+
+func test_boon_rules_in_a_fight() -> void:
+	_db()
+	var g := CombatGrid.flat(3, 1)
+	var k := CombatUnit.enemy(Db.class_def(&"knight"), {"rage_per_hit": 1, "crit_heal": 1, "start_res": 2})
+	k.team = 0
+	k.place(Vector2i(0, 0), 0)
+	eq(k.res, 2, "start the fight with 2 rage")
+	var b := CombatUnit.enemy(Db.class_def(&"bandit"))
+	b.place(Vector2i(1, 0), 0)
+	b.max_hp = 99
+	b.hp = 99
+	k.hp = 5
+	var rng := RandomNumberGenerator.new()
+	CombatRules.resolve(rng, g, k, k.abilities[0], b.cell, [k, b], false)
+	eq(k.res, 4, "two rage a hit with hot blood")
+	var healed := false
+	for i in 60:
+		var ev := CombatRules.resolve(rng, g, k, k.abilities[0], b.cell, [k, b], false)
+		if ev.any(func(e: Dictionary) -> bool: return e.type == "heal" and e.unit == k):
+			healed = true
+			break
+		b.hp = 99
+	ok(healed, "a crit heals the striker")

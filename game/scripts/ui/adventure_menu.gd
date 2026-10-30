@@ -59,6 +59,9 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 				changed.call())
 			row.add_child(b)
 		box.add_child(row)
+	for id in Game.run.boons:
+		var b: Dictionary = Db.boons[id]
+		_label(box, Txt.f("UI_LS_BLESSING" if b.kind == "blessing" else "UI_LS_SETBACK", Txt.t(String(b.name_key))), 13)
 	if not Game.run.meal.is_empty():
 		_label(box, Txt.f("UI_LS_MEAL", [Txt.t(String(Db.recipes.get(String(Game.run.meal.recipe), {}).get("name_key", ""))),
 			int(Game.run.meal.fights)]), 13)

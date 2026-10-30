@@ -52,6 +52,9 @@ var res_max := 0
 var res := 0  ## what's left to spend this fight
 var res_every := 0  ## charges: one back every this many own phases
 var res_tick := 0  ## charges: own phases since the last one came back
+var rage_bonus := 0  ## extra rage per hit dealt or taken (a blessing)
+var crit_heal := 0  ## HP a crit heals the striker (a blessing)
+var start_res := 0  ## mana, rage or charges added (or taken) at a fight's start (blessings and setbacks)
 var statuses := {}  ## status id -> turns left (see CombatRules.STATUS_*)
 
 # View state, animated by CombatBoard.
@@ -96,6 +99,9 @@ func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 	res_kind = c.resource
 	res_max = c.resource_max
 	res_every = c.resource_every
+	rage_bonus = int(mods.get("rage_per_hit", 0))
+	crit_heal = int(mods.get("crit_heal", 0))
+	start_res = int(mods.get("start_res", 0))
 	reset_resource()
 	set_spells(c.default_spells())
 
@@ -209,7 +215,7 @@ func can_use(a: Ability) -> bool:
 
 ## A fight's start: mana and charges full, rage empty.
 func reset_resource() -> void:
-	res = 0 if res_kind == "rage" else res_max
+	res = clampi((0 if res_kind == "rage" else res_max) + start_res, 0, res_max)
 	res_tick = 0
 
 

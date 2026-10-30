@@ -385,6 +385,7 @@ func start_adventure() -> void:
 				run.add_item(id, int(pack["items"][id]))
 	run.gold = int(pack.get("gold", 0))
 	run.meal = Dictionary(pack.get("meal", {})).duplicate()
+	run.boons.assign(Array(pack.get("boons", [])).filter(func(id: Variant) -> bool: return Db.boons.has(String(id))))
 	run.load_waiting(pack.get("waiting", {}))
 	refresh_party()
 	run.load_belts(pack.get("belts", {}))
@@ -417,7 +418,7 @@ func refresh_party() -> void:
 			m.def = hero_def()  # the class follows the weapon
 		var before := run.max_hp(m)
 		var s := level_state(id)
-		m.bonus = LevelRules.merge(LevelRules.merge(LevelRules.bonus(s, Db.levels), weapon_mods(id)), meal_mods())
+		m.bonus = LevelRules.merge(LevelRules.merge(LevelRules.merge(LevelRules.bonus(s, Db.levels), weapon_mods(id)), meal_mods()), boon_mods())
 		m.ranks = rank_state(id).ranks
 		m.hp = clampi(int(m.hp) + maxi(0, run.max_hp(m) - before), 0, run.max_hp(m))
 
@@ -533,7 +534,7 @@ func save_adventure() -> void:
 	for m in run.members:
 		hp[String((m.def as CharacterDef).id)] = int(m.hp)
 	meta.pack = {"grid": run.pack.to_save(), "belts": run.belts_save(), "waiting": run.waiting_save(), "gold": run.gold, "hp": hp,
-		"meal": run.meal.duplicate()}
+		"meal": run.meal.duplicate(), "boons": run.boons.duplicate()}
 	save_meta()
 
 
@@ -566,6 +567,9 @@ func home_again() -> void:
 	var back := not run.away.is_empty()
 	if back:
 		run.come_home()
+		refresh_party()
+	if not run.boons.is_empty():
+		run.boons.clear()  # blessings and setbacks last until the party is home ([USER] omr-7, omr-8)
 		refresh_party()
 	var banked := run.bank_materials()
 	for id: String in banked:
@@ -723,6 +727,51 @@ func fight_done() -> void:
 	if int(run.meal.fights) <= 0:
 		run.meal = {}
 	refresh_party()
+
+
+# --- blessings and setbacks ([USER] omr-6, omr-7, omr-8; one-more-run step 5) ---------------------------
+
+## What an event's outcome gave: a random blessing or setback for each it names. Returns the log lines.
+func absorb_boons(out: Dictionary) -> PackedStringArray:
+	var lines: PackedStringArray = []
+	for i in int(out.get("blessings", 0)):
+		var id := give_boon("blessing")
+		if id != "":
+			lines.append(Txt.f("UI_GOT_BLESSING", Txt.t(String(Db.boons[id].name_key))))
+	for i in int(out.get("setbacks", 0)):
+		var id := give_boon("setback")
+		if id != "":
+			lines.append(Txt.f("UI_GOT_SETBACK", Txt.t(String(Db.boons[id].name_key))))
+	return lines
+
+
+## Draws one at random from the pool, not one already held; blessings stop at blessing_max. "" when none.
+func give_boon(kind: String) -> String:
+	if run == null:
+		return ""
+	var held := run.boons.filter(func(id: String) -> bool: return String(Db.boons[id].kind) == kind).size()
+	if kind == "blessing" and held >= int(Db.levels.get("blessing_max", 5)):
+		return ""
+	var pool: Array = Db.boons.keys().filter(func(id: String) -> bool: return String(Db.boons[id].kind) == kind and not run.boons.has(id))
+	if pool.is_empty():
+		return ""
+	var id: String = pool[run.rng.randi_range(0, pool.size() - 1)]
+	run.boons.append(id)
+	refresh_party()
+	save_adventure()
+	return id
+
+
+## Everything the held blessings and setbacks change, in CombatUnit mod keys (food goes to the run).
+func boon_mods() -> Dictionary:
+	var out := {}
+	if run == null:
+		return out
+	for id in run.boons:
+		out = LevelRules.merge(out, RestoreRules.parse_needs(String(Db.boons[id].effect)))
+	run.food_extra = int(out.get("food", 0))
+	out.erase("food")
+	return out
 
 
 ## How much of a material the village has banked.

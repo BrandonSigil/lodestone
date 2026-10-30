@@ -352,7 +352,9 @@ func test_village_maps_link_up() -> void:
 		ok(m != null and m.grid.passable(m.start[0]), "%s loads with a walkable start" % n)
 		ok(not m.turn, "%s keeps the camera fixed for its building art" % n)
 		for t in m.things:
-			if t.event != "":
+			if t.kind == "restore":  # a village building: its event names the building's restore ladder
+				ok(not RestoreRules.ladder(Db.restore, String(t.event)).is_empty(), "%s/%s: a ladder for %s" % [n, t.id, t.event])
+			elif t.event != "":
 				ok(Db.explore_events.has(t.event), "%s/%s: event %s exists" % [n, t.id, t.event])
 			if t.to != "":
 				var there := ExploreMap.load_named(t.to)

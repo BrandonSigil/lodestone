@@ -10,3 +10,4 @@ branch_level,10,a job splits into one of its two branches at this job level
 party_max,4,how many fight: the hero and up to three companions ([USER] pc-1)
 camp_seconds,20,MAKE CAMP stands the party still this long on the road clock (meals still come due)
 meal_fights,2,a meal cooked at camp lasts this many fights
+blessing_max,5,the party carries at most this many blessings at once ([USER] omr-7)

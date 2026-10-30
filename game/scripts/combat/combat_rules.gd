@@ -497,7 +497,12 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 		t.hp = maxi(0, t.hp - dmg)
 		for o: CombatUnit in [u, t]:  # rage builds on every hit dealt or taken
 			if o.res_kind == "rage":
-				o.res = mini(o.res_max, o.res + int(num("rage_per_hit")))
+				o.res = mini(o.res_max, o.res + int(num("rage_per_hit")) + o.rage_bonus)
+		if crit and u.crit_heal > 0 and u.alive():
+			var before := u.hp
+			u.hp = mini(u.max_hp, u.hp + u.crit_heal)
+			if u.hp > before:
+				events.append({"type": "heal", "src": u, "unit": u, "amount": u.hp - before})
 		t.statuses.erase(STATUS_SLEEP)
 		events.append({"type": "hit", "src": u, "unit": t, "amount": dmg, "crit": crit})
 	if t.alive() and a.status != "":
