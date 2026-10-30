@@ -52,11 +52,13 @@ static func make() -> Theme:
 	t.default_font = load("res://fonts/YoungSerif-Regular.ttf") as Font
 	for v in ["DialogPanel", "MenuPanel", "InfoPanel", "TipPanel", "TitlePlate"]:
 		t.set_type_variation(v, "PanelContainer")
-	t.set_stylebox("panel", "DialogPanel", framed(18.0))
-	t.set_stylebox("panel", "MenuPanel", framed(10.0))
+	# Brandon's approved painted pieces where they exist (art/source/ui/menu/look_*.png), else FramedBox's code drawing.
+	# Panel corners: the leaves and the gem reach about 105 px into the painted piece, so 110 keeps them whole.
+	t.set_stylebox("panel", "DialogPanel", look("look_panel.png", 110, 110, 0.45, 22.0, 20.0))
+	t.set_stylebox("panel", "MenuPanel", look("look_panel.png", 110, 110, 0.3, 14.0, 12.0))
 	t.set_stylebox("panel", "InfoPanel", framed(8.0, false))
-	t.set_stylebox("panel", "TitlePlate", framed(8.0))
-	t.set_stylebox("panel", "TipPanel", framed(12.0))  # the fight's corner panel: no pointer, it points at nothing
+	t.set_stylebox("panel", "TitlePlate", look("look_title_plate.png", 88, 0, 0.3, 30.0, 8.0))
+	t.set_stylebox("panel", "TipPanel", look("look_panel.png", 110, 110, 0.4, 26.0, 24.0))  # the fight's corner panel
 	var tip := framed(12.0)
 	tip.pointer = true
 	t.set_stylebox("panel", "TooltipPanel", tip)  # Godot's own hover tooltips: the V under the middle
@@ -69,11 +71,11 @@ static func make() -> Theme:
 	t.set_font_size("font_size", "SubTitle", 15)
 	t.set_color("font_color", "SubTitle", GOLD.lerp(PARCHMENT, 0.5))
 	# Buttons: the pill, a gem and leaves at each end; lit, pressed and greyed by tint and glow.
-	t.set_stylebox("normal", "Button", pill(Color.WHITE, 0.0))
-	t.set_stylebox("hover", "Button", pill(Color(1.25, 1.25, 1.2), 0.6))
-	t.set_stylebox("pressed", "Button", pill(Color(0.75, 0.75, 0.7), 0.9))
-	t.set_stylebox("hover_pressed", "Button", pill(Color(0.85, 0.85, 0.8), 1.0))
-	t.set_stylebox("disabled", "Button", pill(Color(0.55, 0.55, 0.55, 0.85), 0.0))
+	t.set_stylebox("normal", "Button", button(Color.WHITE, 0.0))
+	t.set_stylebox("hover", "Button", button(Color(1.25, 1.25, 1.2), 0.6))
+	t.set_stylebox("pressed", "Button", button(Color(0.75, 0.75, 0.7), 0.9))
+	t.set_stylebox("hover_pressed", "Button", button(Color(0.85, 0.85, 0.8), 1.0))
+	t.set_stylebox("disabled", "Button", button(Color(0.55, 0.55, 0.55, 0.85), 0.0))
 	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())  # focus shows as the lit rim (hover) via the theme's own focus pass
 	t.set_color("font_color", "Button", PARCHMENT)
 	t.set_color("font_hover_color", "Button", Color(1, 0.97, 0.88))
@@ -82,6 +84,48 @@ static func make() -> Theme:
 	t.set_color("font_disabled_color", "Button", PARCHMENT.darkened(0.35))
 	_kit(t)
 	return t
+
+
+const LOOK_DIR := "res://art/source/ui/menu/"
+static var _looks := {}  ## "file@scale" -> the piece scaled to game size, made once
+
+
+## One of Brandon's painted pieces as a nine-slice box ([USER] 2026-10-30, the art runner's cut of his approved
+## "frame green"): scaled to game size, the corners (mx, my at the piece's own size) kept whole and the bands and the
+## fill tiled between them, so nothing smears. Falls back to FramedBox's code drawing if the piece isn't there.
+static func look(file: String, mx: int, my: int, scale: float, pad_x: float, pad_y: float, tint := Color.WHITE) -> StyleBox:
+	var p := LOOK_DIR + file
+	if not ResourceLoader.exists(p):
+		return framed(pad_y) if not file.contains("button") else pill(tint, 0.0)
+	var key := "%s@%s" % [file, scale]
+	if not _looks.has(key):
+		var img := (load(p) as Texture2D).get_image()
+		img.resize(maxi(1, roundi(img.get_width() * scale)), maxi(1, roundi(img.get_height() * scale)), Image.INTERPOLATE_LANCZOS)
+		_looks[key] = ImageTexture.create_from_image(img)
+	var sb := StyleBoxTexture.new()
+	sb.texture = _looks[key]
+	sb.texture_margin_left = mx * scale
+	sb.texture_margin_right = mx * scale
+	sb.texture_margin_top = my * scale
+	sb.texture_margin_bottom = my * scale
+	sb.axis_stretch_horizontal = StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT
+	# a plate or a pill is one band tall: it stretches to a taller button rather than stacking a second pill
+	sb.axis_stretch_vertical = StyleBoxTexture.AXIS_STRETCH_MODE_TILE_FIT if my > 0 else StyleBoxTexture.AXIS_STRETCH_MODE_STRETCH
+	sb.modulate_color = Color(minf(tint.r, 1.0), minf(tint.g, 1.0), minf(tint.b, 1.0), tint.a)
+	sb.content_margin_left = pad_x
+	sb.content_margin_right = pad_x
+	sb.content_margin_top = pad_y
+	sb.content_margin_bottom = pad_y
+	return sb
+
+
+## A button: Brandon's painted pill (round ends, a gem and leaves each end), lit, pressed or greyed; a lit one
+## (glow) brightens its painting a little.
+static func button(tint: Color, glow: float) -> StyleBox:
+	var sb := look("look_button.png", 85, 0, 0.24, 24.0, 7.0, tint)
+	if sb is StyleBoxTexture and glow > 0.0:
+		(sb as StyleBoxTexture).modulate_color = (sb as StyleBoxTexture).modulate_color.lightened(0.18 * glow)
+	return sb
 
 
 ## A panel in Brandon's frame: the banded rim, the mottled green, gems and leaves at the corners (FramedBox).
@@ -108,7 +152,7 @@ static func pill(tint: Color, glow: float) -> FramedBox:
 # --- drawing for screens that paint themselves (the character sheet) --------------------------------------
 
 static func frame(ci: CanvasItem, r: Rect2) -> void:
-	ci.draw_style_box(framed(0.0), r)  # the same frame every panel wears
+	ci.draw_style_box(look("look_panel.png", 72, 72, 0.5, 0.0, 0.0), r)  # the same frame every panel wears
 
 
 static func plate(ci: CanvasItem, r: Rect2, col := PARCHMENT) -> void:
