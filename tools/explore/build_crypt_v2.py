@@ -1,126 +1,170 @@
 #!/usr/bin/env python3
 """Builds game/data/explore/crypt_v2.json: the crypt redesign prototype ([USER] 2026-10-30, card
-builder-crypt-redesign-present: courtyard start, a bridge, big crypt doors, branching paths and rooms inside, several
-routes, an outline that is not a rectangle). Graybox, no story. Its own level next to the live crypt.
+builder-crypt-redesign-present: courtyard start, a bridge, big crypt doors, branching paths and interesting rooms, several
+routes, a windy outline that is not a rectangle; then "unique shapes, jut outs, dynamics, verticality!"). Graybox, no story.
 
-Flow (x right, y down): courtyard (SW, forest) -> stone bridge east over a chasm -> gatehouse and the big door -> the hall
-(branch 1 north, branch 2 east) ->
-  north: corridor -> junction room -> grand stair -> throne terrace (the Lich King);
-  from the junction: a west stair to the gallery (a dead-end stub, the boost) and a west corridor up to the terrace's west
-  end (where the way out is); a bridge east over a drop to the east wing;
-  east: passage -> chapel -> stair north -> east wing (the key) -> east corridor up to the terrace's east lobe.
-Rooms are carved from rock, so the outline is whatever the rooms make: it winds. Run again: python3 tools/explore/build_crypt_v2.py
+A winding chain of rooms at different heights with voids between them, joined by corridors that climb a level a cell,
+a long bridge over a chasm and a lookout jut-out. Rooms are rounded; rock far from any ground is void, so the outline is
+what the rooms and links make. Three routes reach the throne: up the middle (hall, gallery, junction, grand stair), east
+(chapel, east wing), and west (gate, cellar, library); the junction and the east wing are also joined by the long bridge.
+Run: python3 tools/explore/build_crypt_v2.py   Check: python3 tools/map_shape.py game/data/explore/crypt_v2.json
 """
 import json
 import os
 
 HD = "0123456789abcdefghijklmnopqrstuvwxyz"
-W, H = 56, 44
+W, H = 76, 62
 terrain = [["r"] * W for _ in range(H)]
 height = [[0] * W for _ in range(H)]
+ROOMS = {}
+LINKS = {}  # name -> set of cells, for the route checks
 
 
-def fill(x0, y0, x1, y1, t, h):
-    for y in range(y0, y1 + 1):
-        for x in range(x0, x1 + 1):
-            terrain[y][x] = t
-            height[y][x] = h
+def inside(r, x, y):
+    cx, cy, rx, ry, h, p = r["box"]
+    return abs((x - cx) / (rx + 0.5)) ** p + abs((y - cy) / (ry + 0.5)) ** p <= 1.0
 
 
-def fe(x0, y0, x1, y1, t, h, p=3.0):
-    """A rounded room: a superellipse inside the box, so the outline curves instead of squaring off."""
-    cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
-    rx, ry = (x1 - x0) / 2.0 + 0.5, (y1 - y0) / 2.0 + 0.5
-    for y in range(y0, y1 + 1):
-        for x in range(x0, x1 + 1):
-            if abs((x - cx) / rx) ** p + abs((y - cy) / ry) ** p <= 1.0:
+def room(name, cx, cy, rx, ry, h, t="s", p=2.6):
+    ROOMS[name] = {"box": (cx, cy, rx, ry, h, p), "t": t, "h": h}
+    for y in range(max(0, cy - ry - 1), min(H, cy + ry + 2)):
+        for x in range(max(0, cx - rx - 1), min(W, cx + rx + 2)):
+            if inside(ROOMS[name], x, y):
                 terrain[y][x] = t
                 height[y][x] = h
 
 
-def pillar(x, y, h):
-    if terrain[y][x] not in "r.":
-        put(x, y, "u", h)
+def pillars(name, pts):
+    r = ROOMS[name]
+    for dx, dy in pts:
+        x, y = r["box"][0] + dx, r["box"][1] + dy
+        if inside(r, x, y):
+            terrain[y][x] = "u"
 
 
-def put(x, y, t, h=None):
-    terrain[y][x] = t
-    if h is not None:
-        height[y][x] = h
+def cells_between(a, b, first):
+    (x0, y0), (x1, y1) = a, b
+    out = []
+    x, y = x0, y0
+    if first == "x":
+        while x != x1:
+            x += 1 if x1 > x else -1
+            out.append((x, y))
+        while y != y1:
+            y += 1 if y1 > y else -1
+            out.append((x, y))
+    else:
+        while y != y1:
+            y += 1 if y1 > y else -1
+            out.append((x, y))
+        while x != x1:
+            x += 1 if x1 > x else -1
+            out.append((x, y))
+    return out
 
 
-# Courtyard (start, outdoors): two lobes so its edge is not square.
-fe(2, 30, 14, 42, "g", 2, 2.4)
-fill(6, 27, 11, 31, "g", 2)
-fill(1, 35, 3, 39, "g", 2)
-for x, y in [(4, 33), (5, 40), (12, 40), (13, 32), (7, 28), (10, 28), (2, 36), (9, 33)]:
-    put(x, y, "f")
-# The bridge: a narrow stone span over a chasm, one cell wide.
-fill(15, 33, 20, 39, "w", 0)
-fill(15, 36, 20, 36, "s", 2)
-# Gatehouse and the big door, then the hall.
-fill(21, 34, 23, 38, "s", 2)
-fill(24, 34, 24, 38, "r", 2)
-put(24, 36, "u", 2)  # the big door
-fe(25, 30, 38, 42, "s", 2, 2.8)
-for x, y in [(28, 33), (28, 39), (33, 33), (33, 39), (36, 33), (36, 39)]:
-    pillar(x, y, 2)
-# North: corridor (with a stub that goes nowhere) up to the junction room.
-fill(30, 22, 32, 30, "d", 2)
-fill(33, 26, 36, 26, "d", 2)
-fill(30, 21, 32, 21, "t", 2)
-fe(25, 12, 41, 22, "s", 3, 2.8)
-fill(31, 16, 32, 17, "w", 3)
-for x, y in [(28, 15), (28, 19), (38, 15), (38, 19)]:
-    pillar(x, y, 3)
-# West: stair to the gallery, a dead-end stub with the boost, and the west corridor to the terrace.
-fe(8, 12, 25, 24, "s", 4, 2.6)
-for x, y in [(13, 15), (13, 20), (18, 15), (18, 20), (22, 15), (22, 20)]:
-    pillar(x, y, 4)
-put(25, 17, "t", 3)
-fill(5, 18, 9, 18, "d", 4)  # the stub
-fill(12, 9, 14, 12, "d", 4)
-fill(12, 8, 14, 8, "t", 4)
-fill(12, 7, 14, 7, "t", 5)
-# East: passage, chapel, stair north, east wing, bridge from the junction, east corridor.
-fill(38, 35, 45, 37, "d", 2)
-fe(45, 30, 55, 42, "s", 2, 2.6)
-for x, y in [(48, 33), (52, 33), (48, 38), (52, 38)]:
-    pillar(x, y, 2)
-fill(49, 30, 50, 30, "t", 2)
-fe(45, 15, 55, 30, "s", 3, 2.6)
-fill(41, 16, 45, 18, "w", 0)
-fill(41, 17, 45, 17, "s", 3)
-for x, y in [(48, 20), (52, 20), (48, 26), (52, 26)]:
-    pillar(x, y, 3)
-fill(49, 16, 50, 16, "t", 3)
-fill(49, 12, 50, 15, "d", 4)
-fill(49, 11, 50, 11, "t", 4)
-fill(49, 10, 50, 10, "t", 5)
-# Grand stair and the throne terrace.
-fill(31, 13, 35, 13, "t", 3)
-fill(31, 12, 35, 12, "t", 4)
-fill(31, 11, 35, 11, "t", 5)
-fe(9, 0, 53, 7, "s", 6, 6.0)
-fe(26, 6, 40, 10, "s", 6, 2.4)
-fe(45, 6, 53, 9, "s", 6, 2.4)
-# Stairs go in last, over the rooms' rounded edges.
-for x in range(31, 36):
-    put(x, 13, "t", 3); put(x, 12, "t", 4); put(x, 11, "t", 5)
-for x in (12, 13, 14):
-    put(x, 8, "t", 4); put(x, 7, "t", 5)
-for x in (49, 50):
-    put(x, 30, "t", 2); put(x, 16, "t", 3); put(x, 11, "t", 4); put(x, 10, "t", 5)
-put(25, 17, "t", 3)
-for x in (31, 32):
-    pass
-for x in range(30, 33):
-    put(x, 21, "t", 2)
-put(38, 2, "u", 6)  # throne
-for x, y in [(18, 2), (18, 5), (26, 2), (26, 5), (32, 2), (32, 5), (44, 2), (44, 5)]:
-    pillar(x, y, 6)
+def link(name, a, b, first="x", width=3, bridge=False, door=None, to_off=(0, 0)):
+    """Carve a way from room a's centre to room b's centre, outside both. Heights climb a level a cell, centred; a
+    bridge stays flat over a chasm."""
+    ra, rb = ROOMS[a], ROOMS[b]
+    pa, pb = ra["box"][:2], (rb["box"][0] + to_off[0], rb["box"][1] + to_off[1])
+    path = [c for c in cells_between(pa, pb, first) if not inside(ra, *c) and not inside(rb, *c)]
+    ha, hb = ra["h"], rb["h"]
+    n = len(path)
+    dh = abs(hb - ha)
+    assert n >= max(dh, 1) or bridge, f"{a}->{b}: {n} cells for a {dh} level climb"
+    sign = 1 if hb > ha else -1
+    hs = []
+    for i in range(n):
+        if bridge:
+            hs.append(min(ha, hb))
+        else:
+            s = max(0, min(dh, i + 1 - (n - dh) // 2))
+            hs.append(ha + sign * s)
+    cells = set()
+    for i, (x, y) in enumerate(path):
+        horizontal = (i + 1 < n and path[i + 1][1] == y) or (i + 1 >= n and i > 0 and path[i - 1][1] == y)
+        for o in range(-(width // 2), width // 2 + 1):
+            cx, cy = (x, y + o) if horizontal else (x + o, y)
+            if not (0 <= cx < W and 0 <= cy < H) or terrain[cy][cx] not in "r.w":
+                if terrain[cy][cx] != "r" or not (0 <= cx < W and 0 <= cy < H):
+                    continue
+            cells.add((cx, cy))
+            height[cy][cx] = hs[i]
+            terrain[cy][cx] = "s" if bridge else "d"
+            if not bridge and i + 1 < n:
+                nxt = hs[i + 1]
+                if nxt == hs[i] + 1:
+                    terrain[cy][cx] = "t"
+                elif nxt == hs[i] - 1 and False:
+                    pass
+            if not bridge and i > 0 and hs[i - 1] == hs[i] + 1:
+                terrain[cy][cx] = "t"  # the lower cell of a rise, going down
+    if bridge:  # a chasm either side
+        for i, (x, y) in enumerate(path):
+            horizontal = (i + 1 < n and path[i + 1][1] == y) or (i + 1 >= n and i > 0 and path[i - 1][1] == y)
+            for o in (-3, -2, 2, 3):
+                cx, cy = (x, y + o) if horizontal else (x + o, y)
+                if 0 <= cx < W and 0 <= cy < H and terrain[cy][cx] == "r":
+                    terrain[cy][cx] = "w"
+                    height[cy][cx] = 0
+    if door:
+        dx, dy = path[len(path) // 2]
+        terrain[dy][dx] = "u"
+        door["cell"] = [dx, dy]
+    LINKS[name] = cells
+    return path
 
-# Walls: rock rises 2 above its tallest open neighbour; rock with no ground near is void (as build_crypt.py).
+
+# --- rooms: an S-curve from the south-west courtyard to the throne at the top ---------------------------------------
+room("court", 9, 54, 7, 6, 2, "g", 2.2)
+room("lookout", 6, 41, 3, 3, 4, "g", 2.4)  # a jut-out north of the courtyard, a dead end with a boost
+room("gate", 23, 50, 4, 3, 3, "s")
+room("hall", 37, 44, 8, 6, 3, "s")
+room("chapel", 55, 52, 4, 5, 3, "s")
+room("cellar", 24, 37, 6, 4, 1, "s")
+room("gallery", 49, 28, 8, 5, 7, "s")
+room("library", 13, 25, 5, 7, 6, "s")
+room("junction", 30, 20, 7, 5, 10, "s")
+room("wing", 65, 21, 4, 6, 9, "s")
+room("throne", 52, 7, 12, 4, 13, "s", 4.0)
+pillars("hall", [(-5, -4), (-5, 4), (0, -4), (0, 4), (5, -4), (5, 4)])
+pillars("gallery", [(-5, -3), (-5, 3), (0, -3), (0, 3), (5, -3), (5, 3)])
+pillars("junction", [(-4, -3), (-4, 3), (4, -3), (4, 3)])
+pillars("library", [(-3, -5), (3, -5), (-3, 5), (3, 5)])
+pillars("wing", [(-2, -4), (2, -4), (-2, 4), (2, 4)])
+pillars("chapel", [(-2, -3), (2, -3), (-2, 3), (2, 3)])
+pillars("throne", [(-10, -2), (-10, 2), (-5, -2), (-5, 2), (5, -2), (5, 2), (10, -2), (10, 2)])
+# pools: the cellar's sink and the junction's basin
+for (r, offs) in (("cellar", [(-1, 0), (0, 0), (1, 0), (0, 1), (0, -1)]), ("junction", [(0, 0), (1, 0)])):
+    cx, cy = ROOMS[r]["box"][:2]
+    for dx, dy in offs:
+        terrain[cy + dy][cx + dx] = "w"
+        height[cy + dy][cx + dx] = ROOMS[r]["h"] - (1 if r == "cellar" else 0)
+
+gate_thing = {"id": "gate", "kind": "door", "event": "locked_door", "floor": "s"}
+# the courtyard's chasm bridge (flat, over a drop), the big door, then the climbs
+link("bridge_in", "court", "gate", "x", 1, bridge=True)
+link("door", "gate", "hall", "x", 1, door=gate_thing)
+link("lookout_up", "court", "lookout", "y", 2)
+link("hall_gallery", "hall", "gallery", "y", 3)
+link("hall_chapel", "hall", "chapel", "x", 3)
+link("chapel_wing", "chapel", "wing", "x", 3)
+link("gate_cellar", "gate", "cellar", "y", 3)
+link("cellar_library", "cellar", "library", "x", 2)
+link("gallery_junction", "gallery", "junction", "x", 3)
+link("junction_throne", "junction", "throne", "y", 3)
+link("library_throne", "library", "throne", "y", 1, to_off=(0, -3))
+link("wing_throne", "wing", "throne", "y", 1)
+link("bridge_wing", "junction", "wing", "y", 1, bridge=True) if False else None
+# the long bridge from the junction's east edge to the east wing, over a drop (heights 10 and 9)
+ROOMS["junction"]["h"], ROOMS["wing"]["h"] = 10, 9
+link("bridge_long", "junction", "wing", "x", 1, bridge=True)
+# the bridge starts and ends one level off a room's floor; level it to the lower room
+for (x, y) in LINKS["bridge_long"]:
+    height[y][x] = 9
+
+# Walls: rock rises 2 above its tallest open neighbour; rock with no ground next to it is void (the outline).
 for y in range(H):
     for x in range(W):
         if terrain[y][x] != "r":
@@ -129,20 +173,15 @@ for y in range(H):
         for dx in (-1, 0, 1):
             for dy in (-1, 0, 1):
                 nx, ny = x + dx, y + dy
-                if 0 <= nx < W and 0 <= ny < H and terrain[ny][nx] != "r":
+                if 0 <= nx < W and 0 <= ny < H and terrain[ny][nx] not in "r.":
                     best = max(best or 0, height[ny][nx])
-        if best is None:
-            height[y][x] = 0
-        elif height[y][x] < best + 2:
-            height[y][x] = min(8, best + 2)
-put(24, 36, "u", 2)
-# The outline: rock more than 2 cells from any ground is void, so the map's edge follows its rooms, not a rectangle.
+        height[y][x] = 0 if best is None else min(24, best + 2)
 near = [[False] * W for _ in range(H)]
 for y in range(H):
     for x in range(W):
-        if terrain[y][x] != "r":
-            for dy in range(-2, 3):
-                for dx in range(-2, 3):
+        if terrain[y][x] not in "r.":
+            for dy in range(-1, 2):
+                for dx in range(-1, 2):
                     if 0 <= x + dx < W and 0 <= y + dy < H:
                         near[y + dy][x + dx] = True
 for y in range(H):
@@ -152,43 +191,104 @@ for y in range(H):
             height[y][x] = 0
 
 zones = [["-"] * W for _ in range(H)]
-for y in range(26, H):
-    for x in range(0, 21):
+for y in range(34, H):
+    for x in range(0, 22):
         zones[y][x] = "f"
-for y in range(0, 26):
+for y in range(26, 62):
     for x in range(0, 14):
-        if x < 4:
-            zones[y][x] = "-"
+        if zones[y][x] == "-" and y > 33:
+            zones[y][x] = "f"
+
+
+def c(name, dx=0, dy=0):
+    r = ROOMS[name]["box"]
+    return [r[0] + dx, r[1] + dy]
+
+
 data = {
     "name": "crypt_v2", "art_set": "ruins", "strangeness": 0.0, "level": 1, "view": 0, "walls": True,
     "wall_kit": "dungeon", "outdoors": ["forest"],
     "grid": {"w": W, "h": H, "terrain": ["".join(r) for r in terrain], "heights": ["".join(HD[v] for v in r) for r in height],
              "zones": ["".join(r) for r in zones], "zone_key": {"f": "forest", "d": "dungeon"}},
-    "start": [[8, 37], [9, 38], [7, 38]],
+    "start": [c("court", -2, 2), c("court", -1, 3), c("court", -3, 3)],
     "groups": [
         {"id": "junction", "event": "spot_people", "sight": 4, "loot": "food:+6;gold:+10",
-         "units": [{"id": "bandit", "cell": [30, 18]}, {"id": "bandit", "cell": [34, 16]}, {"id": "bandit_archer", "cell": [28, 15]}]},
+         "units": [{"id": "bandit", "cell": c("junction", -2, 2)}, {"id": "bandit", "cell": c("junction", 3, -1)},
+                   {"id": "bandit_archer", "cell": c("junction", 0, -4)}]},
         {"id": "gallery", "event": "spot_people", "sight": 4, "loot": "food:+10",
-         "units": [{"id": "bandit_archer", "cell": [16, 16]}, {"id": "bandit", "cell": [19, 19]}]},
+         "units": [{"id": "bandit_archer", "cell": c("gallery", -4, 1)}, {"id": "bandit", "cell": c("gallery", 3, -1)}]},
+        {"id": "cellar", "event": "spot_beasts", "sight": 4, "loot": "food:+10",
+         "units": [{"id": "wolf", "cell": c("cellar", -3, 1)}, {"id": "wolf", "cell": c("cellar", 3, -2)}]},
         {"id": "east_wing", "event": "spot_people", "sight": 5, "loot": "medicine:+2",
-         "units": [{"id": "bandit_archer", "cell": [52, 22]}, {"id": "bandit", "cell": [50, 25]}]},
+         "units": [{"id": "bandit_archer", "cell": c("wing", 1, -4)}, {"id": "bandit", "cell": c("wing", -1, 2)}]},
         {"id": "throne", "event": "spot_boss", "sight": 4, "loot": "medicine:+3;gold:+20;unlock:beat_lich",
          "boss": True, "end": True, "goals": "defeat|exit",
-         "exit": [[11, 1], [12, 1], [11, 2], [12, 2], [11, 3], [12, 3]],
-         "summon": [[36, 3], [40, 3], [37, 4], [39, 4]],
-         "units": [{"id": "lich", "cell": [38, 3]}]},
+         "exit": [[c("throne", -13, dy)[0] + dx, c("throne", -13, dy)[1]] for dy in (-1, 0, 1) for dx in (0, 1)],
+         "summon": [c("throne", -2, 0), c("throne", 2, 0), c("throne", -1, 1), c("throne", 1, 1)],
+         "units": [{"id": "lich", "cell": c("throne", 4, 0)}]},
     ],
     "things": [
-        {"id": "gate", "kind": "door", "event": "locked_door", "cell": [24, 36], "floor": "s"},
-        {"id": "yard_stone", "kind": "shrine", "event": "shrine", "cell": [9, 30]},
-        {"id": "hall_chest", "kind": "chest", "event": "chest", "cell": [35, 40]},
-        {"id": "gallery_boost", "kind": "boost", "event": "hp:2", "cell": [5, 18]},
-        {"id": "chapel_chest", "kind": "chest", "event": "chest", "cell": [53, 39]},
-        {"id": "wing_key", "kind": "key", "event": "crypt_key", "cell": [53, 28]},
-        {"id": "way_out", "kind": "exit", "event": "exit", "cell": [11, 2]},
-        {"id": "up_stair", "kind": "enter", "event": "", "cell": [4, 38], "to": "snow_pass", "at": [9, 8]},
+        gate_thing,
+        {"id": "yard_stone", "kind": "shrine", "event": "shrine", "cell": c("court", 2, -3)},
+        {"id": "lookout_boost", "kind": "boost", "event": "hp:2", "cell": c("lookout", 0, -1)},
+        {"id": "hall_chest", "kind": "chest", "event": "chest", "cell": c("hall", 6, 2)},
+        {"id": "chapel_chest", "kind": "chest", "event": "chest", "cell": c("chapel", 0, 4)},
+        {"id": "wing_key", "kind": "key", "event": "crypt_key", "cell": c("wing", 2, 5)},
+        {"id": "library_rare", "kind": "rare", "event": "rare:1;metal:2", "cell": c("library", -3, -2)},
+        {"id": "way_out", "kind": "exit", "event": "exit", "cell": c("throne", -13, 0)},
+        {"id": "up_stair", "kind": "enter", "event": "", "cell": c("court", -6, 3), "to": "snow_pass", "at": [9, 8]},
     ],
 }
+for t in data["things"]:
+    assert terrain[t["cell"][1]][t["cell"][0]] not in "r.w" or t["id"] == "gate", t["id"]
+# Routes: the throne must be reachable by each of the three climbs alone (the other two shut).
+from collections import deque
+
+
+def reach(start, block):
+    seen = {start}
+    q = deque([start])
+    while q:
+        x, y = q.popleft()
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nx, ny = x + dx, y + dy
+            if (0 <= nx < W and 0 <= ny < H and (nx, ny) not in seen and (nx, ny) not in block
+                    and terrain[ny][nx] not in "r.w" and abs(height[ny][nx] - height[y][x]) <= 1):
+                seen.add((nx, ny))
+                q.append((nx, ny))
+    return seen
+
+
+ROUTES = {"middle": ("hall_gallery", "gallery_junction", "junction_throne"),
+          "east": ("hall_chapel", "chapel_wing", "wing_throne"),
+          "west": ("gate_cellar", "cellar_library", "library_throne")}
+start0 = tuple(data["start"][0])
+throne_cell = tuple(c("throne", 0, 0))
+for keep, links in ROUTES.items():
+    block = set()
+    for other, ls in ROUTES.items():
+        if other != keep:
+            for ln in ls[-1:]:  # shut each other route's last climb into the throne room
+                block |= LINKS[ln]
+    rr = reach(start0, block)
+    if throne_cell not in rr:
+        print(keep, "fails; library", tuple(c("library",1,0)) in rr, "cellar floor", tuple(c("cellar",0,4)) in rr, "lib exit", tuple(c("library",0,-7)) in rr)
+        # the last reached cell nearest the throne
+        best = min(rr, key=lambda q: abs(q[0]-throne_cell[0]) + abs(q[1]-throne_cell[1]))
+        print("closest", best, height[best[1]][best[0]], terrain[best[1]][best[0]])
+        for dx, dy in ((1,0),(-1,0),(0,1),(0,-1)):
+            n=(best[0]+dx,best[1]+dy); print("   ", n, terrain[n[1]][n[0]], height[n[1]][n[0]])
+    if throne_cell not in rr and keep == "west":
+        pts = [(q, terrain[q[1]][q[0]], height[q[1]][q[0]], q in rr) for q in sorted(LINKS["library_throne"], key=lambda q: (-q[1], q[0]))]
+        print("LT", [p for p in pts if not p[3]][:3], [p for p in pts if p[3]][-3:])
+        print("ROW40", [(x, terrain[40][x], height[40][x], (x, 40) in rr) for x in range(10, 28)])
+        for ln in ("cellar_library", "library_throne"):
+            cs = sorted(LINKS[ln])
+            print(ln, [(q, terrain[q[1]][q[0]], height[q[1]][q[0]], q in rr) for q in cs if q[0] in (11, 12) or q[1] in (8, 27)][:40])
+    assert throne_cell in rr, f"the {keep} route does not reach the throne alone"
+assert throne_cell in reach(start0, set()), "the throne is unreachable"
+print("routes ok: middle, east and west each reach the throne alone")
+
 out = os.path.join(os.path.dirname(__file__), "..", "..", "game", "data", "explore", "crypt_v2.json")
 with open(out, "w") as f:
     json.dump(data, f, indent=1)

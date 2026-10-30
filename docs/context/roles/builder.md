@@ -19,6 +19,12 @@
   `game/data/battle_art_village.csv`), or window sizes (`_strip_cut`). Then village v2 art.
 - Uncommitted work of mine: none. The six strip PNGs are the art runner's to commit on stamp.
 
+## Standing rule: never show Brandon a box
+[USER] 2026-10-30, said several times: "is the entire map basically just a big box? if yes, dont show it to me and work on it.
+Unique shapes, jut outs, dynamics, verticality!" Before a map goes on the desk (card, presentation, layout shot), run
+`python3 tools/map_shape.py game/data/explore/<map>.json`. If it says BOX, rework it first. Build maps as a winding chain of
+rooms at different heights with voids between, not a filled rectangle.
+
 ## Open threads
 - Desk: `builder-maker-goals-review`, `builder-crypt-redesign-present` (open). Notes: none open.
 - The art runner (`local_b246bd54-…`) sends Brandon's picks on art cards; the systems developer owns engine rules;

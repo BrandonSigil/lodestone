@@ -36,6 +36,14 @@ for scene in launch village trail combat world_map battle_view explore map_maker
 	fi
 done
 
+# The shape gate ([USER] 2026-10-30: never show him a box): the crypt redesign prototype must not read as one.
+if command -v python3 >/dev/null 2>&1 && [ -f game/data/explore/crypt_v2.json ]; then
+	if ! shape=$(python3 tools/map_shape.py game/data/explore/crypt_v2.json); then
+		echo "FAIL map shape: $shape"
+		fail=1
+	fi
+fi
+
 # The E2E robot plays the whole loop (about 2 minutes). Opt in: E2E=1 tools/check.sh
 if [ "${E2E:-0}" = "1" ]; then
 	out=$("${RUN[@]}" --headless --path . -s res://tools/e2e_play.gd 2>&1)
