@@ -54,6 +54,8 @@ var _fit_board := true  ## false when the host owns the board's camera (explorat
 var _moving := false  ## MOVE picked: the menu is hidden and the reachable tiles are lit
 var _cancel: Button
 var _auto: Button
+var _hud: ActionHud  ## the action bar, ring or hand of cards (the "list" layout is _menu)
+var _layout_btn: Button
 ## Testing: the party plays its own turns. Kept across fights, so one click covers a whole dungeon.
 static var auto_fight := false
 const AUTO_PAUSE := 0.4  ## seconds between auto phases
@@ -133,6 +135,18 @@ func _build_ui() -> void:
 	_auto.add_theme_font_size_override("font_size", 12)
 	_auto.toggled.connect(_on_auto_toggled)
 	_ui.add_child(_auto)
+	_hud = ActionHud.new()
+	_hud.layout = action_layout()
+	_hud.on_hover = preview_reach
+	_hud.on_unhover = func() -> void: board.reach = {}
+	_ui.add_child(_hud)
+	_hud.visible = false
+	_layout_btn = Button.new()  # testing: switch the action layout ([USER] 2026-10-30, three to pick from)
+	_layout_btn.custom_minimum_size = Vector2(AUTO_SIZE.x, AUTO_SIZE.y)
+	_layout_btn.add_theme_font_size_override("font_size", 12)
+	_layout_btn.pressed.connect(_next_layout)
+	_ui.add_child(_layout_btn)
+	_show_layout()
 
 
 static func _panel_style(bg: Color) -> StyleBoxFlat:
@@ -154,6 +168,7 @@ func layout(r: Rect2) -> void:
 	_banner.position = r.position + Vector2(r.size.x * 0.5 - 90, r.size.y - 84)
 	_cancel.position = r.position + Vector2(r.size.x * 0.5 - CANCEL_SIZE.x * 0.5, r.size.y - 44)
 	_auto.position = Vector2(r.end.x - AUTO_SIZE.x - 8, r.position.y + 8)
+	_layout_btn.position = _auto.position + Vector2(0, AUTO_SIZE.y + 4)
 	if not _fit_board:
 		return
 	var bs := board.board_size()
@@ -167,6 +182,8 @@ func _on_rotated() -> void:
 	layout(_rect)
 	if selected and _menu.visible:
 		_place_menu()
+	elif selected and _hud.visible:
+		_open_menu()
 
 
 ## enemy_first: the party was caught (spotted on an exploration map), so the enemy moves before round 1.
@@ -535,8 +552,8 @@ func _deselect() -> void:
 		board.highlights = {}
 		board.area = {}
 	reach = {}
-	if _menu:
-		_menu.visible = false
+	_hide_menu()
+	if _forecast:
 		_forecast.visible = false
 	if state == S.MENU or state == S.TARGET:
 		state = S.IDLE
@@ -558,7 +575,7 @@ func _begin_move() -> void:
 	if selected == null or selected.moved:
 		return
 	_moving = true
-	_menu.visible = false
+	_hide_menu()
 	_show_move_tiles()
 	_refresh_cancel()
 
@@ -591,32 +608,88 @@ func _open_menu() -> void:
 		_menu_box.remove_child(c)  # gone now, so the menu's size comes from the new items only
 		c.queue_free()
 	var u := selected
-	if not u.moved and CombatRules.move_points(u) > 0:
-		_menu_item(Txt.t("ACT_MOVE"), true, _begin_move)
-	if not u.acted:
-		for a in u.abilities:
-			_menu_item(_ability_label(u, a), _has_targets(u, a) and u.can_use(a), _start_targeting.bind(a), a)
-		if _talk_target(u) != null:
-			_menu_item(Txt.t("ACT_TALK"), true, _on_talk)
-		for a in CombatRules.extra_actions(u):  # AID, only while a downed teammate lies next to this piece
-			if _has_targets(u, a):
-				_menu_item(Txt.t(a.name_key), true, _start_targeting.bind(a), a)
-		for id: String in Db.combat_items:  # only what's on this piece's own belt
-			var it: Ability = Db.combat_items[id]
-			var have := u.belt.count(it.spends) if u.belt != null else 0
-			if have <= 0:
-				continue
-			var label := "%s  (%s %d)" % [Txt.t(it.name_key), Txt.t(String(Db.items[it.spends].name_key)), have]
-			_menu_item(label, CombatRules.usable(u, it) and _has_targets(u, it), _start_targeting.bind(it), it)
-		_menu_item(Txt.t("ACT_GUARD"), true, _on_guard)
-	if u.moved and not u.acted and not u.left_guard:  # a free hit taken on the way can't be undone
-		_menu_item(Txt.t("ACT_UNDO"), true, _undo_move)
-	_menu_item(Txt.t("ACT_WAIT"), true, _on_wait)
+	var entries := _entries(u)
+	if _hud.layout != "list":
+		_hide_menu()
+		_hud.show_for(u, entries, board.cell_screen_pos(u.cell), _rect if _rect.has_area() else get_viewport_rect())
+		_banner.visible = _hud.layout == "ring"  # the bar and the hand sit where the banner does
+		return
+	for e in entries:
+		_menu_item(String(e.text), bool(e.enabled), e.cb, e.get("ability"))
 	_menu.visible = true
 	_menu.reset_size()
 	await get_tree().process_frame
 	if selected == u and _menu.visible:
 		_place_menu()
+
+
+## What piece u can do now, in menu order: {text, enabled, cb, ability, kind, count}. Every layout shows these.
+func _entries(u: CombatUnit) -> Array:
+	var out := []
+	var add := func(text: String, enabled: bool, cb: Callable, kind: String, a: Ability = null, count := 0) -> void:
+		out.append({"text": text, "enabled": enabled, "cb": cb, "kind": kind, "ability": a, "count": count})
+	if not u.moved and CombatRules.move_points(u) > 0:
+		add.call(Txt.t("ACT_MOVE"), true, _begin_move, "move")
+	if not u.acted:
+		for a in u.abilities:
+			add.call(_ability_label(u, a) if _hud.layout == "list" else Txt.t(a.name_key), _has_targets(u, a) and u.can_use(a), _start_targeting.bind(a), "skill", a)
+		if _talk_target(u) != null:
+			add.call(Txt.t("ACT_TALK"), true, _on_talk, "talk")
+		for a in CombatRules.extra_actions(u):  # AID, only while a downed teammate lies next to this piece
+			if _has_targets(u, a):
+				add.call(Txt.t(a.name_key), true, _start_targeting.bind(a), "aid", a)
+		for id: String in Db.combat_items:  # only what's on this piece's own belt
+			var it: Ability = Db.combat_items[id]
+			var have := u.belt.count(it.spends) if u.belt != null else 0
+			if have <= 0:
+				continue
+			var label := "%s  (%s %d)" % [Txt.t(it.name_key), Txt.t(String(Db.items[it.spends].name_key)), have] if _hud.layout == "list" else Txt.t(it.name_key)
+			add.call(label, CombatRules.usable(u, it) and _has_targets(u, it), _start_targeting.bind(it), "item", it, have)
+		add.call(Txt.t("ACT_GUARD"), true, _on_guard, "guard")
+	if u.moved and not u.acted and not u.left_guard:  # a free hit taken on the way can't be undone
+		add.call(Txt.t("ACT_UNDO"), true, _undo_move, "undo")
+	add.call(Txt.t("ACT_WAIT"), true, _on_wait, "wait")
+	return out
+
+
+## The action layout from the settings ([USER] 2026-10-30: three versions; the losers go once Brandon picks).
+static func action_layout() -> String:
+	var l := String(Game.meta.get("settings", {}).get("action_ui", "list"))
+	return l if l in ActionHud.LAYOUTS else "list"
+
+
+func _next_layout() -> void:
+	var i := (ActionHud.LAYOUTS.find(_hud.layout) + 1) % ActionHud.LAYOUTS.size()
+	set_layout(ActionHud.LAYOUTS[i])
+
+
+func set_layout(l: String) -> void:
+	_hud.layout = l
+	var st: Dictionary = Game.meta.get("settings", {})
+	st["action_ui"] = l
+	Game.meta["settings"] = st
+	Game.save_meta()
+	_show_layout()
+	if selected != null and _menu_shown():
+		_hud.clear()
+		_open_menu()
+
+
+func _show_layout() -> void:
+	_layout_btn.text = Txt.f("UI_ACTION_UI", Txt.t("UI_LAYOUT_" + _hud.layout.to_upper()))
+
+
+func _menu_shown() -> bool:
+	return (_menu != null and _menu.visible) or (_hud != null and _hud.visible)
+
+
+func _hide_menu() -> void:
+	if _menu:
+		_menu.visible = false
+	if _hud:
+		_hud.clear()
+	if _banner:
+		_banner.visible = true
 
 
 func _place_menu() -> void:
@@ -651,7 +724,7 @@ func _menu_item(text: String, enabled: bool, cb: Callable, a: Ability = null) ->
 
 
 func _process(_delta: float) -> void:
-	if not board.reach.is_empty() and (_menu == null or not _menu.visible):
+	if not board.reach.is_empty() and not _menu_shown():
 		board.reach = {}  # the menu went away (an action picked, a step back, the phase over): so does the preview
 
 
@@ -703,7 +776,7 @@ func _start_targeting(a: Ability) -> void:
 		return
 	targeting = a
 	state = S.TARGET
-	_menu.visible = false
+	_hide_menu()
 	board.reach = {}
 	board.highlights = {}
 	var col := ENEMY_COLOR if a.hostile() else ALLY_COLOR
@@ -830,6 +903,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	match event.keycode:
 		KEY_ESCAPE:
 			_back()
+		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_0:
+			if _hud.visible and state == S.MENU:  # the slot keys of the bar, ring and hand
+				_hud.press_key((event.keycode - KEY_1) if event.keycode != KEY_0 else 9)
 		KEY_D:
 			show_danger = not show_danger
 			_refresh_danger()
@@ -886,7 +962,7 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 				var a := targeting
 				if a.target == "cell" and CombatRules.affected_units(grid, who, a, c, units, who.cell).is_empty():
 					return
-				_menu.visible = false
+				_hide_menu()
 				_cancel.visible = false
 				await _use(who, a, c)
 				if _check_end():
@@ -898,7 +974,7 @@ func _move_selected(c: Vector2i) -> void:
 	var u := selected
 	state = S.BUSY
 	_moving = false
-	_menu.visible = false
+	_hide_menu()
 	_refresh_cancel()
 	board.highlights = {}
 	var path := CombatRules.path_to(reach.prev, u.cell, c)

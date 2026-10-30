@@ -1058,3 +1058,41 @@ func test_a_hidden_piece_comes_out_when_its_side_is_otherwise_gone() -> void:
 	var ev := CombatRules.begin_phase(units, 1)
 	ok(not amb.hiding, "out once nobody else of its side is left")
 	ok(ev.any(func(e: Dictionary) -> bool: return e.type == "reveal"), "and the board is told")
+
+
+## The fight's hover card ([USER] 2026-10-30, WoW-style): name, cost, reach, the numbers, wait and the caveman line.
+func test_action_hover_card_reads_the_data() -> void:
+	var g := CombatGrid.flat(6, 3)
+	var mage := _unit("mage", 0, Vector2i(1, 1), g)
+	var beam := Db.ability("moonbeam")
+	var lines := ActionInfo.lines(mage, beam)
+	eq(lines[0], Txt.t(beam.name_key), "the name first")
+	eq(lines[1], Txt.f("TIP_COST", [beam.res_cost, Txt.t("RES_MANA"), mage.res, mage.res_max]), "then the cost")
+	ok(lines[2].begins_with(Txt.f("TIP_RANGE", "%d-%d" % [beam.range_min, beam.range_max])), "the reach")
+	var hit := mage.damage + beam.power
+	ok(lines[3].contains(Txt.f("TIP_HIT", "%d-%d" % [hit - 1, hit + 1])), "the damage from the data")
+	eq(lines[lines.size() - 1], Txt.t("DESC_MOONBEAM"), "and the caveman line last")
+	var dog := _unit("dog", 0, Vector2i(2, 1), g)
+	dog.res = 0
+	dog.res_tick = 1
+	ok(ActionInfo.recharge(dog, Db.ability("bite")) > 0.0, "a spent charge sweeps back")
+	eq(ActionInfo.wait_text(dog, Db.ability("bite")), Txt.f("TIP_CHARGE_BACK", dog.res_every))
+
+
+## Every layout builds its slots from the same entries; keys 1 to 0 fire the skill slots.
+func test_action_layouts_build_and_keys_fire() -> void:
+	var hud := ActionHud.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(hud)
+	var g := CombatGrid.flat(6, 3)
+	var mage := _unit("mage", 0, Vector2i(1, 1), g)
+	var fired := []
+	var entries := [{"text": "MOVE", "enabled": true, "cb": func() -> void: fired.append("move"), "kind": "move", "ability": null, "count": 0}]
+	for a in mage.abilities:
+		entries.append({"text": Txt.t(a.name_key), "enabled": true, "cb": func() -> void: fired.append(a.id), "kind": "skill", "ability": a, "count": 0})
+	for l in ["bar", "ring", "cards"]:
+		hud.layout = l
+		hud.show_for(mage, entries.duplicate(true), Vector2(300, 300), Rect2(0, 0, 1280, 720))
+		eq(hud._slots.size(), mage.abilities.size(), l + ": a slot per skill")
+	ok(hud.press_key(1), "key 2 fires the second skill")
+	eq(fired, [mage.abilities[1].id])
+	hud.queue_free()
