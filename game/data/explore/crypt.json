@@ -10,103 +10,199 @@
   "forest"
  ],
  "grid": {
-  "w": 34,
-  "h": 30,
+  "w": 76,
+  "h": 62,
   "terrain": [
-   "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
-   "rrrrrrrrrrrrssssssussssssrrrrrrrrr",
-   "rrrrrrrrrrrrssusssssssussrrrrrrrrr",
-   "rrrrrrrrrrrrsssssssssssssrrrfgssgr",
-   "rrrrrrrrrrrrssusssssssussrrrgtssgr",
-   "rrrrrrrrrrrrsssssssssssssrrrggggfr",
-   "rrrrrrrrrrrrrrrrrtttrrrrrrrrgggggr",
-   "rrrrrrrrrrrrrrrrrtttrrrrrrrrgrgrgr",
-   "rgggggggggggssssssssssssssssgggggr",
-   "rgfgggfgggggssussssssusssusstrgrgr",
-   "rgggggggggggssssswwssssssssstggggr",
-   "rggfggggggggssssswwsssssssssrrrrrr",
-   "rggggggggfggssussssssusssussrssssr",
-   "rgggrrrrrrrrssssssssssssssssrsrssr",
-   "rrurrwwwwwwrrrrrrrrrrrrrrtttrssssr",
-   "rgggfwwwwwwrrrrrrrrrrrrrrdddussssr",
-   "rfgggwwwwwwrrrrrrrrrrrrrrdddrsrssr",
-   "rggggwwwwwwrrrrrrrrrrrrrrdddrssssr",
-   "rggggwwwwwwrrrrrrrrrrrrrruuurrrrrr",
-   "rggggwwwwwwgrrrrrrrrrrrrrdddrrrrrr",
-   "rggggssssssgrrrrrrrrrrrrrdddrrrrrr",
-   "rggggwwwwwwgrrrrrrrrrrrrrdddrrrrrr",
-   "rfgggwwwwwwgrrrrrrrrrgggggggggggrr",
-   "rgfggwwwwwwgggggggggggggggggggfgrr",
-   "rggggwwwwwwgggggfggggggggggggggfrr",
-   "rrrrrwwwwwwgggggggggggggggggggggrr",
-   "rrrrrwwwwwwggfggggggggggggggggggrr",
-   "rrrrrwwwwwwgggfgggggggfgggggggggrr",
-   "rrrrrwwwwwwrrrrrrrrrrggfgggggggfrr",
-   "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr"
+   "............................................................................",
+   ".........................................rrrrrrrrrrrrrrrrrrrrrrr............",
+   ".......................................rrrsssssssssssssssssssssrrr..........",
+   "..rrrrrrr...rrrrrrrrrrrrrrrrrrrrrrrrrrrrsssssssssssssssssssssssssrr.........",
+   ".rrsssssrr..rddtttttttdddddddddddddddddsssusssusssusssusssssssssssr.........",
+   ".rsssssssr..rdrrrrrrrrrrrrrrrrrrrrrrrrrussssssssssssssssssssssssssr.........",
+   ".rsssssssr..rdr..............rtddddddddssdddddddddddddddddttssssssr.........",
+   ".rsssssssr..rdr.............rrtddddddddssdddddddddddddddddttssssssr.........",
+   ".rsssssssr..rdr.............rtttdddddddssdddddddddddddddddttssssssr.........",
+   ".rsssssssr..rdr.............rtttrrrrrrrussssssssssssssssssssssssssr.........",
+   ".rrsssssrr..rdr.............rdddr.....rsssusssusssusssusssssssssssr.........",
+   "..rrrdrrr...rdr.............rdddr.....rrsssssssssssssssssssssssssdr.........",
+   "....rdr.....rdr.............rdddr......rrrssssssssssssssssssssssstr.........",
+   "....rdr.....rdr.............rdddr........rrrrrrrrrrrrrrrrrrrrrrrrtr.........",
+   "....rdr.....rdr.............rdddr.............................rrrtrrr.......",
+   "....rdr.....rdr...........rrrdddrrr..........................rrsssssrr......",
+   "....rtr.....rdr.........rrrsssssssrrrrrrrrrrrrrrrrrrrrrrrrrrrrsssssssr......",
+   "....rtr...rrrdrrr......rrsusssssssusrwwwwwwwwwwwwwwwwwwwwwwwwrsusssusrr.....",
+   "....rtr.rrrsssssrrr....rssssssssssssswwwwwwwwwwwwwwwwwwwwwwwwsssssssssr.....",
+   "....rtr.rsssssssssr....rsssssssssssssrrrrrrrrrrrrrrrrrrrrrrrrsssssssssr.....",
+   "....rtrrrsusssssusrr...rsssssswwssssssssssssssssssssssssssssssssssssssr.....",
+   "....rtrrsssssssssssr...rsssssssssssssrrrrrrrrrrrrrrrrrrrrrrrrsssssssssr.....",
+   "....rtrrsssssssssssr...rssssssssssssswwwwwwwwwwwwwwwwwwwwwwwwsssssssssr.....",
+   "....rtrrsssssssssssr...rrsusssssssusrwwwwwwwwwwwwwwwwwwwwwwwwsssssssssr.....",
+   "....rtrrsssssssssssr....rrrsssssssrrrrrrrrrrrsssssssssrrrrrrrsssssssssr.....",
+   "....rtddsssssssssssr......rrrdddrrr......rrsussssussssusrr..rrsusssusrr.....",
+   "....rrrrsssssssssssr........rdddrrrrrrrrrrsssssssssssssssr...rsssssssr......",
+   ".......rsssssssssssr........rdddddtttdddddsssssssssssssssr...rrsssssrr......",
+   ".......rsssssssssssr........rdddddtttdddddsssssssssssssssr....rrdddrr.......",
+   ".......rsssssssssssr........rrrdddttddddddsssssssssssssssr.....rdddr........",
+   ".......rrsusssssusrr..........rrrrrrdddrrrsssssssssssssssr.....rdddr........",
+   "........rsssssssssr................rtttr.rrsussssussssusrr.....rdddr........",
+   "........rrrsssssrrr.rrrrrrrrr......rtttr..rrrsssssssssrrr......rdddr........",
+   "..........rrdddrr.rrrsssssssrrr....rtttr....rrrrrrrrrrr........rdddr........",
+   "...........rdddr.rrsssssssssssrr...rtttr.......................rdddr........",
+   "...........rdddrrrsssssssssssssr...rdddr.......................rdddr........",
+   "...........rtttttdsssssswssssssr...rdddr.......................rdddr........",
+   "...rrrrrrr.rtttttdssssswwwsssssr...rdddr.......................rdddr........",
+   "..rrgggggrrrrrtttdsssssswssssssrrrrrdddrrrr....................rdddr........",
+   "..rgggggggr..rrrrrsssssssssssssrrsssssssssrrr..................rdddr........",
+   "..rgggggggr......rrsssssssssssrsussssussssusr..................rdddr........",
+   "..rgggggggr.......rrrsssssssrrrsssssssssssssrr.................rtttr........",
+   "..rgggggggr.........rrdddrrrrrsssssssssssssssrrrrrrrrrrr.......rtttr........",
+   "..rgggggggrr.........rtttr...rsssssssssssssssddddddddddrrr.....rtttr........",
+   "..rrgggggddr........rrdddrr..rsssssssssssssssddddddddddddr.....rtttr........",
+   "...rrrrrdddr......rrrsssssrrrrsssssssssssssssddddddddddddr.....rtttr........",
+   ".......rtttr......rsssssssssrrsssssssssssssssrrrrrrrrrdddrr....rtttr........",
+   ".....rrrtttrrr....rsssssssssrrrsssssssssssssrr.....rrsssssrr...rdddr........",
+   "...rrrgggggggrrr..rsssssssssdddsussssussssusr.....rrsssssssrr..rdddr........",
+   "..rrgggggggggggrr.rsssssssssrrrrrsssssssssrrr.....rssusssussr..rdddr........",
+   "..rgggggggggggggrrrsssssssssr...rrrrrdrrrrr.......rsssssssssrrrrdddr........",
+   ".rrgggggggggggggrwwwwsssssrrr.......rdr...........rsssssssssdddddddr........",
+   ".rgggggggggggggggwwwwwwsrwwr........rdr...........rsssssssssdddddddr........",
+   ".rgggggggggggggggrrrwwrurwwr........rdr...........rsssssssssdddddrrr........",
+   ".rgggggggggggggggsssssssrwwr........rurrrrrr......rsssssssssrrrrrr..........",
+   ".rgggggggggggggggrrrrrrrrrrr........rdsssssrr.....rssusssussr...............",
+   ".rgggggggggggggggwwwwwwr............rsssssssr.....rrsssssssrr...............",
+   ".rrgggggggggggggrwwwwwwr............rsssssssr......rrsssssrr................",
+   "..rgggggggggggggrrrrrrrr............rsssssssr.......rrrrrrr.................",
+   "..rrgggggggggggrr...................rrsssssrr...............................",
+   "...rrrgggggggrrr.....................rrrrrrr................................",
+   ".....rrrrrrrrr.............................................................."
   ],
   "heights": [
-   "0000000000088888888888888800000000",
-   "0000000000086666666666666800000000",
-   "0000000000086666666666666806688886",
-   "0000000000086666666666666806446646",
-   "0000000000086666666666666806456646",
-   "0000000000086666666666666806444446",
-   "0000000000088888855588888806444446",
-   "6666666666666555744475555556444446",
-   "6444444444443333333333333333444446",
-   "6444444444443333333333333333444446",
-   "6444444444443333322333333333444446",
-   "6444444444443333322333333333666666",
-   "6444444444443333333333333333511113",
-   "6444666666663333333333333333511113",
-   "6636622222255555555555555222511113",
-   "4222222222240000000000004111111113",
-   "4222222222240000000000003111311113",
-   "4222200000040000000000003111311113",
-   "4222200000033000000000003111333333",
-   "4222200000013000000000003111300000",
-   "4222222222213000000000003111300000",
-   "4222200000013000000033333111333330",
-   "4222200000013333333331111111111130",
-   "4222200000011111111111111111111130",
-   "4222200000011111111111111111111130",
-   "4444400000011111111111111111111130",
-   "0000200000011111111111111111111130",
-   "0000200000011111111111111111111130",
-   "0000200000033333333331111111111130",
-   "0000222222220000000033333333333330"
+   "0000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "00000000000000000000000000000000000000000fffffffffffffffffffffff000000000000",
+   "000000000000000000000000000000000000000fffdddddddddddddddddddddfff0000000000",
+   "00iiiiiii0008889abcdefffffffffffffffffffdddddddddddddddddddddddddhh000000000",
+   "0iigggggii008666789abcddddddddddddddddddddddddddddddddddddddffffffh000000000",
+   "0igggggggi008689abcdeffffffffffffffffffdddddddddddddddddddddffffffh000000000",
+   "0igggggggi0086800000000000000ecddddddddddddddddddddddddddddeffffffh000000000",
+   "0igggggggi008680000000000000decddddddddddddddddddddddddddddeffffffh000000000",
+   "0igggggggi008680000000000000dbbbdddddddddddddddddddddddddddeffffffh000000000",
+   "0igggggggi008680000000000000daaafffffffdddddddddddddddddddddffffffh000000000",
+   "0iigggggii008680000000000000caaac00000fdddddddddddddddddddddffffffh000000000",
+   "00iiigiii0008680000000000000caaac00000ffddddddddddddddddddddddddddh000000000",
+   "0000igi000008680000000000000caaac000000fffdddddddddddddddddddddddcf000000000",
+   "0000igi000008680000000000000caaac00000000ffffffffffffffffffffffffbe000000000",
+   "0000igi000008680000000000000caaac00000000000000000000000000000bbdadbb0000000",
+   "0000igi0000086800000000000cccaaaccc00000000000000000000000000bb99999bb000000",
+   "0000ifi00000868000000000cccaaaaaaaccc222222222222222222222222b9999999b000000",
+   "0000heh0008886888000000ccaaaaaaaaaaac000000000000000000000000b9999999bb00000",
+   "0000gdg0888666668880000caaaaaaaaaaaaa000000000000000000000000999999999b00000",
+   "0000fcf0866666666680000caaaaaaaaaaaaacbbbbbbbbbbbbbbbbbbbbbbb999999999b00000",
+   "0000ebe8866666666688000caaaaaaaaaaaaa999999999999999999999999999999999b00000",
+   "0000dad8666666666668000caaaaaaaaaaaaacbbbbbbbbbbbbbbbbbbbbbbb999999999b00000",
+   "0000c9c8666666666668000caaaaaaaaaaaaa000000000000000000000000999999999b00000",
+   "0000b8b8666666666668000ccaaaaaaaaaaac000000000000000000000000999999999b00000",
+   "0000a7a86666666666680000cccaaaaaaaccc22222999777777777999222b999999999b00000",
+   "00009666666666666668000000cccaaaccc0000009977777777777779900bb9999999bb00000",
+   "0000888866666666666800000000caaacccba999997777777777777779000b9999999b000000",
+   "0000000866666666666800000000caaaaa987777777777777777777779000bb99999bb000000",
+   "0000000866666666666800000000caaaaa9877777777777777777777790000bb999bb0000000",
+   "0000000866666666666800000000cccaaa98777777777777777777777900000b999b00000000",
+   "000000088666666666880000000000cccccb777999777777777777777900000b999b00000000",
+   "000000008666666666800000000000000009666909977777777777779900000b999b00000000",
+   "000000008886666688803333333330000008555800999777777777999000000b999b00000000",
+   "000000000088666880333111111133300007444700009999999999900000000b999b00000000",
+   "000000000008666803311111111111330006333600000000000000000000000b999b00000000",
+   "000000000008666843111111111111130005333500000000000000000000000b999b00000000",
+   "000000000008553211111111011111130005333500000000000000000000000b999b00000000",
+   "000666666607443211111110001111130005333500000000000000000000000b999b00000000",
+   "006644444666663211111111011111135555333555500000000000000000000b999b00000000",
+   "006444444460055543111111111111155333333333555000000000000000000b999b00000000",
+   "006444444460000003311111111111533333333333335000000000000000000b999b00000000",
+   "006444444460000000333111111135533333333333335500000000000000000b888b00000000",
+   "006444444460000000003311133335333333333333333555555555550000000a777a00000000",
+   "0064444444660000000004111400053333333333333333333333333555000009666900000000",
+   "0066444444460000000055222550053333333333333333333333333335000008555800000000",
+   "0006666644460000005553333355553333333333333333333333333335000007444700000000",
+   "0000000633360000005333333333553333333333333335555555553335500006333600000000",
+   "0000044522254400005333333333555333333333333355000005533333550005333500000000",
+   "0004442222222444005333333333333333333333333350000055333333355005333500000000",
+   "0044222222222224405333333333555553333333335550000053333333335005333500000000",
+   "0042222222222222425333333333500055555355555000000053333333335555333500000000",
+   "0442222222222222400003333355500000005350000000000053333333333333333500000000",
+   "0422222222222222200000025002000000005350000000000053333333333333333500000000",
+   "0422222222222222244400424002000000005350000000000053333333333333355500000000",
+   "0422222222222222222222224002000000005355555500000053333333335555550000000000",
+   "0422222222222222244444444222000000005333333550000053333333335000000000000000",
+   "0422222222222222200000020000000000005333333350000055333333355000000000000000",
+   "0442222222222222400000020000000000005333333350000005533333550000000000000000",
+   "0042222222222222422222220000000000005333333350000000555555500000000000000000",
+   "0044222222222224400000000000000000005533333550000000000000000000000000000000",
+   "0004442222222444000000000000000000000555555500000000000000000000000000000000",
+   "0000044444444400000000000000000000000000000000000000000000000000000000000000"
   ],
   "zones": [
-   "----------------------------------",
-   "----------------------------------",
-   "----------------------------------",
-   "----------------------------------",
-   "----------------------------------",
-   "----------------------------------",
-   "----------------------------------",
-   "----------------------------------",
-   "ffffffffffff----------------------",
-   "ffffffffffff----------------------",
-   "ffffffffffff----------------------",
-   "ffffffffffff------------dddddddddd",
-   "ffffffffffff------------dddddddddd",
-   "ffffffffffff------------dddddddddd",
-   "dddddfffffff------------dddddddddd",
-   "dddddfffffff------------dddddddddd",
-   "dddddfffffff------------dddddddddd",
-   "dddddfffffff------------dddddddddd",
-   "dddddfffffff------------dddddddddd",
-   "dddddfffffffffffffffffffdddddddddd",
-   "dddddfffffffffffffffffffdddddddddd",
-   "dddddfffffffffffffffffffdddddddddd",
-   "dddddfffffffffffffffffffffffffffff",
-   "dddddfffffffffffffffffffffffffffff",
-   "dddddfffffffffffffffffffffffffffff",
-   "ffffffffffffffffffffffffffffffffff",
-   "ffffffffffffffffffffffffffffffffff",
-   "ffffffffffffffffffffffffffffffffff",
-   "ffffffffffffffffffffffffffffffffff",
-   "ffffffffffffffffffffffffffffffffff"
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "----------------------------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------",
+   "ffffffffffffffffffffff------------------------------------------------------"
   ],
   "zone_key": {
    "f": "forest",
@@ -115,16 +211,16 @@
  },
  "start": [
   [
-   27,
-   26
+   7,
+   56
   ],
   [
-   28,
-   27
+   8,
+   57
   ],
   [
-   26,
-   27
+   6,
+   57
   ]
  ],
  "groups": [
@@ -137,22 +233,44 @@
     {
      "id": "bandit",
      "cell": [
-      19,
-      9
+      28,
+      22
      ]
     },
     {
      "id": "bandit",
      "cell": [
-      20,
-      12
+      33,
+      19
      ]
     },
     {
      "id": "bandit_archer",
      "cell": [
-      16,
-      8
+      30,
+      16
+     ]
+    }
+   ]
+  },
+  {
+   "id": "tower",
+   "event": "spot_people",
+   "sight": 4,
+   "loot": "food:+10",
+   "units": [
+    {
+     "id": "bandit_archer",
+     "cell": [
+      45,
+      29
+     ]
+    },
+    {
+     "id": "bandit",
+     "cell": [
+      52,
+      27
      ]
     }
    ]
@@ -166,21 +284,21 @@
     {
      "id": "wolf",
      "cell": [
-      2,
-      18
+      21,
+      38
      ]
     },
     {
      "id": "wolf",
      "cell": [
-      3,
-      20
+      27,
+      35
      ]
     }
    ]
   },
   {
-   "id": "tower",
+   "id": "east_wing",
    "event": "spot_people",
    "sight": 5,
    "loot": "medicine:+2",
@@ -188,15 +306,15 @@
     {
      "id": "bandit_archer",
      "cell": [
-      30,
-      3
+      66,
+      17
      ]
     },
     {
      "id": "bandit",
      "cell": [
-      30,
-      8
+      64,
+      23
      ]
     }
    ]
@@ -211,54 +329,54 @@
    "goals": "defeat|exit",
    "exit": [
     [
-     12,
-     1
+     62,
+     11
     ],
     [
-     13,
-     1
+     63,
+     11
     ],
     [
-     12,
-     2
+     64,
+     11
     ],
     [
-     13,
-     2
+     62,
+     12
     ],
     [
-     12,
-     3
+     63,
+     12
     ],
     [
-     13,
-     3
+     64,
+     12
     ]
    ],
    "summon": [
     [
-     17,
-     3
+     62,
+     6
     ],
     [
-     19,
-     3
+     62,
+     8
     ],
     [
-     16,
-     2
+     61,
+     7
     ],
     [
-     20,
-     2
+     63,
+     5
     ]
    ],
    "units": [
     {
      "id": "lich",
      "cell": [
-      18,
-      2
+      63,
+      7
      ]
     }
    ]
@@ -269,29 +387,20 @@
    "id": "gate",
    "kind": "door",
    "event": "locked_door",
+   "floor": "s",
    "cell": [
-    26,
-    18
-   ],
-   "floor": "d"
+    23,
+    53
+   ]
   },
   {
    "id": "crypt_door",
    "kind": "door",
    "event": "sealed_door",
+   "floor": "s",
    "cell": [
-    28,
-    15
-   ],
-   "floor": "s"
-  },
-  {
-   "id": "crypt_chest",
-   "kind": "chest",
-   "event": "chest",
-   "cell": [
-    31,
-    14
+    37,
+    54
    ]
   },
   {
@@ -299,27 +408,53 @@
    "kind": "shrine",
    "event": "shrine",
    "cell": [
-    24,
-    24
+    11,
+    51
    ]
   },
   {
-   "id": "cave_rubble",
-   "kind": "rubble",
-   "event": "rubble",
+   "id": "lookout_boost",
+   "kind": "boost",
+   "event": "hp:2",
    "cell": [
-    2,
-    14
-   ],
-   "floor": "t"
+    6,
+    40
+   ]
   },
   {
-   "id": "tower_chest",
+   "id": "hall_chest",
    "kind": "chest",
    "event": "chest",
    "cell": [
-    31,
-    3
+    43,
+    46
+   ]
+  },
+  {
+   "id": "chapel_chest",
+   "kind": "chest",
+   "event": "chest",
+   "cell": [
+    55,
+    56
+   ]
+  },
+  {
+   "id": "wing_key",
+   "kind": "key",
+   "event": "crypt_key",
+   "cell": [
+    67,
+    26
+   ]
+  },
+  {
+   "id": "library_rare",
+   "kind": "rare",
+   "event": "rare:1;metal:2",
+   "cell": [
+    10,
+    23
    ]
   },
   {
@@ -327,45 +462,46 @@
    "kind": "exit",
    "event": "exit",
    "cell": [
-    13,
-    2
-   ]
-  },
-  {
-   "id": "west_boost",
-   "kind": "boost",
-   "event": "hp:2",
-   "cell": [
-    2,
+    63,
     12
    ]
   },
   {
-   "id": "vault_key",
-   "kind": "key",
-   "event": "crypt_key",
+   "id": "throne_doors",
+   "kind": "door",
+   "event": "locked_door",
    "cell": [
-    32,
-    16
-   ]
+    39,
+    7
+   ],
+   "floor": "s"
   },
   {
    "id": "crypt_vault",
    "kind": "chest",
    "event": "crypt_vault",
    "cell": [
-    32,
-    9
+    5,
+    7
    ],
    "once": "got_crypt_vault"
+  },
+  {
+   "id": "crypt_chest",
+   "kind": "chest",
+   "event": "chest",
+   "cell": [
+    40,
+    57
+   ]
   },
   {
    "id": "up_stair",
    "kind": "enter",
    "event": "",
    "cell": [
-    30,
-    27
+    3,
+    57
    ],
    "to": "snow_pass",
    "at": [

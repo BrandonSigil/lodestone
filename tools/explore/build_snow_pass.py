@@ -390,7 +390,7 @@ for c in [top, (top[0] + 1, top[1]), (top[0], top[1] + 1), (top[0] + 1, top[1] +
     if P.inb(*c) and P.t(*c) != ".":
         P.put(*c, "s", 8)
 P.blob("crypt_door", top[0] - 1, top[1] - 1, (2, 1), 1.2, 2.0)
-P.things.append({"id": "crypt_stair", "kind": "enter", "event": "", "cell": [top[0], top[1] + 0], "to": "crypt", "at": [27, 26]})
+P.things.append({"id": "crypt_stair", "kind": "enter", "event": "", "cell": [top[0], top[1] + 0], "to": "crypt", "at": [10, 55]})
 P.things[-1]["cell"] = [top[0], top[1]]
 P.prop("prop_brazier", top[0] + 1, top[1] - 1, tall=0.9, sight=0.5) if P.t(top[0] + 1, top[1] - 1) == "s" else None
 

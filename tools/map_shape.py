@@ -3,7 +3,7 @@
 ([USER] 2026-10-30: "is the entire map basically just a big box? if yes, don't show it to me and work on it. Unique
 shapes, jut outs, dynamics, verticality!").
 
-    python3 tools/map_shape.py game/data/explore/crypt_v2.json [more maps...]
+    python3 tools/map_shape.py game/data/explore/crypt.json [more maps...]
 
 Measures the walkable footprint (cells a piece can stand on: not rock, void or deep water) and prints:
   fill       share of the bounding box the footprint covers          (a box is near 1; winding is low)

@@ -25,7 +25,7 @@ func _room() -> CombatGrid:
 func test_crypt_loads_with_things_and_groups() -> void:
 	var m := _crypt()
 	ok(m != null, "crypt.json loads")
-	eq(m.grid.w, 34, "width")
+	eq(m.grid.w, 76, "width")
 	ok(m.start.size() >= 1 and m.grid.passable(m.start[0]), "start cell is walkable")
 	ok(m.groups.size() >= 3, "several enemy groups")
 	ok(m.things.size() >= 5, "doors, chests and an exit")
@@ -75,11 +75,13 @@ func test_door_blocks_until_opened() -> void:
 	var m := _crypt()
 	var door: Dictionary = m.things.filter(func(t: Dictionary) -> bool: return t.id == "gate")[0]
 	var g := m.grid
+	g.set_terrain(door.cell, CombatGrid.T.ROAD)
+	var axis := Vector2i(1, 0) if g.passable(door.cell + Vector2i(1, 0)) and g.passable(door.cell + Vector2i(-1, 0)) else Vector2i(0, 1)
+	var near: Vector2i = door.cell + axis
+	var far: Vector2i = door.cell - axis
 	g.set_terrain(door.cell, CombatGrid.T.RUIN)
-	var north: Vector2i = door.cell + Vector2i(0, -1)
-	var south: Vector2i = door.cell + Vector2i(0, 1)
 	ok(not g.passable(door.cell), "a shut door can't be walked through")
-	ok(not g.line_of_sight(south, north + Vector2i(0, -2)), "a shut door blocks sight")
+	ok(not g.line_of_sight(near, far - axis * 2), "a shut door blocks sight")
 	g.set_terrain(door.cell, CombatGrid.T.ROAD)
 	ok(g.passable(door.cell), "an open door is floor")
 
@@ -104,18 +106,24 @@ func test_crypt_chest_is_locked_until_the_door_opens() -> void:
 	var m := _crypt()
 	var doors: Array[Vector2i] = []
 	var chest := Vector2i(-1, -1)
+	var crypt_door := Vector2i(-1, -1)
+	var gate := Vector2i(-1, -1)
 	for t in m.things:
 		if t.kind == "door" or t.kind == "rubble":
 			m.grid.set_terrain(t.cell, CombatGrid.T.RUIN)
 			doors.append(t.cell)
 		if t.id == "crypt_chest":
 			chest = t.cell
+		if t.id == "crypt_door":
+			crypt_door = t.cell
+		if t.id == "gate":
+			gate = t.cell
 	var open := ExploreRules.reach(m.grid, [m.start[0]], 1)
 	var locked := ExploreRules.locked_cells(m.grid, open, doors, 1)
 	ok(locked.has(chest), "the crypt chest sits in a locked room")
-	ok(not locked.has(Vector2i(26, 18)), "the gate, facing the yard, shows")
-	ok(locked.has(Vector2i(28, 15)), "the crypt door, off the corridor past the gate, is locked too")
-	ok(not locked.has(m.start[0]), "the yard the party starts in is open")
+	ok(not locked.has(gate), "the gate shows")
+	ok(locked.has(crypt_door), "the crypt door, off the hall past the gate, is locked too")
+	ok(not locked.has(m.start[0]), "the courtyard the party starts in is open")
 
 
 func _walled(w: int, h: int, floor_cells: Callable) -> CombatGrid:
@@ -404,11 +412,6 @@ func test_only_full_height_props_see_through() -> void:
 	ok(not CombatBoard.see_through({"sprite": "prop_crates", "tall": 0.8}), "crates stay solid")
 	ok(CombatBoard.see_through({"sprite": "ph_building", "tall": 2.0}), "an uncatalogued gray box taller than a piece")
 	ok(not CombatBoard.see_through({"sprite": "prop_bush_2", "tall": 0.55}), "an uncatalogued bush")
-	for low in ["prop_bench", "prop_table", "prop_stool", "prop_barrel", "prop_fence", "prop_board", "prop_lamp", "prop_planter"]:
-		ok(not CombatBoard.see_through({"sprite": low, "tall": 1.5}), low + " stays solid whatever its height")
-	ok(CombatBoard.see_through({"sprite": "prop_well", "tall": 1.8}), "a roofed well taller than a piece")
-	ok(not CombatBoard.see_through({"sprite": "prop_well", "tall": 0.8}), "a low well")
-	ok(not CombatBoard.see_through({"sprite": "prop_stall", "tall": 0.9 - 0.01}), "a stall no taller than a piece")
 	for low in ["prop_bench", "prop_table", "prop_stool", "prop_barrel", "prop_fence", "prop_board", "prop_lamp", "prop_planter"]:
 		ok(not CombatBoard.see_through({"sprite": low, "tall": 1.5}), low + " stays solid whatever its height")
 	ok(CombatBoard.see_through({"sprite": "prop_well", "tall": 1.8}), "a roofed well taller than a piece")
