@@ -834,7 +834,7 @@ func test_rogue_blades_poison_through_armor_and_renew() -> void:
 
 
 ## [USER] design-boss-daggers: hit and run. After a hit the rogue may walk what's left of its move; the AI steps
-## out of the reach of every foe's plain hit.
+## to a cell no foe could hit next phase, else stays.
 func test_rogue_hits_and_runs() -> void:
 	var g := CombatGrid.flat(9, 1)
 	var r := _unit("job_rogue", 0, Vector2i(0, 0), g)
@@ -854,7 +854,11 @@ func test_rogue_hits_and_runs() -> void:
 	var cells: Dictionary = CombatRules.reachable(g, r, units).cost
 	ok(cells.has(Vector2i(0, 0)) and not cells.has(Vector2i(2 - r.move, 0)), "the move tiles are the rest of the move")
 	var away := EnemyAi.retreat(g, r, units)
-	ok(not EnemyAi.hit_reach(g, r, units).has(away.move) or away.move == r.cell, "the AI steps out of the foes' reach")
+	ok(not CombatRules.danger_zone(g, units, 1).has(away.move) or away.move == r.cell, "the AI steps out of the danger zone")
+	var boxed := CombatGrid.flat(3, 1)
+	var r2 := _unit("job_rogue", 0, Vector2i(0, 0), boxed)
+	var b2 := _unit("bandit", 1, Vector2i(1, 0), boxed)
+	eq(EnemyAi.retreat(boxed, r2, [r2, b2]).move, r2.cell, "no safe cell: it stays by the foe")
 	var k := _unit("knight", 0, Vector2i(2, 0), g)
 	k.moved = true
 	ok(not CombatRules.hit_and_run(k, k.abilities[0]), "other jobs don't")
@@ -876,3 +880,19 @@ func test_hit_and_run_counts_reach_two() -> void:
 	var zone := EnemyAi.hit_reach(g, r, [r, lich])
 	ok(zone.has(Vector2i(far, 0)), "his walk plus his reach is in")
 	ok(not zone.has(Vector2i(far - 1, 0)), "one further is out")
+
+
+## A piece helped up after its place in the list came by still gets its turn, as the player's can (the robot's
+## dagger stalemate at the throne, playtest bug 03).
+func test_a_piece_helped_up_mid_phase_still_acts() -> void:
+	var g := CombatGrid.flat(6, 1)
+	var hero := _unit("job_rogue", 0, Vector2i(1, 0), g)
+	var dog := _unit("dog", 0, Vector2i(0, 0), g)
+	var foe := _unit("bandit", 1, Vector2i(4, 0), g)
+	var units := [hero, dog, foe]
+	CombatRules.begin_phase(units, 0)
+	hero.hp = 0
+	ok(hero.downed(), "the hero is down, first in the list")
+	CombatSim.play_phase(RandomNumberGenerator.new(), g, units, 0)
+	ok(hero.alive(), "the dog helped him up")
+	ok(hero.done(), "and he still took his turn")

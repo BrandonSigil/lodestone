@@ -30,6 +30,21 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 	return plan
 
 
+## Every ready piece of `team` takes its turn, and round the list again while a piece helped up after its place
+## came by still can (a revived piece may act, as the player's can). True when the other side is gone.
+static func play_phase(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, team: int) -> bool:
+	var again := true
+	while again:
+		again = false
+		for u: CombatUnit in units:
+			if u.team == team and u.alive() and not u.done():
+				take_turn(rng, grid, u, units)
+				again = true
+				if not CombatRules.team_alive(units, 1 - team):
+					return true
+	return false
+
+
 ## Fights until one side falls. Mutates the units. Returns {"winner": 0, 1 or -1 for a stall, "rounds": int}.
 ## supplies: counts that pack belts for pieces without one (CombatUnit.pack_belts).
 static func fight(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, supplies: Dictionary = {}) -> Dictionary:
@@ -46,10 +61,7 @@ static func fight(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, su
 			for u: CombatUnit in units:
 				if u.team == team and u.alive():
 					CombatRules.skittish_check(rng, u, units)
-			for u: CombatUnit in units:
-				if u.team == team and u.alive() and not u.done():
-					take_turn(rng, grid, u, units)
-					if not CombatRules.team_alive(units, 1 - team):
-						return {"winner": team, "rounds": rounds}
+			if play_phase(rng, grid, units, team):
+				return {"winner": team, "rounds": rounds}
 			CombatRules.end_phase(units, team)
 	return {"winner": -1, "rounds": rounds}

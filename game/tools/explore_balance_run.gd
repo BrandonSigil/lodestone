@@ -134,10 +134,7 @@ func _play(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, first: in
 		rounds += 1
 		for team in [first, 1 - first]:
 			CombatRules.begin_phase(units, team)
-			for u: CombatUnit in units:
-				if u.team == team and u.alive() and not u.done():
-					CombatSim.take_turn(rng, grid, u, units)
-					if not CombatRules.team_alive(units, 1 - team):
-						return {"winner": team, "rounds": rounds}
+			if CombatSim.play_phase(rng, grid, units, team):
+				return {"winner": team, "rounds": rounds}
 			CombatRules.end_phase(units, team)
 	return {"winner": -1, "rounds": rounds}

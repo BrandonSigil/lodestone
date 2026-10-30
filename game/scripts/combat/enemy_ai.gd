@@ -50,13 +50,16 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 		"path": CombatRules.path_to(reach.prev, u.cell, best_cell), "guard": guard, "cost": int(cost.get(best_cell, 0))}
 
 
-## Hit and run, after the strike: the nearest cell u can still reach that no foe's plain hit could strike next
-## phase (the Lich's reach 2 too, game designer 2026-10-30), without walking off a guard; where it stands if that's safe or nothing is. Same shape as plan's
-## move part: {"move", "path", "cost"}.
+## Hit and run, after the strike: the nearest cell u can still reach outside the foes' reach, without walking off
+## a guard; where it stands if that's safe or nothing is, so it stays by the foe and its teammate keeps the
+## team-up. It counts everything they could hit next phase, spells too (the danger zone, game designer
+## 2026-10-30); combat.csv `run_melee_only` 1: only their reach-1 plain hits. Same shape as plan's move part:
+## {"move", "path", "cost"}.
 static func retreat(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var reach := CombatRules.reachable(grid, u, units)
 	var cost: Dictionary = reach.cost
-	var zone := hit_reach(grid, u, units)
+	var zone := hit_reach(grid, u, units, true) if CombatRules.num("run_melee_only") > 0.0 \
+		else CombatRules.danger_zone(grid, units, 1 - u.team)
 	var best := u.cell
 	if zone.has(u.cell):
 		for cell: Vector2i in cost:
@@ -67,13 +70,15 @@ static func retreat(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary
 	return {"move": best, "path": CombatRules.path_to(reach.prev, u.cell, best), "cost": int(cost.get(best, 0))}
 
 
-## Every cell a foe of u could strike with its plain hit next phase, whatever its reach.
-static func hit_reach(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
+## Every cell a foe of u could strike with its plain hit next phase; melee_only: only foes whose hit reaches 1.
+static func hit_reach(grid: CombatGrid, u: CombatUnit, units: Array, melee_only := false) -> Dictionary:
 	var zone := {}
 	for o: CombatUnit in units:
 		if o.team == u.team or not o.alive() or o.has_status(CombatRules.STATUS_SLEEP):
 			continue
 		var r := CombatRules.ability_range(o, null)
+		if melee_only and r.y > 1:
+			continue
 		for f: Vector2i in CombatRules.reachable(grid, o, units).cost:
 			var g := CombatGrid.ground(f)
 			for dy in range(-r.y, r.y + 1):

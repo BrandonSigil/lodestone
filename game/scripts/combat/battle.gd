@@ -252,14 +252,18 @@ func _auto_player_phase() -> void:
 		log_line.emit(Txt.t("UI_AUTO_STALEMATE"))
 		_finish(true)
 		return
-	for u: CombatUnit in units:
-		if u.team != 0 or not u.alive() or u.done() or state == S.OVER:
-			continue
-		await _ai_turn(u)
-		u.moved = true
-		u.acted = true
-		if _check_end():
-			return
+	var again := true
+	while again:  # round the list again for a piece helped up after its place came by: it may act, as the player's can
+		again = false
+		for u: CombatUnit in units:
+			if u.team != 0 or not u.alive() or u.done() or state == S.OVER:
+				continue
+			await _ai_turn(u)
+			u.moved = true
+			u.acted = true
+			again = true
+			if _check_end():
+				return
 	CombatRules.end_phase(units, 0)
 	_enemy_phase()
 
