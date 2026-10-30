@@ -15,9 +15,8 @@ const BOX := 52.0
 const DOCK_ART := "res://art/source/ui/dock/"  ## Brandon's painted dock pieces (approved 2026-10-30)
 const KS := 0.36  ## bar pieces: the art's pixels to dock units (the ends stay fixed, the fill stretches to the boxes)
 const KP := 0.32  ## portrait frame
-const KC := 0.7  ## pop-up column pieces
 const PW := 127.0  ## the portrait frame's inner width, window and meters
-const FRAME_ART := 90.0  ## how far the bottom frame's art (the diamond crest, the leaves) reaches up into the play area
+const FRAME_ART := 24.0  ## how far the bottom frame's art (the diamond crest, the leaves) reaches up into the play area
 const TIP_DELAY := 0.5  ## seconds resting on a box before its details show
 const TIP_W := 205.0  ## narrow enough to sit beside the dock's portrait panel
 const PORTRAIT_DIR := "res://art/source/portraits/"
@@ -156,6 +155,8 @@ func _build() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 	_dock.add_child(row)
+	if swap_count > 0:  # NEXT GUY: an arrows icon, far left by the portrait ([USER] 2026-10-30)
+		row.add_child(_swap_button())
 	row.add_child(_portrait_panel(_unit))
 	var bar := _art_panel(Vector2(38, 20), Vector2(38, 20), Vector2(0, 292 * KS), _draw_bar)  # left piece, fill, right piece
 	bar.size_flags_vertical = Control.SIZE_SHRINK_END
@@ -181,15 +182,6 @@ func _build() -> void:
 		s.focus_neighbor_right = s.get_path_to(_bar_slots[(i + 1) % _bar_slots.size()])
 		s.focus_neighbor_top = s.get_path()
 		s.focus_neighbor_bottom = s.get_path()
-	if swap_count > 0:
-		var swap := Button.new()
-		swap.text = Txt.t("UI_SWAP")
-		swap.custom_minimum_size = Vector2(70, BOX)
-		swap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		swap.pressed.connect(func() -> void:
-			if on_swap.is_valid():
-				on_swap.call())
-		row.add_child(swap)
 	_dock.reset_size()
 	_place.call_deferred()
 	_tip.move_to_front()
@@ -229,11 +221,37 @@ func _box(e: Dictionary, parent: Control) -> ActionSlot:
 	return s
 
 
-const PIECES := ["bar_left", "bar_fill", "bar_right", "bar_crest_top", "bar_crest_bottom", "portrait_frame", "column_top", "column_mid", "column_bottom"]
+const PIECES := ["bar_left", "bar_fill", "bar_right", "bar_crest_top", "bar_crest_bottom", "portrait_frame"]
 var _pieces := {}
 
 
 ## A dock piece. They are all loaded before the first build: a texture first loaded mid-draw paints white.
+func _swap_button() -> Button:
+	var b := Button.new()
+	b.tooltip_text = Txt.t("UI_SWAP")
+	b.custom_minimum_size = Vector2(48, 48)
+	b.size_flags_vertical = Control.SIZE_SHRINK_END
+	b.focus_mode = Control.FOCUS_ALL
+	for n in ["normal", "hover", "pressed", "focus"]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.05, 0.2, 0.14) if n != "hover" else Color(0.1, 0.3, 0.22)
+		sb.border_color = Color(0.9, 0.82, 0.7) if n != "focus" else Color(0.55, 0.78, 1.0)
+		sb.set_border_width_all(2)
+		sb.set_corner_radius_all(3)
+		b.add_theme_stylebox_override(n, sb)
+	b.draw.connect(func() -> void:  # an arrow right over an arrow left
+		var c := Color(0.9, 0.82, 0.7)
+		for d in [[-1.0, 15.0], [1.0, 33.0]]:
+			var dir: float = d[0]
+			var y: float = d[1]
+			b.draw_line(Vector2(24 - 13 * dir, y), Vector2(24 + 13 * dir, y), c, 2.0)
+			b.draw_colored_polygon(PackedVector2Array([Vector2(24 + 15 * dir, y), Vector2(24 + 6 * dir, y - 6), Vector2(24 + 6 * dir, y + 6)]), c))
+	b.pressed.connect(func() -> void:
+		if on_swap.is_valid():
+			on_swap.call())
+	return b
+
+
 func _tex(n: String) -> Texture2D:
 	if _pieces.is_empty():
 		for k in PIECES:
@@ -271,14 +289,20 @@ func _draw_bar(c: Control) -> void:
 	c.draw_texture_rect(bottom, Rect2((c.size.x - bw) * 0.5, c.size.y - 55 * KS, bw, bottom.get_height() * KS), false)
 
 
-## A pop-up column: the arched top, a middle that stretches to the entries, the hanging bottom.
-func _draw_column(c: Control) -> void:
-	var th := _tex("column_top").get_height() * KC
-	var bh := _tex("column_bottom").get_height() * KC
-	if c.size.y - th - bh > 0.0:
-		c.draw_texture_rect(_tex("column_mid"), Rect2(0, th - 1.0, c.size.x, c.size.y - th - bh + 2.0), false)
-	c.draw_texture_rect(_tex("column_top"), Rect2(0, 0, c.size.x, th), false)
-	c.draw_texture_rect(_tex("column_bottom"), Rect2(0, c.size.y - bh, c.size.x, bh), false)
+## A pop-up column's container: plain, with a thin rim, standing on the bar.
+func _plain_panel() -> PanelContainer:
+	var p := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.05, 0.2, 0.14)
+	sb.border_color = Color(0.9, 0.82, 0.7)
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(3)
+	sb.content_margin_left = 6
+	sb.content_margin_right = 6
+	sb.content_margin_top = 6
+	sb.content_margin_bottom = 10  # runs on behind the bar's top edge
+	p.add_theme_stylebox_override("panel", sb)
+	return p
 
 
 func _diamond_sep() -> Control:
@@ -298,7 +322,7 @@ func _pop(s: ActionSlot) -> void:
 	var entries: Array = s.entry.pop
 	_pop_for = s
 	_pop_entries = entries
-	_pop_panel = _art_panel(Vector2(24, 75 * KC), Vector2(24, 40 * KC), Vector2(160 * KC, (128 + 104) * KC), _draw_column)
+	_pop_panel = _plain_panel()
 	add_child(_pop_panel)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
@@ -325,14 +349,8 @@ func _pop(s: ActionSlot) -> void:
 	var k := UiTheme.small()
 	_pop_panel.scale = Vector2(k, k)
 	var r := s.get_global_rect()
-	var top := r.position.y - _pop_panel.size.y * k - 4
 	var x := r.get_center().x - _pop_panel.size.x * k * 0.5
-	if _bar != null and is_instance_valid(_bar):  # the bar's top crest rises above the boxes: a column over it stands on the crest
-		var crest := _tex("bar_crest_top")
-		var cw := crest.get_width() * KS * k
-		var bx := _bar.global_position.x + (_bar.size.x * k - cw) * 0.5
-		if x < bx + cw and x + _pop_panel.size.x * k > bx:
-			top = minf(top, _bar.global_position.y + (55 * KS - crest.get_height() * KS) * k - _pop_panel.size.y * k - 2)
+	var top := r.position.y + 6.0 * k - _pop_panel.size.y * k  # its foot overlaps the bar's top edge ([USER] 2026-10-30)
 	_pop_panel.global_position = Vector2(x, top)
 	_tip.move_to_front()
 
