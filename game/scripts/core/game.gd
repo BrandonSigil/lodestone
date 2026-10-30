@@ -45,6 +45,9 @@ var _hero: CharacterDef = null
 
 func _ready() -> void:
 	TranslationServer.set_locale("en")
+	# One look for every menu ([USER] 2026-10-30). Merged into the engine's default, the theme every Control falls
+	# back to (a root-window theme doesn't reach Controls under a CanvasLayer); riso screens still set their own.
+	ThemeDB.get_default_theme().merge_with(UiTheme.make())
 	load_meta()
 	get_tree().auto_accept_quit = false  # closing the window bookmarks first (_notification)
 

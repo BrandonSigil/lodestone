@@ -26,13 +26,7 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_tip = PanelContainer.new()
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0.06, 0.07, 0.09, 0.96)
-	st.border_color = Color(0.75, 0.65, 0.4)
-	st.set_border_width_all(2)
-	st.set_corner_radius_all(4)
-	st.set_content_margin_all(8)
-	_tip.add_theme_stylebox_override("panel", st)
+	_tip.theme_type_variation = &"TipPanel"
 	_tip_box = VBoxContainer.new()
 	_tip_box.add_theme_constant_override("separation", 2)
 	_tip.add_child(_tip_box)
@@ -128,8 +122,12 @@ func _hover(s: ActionSlot) -> void:
 	for i in lines.size():
 		var l := Label.new()
 		l.text = lines[i]
-		l.add_theme_font_size_override("font_size", 16 if i == 0 else 12)
-		l.add_theme_color_override("font_color", Color(1, 0.85, 0.45) if i == 0 else (Color(0.75, 0.9, 0.75) if i == lines.size() - 1 and i > 3 else Color(0.92, 0.92, 0.88)))
+		if i == 0:
+			l.theme_type_variation = &"SubTitle"
+		else:
+			l.add_theme_font_size_override("font_size", 12)
+		if i == lines.size() - 1 and i > 3:
+			l.add_theme_color_override("font_color", Color(0.75, 0.9, 0.75))  # the caveman line
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size = Vector2(220, 0)
 		_tip_box.add_child(l)
@@ -169,13 +167,7 @@ func _unhover(s: ActionSlot) -> void:
 
 func _bar(u: CombatUnit, skills: Array, basics: Array, area: Rect2) -> void:
 	var panel := PanelContainer.new()
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0.08, 0.09, 0.1, 0.92)
-	st.border_color = Color(0.45, 0.4, 0.3)
-	st.set_border_width_all(2)
-	st.set_corner_radius_all(6)
-	st.set_content_margin_all(6)
-	panel.add_theme_stylebox_override("panel", st)
+	panel.theme_type_variation = &"MenuPanel"
 	add_child(panel)
 	_bar_panel = panel
 	var col := VBoxContainer.new()

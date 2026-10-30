@@ -87,3 +87,15 @@ func test_the_rack_opens_sheets_and_take_arms_the_hero() -> void:
 	s.free()
 	Game.explore_map = "home"
 	_restore(saved)
+
+
+## One shared menu look ([USER] 2026-10-30): the theme Game merges in has the dialogue, menu, info and hover-card
+## panels, titles and buttons, so every screen without its own theme picks them up.
+func test_shared_menu_theme_is_in_the_default() -> void:
+	var t := UiTheme.make()
+	for v in ["DialogPanel", "MenuPanel", "InfoPanel", "TipPanel"]:
+		ok(t.has_stylebox("panel", v), v + " has its panel")
+	ok(t.has_color("font_color", "MenuTitle") and t.has_font_size("font_size", "MenuTitle"), "a title look")
+	for st in ["normal", "hover", "pressed", "disabled"]:
+		ok(t.has_stylebox(st, "Button"), "buttons: " + st)
+	ok(ThemeDB.get_default_theme().has_stylebox("panel", "DialogPanel"), "Game merged it into the default theme")

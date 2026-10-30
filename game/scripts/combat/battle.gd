@@ -100,14 +100,14 @@ func _build_ui() -> void:
 	_ui.layer = 3
 	add_child(_ui)
 	_menu = PanelContainer.new()
-	_menu.add_theme_stylebox_override("panel", _panel_style(Color(0.12, 0.15, 0.15, 0.94)))
+	_menu.theme_type_variation = &"MenuPanel"
 	_menu_box = VBoxContainer.new()
 	_menu_box.add_theme_constant_override("separation", 2)
 	_menu.add_child(_menu_box)
 	_menu.visible = false
 	_ui.add_child(_menu)
 	_forecast = PanelContainer.new()
-	_forecast.add_theme_stylebox_override("panel", _panel_style(Color(0.08, 0.1, 0.1, 0.9)))
+	_forecast.theme_type_variation = &"InfoPanel"
 	_forecast_label = Label.new()
 	_forecast_label.add_theme_font_size_override("font_size", 13)
 	_forecast.add_child(_forecast_label)
@@ -147,16 +147,6 @@ func _build_ui() -> void:
 	_layout_btn.pressed.connect(_next_layout)
 	_ui.add_child(_layout_btn)
 	_show_layout()
-
-
-static func _panel_style(bg: Color) -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.set_corner_radius_all(4)
-	sb.set_content_margin_all(6)
-	sb.border_color = Color(0.9, 0.85, 0.6, 0.5)
-	sb.set_border_width_all(1)
-	return sb
 
 
 ## Centre the board in a screen rect at a scale that fits (a borrowed board only places the menus).

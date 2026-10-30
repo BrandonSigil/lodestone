@@ -595,7 +595,7 @@ func _new_dialog(text: String) -> VBoxContainer:
 	if _dialog:
 		_dialog.queue_free()
 	_dialog = PanelContainer.new()
-	_dialog.add_theme_stylebox_override("panel", Battle._panel_style(Color(0.1, 0.12, 0.12, 0.96)))
+	_dialog.theme_type_variation = &"DialogPanel"
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
 	_dialog.add_child(box)

@@ -255,7 +255,12 @@ static func _label(box: VBoxContainer, text: String, font_size: int) -> void:
 	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(W, 0)
-	l.add_theme_font_size_override("font_size", font_size)
+	if font_size >= 20:
+		l.theme_type_variation = &"MenuTitle"  # the shared title look (UiTheme)
+	elif font_size == 15:
+		l.theme_type_variation = &"SubTitle"
+	else:
+		l.add_theme_font_size_override("font_size", font_size)
 	box.add_child(l)
 
 
