@@ -256,3 +256,20 @@ func test_feet_draw_over_the_flat_ground_in_front() -> void:
 	g.set_height(Vector2i(3, 2), 2)
 	eq(b._unit_depth(u), b.depth_of(2.4, 2.4), "a step up in front still covers the feet")
 	b.free()
+
+
+## Brandon's bug (2026-10-30): "can't click on the tile behind this quarter piece because of the wall". In
+## play a wall never takes the click: the floor you see behind it does. The map maker still picks walls.
+func test_a_click_behind_a_front_wall_finds_the_floor() -> void:
+	var g := CombatGrid.flat(6, 6)
+	g.set_terrain(Vector2i(3, 3), CombatGrid.T.ROCK)
+	g.set_height(Vector2i(3, 3), 2)  # its top sits right over the middle of (2, 2) on screen
+	var b := CombatBoard.new()
+	b.grid = g
+	var at := b.iso(2.5, 2.5, 0.0)
+	eq(b.pick(at), Vector2i(3, 3), "the map maker: the wall in front")
+	b.pick_floor = true
+	eq(b.pick(at), Vector2i(2, 2), "in play: the floor behind it")
+	b.pick_also = {Vector2i(3, 3): true}
+	eq(b.pick(at), Vector2i(3, 3), "unless a thing stands there (a shut door)")
+	b.free()

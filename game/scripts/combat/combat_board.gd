@@ -86,6 +86,10 @@ var goal_cells := {}  # cell -> true, a fight's way out (FightGoals exit), ringe
 var glow := {}  # cell -> true, a door the party is close to: a warm pool of light on its doorstep (ExploreOverlay)
 var show_coords := false
 var edit_void := false  ## map editor: show VOID cells as faint outlines and let them be picked
+## Play, not editing: walls, rock and anything else nobody stands on never take a click or the hover, so the
+## floor you see behind a front wall or curb wins (Brandon's bug, 2026-10-30). The map maker keeps it off.
+var pick_floor := false
+var pick_also := {}  ## cell -> true: with pick_floor, cells that take clicks though nobody stands there (a shut door, the rack)
 var island := true  ## rims hang ragged rock below the base, water spills off the edge
 var blend := true  ## ground fades into different neighbouring ground (see _fringe)
 var backdrop := false  ## a soft paper card behind the island (tester and fights; exploration draws its own world)
@@ -435,6 +439,8 @@ func pick(local: Vector2) -> Vector2i:
 					return p
 			if hidden(c) and not (edit_void and grid.terrain_at(c) == CombatGrid.T.VOID):
 				continue
+			if pick_floor and not grid.passable(c) and not pick_also.has(c):
+				continue  # a wall or rock: the click goes through to the floor behind it
 			if Geometry2D.is_point_in_polygon(local, _diamond(c, _surf(c))):
 				return c
 	return NONE

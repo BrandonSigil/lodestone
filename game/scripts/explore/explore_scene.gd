@@ -84,6 +84,7 @@ func _ready() -> void:
 	overlay = ExploreOverlay.new()
 	overlay.scene = self
 	board.add_child(overlay)
+	board.pick_floor = true  # walls never take the click: the floor behind them does
 	board.cell_clicked.connect(_on_cell_clicked)
 	board.cell_hovered.connect(_on_cell_hovered)
 	board.rotated.connect(_on_rotated)
@@ -476,6 +477,10 @@ func _every_cell() -> Dictionary:
 
 ## Out of a fight the board shows the leader and the enemies in sight; in a fight, every fighter.
 func _refresh_units() -> void:
+	board.pick_also = {}
+	for t in things:  # a thing on a cell nobody stands on (a shut door, the rack) still takes its click
+		if not t.done:
+			board.pick_also[t.cell] = true
 	if mode == M.FIGHT or mode == M.DEPLOY:
 		return
 	var shown: Array = [leader()]
