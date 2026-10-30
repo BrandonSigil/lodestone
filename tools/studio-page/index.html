@@ -418,14 +418,14 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
   <p id="lb-cap"></p>
 </div>
 <div class="toast" id="toast" hidden></div>
-<button class="chat-fab" id="chat-fab" aria-label="Chat with Pip, the project manager" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="dot" id="chat-dot" hidden></span><span class="pip" id="chat-pip" hidden></span></button>
+<button class="chat-fab" id="chat-fab" aria-label="Chat with Wren, the project manager" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="dot" id="chat-dot" hidden></span><span class="pip" id="chat-pip" hidden></span></button>
 <section class="chat" id="chat" hidden aria-labelledby="chat-h">
-  <div class="chat-head" id="chat-anchor"><img src="/_blob/f34a4132cbfb71e436a5c2a4758be01a" alt=""><div><h2 id="chat-h">Pip</h2><small id="chat-sub">Opening…</small></div><button id="chat-x" aria-label="Close chat">×</button></div>
+  <div class="chat-head" id="chat-anchor"><img src="/_blob/f34a4132cbfb71e436a5c2a4758be01a" alt=""><div><h2 id="chat-h">Wren</h2><small id="chat-sub">Opening…</small></div><button id="chat-x" aria-label="Close chat">×</button></div>
   <div class="chat-log" id="chat-log" aria-live="polite"></div>
   <div class="chat-typing" id="chat-typing" hidden></div>
   <form class="chat-form" id="chat-form">
     <div id="chat-att"></div>
-    <div class="chat-row"><label class="chat-round chat-plus" id="chat-plus" aria-label="Add a picture" title="Add a picture" hidden><input type="file" accept="image/*" multiple hidden data-attach="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></label><textarea id="chat-in" rows="1" placeholder="Message Pip" aria-label="Message"></textarea><button class="chat-round chat-go" id="chat-send" type="submit" aria-label="Send" title="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div>
+    <div class="chat-row"><label class="chat-round chat-plus" id="chat-plus" aria-label="Add a picture" title="Add a picture" hidden><input type="file" accept="image/*" multiple hidden data-attach="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></label><textarea id="chat-in" rows="1" placeholder="Message Wren" aria-label="Message"></textarea><button class="chat-round chat-go" id="chat-send" type="submit" aria-label="Send" title="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button></div>
   </form>
 </section>
 
@@ -1027,17 +1027,17 @@ function renderChat() {
   const lastMine = [...S.chat].reverse().find((m) => m.from === "brandon");
   const asks = S.chat.filter((m) => m.ask && m.from !== "brandon" && String(m.at) > String(lastMine?.at || ""));
   $("chat-pip").hidden = !asks.length;
-  $("chat-fab").setAttribute("aria-label", asks.length ? "Chat with Pip: waiting on you" : "Chat with Pip, the project manager");
+  $("chat-fab").setAttribute("aria-label", asks.length ? "Chat with Wren: waiting on you" : "Chat with Wren, the project manager");
   const working = lastMine && lastMine.status === "seen";
-  $("chat-typing").hidden = !working; $("chat-typing").textContent = working ? "Pip is on it…" : "";
+  $("chat-typing").hidden = !working; $("chat-typing").textContent = working ? "Wren is on it…" : "";
   if (!chatOpen()) return;
   const log = $("chat-log"), atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
   log.innerHTML = S.chat.length ? S.chat.map((m) => {
     const mine = m.from === "brandon";
     const ims = (m.images || []).map((im) => ({ url: im.url, caption: im.caption || "" }));
     const waiting = asks.includes(m);
-    return `<div class="msg${mine ? " mine" : ""}${waiting ? " ask" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Pip" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.text ? `<div class="bubble">${esc(m.text)}</div>` : ""}${shotsHtml(ims)}${waiting ? `<span class="flag">Waiting on you</span>` : ""}</div>`;
-  }).join("") : `<div class="empty">Talk to Pip, the project manager, here like a teammate: ask what's going on, pass on a decision, or paste a picture.</div>`;
+    return `<div class="msg${mine ? " mine" : ""}${waiting ? " ask" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Wren" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.text ? `<div class="bubble">${esc(m.text)}</div>` : ""}${shotsHtml(ims)}${waiting ? `<span class="flag">Waiting on you</span>` : ""}</div>`;
+  }).join("") : `<div class="empty">Talk to Wren, the project manager, here like a teammate: ask what's going on, pass on a decision, or paste a picture.</div>`;
   if (atEnd || S.chatJump) { log.scrollTop = log.scrollHeight; S.chatJump = false; }
   markChatSeen();
 }
