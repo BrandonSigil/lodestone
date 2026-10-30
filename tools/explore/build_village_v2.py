@@ -625,7 +625,8 @@ UNDER = {c: (V.terrain[c[1]][c[0]], V.height[c[1]][c[0]]) for pr in V.props
 path = save_all()
 GODOT = os.environ.get("GODOT") or shutil.which("godot") or "/Applications/Godot.app/Contents/MacOS/Godot"
 GAME = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "game"))
-subprocess.run([GODOT, "--headless", "--path", GAME, "-s", "res://tools/dress_explore.gd", "--", "village_v2", "", "", "4", "24"],
+GUARD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mem_guard.sh")  # killed over GODOT_MEM_CAP_MB
+subprocess.run([GUARD, GODOT, "--headless", "--path", GAME, "-s", "res://tools/dress_explore.gd", "--", "village_v2", "", "", "4", "24"],
                check=True)
 with open(path) as f:
     dressed = json.load(f)["grid"]
