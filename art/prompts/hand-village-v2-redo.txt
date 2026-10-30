@@ -1,0 +1,13 @@
+Image 1 = a grey block-out guide on cream paper: four plain grey boxes drawn on a strict 2:1 dimetric grid (every floor edge runs at exactly 2 across to 1 down, like a diamond tile twice as wide as tall; uprights are perfectly vertical). Paint each prop INSIDE its grey box, so that the prop's ground edges and outline follow the box's edges exactly. Do not tilt, rotate, flatten or round any edge; no edge may run at 45 degrees or look like a top-down plan view. Keep each prop in the same place and the same size as its box.
+
+WHAT THIS IS: four small outdoor pieces for a cosy fantasy village on a hill, game-ready, each standing alone. Same cream paper (#eae8d6) background as image 1. No text, no labels, no numbers. Do not draw the grey boxes, only the props that fill them.
+
+THE FOUR PROPS (one per box, the same place as the box):
+   top left, the large flat 2 x 2 tile slab: a crop bed. Three straight ridges of dark brown soil running along the down-right edge of the slab, small green cabbages and pale turnips with leafy tops in the first two ridges, golden wheat in the third. The bed is a low flat raised bed with straight square edges, not a mound.
+   top right, the low square block with the thin upright post: a grave mound of brown earth with a few dry fall leaves, a plain stone cross standing upright at the back.
+   bottom left, the thin tall slab: a weathered grey stone headstone with a rounded top, slightly mossy at its foot, standing as a thin upright slab with its flat face toward the lower right.
+   bottom right, the thin wall between two tall posts: a short run of black wrought-iron fence, upright bars with pointed tips between two square grey stone posts, running along the down-right edge.
+
+FINISH (copy the fall village look): soft flat painted fills with a little soft mottle, one flat colour plus one shadow tone per surface, light from the upper left (top lightest, left faces mid, right faces darkest). One soft dark charcoal outline (#373335, never pure black) round each whole prop only, no inner lines. Warm stone, wood brown and fall colours: moss green, ochre, faded gold. At most two or three small golden leaf tufts touching the base; no ground disc, no grass patch, no cast shadow. Big simple silhouettes.
+
+Avoid: tilted or rotated props, 45 degree or top-down views, round or bulky blobs, true isometric (30 degree) edges, perspective, flat-on views, ground under props, cast shadows, pixel art, fine detail, text, letters, numbers, 3d render, glossy, photo, people, animals, skulls, watermark.
