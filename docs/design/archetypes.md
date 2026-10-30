@@ -139,3 +139,23 @@ Visual overview: https://claude.ai/artifact/8rdAXgqcZogHZDsFVjsUgU (the Class Ma
 | mender | cleric (sanctuary, smite) | medic (rest care, cleanse) |
 | chanter | herald (rally the line) | diplomat (talk wins) |
 | tinker | bomber (bigger blasts) | engineer (turret, repair) |
+
+## Brandon's answers (2026-10-30, card design-archetypes-present)
+`[USER]` All ten archetypes go forward. A class's regular attack sits outside its four abilities. Ember burns a line of 2 to 3 tiles instead of one brush tile: a barrier that can also burn whoever stands on it.
+
+`[AI]` Revised kits (the "basic" slot above is the free regular attack and is not an ability):
+
+| Archetype | Four abilities |
+| --- | --- |
+| bulwark | guard zone, goad, command, shield_wall (adjacent allies +1 armor until its next phase) |
+| reaver | cleave, shove, second_wind, leap (jump 3 tiles, ignoring height) |
+| shade | kick, backstab, poison blades, shadow_swap |
+| sharpshooter | aimed_shot, volley, snare, overwatch |
+| tracker | trap, snare, call_companion, lure (pull a foe 2 tiles) |
+| ember | firebolt, fireball, ignite (a line of 2 to 3 burning tiles), flash |
+| moon | moonbeam, moon_sleep, moon_tide / star_guide, moon_veil |
+| mender | mend, ward, aid from range, renew (heal over time) |
+| chanter | rally, dissonance, last_stand, inspire (allies within 2 +1 damage a phase) |
+| tinker | bomb, caltrops, patch, smoke_bomb (blocks sight on a 3x3 for a phase) |
+
+The wizard branch's `wall_of_fire` becomes "ignite lines last 3 phases and hit harder", since ignite is now a line already.
