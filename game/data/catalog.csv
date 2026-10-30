@@ -57,7 +57,6 @@ house_wall_window,Walls,House walls,prop,village_in/wall_window,1,1,0,3,,,,house
 house_wall_door,Walls,House walls,prop,village_in/wall_door,1,1,0,3,,,,house doorway,
 house_wall_corner,Walls,House walls,prop,village_in/wall_corner,1,1,0,3,,,,house corner,
 dungeon_wall_plain,Walls,Dungeon walls,prop,dungeon/wall_plain,1,1,0,3,,,,dungeon wall,
-dungeon_wall_window,Walls,Dungeon walls,prop,dungeon/wall_window,1,1,0,3,,,,dungeon window,
 dungeon_wall_door,Walls,Dungeon walls,prop,dungeon/wall_door,1,1,0,3,,,,dungeon doorway,
 dungeon_wall_corner,Walls,Dungeon walls,prop,dungeon/wall_corner,1,1,0,3,,,,dungeon corner,
 door_locked,Interactables,Doors,thing,,1,1,,,,door,locked_door,locked door,

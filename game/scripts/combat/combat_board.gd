@@ -44,6 +44,7 @@ const WALL_TOP := Color("6c6d74")  ## walls maps: a wall's top, a step lighter t
 const WALL_SIDE := Color("48484d")  ## and its faces, the dungeon cliff's grey
 const PIECE_HIGH := 6.0  ## a wall-kit piece's graybox stands this many levels over its floor (until the kit's art)
 const PIECE_THIN := 0.14  ## and this deep, in cells, on the edge it shares with the room
+const POST_SIZE := 0.22  ## the post where two back walls meet: this many cells square
 const RIM_THIN := 0.25  ## a front edge's stubby wall: this deep in cells
 const RIM_HIGH := 1.0  ## and this many levels over its floor
 ## Which ground reaches onto which where they meet (higher over lower); others never blend.
@@ -1154,14 +1155,27 @@ func _kit_wall(c: Vector2i) -> bool:
 ## A back wall from the map's wall kit ([USER] 2026-10-30, docs/art/references/interior-walls-target.webp): a
 ## thin wall on the cell's edge toward the room, PIECE_HIGH tall, not a block. The kit's flat textures wrap onto
 ## it like a cliff's side (one square = BattleArt.SIDE_TILES cells by SIDE_LEVELS levels): the bottom square is
-## the cell's piece (plain; a window or doorway placed as a prop spans its cell and the next along the wall), plain
-## above it, the kit's top along the top edge, a foot strip if the kit has one, and a corner post where two walls
-## meet. Until the kit's art lands, a graybox plane with a dark window or doorway.
+## the cell's piece (plain, now and then worn; a window or doorway placed as a prop spans its cell and the next along
+## the wall), the upper half of the kit's top square above it (its beam on the wall's top edge), the foot square's
+## footing along the bottom if the kit has one, and at an inside corner only a post. Until the kit's art lands, a
+## graybox plane with a dark window or doorway.
 func _wall_piece(c: Vector2i) -> void:
 	var faces: Array = backs.get(c, [])
 	var col := Color(0.45, 0.46, 0.52) if fog_on and fog.get(c, 2) == 1 else Color.WHITE
 	var h := _surf(c)
 	var plain := BattleArt.texture("wall_plain", true, wall_kit)
+	if faces.size() > 1:
+		# an inside corner: the walls beside it carry the faces; a post stands where they meet, at its front corner
+		var post := BattleArt.texture("wall_timber" if wall_kit == "village_in" else "wall_corner", true, wall_kit)
+		var phi := Vector2(c) + Vector2.ONE
+		var plo := phi - Vector2(POST_SIZE, POST_SIZE)
+		_box(plo, phi, h, h + PIECE_HIGH + 0.3, Color(WALL_SIDE, 1.0) * col)
+		if post != null:
+			for d2: Vector2i in [front_dir(false), front_dir(true)]:
+				var e2: Array = _side(plo, phi, d2)
+				var lit := _face_light(Vector2(d2))
+				_kit_band(e2[0], e2[1], h + PIECE_HIGH + 0.3, h, post, 0.0, 1.0, Color(lit * col.r, lit * col.g, lit * col.b, 1.0))
+		return
 	for d: Vector2i in faces:
 		var lo := Vector2(c)
 		var hi := lo + Vector2.ONE
@@ -1199,30 +1213,23 @@ func _wall_piece(c: Vector2i) -> void:
 			_ci.draw_polygon(pts, PackedColorArray([mod, mod, mod, mod]), uvs, tex)
 		else:
 			var worn := BattleArt.texture("wall_worn" if wall_kit == "village_in" else "wall_cracked", true, wall_kit)
-			_face(e[0], e[1], top, h, Color.WHITE, 0, false, false, worn if worn != null and _hash(c) % 5 == 0 else plain, mod)
-		_face(e[0], e[1], h + PIECE_HIGH, top, Color.WHITE, 0, false, false, plain, mod)
-		var foot := BattleArt.texture("wall_foot", true, wall_kit)
-		if foot != null:
-			_face(e[0], e[1], h + 0.6, h, Color.WHITE, 0, false, false, foot, mod)
+			_kit_band(e[0], e[1], top, h, worn if worn != null and _hash(c) % 5 == 0 else plain, 0.0, 1.0, mod)
+		# the top two levels: the upper half of the kit's top square, its beam or capping on the wall's top edge
 		var cap := BattleArt.texture("wall_top" if wall_kit == "village_in" else "wall_cap", true, wall_kit)
-		if cap != null:
-			var z := h + PIECE_HIGH
-			var q := PackedVector2Array([iso(lo.x, lo.y, z), iso(hi.x, lo.y, z), iso(hi.x, hi.y, z), iso(lo.x, hi.y, z)])
-			var k := Vector2(lo) / BattleArt.SIDE_TILES
-			var w := (Vector2(hi) - Vector2(lo)) / BattleArt.SIDE_TILES
-			_ci.draw_polygon(q, PackedColorArray([col, col, col, col]), PackedVector2Array([k, k + Vector2(w.x, 0), k + w, k + Vector2(0, w.y)]), cap)
-	if faces.size() > 1:
-		# the post where the two back walls meet
-		var post := BattleArt.texture("wall_timber" if wall_kit == "village_in" else "wall_corner", true, wall_kit)
-		var at := Vector2(c) + Vector2.ONE - Vector2(PIECE_THIN, PIECE_THIN) * 1.6
-		var plo := at
-		var phi := Vector2(c) + Vector2.ONE
-		if post == null:
-			_box(plo, phi, h, h + PIECE_HIGH + 0.3, Color(WALL_SIDE, 1.0) * col)
-		else:
-			for d2: Vector2i in [front_dir(false), front_dir(true)]:
-				var e2: Array = _side(plo, phi, d2)
-				_face(e2[0], e2[1], h + PIECE_HIGH + 0.3, h, Color.WHITE, 0, false, false, post, Color(_face_light(Vector2(d2)) * col.r, _face_light(Vector2(d2)) * col.g, _face_light(Vector2(d2)) * col.b, 1.0))
+		_kit_band(e[0], e[1], h + PIECE_HIGH, top, cap if cap != null else plain, 0.0, (PIECE_HIGH - BattleArt.SIDE_LEVELS) / BattleArt.SIDE_LEVELS, mod)
+		var foot := BattleArt.texture("wall_foot", true, wall_kit)
+		if foot != null:  # the footing course: the bottom fifth of the foot square
+			_kit_band(e[0], e[1], h + BattleArt.SIDE_LEVELS * 0.2, h, foot, 0.8, 1.0, mod)
+
+
+## A wall face from a to b, z1 down to z0, wearing rows v0..v1 of a kit square (0 its top, 1 its bottom), with
+## its columns anchored on the world like a cliff side's (BattleArt.SIDE_TILES cells a square), so a run tiles.
+func _kit_band(a: Vector2, b: Vector2, z1: float, z0: float, tex: Texture2D, v0: float, v1: float, mod: Color) -> void:
+	var along_x := is_equal_approx(a.y, b.y)
+	var ua := (a.x if along_x else a.y) / BattleArt.SIDE_TILES
+	var ub := (b.x if along_x else b.y) / BattleArt.SIDE_TILES
+	var pts := PackedVector2Array([iso(a.x, a.y, z1), iso(b.x, b.y, z1), iso(b.x, b.y, z0), iso(a.x, a.y, z0)])
+	_ci.draw_polygon(pts, PackedColorArray([mod, mod, mod, mod]), PackedVector2Array([Vector2(ua, v0), Vector2(ub, v0), Vector2(ub, v1), Vector2(ua, v1)]), tex)
 
 
 ## The kit piece a back-wall cell shows: a window or doorway prop on it ("half" 0), or on the cell before it along
