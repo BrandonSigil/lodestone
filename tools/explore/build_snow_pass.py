@@ -459,11 +459,12 @@ W.groups.append({"id": "den_wolves", "event": "spot_beasts", "sight": 4, "loot":
 W.groups.append({"id": "den_lone", "event": "spot_beasts", "sight": 4, "loot": "food:+3", "elite": True,
                  "units": [{"id": "wolf", "cell": [10, 3]}]})
 W.things.append({"id": "den_bones", "kind": "chest", "event": "den_bones", "cell": [1, 1], "once": "got_den_bones"})
+W.things.append({"id": "den_rare", "kind": "rare", "event": "rare:+1;metal:+2", "cell": [12, 2]})  # behind the elite wolf (omr-10)
 W.prop("prop_bush", 8, 9, tall=0.6, sight=0.5)
 W.prop("prop_boulder", 7, 4, tall=0.6, sight=0.5)
 wt = {t["id"]: tuple(t["cell"]) for t in W.things}
 wreach = W.reach((3, 9), set(wt.values()))
-assert W.usable_from(wreach, wt["den_bones"]) and W.usable_from(wreach, wt["den_out"])
+assert W.usable_from(wreach, wt["den_bones"]) and W.usable_from(wreach, wt["den_out"]) and W.usable_from(wreach, wt["den_rare"])
 for u in W.groups[0]["units"]:
     assert tuple(u["cell"]) in wreach
 assert min(abs(a["cell"][0] - b["cell"][0]) + abs(a["cell"][1] - b["cell"][1])

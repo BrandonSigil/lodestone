@@ -249,6 +249,8 @@ func test_loop_data_is_whole() -> void:
 		for t in m.things:
 			if String(t.kind) == "restore":
 				ok(not RestoreRules.next_step(Db.restore, String(t.event), {}).is_empty(), "%s: restore %s" % [name, t.event])
+			elif String(t.kind) in ExploreRules.LASTING_KINDS:
+				ok(String(t.event) != "", "%s: %s holds its reward" % [name, t.id])
 			elif String(t.event) != "":
 				ok(Db.explore_events.has(t.event), "%s: event %s" % [name, t.event])
 			if String(t.to) != "":

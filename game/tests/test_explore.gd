@@ -42,6 +42,8 @@ func test_events_and_text_exist() -> void:
 	for t in m.things:
 		if t.kind == "enter" and t.event == "":
 			continue  # a plain doorway walks straight through
+		if t.kind in ExploreRules.LASTING_KINDS:
+			continue  # a lasting reward holds its reward in its event, not an event row
 		ok(Db.explore_events.has(t.event), "event %s for %s" % [t.event, t.id])
 	for g in m.groups:
 		ok(Db.explore_events.has(g.event), "event %s for group %s" % [g.event, g.id])

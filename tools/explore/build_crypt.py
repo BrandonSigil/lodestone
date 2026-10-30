@@ -177,6 +177,11 @@ data = {
         {"id": "cave_rubble", "kind": "rubble", "event": "rubble", "cell": [2, 14], "floor": "t"},
         {"id": "tower_chest", "kind": "chest", "event": "chest", "cell": [31, 3]},
         {"id": "way_out", "kind": "exit", "event": "exit", "cell": [13, 2]},
+        # Lasting rewards ([USER] omr-10), taken for good: a boost in the west terrace's far corner, off the
+        # main way; a key behind the sealed door that opens the old box on the graveyard.
+        {"id": "west_boost", "kind": "boost", "event": "hp:2", "cell": [2, 12]},
+        {"id": "vault_key", "kind": "key", "event": "crypt_key", "cell": [32, 16]},
+        {"id": "crypt_vault", "kind": "chest", "event": "crypt_vault", "cell": [32, 9], "once": "got_crypt_vault"},
         # Back up the stair to the top of the snowy pass (the E2E loop comes down into the crypt here).
         {"id": "up_stair", "kind": "enter", "event": "", "cell": [30, 27], "to": "snow_pass", "at": [9, 8]},
     ],

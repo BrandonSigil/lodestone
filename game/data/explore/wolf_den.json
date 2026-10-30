@@ -139,6 +139,15 @@
     1
    ],
    "once": "got_den_bones"
+  },
+  {
+   "id": "den_rare",
+   "kind": "rare",
+   "event": "rare:+1;metal:+2",
+   "cell": [
+    12,
+    2
+   ]
   }
  ]
 }
