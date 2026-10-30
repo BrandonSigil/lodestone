@@ -1,0 +1,14 @@
+Image 1 = a fight menu for a cosy fantasy tactics game: a portrait frame and an action bar in deep green with pale parchment rules, a blue and silver rim, blue diamond gems, a tall diamond crest and olive-green leaves. Copy its LOOK exactly: the same colours, the same rim, gems, crests and leaves, the same painted finish. Do NOT copy its character, its icons, its words or its numbers.
+
+WHAT THIS IS: ONE continuous frame painting, so a game can slice it into a left end, a repeatable middle and a right end and have every piece fit together as if it were one piece. Draw the whole thing as ONE object, flat and straight on, no perspective, no shadow.
+
+BACKGROUND: flat solid magenta (#ff00ff) around it, perfectly even, no texture. No text, letters or numbers anywhere.
+
+LAYOUT, aspect 3:2:
+   TOP, filling the width: ONE LONG ACTION BAR, about six times as wide as it is tall, painted as a single piece edge to edge. Left end with its corner leaves and blue gem, right end mirroring it, the tall blue diamond crest centred on the top edge and its twin pointing down on the bottom edge. Between the ends the bar is PLAIN AND STRAIGHT: the same top and bottom rim lines running dead level, perfectly constant thickness from end to end, dark green inside, no ornament, no gem, no leaf, so any slice of the middle looks identical to the next. Five empty dark square slot windows sit in the middle, evenly spaced with small blue diamonds between, all EMPTY (no icons, no numbers).
+   BELOW LEFT: the PORTRAIT FRAME, a square frame with the tall diamond crest on its top edge and leaves at its corners; its window EMPTY flat cream (#efe6cf), under it a short empty dark green band for health bars. Its rim must be EXACTLY the same thickness and colours as the long bar's rim.
+   BELOW RIGHT: a tall NARROW UPRIGHT PANEL, painted as one piece, with the same rim thickness and colours as the bar. Top end has a small gem; the middle is plain and straight; the bottom end mirrors the top.
+
+RULES FOR THE EDGES: every outer edge ends in the pale parchment rim line itself, with NO black or dark outline outside it and no dark halo against the magenta. One rim thickness for the whole painting. Every straight run perfectly level or upright.
+
+Avoid: text, letters, numbers, icons, people, faces, black outline around the outside, uneven or wobbly rims, different rim thickness between parts, perspective, drop shadows, glow, pixel art, 3d render, photo.
