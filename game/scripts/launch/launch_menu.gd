@@ -70,6 +70,7 @@ func _sections_row() -> HBoxContainer:
 			["Wolf den", "the cave off the pass", _explore.bind("wolf_den")],
 			["Tavern", "walk-in interior", _explore.bind("tavern")],
 			["Crypt", "the Lich King's dungeon, the boss", _explore.bind("crypt")],
+			["City prototype", "dense streets, roofs, overpasses (layout test)", _explore.bind("city_proto")],
 		]],
 		["FIGHT", [
 			["Trail fight", "debug encounter", _trail_fight],
