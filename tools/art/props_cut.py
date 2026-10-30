@@ -43,10 +43,12 @@ def _runs(on: np.ndarray, min_gap: int) -> list:
     return merged
 
 
-def _drop_edge_bits(a: np.ndarray, share: float = 0.15) -> None:
-    """Clear pieces that came from a neighbouring cell, in place: small pieces touching the cell's edge (a
-    spark or tip poking in) and small pieces lying wholly above or below the icon itself, well apart from it
-    (the tip of a flame from the row below)."""
+def _keep_own(a: np.ndarray, inner: tuple, share: float = 0.15) -> bool:
+    """Keep only this cell's icon, in place. The crop `a` reaches past the cell (`inner` = x0, y0, x1, y1 of
+    the cell inside it) so a tip poking over the cell line (a fishing rod) is not clipped. A piece is kept when
+    its middle lies in the cell; a neighbour's tip, whose middle lies outside, is cleared, and so is a small
+    piece lying wholly above or below the icon, well apart from it (a stray fleck). Returns True when a kept
+    piece still touches the crop's edge, i.e. the icon may be clipped."""
     a[a[..., 3] <= 40, 3] = 0  # faint haze would join a fleck to the icon
     on = a[..., 3] > 0
     h, w = on.shape
@@ -66,19 +68,28 @@ def _drop_edge_bits(a: np.ndarray, share: float = 0.15) -> None:
                     seen[ny, nx] = True
                     stack.append((ny, nx))
         comps.append(comp)
-    if not comps:
-        return
-    main = max(comps, key=len)
-    my = [y for y, _ in main]
-    top, bottom, gap = min(my), max(my), h * 0.08
+    ix0, iy0, ix1, iy1 = inner
+    own = []
     for comp in comps:
-        if comp is main or len(comp) >= share * total:
-            continue
         ys, xs = zip(*comp)
-        edge = min(ys) == 0 or max(ys) == h - 1 or min(xs) == 0 or max(xs) == w - 1
-        apart = min(ys) > bottom + gap or max(ys) < top - gap
-        if edge or apart:
+        cy, cx = sum(ys) / len(ys), sum(xs) / len(xs)
+        if ix0 <= cx < ix1 and iy0 <= cy < iy1:
+            own.append(comp)
+        else:
             a[list(ys), list(xs), 3] = 0
+    if not own:
+        return False
+    main = max(own, key=len)
+    my = [y for y, _ in main]
+    top, bottom, gap = min(my), max(my), (iy1 - iy0) * 0.08
+    clipped = False
+    for comp in own:
+        ys, xs = zip(*comp)
+        if comp is not main and len(comp) < share * total and (min(ys) > bottom + gap or max(ys) < top - gap):
+            a[list(ys), list(xs), 3] = 0
+            continue
+        clipped |= min(ys) == 0 or max(ys) == h - 1 or min(xs) == 0 or max(xs) == w - 1
+    return clipped
 
 
 def cut(sheet: str, cols: int, rows: int, names: list, out: Path, width: int = 0, scale: float = 0.0, icon: int = 0, even: bool = False) -> list:
@@ -105,13 +116,13 @@ def cut(sheet: str, cols: int, rows: int, names: list, out: Path, width: int = 0
             i = r * cols + c
             if i >= len(names) or names[i] == "-":
                 continue
-            pad = 0 if even else 8
+            pad = int((y1 - y0) * 0.25) if even else 8  # even cells reach a quarter cell past their lines
             box = (max(x0 - pad, 0), max(y0 - pad, 0), min(x1 + pad, w), min(y1 + pad, h))
             p = key_background(img.crop(box), tol=14)
             a = np.asarray(p).copy()
             a[np.abs(a[..., :3].astype(int) - paper).max(-1) <= PAPER_TOL, 3] = 0
-            if even:
-                _drop_edge_bits(a)
+            if even and _keep_own(a, (x0 - box[0], y0 - box[1], x1 - box[0], y1 - box[1])):
+                print(f"CLIPPED? {names[i]}: a piece still touches the crop's edge")
             p = Image.fromarray(a, "RGBA")
             p = p.crop(p.getchannel("A").getbbox())
             if icon:  # fit the longer side to 90% of the square, centred, so every icon sits the same way
