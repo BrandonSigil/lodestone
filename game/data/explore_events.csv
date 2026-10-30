@@ -30,4 +30,4 @@ companion_dog,EX_COMPANION,OPT_INVITE,noparty:dog,none,0,invite:dog,,OPT_SEND_HO
 settler_smith,EX_SETTLER_SMITH,OPT_WELCOME,noflag:settler_smith,none,0,unlock:settler_smith;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,
 settler_chef,EX_SETTLER_CHEF,OPT_WELCOME,noflag:settler_chef,none,0,unlock:settler_chef;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,
 crypt_vault,EX_CRYPT_VAULT,OPT_OPEN,flag:crypt_key,none,0,rare:+1;metal:+2;gold:+15;unlock:got_crypt_vault;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,
-fish_dock,EX_FISH_DOCK,OPT_FISH,,none,0,fish,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,
+fish_dock,EX_FISH_DOCK,OPT_FISH,item:rod,none,0,fish,,OPT_NO_ROD,noitem:rod,none,0,,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,

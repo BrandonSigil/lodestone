@@ -8,10 +8,11 @@ const DAY_SECONDS := 30.0  ## the party eats once per this many seconds walked
 const STARVE_HP := 1  ## each member loses this when there is no food at a meal (never below 1 HP)
 const ACT_COOLDOWN := 15.0  ## seconds walked before the same activity can be tried again
 const EAT_HEAL := 2  ## EAT from the pack: one food heals the most hurt member this much
-## Activity id -> {"check", "dc", "food", "medicine"}: what a win gives (plus the margin for food).
+## Activity id -> {"check", "dc", "food", "medicine", "item"}: what a win gives (plus the margin for food), and
+## the gear it needs in the pack, if any.
 const ACTS := {
 	"hunt": {"check": "hunt", "dc": 12, "food": 3, "medicine": 0},
-	"fish": {"check": "fish", "dc": 11, "food": 2, "medicine": 0},
+	"fish": {"check": "fish", "dc": 11, "food": 2, "medicine": 0, "item": "rod"},  # [USER] 2026-10-30: fishing needs a rod
 	"forage": {"check": "forage", "dc": 11, "food": 1, "medicine": 1},
 }
 
@@ -101,8 +102,16 @@ static func use_on(run: RunState, item: String, m: Dictionary) -> bool:
 
 
 ## Hunt, fish or forage: the party's best roll. Returns the roll with "food" and "medicine" gained.
+## Has the party what the activity needs? Fishing takes a rod, on the world map and at any dock alike.
+static func can_try(run: RunState, act: String) -> bool:
+	var need := String(ACTS[act].get("item", ""))
+	return need == "" or run.item_count(need) > 0
+
+
 static func activity(run: RunState, act: String) -> Dictionary:
 	var a: Dictionary = ACTS[act]
+	if not can_try(run, act):
+		return {"success": false, "food": 0, "medicine": 0, "total": 0}
 	var r := TrailRules.roll(run, a.check, a.dc)
 	r["food"] = 0
 	r["medicine"] = 0

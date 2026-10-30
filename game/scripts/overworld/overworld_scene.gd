@@ -518,7 +518,9 @@ func _side() -> void:
 	if walking():
 		hud.add_button(Txt.t("UI_OW_FAST"), fast_forward)
 		hud.add_button(Txt.t("UI_OW_HUNT"), act.bind("hunt"))
-		hud.add_button(Txt.t("UI_OW_FISH"), act.bind("fish"))
+		var fish := hud.add_button(Txt.t("UI_OW_FISH"), act.bind("fish"))
+		fish.disabled = not TravelRules.can_try(Game.run, "fish")  # no rod in the pack
+		fish.tooltip_text = "" if not fish.disabled else Txt.t("UI_OW_NO_ROD")
 		hud.add_button(Txt.t("UI_OW_FORAGE"), act.bind("forage"))
 		hud.add_button(Txt.t("UI_OW_TALK"), talk)
 		if not Game.travel.get("camped", false):

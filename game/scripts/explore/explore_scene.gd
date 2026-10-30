@@ -728,6 +728,18 @@ func _lasting(t: Dictionary) -> void:
 				_close_dialog()
 				_refresh_locked()
 				mode = M.WALK)
+		"find":  # a one-time cache ([USER] 2026-10-30: the first fishing rod): its event is the effects
+			TrailRules.apply_effects(Game.run, what)
+			_take_lasting(t)
+			_after_change()
+			var names: PackedStringArray = []
+			for part in what.split(";", false):
+				var id := part.split(":")[0].strip_edges()
+				if Db.items.has(id):
+					names.append(Txt.t(String(Db.items[id].name_key)))
+			_dialog_button(_new_dialog(Txt.f("UI_FOUND_THING", "  ".join(names))), Txt.t("UI_CONTINUE"), func() -> void:
+				_close_dialog()
+				mode = M.WALK)
 		"rare":
 			TrailRules.apply_effects(Game.run, what)
 			_take_lasting(t)
@@ -1275,6 +1287,9 @@ func _have() -> Dictionary:
 ## world map's FISH ([USER] 2026-10-28: dice for now, a minigame later), the catch into the pack. The spot
 ## rests until the next trip out of town ([AI] 2026-10-30; desk card dev-fishing-rules).
 func _fish(t: Dictionary) -> void:
+	if not TravelRules.can_try(Game.run, "fish"):  # no rod: the row's need should have hidden FISH already
+		board.float_text(leader().cell, Txt.t("OPT_NO_ROD"), Color(0.9, 0.8, 0.7))
+		return
 	var r := TravelRules.activity(Game.run, "fish")
 	if not t.is_empty():
 		Game.use_for_trip(map.map_name + "/" + String(t.id))

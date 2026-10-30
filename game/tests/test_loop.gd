@@ -982,7 +982,8 @@ func test_doors_glow_when_close() -> void:
 
 
 ## Fishing off a dock (the map builder's note builder-to-dev-fishing): any thing whose event has an option
-## with the `fish` effect rolls the world map's FISH, and the spot rests until the next trip.
+## with the `fish` effect rolls the world map's FISH, and the spot rests until the next trip. [USER] 2026-10-30:
+## it needs a rod, there and on the world map.
 func test_fishing_from_any_dock_spot() -> void:
 	var saved := _fresh_game()
 	eq(ExploreRules.split_effects("fish").map, ["fish"] as Array[String], "fish is a map effect any event row can use")
@@ -994,8 +995,13 @@ func test_fishing_from_any_dock_spot() -> void:
 	ok(not spots.is_empty(), "village v2 has a fishing spot")
 	var spot: Dictionary = spots[0]
 	var ev: Dictionary = Db.explore_events["fish_dock"]
+	var keys := func() -> Array: return ExploreRules.options_for(ev, s._defs(), s._have()).map(func(o: Dictionary) -> String: return o.key)
+	ok(not keys.call().has("OPT_FISH") and keys.call().has("OPT_NO_ROD"), "no rod: no FISH, and the spot says why")
+	ok(not TravelRules.can_try(Game.run, "fish"), "nor on the world map")
+	Game.run.add_item("rod", 1)
+	ok(TravelRules.can_try(Game.run, "fish"), "a rod in the pack")
 	var fish: Array = ExploreRules.options_for(ev, s._defs(), s._have()).filter(func(o: Dictionary) -> bool: return o.key == "OPT_FISH")
-	eq(fish.size(), 1, "FISH is on offer, no rod needed")
+	eq(fish.size(), 1, "FISH is on offer with the rod")
 	var food_before: int = Game.run.food
 	s.mode = 2
 	s.choose(fish[0], {"thing": spot})
@@ -1064,3 +1070,25 @@ func _click(at: Vector2) -> InputEventMouseButton:
 	e.pressed = true
 	e.position = at
 	return e
+
+
+## The first rod is a one-time find ([USER] 2026-10-30): a thing of kind `find` whose event is its effects
+## gives them once and is taken for good, like the other lasting rewards.
+func test_a_one_time_find_gives_the_rod() -> void:
+	var saved := _fresh_game()
+	Game.explore_map = "village"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	var cache := {"id": "test_rod", "kind": "find", "event": "rod:+1", "cell": Vector2i(1, 1), "done": false}
+	ok(Game.run.item_count("rod") == 0)
+	s._lasting(cache)
+	eq(Game.run.item_count("rod"), 1, "the rod is in the pack")
+	ok(cache.done and Game.has_flag(ExploreRules.taken_flag("village", "test_rod")), "and the cache is taken for good")
+	eq(RunState.shape_of("rod").size(), 3, "a 3 x 1 rod")
+	eq(String(Db.items["rod"].kind), "gear")
+	s._close_dialog()
+	s.free()
+	Game.explore_map = "home"
+	_restore(saved)
+

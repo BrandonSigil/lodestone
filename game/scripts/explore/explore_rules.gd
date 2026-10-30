@@ -30,7 +30,7 @@ static func taken_flag(map_name: String, thing_id: String) -> String:
 	return "got_%s_%s" % [map_name, thing_id]
 
 
-const LASTING_KINDS := ["boost", "key", "rare"]
+const LASTING_KINDS := ["boost", "key", "rare", "find"]  ## find: a one-time cache; its event is the effects, "rod:+1"
 
 
 ## Bosses and elite groups, once beaten, stay beaten.
@@ -585,6 +585,8 @@ static func need_met(need: String, defs: Array, have := {}) -> bool:
 	match kv[0]:
 		"item":
 			return int(have.get("items", {}).get(kv[1], 0)) > 0
+		"noitem":  # the pack holds none (the dock's NO ROD line)
+			return int(have.get("items", {}).get(kv[1], 0)) <= 0
 		"flag":
 			return have.get("flags", []).has(kv[1])
 		"noflag":
