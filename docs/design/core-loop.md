@@ -140,6 +140,7 @@ Boss shapes (fortress, objective, several parts, minions); foe types and behavio
 - **Grinding is allowed, and completed places can be walked past** (pc-4; walking past cleared places is built).
 - **The console overworld stays, with forks that branch and join up again** (pc-5): head north, fork east or west, and the branches link back up. A map-layout rule for the overworld, not a new system.
 - **Opt-in risk is marked elite fights** (pc-6): tougher groups, better rewards. No vows, no push-on-or-go-home.
+- **The first elite is the lone wolf deep in the wolf den** (`design-elite-pick`), a side room the party can skip. Elites fight at 150% HP, +1 damage, +1 armor, pay 1.5x XP and stay beaten (the developer's build).
 - **Stats are rolled each level from each character's own growth odds** (pc-7), Fire Emblem style. A tank mostly gains HP or defense, now and then attack, and never a stat it can't use.
 - **Skills grow on their own; ranks add something new** (pc-8). A skill gets stronger with the character's stats even if never ranked. Choosing to rank it adds an effect: a stronger slow, a bleed at rank 2.
 - **The weapon is the job; switch in the village, starting that job at 0** (pc-9). Take a different weapon at the smithy to change job (so you can bring a companion who fills your old role). Later weapon types can be powerful new jobs. This replaces the draft of a job at level 5.
@@ -233,8 +234,7 @@ The chain, filled in: **a 30 to 45 minute trip; random road encounters give trip
 - **Which buildings, which settlers, which steps.** Brandon's examples: the inn kitchen (a chef, recipes) and the smithy (the blacksmith, the forge, a sharpening stone, then weapon upgrades). Which settler unlocks the pack upgrade is open. Settlers and their buildings are Brandon's to name; the build uses placeholders.
 - **The blessing and setback pools** need real content once the system is in.
 
-### Build order (card `design-omr-build`)
-*Proposal:* after the player-choice build.
+### Build order (card `design-omr-build`, approved 2026-10-29: all six, after the player-choice build, with the defaults above; handed to the systems developer)
 1. **Bookmark save.** Save and quit anywhere outside a fight; a fight quit midway restarts from its first turn on load. Small, and it protects every test after it.
 2. **Restore loop.** Material items (food ingredients, potion materials, metal, wood, rare finds) in the pack; village buildings with restore ladders in data (exact items, finished on the next return home, opened by their settler); each building shows its next step's needs; a global list with tracked goals; tracked needs in the frame on trips.
 3. **The first two ladders.** The smithy (forge, sharpening stone, then weapon upgrades +1 to +3, which finishes Player choice's "smithy weapon upgrades") and the inn kitchen (recipes). The pack upgrade goes on a ladder once Brandon names its settler.
