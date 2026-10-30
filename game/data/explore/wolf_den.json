@@ -80,6 +80,7 @@
    "event": "spot_beasts",
    "sight": 4,
    "loot": "food:+6",
+   "goals": "hold:4",
    "units": [
     {
      "id": "wolf",

@@ -354,10 +354,11 @@ P.things.append({"id": "ledge_chest", "kind": "chest", "event": "ledge_chest", "
 P.things.append({"id": "rope_down", "kind": "climb", "event": "rope_down", "cell": list(down), "to": "snow_pass", "at": list(rope_land)})
 P.prop("prop_crate", *[c for c in inner if c != chest][-1], tall=0.6, sight=0.5)
 
-# The bandits: on the high shelf, in front of the choke to the summit flight.
-P.groups.append({"id": "pass_bandits", "event": "spot_people", "sight": 5, "loot": "food:+4;gold:+8",
+# The bandits: on the high shelf, in front of the choke to the summit flight. The archer holds the foot
+# of the summit stair and leads: drop him and the rest flee ([USER] 2026-10-29, card design-fight-goals-pick).
+P.groups.append({"id": "pass_bandits", "event": "spot_people", "sight": 5, "loot": "food:+4;gold:+8", "goals": "leader",
                  "units": [{"id": "bandit", "cell": list(at(1, edge(3, 1) + 4))},
-                           {"id": "bandit_archer", "cell": list(at(-3, edge(3, -3) + 2))}]})
+                           {"id": "bandit_archer", "cell": list(at(-3, edge(3, -3) + 2)), "leader": True}]})
 
 # The secret: a dead-end nook at the high shelf's far right, behind a boulder and pines.
 nook = at(9, 24)
@@ -449,8 +450,9 @@ W.put(4, 10, "d", 1)
 W.put(4, 11, "d", 1)
 W.things.append({"id": "den_out", "kind": "enter", "event": "", "cell": [4, 11], "to": "snow_pass", "at": list(DEN_FRONT)})
 # Two packs, not one: the pair by the bones and a lone wolf at the far end, more than 3 cells apart so
-# they fight separately (a party of two loses most three-wolf fights).
-W.groups.append({"id": "den_wolves", "event": "spot_beasts", "sight": 4, "loot": "food:+6",
+# they fight separately (a party of two loses most three-wolf fights). The pair is a hold-out: last 4
+# rounds and they give up ([USER] 2026-10-29, card design-fight-goals-pick).
+W.groups.append({"id": "den_wolves", "event": "spot_beasts", "sight": 4, "loot": "food:+6", "goals": "hold:4",
                  "units": [{"id": "wolf", "cell": [5, 2]}, {"id": "wolf", "cell": [3, 2]}]})
 W.groups.append({"id": "den_lone", "event": "spot_beasts", "sight": 4, "loot": "food:+3",
                  "units": [{"id": "wolf", "cell": [10, 3]}]})

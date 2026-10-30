@@ -142,6 +142,8 @@ data = {
     "art_set": "ruins",
     "strangeness": 0.0,
     "view": 0,
+    "walls": True,  # plain gray walls (ExploreMap.walls)
+    "outdoors": ["forest"],
     "grid": {
         "w": W,
         "h": H,
@@ -160,8 +162,11 @@ data = {
          "units": [{"id": "bandit_archer", "cell": [30, 3]}, {"id": "bandit", "cell": [30, 8]}]},
         # The E2E loop's boss ([USER] 2026-10-28): the Lich King on his throne, a placeholder piece.
         # Beating him ends the test ("end"); "boss" pays boss XP.
+        # Kill him or escape ([USER] 2026-10-29, card design-fight-goals-pick): every standing piece on the
+        # green cells round the way out, at the terrace's far west end, past him and behind the pillars.
         {"id": "throne", "event": "spot_boss", "sight": 4, "loot": "medicine:+3;gold:+20;unlock:beat_lich",
-         "boss": True, "end": True,
+         "boss": True, "end": True, "goals": "defeat|exit",
+         "exit": [[12, 1], [13, 1], [12, 2], [13, 2], [12, 3], [13, 3]],
          "units": [{"id": "lich", "cell": [18, 2]}]},
     ],
     "things": [

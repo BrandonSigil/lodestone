@@ -1631,6 +1631,16 @@
    "once": "met_dog"
   },
   {
+   "id": "dog_home",
+   "kind": "companion",
+   "event": "companion_dog",
+   "cell": [
+    3,
+    23
+   ],
+   "when": "met_dog"
+  },
+  {
    "id": "se_door",
    "kind": "enter",
    "event": "door_stuck",

@@ -593,6 +593,9 @@ V.thing(id="smithy_door", kind="enter", event="door_stuck", cell=smithy_door)
 V.thing(id="west_door", kind="enter", event="door_dog", cell=west_door, to="house_dog", at=[3, 5], once="met_dog")
 V.thing(id="west_door_open", kind="enter", event="", cell=west_door, to="house_dog", at=[3, 5], when="met_dog")
 V.thing(id="dog_window", kind="window", event="dog_window", cell=[5, 19], to="house_dog", at=[5, 3], once="met_dog")
+# Once he's out, the dog lives here: walk up to invite him or send him home ([USER] pc-10). No figure of
+# its own (the "!" only), since he may be in the party and following the lead.
+V.thing(id="dog_home", kind="companion", event="companion_dog", cell=[3, 23], when="met_dog")
 V.thing(id="se_door", kind="enter", event="door_stuck", cell=south_east_door)
 V.thing(id="far_door", kind="enter", event="door_stuck", cell=far_door)
 V.thing(id="bluff_door", kind="enter", event="door_stuck", cell=bluff_door)

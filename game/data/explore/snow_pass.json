@@ -228,6 +228,7 @@
   },
   {
    "event": "spot_people",
+   "goals": "leader",
    "id": "pass_bandits",
    "loot": "food:+4;gold:+8",
    "sight": 5.0,
@@ -244,7 +245,8 @@
       10.0,
       13.0
      ],
-     "id": "bandit_archer"
+     "id": "bandit_archer",
+     "leader": true
     }
    ]
   }

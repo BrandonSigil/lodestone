@@ -4,7 +4,9 @@
  "strangeness": 0.0,
  "view": 0,
  "walls": true,
- "outdoors": ["forest"],
+ "outdoors": [
+  "forest"
+ ],
  "grid": {
   "w": 34,
   "h": 30,
@@ -204,6 +206,33 @@
    "loot": "medicine:+3;gold:+20;unlock:beat_lich",
    "boss": true,
    "end": true,
+   "goals": "defeat|exit",
+   "exit": [
+    [
+     12,
+     1
+    ],
+    [
+     13,
+     1
+    ],
+    [
+     12,
+     2
+    ],
+    [
+     13,
+     2
+    ],
+    [
+     12,
+     3
+    ],
+    [
+     13,
+     3
+    ]
+   ],
    "units": [
     {
      "id": "lich",

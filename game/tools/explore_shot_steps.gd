@@ -38,11 +38,36 @@ func run(s: Node, f: int, step: String) -> bool:
 	if step.begins_with("near:") or step.begins_with("use:"):
 		if f == 5:
 			if step.begins_with("near:"):
-				var xy := step.substr(5).split(",")
+				# near:<x>,<y>[:<flag>,...] - flags set first, so things behind a "when" show.
+				var parts := step.substr(5).split(":")
+				if parts.size() > 1:
+					var game: Node = s.get_node("/root/Game")
+					game.save_enabled = false  # a shot never writes the real save
+					game.meta.flags.append_array(parts[1].split(","))
+				var xy := parts[0].split(",")
 				_put(s, Vector2i(int(xy[0]), int(xy[1])))
 			else:
 				s._go_use(_thing(s, step.substr(4)))
 		return f == 90
+	if step.begins_with("goal:"):
+		# goal:<group id>:<x>,<y> - the lead at x,y fights that group: the goal line, a BOSS tag, green exit cells.
+		var parts := step.split(":")
+		if f == 5:
+			var xy := parts[2].split(",")
+			_put(s, Vector2i(int(xy[0]), int(xy[1])))
+			for y in s.grid.h:
+				for x in s.grid.w:
+					s.seen[Vector2i(x, y)] = true
+			for g: Dictionary in s.groups:
+				if String(g.def.id) == parts[1]:
+					s.start_fight(g, "party")
+		if f == 15:
+			s._begin_battle()
+		if f == 20:
+			for y in s.grid.h:
+				for x in s.grid.w:
+					s.board.fog[Vector2i(x, y)] = 2
+		return f == 40
 	match step:
 		"start":
 			return f == 20
