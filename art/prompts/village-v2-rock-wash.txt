@@ -1,0 +1,18 @@
+LODESTONE VILLAGE V2 ROCK WASH (the hybrid Brandon asked for on 2026-10-30: a soft painted base that repeats with no seam and no pattern; the game draws the cliff's cracks, ledges and slab edges over it in light ink lines)
+
+Image 1 = Brandon's cliff picture (docs/art/references/village-v2-cliff-hybrid.png): broad flat painted rock planes, soft and quiet, almost no detail. Copy only its rock paint: the soft even colour, the faint mottle, the calm. Do NOT copy its snow, its shapes, its cracks or its edges.
+Image 2 = his approved blue-grey rock (docs/art/references/village-v2-rock-4.png) and image 3 = his approved warm grey rock (docs/art/references/village-v2-rock-5.png): copy their colours and their soft painted fill only, NOT their slabs, cracks or lines.
+Image 4 = docs/art/references/style-flat-forest.png, the house finish.
+
+WHAT THIS IS: a plain painted texture, a watercolour wash of rock colour, that the game repeats many times across and down tall cliff faces. It must have NOTHING that can be seen to repeat: no lines, no cracks, no slabs, no edges, no shapes, no spots, no marks, no dark or light patch bigger than the others. Only a soft, even, gentle watercolour mottle: the same two or three close tones of one rock colour, blended in soft blotches of many sizes, evenly spread over the whole square, like wet paint on paper, with the faintest paper grain. Calm and low contrast; most of the square is the middle tone. Light even everywhere (the game shades the faces and draws the cracks).
+SEAMLESS: the left edge flows into the right edge and the top edge into the bottom edge with no visible join; no darker or lighter rim, no vignette, no border.
+
+LAYOUT: aspect 3:2, plain flat cream paper (#eae8d6), no title, no labels, no text. THREE equal SQUARE swatches in one row, side by side, with a clear cream gap between them and cream above and below; each swatch filled edge to edge with the wash; nothing crosses a swatch edge.
+   left: the warm grey of image 3 (about #9f8874 middle, #8d7867 and #ab9584 for the mottle);
+   middle: the blue-grey of image 2 (about #8c8f94 middle, #7e8189 and #989ba0);
+   right: the cool grey of image 1 (about #868188 middle, #7a7684 and #918d95).
+
+Avoid: lines, outlines, cracks, slabs, ridges, rocks, stones, pebbles, bricks, blocks, strata, bands, ledges, moss, grass, snow, shapes of any kind, high contrast, dark spots, speckle, noise, a vignette, a frame, darker edges, a lighter centre, a gradient across the square, pixel art, 3d render, photo, text.
+
+CELL TO GAME FILE: cut the three swatches (cells from the cream gaps, trim the rim, 512 square), seam_wrap.py --axis xy if tile_seam_check.py asks for it, then mock with the in-engine ink lines at 6, 12 and 24 levels for the review card. Brandon's pick goes to game/art/source/battle/village/side_rock.png; the map builder or systems developer draws the cracks and ledges over it in code.
+Run: cd tools/art && ~/.lodestone/venv/bin/python picsart_sheet.py --name village_v2_rock_wash --prompt-file ../../art/prompts/village-v2-rock-wash.txt --ref ../../docs/art/references/village-v2-cliff-hybrid.png --ref ../../docs/art/references/village-v2-rock-4.png --ref ../../docs/art/references/village-v2-rock-5.png --ref ../../docs/art/references/style-flat-forest.png --aspect 3:2 --resolution 2K --count 2 --out-dir ../../art/picsart/out/village-v2
