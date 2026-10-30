@@ -2,7 +2,7 @@ id,name_key,kind,target,range_min,range_max,radius,power,crit,cost,push,status,s
 strike,SKILL_STRIKE,attack,enemy,0,0,0,0,0,0,0,,0,0,
 shove,SKILL_SHOVE,attack,enemy,1,1,0,-2,10,2,1,,0,0,
 aimed_shot,SKILL_AIMED,attack,enemy,0,0,0,1,15,1,0,,0,0,
-snare,SKILL_SNARE,attack,enemy,2,3,0,-2,5,1,0,rooted,1,0,
+snare,SKILL_SNARE,attack,enemy,2,4,0,-2,5,1,0,rooted,1,0,
 moonbeam,SKILL_MOONBEAM,attack,cell,2,3,1,-1,0,4,0,,0,1,moon
 moon_veil,SKILL_VEIL,buff,ally,0,3,0,0,0,4,0,veil,1,1,moon
 fireball,SKILL_FIREBALL,attack,cell,2,4,1,0,0,4,0,,0,1,fire

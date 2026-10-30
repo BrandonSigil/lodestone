@@ -89,8 +89,8 @@ func test_melee_reaches_over_a_stair() -> void:
 func test_bow_range_grows_with_height() -> void:
 	var g := CombatGrid.flat(8, 3)
 	var a := _unit("hunter", 0, Vector2i(0, 1), g)
-	var b := _unit("bandit", 1, Vector2i(5, 1), g)
-	ok(not CombatRules.can_attack(g, a, b, a.cell), "5 tiles is out of range on flat ground")
+	var b := _unit("bandit", 1, Vector2i(6, 1), g)
+	ok(not CombatRules.can_attack(g, a, b, a.cell), "6 tiles is out of range on flat ground (a bow reaches 5)")
 	g.set_height(Vector2i(0, 1), 1)
 	ok(CombatRules.can_attack(g, a, b, a.cell), "+1 range from 1 level up")
 
@@ -461,10 +461,10 @@ func test_cliff_edge_hides_target() -> void:
 func test_high_range_capped() -> void:
 	var g := CombatGrid.flat(12, 1)
 	g.set_height(Vector2i(0, 0), 8)
-	var h := _unit("hunter", 0, Vector2i(0, 0), g)  # range 4
-	var b := _unit("bandit", 1, Vector2i(7, 0), g)
-	ok(CombatRules.can_attack(g, h, b, h.cell), "4 + 3")
-	b.place(Vector2i(8, 0), 0)
+	var h := _unit("hunter", 0, Vector2i(0, 0), g)  # range 5 ([USER] 2026-10-30: bows one ring further)
+	var b := _unit("bandit", 1, Vector2i(8, 0), g)
+	ok(CombatRules.can_attack(g, h, b, h.cell), "5 + 3")
+	b.place(Vector2i(9, 0), 0)
 	ok(not CombatRules.can_attack(g, h, b, h.cell), "8 levels only buy +3")
 
 
@@ -781,3 +781,17 @@ func test_hovering_an_action_shows_its_reach() -> void:
 	b.preview_reach(null)
 	eq(b.board.reach, {}, "WAIT or GUARD: nothing")
 	b.free()
+
+
+## [USER] 2026-10-30: rangers and archers reach one ring further: the hero's bow 2 to 4, the bow foes 2 to 5,
+## the hunter's SNARE 2 to 4.
+func test_bows_reach_one_ring_further() -> void:
+	var g := CombatGrid.flat(9, 1)
+	var hero := CombatUnit.from_member({"def": Db.character(&"lead"), "hp": 20})
+	hero.apply_class(load("res://data/classes/job_archer.tres"), Game.weapon_mods("lead", "bow"))
+	eq(CombatRules.ability_range(hero, hero.abilities[0]), Vector2i(2, 4), "the hero's bow")
+	for id in ["archer", "bandit_archer", "hunter"]:
+		var u := _unit(id, 1, Vector2i(0, 0), g)
+		eq(CombatRules.ability_range(u, u.abilities[0]), Vector2i(2, 5), id)
+	eq(CombatRules.ability_range(_unit("hunter", 0, Vector2i(0, 0), g), Db.ability("snare")), Vector2i(2, 4), "SNARE")
+
