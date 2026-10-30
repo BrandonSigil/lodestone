@@ -134,6 +134,13 @@ func press_key(i: int) -> bool:
 	return true
 
 
+## The dock's rect on screen (scaled), or an empty rect when none is up.
+func dock_rect() -> Rect2:
+	if _dock == null or not visible:
+		return Rect2()
+	return Rect2(_dock.global_position, _dock.size * _dock.scale)
+
+
 func hovering() -> bool:
 	return _slots.any(func(s: ActionSlot) -> bool: return is_instance_valid(s) and (s.is_hovered() or s.has_focus()))
 

@@ -77,6 +77,7 @@ var summon_avoid := {}  ## cells its called pieces never take (the fight's way o
 var minions: Array = []  ## the pieces it called, standing or not
 var summoner: CombatUnit = null  ## who called this piece
 var hiding := false  ## an ambusher not seen yet (a map group's "hidden"): not drawn, not in the danger zone, until spotted or it strikes
+var scaled := false  ## ScaleTest.standard has run on this piece
 var hp_phase := 0  ## the boss's health phase (ClassDef.hp_phases): 0 until its HP first falls under the first line
 var phase_abilities: Array[Ability] = []  ## what the current health phase added, to swap out at the next one
 var uses := {}  ## ability id -> times used this fight (the clutch tools' counts for the balance probes)
@@ -179,6 +180,7 @@ static func from_def(d: CharacterDef, mods: Dictionary = {}, spell_ids: Variant 
 		u.skills[k] = d.skill(k)
 	for k in d.off_skills:
 		u.skills[k] = d.skill(k)
+	ScaleTest.standard(u)
 	return u
 
 
@@ -219,6 +221,7 @@ static func enemy(c: ClassDef, mods: Dictionary = {}) -> CombatUnit:
 	u.shown_hp = u.hp
 	u.tint = Color(0.72, 0.36, 0.33)
 	u.skills = c.skills.duplicate()
+	ScaleTest.standard(u)
 	return u
 
 

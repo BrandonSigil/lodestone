@@ -38,3 +38,4 @@ threat_ai,1,1: the AI weighs a kill by what the target threatens (a pillar by it
 foe_ward_armor,2,a foe warded by a warder has this much more armor until the warder's side next moves (game designer foe-roles-build)
 charge_bonus,2,a charging piece's hit does this much more
 charge_min,3,tiles it must have run in a straight line this phase to charge
+scale_standard,0,1: scale C's move and reach (data/scale_standard.csv) for every piece; flip once the fight areas are resized ([USER] design-scale)

@@ -1,0 +1,64 @@
+kind,id,move,range_min,range_max,note
+class,ambusher,8,1,1,"move 5, reach 1-1"
+class,archer,5,2,8,"move 4, reach 2-5"
+class,bandit,5,1,1,"move 4, reach 1-1"
+class,bandit_archer,5,2,8,"move 4, reach 2-5"
+class,bush,3,1,1,"move 2, reach 1-1"
+class,dog,8,1,1,"move 5, reach 1-1"
+class,duo,5,1,1,"move 4, reach 1-1"
+class,foe_bull,8,1,1,"move 5, reach 1-1"
+class,foe_hexer,4,1,1,"move 3, reach 1-1"
+class,foe_mender,4,1,1,"move 3, reach 1-1"
+class,foe_rusher,8,1,1,"move 5, reach 1-1"
+class,foe_warder,4,1,1,"move 3, reach 1-1"
+class,hunter,8,2,8,"move 5, reach 2-5"
+class,job_archer,5,1,1,"move 4, reach 1-1"
+class,job_chanter,5,1,1,"move 4, reach 1-1"
+class,job_ember,4,2,4,"move 3, reach 2-3"
+class,job_knight,5,1,1,"move 4, reach 1-1"
+class,job_mage,5,1,1,"move 4, reach 1-1"
+class,job_mender,4,1,3,"move 3, reach 1-2"
+class,job_moon,4,2,4,"move 3, reach 2-3"
+class,job_reaver,5,1,1,"move 4, reach 1-1"
+class,job_rogue,5,1,1,"move 4, reach 1-1"
+class,job_tinker,5,2,4,"move 4, reach 2-3"
+class,job_tracker,5,1,1,"move 4, reach 1-1"
+class,knight,5,1,1,"move 4, reach 1-1"
+class,lich,4,1,3,"move 3, reach 1-2"
+class,lich_minion,4,1,1,"move 3, reach 1-1"
+class,mage,5,2,4,"move 4, reach 2-3"
+class,nobody,5,1,1,"move 4, reach 1-1"
+class,strange_thing,4,1,3,"move 3, reach 1-2"
+class,wizard,4,2,4,"move 3, reach 2-3"
+class,wolf,9,1,1,"move 6, reach 1-1"
+ability,snare,,2,6,reach 2-4
+ability,moonbeam,,2,4,reach 2-3
+ability,moon_veil,,0,4,reach 0-3
+ability,fireball,,2,6,reach 2-4
+ability,mend,,0,3,reach 0-2
+ability,moon_sleep,,2,4,reach 2-3
+ability,moon_tide,,1,4,reach 1-3
+ability,star_guide,,0,4,reach 0-3
+ability,firebolt,,2,6,reach 2-4
+ability,frost_bind,,2,4,reach 2-3
+ability,lich_doom,,1,6,reach 1-4
+ability,ward,,0,4,reach 0-3
+ability,leap,,0,4,reach 0-3
+ability,volley,,2,6,reach 2-4
+ability,trap,,1,4,reach 1-3
+ability,lure,,2,6,reach 2-4
+ability,call_companion,,0,6,reach 0-4
+ability,ignite,,2,6,reach 2-4
+ability,flash,,0,4,reach 0-3
+ability,far_aid,,1,4,reach 1-3
+ability,renew,,0,3,reach 0-2
+ability,rally,,0,4,reach 0-3
+ability,dissonance,,2,4,reach 2-3
+ability,bomb,,2,4,reach 2-3
+ability,caltrops,,1,4,reach 1-3
+ability,smoke_bomb,,2,4,reach 2-3
+ability,foe_mend,,1,3,reach 1-2
+ability,foe_spook,,1,4,reach 1-3
+ability,foe_slow,,1,4,reach 1-3
+ability,foe_ward,,0,4,reach 0-3
+ability,throw_dagger,,2,4,reach 2-3

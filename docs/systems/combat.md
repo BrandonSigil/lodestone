@@ -181,3 +181,8 @@ The ten archetypes of `docs/design/archetypes.md` are data, not yet in play: `da
 - Encounters for trying them: `casters`, `warded`, `chargers`, `charge_mix` in `encounters.csv`. `tools/foe_roles.gd -- 120` measures them (road fights, the hero and dog or four pieces, level 1).
 
 Kit changes of 2026-10-30 (card design-kits-fourth, `data/kits.csv`): reaver's fourth slot is the passive `bloodied` (not built), shade is throw_dagger (`abilities.csv`, built), poison_blades, shadow_swap and the passive `quick_hands` (not built; backstab and kick are out of its kit, the rows stay in `abilities.csv`), moon is moonbeam (the 2x2 heal-or-burn is not built; the shipped one is a plus-shape hit), moon_sleep (the 1 to 3 roll is not built; waking on damage is), star_guide, moon_veil. The assassin and hexer notes in `evolved.csv` carry their upgrades. `evolved.csv` notes are now properly quoted (the earlier commas cut some of them short).
+
+## The combat log (2026-10-30)
+`CombatLog` (bottom right of every fight screen, in `Battle`'s UI layer) shows every event in plain words, newest at the bottom, wheel-scrollable, narrowed to stay clear of the action dock (`ActionHud.dock_rect`): the round, who walks how far, each hit with its damage and CRIT, heals, statuses, pushes, counters, watch shots, downs, aid, knock-outs, boss moves, phases, goals, win and lose. It listens to `Battle.log_line`, so a line emitted there shows in the host's own log as well.
+
+Scale C as the standard: `data/scale_standard.csv` and the `scale_standard` switch in `combat.csv` (0 for now); see `docs/design/scale-study.md`.

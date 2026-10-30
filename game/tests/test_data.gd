@@ -197,3 +197,30 @@ func test_scale_c_set() -> void:
 	var setup := SandboxSetup.load_file("res://data/maps/arena_c.json")
 	ok(setup != null and setup.enemies.size() >= 4, "the arena has its foes")
 	g.w = g.w
+
+
+## Scale C as the standard, ready to switch (combat.csv `scale_standard`): off, nothing changes; on, pieces get the
+## table's move and reach once, gear keeps its addition, and the shipped ability rows stay as they are.
+func test_scale_standard_switch() -> void:
+	if Db.explore_events.is_empty():
+		Db.reload()
+	var rows := ScaleTest.standard_rows()
+	for key: String in rows:
+		var kind := key.split(":")[0]
+		var id := key.split(":")[1]
+		if kind == "class":
+			ok(ResourceLoader.exists("res://data/classes/%s.tres" % id), "class %s" % id)
+		else:
+			ok(Db.abilities.has(id), "ability %s" % id)
+	var off := CombatUnit.enemy(load("res://data/classes/wolf.tres"))
+	eq(off.move, 6, "off: the wolf walks 6")
+	Db.combat["scale_standard"] = 1.0
+	var on := CombatUnit.enemy(load("res://data/classes/wolf.tres"), {"move": 1})
+	var archer := CombatUnit.enemy(load("res://data/classes/bandit_archer.tres"))
+	var mage := CombatUnit.from_def(Db.character(&"wizard"))
+	Db.combat["scale_standard"] = 0.0
+	eq(on.move, 10, "on: 9 for the wolf, and its gear's +1 kept")
+	eq(archer.range_max, 8, "on: the archer reaches 8")
+	var ball: Ability = mage.abilities.filter(func(a: Ability) -> bool: return a.id == "fireball")[0]
+	eq(ball.range_max, 6, "on: the mage's fireball reaches 6")
+	eq(Db.ability("fireball").range_max, 4, "the shipped row is untouched")

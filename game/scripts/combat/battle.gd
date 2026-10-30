@@ -47,6 +47,7 @@ var used := {}  ## piece -> ability ids it has used this fight: an unknown boss'
 var deeds := {}  ## bond pair key -> {"help_up", "teamup"}: what party pieces did for each other this fight (BondRules)
 
 var _ui: CanvasLayer
+var _log_view: CombatLog  ## the readable log, bottom right ([USER] 2026-10-30 design-scale)
 var _menu: PanelContainer
 var _menu_box: VBoxContainer
 var _forecast: PanelContainer
@@ -130,6 +131,9 @@ func _build_ui() -> void:
 	_cancel.visible = false
 	_cancel.pressed.connect(_back)
 	_ui.add_child(_cancel)
+	_log_view = CombatLog.new()
+	_ui.add_child(_log_view)
+	log_line.connect(_log_view.add)
 	_auto = Button.new()
 	_auto.text = Txt.t("UI_AUTO_FIGHT")
 	_auto.toggle_mode = true
@@ -166,6 +170,7 @@ func layout(r: Rect2) -> void:
 	_cancel.position = r.position + Vector2(r.size.x * 0.5 - CANCEL_SIZE.x * 0.5, r.size.y - 44)
 	_auto.position = Vector2(r.end.x - AUTO_SIZE.x - 8, r.position.y + 8)
 	_layout_btn.position = _auto.position + Vector2(0, AUTO_SIZE.y + 4)
+	_log_view.place(r, _hud.dock_rect() if _hud != null else Rect2())
 	if not _fit_board:
 		return
 	var bs := board.board_size()
@@ -208,6 +213,7 @@ func _start_player_phase() -> void:
 	round_no += 1
 	_show_phase_events(CombatRules.begin_phase(units, 0))
 	_banner.text = Txt.f("UI_ROUND", round_no) + "  " + Txt.t("UI_PLAYER_PHASE")
+	log_line.emit(Txt.f("LOG_ROUND", round_no))
 	for u: CombatUnit in units:
 		if u.team == 0 and u.alive():
 			var r := CombatRules.skittish_check(rng, u, units)
@@ -237,6 +243,7 @@ func end_player_phase() -> void:
 func _enemy_phase() -> void:
 	state = S.BUSY
 	_banner.text = Txt.t("UI_ENEMY_PHASE")
+	log_line.emit(Txt.t("LOG_FOES_MOVE"))
 	board.danger = {}
 	phase_changed.emit(1)
 	_show_phase_events(CombatRules.begin_phase(units, 1))
@@ -303,6 +310,7 @@ func _ai_turn(u: CombatUnit) -> void:
 	if not await _leave_guards(u, plan.move):
 		return
 	if plan.move != u.cell:
+		log_line.emit(Txt.f("LOG_MOVE", [Txt.t(u.name_key), maxi(1, plan.path.size() - 1)]))
 		await board.animate_move(u, plan.path)
 		u.place(plan.move, grid.height_at(plan.move))
 		await _spot(u)
@@ -514,7 +522,7 @@ func _play(ev: Dictionary) -> void:
 				board.float_text(t.cell, "-%d!" % ev.amount, Color(1, 0.55, 0.3), 26)
 			else:
 				board.float_text(t.cell, "-%d" % ev.amount, Color(1, 0.85, 0.5))
-			log_line.emit("  %s > %s  -%d%s" % [Txt.t(src.name_key), Txt.t(t.name_key), ev.amount, ("  " + Txt.t("UI_CRIT")) if ev.crit else ""])
+			log_line.emit(Txt.f("LOG_HIT_CRIT" if ev.crit else "LOG_HIT", [Txt.t(src.name_key), Txt.t(t.name_key), ev.amount]))
 			t.shown_hp = maxi(0, t.shown_hp - int(ev.amount))
 			if t.shown_hp <= 0:
 				log_line.emit(Txt.f("LOG_DOWN", Txt.t(t.name_key)))
@@ -524,14 +532,17 @@ func _play(ev: Dictionary) -> void:
 						board.float_text(m.cell, Txt.t("UI_CRUMBLE"), Color(0.9, 0.6, 1.0))
 		"heal":
 			t.shown_hp = mini(t.max_hp, t.shown_hp + int(ev.amount))
+			log_line.emit(Txt.f("LOG_HP_BACK", [Txt.t(t.name_key), ev.amount]))
 			board.float_text(t.cell, "+%d" % ev.amount, Color(0.5, 1.0, 0.6))
 			await get_tree().create_timer(0.25).timeout
 		"status":
 			if ev.get("struck", false):
 				await board.animate_attack(ev.src, t, true)
+			log_line.emit(Txt.f("LOG_STATUS", [Txt.t(t.name_key), Txt.t("TAG_" + String(ev.status).to_upper())]))
 			board.float_text(t.cell, Txt.t("TAG_" + String(ev.status).to_upper()), Color(0.75, 0.85, 1.0))
 			await get_tree().create_timer(0.2).timeout
 		"push":
+			log_line.emit(Txt.f("LOG_PUSH", Txt.t(t.name_key)))
 			await board.animate_push(t, ev.path)
 		"bump", "fall":
 			t.shown_hp = maxi(0, t.shown_hp - int(ev.amount))
@@ -559,6 +570,7 @@ func _play(ev: Dictionary) -> void:
 			log_line.emit(Txt.f("LOG_FREE_HIT", [Txt.t(ev.src.name_key), Txt.t(t.name_key)]))
 			await get_tree().create_timer(0.2).timeout
 		"counter":
+			log_line.emit(Txt.f("LOG_COUNTER", Txt.t(ev.src.name_key)))
 			board.float_text(ev.src.cell, Txt.t("UI_COUNTER"), Color(1, 1, 1))
 			await get_tree().create_timer(0.2).timeout
 		"carry":
@@ -571,6 +583,7 @@ func _play(ev: Dictionary) -> void:
 			board.float_text(t.cell, Txt.t("SKILL_SHADOW_SWAP"), Color(0.7, 0.6, 1.0))
 			await get_tree().create_timer(0.25).timeout
 		"overwatch":
+			log_line.emit(Txt.f("LOG_OVERWATCH", Txt.t(ev.src.name_key)))
 			board.float_text(ev.src.cell, Txt.t("SKILL_OVERWATCH"), Color(1.0, 0.9, 0.5))
 			await get_tree().create_timer(0.2).timeout
 		"command":
@@ -621,6 +634,7 @@ func _finish(won: bool) -> void:
 	board.marks = {}
 	board.combat_stance = false
 	_banner.text = Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT")
+	log_line.emit(Txt.t("LOG_FIGHT_WON") if won else Txt.t("LOG_FIGHT_LOST"))
 	changed.emit()
 	finished.emit(won)
 
@@ -1133,6 +1147,7 @@ func _move_selected(c: Vector2i) -> void:
 		if not _check_end():
 			_finish_unit()
 		return
+	log_line.emit(Txt.f("LOG_MOVE", [Txt.t(u.name_key), maxi(1, path.size() - 1)]))
 	await board.animate_move(u, path)
 	u.place(c, grid.height_at(c))
 	u.moved = true
