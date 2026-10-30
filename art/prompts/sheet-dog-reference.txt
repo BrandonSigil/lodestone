@@ -1,0 +1,19 @@
+LODESTONE DOG REFERENCE SHEET (the companion dog's own key art, the way 00-reference-sheet.png is the hero's; later animation sheets copy it)
+
+Image 1 = Brandon's corgi (docs/art/references/dog-corgi.png). Draw THIS dog and nobody else: the same corgi, orange-tan and cream coat, big upright ears, short legs, fluffy rump, simple dark oval eye, little pink tongue, the same rolled pack and saddlebag on his back, the same small cloak with a round clasp at his chest. Same chibi proportions, same flat colours, same simple shading, same paint-marker line art. Do not add detail.
+THE ONE CHANGE (Brandon): his cloak is a different colour from the hero's green, so the two don't look alike: a soft, faded brick red cloak with a small brass clasp. Everything else as image 1.
+Image 2 = the hero's reference sheet (docs/art/characters/00-reference-sheet.png). Copy only its LAYOUT idea (big views of the character in a row, small action poses below) and its finish. Do NOT draw the hero, do not copy its labels, colour swatches or props.
+
+LAYOUT: aspect 3:2, plain flat cream paper (#eae8d6). Every figure the same dog at the same size within its row, standing alone with clear empty cream round it. No floor tiles, no grid diamonds, no ground lines, no grass marks, no cast shadows.
+   Top row, five views of him standing, seen from the high game camera of image 1 (2:1 dimetric, looking down about 30 degrees, no perspective), left to right:
+      SE three-quarter front, facing the LOWER RIGHT (the face, chest and right side);
+      S facing straight down the screen toward the viewer;
+      E a true side profile facing the RIGHT edge;
+      NE three-quarter back, facing the UPPER RIGHT (back of the head, the pack, no face);
+      N seen from straight behind, facing up the screen (the pack and his rump, no face).
+   Bottom row, five small action poses, all facing SE: idle sitting with his tongue out; trotting mid-step; a lunging bite, mouth open; barking, head up, with two or three small blue marks above him like image 1's; hurt, flattened ears, sitting down dazed.
+
+LINE ART (essential, the house style): a soft, imperfect paint-marker outline round the whole dog and his big parts (ears, head, legs, cloak, pack), dark warm charcoal (#373335, not pure black), slightly wobbly and uneven in weight like a felt marker drawn by hand. Not a thin, even vector hairline.
+
+Rules: no text, no labels, no letters, no numbers, no colour swatches, no props lying about, no people, no other animals. Only the bark marks are an effect.
+Avoid: a green cloak, the hero, realistic dog, fur strands, texture, big white eyes, perspective, low angle, different camera angles between views, 3d render, photo, glossy, thin even hairline outlines, pure black outlines, text, labels.
