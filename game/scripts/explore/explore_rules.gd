@@ -157,8 +157,9 @@ const WALL_HALF := 1  ## a wall between two floors stands this high
 ## `outdoors` ([USER] 2026-10-29): zones that are outside, not interior. Their rock between two floors stays
 ## natural rock; their edge rock is void, so the forest skirt's tree line frames the area, except a back edge
 ## facing a pocket the world's edge doesn't reach (the space between buildings), which is a tall wall.
+## `tall`: how many levels a back wall stands over its floor (a map's wall_tall; interiors stand them higher).
 ## Returns {"walls": rock cells drawn as walls, "rims": front-edge floor cells}.
-static func shape_walls(grid: CombatGrid, front: Array, outdoors := []) -> Dictionary:
+static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := WALL_TALL) -> Dictionary:
 	var f0: Vector2i = front[0]
 	var f1: Vector2i = front[1]
 	var back: Array[Vector2i] = [-f0, -f1, -f0 - f1]
@@ -189,12 +190,12 @@ static func shape_walls(grid: CombatGrid, front: Array, outdoors := []) -> Dicti
 			if outside:
 				var pocket := behind < 0 and not STEPS.any(func(d: Vector2i) -> bool: return world.has(c + d))
 				if pocket:
-					heights[c] = floor_h + WALL_TALL
+					heights[c] = floor_h + tall
 				elif behind < 0 or _open_front(grid, c, f0, f1):
 					mass.append(c)
 				continue
 			if behind < 0:
-				heights[c] = floor_h + WALL_TALL
+				heights[c] = floor_h + tall
 			elif _open_front(grid, c, f0, f1):
 				rims[c] = c + back[behind]
 			else:

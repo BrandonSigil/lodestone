@@ -40,6 +40,7 @@ class Map:
         self.props, self.things, self.start = [], [], []
         self.art_set = art_set
         self.walls = False  # rock is plain gray walls (ExploreMap.walls): the interiors
+        self.wall_tall = 0  # back walls this many levels over the floor (ExploreMap.wall_tall; 0: the game's default)
 
     def fill(self, x0, y0, x1, y1, t=None, h=None):
         """Inclusive rect; None keeps what is there."""
@@ -79,7 +80,8 @@ class Map:
     def save(self, view=0, turn=False, fog=True):
         data = {
             "name": self.name, "art_set": self.art_set, "strangeness": 0.0, "view": view,
-            **({"walls": True} if self.walls else {}), "turn": turn, "fog": fog,
+            **({"walls": True} if self.walls else {}), **({"wall_tall": self.wall_tall} if self.wall_tall else {}),
+            "turn": turn, "fog": fog,
             "grid": {"w": self.w, "h": self.h,
                      "terrain": ["".join(r) for r in self.terrain],
                      "heights": ["".join(str(v) for v in r) for r in self.height],
@@ -97,15 +99,14 @@ class Map:
 
 
 def room(m, x0, y0, x1, y1, floor="s", h=1, wall=2):
-    """A walled room on [x0..x1] x [y0..y1] (walls included). Back walls (low x, low y) stand `wall`
-    levels over the floor; front walls one level, so the camera sees in."""
+    """A room on [x0..x1] x [y0..y1]: walls along its back edges only (low x, low y); the front edges are open
+    floor, so the camera sees in ([USER] 2026-10-30). On arrival shape_walls stands the back walls the map's
+    wall_tall over the floor."""
     m.fill(x0, y0, x1, y1, floor, h)
     for x in range(x0, x1 + 1):
         m.put(x, y0, "r", h + wall)
-        m.put(x, y1, "r", h + 1)
     for y in range(y0, y1 + 1):
         m.put(x0, y, "r", h + wall)
-        m.put(x1, y, "r", h + 1)
 
 
 BLOCKED = "ru."  # rock, rubble and void can't be walked (CombatGrid.STEP_COST)
@@ -624,6 +625,7 @@ V.save(fog=False)  # the whole town is in view: fog of war is for the bigger map
 def interior(name, w, h):
     m = Map(name, w, h, ".", 0, "village_in")
     m.walls = True
+    m.wall_tall = 9  # back walls three times the game's 3, so they read as real walls ([USER] 2026-10-30)
     return m
 
 

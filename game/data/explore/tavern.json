@@ -4,6 +4,7 @@
  "strangeness": 0.0,
  "view": 0,
  "walls": true,
+ "wall_tall": 9,
  "turn": false,
  "fog": true,
  "grid": {
@@ -11,29 +12,29 @@
   "h": 11,
   "terrain": [
    "rrrrrrrrrrrr",
-   "rssssssssssr",
-   "rssssssssssr",
-   "rssssssssssr",
-   "rssssssssssr",
-   "rssssssssssr",
-   "rssssssssssr",
-   "rssssssssssr",
-   "rssssssssssr",
-   "rssssssssssr",
-   "rrrsrrrrrrrr"
+   "rsssssssssss",
+   "rsssssssssss",
+   "rsssssssssss",
+   "rsssssssssss",
+   "rsssssssssss",
+   "rsssssssssss",
+   "rsssssssssss",
+   "rsssssssssss",
+   "rsssssssssss",
+   "rsssssssssss"
   ],
   "heights": [
-   "333333333332",
-   "311111111112",
-   "311111111112",
-   "311111111112",
-   "311111111112",
-   "311111111112",
-   "311111111112",
-   "311111111112",
-   "311111111112",
-   "311111111112",
-   "322122222222"
+   "333333333333",
+   "311111111111",
+   "311111111111",
+   "311111111111",
+   "311111111111",
+   "311111111111",
+   "311111111111",
+   "311111111111",
+   "311111111111",
+   "311111111111",
+   "311111111111"
   ],
   "props": [
    {
