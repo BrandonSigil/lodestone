@@ -10,13 +10,20 @@ extends Control
 const T := CombatGrid.T
 const GROUNDS := [["grass", T.GRASS], ["forest", T.FOREST], ["road", T.ROAD], ["stone", T.STONE], ["wall", T.ROCK],
 		["water", T.WATER], ["stairs", T.STAIRS], ["ruin", T.RUIN], ["empty", T.VOID]]
-const COLORS := {T.GRASS: Color("8fbf68"), T.FOREST: Color("3e7a4a"), T.WATER: Color("5a9fe0"), T.ROCK: Color("8a8a92"),
-		T.ROAD: Color("d2b68a"), T.STONE: Color("dcd2bd"), T.STAIRS: Color("f0d878"), T.RUIN: Color("b07a5a"), T.VOID: Color("232a30")}
+## The plan look (the top-down plan Brandon liked in the crypt presentations): flat colours on cream paper, one crisp
+## square a cell, the height as a gentle shade, no grid lines or numbers unless asked.
+const COLORS := {T.GRASS: Color8(150, 190, 110), T.FOREST: Color8(70, 120, 70), T.WATER: Color8(110, 160, 220), T.ROCK: Color8(150, 150, 155),
+		T.ROAD: Color8(200, 180, 140), T.STONE: Color8(215, 205, 185), T.STAIRS: Color8(235, 225, 160), T.RUIN: Color8(190, 185, 175),
+		T.VOID: Color8(245, 241, 230)}
+const PAPER := Color8(245, 241, 230)
 const MAX_H := 24
 
 var maker: Node  ## the map maker scene
 var paint_ground := true
 var paint_height := true
+var show_numbers := false
+var show_grid := false
+var show_labels := true
 var ground: int = T.GRASS
 var height := 3
 var cs := 16.0  ## screen pixels a cell
@@ -87,6 +94,16 @@ func _build_bar() -> void:
 	_height_spin.custom_minimum_size.x = 70
 	_height_spin.value_changed.connect(func(v: float) -> void: height = int(v))
 	row2.add_child(_height_spin)
+	for opt in [["numbers", "show_numbers"], ["grid", "show_grid"], ["labels", "show_labels"]]:
+		var co := CheckBox.new()
+		co.text = opt[0]
+		co.button_pressed = bool(get(opt[1]))
+		co.focus_mode = Control.FOCUS_NONE
+		var prop: String = opt[1]
+		co.toggled.connect(func(on: bool) -> void:
+			set(prop, on)
+			queue_redraw())
+		row2.add_child(co)
 	var hint := Label.new()
 	hint.text = "drag paints  ·  right click picks up  ·  0-9 sets the height  ·  [ ] brush  ·  Tab: back to the isometric view"
 	hint.add_theme_font_size_override("font_size", 11)
@@ -110,9 +127,10 @@ func set_height(h: int) -> void:
 ## Fit the whole map into this control (called when the mode opens, and on resize).
 func fit() -> void:
 	var g: CombatGrid = maker.doc.grid
-	var avail := size - Vector2(24, 24)
+	var bar_h := 96.0  # the tool bar sits over the top, so the map starts under it
+	var avail := size - Vector2(24, 24 + bar_h)
 	cs = clampf(floorf(minf(avail.x / g.w, avail.y / g.h)), 4.0, 48.0)
-	origin = (size - Vector2(g.w, g.h) * cs) * 0.5
+	origin = (Vector2((size.x - g.w * cs) * 0.5, bar_h + (size.y - bar_h - g.h * cs) * 0.5)).floor()
 	queue_redraw()
 
 
@@ -215,8 +233,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 func _zoom(at: Vector2, f: float) -> void:
 	var before := (at - origin) / cs
-	cs = clampf(cs * f, 4.0, 64.0)
-	origin = at - before * cs
+	var next := clampf(roundf(cs * f), 4.0, 64.0)
+	if next == cs:
+		next = clampf(cs + (1.0 if f > 1.0 else -1.0), 4.0, 64.0)
+	cs = next  # whole pixels a cell, so the squares stay crisp
+	origin = (at - before * cs).floor()
 	queue_redraw()
 
 
@@ -233,7 +254,7 @@ func _draw() -> void:
 	if maker == null or maker.doc == null:
 		return
 	var g: CombatGrid = maker.doc.grid
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.13, 0.15, 0.17))
+	draw_rect(Rect2(Vector2.ZERO, size), PAPER)
 	var top := 1
 	for y in g.h:
 		for x in g.w:
@@ -247,16 +268,16 @@ func _draw() -> void:
 			var t := g.terrain_at(c)
 			var col: Color = COLORS.get(t, Color.MAGENTA)
 			if t != T.VOID:
-				var shade := 0.62 + 0.5 * float(g.height_at(c)) / float(top)
+				var shade := 0.78 + 0.04 * float(g.height_at(c))
 				col = Color(minf(col.r * shade, 1.0), minf(col.g * shade, 1.0), minf(col.b * shade, 1.0))
 			draw_rect(r, col)
 			if t == T.STAIRS:
 				for i in 3:
 					var yy := r.position.y + cs * (0.25 + 0.25 * i)
 					draw_line(Vector2(r.position.x + cs * 0.15, yy), Vector2(r.end.x - cs * 0.15, yy), Color(0.3, 0.25, 0.1, 0.8), maxf(1.0, cs * 0.06))
-			if cs >= 14.0 and t != T.VOID:
+			if show_numbers and cs >= 14.0 and t != T.VOID:
 				draw_string(font, r.position + Vector2(0, cs * 0.5 + fs * 0.35), str(g.height_at(c)), HORIZONTAL_ALIGNMENT_CENTER, cs, fs, Color(0, 0, 0, 0.55))
-			if cs >= 6.0:
+			if show_grid and cs >= 6.0:
 				draw_rect(r, Color(0, 0, 0, 0.12), false, 1.0)
 	_marks(g)
 	if g.in_bounds(_hover):
@@ -280,6 +301,8 @@ func _marks(g: CombatGrid) -> void:
 		var r := Rect2(origin + (Vector2(c) + Vector2(0.2, 0.2)) * cs, Vector2(cs, cs) * 0.6)
 		draw_rect(r, Color(0.98, 0.84, 0.48))
 		draw_rect(r, Color(0, 0, 0, 0.7), false, 1.2)
+		if show_labels and cs >= 8.0:
+			draw_string(ThemeDB.fallback_font, origin + Vector2(c) * cs + Vector2(0, -2), String(t.get("id", "")).left(6), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.63, 0.08, 0.08))
 	for list in ["party", "enemies"]:
 		for e in d.get(list, []):
 			dot.call(Vector2i(int(e.x), int(e.y)), Color(0.45, 0.72, 1.0) if list == "party" else Color(1.0, 0.48, 0.42))
