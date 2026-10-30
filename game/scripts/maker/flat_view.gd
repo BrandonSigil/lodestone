@@ -35,66 +35,46 @@ var _seen_version := -1
 var _hover := Vector2i(-999, -999)
 var _ground_buttons := {}
 var _height_spin: SpinBox
-var _box: PanelContainer
+var _drawer: MakerUI.Drawer
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
-	_build_bar()
 
 
-func _build_bar() -> void:
-	_box = PanelContainer.new()
-	_box.position = Vector2(8, 8)
-	add_child(_box)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 4)
-	_box.add_child(col)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 3)
-	col.add_child(row)
+## The brush controls, as a drawer for the maker's right panel (closed by default; the handle says what the brush is).
+func build_drawer() -> MakerUI.Drawer:
+	_drawer = MakerUI.Drawer.new("flat", "Flat brush", -1, false, 14)
+	var col: VBoxContainer = _drawer.body
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 4)
+	flow.add_theme_constant_override("v_separation", 4)
+	col.add_child(flow)
 	for g in GROUNDS:
 		var b := Button.new()
 		b.text = g[0]
 		b.toggle_mode = true
 		b.focus_mode = Control.FOCUS_NONE
-		b.custom_minimum_size = Vector2(54, 26)
-		b.add_theme_font_size_override("font_size", 12)
+		b.custom_minimum_size = Vector2(66, 28)
+		b.add_theme_font_size_override("font_size", 13)
 		var sw := StyleBoxFlat.new()
 		sw.bg_color = COLORS[g[1]]
 		sw.set_corner_radius_all(3)
-		b.add_theme_stylebox_override("pressed", sw)
-		b.add_theme_stylebox_override("hover_pressed", sw)
-		b.add_theme_color_override("font_pressed_color", Color(0.1, 0.1, 0.1))
-		b.add_theme_color_override("font_hover_pressed_color", Color(0.1, 0.1, 0.1))
+		sw.border_color = Color(0, 0, 0, 0.35)
+		sw.set_border_width_all(1)
+		for k in ["pressed", "hover_pressed"]:
+			b.add_theme_stylebox_override(k, sw)
+		for k in ["font_pressed_color", "font_hover_pressed_color"]:
+			b.add_theme_color_override(k, Color(0.1, 0.1, 0.1))
 		var t: int = g[1]
 		b.pressed.connect(func() -> void: set_ground(t))
-		row.add_child(b)
+		flow.add_child(b)
 		_ground_buttons[t] = b
-	var row2 := HBoxContainer.new()
-	row2.add_theme_constant_override("separation", 8)
+	var row2 := HFlowContainer.new()
+	row2.add_theme_constant_override("h_separation", 8)
 	col.add_child(row2)
-	var cg := CheckBox.new()
-	cg.text = "ground"
-	cg.button_pressed = paint_ground
-	cg.focus_mode = Control.FOCUS_NONE
-	cg.toggled.connect(func(on: bool) -> void: paint_ground = on)
-	row2.add_child(cg)
-	var ch := CheckBox.new()
-	ch.text = "height"
-	ch.button_pressed = paint_height
-	ch.focus_mode = Control.FOCUS_NONE
-	ch.toggled.connect(func(on: bool) -> void: paint_height = on)
-	row2.add_child(ch)
-	_height_spin = SpinBox.new()
-	_height_spin.min_value = 0
-	_height_spin.max_value = MAX_H
-	_height_spin.value = height
-	_height_spin.custom_minimum_size.x = 70
-	_height_spin.value_changed.connect(func(v: float) -> void: height = int(v))
-	row2.add_child(_height_spin)
-	for opt in [["numbers", "show_numbers"], ["grid", "show_grid"], ["labels", "show_labels"]]:
+	for opt in [["ground", "paint_ground"], ["height", "paint_height"], ["numbers", "show_numbers"], ["grid", "show_grid"], ["labels", "show_labels"]]:
 		var co := CheckBox.new()
 		co.text = opt[0]
 		co.button_pressed = bool(get(opt[1]))
@@ -104,31 +84,61 @@ func _build_bar() -> void:
 			set(prop, on)
 			queue_redraw())
 		row2.add_child(co)
+	var hrow := HBoxContainer.new()
+	col.add_child(hrow)
+	var hl := Label.new()
+	hl.text = "height"
+	hrow.add_child(hl)
+	_height_spin = SpinBox.new()
+	_height_spin.min_value = 0
+	_height_spin.max_value = MAX_H
+	_height_spin.value = height
+	_height_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_height_spin.value_changed.connect(func(v: float) -> void:
+		height = int(v)
+		_sum())
+	hrow.add_child(_height_spin)
 	var hint := Label.new()
-	hint.text = "drag paints  ·  right click picks up  ·  0-9 sets the height  ·  [ ] brush  ·  Tab: back to the isometric view"
+	hint.text = "drag paints  ·  right click picks up  ·  0-9 sets the height  ·  [ ] brush size  ·  Tab: back to isometric"
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 11)
 	hint.modulate = Color(1, 1, 1, 0.7)
 	col.add_child(hint)
 	set_ground(ground)
+	return _drawer
+
+
+## The handle's text: what the brush is right now, so it reads without opening the drawer.
+func _sum() -> void:
+	if _drawer == null:
+		return
+	var nm := "brush"
+	for g in GROUNDS:
+		if g[1] == ground:
+			nm = g[0]
+	_drawer.head.text = "Flat brush:  %s%s%s" % [nm if paint_ground else "-", ", height %d" % height if paint_height else "", "" if _drawer.open else "   (open)"]
+	_drawer.head.queue_redraw()
 
 
 func set_ground(t: int) -> void:
 	ground = t
 	for k in _ground_buttons:
 		_ground_buttons[k].set_pressed_no_signal(k == t)
+	_sum()
 
 
 func set_height(h: int) -> void:
 	height = clampi(h, 0, MAX_H)
 	if _height_spin != null:
 		_height_spin.set_value_no_signal(height)
+	_sum()
 
 
 ## Fit the whole map into this control (called when the mode opens, and on resize).
 func fit() -> void:
 	var g: CombatGrid = maker.doc.grid
-	var bar_h := 96.0  # the tool bar sits over the top, so the map starts under it
-	var avail := size - Vector2(24, 24 + bar_h)
+	var bar_h := 0.0
+	var avail := size - Vector2(24, 24)
 	cs = clampf(floorf(minf(avail.x / g.w, avail.y / g.h)), 4.0, 48.0)
 	origin = (Vector2((size.x - g.w * cs) * 0.5, bar_h + (size.y - bar_h - g.h * cs) * 0.5)).floor()
 	queue_redraw()

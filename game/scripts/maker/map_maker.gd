@@ -61,6 +61,7 @@ const FOE_COLOR := Color(1.0, 0.48, 0.42)
 var doc: MapDoc
 var board: CombatBoard
 var overlay: MakerOverlay
+var _flat_drawer: MakerUI.Drawer
 var flat: FlatView  ## the flat sketch mode (Tab): a top-down grid of the same map
 var tool := "select"
 var radius := 0  ## brush size: 0 = one cell
@@ -1578,6 +1579,8 @@ func set_flat(on: bool) -> void:
 	if flat == null:
 		return
 	flat.visible = on
+	if _flat_drawer != null:
+		_flat_drawer.visible = on
 	board.visible = not on
 	if _view_buttons.has("flat"):
 		(_view_buttons["flat"] as Button).set_pressed_no_signal(on)
@@ -1852,6 +1855,11 @@ func _build_dock() -> void:
 		body.add_theme_constant_override("separation", 6)
 		page.add_child(body)
 		_pages[t[0]] = page
+	_flat_drawer = flat.build_drawer()
+	_flat_drawer.visible = false
+	_flat_drawer.toggled_open.connect(func(_k: String, _o: bool) -> void: flat.set_ground(flat.ground))
+	col.add_child(_flat_drawer)
+	col.move_child(_flat_drawer, 0)  # above the page tabs
 	_build_assets_page(_pages.assets.get_child(0))
 	_insp_box = _pages.inspect.get_child(0)
 	_build_map_page(_pages.map.get_child(0))

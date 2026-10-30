@@ -51,6 +51,10 @@ func run(m: Node, script: String) -> void:
 				m.call("new_blank")
 			"flat":  # flat:on|off, the flat sketch mode
 				m.call("set_flat", a[1] == "on")
+			"fdrawer":  # fdrawer:open, the flat brush drawer on the right panel
+				var fdr: Object = m.get("_flat_drawer")
+				if not fdr.get("open"):
+					fdr.call("_flip")
 			"fpaint":  # fpaint:<x1>:<y1>:<x2>:<y2>:<ground>:<height>: paint a line in the flat view
 				var fv: FlatView = m.get("flat")
 				fv.set_ground(int(a[5]))
