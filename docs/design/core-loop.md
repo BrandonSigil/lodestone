@@ -349,3 +349,24 @@ The follow-ups left open after the four themes: what makes a boss different, wha
 | `design-village-life` | How alive are the settlers? (multi) | services only; bonds that grow; daily routines |
 
 Tensions to watch: an ambusher bends danger-zone-only (c2); a boss big-move warning would be the one exception to it; foes that level with the party would undo grinding as a safety net (pc-4).
+
+### Decided (2026-10-30)
+- **Regions:** completing a region opens the next. A region with a boss completes once the party is past him, beaten or escaped ("if you sneak past the Lich King, thats fine too"); a region without one completes at the end of its map. Boss XP and loot only for a kill; an escaped boss is back on his throne next time.
+- **Cadence:** few bosses, at the end of some regions; elites carry the middle and can be tucked into any region; every region has fights.
+- **Boss tools, in order:** minions (the Lich gets them now), phases (with the second boss), parts to break, an objective.
+- **Warning:** a boss's big move marks its tiles a phase ahead and lands at the start of his next phase. Everything else stays danger-zone only.
+- **Retry:** after the first fight with a boss, his card shows his HP and all his moves for good.
+- **Foe scale:** by depth. A place's foes are set by its level and never change.
+- **Foe roles, in order:** ambusher, caster/support, charger, guard.
+- **Weakness:** a few tags (undead, beast, armored, flying), each a small damage change for some attack kinds. Whether the Lich himself is undead is on the desk (`design-lich-tag`); he has no tag until Brandon answers.
+- **Village:** restore only, with one twist: a settler's service can come with a plot by their house (a garden for crops, a pen for animals).
+- Still open: `design-village-life`.
+
+### First build (handed to the systems developer and the map builder, 2026-10-30)
+1. The Lich's big move with its warning (windup 1, cooldown 3, a 5-cell plus, power 4, hits his own minions too).
+2. The Lich's minions (2 every 3rd phase, at most 4 standing, they crumble when he falls).
+3. Foe tags (`data/tags.csv`; wolves beast, minions undead).
+4. The ambusher (hidden until seen within 3 cells; its first strike from hiding counts as a flank).
+5. Check that escaping the Lich completes the crypt the way a kill does, without the boss XP or loot.
+
+Then re-measure the Lich at level 5 with all four builds: each must win about 15% or more, with no stalls. Later, in order: learn him, foes by depth, caster/support, charger, guard, boss phases, parts, objective, village plots. The numbers are the `[AI]` lines of 2026-10-30 in `docs/decisions.md`.
