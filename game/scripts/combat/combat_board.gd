@@ -131,6 +131,11 @@ var _skirt_fade_prev := {}
 var _skirt_by_depth := {}
 var _over_by_depth := {}  ## this frame: depth -> {cell: true} with a highlight, the cursor or the fog veil
 var _units_by_depth := {}
+var _deck_over := {}  ## this frame: depth -> {deck place: true} with an overlay (drawn on the deck, DECK slab)
+var _deck_units := {}  ## this frame: depth -> pieces standing on a deck
+## A piece under a deck: the deck goes see-through round it (the window), as buildings do. Off: the deck stays
+## solid and the piece shows as its ghost ring (the _paint_top pass). Desk card for the design call.
+var deck_window := true
 var _seen := {}  ## fog cells the ground slabs have drawn
 var _snap_h := PackedInt32Array()
 var _snap_t := PackedInt32Array()
@@ -252,7 +257,8 @@ func iso(x: float, y: float, h: float) -> Vector2:
 
 
 func cell_top(c: Vector2i) -> Vector2:
-	return iso(c.x + 0.5, c.y + 0.5, grid.height_at(c))
+	var g := CombatGrid.ground(c)
+	return iso(g.x + 0.5, g.y + 0.5, grid.height_at(c))
 
 
 ## Where the ground's surface is drawn: water sits a little below its banks.
@@ -361,7 +367,8 @@ func board_origin() -> Vector2:
 
 
 func _diamond(c: Vector2i, h: float) -> PackedVector2Array:
-	return PackedVector2Array([iso(c.x, c.y, h), iso(c.x + 1, c.y, h), iso(c.x + 1, c.y + 1, h), iso(c.x, c.y + 1, h)])
+	var g := CombatGrid.ground(c)
+	return PackedVector2Array([iso(g.x, g.y, h), iso(g.x + 1, g.y, h), iso(g.x + 1, g.y + 1, h), iso(g.x, g.y + 1, h)])
 
 
 ## Cells grouped by draw depth, back first. With the skirt, the forest cells outside the grid join in and
@@ -400,6 +407,10 @@ func pick(local: Vector2) -> Vector2i:
 	var layers := _layers()
 	for i in range(layers.size() - 1, -1, -1):
 		for c: Vector2i in layers[i]:
+			if grid.has_deck(c) and not hidden(c):  # the deck is drawn over its lane: it wins where they overlap
+				var p := CombatGrid.deck_of(c)
+				if Geometry2D.is_point_in_polygon(local, _diamond(p, _surf(p))):
+					return p
 			if hidden(c) and not (edit_void and grid.terrain_at(c) == CombatGrid.T.VOID):
 				continue
 			if Geometry2D.is_point_in_polygon(local, _diamond(c, _surf(c))):
@@ -453,8 +464,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 ## One canvas in the board's painter's order.
 class Slab extends Node2D:
-	enum K { BACK, WATER, GROUND, FALLS, OVER, PROPS, UNITS, TOP }
-	const PER_DEPTH := 6
+	enum K { BACK, WATER, GROUND, FALLS, OVER, PROPS, UNITS, DECK, TOP }
+	const PER_DEPTH := 7
 	var board: CombatBoard
 	var kind := K.GROUND
 	var depth := 0
@@ -566,26 +577,30 @@ func _sync_slabs() -> void:
 	_dirty_props.clear()
 	# What moves: bucket this frame's overlays and pieces by depth, then redraw those slabs.
 	_over_by_depth.clear()
+	_deck_over.clear()
 	for dict: Dictionary in [highlights, danger, area, guard_ring, goal_cells]:
 		for c: Vector2i in dict:
-			_bucket(_over_by_depth, c)
+			_bucket(_deck_over if CombatGrid.on_deck(c) else _over_by_depth, c)
 	if hover != NONE and grid.in_bounds(hover):
-		_bucket(_over_by_depth, hover)
+		_bucket(_deck_over if CombatGrid.on_deck(hover) else _over_by_depth, hover)
 	_units_by_depth.clear()
+	_deck_units.clear()
 	for u: CombatUnit in units:
 		if u.shown_hp > 0 or u.downed():
 			var d := clampi(_unit_depth(u) + _off, 0, _depths.size() - 1)
-			if not _units_by_depth.has(d):
-				_units_by_depth[d] = []
-			_units_by_depth[d].append(u)
+			var into := _deck_units if CombatGrid.on_deck(u.cell) else _units_by_depth
+			if not into.has(d):
+				into[d] = []
+			into[d].append(u)
 	for sl: Slab in _slabs:
-		if sl.kind == Slab.K.OVER or sl.kind == Slab.K.UNITS or sl.kind == Slab.K.BACK or sl.kind == Slab.K.TOP:
+		if sl.kind == Slab.K.OVER or sl.kind == Slab.K.UNITS or sl.kind == Slab.K.DECK or sl.kind == Slab.K.BACK or sl.kind == Slab.K.TOP:
 			sl.queue_redraw()
 	_update_wakes()
 
 
 func _depth_at(c: Vector2i) -> int:
-	return clampi(depth_of(c.x, c.y) + _off, 0, maxi(0, _depths.size() - 1))
+	var g := CombatGrid.ground(c)
+	return clampi(depth_of(g.x, g.y) + _off, 0, maxi(0, _depths.size() - 1))
 
 
 ## Keys in one set but not the other.
@@ -607,7 +622,7 @@ func _bucket(into: Dictionary, c: Vector2i) -> void:
 	into[d][c] = true
 
 
-## BACK, then WATER, GROUND, FALLS, OVER, PROPS and UNITS for each depth, then TOP.
+## BACK, then WATER, GROUND, FALLS, OVER, PROPS, UNITS and DECK for each depth, then TOP.
 func _build_slabs(n: int) -> void:
 	if _slabs.size() == 2 + n * Slab.PER_DEPTH:
 		return
@@ -631,7 +646,7 @@ func _build_slabs(n: int) -> void:
 		_slabs.append(sl)
 	add.call(Slab.K.BACK, 0)
 	for d in n:
-		for kind in [Slab.K.WATER, Slab.K.GROUND, Slab.K.FALLS, Slab.K.OVER, Slab.K.PROPS, Slab.K.UNITS]:
+		for kind in [Slab.K.WATER, Slab.K.GROUND, Slab.K.FALLS, Slab.K.OVER, Slab.K.PROPS, Slab.K.UNITS, Slab.K.DECK]:
 			add.call(kind, d)
 		_fall_cells[d] = []
 		_prop_cells[d] = []
@@ -688,7 +703,7 @@ func _has_props(c: Vector2i) -> bool:
 
 ## Never drawn: no ground, or never seen under fog of war.
 func _unseen(c: Vector2i) -> bool:
-	return not grid.in_bounds(c) or grid.terrain_at(c) == CombatGrid.T.VOID or (fog_on and not fog.has(c))
+	return not grid.in_bounds(c) or grid.terrain_at(c) == CombatGrid.T.VOID or (fog_on and not fog.has(CombatGrid.ground(c)))
 
 
 func _paint(sl: Slab) -> void:
@@ -734,6 +749,8 @@ func _paint(sl: Slab) -> void:
 						_ci.draw_polyline(_ring(_diamond(c, 0.0)), Color(1, 1, 1, 0.5 if c == hover else 0.14), 1.0, true)
 			for u: CombatUnit in _units_by_depth.get(sl.depth, []):
 				_draw_unit(u)
+		Slab.K.DECK:
+			_paint_deck(sl.depth)
 		Slab.K.TOP:
 			_paint_top()
 	_ci = self
@@ -764,6 +781,66 @@ func _paint_props(d: int) -> void:
 				_veil(c)
 	for c: Vector2i in _skirt_by_depth.get(d, []):
 		_draw_skirt(c)
+
+
+## Decks (CombatGrid.DECK) draw after the pieces in the lane at their depth and under those on top: the slab,
+## then overlays on deck places, what stands on the decks, and the pieces up there.
+func _paint_deck(d: int) -> void:
+	if grid.decks.is_empty():
+		return
+	for c: Vector2i in _depths[d]:
+		if grid.has_deck(c) and not _unseen(c):
+			_draw_deck(c)
+	for c: Vector2i in _deck_over.get(d, {}):
+		if not hidden(c):
+			_draw_over(c)
+	for a: Vector2i in grid.props:
+		if CombatGrid.on_deck(a) and not _unseen(a):
+			var f := _prop_front(a, grid.props[a])
+			if _depth_at(f) == d:
+				_placed(f)
+	for u: CombatUnit in _deck_units.get(d, []):
+		_draw_unit(u)
+
+
+## A deck: a slab DECK_THICK levels deep under its floor (the sight rule), sides only where the deck ends, so a
+## run of deck reads as one bridge. Graybox until art. See-through while a piece stands under or behind it.
+func _draw_deck(c: Vector2i) -> void:
+	var p := CombatGrid.deck_of(c)
+	var h := float(grid.height_at(p))
+	var t := grid.terrain_at(p)
+	var zone := grid.zone_at(c)
+	var col := Color(1, 1, 1, 0.35 if _fade.has(p) else 1.0)
+	var lo := Vector2(c)
+	var hi := lo + Vector2.ONE
+	for shade in [false, true]:
+		var fd := front_dir(shade)
+		var n := CombatGrid.deck_of(c + fd)
+		if grid.has_deck(c + fd) and grid.height_at(n) == grid.height_at(p):
+			continue
+		var e: Array = _side(lo, hi, fd)
+		var side_tex := BattleArt.side(t, zone)
+		var mod := Color(_tint(t).darkened(0.25 if shade else 0.1), col.a)
+		_face(e[0], e[1], h, h - CombatGrid.DECK_THICK, Color(MASONRY.darkened(0.3 if shade else 0.12), col.a), _hash(c), false, true, side_tex, mod)
+	var top := _diamond(p, h)
+	var top_tex := BattleArt.top(t, zone)
+	if top_tex != null:  # the same stone as the ground's, at the same world spot
+		var uvs := PackedVector2Array([lo, Vector2(hi.x, lo.y), hi, Vector2(lo.x, hi.y)])
+		for i in 4:
+			uvs[i] /= BattleArt.TOP_TILES
+		var cols := PackedColorArray()
+		cols.resize(4)
+		cols.fill(Color(_tint(t) * (1.0 + minf(h, 6.0) * 0.025), col.a))
+		_ci.draw_polygon(top, cols, uvs, top_tex)
+	else:
+		_ci.draw_colored_polygon(top, Color(_terrain_color(t).lightened(minf(h, 6.0) * 0.025), col.a))
+	if t == CombatGrid.T.STAIRS:  # stair lines across a stair deck, as on the ground
+		for i in range(1, 4):
+			_ci.draw_line(top[0].lerp(top[3], i / 4.0), top[1].lerp(top[2], i / 4.0), Color(INK, 0.3 * col.a), 1.0, true)
+	for i in 4:
+		var side := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)][i] as Vector2i
+		if not grid.has_deck(c + side) or grid.height_at(CombatGrid.deck_of(c + side)) != grid.height_at(p):
+			_ci.draw_line(top[i], top[(i + 1) % 4], Color(INK, 0.55 * col.a), 1.5, true)
 
 
 func _paint_top() -> void:
@@ -798,7 +875,7 @@ static func _ring(pts: PackedVector2Array) -> PackedVector2Array:
 func hidden(c: Vector2i) -> bool:
 	if grid.terrain_at(c) == CombatGrid.T.VOID:
 		return true
-	if fog_on and not fog.has(c):
+	if fog_on and not fog.has(CombatGrid.ground(c)):
 		return true
 	return cull.has_area() and not cull.has_point(cell_top(c))
 
@@ -1979,15 +2056,18 @@ func _prop_front(a: Vector2i, p: Dictionary) -> Vector2i:
 	for dy in p.foot.y:
 		for dx in p.foot.x:
 			var c := a + Vector2i(dx, dy)
-			if not free.has(Vector2i(dx, dy)) and depth_of(c.x, c.y) > depth_of(best.x, best.y):
+			var g := CombatGrid.ground(c)
+			var gb := CombatGrid.ground(best)
+			if not free.has(Vector2i(dx, dy)) and depth_of(g.x, g.y) > depth_of(gb.x, gb.y):
 				best = c
 	return best
 
 
 ## Screen rect of a placed prop. Buildings (tall 0) span their footprint with the image's bottom on its
 ## front corner; small props stand `tall` tile widths high on the middle of their footprint.
-func _prop_rect(a: Vector2i, p: Dictionary, tex: Texture2D) -> Rect2:
-	var h := float(grid.height_at(a))
+func _prop_rect(anchor: Vector2i, p: Dictionary, tex: Texture2D) -> Rect2:
+	var h := float(grid.height_at(anchor))
+	var a := CombatGrid.ground(anchor)
 	var foot: Vector2i = p.foot
 	var pts := [iso(a.x, a.y, h), iso(a.x + foot.x, a.y, h), iso(a.x + p.foot.x, a.y + p.foot.y, h), iso(a.x, a.y + p.foot.y, h)]
 	var lo := Vector2(INF, INF)
@@ -2014,7 +2094,7 @@ func _placed(c: Vector2i) -> void:
 	var p: Dictionary = grid.props[a]
 	var tex := prop_texture(p, grid.zone_at(a))
 	var col := Color.WHITE
-	if fog_on and fog.get(c, 2) == 1:
+	if fog_on and fog.get(CombatGrid.ground(c), 2) == 1:
 		col = Color(0.45, 0.46, 0.52)  # remembered, out of sight: same wash as the veil
 	var holes: Array = _fade.get(a, [])
 	if not holes.is_empty() and tex == null:
@@ -2030,7 +2110,7 @@ func _placed(c: Vector2i) -> void:
 	if tex == null:
 		var h := float(grid.height_at(a))
 		var tall: float = p.tall
-		_box(Vector2(a), Vector2(a) + Vector2(p.foot), h, h + (tall * 2.0 if tall > 0.0 else 3.0), col)
+		_box(Vector2(CombatGrid.ground(a)), Vector2(CombatGrid.ground(a)) + Vector2(p.foot), h, h + (tall * 2.0 if tall > 0.0 else 3.0), col)
 		return
 	var r := _prop_rect(a, p, tex)
 	if p.tall > 0.0 and not p.walk:
@@ -2818,7 +2898,7 @@ func _block(lo: Vector2, hi: Vector2, h0: float, h1: float, col: Color, seed_v: 
 func _unit_base(u: CombatUnit) -> Vector2:
 	var base := iso(u.vis.x + 0.5, u.vis.y + 0.5, u.vis_h) + u.offset - Vector2(0, u.hop)
 	var c := Vector2i(roundi(u.vis.x), roundi(u.vis.y))
-	if grid.in_bounds(c) and grid.terrain_at(c) == CombatGrid.T.WATER:
+	if grid.in_bounds(c) and grid.terrain_at(c) == CombatGrid.T.WATER and not CombatGrid.on_deck(u.cell):
 		base.y += WATER_INSET * HS  # wading: feet at the water's surface
 	return base
 
@@ -2843,6 +2923,8 @@ func _find_cover() -> void:
 		for dy in range(-6, 7):  # a house in front can reach this far
 			for dx in range(-6, 7):
 				var c := uc + Vector2i(dx, dy)
+				if grid.in_bounds(c) and grid.has_deck(c) and depth_of(c.x, c.y) >= d and not hidden(c):
+					_cover_by_deck(u, box, c)
 				if not grid.in_bounds(c) or depth_of(c.x, c.y) <= d or hidden(c):
 					continue
 				var h := float(grid.height_at(c))
@@ -2871,6 +2953,41 @@ func _find_cover() -> void:
 						col = col.expand(q + Vector2(0, (h - u.vis_h) * HS))
 					if _overlap(box, col) > 0.35:
 						_covered[u] = true
+
+
+## A deck draws after the lane's pieces at its depth, so it (and what stands on it) can hide a piece under or
+## behind it: open its window round the piece (deck_window), or else ghost the piece.
+func _cover_by_deck(u: CombatUnit, box: Rect2, c: Vector2i) -> void:
+	var p := CombatGrid.deck_of(c)
+	if u.cell == p or u.vis_h >= grid.height_at(p) - 0.5:
+		return  # on the deck or level with it: drawn in front of the slab
+	var h := float(grid.height_at(p))
+	var slab := Rect2(_diamond(p, h)[0], Vector2.ZERO)
+	for q in _diamond(p, h - CombatGrid.DECK_THICK) + _diamond(p, h):
+		slab = slab.expand(q)
+	if _overlap(box, slab) > 0.2:
+		if not deck_window:
+			_covered[u] = true
+		else:
+			_fade[p] = _fade.get(p, []) + [box.get_center()]
+			if u.team == 0:
+				_covered[u] = _covered.get(u, false)
+	var a := grid.prop_anchor(p)
+	if a != CombatGrid.NONE_CELL and _prop_front(a, grid.props[a]) == p:
+		var pr: Dictionary = grid.props[a]
+		var tex := prop_texture(pr, grid.zone_at(a))
+		var r := slab
+		if tex != null:
+			r = _prop_rect(a, pr, tex)
+		else:  # the graybox block, as _placed draws it
+			var lo := Vector2(CombatGrid.ground(a))
+			var z1 := h + (float(pr.tall) * 2.0 if float(pr.tall) > 0.0 else 3.0)
+			for q in [iso(lo.x, lo.y, z1), iso(lo.x + pr.foot.x, lo.y + pr.foot.y, h), iso(lo.x + pr.foot.x, lo.y, z1), iso(lo.x, lo.y + pr.foot.y, z1)]:
+				r = r.expand(q)
+		if _overlap(box, r) > 0.2:
+			_fade[a] = _fade.get(a, []) + [box.get_center()]
+			if u.team == 0:
+				_covered[u] = _covered.get(u, false)
 
 
 ## Skirt trees in front of a piece, the cursor or a highlighted cell go see-through, so the forest framing

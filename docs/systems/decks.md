@@ -25,8 +25,15 @@
 - **Guard zones**: the ring shows only places the guard can hit (as holding already required), so a guard on a bridge doesn't ring the lane three levels down.
 - Cell-aimed abilities and the danger zone list deck places too. The AI moves through `reachable` and `walk_distance`, so it walks bridges and lanes.
 
+## Drawing (step 4)
+- `CombatBoard` has a DECK slab per depth, after that depth's pieces: the deck slab, overlays on deck places (highlights, danger, area, guard ring, goals, the cursor), props standing on decks, then the pieces on decks. So a deck covers the lane's pieces at its depth and sits under its own.
+- A deck draws as a slab `DECK_THICK` deep with the ground's top and side art (graybox colours without it). Side faces and outline only where the deck ends, so a run of deck reads as one bridge.
+- A piece under or behind a deck: with `deck_window` on, the deck (and a prop on it) goes see-through while the piece stands there; off, the deck stays solid and the piece gets the ghost copy and foot ring. Which one is a design call on the desk (card `dev-deck-covered-piece`); the window is on until it's answered.
+- Picking returns the deck place where the deck's top is under the mouse, the lane cell elsewhere. Drawing helpers (`_diamond`, `cell_top`, `_depth_at`, `hidden`, prop rects) take places and draw at the ground cell.
+- Test picture: `tools/godot.sh --path game -s res://tools/map_shot.gd -- out.png demo:bridge 0 [nowindow]`.
+
 ## Sight (rule for map checks; built in step 5)
 A deck is a slab `DECK_THICK` (1) level thick under its floor. A sight line through the cell between `h - 1` and `h` is blocked; above it (on the deck) or below it (in the lane) it passes.
 
 ## Still to come
-4. Drawing the deck slab and what stands on it (with the map builder; the see-through window opens it over a piece underneath). 5. Sight and fog per layer. 6. The map maker paints decks (map builder). Until step 4, a map with decks loads and saves but doesn't draw them.
+5. Sight and fog per layer. 6. The map maker paints decks (map builder), and real deck art.
