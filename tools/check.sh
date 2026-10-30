@@ -44,6 +44,14 @@ if [ "${E2E:-0}" = "1" ]; then
 		grep -A3 "SCRIPT ERROR" <<< "$out" | head -20
 		code=1
 	fi
+	# Engine errors fail the run too (a deferred call on a freed node, 2026-10-30), all but Godot's own leak
+	# report at exit.
+	errs=$(grep -E "^ERROR:" <<< "$out" | grep -vE "still in use at exit|leaked at exit")
+	if [ -n "$errs" ]; then
+		echo "FAIL e2e engine errors:"
+		sort <<< "$errs" | uniq -c | head -10
+		code=1
+	fi
 	if [ $code -ne 0 ]; then
 		echo "FAIL e2e"
 		fail=1

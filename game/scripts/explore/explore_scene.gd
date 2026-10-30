@@ -1060,7 +1060,7 @@ func _new_dialog(text: String, top := false) -> VBoxContainer:
 	if text == "":
 		l.queue_free()
 	if fresh:
-		UiTheme.pop_in.call_deferred(_dialog)
+		UiTheme.pop_in_later(_dialog)
 	return box
 
 

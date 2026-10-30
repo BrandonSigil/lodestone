@@ -132,6 +132,16 @@ static func fade_in(c: Control) -> void:
 	c.create_tween().tween_property(c, "modulate:a", 1.0, OPEN_TIME)
 
 
+## pop_in once the menu has its size (the next frame), unless it was freed or swapped by then (a menu rebuilt at
+## once, a fight starting): a deferred call straight to pop_in errored on the freed dialog (playtest, 2026-10-30).
+static func pop_in_later(c: Control) -> void:
+	var ref: WeakRef = weakref(c)
+	(func() -> void:
+		var live := ref.get_ref() as Control
+		if live != null and live.is_inside_tree():
+			pop_in(live)).call_deferred()
+
+
 ## A menu closing: shrinks a touch and fades, then frees itself. Its buttons die at once, so nothing on the way
 ## out can be pressed.
 static func pop_out(c: Control) -> void:
