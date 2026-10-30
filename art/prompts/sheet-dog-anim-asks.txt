@@ -2,7 +2,7 @@ ASKS FOR sheet-dog-anim.txt (one facing line per run, passed as char_sheet.py --
 
   ~/.lodestone/venv/bin/python tools/art/char_sheet.py --id dog --dir <dir> --prompt-file art/prompts/sheet-dog-anim.txt \
       --ref docs/art/characters/dog-reference-sheet.png --facing "$(sed -n 's/^<dir>: //p' art/prompts/sheet-dog-anim-asks.txt)"
-  then cut with tools/art/anim_sheet_cut.py (rows idle 5 incl. blink, walk 6, swing 6 = bite, cast 6 = bark, hurt 4) into a staging --out until Brandon stamps it.
+  then cut with tools/art/anim_sheet_cut.py --id dog (rows idle 5 incl. blink, walk 6 = trot, attack 6 = bite, cast 6 = bark, hurt_down 4) into a staging --out until Brandon stamps it; approved strips and dog.json go to game/art/source/characters/dog/ (the systems developer: the hero's anim names, BARK plays cast, west facings mirrored).
 
 se: SE: three-quarter front view, the dog faces toward the LOWER RIGHT of the picture. We see his face, chest and right side; the pack sits on his back at the upper left.
 ne: NE: three-quarter back view, the dog faces toward the UPPER RIGHT of the picture. We see the back of his head and ears, the pack and his fluffy rump; no face.
