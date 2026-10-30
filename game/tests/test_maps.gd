@@ -564,6 +564,17 @@ func test_map_maker_places_things() -> void:
 	eq(String(saved.things[1].note), "barred from the other side", "notes are saved")
 	var em := ExploreMap.from_dict(saved)
 	eq(em.things.size(), 2, "the explore scene reads the things")
+	# a foe group's fight goals, set from the inspector
+	maker.get("doc").data["groups"] = [{"id": "g", "units": [{"id": "wolf", "cell": [4, 1]}, {"id": "wolf", "cell": [5, 1]}]}]
+	var pick: Dictionary = maker.call("_pick", Vector2i(5, 1))
+	eq(String(pick.get("type", "")), "group", "a foe unit is pickable")
+	maker.call("_select", pick)
+	maker.call("_set_group_goals", {"defeat": true, "leader": true, "exit": false}, 3)
+	eq(String(maker.get("doc").data.groups[0].goals), "defeat|leader|hold:3", "goals land on the group")
+	maker.call("_set_group_goals", {"defeat": true, "leader": false, "exit": false}, 0)
+	ok(not (maker.get("doc").data.groups[0] as Dictionary).has("goals"), "plain defeat is the default")
+	maker.call("_delete_selected")
+	eq((maker.get("doc").data.groups[0].units as Array).size(), 1, "a unit deleted")
 	# battle maps take no things
 	var bd := MapDoc.create("battle", "test_tmp", _island(8, 1))
 	maker.call("_open", bd)

@@ -63,10 +63,19 @@ static func _arrow(a: Vector2, b: Vector2, head := 0.16) -> void:
 	_line([b - d * head + n * head * 0.8, b, b - d * head - n * head * 0.8])
 
 
+## Lasting rewards draw with Brandon's icon art (game/art/source/icons) instead of a line glyph.
+const ART_ICONS := {"boost": "strength", "key": "key", "rare": "rare"}
+
+
 static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 	_ci = ci
 	var side := minf(r.size.x, r.size.y)
 	_r = Rect2(r.position + (r.size - Vector2(side, side)) * 0.5, Vector2(side, side))
+	if ART_ICONS.has(id):
+		var path := "res://art/source/icons/%s.png" % ART_ICONS[id]
+		if ResourceLoader.exists(path):
+			ci.draw_texture_rect(load(path) as Texture2D, _r, false, Color(1, 1, 1, col.a))
+			return
 	_col = col
 	_w = maxf(1.5, side / 13.0)
 	match id:

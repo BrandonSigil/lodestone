@@ -9,7 +9,7 @@ extends RefCounted
 const CSV := "res://data/catalog.csv"
 const UNSORTED := "Unsorted"
 ## Thing kinds the explore scene knows (see ExploreMap and docs/systems/explore.md).
-const THING_KINDS := ["door", "enter", "exit", "chest", "rack", "hidden", "shrine", "rubble"]
+const THING_KINDS := ["door", "enter", "exit", "chest", "rack", "hidden", "shrine", "rubble", "boost", "key", "rare"]
 
 static var _entries: Array[Dictionary] = []
 static var _angles := {}

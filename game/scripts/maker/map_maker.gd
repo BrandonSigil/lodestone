@@ -1041,6 +1041,12 @@ func _pick(c: Vector2i) -> Dictionary:
 	if i >= 0:
 		return {"type": "thing", "i": i}
 	if doc.kind == "explore":
+		var gs: Array = doc.data.get("groups", [])
+		for gi in gs.size():
+			var us: Array = gs[gi].get("units", [])
+			for ui in us.size():
+				if int(us[ui].cell[0]) == c.x and int(us[ui].cell[1]) == c.y:
+					return {"type": "group", "i": gi, "u": ui}
 		var st: Array = doc.data.get("start", [])
 		for j in st.size():
 			if int(st[j][0]) == c.x and int(st[j][1]) == c.y:
@@ -1063,6 +1069,9 @@ func _sel_valid() -> bool:
 			return doc.grid.props.has(selection.cell)
 		"thing":
 			return doc.kind == "explore" and int(selection.i) < _things().size()
+		"group":
+			var gs: Array = doc.data.get("groups", [])
+			return doc.kind == "explore" and int(selection.i) < gs.size() and int(selection.u) < (gs[selection.i].get("units", []) as Array).size()
 		"start":
 			return int(selection.i) < (doc.data.get("start", []) as Array).size()
 		"piece":
@@ -1077,6 +1086,9 @@ func _sel_cell(sel: Dictionary) -> Vector2i:
 		"thing":
 			var cell: Array = _things()[sel.i].cell
 			return Vector2i(int(cell[0]), int(cell[1]))
+		"group":
+			var gc: Array = doc.data.groups[sel.i].units[sel.u].cell
+			return Vector2i(int(gc[0]), int(gc[1]))
 		"start":
 			var s: Array = doc.data.start[sel.i]
 			return Vector2i(int(s[0]), int(s[1]))
@@ -1148,6 +1160,8 @@ func _end_move() -> void:
 			th.cell = [at.x, at.y]
 			if th.has("floor") and g.terrain_at(at) != T.RUIN:
 				th.floor = CombatGrid.LETTERS[g.terrain_at(at)]
+		"group":
+			doc.data.groups[selection.i].units[selection.u].cell = [at.x, at.y]
 		"start":
 			doc.data.start[selection.i] = [at.x, at.y]
 		"piece":
@@ -1166,6 +1180,11 @@ func _delete_selected() -> void:
 			MapOps.remove_prop(doc.grid, selection.cell)
 		"thing":
 			_things().remove_at(selection.i)
+		"group":
+			var gd: Array = doc.data.groups
+			(gd[selection.i].units as Array).remove_at(selection.u)
+			if (gd[selection.i].units as Array).is_empty():
+				gd.remove_at(selection.i)
 		"start":
 			if (doc.data.start as Array).size() <= 1:
 				_say("an explore map needs a start; move it instead")
@@ -1202,9 +1221,14 @@ func _refresh_marks() -> void:
 		for i in st.size():
 			marks.append({"cell": Vector2i(int(st[i][0]), int(st[i][1])), "color": START_COLOR, "icon": "start",
 				"label": "start" if i == 0 else "", "selected": sel_t == "start" and int(selection.i) == i})
-		for gr in d.get("groups", []):
-			for u in gr.get("units", []):
-				marks.append({"cell": Vector2i(int(u.cell[0]), int(u.cell[1])), "color": FOE_COLOR, "icon": "rack", "label": ""})
+		var gl: Array = d.get("groups", [])
+		for gi in gl.size():
+			var ul: Array = gl[gi].get("units", [])
+			for ui in ul.size():
+				var u: Dictionary = ul[ui]
+				marks.append({"cell": Vector2i(int(u.cell[0]), int(u.cell[1])), "color": FOE_COLOR, "icon": "rack",
+					"label": "boss" if bool(u.get("leader", false)) else "",
+					"selected": sel_t == "group" and int(selection.i) == gi and int(selection.u) == ui})
 		var things := _things()
 		for i in things.size():
 			var t: Dictionary = things[i]
@@ -1950,6 +1974,8 @@ func _build_inspector() -> void:
 				_inspect_prop()
 			"thing":
 				_inspect_thing()
+			"group":
+				_inspect_group()
 			"start", "piece":
 				var c := _sel_cell(selection)
 				_insp_box.add_child(MakerUI.label("Party start" if selection.type == "start" else String(doc.data[selection.list][selection.i].id), 15, MakerUI.INK, true))
@@ -2151,6 +2177,81 @@ func _inspect_thing() -> void:
 		_num_field("arrive y", int(at[1]), -1, MAX_SIZE, 1, func(v: float) -> void: _set_thing("at", [int(th.get("at", [-1, -1])[0]), int(v)]))
 	_line_field("gone if", String(th.get("once", "")), "flags, a|b: once any is set it's gone", func(t: String) -> void: _set_thing("once", t.strip_edges()))
 	_note_field(String(th.get("note", "")), func(t: String) -> void: _set_thing("note", t.strip_edges()))
+
+
+## A foe group's fight goals (FightGoals; docs/systems/combat.md): any one met wins. Set per group; the clicked
+## unit can be marked the leader. Written to the group's `goals` ("leader|exit"), `exit` and the unit's `leader`.
+func _inspect_group() -> void:
+	var gr: Dictionary = doc.data.groups[selection.i]
+	var unit: Dictionary = gr.units[selection.u]
+	_insp_box.add_child(MakerUI.label("Foe group %s" % String(gr.get("id", "")), 15, MakerUI.INK, true))
+	_insp_box.add_child(MakerUI.label("%s  ·  unit %d of %d  ·  drag to move it" % [String(unit.get("id", "")), int(selection.u) + 1, (gr.units as Array).size()], 12, MakerUI.DIM))
+	var goals := String(gr.get("goals", "")).split("|", false)
+	_insp_box.add_child(MakerUI.label("Win by (any one)", 12, MakerUI.DIM))
+	var hold := 0
+	var kinds := {"defeat": false, "leader": false, "exit": false}
+	for g in goals:
+		if g.begins_with("hold:"):
+			hold = int(g.get_slice(":", 1))
+		elif kinds.has(g):
+			kinds[g] = true
+	if goals.is_empty():
+		kinds.defeat = true
+	for k in ["defeat", "leader", "exit"]:
+		var cb := CheckBox.new()
+		cb.text = {"defeat": "defeat every foe", "leader": "beat the leader", "exit": "everyone on the exit"}[k]
+		cb.button_pressed = kinds[k]
+		cb.toggled.connect(func(on: bool) -> void:
+			kinds[k] = on
+			_set_group_goals(kinds, hold))
+		_insp_box.add_child(cb)
+	_num_field("hold N rounds", hold, 0, 30, 1, func(v: float) -> void:
+		hold = int(v)
+		_set_group_goals(kinds, hold))
+	var lead := CheckBox.new()
+	lead.text = "this unit is the leader (BOSS)"
+	lead.button_pressed = bool(unit.get("leader", false))
+	lead.toggled.connect(func(on: bool) -> void:
+		_push_undo()
+		if on:
+			unit["leader"] = true
+		else:
+			unit.erase("leader")
+		_build_inspector())
+	_insp_box.add_child(lead)
+	var ex := PackedStringArray()
+	for c in gr.get("exit", []):
+		ex.append("%d,%d" % [int(c[0]), int(c[1])])
+	_line_field("exit cells", ";".join(ex), "x,y;x,y  (the green ring)", func(t: String) -> void:
+		var cells: Array = []
+		for part in t.split(";", false):
+			var xy := part.split(",", false)
+			if xy.size() == 2 and xy[0].strip_edges().is_valid_int() and xy[1].strip_edges().is_valid_int():
+				cells.append([int(xy[0]), int(xy[1])])
+		_push_undo()
+		if cells.is_empty():
+			gr.erase("exit")
+		else:
+			gr["exit"] = cells
+		_build_inspector())
+
+
+func _set_group_goals(kinds: Dictionary, hold: int) -> void:
+	if not _sel_valid() or selection.type != "group":
+		return
+	var parts: Array[String] = []
+	for k in ["defeat", "leader", "exit"]:
+		if kinds[k]:
+			parts.append(k)
+	if hold > 0:
+		parts.append("hold:%d" % hold)
+	_push_undo()
+	var gr: Dictionary = doc.data.groups[selection.i]
+	if parts.is_empty() or parts == ["defeat"]:
+		gr.erase("goals")
+	else:
+		gr["goals"] = "|".join(parts)
+	_build_inspector()
 
 
 func _id_taken(id: String) -> bool:
