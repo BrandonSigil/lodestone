@@ -54,6 +54,7 @@ func _ready() -> void:
 	_refresh_hud()
 	get_viewport().size_changed.connect(queue_redraw)
 	Game.bookmarked.connect(hud.flash_saved)
+	Game.counts.connect(_say)
 	bookmark.call_deferred()
 
 
@@ -505,6 +506,7 @@ func _refresh_side() -> void:
 func _refresh_hud() -> void:
 	hud.set_party(FrameHud.party_entries_from_run(Game.run))
 	hud.set_pack(Game.run.pack)
+	hud.set_goals(Game.goal_lines())
 	var tools := [{"id": "pack", "text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]
 	if Game.has_flag("has_lodestone"):
 		tools.append({"text": Txt.t("UI_LODESTONE"), "cb": _open_menu.bind("lodestone"), "glow": Game.pending_picks() > 0})
@@ -527,8 +529,10 @@ func _open_menu(which: String) -> void:
 		_close_dialog()
 	if which == "pack":
 		AdventureMenu.pack(box, changed, close)
+	elif which == "restore":
+		AdventureMenu.restore_list(box, changed, close)
 	else:
-		AdventureMenu.lodestone(box, changed, close)
+		AdventureMenu.lodestone(box, changed, close, true, _open_menu.bind("restore"))
 
 
 func _new_dialog(text: String) -> VBoxContainer:

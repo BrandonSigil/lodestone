@@ -144,6 +144,9 @@ func _ready() -> void:
 	if lead:
 		_snap_to(lead)
 	Game.bookmarked.connect(hud.flash_saved)
+	Game.counts.connect(func(text: String) -> void:
+		if leader() != null:
+			board.float_text(leader().cell, text, Color(0.95, 0.85, 0.4)))
 	if not Game.resume_fight.is_empty():
 		# a fight that was going when the game was quit starts again from its first turn
 		var f := Game.resume_fight
@@ -655,7 +658,48 @@ func _open_thing(t: Dictionary) -> void:
 	if t.kind == "enter" and String(t.event) == "":
 		_travel(t)  # a plain doorway: no box, just go through
 		return
+	if t.kind == "restore":
+		_restore_box(String(t.event))  # a village building's ladder: its event names the building
+		return
 	open_event(String(t.event), {"thing": t})
+
+
+## A building's next restore step ([USER] omr-5: walk up to it to see what it needs): the items with what
+## the village pile holds, GIVE when it's all there, and WATCH to track it on trips.
+func _restore_box(building: String) -> void:
+	mode = M.DIALOG
+	var name := Txt.t("BUILDING_" + building.to_upper())
+	var lines: PackedStringArray = [name]
+	var row := RestoreRules.next_step(Db.restore, building, Game.meta.restore)
+	var box: VBoxContainer
+	if not RestoreRules.is_open(Db.restore, building, Game.meta.flags):
+		lines.append(Txt.t("UI_RESTORE_LOCKED"))
+	elif row.is_empty():
+		lines.append(Txt.t("UI_RESTORE_ALL_DONE"))
+	elif RestoreRules.status(Game.meta.restore, String(row.id)) == "paid":
+		lines.append(Txt.t(String(row.name_key)))
+		lines.append(Txt.t("UI_RESTORE_WAIT"))
+	else:
+		lines.append(Txt.t(String(row.name_key)))
+		var needs := RestoreRules.parse_needs(String(row.needs))
+		for id in needs:
+			lines.append("  %s  %d / %d" % [Txt.t(String(Db.items[id].name_key)), int(Game.meta.materials.get(id, 0)), int(needs[id])])
+	box = _new_dialog("\n".join(lines))
+	if not row.is_empty() and RestoreRules.is_open(Db.restore, building, Game.meta.flags) \
+			and RestoreRules.status(Game.meta.restore, String(row.id)) == "":
+		var id := String(row.id)
+		if RestoreRules.can_pay(row, Game.meta.restore, Game.meta.materials):
+			_dialog_button(box, Txt.t("UI_RESTORE_PAY"), func() -> void:
+				Game.pay_step(id)
+				_refresh_hud()
+				_restore_box(building))
+		_dialog_button(box, Txt.t("UI_RESTORE_UNTRACK" if Game.meta.tracked.has(id) else "UI_RESTORE_TRACK"), func() -> void:
+			Game.toggle_track(id)
+			_refresh_hud()
+			_restore_box(building))
+	_dialog_button(box, Txt.t("OPT_LEAVE"), func() -> void:
+		_close_dialog()
+		mode = M.WALK)
 
 
 ## A hidden thing shows (and can be used) only once the leader stands next to it. A thing with a "when"
@@ -1135,6 +1179,7 @@ func _gate_prompt() -> void:
 func _gate_go() -> void:
 	_gate_open = false
 	_close_dialog()
+	Game.start_trip()
 	_finish_map()
 
 
@@ -1241,6 +1286,7 @@ func _refresh_hud() -> void:
 			"res": u.res, "res_max": u.res_max})
 	hud.set_party(entries)
 	hud.set_pack(Game.run.pack)
+	hud.set_goals(Game.goal_lines())
 	var tools := [{"id": "pack", "text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]
 	if Game.has_flag("has_lodestone"):
 		tools.append({"text": Txt.t("UI_LODESTONE"), "cb": _open_menu.bind("lodestone"), "glow": Game.pending_picks() > 0})
@@ -1265,5 +1311,7 @@ func _open_menu(which: String) -> void:
 		mode = M.WALK
 	if which == "pack":
 		AdventureMenu.pack(box, changed, close)
+	elif which == "restore":
+		AdventureMenu.restore_list(box, changed, close)
 	else:
-		AdventureMenu.lodestone(box, changed, close, map.map_name != "village")
+		AdventureMenu.lodestone(box, changed, close, map.map_name != "village", _open_menu.bind("restore"))

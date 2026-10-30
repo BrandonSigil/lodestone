@@ -10,3 +10,8 @@ rope,ITEM_ROPE,gear,##,0,0,0,0,1
 meat,ITEM_MEAT,food,#,0,1,0,0,10
 potion,ITEM_POTION,med,#,0,0,1,0,3
 stuff,ITEM_STUFF,material,#,0,0,0,0,5
+ingredient,ITEM_INGREDIENT,material,#,0,0,0,0,5
+herb,ITEM_HERB,material,#,0,0,0,0,5
+metal,ITEM_METAL,material,#,0,0,0,0,5
+wood,ITEM_WOOD,material,##,0,0,0,0,5
+rare,ITEM_RARE,material,#,0,0,0,0,1

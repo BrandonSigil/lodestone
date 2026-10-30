@@ -14,6 +14,7 @@ const LEAF_ART := "res://art/source/ui/frame_bottom.webp"
 const LEAF_BAND_TOP := 102.0  ## the solid band starts here; above it only leaves and the diamond poke up
 const LEAF_PACK := Rect2(128, 133, 130, 108)  ## inside the left square's rim: the inventory button
 const LEAF_PARTY := Rect2(1295, 132, 495, 104)  ## inside the right panel's rim: the party, up to 4
+const LEAF_BAR := Rect2(345, 134, 380, 48)  ## the long bar's top half (its ornament runs below): tracked goals
 const LEAF_PARTY_MAX := 4
 const LEAF_DECOR_TOP := 50.0  ## the corner leaves reach up to here; buttons above the frame sit higher
 const LEAF_DIAMOND_TOP := 2.0  ## the centre diamond's tip
@@ -34,6 +35,7 @@ var leaf: Control = null  ## the leaf frame along the bottom (explore maps and t
 var side_panel: PanelContainer = null  ## with the leaf frame: the screen's controls float over the map, top right
 var leaf_pack: Button
 var leaf_party: HBoxContainer
+var leaf_goals: Label  ## tracked restore steps and what they still miss ([USER] omr-5)
 var _leaf_art: TextureRect
 var _leaf_block: Control
 var _leaf_pack_cb := Callable()
@@ -160,6 +162,11 @@ func use_leaf_frame() -> void:
 		if _leaf_pack_cb.is_valid():
 			_leaf_pack_cb.call())
 	leaf.add_child(leaf_pack)
+	leaf_goals = _label("", 11)
+	leaf_goals.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	leaf_goals.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	leaf_goals.clip_text = true
+	leaf.add_child(leaf_goals)
 	leaf_party = HBoxContainer.new()
 	leaf_party.add_theme_constant_override("separation", 4)
 	leaf_party.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -200,6 +207,8 @@ func _layout_leaf() -> void:
 	_leaf_block.size = Vector2(vs.x, bottom_h)
 	leaf_pack.position = Vector2(0, top) + LEAF_PACK.position * s
 	leaf_pack.size = LEAF_PACK.size * s
+	leaf_goals.position = Vector2(0, top) + LEAF_BAR.position * s
+	leaf_goals.size = LEAF_BAR.size * s
 	leaf_party.position = Vector2(0, top) + LEAF_PARTY.position * s
 	leaf_party.size = LEAF_PARTY.size * s
 	for c in leaf_party.get_children():
@@ -356,6 +365,12 @@ func set_tools(entries: Array) -> void:
 		if e.get("glow", false):
 			b.add_theme_color_override("font_color", Color(0.65, 0.95, 1.0))
 		tools_box.add_child(b)
+
+
+## Tracked village goals in the frame's long bar (up to two lines; nothing tracked leaves it bare).
+func set_goals(lines: PackedStringArray) -> void:
+	if leaf_goals != null:
+		leaf_goals.text = "\n".join(lines.slice(0, 2))
 
 
 ## The "saved" cue ([USER] omr-11): a word that shows in the top left and fades.

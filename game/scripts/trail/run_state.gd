@@ -22,6 +22,7 @@ var pack: InventoryGrid = InventoryGrid.create(PACK_COLS, PACK_ROWS)
 ## or sends the courier home ([USER] 2026-10-29). Not carried: it counts for nothing until packed.
 var found: InventoryGrid = InventoryGrid.create(FOUND_COLS, FOUND_ROWS)
 var courier_bag: InventoryGrid = null  ## the courier's saddlebag while it's being filled
+var on_pickup := Callable()  ## (id, n) after something is added to the pack: Game says when it counts toward a goal
 var away: Array[Dictionary] = []  ## members sent home with a bag: {"member": Dictionary, "bag": InventoryGrid}
 ## What the party carries in the pack and on its belts, id -> count (gear bound to a member left out).
 ## Read-only: change it with add_item.
@@ -146,6 +147,8 @@ func add_item(id: String, n: int) -> int:
 		lost = found.put(id, shape_of(id), lost, stack_of(id))
 	if lost > 0:
 		note(Txt.f("LOG_OVERFLOW", [lost, Txt.t(String(Db.items[id].name_key))]))
+	if n > lost and on_pickup.is_valid():
+		on_pickup.call(id, n - lost)
 	return lost
 
 

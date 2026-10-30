@@ -17,6 +17,7 @@ var explore_events: Dictionary = {}  # id -> event, from data/explore_events.csv
 var levels: Dictionary = {}  # key -> number, from data/levels.csv (see LevelRules)
 var combat: Dictionary = {}  # key -> number, from data/combat.csv (see CombatRules.num)
 var growth: Dictionary = {}  # character id -> {stat: % chance a level}, from data/growth.csv (see LevelRules)
+var restore: Array[Dictionary] = []  # village restore ladders, data/restore.csv rows (see RestoreRules)
 var jobs: Dictionary = {}  # job id -> data/jobs.csv row (name_key, class, branch_a, branch_b)
 var skill_ranks: Dictionary = {}  # skill id -> [effect of rank 1, rank 2, ...], from data/skill_ranks.csv
 var weapons: Dictionary = {}  # id -> row of data/weapons.csv: the smithy weapons and what they add
@@ -60,6 +61,7 @@ func reload() -> void:
 		for k in LevelRules.STATS:
 			odds[k] = float(row.get(k, 0))
 		growth[row.id] = odds
+	restore = CsvTable.load_rows("res://data/restore.csv")
 	jobs.clear()
 	for row in CsvTable.load_rows("res://data/jobs.csv"):
 		jobs[row.id] = row

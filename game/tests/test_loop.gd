@@ -634,3 +634,56 @@ func test_a_bookmark_comes_back_to_the_spot() -> void:
 	Game.explore_map = "home"
 	Game.explore_entry = Vector2i(-1, -1)
 	_restore(saved)
+
+
+# --- restoring the village ([USER] omr-2, omr-5, omr-12; one-more-run step 2) ----------------------
+
+const LADDER := [
+	{"id": "forge_1", "building": "forge", "step": "1", "name_key": "X1", "needs": "metal:3;wood:2", "gives": "unlock:forge_hot", "settler": "smith_here"},
+	{"id": "forge_2", "building": "forge", "step": "2", "name_key": "X2", "needs": "rare:1", "gives": "", "settler": ""},
+]
+
+
+func test_a_ladder_step_by_step() -> void:
+	var rows: Array = LADDER.duplicate(true)
+	var state := {}
+	ok(not RestoreRules.is_open(rows, "forge", []), "shut until the settler moves in")
+	ok(RestoreRules.is_open(rows, "forge", ["smith_here"]))
+	var step := RestoreRules.next_step(rows, "forge", state)
+	eq(step.id, "forge_1")
+	var pile := {"metal": 2, "wood": 5}
+	eq(RestoreRules.missing(step, pile), {"metal": 1})
+	ok(not RestoreRules.pay(step, state, pile, 0), "one metal short")
+	pile.metal = 4
+	ok(RestoreRules.pay(step, state, pile, 0))
+	eq(pile, {"metal": 1, "wood": 3}, "paid from the pile")
+	eq(RestoreRules.next_step(rows, "forge", state).id, "forge_1", "under way, still the step to show")
+	eq(RestoreRules.finish(rows, state, 0), [], "not done on the trip it was paid")
+	eq(RestoreRules.finish(rows, state, 1).size(), 1, "done when the party comes home from the next trip")
+	eq(RestoreRules.next_step(rows, "forge", state).id, "forge_2")
+
+
+func test_paying_tracking_and_coming_home() -> void:
+	var saved := _fresh_game()
+	Db.restore.assign(LADDER.duplicate(true))
+	Game.meta.flags.append("smith_here")
+	Game.meta.materials = {"metal": 3, "wood": 2}
+	Game.toggle_track("forge_2")
+	eq(Array(Game.goal_lines()), ["X2: %s 1" % Txt.t("ITEM_RARE")], "the frame shows what the tracked step misses")
+	var heard := []
+	Game.counts.connect(func(t: String) -> void: heard.append(t))
+	Game.run.add_item("rare", 1)
+	eq(heard.size(), 1, "a pickup that counts says so")
+	eq(Array(Game.goal_lines()), ["X2: %s" % Txt.t("UI_RESTORE_READY")])
+	ok(Game.pay_step("forge_1"))
+	eq(Game.meta.materials, {}, "the pile paid for it")
+	Game.home_again()
+	eq(RestoreRules.status(Game.meta.restore, "forge_1"), "paid", "coming home without a trip doesn't finish it")
+	Game.start_trip()
+	Game.home_again()
+	eq(RestoreRules.status(Game.meta.restore, "forge_1"), "done", "home from a trip: done")
+	ok(Game.has_flag("forge_hot"), "and it gives what it gives")
+	for c in Game.counts.get_connections():
+		Game.counts.disconnect(c.callable)
+	Db.reload()  # the real ladders back
+	_restore(saved)

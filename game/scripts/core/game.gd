@@ -210,7 +210,7 @@ func save_meta() -> void:
 
 static func _fresh_meta() -> Dictionary:
 	return {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": [],
-		"levels": {}, "pack": {}, "materials": {}, "benched": [], "bookmark": {}}
+		"levels": {}, "pack": {}, "materials": {}, "benched": [], "bookmark": {}, "restore": {}, "tracked": [], "trips": 0}
 
 
 func reset_meta() -> void:
@@ -392,6 +392,7 @@ func start_adventure() -> void:
 		var id := String((m.def as CharacterDef).id)
 		if hp.has(id):
 			m.hp = clampi(int(hp[id]), 1, run.max_hp(m))
+	run.on_pickup = _on_pickup  # from here on, pickups that count toward a tracked step say so
 
 
 ## Adds companions whose flag just got set (at full HP) and recomputes everyone's level and gear bonus.
@@ -560,10 +561,86 @@ func home_again() -> void:
 	var banked := run.bank_materials()
 	for id: String in banked:
 		meta.materials[id] = int(meta.materials.get(id, 0)) + int(banked[id])
-	if back or not banked.is_empty():
+	# restore steps paid before this trip are done now ([USER] omr-12)
+	var finished := RestoreRules.finish(Db.restore, meta.restore, int(meta.trips))
+	for r: Dictionary in finished:
+		var out := TrailRules.apply_effects(run, String(r.get("gives", "")))
+		absorb(out.unlocks)
+		pending_lines.append(Txt.f("UI_RESTORE_DONE_LINE", [Txt.t("BUILDING_" + String(r.building).to_upper()), Txt.t(String(r.name_key))]))
+		meta.tracked.erase(String(r.id))
+	if back or not banked.is_empty() or not finished.is_empty():
 		save_adventure()  # saves meta too
 		if not run.adventure:
 			save_meta()
+
+
+# --- restoring the village ([USER] omr-2, omr-5, omr-12; one-more-run step 2) --------------------------
+
+signal counts(text: String)  ## a pickup counts toward a tracked step: screens show the line
+
+
+## Out the gate: a new trip. Steps paid before it finish when the party is home again.
+func start_trip() -> void:
+	meta.trips = int(meta.trips) + 1
+	save_meta()
+
+
+## Pay a building's next step from the village pile. False when it can't be paid.
+func pay_step(id: String) -> bool:
+	var rows := Db.restore.filter(func(r: Dictionary) -> bool: return String(r.id) == id)
+	if rows.is_empty() or not RestoreRules.pay(rows[0], meta.restore, meta.materials, int(meta.trips)):
+		return false
+	save_adventure()
+	save_meta()
+	return true
+
+
+func toggle_track(id: String) -> void:
+	if meta.tracked.has(id):
+		meta.tracked.erase(id)
+	else:
+		meta.tracked.append(id)
+	save_meta()
+
+
+## What the party has toward a step: the village pile, plus what's carried on a trip.
+func have_for_goals() -> Dictionary:
+	var out: Dictionary = Dictionary(meta.materials).duplicate()
+	if run != null:
+		var carried := run.items
+		for id in carried:
+			out[id] = int(out.get(id, 0)) + int(carried[id])
+	return out
+
+
+## Tracked steps not yet paid, with what each still misses: [{"row", "missing"}].
+func tracked_missing() -> Array:
+	var out := []
+	var have := have_for_goals()
+	for r: Dictionary in Db.restore:
+		if meta.tracked.has(String(r.id)) and RestoreRules.status(meta.restore, String(r.id)) == "":
+			out.append({"row": r, "missing": RestoreRules.missing(r, have)})
+	return out
+
+
+## The frame's goal lines: each tracked step and what it still misses ("SMITHY FORGE: METAL 2, WOOD 1").
+func goal_lines() -> PackedStringArray:
+	var lines: PackedStringArray = []
+	for g: Dictionary in tracked_missing():
+		var parts: PackedStringArray = []
+		for id in g.missing:
+			parts.append("%s %d" % [Txt.t(String(Db.items[id].name_key)), int(g.missing[id])])
+		lines.append("%s: %s" % [Txt.t(String(g.row.name_key)), ", ".join(parts) if not parts.is_empty() else Txt.t("UI_RESTORE_READY")])
+	return lines
+
+
+## A pickup that counts toward a tracked step says so ([USER] omr-5).
+func _on_pickup(id: String, _n: int) -> void:
+	for r: Dictionary in Db.restore:
+		if meta.tracked.has(String(r.id)) and RestoreRules.status(meta.restore, String(r.id)) == "" \
+				and RestoreRules.parse_needs(String(r.needs)).has(id):
+			counts.emit(Txt.f("UI_COUNTS_FOR", [Txt.t(String(Db.items[id].name_key)), Txt.t(String(r.name_key))]))
+			return
 
 
 ## How much of a material the village has banked.

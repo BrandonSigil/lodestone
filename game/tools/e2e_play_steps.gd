@@ -92,7 +92,11 @@ func play(t: SceneTree) -> void:
 	_check(game.run.item_count("rope") == rope and game.run.gold == gold, "kept every item")
 	_check(game.run.members.all(func(m: Dictionary) -> bool: return m.hp == game.run.max_hp(m)), "everyone at full HP")
 	_check(game.has_flag("lodestone_revealed"), "a fall reveals the Lodestone")
-	_check(game.material_count("stuff") >= 4 and game.run.item_count("stuff") == 0, "the stuff found on the way went to the village pile")
+	var pile := 0
+	for k in game.meta.materials:
+		pile += int(game.meta.materials[k])
+	_check(pile >= 4 and game.run.items.keys().all(func(k: String) -> bool: return String(Db.items[k].kind) != "material"),
+		"the materials found on the way went to the village pile")
 
 	# A beaten boss stays beaten: back in the crypt after the fall, the throne is empty.
 	game.explore_map = "crypt"

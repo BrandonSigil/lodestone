@@ -1,7 +1,7 @@
 extends SceneTree
 ## Drives the explore scene into a state and saves a PNG, so the walkable map can be checked headless.
 ## Args after "--": <png path> <step> [map]. Steps: start, walk, wasd, door, spot, deploy, fight (crypt),
-## overview, pack, pack_full, lodestone, gate (village), benched (village), elite, near:<x>,<y>[:<flags>], use:<thing id>, goal:<group id>:<x>,<y> (any map). The map defaults to crypt. See explore_shot_steps.gd.
+## overview, pack, pack_full, lodestone, gate (village), benched (village), restore, elite, near:<x>,<y>[:<flags>], use:<thing id>, goal:<group id>:<x>,<y> (any map). The map defaults to crypt. See explore_shot_steps.gd.
 
 var _frames := 0
 var _out := ""

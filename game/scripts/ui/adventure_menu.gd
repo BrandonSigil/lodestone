@@ -12,7 +12,7 @@ const FULL_CELL := 46.0  ## smaller when FOUND and the courier's bag share the b
 ## [USER] 2026-10-28: the Lodestone opens from its bottom-bar button at any time: skill ranks waiting, head back
 ## to town ([USER] 2026-10-29: stats roll on their own each level; every 4 levels a rank for one of the
 ## character's own skills). home: false hides GO HOME (in town already, or mid-fight).
-static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, home := true) -> void:
+static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, home := true, open_list := Callable()) -> void:
 	_label(box, Txt.t("UI_LODESTONE"), 20)
 	for m in Game.run.members:
 		var d: CharacterDef = m.def
@@ -63,12 +63,58 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 		_button(box, Txt.t("UI_LS_HOME"), func() -> void:
 			close.call()
 			Game.wake_in_town(false))
+	if open_list.is_valid():
+		_button(box, Txt.t("UI_LS_RESTORE"), open_list)
 	_button(box, Txt.t("UI_LS_SAVE_QUIT"), func() -> void:
 		# [USER] omr-4, omr-11: put a bookmark in; Continue on the launch menu comes back right here
 		var tree := Engine.get_main_loop() as SceneTree
 		if tree.current_scene.has_method("bookmark"):
 			tree.current_scene.call("bookmark")
 		tree.quit())
+	_button(box, Txt.t("UI_CLOSE_MENU"), close)
+
+
+## Every building's restore ladder at once ([USER] omr-5, like Stardew's community center): steps done,
+## under way, open (with what they need) or locked until the settler moves in. WATCH tracks any open step.
+static func restore_list(box: VBoxContainer, changed: Callable, close: Callable) -> void:
+	_label(box, Txt.t("UI_RESTORE_LIST"), 20)
+	var have := Game.have_for_goals()
+	for building in RestoreRules.buildings(Db.restore):
+		_label(box, Txt.t("BUILDING_" + building.to_upper()), 15)
+		if not RestoreRules.is_open(Db.restore, building, Game.meta.flags):
+			_label(box, "  " + Txt.t("UI_RESTORE_LOCKED"), 12)
+			continue
+		for r: Dictionary in RestoreRules.ladder(Db.restore, building):
+			var id := String(r.id)
+			var st := RestoreRules.status(Game.meta.restore, id)
+			var line := "  %s" % Txt.t(String(r.name_key))
+			if st == "done":
+				_label(box, line + "   " + Txt.t("UI_RESTORE_DONE"), 12)
+				continue
+			if st == "paid":
+				_label(box, line + "   " + Txt.t("UI_RESTORE_WORKING"), 12)
+				continue
+			var parts: PackedStringArray = []
+			var needs := RestoreRules.parse_needs(String(r.needs))
+			for k in needs:
+				parts.append("%s %d/%d" % [Txt.t(String(Db.items[k].name_key)), mini(int(have.get(k, 0)), int(needs[k])), int(needs[k])])
+			var row := HBoxContainer.new()
+			var l := Label.new()
+			l.text = line + "   " + ", ".join(parts)
+			l.add_theme_font_size_override("font_size", 12)
+			l.custom_minimum_size = Vector2(W - 130, 0)
+			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			row.add_child(l)
+			var b := Button.new()
+			b.text = Txt.t("UI_RESTORE_UNTRACK" if Game.meta.tracked.has(id) else "UI_RESTORE_TRACK")
+			b.custom_minimum_size = Vector2(120, 26)
+			b.pressed.connect(func() -> void:
+				Game.toggle_track(id)
+				changed.call())
+			row.add_child(b)
+			box.add_child(row)
+	if RestoreRules.buildings(Db.restore).is_empty():
+		_label(box, Txt.t("UI_RESTORE_NONE"), 12)
 	_button(box, Txt.t("UI_CLOSE_MENU"), close)
 
 
