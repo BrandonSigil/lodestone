@@ -15,7 +15,7 @@ const NOISE_RANGE := 12  ## a noisy failure draws the nearest group within this 
 const JOIN_RANGE := 3  ## other groups this close to a fight join it
 
 ## Effects the map handles itself. Anything else ("food:+3", "hp_one:-2") goes to TrailRules on the run.
-const MAP_EFFECTS := ["open", "remove", "noise", "reveal", "exit", "fight", "sneak_attack", "ambushed", "pacify", "travel"]
+const MAP_EFFECTS := ["open", "remove", "noise", "reveal", "exit", "fight", "sneak_attack", "ambushed", "pacify", "travel", "fish"]
 
 
 ## A beaten boss stays beaten for good, through falls and new trips in ([USER] 2026-10-29: once the

@@ -979,3 +979,32 @@ func test_doors_glow_when_close() -> void:
 	ok(ExploreOverlay.NO_MARK_KINDS.has("enter"), "and a doorway never gets a \"!\"")
 	s.free()
 	Game.explore_map = "home"
+
+
+## Fishing off a dock (the map builder's note builder-to-dev-fishing): any thing whose event has an option
+## with the `fish` effect rolls the world map's FISH, and the spot rests until the next trip.
+func test_fishing_from_any_dock_spot() -> void:
+	var saved := _fresh_game()
+	eq(ExploreRules.split_effects("fish").map, ["fish"] as Array[String], "fish is a map effect any event row can use")
+	Game.explore_map = "village_v2"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	var spots: Array = s.things.filter(func(t: Dictionary) -> bool: return String(t.event) == "fish_dock")
+	ok(not spots.is_empty(), "village v2 has a fishing spot")
+	var spot: Dictionary = spots[0]
+	var ev: Dictionary = Db.explore_events["fish_dock"]
+	var fish: Array = ExploreRules.options_for(ev, s._defs(), s._have()).filter(func(o: Dictionary) -> bool: return o.key == "OPT_FISH")
+	eq(fish.size(), 1, "FISH is on offer, no rod needed")
+	var food_before: int = Game.run.food
+	s.mode = 2
+	s.choose(fish[0], {"thing": spot})
+	ok(Game.run.food >= food_before, "the catch (if any) goes in the pack")
+	ok(spot.done, "the spot rests")
+	ok(Game.used_this_trip("village_v2/" + String(spot.id)), "for the rest of this trip")
+	Game.start_trip()
+	ok(not Game.used_this_trip("village_v2/" + String(spot.id)), "and is back on the next one")
+	s._close_dialog()
+	s.free()
+	Game.explore_map = "home"
+	_restore(saved)

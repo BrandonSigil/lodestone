@@ -815,7 +815,7 @@ func _once_done(t: Dictionary) -> bool:
 	for f in String(t.get("once", "")).split("|", false):
 		if Game.has_flag(f):
 			return true
-	return false
+	return Game.used_this_trip(map.map_name + "/" + String(t.id))  # a fishing spot rests until the next trip
 
 
 func _letter_terrain(letter: String) -> int:
@@ -946,6 +946,8 @@ func _apply_map_fx(list: Array, ctx: Dictionary) -> void:
 				_finish_map()
 			"travel":
 				_travel(t)
+			"fish":
+				_fish(t)
 	if mode == M.WALK:
 		if "open" in list:
 			_refresh_locked()
@@ -1262,6 +1264,19 @@ func _end_fight() -> void:
 func _have() -> Dictionary:
 	return {"items": Game.run.items, "flags": Game.meta.flags,
 		"party": Game.adventure_defs().map(func(d: CharacterDef) -> String: return String(d.id))}
+
+
+## Fishing off a dock or shore (a thing whose event's option has the `fish` effect): the same roll as the
+## world map's FISH ([USER] 2026-10-28: dice for now, a minigame later), the catch into the pack. The spot
+## rests until the next trip out of town ([AI] 2026-10-30; desk card dev-fishing-rules).
+func _fish(t: Dictionary) -> void:
+	var r := TravelRules.activity(Game.run, "fish")
+	if not t.is_empty():
+		Game.use_for_trip(map.map_name + "/" + String(t.id))
+		t.done = true
+	board.float_text(leader().cell, Txt.f("UI_FISH_GOT", int(r.food)) if r.success else Txt.t("UI_FISH_NONE"),
+		Color(0.6, 0.85, 1.0))
+	_after_change()
 
 
 # --- character sheets ([USER] 2026-10-30: the dog's, and one per build at the smithy rack) -------------------

@@ -635,6 +635,18 @@ func home_again() -> void:
 signal counts(text: String)  ## a pickup counts toward a tracked step: screens show the line
 
 
+## A thing that rests for the rest of this trip once used (a fishing spot): `key` is "<map>/<thing id>".
+func use_for_trip(key: String) -> void:
+	var used: Dictionary = meta.get("trip_used", {})
+	used[key] = int(meta.trips)
+	meta["trip_used"] = used
+	save_meta()
+
+
+func used_this_trip(key: String) -> bool:
+	return int(meta.get("trip_used", {}).get(key, -1)) == int(meta.trips)
+
+
 ## Out the gate: a new trip. Steps paid before it finish when the party is home again.
 func start_trip() -> void:
 	meta.trips = int(meta.trips) + 1
