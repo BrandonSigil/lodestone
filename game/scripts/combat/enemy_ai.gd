@@ -30,6 +30,8 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var marked := CombatRules.marks(units)
 	for cell: Vector2i in cost:
 		leave[cell] = leave_cost(grid, u, units, cell) + mark_cost(grid, u, units, cell, marked)
+	if u.has_trait(CombatRules.TRAIT_STAND_WATCH) and u.move_spent == 0:  # standing still readies the watch shot
+		leave[u.cell] = float(leave[u.cell]) - watch_value(grid, u, units)
 	var actions: Array[Ability] = u.abilities.duplicate()
 	actions.append_array(CombatRules.extra_actions(u))  # AID or a knock-out too
 	var extra := {}  # CARRY's destination and set-down cell, when a clutch tool wins
@@ -310,6 +312,25 @@ static func threat_worth(t: CombatUnit, units: Array) -> float:
 	return clampf(t.damage / 6.0, 0.3, 1.0)
 
 
+## What a readied watch shot is worth to u (OVERWATCH): only when a foe out of the bow's reach could walk in on a
+## downed or hurt friend next phase (one already in reach is better shot now); then about a real shot on it.
+static func watch_value(grid: CombatGrid, u: CombatUnit, units: Array) -> float:
+	var hurt := units.filter(func(f: CombatUnit) -> bool:
+		return f.team == u.team and f != u and (f.downed() or (f.alive() and f.hp * 2 < f.max_hp)))
+	if hurt.is_empty():
+		return 0.0
+	var r := CombatRules.ability_range(u, null)
+	var best := 0.0
+	for o: CombatUnit in units:
+		if o.team == u.team or not o.alive() or o.hiding or o.has_trait(CombatRules.TRAIT_STRUCTURE) or CombatRules.in_reach(grid, u.cell, o.cell, r):
+			continue
+		var o_reach: Dictionary = CombatRules.reachable(grid, o, units).cost
+		for f: CombatUnit in hurt:
+			if o_reach.keys().any(func(c: Vector2i) -> bool: return CombatRules.dist(c, f.cell) <= CombatRules.ability_range(o, null).y):
+				best = maxf(best, CombatRules.expected_damage(grid, u, o, u.cell, null, units) * 10.0 + 6.0)  # a real shot's worth
+	return best
+
+
 static var _reach_cache := {}  ## team -> the other side's hit reach, for one plan (WARD and OVERWATCH ask often)
 
 
@@ -346,23 +367,8 @@ static func _buff_value(u: CombatUnit, t: CombatUnit, status: String, units: Arr
 			if grid == null or not _foe_reach(grid, t, units).has(t.cell):
 				return 0.0
 			return 6.0 + 30.0 * (1.0 - float(t.hp) / t.max_hp)
-		CombatRules.STATUS_OVERWATCH:  # when a foe could reach a downed or hurt friend next phase, and would have to
-			if grid == null:  # walk into the bow's reach to do it (one already in reach is better shot now)
-				return 0.0
-			var hurt := units.filter(func(f: CombatUnit) -> bool:
-				return f.team == u.team and f != u and (f.downed() or (f.alive() and f.hp * 2 < f.max_hp)))
-			if hurt.is_empty():
-				return 0.0
-			var r := CombatRules.ability_range(u, null)
-			var best := 0.0
-			for o: CombatUnit in units:
-				if o.team == u.team or not o.alive() or o.hiding or o.has_trait(CombatRules.TRAIT_STRUCTURE) or CombatRules.in_reach(grid, u.cell, o.cell, r):
-					continue
-				var o_reach: Dictionary = CombatRules.reachable(grid, o, units).cost
-				for f: CombatUnit in hurt:
-					if o_reach.keys().any(func(c: Vector2i) -> bool: return CombatRules.dist(c, f.cell) <= CombatRules.ability_range(o, null).y):
-						best = maxf(best, CombatRules.expected_damage(grid, u, o, u.cell, null, units) * 10.0 + 6.0)  # a real shot's worth
-			return best
+		CombatRules.STATUS_OVERWATCH:
+			return watch_value(grid, u, units) if grid != null else 0.0
 		CombatRules.STATUS_GUIDED:
 			return 5.0 if t != u and not t.acted else 0.0
 		CombatRules.STATUS_TAUNT:

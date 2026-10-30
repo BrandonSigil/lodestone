@@ -36,6 +36,7 @@ const TRAIT_BONES := &"bones"  ## Skeleton: makes the piece undead (arrows -2, f
 const TRAIT_DOUBLE_STRIKE := &"double_strike"  ## Lewith & Flark: the basic hit swings twice at -1 damage each
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
 const TRAIT_POISON_BLADES := &"poison_blades"  ## Rogue: every hit leaves POISON ([USER] design-boss-daggers)
+const TRAIT_STAND_WATCH := &"stand_watch"  ## Bow: an archer that doesn't move in its phase ends it on OVERWATCH, free
 const TRAIT_STRUCTURE := &"structure"  ## an ice pillar: never acts or hits back, stands in the way, doesn't count toward winning
 const TRAIT_AMBUSH := &"ambush"  ## Ambusher: waits hidden; its first strike from hiding counts as a flank ([USER] design-foe-roles)
 const SPOT_RANGE := 3  ## a party piece ending a move this close, with line of sight, spots a hidden foe
@@ -702,6 +703,7 @@ static func end_phase(units: Array, team: int) -> void:
 	for u: CombatUnit in units:
 		if u.team != team:
 			continue
+		var stood := u.cell == u.move_origin
 		u.move_spent = 0  # out of its own phase a piece's reach is its whole move (the other side's threat maps)
 		for s in u.statuses.keys():
 			if s in STATUS_UNTIL_OWN_PHASE:
@@ -709,6 +711,8 @@ static func end_phase(units: Array, team: int) -> void:
 			u.statuses[s] = int(u.statuses[s]) - 1
 			if u.statuses[s] <= 0:
 				u.statuses.erase(s)
+		if stood and u.alive() and u.has_trait(TRAIT_STAND_WATCH):  # stand and watch: one shot readied till its next phase
+			u.statuses[STATUS_OVERWATCH] = 1
 
 
 # --- a boss's big moves ([USER] 2026-10-30 design-boss-warning, design-boss-shape) ---------------------------

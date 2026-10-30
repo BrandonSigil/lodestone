@@ -1237,3 +1237,21 @@ func test_shadow_swap_overwatch_and_ward() -> void:
 	ok(not knight.has_status(CombatRules.STATUS_WARD), "used up")
 	CombatRules.resolve(RandomNumberGenerator.new(), g, thug, thug.abilities[0], knight.cell, [mage, knight, thug])
 	ok(knight.hp < hp, "the next one lands")
+
+
+## Stand and watch (game designer 2026-10-30): an archer that doesn't move in its phase ends it on OVERWATCH, free on
+## top of its attack; one that moved doesn't.
+func test_an_archer_that_stands_still_watches() -> void:
+	var g := CombatGrid.flat(8, 3)
+	var archer := _unit("job_archer", 0, Vector2i(1, 1), g)
+	var units := [archer]
+	ok(archer.has_trait(CombatRules.TRAIT_STAND_WATCH))
+	CombatRules.begin_phase(units, 0)
+	archer.acted = true
+	CombatRules.end_phase(units, 0)
+	ok(archer.has_status(CombatRules.STATUS_OVERWATCH), "stood still: watching")
+	CombatRules.begin_phase(units, 0)
+	ok(not archer.has_status(CombatRules.STATUS_OVERWATCH), "gone at its next phase")
+	archer.place(Vector2i(3, 1), 0)
+	CombatRules.end_phase(units, 0)
+	ok(not archer.has_status(CombatRules.STATUS_OVERWATCH), "moved: no watch")
