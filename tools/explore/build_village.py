@@ -345,6 +345,7 @@ V.thing(id="statue", kind="statue", event="statue_lodestone", cell=[21, 22], onc
 V.thing(id="food_barrel", kind="cache", event="cache_food", cell=[35, 19], once="got_food_barrel")
 V.thing(id="smithy_rope", kind="cache", event="cache_rope", cell=[14, 9], once="got_rope")
 V.thing(id="stream_rod", kind="find", event="rod:+1", cell=[9, 29])  # the first fishing rod, on the stream bank by the cottage (5130f86)
+V.thing(id="stream_fish", kind="fish", event="fish_dock", cell=[11, 30])  # a fishing spot on the stream, beside the rod's bank (FISH needs the rod)
 V.start = [hero_door]
 if "--dump" in sys.argv:
     dump(V)

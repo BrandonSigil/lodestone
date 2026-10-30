@@ -1743,6 +1743,15 @@
     9,
     29
    ]
+  },
+  {
+   "id": "stream_fish",
+   "kind": "fish",
+   "event": "fish_dock",
+   "cell": [
+    11,
+    30
+   ]
   }
  ]
 }
