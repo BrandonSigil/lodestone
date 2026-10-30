@@ -495,3 +495,45 @@ func test_the_rack_offers_what_the_hero_doesnt_hold() -> void:
 	eq(shown.call(["weapon_sword", "found_book"]), ["OPT_TAKE_DAGGERS", "OPT_TAKE_BOW", "OPT_TAKE_BOOK", "OPT_LEAVE"], "swap any time")
 	var out := TrailRules.apply_effects(RunState.new(), "weapon:bow")
 	eq(out.weapon, "bow")
+
+
+# --- the party changes at home ([USER] pc-1, pc-10; player-choice step 3) --------------------------
+
+func test_who_comes_along() -> void:
+	var saved := _fresh_game()
+	eq(Game.run.members.size(), 2, "the dog joins when he's met")
+	Game.run.members[1].belt.put("potion", RunState.shape_of("potion"), 2, 3)
+	var potions := Game.run.medicine
+	Game.dismiss("dog")
+	eq(Game.run.members.size(), 1, "left at home")
+	ok(not Game.in_party("dog"))
+	eq(Game.run.medicine, potions, "his belt went back into the pack")
+	Game.start_adventure()
+	eq(Game.run.members.size(), 1, "still home after a restart")
+	ok(Game.invite("dog"))
+	eq(Game.run.members.size(), 2, "and back on the next invite")
+	eq(Game.party_max(), 4, "four fight")
+	ok(ExploreRules.need_met("noparty:dog", [], {"party": ["lead"]}))
+	ok(ExploreRules.need_met("party:dog", [], {"party": ["lead", "dog"]}))
+	var out := TrailRules.apply_effects(RunState.new(), "invite:dog")
+	eq(out.invite, "dog")
+	_restore(saved)
+
+
+func test_the_gate_asks_go_or_edit() -> void:
+	var saved := _fresh_game()
+	Game.explore_map = "village"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	s._apply_map_fx(["exit"], {})
+	ok(s._gate_open, "the gate asks first")
+	var texts: Array = s._dialog.find_children("*", "Button", true, false).map(func(b: Button) -> String: return b.text)
+	ok(texts.has(Txt.t("UI_GATE_GO")) and texts.has(Txt.t("UI_GATE_PARTY")), "GO (F) and EDIT PARTY (P)")
+	s._party_editor()
+	texts = s._dialog.find_children("*", "Button", true, false).map(func(b: Button) -> String: return b.text)
+	ok(texts.has(Txt.f("UI_PARTY_IN", Txt.t("CHAR_DOG"))), "the dog is listed, coming")
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"
+	_restore(saved)

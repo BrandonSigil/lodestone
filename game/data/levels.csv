@@ -7,3 +7,4 @@ xp_win,10,every member who fought gets this for a won fight
 xp_foe,25,plus this per foe downed
 xp_boss,100,plus this for a boss fight
 branch_level,10,a job splits into one of its two branches at this job level
+party_max,4,how many fight: the hero and up to three companions ([USER] pc-1)

@@ -53,6 +53,7 @@ var _log_label: Label
 var _phase: Label
 var _keys_walking := false  ## the leader is walking on WASD
 var _menu_open := false  ## the pack or the Lodestone menu is the open dialog
+var _gate_open := false  ## the village gate's GO / EDIT PARTY prompt is up (F and P answer it)
 ## Deploying: the fight waiting to start, the member being placed and the cells it may take.
 var _pending := {}
 var _placing: CombatUnit = null
@@ -361,8 +362,13 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_ENTER:
 			if mode == M.DEPLOY:
 				_begin_battle()
+		KEY_P:
+			if _gate_open:
+				_party_editor()
 		KEY_F:
-			if mode == M.WALK:
+			if _gate_open:
+				_gate_go()
+			elif mode == M.WALK:
 				var t := _nearest_thing()
 				if not t.is_empty():
 					_go_use(t)
@@ -687,7 +693,7 @@ func open_event(id: String, ctx: Dictionary) -> void:
 	walking_now = false
 	board.highlights = {}
 	var box := _new_dialog(Txt.t(ev.text_key))
-	for o: Dictionary in ExploreRules.options_for(ev, _defs(), {"items": Game.run.items, "flags": Game.meta.flags}):
+	for o: Dictionary in ExploreRules.options_for(ev, _defs(), _have()):
 		var label := Txt.t(o.key)
 		if o.check != "none":
 			var who: Dictionary = TrailRules.best_member(Game.run, o.check)
@@ -719,6 +725,11 @@ func choose(o: Dictionary, ctx: Dictionary) -> void:
 		if out.weapon != "":
 			Game.take_weapon(out.weapon)
 			lines.append(Txt.f("UI_NOW_JOB", Txt.t(String(Db.jobs[Game.job_id()].name_key))))
+		if out.invite != "":
+			lines.append(Txt.f("UI_JOINS" if Game.invite(out.invite) else "UI_PARTY_FULL", Txt.t(Db.character(StringName(out.invite)).name_key)))
+		if out.dismiss != "":
+			Game.dismiss(out.dismiss)
+			lines.append(Txt.f("UI_STAYS_HOME", Txt.t(Db.character(StringName(out.dismiss)).name_key)))
 		_after_change()
 		for f: String in out.unlocks:
 			if Txt.has("UI_GOT_" + f.to_upper()):
@@ -772,6 +783,9 @@ func _apply_map_fx(list: Array, ctx: Dictionary) -> void:
 				if not near.is_empty():
 					start_fight(near, "ambushed")
 			"exit":
+				if map.map_name == "village":
+					_gate_prompt()  # [USER] pc-10: one key to go, one to edit the party
+					return
 				_finish_map()
 			"travel":
 				_travel(t)
@@ -1073,6 +1087,52 @@ func _end_fight() -> void:
 	_walk_side()
 	_refresh_sight()
 	_refresh_units()
+
+
+## What option needs check: the pack, the flags and who's in the party.
+func _have() -> Dictionary:
+	return {"items": Game.run.items, "flags": Game.meta.flags,
+		"party": Game.adventure_defs().map(func(d: CharacterDef) -> String: return String(d.id))}
+
+
+## Leaving the village by the gate ([USER] pc-10: "press F to proceed", "press P to edit party").
+func _gate_prompt() -> void:
+	mode = M.DIALOG
+	_gate_open = true
+	var names: PackedStringArray = []
+	for d in Game.adventure_defs():
+		names.append(Txt.t(d.name_key))
+	var box := _new_dialog(Txt.f("UI_GATE_PROMPT", ", ".join(names)))
+	_dialog_button(box, Txt.t("UI_GATE_GO"), _gate_go)
+	_dialog_button(box, Txt.t("UI_GATE_PARTY"), _party_editor)
+	_dialog_button(box, Txt.t("OPT_STAY"), func() -> void:
+		_gate_open = false
+		_close_dialog()
+		mode = M.WALK)
+
+
+func _gate_go() -> void:
+	_gate_open = false
+	_close_dialog()
+	_finish_map()
+
+
+## Who comes along: every companion the hero has met, in or out, up to the party's four.
+func _party_editor() -> void:
+	_gate_open = false
+	var box := _new_dialog(Txt.f("UI_PARTY_EDIT", [Game.adventure_defs().size(), Game.party_max()]))
+	for d in Game.companions():
+		var id := String(d.id)
+		var going := Game.in_party(id)
+		var label := Txt.f("UI_PARTY_IN" if going else "UI_PARTY_OUT", Txt.t(d.name_key))
+		_dialog_button(box, label, func() -> void:
+			if Game.in_party(id):
+				Game.dismiss(id)
+			else:
+				Game.invite(id)
+			_after_change()
+			_party_editor())
+	_dialog_button(box, Txt.t("UI_CONTINUE"), _gate_prompt)
 
 
 ## Out the way out: onto the overworld, standing at the place this map belongs to.

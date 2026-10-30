@@ -46,6 +46,17 @@ func run(s: Node, f: int, step: String) -> bool:
 	match step:
 		"start":
 			return f == 20
+		"gate":
+			# The village gate's prompt ([USER] pc-10): GO (F) or EDIT PARTY (P); then the party editor.
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false  # a shot never writes the real save
+				game.meta.flags.append_array(["has_lodestone", "met_dog"])
+				game.refresh_party()
+				s._after_change()
+				s._apply_map_fx(["exit"], {})
+				s._party_editor()
+			return f == 30
 		"lodestone":
 			# The Lodestone menu with a skill rank waiting for the dog (rolled stats show in each line).
 			if f == 5:

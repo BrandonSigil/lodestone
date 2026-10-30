@@ -497,7 +497,8 @@ static func parse_events(rows: Array[Dictionary]) -> Dictionary:
 
 
 ## "" (anyone), "skill:<check>" (someone has it), "class:<id>", "char:<id>", "item:<id>" (the pack holds one),
-## "flag:<id>" or "noflag:<id>" (a meta flag is or isn't set); several joined by "&" must all hold.
+## "flag:<id>" or "noflag:<id>" (a meta flag is or isn't set), "party:<id>" or "noparty:<id>" (a companion is or
+## isn't in the party: have.party); several joined by "&" must all hold.
 ## `defs`: the party's CharacterDefs. have: {"items": id -> count, "flags": Array of set flags}.
 static func need_met(need: String, defs: Array, have := {}) -> bool:
 	if need == "":
@@ -514,6 +515,10 @@ static func need_met(need: String, defs: Array, have := {}) -> bool:
 			return have.get("flags", []).has(kv[1])
 		"noflag":
 			return not have.get("flags", []).has(kv[1])
+		"party":  # the companion is coming along / staying home ([USER] pc-10)
+			return have.get("party", []).has(kv[1])
+		"noparty":
+			return not have.get("party", []).has(kv[1])
 	for d: CharacterDef in defs:
 		match kv[0]:
 			"skill":

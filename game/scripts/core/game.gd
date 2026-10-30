@@ -122,7 +122,7 @@ func save_meta() -> void:
 
 static func _fresh_meta() -> Dictionary:
 	return {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": [],
-		"levels": {}, "pack": {}, "materials": {}}
+		"levels": {}, "pack": {}, "materials": {}, "benched": []}
 
 
 func reset_meta() -> void:
@@ -231,13 +231,55 @@ func choose_branch(which: String) -> bool:
 	return true
 
 
+## The party: the hero and the companions coming along. [USER] pc-1, pc-10: four fight, and who comes is
+## changed only at home (the gate's EDIT PARTY, or walking up to a companion in the village). A companion met
+## for the first time joins on their own while there's room; the player benches them to leave them home.
 func adventure_defs() -> Array[CharacterDef]:
 	var out: Array[CharacterDef] = [hero_def()]
+	for d in companions():
+		if not meta.benched.has(String(d.id)) and out.size() < party_max():
+			out.append(d)
+	return out
+
+
+## Every companion the hero has met (in the roster's order), in the party or not.
+func companions() -> Array[CharacterDef]:
+	var out: Array[CharacterDef] = []
 	for id in ADVENTURE_ROSTER.slice(1):
 		var d := Db.character(id)
 		if d != null and is_unlocked(d):
 			out.append(d)
 	return out
+
+
+func party_max() -> int:
+	return int(Db.levels.get("party_max", 4))
+
+
+func in_party(id: String) -> bool:
+	return adventure_defs().any(func(d: CharacterDef) -> bool: return String(d.id) == id)
+
+
+## Bring a companion along (false when the party is full) or leave them at home. Only at home: the gate
+## prompt and the companions' homes in the village call these.
+func invite(id: String) -> bool:
+	if in_party(id):
+		return true
+	if adventure_defs().size() >= party_max():
+		return false
+	meta.benched.erase(id)
+	refresh_party()
+	save_adventure()
+	save_meta()
+	return true
+
+
+func dismiss(id: String) -> void:
+	if not meta.benched.has(id):
+		meta.benched.append(id)
+	refresh_party()
+	save_adventure()
+	save_meta()
 
 
 ## Builds the run from meta: the party with its HP, and the pack. Nothing here is ever lost.
@@ -268,10 +310,17 @@ func start_adventure() -> void:
 func refresh_party() -> void:
 	if run == null:
 		return
-	for d in adventure_defs():
+	var wanted := adventure_defs()
+	for d in wanted:
 		var have := run.members.any(func(m: Dictionary) -> bool: return (m.def as CharacterDef).id == d.id)
 		if not have and not run.is_away(d.id):
 			run.join(d)
+	for m in run.members.duplicate():  # benched at home: what was on their belt goes back to the pack
+		var id := String((m.def as CharacterDef).id)
+		if id != "lead" and not wanted.any(func(d: CharacterDef) -> bool: return String(d.id) == id):
+			for it in (m.belt as InventoryGrid).items:
+				run.add_item(String(it.id), int(it.get("n", 1)))
+			run.members.erase(m)
 	for m in run.members:
 		var id := String((m.def as CharacterDef).id)
 		if id == "lead":

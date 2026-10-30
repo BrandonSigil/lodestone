@@ -26,3 +26,4 @@ ledge_chest,EX_CHEST,OPT_OPEN,,none,0,gold:+15;medicine:+2;unlock:got_ledge_ches
 snow_secret,EX_SNOW_SECRET,OPT_DIG,,none,0,medicine:+2;food:+3;unlock:got_snow_secret;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,
 den_bones,EX_DEN_BONES,OPT_RUMMAGE,,none,0,gold:+10;rope:+1;stuff:+2;unlock:got_den_bones;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,
 spot_boss,EX_SPOT_BOSS,OPT_FIGHT,,none,0,fight,,OPT_BACK_OFF,,none,0,,,,,,,,,,,,,,,,,,,,
+companion_dog,EX_COMPANION,OPT_INVITE,noparty:dog,none,0,invite:dog,,OPT_SEND_HOME,party:dog,none,0,dismiss:dog,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,
