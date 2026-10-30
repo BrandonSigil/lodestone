@@ -246,13 +246,14 @@ html.locked { overflow: hidden; }
 .chat-fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 38; width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--chat); color: var(--chat-ink); box-shadow: var(--shadow), 0 6px 18px rgba(20,30,24,.25); display: grid; place-items: center; }
 .chat-fab svg { width: 26px; height: 26px; }
 .chat-fab .dot { position: absolute; top: 2px; right: 2px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--stamp); color: #fff; font-size: 12px; font-weight: 600; line-height: 20px; }
-.chat { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 38; width: min(380px, calc(100vw - 32px)); height: min(560px, calc(100vh - 120px)); background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow), 0 12px 32px rgba(20,30,24,.22); display: flex; flex-direction: column; overflow: hidden; }
+.chat { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 38; width: min(380px, calc(100vw - 32px)); height: min(760px, calc(100vh - 110px)); background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow), 0 12px 32px rgba(20,30,24,.22); display: flex; flex-direction: column; overflow: hidden; }
 .chat-fab .pip { position: absolute; bottom: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--amber); border: 2px solid var(--paper); }
 .msg.ask .bubble { border-left: 3px solid var(--amber); }
 .msg .flag { display: inline-block; margin-top: 3px; font-size: 11.5px; font-weight: 600; color: var(--amber); }
-.chat-head { background: var(--chat); color: var(--chat-ink); padding: 10px 12px 10px 16px; display: flex; align-items: center; gap: 10px; }
-.chat-head h2 { font-family: var(--display); font-weight: 400; font-size: 17px; margin: 0; }
-.chat-head small { display: block; font-size: 12px; opacity: .85; }
+.chat-head { background: var(--chat); color: var(--chat-ink); padding: 7px 8px 7px 10px; display: flex; align-items: center; gap: 10px; }
+.chat-head img { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255,255,255,.85); background: #f4efe2; flex: none; }
+.chat-head h2 { font-family: var(--body); font-weight: 600; font-size: 15px; line-height: 1.2; margin: 0; }
+.chat-head small { display: block; font-size: 12px; line-height: 1.3; opacity: .85; }
 .chat-head .live { width: 8px; height: 8px; border-radius: 50%; background: #8fd19e; display: inline-block; margin-right: 5px; }
 .chat-head .live.slow { background: var(--amber); }
 .chat-head button { margin-left: auto; background: none; border: 0; color: inherit; font-size: 22px; line-height: 1; padding: 4px 8px; border-radius: 6px; }
@@ -410,14 +411,14 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
   <p id="lb-cap"></p>
 </div>
 <div class="toast" id="toast" hidden></div>
-<button class="chat-fab" id="chat-fab" aria-label="Chat with the project manager" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="dot" id="chat-dot" hidden></span><span class="pip" id="chat-pip" hidden></span></button>
+<button class="chat-fab" id="chat-fab" aria-label="Chat with Pip, the project manager" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="dot" id="chat-dot" hidden></span><span class="pip" id="chat-pip" hidden></span></button>
 <section class="chat" id="chat" hidden aria-labelledby="chat-h">
-  <div class="chat-head" id="chat-anchor"><div><h2 id="chat-h">Project manager</h2><small id="chat-sub">Opening…</small></div><button id="chat-x" aria-label="Close chat">×</button></div>
+  <div class="chat-head" id="chat-anchor"><img src="/_blob/f34a4132cbfb71e436a5c2a4758be01a" alt=""><div><h2 id="chat-h">Pip</h2><small id="chat-sub">Opening…</small></div><button id="chat-x" aria-label="Close chat">×</button></div>
   <div class="chat-log" id="chat-log" aria-live="polite"></div>
   <div class="chat-typing" id="chat-typing" hidden></div>
   <form class="chat-form" id="chat-form">
     <div id="chat-att"></div>
-    <div class="chat-row"><textarea id="chat-in" rows="1" placeholder="Message the project manager" aria-label="Message"></textarea><button class="btn primary" id="chat-send" type="submit">Send</button></div>
+    <div class="chat-row"><textarea id="chat-in" rows="1" placeholder="Message Pip" aria-label="Message"></textarea><button class="btn primary" id="chat-send" type="submit">Send</button></div>
   </form>
 </section>
 
@@ -1010,7 +1011,7 @@ function markChatSeen() { const last = S.chat.at(-1)?.at; if (last) try { localS
 function chatOpen() { return !$("chat").hidden; }
 function renderChatHead() {
   const live = S.chatWake === "available";
-  $("chat-sub").innerHTML = `<span class="live${live ? "" : " slow"}"></span>${live ? "Answers here in a minute or two" : "Picks this up within the hour"}`;
+  $("chat-sub").innerHTML = `<span class="live${live ? "" : " slow"}"></span>Project manager · ${live ? "answers in a minute or two" : "picks this up within the hour"}`;
 }
 function renderChat() {
   S.chat.sort((a, b) => String(a.at).localeCompare(String(b.at)));
@@ -1019,17 +1020,17 @@ function renderChat() {
   const lastMine = [...S.chat].reverse().find((m) => m.from === "brandon");
   const asks = S.chat.filter((m) => m.ask && m.from !== "brandon" && String(m.at) > String(lastMine?.at || ""));
   $("chat-pip").hidden = !asks.length;
-  $("chat-fab").setAttribute("aria-label", asks.length ? "Chat with the project manager: waiting on you" : "Chat with the project manager");
+  $("chat-fab").setAttribute("aria-label", asks.length ? "Chat with Pip: waiting on you" : "Chat with Pip, the project manager");
   const working = lastMine && lastMine.status === "seen";
-  $("chat-typing").hidden = !working; $("chat-typing").textContent = working ? "Project manager is on it…" : "";
+  $("chat-typing").hidden = !working; $("chat-typing").textContent = working ? "Pip is on it…" : "";
   if (!chatOpen()) return;
   const log = $("chat-log"), atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
   log.innerHTML = S.chat.length ? S.chat.map((m) => {
     const mine = m.from === "brandon";
     const ims = (m.images || []).map((im) => ({ url: im.url, caption: im.caption || "" }));
     const waiting = asks.includes(m);
-    return `<div class="msg${mine ? " mine" : ""}${waiting ? " ask" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Project manager" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.text ? `<div class="bubble">${esc(m.text)}</div>` : ""}${shotsHtml(ims)}${waiting ? `<span class="flag">Waiting on you</span>` : ""}</div>`;
-  }).join("") : `<div class="empty">Talk to the project manager here like a teammate: ask what's going on, pass on a decision, or paste a picture.</div>`;
+    return `<div class="msg${mine ? " mine" : ""}${waiting ? " ask" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Pip" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.text ? `<div class="bubble">${esc(m.text)}</div>` : ""}${shotsHtml(ims)}${waiting ? `<span class="flag">Waiting on you</span>` : ""}</div>`;
+  }).join("") : `<div class="empty">Talk to Pip, the project manager, here like a teammate: ask what's going on, pass on a decision, or paste a picture.</div>`;
   if (atEnd || S.chatJump) { log.scrollTop = log.scrollHeight; S.chatJump = false; }
   markChatSeen();
 }
