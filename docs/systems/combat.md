@@ -95,7 +95,7 @@ Where to pick: in the sandbox, the right panel's SPELLS section has a picker per
 | Wolf | JUMP BITE: +10% crit, +1 damage, 1 charge |
 | Dog | BITE: melee, the foe is SLOW for a phase, 1 charge. BARK: TAUNT until the dog's next phase, 1 charge ([USER] c4: bite slows, bark taunts) |
 | Bandit | DIRTY KICK: +5% crit, -1 damage, push 1, 2 rage |
-| Lich King | FIRE ZAP. BIG BAD BOOM, his big move (below) |
+| Lich King (38 HP, undead) | FIRE ZAP. BIG BAD BOOM, his big move (below) |
 
 ## Foe tags ([USER] design-foe-weakness; `data/tags.csv`)
 A class's `tags` (undead, beast, armored, flying) make some kinds of blow hit harder or softer. Kinds (`CombatRules.attack_kinds`): blade (non-magic melee), arrow (non-magic ranged), spell (magic, the Lich's plain hit too), and fire as well for a fire-element skill. The change is a damage part (`FOE_<TAG>`, shown in the forecast), so at least 1 still gets through. Table: undead fire +2, arrow -2; beast blade +1; armored spell +2, blade -1; flying arrow +2. Wolves are beast, the Lich and his minions undead ([USER] design-lich-tag). The bones trait (the skeleton archer) now just makes the piece undead. A foe's hover card lists its tags.
