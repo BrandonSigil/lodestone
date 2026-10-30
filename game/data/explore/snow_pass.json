@@ -247,6 +247,14 @@
      ],
      "id": "bandit_archer",
      "leader": true
+    },
+    {
+     "id": "ambusher",
+     "cell": [
+      7,
+      15
+     ],
+     "hidden": true
     }
    ]
   }

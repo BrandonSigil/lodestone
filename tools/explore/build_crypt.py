@@ -143,7 +143,7 @@ data = {
     "name": "crypt",
     "art_set": "ruins",
     "strangeness": 0.0,
-    "level": 2,  # foes by depth (design-to-builder-map-levels; 3 made the plaza a wall in playtests, 9ae5045)
+    "level": 1,  # foes by depth (design-to-builder-map-levels; 3, then 2 walled the plaza in playtests, 96c8714)
     "view": 0,
     "walls": True,  # plain gray walls (ExploreMap.walls)
     "wall_kit": "dungeon",  # thin stone back walls from the dungeon wall kit ([USER] 2026-10-30)
@@ -163,11 +163,7 @@ data = {
         {"id": "cave", "event": "spot_beasts", "sight": 4, "loot": "food:+10",
          "units": [{"id": "wolf", "cell": [2, 18]}, {"id": "wolf", "cell": [3, 20]}]},
         {"id": "tower", "event": "spot_people", "sight": 5, "loot": "medicine:+2",
-         # An ambusher (design-foe-roles) hides behind the tower's east side at (32, 4): seen from nowhere
-         # further than 3, spotted by a piece that steps round the tower (31, 5 or 32, 5). It moved here from
-         # the plaza, whose first try was lost in over half the playtests (ad89a0a).
-         "units": [{"id": "bandit_archer", "cell": [30, 3]}, {"id": "bandit", "cell": [30, 8]},
-                   {"id": "ambusher", "cell": [32, 4], "hidden": True}]},
+         "units": [{"id": "bandit_archer", "cell": [30, 3]}, {"id": "bandit", "cell": [30, 8]}]},
         # The E2E loop's boss ([USER] 2026-10-28): the Lich King on his throne, a placeholder piece.
         # Beating him ends the test ("end"); "boss" pays boss XP.
         # Kill him or escape ([USER] 2026-10-29, card design-fight-goals-pick): every standing piece on the

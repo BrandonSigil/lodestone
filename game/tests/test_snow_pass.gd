@@ -59,6 +59,9 @@ func test_pass_climb_reaches_everything() -> void:
 	ok(m.grid.height_at(top.cell) > m.grid.height_at(s) + 5, "the crypt stair is far above the start")
 	for g in m.groups:
 		for u: Dictionary in g.units:
+			if u.hidden:  # an ambusher may wait where the party can't walk (pines); it comes to them in the fight
+				ok(m.grid.passable(u.cell), "%s's hidden piece stands where a fight can move it" % g.id)
+				continue
 			ok(ExploreRules.find_path(m.grid, s, u.cell, 1, _blocked(m), _all(m)).size() > 1, "%s can be walked to" % g.id)
 
 

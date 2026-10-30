@@ -558,6 +558,25 @@ def wood_strays(path, most=2):
 
 
 wood_strays(os.path.normpath(os.path.join(OUT_DIR, "snow_pass.json")))
+
+
+def hide_ambusher(path, cell=(7, 15)):
+    """An ambusher (design-foe-roles, 96c8714) joins the bandits after the dressing, so the dressing (which keeps
+    the cells round each unit as built) lays the ground as before. It waits in the pines at the west end of the
+    bandits' road, behind the two rocks: unseen from the road, spotted by a piece that goes round the rocks."""
+    with open(path) as f:
+        data = json.load(f)
+    g = data["grid"]
+    assert g["terrain"][cell[1]][cell[0]] == "f" and g["heights"][cell[1]][cell[0]] == "6", "the ambusher's pines moved"
+    for grp in data["groups"]:
+        if grp["id"] == "pass_bandits":
+            grp["units"].append({"id": "ambusher", "cell": list(cell), "hidden": True})
+    with open(path, "w") as f:
+        json.dump(data, f, indent=1)
+        f.write("\n")
+
+
+hide_ambusher(os.path.normpath(os.path.join(OUT_DIR, "snow_pass.json")))
 if __name__ == "__main__":
     P.dump()
     print("start", start, "den_mouth", den, "den front", DEN_FRONT, "rope", rope_cell, "->", ledge_front,

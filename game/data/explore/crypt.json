@@ -2,7 +2,7 @@
  "name": "crypt",
  "art_set": "ruins",
  "strangeness": 0.0,
- "level": 2,
+ "level": 1,
  "view": 0,
  "walls": true,
  "wall_kit": "dungeon",
@@ -198,14 +198,6 @@
       30,
       8
      ]
-    },
-    {
-     "id": "ambusher",
-     "cell": [
-      32,
-      4
-     ],
-     "hidden": true
     }
    ]
   },
