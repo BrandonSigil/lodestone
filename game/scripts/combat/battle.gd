@@ -277,7 +277,7 @@ func _auto_player_phase() -> void:
 	var again := true
 	while again:  # round the list again for a piece helped up after its place came by: it may act, as the player's can
 		again = false
-		for u: CombatUnit in CombatSim.by_turn(units):
+		for u: CombatUnit in CombatSim.by_turn(units, grid):
 			if u.team != 0 or not u.alive() or u.done() or state == S.OVER:
 				continue
 			await _ai_turn(u)

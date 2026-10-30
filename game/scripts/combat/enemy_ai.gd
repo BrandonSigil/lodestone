@@ -112,9 +112,10 @@ static func _clutch(grid: CombatGrid, u: CombatUnit, units: Array, cost: Diction
 					if o.team != u.team and o.alive() and o.has_trait(CombatRules.TRAIT_STRUCTURE) and CombatRules.dist(o.cell, c) == 1:
 						n += 2.0
 				return n
-			# A standing friend is only worth carrying off a marked tile: one in melee chose to be there.
+			# A standing friend is only worth carrying off a marked tile, and only once it has had its turn (before that
+			# it can walk off itself); one in melee chose to be there.
 			var needy := units.filter(func(f: CombatUnit) -> bool:
-				return f != u and f.team == u.team and (f.downed() or (f.alive() and marked.has(f.cell))))
+				return f != u and f.team == u.team and (f.downed() or (f.alive() and f.done() and marked.has(f.cell))))
 			if needy.is_empty():
 				continue
 			var threat := hit_reach(grid, u, units)

@@ -91,7 +91,7 @@ func _fight(m: ExploreMap, g: Dictionary, how: String, level: int, weapon: Strin
 	var enemies: Array = []
 	for e: Dictionary in g.units:
 		var cls := Db.class_def(e.id)
-		var depth := 1 if bool(g.get("boss", false)) else m.level  # the place's depth; a boss is tuned by hand
+		var depth := ExploreRules.group_depth(m.level, g)  # the place's depth; a boss is tuned by hand
 		var u := CombatUnit.enemy(cls, ExploreRules.depth_mods(m.map_name, depth, String(g.id), g.units.find(e), cls))
 		u.place(e.cell, grid.height_at(e.cell))
 		u.summon_cells = g.get("summon", [] as Array[Vector2i])

@@ -45,7 +45,7 @@ static func play_phase(rng: RandomNumberGenerator, grid: CombatGrid, units: Arra
 	var again := true
 	while again:
 		again = false
-		for u: CombatUnit in by_turn(units):
+		for u: CombatUnit in by_turn(units, grid):
 			if u.team == team and u.alive() and not u.done():
 				take_turn(rng, grid, u, units)
 				again = true
@@ -75,11 +75,19 @@ static func run_phase(rng: RandomNumberGenerator, grid: CombatGrid, units: Array
 	return -1
 
 
-## The order a side's pieces take their turns: one that can COMMAND goes last, after the friend it would send
-## again has had its turn, as a player would order them ([USER] design-clutch-tools-2).
-static func by_turn(units: Array) -> Array:
-	var first := units.filter(func(u: CombatUnit) -> bool: return not u.abilities.any(func(a: Ability) -> bool: return a.kind == "command"))
-	return first + units.filter(func(u: CombatUnit) -> bool: return not first.has(u))
+const COMMAND_WAIT := 20.0  ## a piece with COMMAND ready waits for its friend when its own best action scores under this
+
+
+## The order a side's pieces take their turns ([USER] design-clutch-tools-2, game designer 2026-10-30): one with
+## COMMAND ready whose own best action now is weak goes last, so the friend it would send again has had its turn,
+## as a player would order them; with a good action in hand, or COMMAND on its wait, it goes in turn.
+static func by_turn(units: Array, grid: CombatGrid = null) -> Array:
+	var waits := func(u: CombatUnit) -> bool:
+		if not u.abilities.any(func(a: Ability) -> bool: return a.kind == "command" and CombatRules.usable(u, a)):
+			return false
+		return grid == null or u.done() or float(EnemyAi.plan(grid, u, units).score) < COMMAND_WAIT
+	var first := units.filter(func(u: CombatUnit) -> bool: return not waits.call(u))
+	return first + units.filter(func(u: CombatUnit) -> bool: return waits.call(u))
 
 
 ## Fights until one side falls. Mutates the units. Returns {"winner": 0, 1 or -1 for a stall, "rounds": int}.

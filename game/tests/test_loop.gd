@@ -1226,7 +1226,8 @@ func test_bosses_skip_the_depth_rolls() -> void:
 	Game.explore_entry = Vector2i(-1, -1)
 	var s: Node = load("res://scenes/explore.tscn").instantiate()
 	(Engine.get_main_loop() as SceneTree).root.add_child(s)
-	ok(s.map.level > 1, "the crypt is deeper than 1")
+	eq(ExploreRules.group_depth(3, {"boss": true}), 1, "a boss group rolls no depth")
+	eq(ExploreRules.group_depth(3, {}), 3, "any other group rolls the place's")
 	var throne: Dictionary = s.groups.filter(func(g: Dictionary) -> bool: return g.def.id == "throne")[0]
 	var lich: CombatUnit = throne.units[0]
 	eq(lich.max_hp, Db.class_def("lich").max_hp, "the Lich keeps his own HP")
