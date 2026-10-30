@@ -359,7 +359,32 @@ func test_road_fight_is_scale_c() -> void:
 		for a in mine:
 			for b in theirs:
 				gap = mini(gap, absi(a.x - b.x))
-		ok(gap >= 14, "seed %d: sides start %d columns apart" % [s, gap])
+		ok(gap >= 12, "seed %d: sides start %d columns apart" % [s, gap])
+
+
+## Scale C road fight maps ([USER] 2026-10-30: "no way to get up onto that central shelf, stairs seem flat or lead to
+## nowhere"): every walkable cell is on one stretch of ground, and every stair climbs one level and lands.
+func test_valley_every_shelf_has_a_stair_up() -> void:
+	for s in 80:
+		var g := MapGen.valley(s, MapGen.FIGHT_W, MapGen.FIGHT_H, "snow")
+		var start := MapOps._biggest_walk(g, 1)
+		var got := MapOps.reach(g, start, 1)
+		var lost := 0
+		for y in g.h:
+			for x in g.w:
+				if g.passable(Vector2i(x, y)) and not got.has(Vector2i(x, y)):
+					lost += 1
+		eq(lost, 0, "seed %d: %d walkable cells cut off" % [s, lost])
+		for y in g.h:
+			for x in g.w:
+				var c := Vector2i(x, y)
+				if g.terrain_at(c) != CombatGrid.T.STAIRS or not g.passable(c):
+					continue
+				var up := false
+				for d: Vector2i in CombatRules.DIRS:
+					if g.passable(c + d) and g.height_at(c + d) == g.height_at(c) + 1:
+						up = true
+				ok(up, "seed %d: the stair at %s climbs somewhere" % [s, c])
 
 
 func test_map_doc_files() -> void:

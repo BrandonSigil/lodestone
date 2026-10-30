@@ -493,42 +493,92 @@ static func reach(grid: CombatGrid, from: Vector2i, jump := 1) -> Dictionary:
 	return seen
 
 
-## Join every walkable part of the map to the biggest one with stairs, where the climb is 4 levels or less
-## (a 4-level step gets its stair raised one). Returns how many stairs it placed.
+## Join every walkable part of the map to the biggest one with a real flight of stairs: a straight run of cells
+## stepping one level at a time, from the part's edge out to the main ground ([USER] 2026-10-30, scale C road fight:
+## "no way to get up onto that central shelf, stairs seem flat or lead to nowhere"). The run climbs by the cheapest
+## line; each rise's lower cell becomes a stair. A part no run can reach (water or a third part in the way) is made
+## rock, so nothing walkable is left cut off. Returns how many stair cells it placed.
+const RAMP_MAX := 12  ## the longest run, in cells
+
+
 static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var placed := 0
-	for guard in 60:
+	for guard in 40:
 		var start := _biggest_walk(grid, jump)
 		if start.x < 0:
 			return placed
-		var got := reach(grid, start, jump)
-		var options: Array = []
-		for c: Vector2i in got:
+		var main := reach(grid, start, jump)
+		if _all_walkable_reached(grid, main):
+			return placed
+		# the part to join: the biggest one not on the main ground
+		var part := {}
+		for y in grid.h:
+			for x in grid.w:
+				var c := Vector2i(x, y)
+				if grid.passable(c) and not main.has(c) and not part.has(c):
+					var got := reach(grid, c, jump)
+					if got.size() > part.size():
+						part = got
+		var best: Array = []
+		var best_cost := INF
+		for p: Vector2i in part:
 			for d: Vector2i in CombatRules.DIRS:
-				var nb := c + d
-				if got.has(nb) or not grid.passable(nb):
-					continue
-				var diff := absi(grid.height_at(nb) - grid.height_at(c))
-				if diff <= 4 and grid.terrain_at(c) != T.WATER and grid.terrain_at(nb) != T.WATER:
-					options.append([c, nb, diff])
-		if options.is_empty():
-			return placed
-		var pick: Array = options[rng.randi() % options.size()]
-		var a: Vector2i = pick[0]
-		var b: Vector2i = pick[1]
-		var low := a if grid.height_at(a) < grid.height_at(b) else b
-		var high := b if low == a else a
-		grid.set_terrain(low, T.STAIRS)
-		if pick[2] == 4:
-			grid.set_height(low, grid.height_at(low) + 1)
-		if grid.terrain_at(high) == T.FOREST:
-			grid.set_terrain(high, T.GRASS)
-		placed += 1
-		if _all_walkable_reached(grid, reach(grid, start, jump)):
-			return placed
+				var run: Array[Vector2i] = [p]
+				for k in range(1, RAMP_MAX + 1):
+					var q := p + d * k
+					if not grid.solid(q) or part.has(q) or grid.terrain_at(q) == T.WATER:
+						break
+					run.append(q)
+					if main.has(q):
+						var hp := grid.height_at(p)
+						var ht := grid.height_at(q)
+						if absi(ht - hp) <= k:
+							var cost := float(k) + rng.randf() * 0.5
+							for j in range(1, k):
+								var want := hp + signi(ht - hp) * mini(j, absi(ht - hp))
+								if want != grid.height_at(run[j]):
+									cost += 1.5
+							if cost < best_cost:
+								best_cost = cost
+								best = run.duplicate()
+		if best.is_empty():
+			for c: Vector2i in part:  # nothing can reach it: it is rock now
+				grid.set_terrain(c, T.ROCK)
+			continue
+		var hp := grid.height_at(best[0])
+		var ht := grid.height_at(best[best.size() - 1])
+		for j in range(1, best.size() - 1):
+			var q: Vector2i = best[j]
+			grid.set_height(q, hp + signi(ht - hp) * mini(j, absi(ht - hp)))
+			if grid.terrain_at(q) in [T.FOREST, T.ROCK, T.WATER]:
+				grid.set_terrain(q, T.GRASS)
+		for j in range(best.size() - 1):  # the lower cell of each one-level rise is the stair
+			var a: Vector2i = best[j]
+			var b: Vector2i = best[j + 1]
+			if absi(grid.height_at(a) - grid.height_at(b)) == 1:
+				var low := a if grid.height_at(a) < grid.height_at(b) else b
+				if grid.terrain_at(low) != T.STAIRS:
+					grid.set_terrain(low, T.STAIRS)
+					placed += 1
 	return placed
+
+
+## Walkable cells the main ground can't reach (a pillar's top, a nook) become rock, so no one stands cut off.
+static func seal_unreachable(grid: CombatGrid, jump := 1) -> int:
+	var start := _biggest_walk(grid, jump)
+	if start.x < 0:
+		return 0
+	var got := reach(grid, start, jump)
+	var n := 0
+	for y in grid.h:
+		for x in grid.w:
+			var c := Vector2i(x, y)
+			if grid.passable(c) and not got.has(c):
+				grid.set_terrain(c, T.ROCK)
+				n += 1
+	return n
 
 
 static func _biggest_walk(grid: CombatGrid, jump: int) -> Vector2i:
