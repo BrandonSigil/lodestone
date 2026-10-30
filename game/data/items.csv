@@ -15,3 +15,6 @@ herb,ITEM_HERB,material,#,0,0,0,0,5
 metal,ITEM_METAL,material,#,0,0,0,0,5
 wood,ITEM_WOOD,material,##,0,0,0,0,5
 rare,ITEM_RARE,material,#,0,0,0,0,1
+meal_stew,MEAL_STEW,meal,##,0,0,0,0,1
+meal_roast,MEAL_ROAST,meal,##,0,0,0,0,1
+meal_feast,MEAL_FEAST,meal,##/##,0,0,0,0,1

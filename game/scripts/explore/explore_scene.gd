@@ -664,6 +664,15 @@ func _open_thing(t: Dictionary) -> void:
 	open_event(String(t.event), {"thing": t})
 
 
+## "FOOD BITS 2/3, HERB 1/1": what a recipe or step needs, with what the village pile holds.
+func _needs_text(needs_s: String) -> String:
+	var parts: PackedStringArray = []
+	var needs := RestoreRules.parse_needs(needs_s)
+	for id in needs:
+		parts.append("%s %d/%d" % [Txt.t(String(Db.items[id].name_key)), int(Game.meta.materials.get(id, 0)), int(needs[id])])
+	return ", ".join(parts)
+
+
 ## A building's next restore step ([USER] omr-5: walk up to it to see what it needs): the items with what
 ## the village pile holds, GIVE when it's all there, and WATCH to track it on trips.
 func _restore_box(building: String) -> void:
@@ -687,7 +696,19 @@ func _restore_box(building: String) -> void:
 		var needs := RestoreRules.parse_needs(String(row.needs))
 		for id in needs:
 			lines.append("  %s  %d / %d" % [Txt.t(String(Db.items[id].name_key)), int(Game.meta.materials.get(id, 0)), int(needs[id])])
+	if building == "inn":
+		for r: Dictionary in Game.recipes_open():
+			lines.append(Txt.f("UI_RECIPE_LINE", [Txt.t(String(r.name_key)), _needs_text(String(r.needs))]))
 	box = _new_dialog("\n".join(lines))
+	if building == "inn":
+		# [USER] omr-9: the chef's recipes, made at home into a meal to carry and cook at camp
+		for r: Dictionary in Game.recipes_open():
+			var rid := String(r.id)
+			if RestoreRules.missing(r, Game.meta.materials).is_empty():
+				_dialog_button(box, Txt.f("UI_COOK", Txt.t(String(r.name_key))), func() -> void:
+					Game.cook(rid)
+					_after_change()
+					_restore_box(building))
 	if not row.is_empty() and RestoreRules.is_open(Db.restore, building, Game.meta.flags) \
 			and RestoreRules.status(Game.meta.restore, String(row.id)) == "":
 		var id := String(row.id)
@@ -1073,6 +1094,7 @@ func _on_fight_changed() -> void:
 func _on_fight_over(won: bool, foes: Array) -> void:
 	for u: CombatUnit in party:
 		u.member.hp = u.hp
+	Game.fight_done()  # one fight less on a camp meal's buff
 	var box := _new_dialog(Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT"))
 	if not won:
 		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall())

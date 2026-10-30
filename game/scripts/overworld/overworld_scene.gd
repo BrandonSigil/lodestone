@@ -89,7 +89,8 @@ func _advance_to(t1: float) -> void:
 	var seconds := float(leg().get("seconds", 60))
 	var stop := TravelRules.next_stop(float(tr.t), tr.stops, seconds)
 	t1 = minf(t1, stop)
-	for i in TravelRules.meals_between(float(tr.t), t1):
+	var rest := float(tr.get("rest", 0.0))  # time spent at camp still counts toward meals
+	for i in TravelRules.meals_between(float(tr.t) + rest, t1 + rest):
 		TravelRules.eat(Game.run)
 		_refresh_hud()
 	tr.t = t1
@@ -207,6 +208,43 @@ func act(kind: String) -> void:
 	acts[kind] = t
 	var r := TravelRules.activity(Game.run, kind)
 	_say(Txt.t("UI_EX_WIN") if r.success else Txt.t("UI_EX_LOSE"))
+	_refresh_hud()
+
+
+## MAKE CAMP ([USER] omr-9): once a leg. The party stands still a while (meals still come due on the road
+## clock) and can cook a meal it carries: everyone's buffed for the next fights.
+func make_camp() -> void:
+	if not walking() or _busy or Game.travel.get("camped", false):
+		return
+	var tr := Game.travel
+	var rest := float(tr.get("rest", 0.0))
+	var camp := float(Db.levels.get("camp_seconds", 20))
+	for i in TravelRules.meals_between(float(tr.t) + rest, float(tr.t) + rest + camp):
+		TravelRules.eat(Game.run)
+	tr["rest"] = rest + camp
+	tr["camped"] = true
+	_busy = true
+	var box := _new_dialog(Txt.t("UI_CAMP"))
+	var meals := Game.run.items.keys().filter(func(id: String) -> bool: return String(Db.items[id].kind) == "meal")
+	if meals.is_empty():
+		var l := Label.new()
+		l.text = Txt.t("UI_CAMP_NO_MEAL")
+		box.add_child(l)
+	for id: String in meals:
+		var b := Button.new()
+		b.text = Txt.f("UI_COOK", Txt.t(String(Db.items[id].name_key)))
+		b.pressed.connect(func() -> void:
+			Game.eat_meal(id)
+			_say(Txt.t("UI_CAMP_ATE"))
+			_close_dialog()
+			_side())
+		box.add_child(b)
+	var go := Button.new()
+	go.text = Txt.t("UI_CONTINUE")
+	go.pressed.connect(func() -> void:
+		_close_dialog()
+		_side())
+	box.add_child(go)
 	_refresh_hud()
 
 
@@ -481,6 +519,8 @@ func _side() -> void:
 		hud.add_button(Txt.t("UI_OW_FISH"), act.bind("fish"))
 		hud.add_button(Txt.t("UI_OW_FORAGE"), act.bind("forage"))
 		hud.add_button(Txt.t("UI_OW_TALK"), talk)
+		if not Game.travel.get("camped", false):
+			hud.add_button(Txt.t("UI_OW_CAMP"), make_camp)
 	else:
 		var n := _node(String(Game.travel.get("at", "town")))
 		if String(n.get("map", "")) != "":

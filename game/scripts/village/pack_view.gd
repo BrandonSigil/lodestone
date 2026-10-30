@@ -317,7 +317,7 @@ static func draw_item(ci: CanvasItem, id: String, db: Dictionary, cells: Array[V
 			best_d = cc.distance_to(center)
 			best = cc
 	Riso.draw_item_icon(ci, kind, best, cell * 0.8)
-	if (kind == "gear" or kind == "material") and cell >= 30.0:  # no icon drawn for these yet, so they carry their name
+	if (kind == "gear" or kind == "material" or kind == "meal") and cell >= 30.0:  # no icon drawn for these yet, so they carry their name
 		Riso.draw_label(ci, Txt.t(String(db[id].name_key)), center, maxi(10, int(cell * 0.22)), ink, HORIZONTAL_ALIGNMENT_CENTER)
 	if bound:
 		Riso.draw_stamp_star(ci, top_left + Vector2(cell * 0.2, cell * 0.2), cell * 0.12, Riso.alpha(Riso.INDIGO, a))

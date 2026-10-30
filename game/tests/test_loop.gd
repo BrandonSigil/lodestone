@@ -725,3 +725,28 @@ func test_a_shut_ladder_says_why() -> void:
 	_db()
 	eq(RestoreRules.opened_by(Db.restore, "sword").id, "smithy_2", "the sharpening stone opens the sword's upgrades")
 	eq(RestoreRules.opened_by(Db.restore, "smithy"), {}, "the smith moving in opens the smithy")
+
+
+# --- meals and camp ([USER] omr-9; one-more-run step 4) ---------------------------------------------
+
+func test_cook_at_home_eat_at_camp() -> void:
+	var saved := _fresh_game()
+	Game.meta.materials = {"ingredient": 5, "herb": 1}
+	ok(not Game.cook("stew"), "no kitchen yet")
+	Game.meta.flags.append("kitchen_1")
+	eq(Game.recipes_open().map(func(r: Dictionary) -> String: return r.id), ["stew"], "the first kitchen step opens the first recipe")
+	ok(Game.cook("stew"))
+	eq(int(Game.meta.materials.ingredient), 2, "its ingredients came from the village pile")
+	eq(Game.run.item_count("meal_stew"), 1, "a meal to carry")
+	eq(Game.run.pack.items.filter(func(it: Dictionary) -> bool: return it.id == "meal_stew")[0].shape.size(), 2, "it takes a full slot")
+	var hero: Dictionary = Game.run.members[0]
+	var hp := Game.run.max_hp(hero)
+	ok(Game.eat_meal("meal_stew"))
+	eq(Game.run.item_count("meal_stew"), 0)
+	eq(Game.run.max_hp(hero), hp + 4, "the buff: +4 HP")
+	Game.fight_done()
+	eq(int(Game.run.meal.fights), 1, "one fight down")
+	Game.fight_done()
+	ok(Game.run.meal.is_empty(), "two fights and it's gone")
+	eq(Game.run.max_hp(hero), hp)
+	_restore(saved)

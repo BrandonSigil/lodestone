@@ -384,6 +384,7 @@ func start_adventure() -> void:
 			if Db.items.has(id):
 				run.add_item(id, int(pack["items"][id]))
 	run.gold = int(pack.get("gold", 0))
+	run.meal = Dictionary(pack.get("meal", {})).duplicate()
 	run.load_waiting(pack.get("waiting", {}))
 	refresh_party()
 	run.load_belts(pack.get("belts", {}))
@@ -416,7 +417,7 @@ func refresh_party() -> void:
 			m.def = hero_def()  # the class follows the weapon
 		var before := run.max_hp(m)
 		var s := level_state(id)
-		m.bonus = LevelRules.merge(LevelRules.bonus(s, Db.levels), weapon_mods(id))
+		m.bonus = LevelRules.merge(LevelRules.merge(LevelRules.bonus(s, Db.levels), weapon_mods(id)), meal_mods())
 		m.ranks = rank_state(id).ranks
 		m.hp = clampi(int(m.hp) + maxi(0, run.max_hp(m) - before), 0, run.max_hp(m))
 
@@ -531,7 +532,8 @@ func save_adventure() -> void:
 	var hp := {}
 	for m in run.members:
 		hp[String((m.def as CharacterDef).id)] = int(m.hp)
-	meta.pack = {"grid": run.pack.to_save(), "belts": run.belts_save(), "waiting": run.waiting_save(), "gold": run.gold, "hp": hp}
+	meta.pack = {"grid": run.pack.to_save(), "belts": run.belts_save(), "waiting": run.waiting_save(), "gold": run.gold, "hp": hp,
+		"meal": run.meal.duplicate()}
 	save_meta()
 
 
@@ -655,6 +657,72 @@ func _on_pickup(id: String, _n: int) -> void:
 				and RestoreRules.parse_needs(String(r.needs)).has(id):
 			counts.emit(Txt.f("UI_COUNTS_FOR", [Txt.t(String(Db.items[id].name_key)), Txt.t(String(r.name_key))]))
 			return
+
+
+# --- meals ([USER] omr-9; one-more-run step 4): cooked at home from the chef's recipes, eaten at camp ------
+
+## Recipes the kitchen can make now (each opens with a kitchen restore step).
+func recipes_open() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for id in Db.recipes:
+		var r: Dictionary = Db.recipes[id]
+		if String(r.kitchen) == "" or has_flag(String(r.kitchen)):
+			out.append(r)
+	return out
+
+
+## Cook a recipe at home: its ingredients from the village pile, its meal into the pack (a full pack puts
+## it in FOUND as any pickup). False when the kitchen can't make it or something's missing.
+func cook(recipe: String) -> bool:
+	var r: Dictionary = Db.recipes.get(recipe, {})
+	if r.is_empty() or not recipes_open().has(r) or not RestoreRules.missing(r, meta.materials).is_empty():
+		return false
+	var needs := RestoreRules.parse_needs(String(r.needs))
+	for id in needs:
+		meta.materials[id] = int(meta.materials[id]) - int(needs[id])
+		if int(meta.materials[id]) <= 0:
+			meta.materials.erase(id)
+	run.add_item(String(r.meal), 1)
+	save_adventure()
+	return true
+
+
+## The recipe a carried meal item was cooked from.
+func recipe_of(meal_item: String) -> Dictionary:
+	for id in Db.recipes:
+		if String(Db.recipes[id].meal) == meal_item:
+			return Db.recipes[id]
+	return {}
+
+
+## Eat a carried meal at camp: everyone gets its buff for the next few fights (meal_fights).
+func eat_meal(meal_item: String) -> bool:
+	var r := recipe_of(meal_item)
+	if r.is_empty() or run.item_count(meal_item) <= 0:
+		return false
+	run.add_item(meal_item, -1)
+	run.meal = {"recipe": String(r.id), "fights": int(Db.levels.get("meal_fights", 2))}
+	run.note(Txt.f("LOG_MEAL", Txt.t(String(r.name_key))))
+	refresh_party()
+	save_adventure()
+	return true
+
+
+## The camp meal's buff, in CombatUnit mod keys ("damage:+1;defense:+1;hp:+4").
+func meal_mods() -> Dictionary:
+	if run == null or run.meal.is_empty() or int(run.meal.get("fights", 0)) <= 0:
+		return {}
+	return RestoreRules.parse_needs(String(Db.recipes.get(String(run.meal.recipe), {}).get("buff", "")))
+
+
+## A fight is over: one fight less on the meal's buff.
+func fight_done() -> void:
+	if run == null or run.meal.is_empty():
+		return
+	run.meal.fights = int(run.meal.fights) - 1
+	if int(run.meal.fights) <= 0:
+		run.meal = {}
+	refresh_party()
 
 
 ## How much of a material the village has banked.

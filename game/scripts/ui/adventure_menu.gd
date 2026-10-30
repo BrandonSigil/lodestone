@@ -59,6 +59,9 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 				changed.call())
 			row.add_child(b)
 		box.add_child(row)
+	if not Game.run.meal.is_empty():
+		_label(box, Txt.f("UI_LS_MEAL", [Txt.t(String(Db.recipes.get(String(Game.run.meal.recipe), {}).get("name_key", ""))),
+			int(Game.run.meal.fights)]), 13)
 	if home:
 		_button(box, Txt.t("UI_LS_HOME"), func() -> void:
 			close.call()
