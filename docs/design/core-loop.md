@@ -329,3 +329,21 @@ Falling keeps every item (`[USER]` 2026-10-28), so a tight pack can't create fea
 | `design-inv-10-home` | Coming home: materials bank themselves, unpack by hand into a stash, or everything banks and you repack? | Materials bank themselves |
 | `design-inv-11-sort` | Hand packing only, auto-place on pickup, or a tidy button too? | Auto-place, rearrange by hand on the walk |
 | `design-inv-12-dog` | The dog as courier: one item, a 2 x 2 saddlebag, or whatever the pack could hold? | 2 x 2 saddlebag |
+
+## Bosses, foes and the village (batch posted 2026-10-30)
+The follow-ups left open after the four themes: what makes a boss different, what each foe asks of the player, and what the village grows into. Ranked so the most load-bearing come first.
+
+| Card | Question | Options |
+|---|---|---|
+| `design-world-gate` | What opens the next region? | bosses only (as today); some roads need a home build; both |
+| `design-boss-cadence` | How often do bosses come? (multi) | end of each region; plus a mid-region mini-boss; a roaming boss; few bosses, elites carry the middle |
+| `design-boss-shape` | What makes a boss fight different? (multi) | phases; parts to break; minions; an objective |
+| `design-foe-scale` | Do foes get tougher as the party levels? | fixed; by depth (closest to today); tougher versions on old places; foes level with the party |
+| `design-foe-roles` | Which foe roles first? (multi) | charger; guard; ambusher; caster or support |
+| `design-foe-weakness` | Do foes have weaknesses? | none; a few tags; a full chart; resistances only (as today) |
+| `design-boss-warning` | Do bosses warn of their big move? | no, danger zone only; the big move shows its tiles; a countdown |
+| `design-boss-retry` | After losing to a boss, what carries over? (multi) | nothing; a growing assist; you learn him; his wounds stay |
+| `design-village-grows` | Beyond restoring, how else does the village grow? (multi) | restore only; empty lots; decoration; the town under threat |
+| `design-village-life` | How alive are the settlers? (multi) | services only; bonds that grow; daily routines |
+
+Tensions to watch: an ambusher bends danger-zone-only (c2); a boss big-move warning would be the one exception to it; foes that level with the party would undo grinding as a safety net (pc-4).
