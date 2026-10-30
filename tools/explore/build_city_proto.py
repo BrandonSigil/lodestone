@@ -11,8 +11,9 @@ levels high and three flights wide that climbs the right way (MapDress.stair_run
 - Streets are laid out as rects; the lots between them are cut into parcels. A parcel becomes a fall village
   house (when its door opens onto a street) or a gray box building (no art: CombatBoard draws a graybox).
   A few lots are walkable roof blocks level with the terrace, reached by flights of three steps.
-- A house over a lane you walk under is faked with a graybox arch (CombatGrid.under_arch) whose span sits
-  flush with the roofs; the real two-level cell is engine work Brandon approved (builder-city-overpass).
+- Houses on bridges you walk under ([USER] card builder-city-overpass; docs/systems/decks.md): a deck over the
+  lane, level with the roofs either side, with a gray box house standing on half of it and a walkway on the
+  other half, so the roofs join across the street and the lane runs on underneath.
 
 Run again after editing: python3 tools/explore/build_city_proto.py [--dump]
 """
@@ -28,11 +29,12 @@ TERRACE = 13  # last row of the upper terrace
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "game", "data", "explore", "city_proto.json")
 BLOCKED = "ru."
 JUMP, STAIRS_CLIMB = 1, 2  # the lead's jump; CombatGrid.STAIRS_CLIMB
+DECK_CLEAR = 2  # CombatGrid.DECK_CLEAR: a deck this far over its lane leaves the lane open
 rng = random.Random(7)
 
 terrain = [["s"] * W for _ in range(H)]
 height = [[HIGH if y <= TERRACE else LOW] * W for y in range(H)]
-props, things = [], []
+props, things, decks = [], [], {}  # decks: ground cell -> deck floor height
 street = set()
 reserved = set()  # lot cells kept out of the parcels (stair flights, roof blocks, overpass pillars)
 
@@ -57,17 +59,15 @@ def stair(cells):
         reserved.add((x, y))
 
 
-def overpass(x, y, foot, top):
-    """A house over the lane, faked: an arch whose pillars are cut into the buildings either side, down at
-    street level, and whose span sits flush with the roofs at `top` (graybox until art)."""
-    fx, fy = foot
-    ends = [(x, y), (x + fx - 1, y + fy - 1)]
-    lvl = min(height[cy][cx] for cy in range(y, y + fy) for cx in range(x, x + fx) if (cx, cy) not in ends)
-    for cx, cy in ends:
-        terrain[cy][cx] = "s"
-        height[cy][cx] = lvl
-        reserved.add((cx, cy))
-    prop("ph_overpass", x, y, foot, tall=(top - lvl) / 2.0, sight=2.0, arch=True)
+def bridge(x0, y0, x1, y1, house):
+    """A deck over the lane (inclusive rect) level with the roofs, and a gray box house standing on it at
+    `house` = (x, y, fx, fy); the rest of the deck is a walkway."""
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            assert ROOF - height[y][x] >= DECK_CLEAR, "a deck too low to walk under at %s" % ((x, y),)
+            decks[(x, y)] = ROOF
+    hx, hy, fx, fy = house
+    prop("ph_building", hx, hy, (fx, fy), 1.5, 3.0, deck=True)
 
 
 # --- streets ---------------------------------------------------------------------------------------------
@@ -116,10 +116,10 @@ for x0, y0, x1, y1 in ROOFS:
                 height[y][x] = ROOF
                 reserved.add((x, y))
 
-# --- houses over lanes (faked) ---------------------------------------------------------------------------
-overpass(26, 21, (1, 4), ROOF)  # over the alley
-overpass(31, 25, (4, 1), ROOF)  # over the east street
-overpass(19, 25, (4, 1), ROOF)  # over main street (approved)
+# --- houses on bridges you walk under ----------------------------------------------------------------------
+bridge(20, 24, 21, 27, (20, 24, 2, 2))  # over main street, roof to roof
+bridge(25, 22, 28, 23, (25, 22, 2, 2))  # over the alley
+bridge(32, 24, 33, 27, (32, 24, 2, 2))  # over the east street
 
 
 # --- the lots: everything else, cut into parcels ----------------------------------------------------------
@@ -211,9 +211,12 @@ def inb(x, y):
     return 0 <= x < W and 0 <= y < H
 
 
-def prop_cells():
+def prop_cells(on_deck=False):
+    """Cells props block on the ground (or, on_deck, on the decks)."""
     cells = set()
     for pr in props:
+        if bool(pr.get("deck")) != on_deck:
+            continue
         fx, fy = pr["foot"]
         for dy in range(fy):
             for dx in range(fx):
@@ -223,21 +226,40 @@ def prop_cells():
     return cells
 
 
+def places(c):
+    """The walkable places at a cell: (cell, 0) its ground, (cell, 1) its deck (docs/systems/decks.md)."""
+    out = []
+    lane_open = c not in decks or decks[c] - height[c[1]][c[0]] >= DECK_CLEAR
+    if terrain[c[1]][c[0]] not in BLOCKED and c not in GROUND_BLOCK and lane_open:
+        out.append((c, 0))
+    if c in decks and c not in DECK_BLOCK:
+        out.append((c, 1))
+    return out
+
+
+def level(p):
+    return decks[p[0]] if p[1] else height[p[0][1]][p[0][0]]
+
+
 def walk(a, b):
-    limit = JUMP + (STAIRS_CLIMB if "t" in (terrain[a[1]][a[0]], terrain[b[1]][b[0]]) else 0)
-    return abs(height[a[1]][a[0]] - height[b[1]][b[0]]) <= limit
+    stairs = (not a[1] and terrain[a[0][1]][a[0][0]] == "t") or (not b[1] and terrain[b[0][1]][b[0][0]] == "t")
+    return abs(level(a) - level(b)) <= JUMP + (STAIRS_CLIMB if stairs else 0)
 
 
 def reach(frm):
-    blocked = prop_cells()
-    seen, todo = {frm}, [frm]
+    global GROUND_BLOCK, DECK_BLOCK
+    GROUND_BLOCK, DECK_BLOCK = prop_cells(), prop_cells(True)
+    seen, todo = {(frm, 0)}, [(frm, 0)]
     while todo:
         c = todo.pop()
         for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            n = (c[0] + dx, c[1] + dy)
-            if inb(*n) and n not in seen and n not in blocked and terrain[n[1]][n[0]] not in BLOCKED and walk(c, n):
-                seen.add(n)
-                todo.append(n)
+            n = (c[0][0] + dx, c[0][1] + dy)
+            if not inb(*n):
+                continue
+            for q in places(n):
+                if q not in seen and walk(c, q):
+                    seen.add(q)
+                    todo.append(q)
     return seen
 
 
@@ -253,7 +275,7 @@ def dump(r):
             elif terrain[y][x] == "t":
                 row += "/" + str(height[y][x])
             else:
-                row += (" " if (x, y) in r else "x") + str(height[y][x])
+                row += ("=" if ((x, y), 1) in r else " " if ((x, y), 0) in r else "x") + str(height[y][x])
         print("%2d %s" % (y, row))
     print("   " + "".join("%2d" % (x % 100) for x in range(W)))
 
@@ -282,15 +304,18 @@ def check():
     r = reach(start)
     if "--dump" in sys.argv:
         dump(r)
+    on_ground = {p[0] for p in r if not p[1]}
     for d in doors:
-        assert d in r, "door %s can't be reached" % (d,)
+        assert d in on_ground, "door %s can't be reached" % (d,)
     for name, cell in [("upper square", (24, 6)), ("market", (31, 31)), ("square A", (12, 33)),
                        ("roof off the cross lane", (10, 17)), ("roof off the market", (25, 25)),
                        ("roof off the east lane", (35, 26)), ("terrace by the grand stair", (21, 12)),
                        ("under the main street house", (20, 25)), ("under the alley house", (26, 22)),
                        ("under the east street house", (32, 25)), ("the west wall stair top", (3, 13)),
                        ("the east wall stair top", (40, 13))]:
-        assert cell in r, name + " can't be reached"
+        assert cell in on_ground, name + " can't be reached"
+    for name, cell in [("over main street", (21, 27)), ("over the alley", (28, 22)), ("over the east street", (33, 26))]:
+        assert (cell, 1) in r, name + " can't be walked on"
     seen = {}
     for pr in props:
         for dy in range(pr["foot"][1]):
@@ -298,7 +323,7 @@ def check():
                 c = (pr["cell"][0] + dx, pr["cell"][1] + dy)
                 assert c not in seen, "%s and %s overlap at %s" % (pr["sprite"], seen[c], c)
                 seen[c] = pr["sprite"]
-        if pr["sprite"].startswith(("b_", "ph_building")):
+        if pr["sprite"].startswith(("b_", "ph_building")) and not pr.get("deck"):
             x0, y0 = pr["cell"]
             lv = {height[y0 + dy][x0 + dx] for dy in range(pr["foot"][1]) for dx in range(pr["foot"][0])}
             assert len(lv) == 1, pr["sprite"] + " isn't on flat ground"
@@ -312,7 +337,8 @@ reached = check()
 data = {
     "name": "city_proto", "art_set": "village", "strangeness": 0.0, "view": 0, "turn": False, "fog": False,
     "grid": {"w": W, "h": H, "terrain": ["".join(r) for r in terrain],
-             "heights": ["".join(str(v) for v in r) for r in height], "props": props},
+             "heights": ["".join(str(v) for v in r) for r in height], "props": props,
+             "decks": [{"x": x, "y": y, "h": h, "t": "s"} for (x, y), h in sorted(decks.items())]},
     "start": [list(start)], "groups": [], "things": things,
 }
 with open(OUT, "w") as f:

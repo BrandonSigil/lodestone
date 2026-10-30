@@ -7,7 +7,7 @@ func _put(s: Node, c: Vector2i) -> void:
 	lead.place(c, s.grid.height_at(c))
 	s._refresh_sight()
 	s._refresh_units()
-	s.focus = Vector2(c) + Vector2(0.5, 0.5)
+	s.focus = Vector2(CombatGrid.ground(c)) + Vector2(0.5, 0.5)
 	s.focus_h = s.grid.height_at(c)
 
 
@@ -45,7 +45,8 @@ func run(s: Node, f: int, step: String) -> bool:
 					game.save_enabled = false  # a shot never writes the real save
 					game.meta.flags.append_array(parts[1].split(","))
 				var xy := parts[0].split(",")
-				_put(s, Vector2i(int(xy[0]), int(xy[1])))
+				var at := Vector2i(int(xy[0]), int(xy[1]))
+				_put(s, CombatGrid.deck_of(at) if xy.size() > 2 and xy[2] == "deck" else at)  # near:x,y,deck stands on the deck
 			else:
 				s._go_use(_thing(s, step.substr(4)))
 		return f == 90

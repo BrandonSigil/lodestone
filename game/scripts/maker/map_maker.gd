@@ -44,6 +44,7 @@ const TOOLS := [
 	["path", "path", "L", "Path", "drag a path's course; stairs are cut where it climbs. With 'follow ground' it finds the easiest walk from where you press to where you let go."],
 	["river", "river", "W", "River", "drag along the river's course from high ground down: it digs a channel that never runs uphill; every drop becomes a waterfall."],
 	["stairs", "stairs", "T", "Stairs", "click a cell at a cliff: stairs that join both sides. Drag from the bottom to the top of a cliff: a flight. Right drag: clear stairs."],
+	["deck", "deck", "J", "Deck", "drag: a bridge floor at the level height over the cells, with the lane under it still open (it stands at least two levels over the ground). Right drag: take decks away."],
 	["|"],
 	["cut", "cut", "C", "Cut", "cut cells out of the map: the outline, chasms, pits. Right: fill them back."],
 	["fill", "fill", "F", "Fill", "give holes ground again at the height around them. Right: cut."],
@@ -52,7 +53,7 @@ const TOOLS := [
 const FIGHT_LABELS := {"hp_pct": "hp %", "attack": "crit (5% a point)", "defense": "armor", "damage": "damage", "move": "move"}
 const GROUNDS := [["grass", T.GRASS], ["forest", T.FOREST], ["road", T.ROAD], ["stone", T.STONE], ["rock", T.ROCK], ["ruin", T.RUIN], ["water", T.WATER]]
 const PATH_GROUNDS := [["road", T.ROAD], ["stone", T.STONE], ["grass", T.GRASS]]
-const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "tidy", "paint", "path", "river", "cut", "fill", "zone"]
+const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "tidy", "paint", "path", "river", "cut", "fill", "zone", "deck"]
 const THING_COLOR := Color(0.98, 0.84, 0.48)
 const START_COLOR := Color(0.45, 0.72, 1.0)
 const FOE_COLOR := Color(1.0, 0.48, 0.42)
@@ -743,6 +744,18 @@ func _apply(c: Vector2i, right: bool) -> void:
 				MapOps.cut(g, cells)
 			else:
 				MapOps.fill(g, cells)
+		"deck":
+			var low := 0
+			for p in cells:
+				if right:
+					if g.has_deck(p):
+						g.remove_deck(p)
+				elif g.solid(p) and level_h >= g.height_at(p) + CombatGrid.DECK_CLEAR:
+					g.add_deck(p, level_h, T.STONE)
+				elif g.solid(p):
+					low += 1
+			if low > 0:
+				_say("a deck stands at least %d levels over the ground: raise the level height" % CombatGrid.DECK_CLEAR)
 		"zone":
 			var z := "" if right else String(_zone_pick.get_item_metadata(_zone_pick.selected))
 			for p in cells:
@@ -1723,7 +1736,7 @@ func _sync_options() -> void:
 	(_opts.get_child(0).get_node("ToolName") as Label).text = String(row[3]) if not row.is_empty() else ""
 	_help.text = String(row[4]) if not row.is_empty() else ""
 	_opt_groups.brush.visible = BRUSH_TOOLS.has(tool)
-	_opt_groups.level.visible = tool == "level"
+	_opt_groups.level.visible = tool == "level" or tool == "deck"
 	_opt_groups.paint.visible = tool == "paint"
 	_opt_groups.path.visible = tool == "path"
 	_opt_groups.zone.visible = tool == "zone"

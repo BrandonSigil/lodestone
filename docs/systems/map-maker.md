@@ -17,7 +17,7 @@ Catalog: `game/data/catalog.csv`. Scene: `scenes/map_maker.tscn`.
   terrain (K, on), grid lines, height numbers, names over things; turn the view (editing only), fit, hide
   panels; **Play test**.
 - **Tool rail** (left): Select V, Place B, Erase X, Party U, Enemy E | Raise 1, Lower 2, Level 3, Smooth 4, Tidy 5,
-  Pillar 6 | Ground P, Path L, River W, Stairs T | Cut C, Fill F, Zone Z. Hover a tool for what it does.
+  Pillar 6 | Ground P, Path L, River W, Stairs T, Deck J | Cut C, Fill F, Zone Z. Hover a tool for what it does.
 - **Options bar** (top): what the picked tool needs: brush size and shape, the level height, ground
   swatches (the tile set's own textures), path ground and "follow ground", the zone's tile set, the stamp
   and its angle, or the selection's turn / mirror / copy / delete.
@@ -74,6 +74,7 @@ Name the map and the id or blob, and write what you want in its note:
   it climbs more than a level. "Follow ground" finds the easiest walk between press and release instead.
 - **River**, **Stairs**, **Cut**, **Fill**, **Zone**: as before (river never runs uphill and falls at every
   drop; stairs join a cliff or run a flight; cut and fill shape the outline; zone paints another tile set).
+- **Deck**: drag a bridge floor at the level height over the cells; the lane under it stays walkable, so it has to stand at least two levels over the ground (`docs/systems/decks.md`). Right drag takes decks away.
 - Where different grounds meet on one level they blend (see `docs/art/transitions.md`).
 
 ## Building for the painted look

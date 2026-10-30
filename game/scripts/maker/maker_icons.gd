@@ -167,6 +167,11 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 			for k in 3:
 				var x := 0.2 + k * 0.1
 				_line([Vector2(x, 0.86), Vector2(x, 0.74)])
+		"deck":  # a bridge floor on two posts, open underneath
+			_line([Vector2(0.12, 0.34), Vector2(0.88, 0.34), Vector2(0.88, 0.46), Vector2(0.12, 0.46), Vector2(0.12, 0.34)])
+			_line([Vector2(0.24, 0.46), Vector2(0.24, 0.86)])
+			_line([Vector2(0.76, 0.46), Vector2(0.76, 0.86)])
+			_line([Vector2(0.06, 0.86), Vector2(0.94, 0.86)])
 		"pillar":  # a lone column with a cap
 			_line([Vector2(0.36, 0.86), Vector2(0.36, 0.3), Vector2(0.64, 0.3), Vector2(0.64, 0.86)])
 			_line([Vector2(0.28, 0.3), Vector2(0.3, 0.2), Vector2(0.7, 0.2), Vector2(0.72, 0.3)])

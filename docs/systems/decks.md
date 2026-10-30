@@ -38,5 +38,10 @@
 - `ExploreRules.sight` returns places: the lane and the deck over it are seen apart, so an enemy on a bridge only shows when its deck place is in sight. The board's fog stays per cell: a cell is lit when either of its places is in sight, and a remembered deck takes the veil's wash.
 - Ranged reach (`CombatRules.in_reach`, the blind cells) goes through `line_of_sight`, so it follows the same rule.
 
+## In the map maker and the city (step 6)
+- The map maker's **Deck** tool (key J, after Stairs): drag lays a stone deck at the level height (the Level box shows with it) over the cells under the brush; a cell where that height isn't `DECK_CLEAR` over its ground is skipped, with a note. Right drag takes decks away. Saving and undo go through `to_dict`, which keeps decks.
+- `city_proto` (`tools/explore/build_city_proto.py`, `bridge()`) has three: over main street, the alley and the east street. Each is a deck level with the roof terraces either side, with a gray box house standing on half of it (`"deck": true`) and a walkway on the other half, so the roofs join across the street and the lane runs on underneath. The builder's own checks walk places the same way (a cell's ground and deck, the lane open under a deck `DECK_CLEAR` up, deck props blocking the deck only).
+- `explore_shot` `near:x,y,deck` stands the lead on the deck.
+
 ## Still to come
-6. The map maker paints decks (map builder), the city's real bridges, and real deck art.
+Real deck art, and Brandon's call on how a piece under a deck shows (card `dev-deck-covered-piece`).

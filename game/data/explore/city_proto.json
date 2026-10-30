@@ -30,11 +30,11 @@
    "sssssdddddddddddssssssssssssssssssssssssssss",
    "sssssdttddddddddssssssssssssssssssssssssssss",
    "sssssdttddddddddssssssddddddddddssssssssssss",
-   "sssssdttddddddddssssssddddsdddddssssssssssss",
+   "sssssdttddddddddssssssddddddddddssssssssssss",
    "ssssssssssssssssssssssssssssssssssssssssssss",
    "ssssssssssssssssssssssssssssssssssdddddsssss",
-   "ssssssssssssssssssssssddddsdddddssdddddsssss",
-   "sssssssssssssssssssssssdddddttdssssdtttsssss",
+   "ssssssssssssssssssssssddddddddddssdddddsssss",
+   "ssssssssssssssssssssssddddddttddssddtttsssss",
    "ssssssssssssssssssssssddddddttddssddtttsssss",
    "ssssssssssssssssssssssddddddttddssdddddsssss",
    "ssssssssssssssssssssssssssssssssssssssssssss",
@@ -76,11 +76,11 @@
    "11111555555555551111111111111111111111111111",
    "11111544555555551111111111111111111111111111",
    "11111533555555551111115555555555111111111111",
-   "11111522555555551111115555155555111111111111",
+   "11111522555555551111115555555555111111111111",
    "11111111111111111111111111111111111111111111",
    "11111111111111111111111111111111115555511111",
-   "11111111111111111111115555155555115555511111",
-   "11111111111111111111111555554451111543211111",
+   "11111111111111111111115555555555115555511111",
+   "11111111111111111111115555554455115543211111",
    "11111111111111111111115555553355115543211111",
    "11111111111111111111115555552255115555511111",
    "11111111111111111111111111111111111111111111",
@@ -102,49 +102,49 @@
   ],
   "props": [
    {
-    "sprite": "ph_overpass",
+    "sprite": "ph_building",
     "cell": [
-     26,
-     21
+     20,
+     24
     ],
     "foot": [
-     1,
-     4
+     2,
+     2
     ],
-    "tall": 2.0,
-    "sight": 2.0,
+    "tall": 1.5,
+    "sight": 3.0,
     "walk": false,
-    "arch": true
+    "deck": true
    },
    {
-    "sprite": "ph_overpass",
+    "sprite": "ph_building",
     "cell": [
-     31,
-     25
+     25,
+     22
     ],
     "foot": [
-     4,
-     1
+     2,
+     2
     ],
-    "tall": 2.0,
-    "sight": 2.0,
+    "tall": 1.5,
+    "sight": 3.0,
     "walk": false,
-    "arch": true
+    "deck": true
    },
    {
-    "sprite": "ph_overpass",
+    "sprite": "ph_building",
     "cell": [
-     19,
-     25
+     32,
+     24
     ],
     "foot": [
-     4,
-     1
+     2,
+     2
     ],
-    "tall": 2.0,
-    "sight": 2.0,
+    "tall": 1.5,
+    "sight": 3.0,
     "walk": false,
-    "arch": true
+    "deck": true
    },
    {
     "sprite": "ph_building",
@@ -952,7 +952,21 @@
     ],
     "foot": [
      3,
-     1
+     4
+    ],
+    "tall": 2.0,
+    "sight": 3.0,
+    "walk": false
+   },
+   {
+    "sprite": "ph_building",
+    "cell": [
+     5,
+     28
+    ],
+    "foot": [
+     3,
+     2
     ],
     "tall": 2.0,
     "sight": 3.0,
@@ -965,8 +979,8 @@
      24
     ],
     "foot": [
-     6,
-     1
+     5,
+     6
     ],
     "tall": 3.0,
     "sight": 3.0,
@@ -975,40 +989,12 @@
    {
     "sprite": "ph_building",
     "cell": [
-     14,
+     13,
      24
     ],
     "foot": [
-     6,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "ph_building",
-    "cell": [
      5,
-     25
-    ],
-    "foot": [
-     5,
-     5
-    ],
-    "tall": 2.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "ph_building",
-    "cell": [
-     10,
-     25
-    ],
-    "foot": [
-     6,
-     3
+     6
     ],
     "tall": 3.0,
     "sight": 3.0,
@@ -1017,11 +1003,25 @@
    {
     "sprite": "ph_building",
     "cell": [
-     10,
+     18,
+     24
+    ],
+    "foot": [
+     2,
+     4
+    ],
+    "tall": 3.0,
+    "sight": 3.0,
+    "walk": false
+   },
+   {
+    "sprite": "ph_building",
+    "cell": [
+     18,
      28
     ],
     "foot": [
-     6,
+     2,
      2
     ],
     "tall": 2.0,
@@ -1031,26 +1031,12 @@
    {
     "sprite": "ph_building",
     "cell": [
-     16,
-     25
-    ],
-    "foot": [
-     3,
-     3
-    ],
-    "tall": 2.5,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "ph_building",
-    "cell": [
-     16,
+     22,
      28
     ],
     "foot": [
-     3,
-     2
+     2,
+     6
     ],
     "tall": 2.0,
     "sight": 3.0,
@@ -1059,8 +1045,22 @@
    {
     "sprite": "ph_building",
     "cell": [
-     19,
-     26
+     22,
+     34
+    ],
+    "foot": [
+     2,
+     6
+    ],
+    "tall": 2.0,
+    "sight": 3.0,
+    "walk": false
+   },
+   {
+    "sprite": "ph_building",
+    "cell": [
+     40,
+     28
     ],
     "foot": [
      1,
@@ -1073,42 +1073,28 @@
    {
     "sprite": "ph_building",
     "cell": [
-     22,
-     28
+     40,
+     32
     ],
     "foot": [
-     2,
-     5
+     1,
+     3
     ],
-    "tall": 2.0,
+    "tall": 1.5,
     "sight": 3.0,
     "walk": false
    },
    {
     "sprite": "ph_building",
     "cell": [
-     22,
-     33
+     40,
+     35
     ],
     "foot": [
-     2,
-     5
-    ],
-    "tall": 2.5,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "ph_building",
-    "cell": [
-     22,
-     38
-    ],
-    "foot": [
-     2,
+     1,
      2
     ],
-    "tall": 2.0,
+    "tall": 1.5,
     "sight": 3.0,
     "walk": false
    },
@@ -1116,25 +1102,11 @@
     "sprite": "ph_building",
     "cell": [
      40,
-     28
+     37
     ],
     "foot": [
      1,
-     6
-    ],
-    "tall": 2.5,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "ph_building",
-    "cell": [
-     40,
-     34
-    ],
-    "foot": [
-     1,
-     6
+     3
     ],
     "tall": 2.0,
     "sight": 3.0,
@@ -1148,7 +1120,7 @@
     ],
     "foot": [
      3,
-     3
+     4
     ],
     "tall": 2.0,
     "sight": 3.0,
@@ -1158,13 +1130,13 @@
     "sprite": "ph_building",
     "cell": [
      5,
-     33
+     34
     ],
     "foot": [
      3,
      2
     ],
-    "tall": 2.0,
+    "tall": 1.5,
     "sight": 3.0,
     "walk": false
    },
@@ -1185,20 +1157,6 @@
    {
     "sprite": "ph_building",
     "cell": [
-     5,
-     35
-    ],
-    "foot": [
-     3,
-     1
-    ],
-    "tall": 2.5,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "ph_building",
-    "cell": [
      24,
      34
     ],
@@ -1206,7 +1164,7 @@
      6,
      6
     ],
-    "tall": 1.5,
+    "tall": 2.5,
     "sight": 3.0,
     "walk": false
    },
@@ -1259,24 +1217,10 @@
      37
     ],
     "foot": [
-     4,
+     6,
      2
     ],
-    "tall": 2.5,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "ph_building",
-    "cell": [
-     12,
-     37
-    ],
-    "foot": [
-     2,
-     2
-    ],
-    "tall": 2.5,
+    "tall": 2.0,
     "sight": 3.0,
     "walk": false
    },
@@ -1290,7 +1234,7 @@
      6,
      3
     ],
-    "tall": 1.5,
+    "tall": 2.0,
     "sight": 3.0,
     "walk": false
    },
@@ -1301,38 +1245,24 @@
      41
     ],
     "foot": [
-     4,
-     3
-    ],
-    "tall": 2.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "ph_building",
-    "cell": [
-     9,
-     41
-    ],
-    "foot": [
      3,
      3
     ],
-    "tall": 2.0,
+    "tall": 2.5,
     "sight": 3.0,
     "walk": false
    },
    {
     "sprite": "ph_building",
     "cell": [
-     12,
+     8,
      41
     ],
     "foot": [
-     2,
+     6,
      3
     ],
-    "tall": 2.0,
+    "tall": 2.5,
     "sight": 3.0,
     "walk": false
    },
@@ -1357,31 +1287,17 @@
      42
     ],
     "foot": [
-     4,
+     6,
      2
     ],
-    "tall": 1.5,
+    "tall": 2.0,
     "sight": 3.0,
     "walk": false
    },
    {
     "sprite": "ph_building",
     "cell": [
-     23,
-     42
-    ],
-    "foot": [
-     4,
-     2
-    ],
-    "tall": 1.5,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "ph_building",
-    "cell": [
-     27,
+     25,
      42
     ],
     "foot": [
@@ -1389,6 +1305,20 @@
      2
     ],
     "tall": 3.0,
+    "sight": 3.0,
+    "walk": false
+   },
+   {
+    "sprite": "ph_building",
+    "cell": [
+     28,
+     42
+    ],
+    "foot": [
+     2,
+     2
+    ],
+    "tall": 2.5,
     "sight": 3.0,
     "walk": false
    },
@@ -1413,24 +1343,24 @@
      42
     ],
     "foot": [
-     3,
+     5,
      2
     ],
-    "tall": 1.5,
+    "tall": 2.0,
     "sight": 3.0,
     "walk": false
    },
    {
     "sprite": "ph_building",
     "cell": [
-     40,
+     42,
      42
     ],
     "foot": [
-     4,
+     2,
      2
     ],
-    "tall": 2.0,
+    "tall": 3.0,
     "sight": 3.0,
     "walk": false
    },
@@ -1811,6 +1741,152 @@
     "tall": 0.65,
     "sight": 0.5,
     "walk": false
+   }
+  ],
+  "decks": [
+   {
+    "x": 20,
+    "y": 24,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 20,
+    "y": 25,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 20,
+    "y": 26,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 20,
+    "y": 27,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 21,
+    "y": 24,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 21,
+    "y": 25,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 21,
+    "y": 26,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 21,
+    "y": 27,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 25,
+    "y": 22,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 25,
+    "y": 23,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 26,
+    "y": 22,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 26,
+    "y": 23,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 27,
+    "y": 22,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 27,
+    "y": 23,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 28,
+    "y": 22,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 28,
+    "y": 23,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 32,
+    "y": 24,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 32,
+    "y": 25,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 32,
+    "y": 26,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 32,
+    "y": 27,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 33,
+    "y": 24,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 33,
+    "y": 25,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 33,
+    "y": 26,
+    "h": 5,
+    "t": "s"
+   },
+   {
+    "x": 33,
+    "y": 27,
+    "h": 5,
+    "t": "s"
    }
   ]
  },
