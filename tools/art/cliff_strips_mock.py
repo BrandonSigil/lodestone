@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Cliff strips mock (art runner, 2026-10-30): a village v2 terrace whose faces are cut into windows 1 to 3
-cells wide at hashed spots; each window is one tall strip cut from Brandon's snowy cliff painting, started at
-its own random depth and run down the whole face, mirrored where it runs out, so no join ever sits on a level
-line (card cliff-no-breaks). Windows blend a little at their sides. Staging only; it places pixels, it
-never edits art.
+"""Cliff strips mock with Brandon's painted strips (art runner, 2026-10-30): village v2 terrace faces cut into
+windows 1 to 3 cells wide, each one strip (3 cells wide) at a hashed x-offset and start depth, mirrored where
+it runs out, cross-faded at window sides. Reads the cut strips from art/picsart/out/hand/cliff_strips_cut/.
+Staging only; it places pixels, it never edits art.
 
     ~/.lodestone/venv/bin/python tools/art/cliff_strips_mock.py OUT.png "#8c827d" 1 0 pieces
 """
@@ -11,7 +10,7 @@ import sys
 import numpy as np
 from PIL import Image, ImageDraw
 
-Z = 0.75
+Z = 1.5
 TW, TH, HS = 64 * Z, 32 * Z, 16 * Z
 INK = (55, 51, 53)
 GRASS = np.array([150, 158, 92], float)
@@ -174,21 +173,24 @@ FEATHER_V = 3.0  # px of cross-fade where two pieces stack, at a height of its o
 FEATHER_H = 0.18  # cells of cross-fade where two windows meet
 
 
+STRIPS = []
+for i in range(1, 7):
+    im = Image.open(str(__import__("pathlib").Path(__file__).resolve().parents[2] / ("art/picsart/out/hand/cliff_strips_cut/cliff_strip_%d.png" % i))).convert("RGB")
+    f = 3 * TW * 0.5 / im.width  # a strip is 3 cells wide
+    STRIPS.append(np.asarray(im.resize((round(im.width * f), round(im.height * f)), Image.LANCZOS), float))
+
+
 def window_color(st, axis, top, xpx, dpx):
-    """Paint for window `st` at xpx px across it and dpx px below the lip: one piece of Brandon's painting at
-    its own scale, started at a random depth inside it, and when the face is taller than the piece it runs on
-    into the piece mirrored top to bottom, so the paint continues with no join at all. Each window starts at
-    its own depth, so the mirror points never line up across a cliff."""
-    ci = int(rnd(st, axis, int(top), 41) * len(CHUNKS))
-    x0, y0, x1, y1 = CHUNKS[ci]
-    ch = y1 - y0 - 1
-    xo = x0 + rnd(st, axis, int(top), 42) * max(0, (x1 - x0) - 3 * TW * 0.5 - 1)
-    v = rnd(st, axis, int(top), 43) * ch * 0.5 + dpx
-    v = np.abs(((v / ch) % 2.0) - 1.0)  # a triangle wave: down the piece, then back up it mirrored
-    v = 1.0 - v
-    xs = np.clip((xo + xpx).astype(int), x0, x1 - 1)
-    ys = np.clip((y0 + v * ch).astype(int), y0, y1 - 1)
-    return EX[ys, xs].astype(float)
+    """Paint for window `st`: one of Brandon's strips (3 cells wide), at a hashed x-offset and a hashed start
+    depth, running down the face and mirrored where it runs out, so no join ever lands on a level."""
+    S = STRIPS[int(rnd(st, axis, int(top), 41) * len(STRIPS))]
+    sh, sw = S.shape[:2]
+    xo = rnd(st, axis, int(top), 42) * max(0, sw - 3 * TW * 0.5)
+    v = rnd(st, axis, int(top), 43) * sh + dpx
+    v = np.abs(((v / (sh - 1)) % 2.0) - 1.0)
+    xs = np.clip((xo + xpx).astype(int), 0, sw - 1)
+    ys = np.clip(((1 - v) * (sh - 1)).astype(int), 0, sh - 1)
+    return S[ys, xs]
 
 
 def pieces(along, h, axis, top, bottom):
