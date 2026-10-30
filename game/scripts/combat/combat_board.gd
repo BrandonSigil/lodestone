@@ -45,8 +45,9 @@ const WALL_SIDE := Color("48484d")  ## and its faces, the dungeon cliff's grey
 const PIECE_HIGH := 6.0  ## a wall-kit piece's graybox stands this many levels over its floor (until the kit's art)
 const PIECE_THIN := 0.14  ## and this deep, in cells, on the edge it shares with the room
 const POST_SIZE := 0.22  ## the post where two back walls meet: this many cells square
-const RIM_THIN := 0.25  ## a front edge's stubby wall: this deep in cells
-const RIM_HIGH := 1.0  ## and this many levels over its floor
+const POST_STRIP := {"village_in": Vector2(0.38, 0.62), "dungeon": Vector2(0.3, 0.7)}  ## the post's texture: only this middle strip (u) wraps it
+const RIM_THIN := 0.45  ## a front edge's stubby wall: this deep in cells (short but thick: [USER] 2026-10-30, dungeon go card)
+const RIM_HIGH := 1.5  ## and this many levels over its floor
 ## Which ground reaches onto which where they meet (higher over lower); others never blend.
 const BLEND_RANK := {CombatGrid.T.GRASS: 0, CombatGrid.T.FOREST: 1, CombatGrid.T.ROAD: 2, CombatGrid.T.STONE: 3}
 const BLEND_DEPTH := 0.34  ## how far (cells) a neighbour's ground reaches in, on average
@@ -1174,7 +1175,12 @@ func _wall_piece(c: Vector2i) -> void:
 			for d2: Vector2i in [front_dir(false), front_dir(true)]:
 				var e2: Array = _side(plo, phi, d2)
 				var lit := _face_light(Vector2(d2))
-				_kit_band(e2[0], e2[1], h + PIECE_HIGH + 0.3, h, post, 0.0, 1.0, Color(lit * col.r, lit * col.g, lit * col.b, 1.0))
+				var strip: Vector2 = POST_STRIP.get(wall_kit, Vector2(0.0, 1.0))
+				var m := Color(lit * col.r, lit * col.g, lit * col.b, 1.0)
+				var q := PackedVector2Array([iso(e2[0].x, e2[0].y, h + PIECE_HIGH + 0.3), iso(e2[1].x, e2[1].y, h + PIECE_HIGH + 0.3),
+					iso(e2[1].x, e2[1].y, h), iso(e2[0].x, e2[0].y, h)])
+				_ci.draw_polygon(q, PackedColorArray([m, m, m, m]),
+					PackedVector2Array([Vector2(strip.x, 0.0), Vector2(strip.y, 0.0), Vector2(strip.y, 1.0), Vector2(strip.x, 1.0)]), post)
 		return
 	for d: Vector2i in faces:
 		var lo := Vector2(c)
