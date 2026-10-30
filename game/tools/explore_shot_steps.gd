@@ -105,6 +105,9 @@ func run(s: Node, f: int, step: String) -> bool:
 		if f == 3:
 			var game: Node = s.get_node("/root/Game")
 			game.save_enabled = false
+			if not game.meta.flags.has("met_dog"):
+				game.meta.flags.append("met_dog")  # the dog comes too
+			game.refresh_party()
 			game.take_weapon("bow")
 			s._rebuild_party()
 		if f == 5:
