@@ -57,6 +57,21 @@ static func elite_mods() -> Dictionary:
 		"defense": int(CombatRules.num("elite_armor"))}
 
 
+## Foes by depth ([USER] design-foe-scale): a foe on a level-N place rolls the heroes' growth table (data/growth.csv)
+## once per level above 1, as a hero levelling up would, seeded by the place, the group and its slot so the same foe
+## always comes out the same. Casters roll the mage's odds, ranged foes the archer's, the rest the knight's.
+## Returns stat mods for CombatUnit.enemy ({} at level 1).
+static func depth_mods(map_name: String, level: int, group_id: String, slot: int, cls: ClassDef) -> Dictionary:
+	if level <= 1:
+		return {}
+	var row := "mage" if cls.magic else ("archer" if cls.range_max > 1 else "knight")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash("%s|%s|%d|%d" % [map_name, group_id, slot, level])
+	var s := LevelRules.fresh()
+	LevelRules.gain(s, (level - 1) * int(Db.levels.get("xp_per_level", 100)), Db.levels, Db.growth.get(row, {}), rng)
+	return LevelRules.bonus(s, Db.levels)
+
+
 ## Elite groups on these maps still standing: what the overworld's elite badge warns of.
 static func elites_left(maps: Array, flags: Array) -> int:
 	var n := 0

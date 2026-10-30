@@ -90,7 +90,8 @@ func _fight(m: ExploreMap, g: Dictionary, how: String, level: int, weapon: Strin
 	var grid := m.grid
 	var enemies: Array = []
 	for e: Dictionary in g.units:
-		var u := CombatUnit.enemy(Db.class_def(e.id))
+		var cls := Db.class_def(e.id)
+		var u := CombatUnit.enemy(cls, ExploreRules.depth_mods(m.map_name, m.level, String(g.id), g.units.find(e), cls))  # the place's depth
 		u.place(e.cell, grid.height_at(e.cell))
 		enemies.append(u)
 	var cells: Array = enemies.map(func(u: CombatUnit) -> Vector2i: return u.cell)

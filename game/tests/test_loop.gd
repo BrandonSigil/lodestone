@@ -1198,3 +1198,21 @@ func test_an_unknown_boss_shows_only_what_he_has_used() -> void:
 	ok(Battle.known(bandit), "a plain foe is always known")
 	b.free()
 	_restore(saved)
+
+
+## Foes by depth ([USER] design-foe-scale): a place's level (map json, default 1) rolls its foes' growth once per
+## level above 1, seeded by the place, so the same foe always comes out the same.
+func test_foes_grow_with_the_place_level() -> void:
+	_db()
+	var bandit := Db.class_def("bandit")
+	eq(ExploreRules.depth_mods("crypt", 1, "plaza", 0, bandit), {}, "level 1: as they are")
+	var deep := ExploreRules.depth_mods("crypt", 6, "plaza", 0, bandit)
+	eq(deep, ExploreRules.depth_mods("crypt", 6, "plaza", 0, bandit), "the same place rolls the same")
+	var gained := 0
+	for k in deep:
+		gained += int(deep[k])
+	ok(gained > 0, "five levels of growth add something")
+	var u := CombatUnit.enemy(bandit, deep)
+	ok(u.max_hp >= bandit.max_hp and u.damage >= bandit.damage, "and the foe is no weaker")
+	eq(ExploreMap.from_dict({"grid": {}, "level": 3}).level, 3, "the map's level")
+	eq(ExploreMap.from_dict({"grid": {}}).level, 1, "default 1")
