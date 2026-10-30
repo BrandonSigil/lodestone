@@ -1,0 +1,5 @@
+Image 1 = a frame painting for a cosy fantasy tactics game menu. KEEP EVERYTHING ABOUT ITS LOOK EXACTLY: the same colours, the same cream and blue rims, the same crests, leaves and gems, the same painted finish, the same layout (long bar on top, square portrait frame bottom left, narrow upright panel bottom right) and the same magenta background.
+
+ONE CHANGE ONLY: in the long action bar, REMOVE ALL FIVE dark slot windows and the small blue diamonds between them. The bar's whole inside is plain, empty dark green with the thin parchment line running dead level along the top and along the bottom, nothing else in it. Keep the left end, the right end, the top crest and the bottom crest exactly as in image 1. Do not add any boxes, windows, squares or rectangles of any kind to the bar.
+
+Everything else stays as in image 1: the portrait frame with its empty cream window and empty green band under it, and the narrow upright panel. Same rim thickness everywhere, no dark outline outside the rim, flat and straight on, no perspective, no shadow, no text, no letters, no numbers.
