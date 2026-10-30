@@ -1081,9 +1081,9 @@ func test_action_hover_card_reads_the_data() -> void:
 	eq(ActionInfo.wait_text(dog, Db.ability("bite")), Txt.f("TIP_CHARGE_BACK", dog.res_every))
 
 
-## The hand ([USER] 2026-10-30, cards): MOVE, ATTACK, ABILITIES, ITEMS, then GUARD and WAIT; ABILITIES deals the
-## piece's skills with BACK. Keys 1 to 0 play the cards of the hand showing.
-func test_the_hand_has_two_levels_and_keys_play_it() -> void:
+## The dock ([USER] 2026-10-30, dev-action-tips): MOVE, ATTACK, TRICKS, then WAIT; TRICKS opens a second row of the
+## piece's skills over the first, and keys 1 to 0 press the top row's boxes.
+func test_the_dock_has_two_rows_and_keys_press_the_top_one() -> void:
 	var hud := ActionHud.new()
 	(Engine.get_main_loop() as SceneTree).root.add_child(hud)
 	var g := CombatGrid.flat(6, 3)
@@ -1093,18 +1093,19 @@ func test_the_hand_has_two_levels_and_keys_play_it() -> void:
 	for a in mage.abilities:
 		entries.append({"text": Txt.t(a.name_key), "enabled": true, "cb": func() -> void: fired.append(a.id), "kind": "skill", "ability": a, "count": 0})
 	entries.append({"text": "WAIT", "enabled": true, "cb": func() -> void: fired.append("wait"), "kind": "wait", "ability": null, "count": 0})
-	hud.show_for(mage, entries, Vector2.ZERO, Rect2(0, 0, 1280, 560))
-	var first: Array = hud.hand_entries().map(func(e: Dictionary) -> String: return String(e.kind))
-	eq(first, ["move", "skill", "group", "wait"], "MOVE, ATTACK, ABILITIES, WAIT (no items on this one)")
+	hud.show_for(mage, entries, Vector2.ZERO, Rect2(0, 0, 1280, 640))
+	eq(hud.hand_entries().map(func(e: Dictionary) -> String: return String(e.kind)), ["move", "skill", "group", "wait"],
+		"MOVE, ATTACK, TRICKS, WAIT (no items on this one)")
 	eq(hud._slots.size(), 4)
 	ok(hud.press_key(1), "key 2: ATTACK")
 	eq(fired, ["strike"])
-	hud.press_key(2)  # ABILITIES
-	eq(hud._slots.size(), mage.abilities.size(), "the skills, then BACK")
+	hud.press_key(2)  # TRICKS
+	eq(hud.second_entries().size(), mage.abilities.size() - 1, "the skills in a second row")
+	eq(hud._slots.size(), 4 + mage.abilities.size() - 1, "over the first")
 	hud.press_key(0)
-	eq(fired, ["strike", mage.abilities[1].id], "key 1 in the second hand: the first skill")
-	hud.press_key(hud._slots.size() - 1)  # BACK
-	eq(hud._slots.size(), 4, "back to the first hand")
+	eq(fired, ["strike", mage.abilities[1].id], "key 1 now presses the second row's first")
+	hud._open("skills")
+	eq(hud.second_entries().size(), 0, "TRICKS again shuts it")
 	hud.queue_free()
 
 

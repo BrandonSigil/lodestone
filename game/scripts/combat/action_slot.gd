@@ -1,21 +1,15 @@
 class_name ActionSlot
 extends Button
-## One fight action as a card in the hand (ActionHud): the art runner's icon when there is one (ActionInfo.icon_for),
-## else a graybox tile coloured by what it does with a short glyph; the name, the cost and the caveman line. Greyed
-## when it can't be used, with a sweep for a charge on its way back. `entry` is Battle's: {text, enabled, cb, ability,
-## kind, key}. With info_corner, pointing at the card's top-right corner asks for its details (info_asked).
+## One fight action as a box in the dock (ActionHud): the art runner's icon when there is one (ActionInfo.icon_for),
+## else a graybox tile coloured by what it does with a short glyph. Greyed when it can't be used, with a sweep for a
+## charge on its way back. `entry` is Battle's: {text, enabled, cb, ability, kind, key}.
 
-signal info_asked
-
-const INFO := 22.0  ## the info corner's size
-## The art runner's spare icons for the plain cards (2026-10-30, approved with the sheet).
+## The art runner's spare icons for the plain boxes (2026-10-30, approved with the sheet).
 const BASIC_ICONS := {"move": "dash", "guard": "guard", "wait": "focus", "undo": "counter", "talk": "rally"}
 
 var entry: Dictionary = {}
 var unit: CombatUnit
-var card := false  ## draw as a card from the hand: frame, icon, name, cost and the caveman line
-var lift := 0.0  ## the card rises this much while hovered
-var info_corner := false
+var open := false  ## TRICKS or STUFF whose row is open: drawn lit
 
 
 static func tint(e: Dictionary) -> Color:
@@ -110,46 +104,5 @@ func _ready() -> void:
 	focus_exited.connect(queue_redraw)
 
 
-## The info corner, in the card's own space (raised with it).
-func info_rect() -> Rect2:
-	return Rect2(Vector2(size.x - INFO - 4, 4 - lift), Vector2(INFO, INFO))
-
-
-func _gui_input(event: InputEvent) -> void:
-	if info_corner and event is InputEventMouseMotion and info_rect().grow(4).has_point(event.position):
-		info_asked.emit()
-
-
 func _draw() -> void:
-	var hot := is_hovered() or has_focus()
-	if not card:
-		paint(self, Rect2(Vector2.ZERO, size), entry, unit, hot)
-		return
-	# A card: parchment frame, the icon on top, then the name, the cost and the caveman line.
-	var r := Rect2(Vector2(0, -lift), size)
-	draw_rect(r, Color(0.16, 0.13, 0.1))
-	draw_rect(r.grow(-3), Color(0.86, 0.8, 0.66) if bool(entry.enabled) else Color(0.55, 0.52, 0.47))
-	draw_rect(r.grow(-3), ActionSlot.tint(entry).darkened(0.2), false, 3.0)
-	var ir := Rect2(r.position + Vector2(12, 12), Vector2(r.size.x - 24, r.size.x - 24))
-	paint(self, ir, entry, unit, hot)
-	var font := ThemeDB.fallback_font
-	var y := ir.end.y + 18
-	draw_string(font, Vector2(r.position.x + 6, y), String(entry.text), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 12, 13, Color(0.12, 0.08, 0.05))
-	var a: Ability = entry.get("ability")
-	if a != null and unit != null:
-		var cost := Txt.t("TIP_FREE")
-		if a.is_item():
-			cost = "x%d" % int(entry.get("count", 0))
-		elif a.res_cost > 0 and unit.res_kind != "":
-			cost = "%d %s" % [a.res_cost, Txt.t("RES_" + unit.res_kind.to_upper())]
-		draw_string(font, Vector2(r.position.x + 6, y + 16), cost, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 12, 11, Color(0.3, 0.2, 0.1))
-		var desc := "DESC_" + a.id.to_upper()
-		if Txt.has(desc):
-			draw_multiline_string(font, Vector2(r.position.x + 8, y + 32), Txt.t(desc), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, 10, 4, Color(0.25, 0.18, 0.1))
-	if info_corner:
-		var cr := info_rect()
-		draw_circle(cr.get_center(), INFO * 0.5, UiTheme.GREEN)
-		draw_arc(cr.get_center(), INFO * 0.5, 0, TAU, 16, UiTheme.RULE, 1.5)
-		draw_string(font, Vector2(cr.position.x, cr.get_center().y + 5), "i", HORIZONTAL_ALIGNMENT_CENTER, INFO, 14, UiTheme.PARCHMENT)
-	if not bool(entry.enabled):
-		draw_rect(r, Color(0, 0, 0, 0.35))
+	paint(self, Rect2(Vector2.ZERO, size), entry, unit, is_hovered() or has_focus() or open)

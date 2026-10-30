@@ -143,7 +143,7 @@ func _build_ui() -> void:
 	add_child(hand_layer)
 	_hud = ActionHud.new()
 	_hud.layout = action_layout()
-	_hud.tip_mode = String(Game.meta.get("settings", {}).get("tip_mode", "delay"))
+	_hud.on_swap = _swap
 	_hud.on_hover = preview_reach
 	_hud.on_unhover = func() -> void: board.reach = {}
 	hand_layer.add_child(_hud)
@@ -665,8 +665,9 @@ func _open_menu() -> void:
 	var entries := _entries(u)
 	if _hud.layout != "list":
 		_hide_menu()
+		_hud.swap_count = _ready_units().filter(func(o: CombatUnit) -> bool: return o != u).size()
 		_hud.show_for(u, entries, board.cell_screen_pos(u.cell), _rect if _rect.has_area() else get_viewport_rect())
-		_banner.visible = false  # the hand sits where the banner does
+		_banner.visible = false  # the dock sits where the banner does
 		return
 	for e in entries:
 		_menu_item(String(e.text), bool(e.enabled), e.cb, e.get("ability"))
@@ -708,8 +709,8 @@ func _entries(u: CombatUnit) -> Array:
 
 ## The action layout from the settings ([USER] 2026-10-30: three versions; the losers go once Brandon picks).
 static func action_layout() -> String:
-	var l := String(Game.meta.get("settings", {}).get("action_ui", "cards"))
-	return l if l in ActionHud.LAYOUTS else "cards"
+	var l := String(Game.meta.get("settings", {}).get("action_ui", "dock"))
+	return l if l in ActionHud.LAYOUTS else "dock"
 
 
 func _next_layout() -> void:
@@ -934,14 +935,34 @@ func _after_action(u: CombatUnit, run := false) -> void:
 		_begin_move()
 
 
+## A character used its move and action, or chose WAIT: the next one with moves comes up by itself ([USER]
+## 2026-10-30, dev-action-tips), or the phase ends when nobody has any left.
 func _finish_unit() -> void:
+	var was := selected
 	_deselect()
 	_refresh_danger()
 	changed.emit()
-	for o: CombatUnit in units:
-		if o.team == 0 and o.alive() and not o.done():
+	var waiting := _ready_units()
+	if waiting.is_empty():
+		end_player_phase()
+		return
+	if auto_fight:
+		return
+	var i := units.find(was)
+	for k in units.size():  # the next in the party's order after the one that just finished
+		var o: CombatUnit = units[(i + 1 + k) % units.size()] if i >= 0 else waiting[0]
+		if waiting.has(o):
+			_select(o)
 			return
-	end_player_phase()
+
+
+## SWAP: the next character who still has moves; a move already made stays made.
+func _swap() -> void:
+	var waiting := _ready_units()
+	if waiting.is_empty() or not is_player_turn():
+		return
+	var i := (waiting.find(selected) + 1) % waiting.size()
+	_select(waiting[i])
 
 
 func _ready_units() -> Array:
