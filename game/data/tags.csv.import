@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cmdphh1dfjuw1"
+
+[deps]
+
+files=["res://data/tags.kind.translation", "res://data/tags.change.translation", "res://data/tags.note.translation"]
+
+source_file="res://data/tags.csv"
+dest_files=["res://data/tags.kind.translation", "res://data/tags.change.translation", "res://data/tags.note.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true
