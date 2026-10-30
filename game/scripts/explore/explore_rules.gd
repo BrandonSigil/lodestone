@@ -25,6 +25,14 @@ static func beaten_flag(map_name: String, group_id: String) -> String:
 	return "beaten_%s_%s" % [map_name, group_id]
 
 
+## The flag that keeps a lasting reward taken for good ([USER] omr-10): stat items, keys, rare caches.
+static func taken_flag(map_name: String, thing_id: String) -> String:
+	return "got_%s_%s" % [map_name, thing_id]
+
+
+const LASTING_KINDS := ["boost", "key", "rare"]
+
+
 ## Bosses and elite groups, once beaten, stay beaten.
 static func stays_beaten(map_name: String, group: Dictionary, flags: Array) -> bool:
 	return (bool(group.get("boss", false)) or bool(group.get("elite", false))) and flags.has(beaten_flag(map_name, String(group.id)))

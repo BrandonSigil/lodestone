@@ -83,6 +83,23 @@ func run(s: Node, f: int, step: String) -> bool:
 				s._refresh_units()
 				s.open_event(String(g.def.event), {"group": g})
 			return f == 30
+		"lasting":
+			# Lasting rewards ([USER] omr-10), set down next to the hero in memory only: a stat item, a key and
+			# a rare cache, and the stat item's WHO TAKE IT box.
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false
+				var c: Vector2i = s.leader().cell
+				var spots: Array[Vector2i] = []
+				for d in [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(2, 0), Vector2i(0, 2)]:
+					if s.grid.passable(c + d) and spots.size() < 3:
+						spots.append(c + d)
+				var kinds := [["boost", "hp:2"], ["key", "shot_key"], ["rare", "rare:1;metal:2"]]
+				for i in spots.size():
+					s.things.append({"id": "shot_%d" % i, "kind": kinds[i][0], "event": kinds[i][1], "cell": spots[i],
+						"floor": "s", "to": "", "at": Vector2i(-1, -1), "once": "", "when": "", "done": false})
+				s._lasting(s.things[s.things.size() - spots.size()])
+			return f == 30
 		"boons":
 			# Blessings and setbacks from the road ([USER] omr-7, omr-8), listed in the Lodestone menu.
 			if f == 5:

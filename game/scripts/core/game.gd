@@ -774,6 +774,15 @@ func boon_mods() -> Dictionary:
 	return out
 
 
+## A stat item from a map, for good ([USER] omr-10): +2 HP or +1 to a stat on one member.
+func take_boost(id: String, stat: String, n: int) -> void:
+	var s := level_state(id)
+	s.found[stat] = int(s.found.get(stat, 0)) + n
+	meta.levels[id] = s
+	refresh_party()
+	save_adventure()
+
+
 ## How much of a material the village has banked.
 func material_count(id: String) -> int:
 	return int(meta.materials.get(id, 0))

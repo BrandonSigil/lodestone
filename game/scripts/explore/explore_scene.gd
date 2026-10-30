@@ -661,7 +661,55 @@ func _open_thing(t: Dictionary) -> void:
 	if t.kind == "restore":
 		_restore_box(String(t.event))  # a village building's ladder: its event names the building
 		return
+	if String(t.kind) in ExploreRules.LASTING_KINDS:
+		_lasting(t)
+		return
 	open_event(String(t.event), {"thing": t})
+
+
+## Lasting map rewards ([USER] omr-10; one-more-run step 6), taken for good. A thing's event says what it holds:
+##   boost  "hp:2", "damage:1", "armor:1", "magic:1" or "crit:1": one party member takes it, for good
+##   key    the flag it sets: a door, cache or shortcut on its map opens on that flag (its event's need)
+##   rare   effects like "rare:1;metal:2": rare materials for the village's restore steps
+func _lasting(t: Dictionary) -> void:
+	mode = M.DIALOG
+	var what := String(t.event)
+	match String(t.kind):
+		"boost":
+			var kv := what.split(":")
+			var box := _new_dialog(Txt.f("UI_BOOST_FOUND", "%s +%s" % [Txt.t("UI_STAT_" + kv[0].to_upper()), kv[1]]))
+			for m in Game.run.members:
+				var id := String((m.def as CharacterDef).id)
+				_dialog_button(box, Txt.f("UI_BOOST_TAKE", Txt.t((m.def as CharacterDef).name_key)), func() -> void:
+					Game.take_boost(id, kv[0], int(kv[1]))
+					_take_lasting(t)
+					_after_change()
+					_close_dialog()
+					mode = M.WALK)
+			_dialog_button(box, Txt.t("OPT_LEAVE"), func() -> void:
+				_close_dialog()
+				mode = M.WALK)
+			return
+		"key":
+			Game.set_flag(what)
+			_take_lasting(t)
+			_dialog_button(_new_dialog(Txt.t("UI_KEY_FOUND")), Txt.t("UI_CONTINUE"), func() -> void:
+				_close_dialog()
+				_refresh_locked()
+				mode = M.WALK)
+		"rare":
+			TrailRules.apply_effects(Game.run, what)
+			_take_lasting(t)
+			_after_change()
+			_dialog_button(_new_dialog(Txt.f("UI_RARE_FOUND", what.replace(";", "  "))), Txt.t("UI_CONTINUE"), func() -> void:
+				_close_dialog()
+				mode = M.WALK)
+
+
+func _take_lasting(t: Dictionary) -> void:
+	Game.set_flag(ExploreRules.taken_flag(map.map_name, String(t.id)))
+	t.done = true
+	_refresh_units()
 
 
 ## "FOOD BITS 2/3, HERB 1/1": what a recipe or step needs, with what the village pile holds.
@@ -736,6 +784,8 @@ func shown(t: Dictionary) -> bool:
 
 ## Gone for good: one of the thing's once flags is set (the book was taken, a smithy weapon was picked).
 func _once_done(t: Dictionary) -> bool:
+	if String(t.kind) in ExploreRules.LASTING_KINDS and Game.has_flag(ExploreRules.taken_flag(map.map_name, String(t.id))):
+		return true  # a lasting reward is taken for good
 	for f in String(t.get("once", "")).split("|", false):
 		if Game.has_flag(f):
 			return true

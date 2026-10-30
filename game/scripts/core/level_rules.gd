@@ -16,7 +16,7 @@ const STATS := ["hp", "damage", "armor", "magic", "crit"]
 
 static func fresh() -> Dictionary:
 	return {"level": 1, "xp": 0, "gains": {"hp": 0, "damage": 0, "armor": 0, "magic": 0, "crit": 0}, "ranks": {}, "pending": 0,
-		"jobs": {}}
+		"jobs": {}, "found": {}}
 
 
 ## A job's own level, ranks and branch, from scratch: a new job starts at 0 ([USER] pc-12).
@@ -44,6 +44,9 @@ static func normalize(s: Variant) -> Dictionary:
 	var ranks: Dictionary = s.get("ranks", {})
 	for id in ranks:
 		out.ranks[String(id)] = int(ranks[id])
+	var found: Dictionary = s.get("found", {})
+	for k in found:
+		out.found[String(k)] = int(found[k])
 	var jobs: Dictionary = s.get("jobs", {})
 	for id in jobs:
 		var j: Dictionary = jobs[id]
@@ -147,12 +150,13 @@ static func ranked(a: Ability, rank: int, rows: Dictionary) -> Ability:
 ## chance there and a defense bonus armor, so crit and armor ride on those keys.
 static func bonus(s: Dictionary, cfg: Dictionary) -> Dictionary:
 	var g: Dictionary = s.get("gains", {})
+	var f: Dictionary = s.get("found", {})  # stat items from the maps ([USER] omr-10), in their own units: +2 HP is 2
 	return {
-		"hp": int(g.get("hp", 0)) * int(cfg.get("growth_hp", 2)),
-		"damage": int(g.get("damage", 0)),
-		"defense": int(g.get("armor", 0)),
-		"magic_power": int(g.get("magic", 0)),
-		"attack": int(g.get("crit", 0)),
+		"hp": int(g.get("hp", 0)) * int(cfg.get("growth_hp", 2)) + int(f.get("hp", 0)),
+		"damage": int(g.get("damage", 0)) + int(f.get("damage", 0)),
+		"defense": int(g.get("armor", 0)) + int(f.get("armor", 0)),
+		"magic_power": int(g.get("magic", 0)) + int(f.get("magic", 0)),
+		"attack": int(g.get("crit", 0)) + int(f.get("crit", 0)),
 	}
 
 

@@ -802,3 +802,31 @@ func test_boon_rules_in_a_fight() -> void:
 			break
 		b.hp = 99
 	ok(healed, "a crit heals the striker")
+
+
+# --- lasting map rewards ([USER] omr-10; one-more-run step 6) ----------------------------------------
+
+func test_lasting_rewards_are_for_good() -> void:
+	var saved := _fresh_game()
+	var dog: Dictionary = Game.run.members[1]
+	var hp := Game.run.max_hp(dog)
+	Game.take_boost("dog", "hp", 2)
+	eq(Game.run.max_hp(dog), hp + 2, "+2 HP on the one who took it")
+	Game.start_adventure()
+	eq(Game.run.max_hp(Game.run.members[1]), hp + 2, "kept for good")
+	Game.explore_map = "crypt"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	var key := {"id": "k1", "kind": "key", "event": "crypt_gate_key", "cell": s.leader().cell, "done": false}
+	s._lasting(key)
+	ok(Game.has_flag("crypt_gate_key"), "the key sets its flag")
+	ok(s._once_done(key), "and is taken for good")
+	var cache := {"id": "r1", "kind": "rare", "event": "rare:1;metal:2", "cell": s.leader().cell, "done": false}
+	s._lasting(cache)
+	eq([Game.run.item_count("rare"), Game.run.item_count("metal")], [1, 2], "rare materials into the pack")
+	ok(s._once_done(cache))
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"
+	_restore(saved)

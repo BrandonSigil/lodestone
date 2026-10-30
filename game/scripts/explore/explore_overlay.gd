@@ -90,6 +90,21 @@ func _thing(kind: String, p: Vector2, dim: bool) -> void:
 			var f := PackedVector2Array([p + Vector2(-9, -30), p + Vector2(4, -36), p + Vector2(4, -22), p + Vector2(-9, -16)])
 			draw_colored_polygon(f, Color(0.2, 0.18, 0.2) * k)
 			draw_polyline(f + PackedVector2Array([f[0]]), Color(0.55, 0.4, 0.25) * k, 2.5, true)
+		"boost":
+			# A stat item: a glowing gem on a little stand ([USER] omr-10). Placeholder until art.
+			var shine := 0.6 + 0.4 * sin(_time * 3.0)
+			draw_circle(p + Vector2(0, -16), 9.0, Color(1.0, 0.85, 0.4, 0.25 * shine) * k)
+			draw_colored_polygon(PackedVector2Array([p + Vector2(0, -26), p + Vector2(6, -16), p + Vector2(0, -6), p + Vector2(-6, -16)]), Color(0.95, 0.75, 0.3) * k)
+		"key":
+			draw_circle(p + Vector2(-5, -14), 5.0, Color(0.9, 0.78, 0.35) * k)
+			draw_circle(p + Vector2(-5, -14), 2.0, Color(0.2, 0.2, 0.2) * k)
+			draw_line(p + Vector2(0, -14), p + Vector2(12, -14), Color(0.9, 0.78, 0.35) * k, 2.5)
+			draw_line(p + Vector2(9, -14), p + Vector2(9, -9), Color(0.9, 0.78, 0.35) * k, 2.0)
+		"rare":
+			# Rare materials: a sparkling lump.
+			draw_colored_polygon(_oval(p + Vector2(0, -6), 9.0, 6.0), Color(0.55, 0.5, 0.65) * k)
+			for o in [Vector2(-4, -12), Vector2(5, -9), Vector2(1, -16)]:
+				draw_circle(p + o, 1.5 + sin(_time * 5.0 + o.x) * 0.8, Color(0.85, 0.95, 1.0) * k)
 		"climb":
 			# A rope knot at the cliff foot.
 			draw_line(p + Vector2(0, -2), p + Vector2(2, -46), Color(0.75, 0.62, 0.4) * k, 2.5, true)
