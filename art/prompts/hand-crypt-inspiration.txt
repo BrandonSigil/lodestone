@@ -1,0 +1,15 @@
+Concept art of a small crypt level for a cosy fantasy tactics game, drawn as a floating diorama on plain cream paper (#eae8d6): an old stone crypt and its walled courtyard, seen from a high fixed camera. Layout is open: invent the rooms, halls, stairs, pits and ways in, and make it interesting to fight across.
+
+CAMERA (essential): 2:1 dimetric, the pixel-art style of isometric. A square tile grid turned 45 degrees and looked at from about 30 degrees above, so every floor tile is a diamond twice as wide as it is tall. Orthographic: no perspective, no vanishing point, parallel edges stay parallel across the whole picture, no lens blur, no tilt-shift. The map is a grid of equal square cells; nothing walkable is smaller than a cell.
+
+HEIGHT: the ground is built from stacked stone blocks in terraces and levels, each step up one clear block high, so you can count the steps. Only two side faces ever show: the left faces are mid-tone and the right faces are the darkest; the tops are the lightest. Never draw the backs or undersides. Cliffs and drops show their full stone face, with staggered stone courses, and the map ends in an edge where the stone drops away into the cream paper: no horizon, no sky, no skybox. A few small loose blocks may fall away from the edge. Stairs are plain flights of low wide steps, one level a step, all the same size.
+
+WALLS AND FLOORS: big squared pale grey stone blocks with a little moss in the joints, arched doorways, a few pillars and a broken arch. Walls up front are short and thick so they never hide the floor behind them; walls at the back are tall. Floors are flat flagstones with a few cracks, moss at the edges, a little fall leaf and dust. Props stay few and big: a sarcophagus, a stone altar, a brazier, hanging iron gates, a crumbled statue, a few bare trees in the courtyard.
+
+LIGHT: one soft sun from the upper left, flat and even, tops brightest, no hard cast shadows, nothing glowing except a small warm brazier flame or one lit window as the single accent.
+
+STYLE: flat soft watercolour and ink, like a children's picture book. Soft flat painted fills with a little soft mottle and a faint paper grain over everything, one lighter and one darker tone per surface, no gradients except a faint tone on the stone. A soft, slightly wobbly dark warm charcoal outline (#373335, never pure black) round each block, prop and edge, like a felt marker. Chunky simple readable shapes, gentle detail, big calm walkable tops.
+
+PALETTE: pale warm grey stone (about #b9b2a6 on top, #8c827d left faces, #6a615d right faces), soft moss green (#7f8c5c), dusty olive and muted sage, faded gold and orange fall leaves (#e0a03a), a deep muted indigo for the darkest doorways and shadows (#2e2a40) instead of black, cream paper (#eae8d6). Muted and cosy, never gloomy or horror.
+
+Avoid: perspective or a vanishing point, a fisheye or wide-angle look, a skybox or horizon, photorealism, 3d render, glossy materials, neon, strong cast shadows, true isometric (30 degree grid lines), pixel art, dark horror mood, skulls and gore, people and monsters, text, letters, numbers, UI, borders, a title.
