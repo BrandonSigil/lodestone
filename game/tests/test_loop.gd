@@ -308,6 +308,45 @@ func test_no_fog_of_war() -> void:
 	Game.explore_map = "home"
 
 
+## Brandon's bugs (2026-10-30): a door's "!" on the lane was an invisible wall, and F did nothing at some "!".
+## On every map every door and thing can be walked up to and used on jump 1, from where the party comes in
+## (the map's start or any doorway), with the other things in the way as they are in the game.
+const ROPE_GATED := {"snow_pass": ["ledge_chest", "rope_down"]}  ## down the ledge only once the rope is tied
+
+func test_every_door_and_thing_reachable_and_usable() -> void:
+	_db()
+	for name in ["village", "home", "house_dog", "house_ne", "tavern", "snow_pass", "wolf_den", "crypt", "city_proto"]:
+		var m := ExploreMap.load_named(name)
+		var g := m.grid
+		var all := {}
+		for y in g.h:
+			for x in g.w:
+				all[Vector2i(x, y)] = true
+		var blocked := {}
+		var ins: Array = m.start.duplicate()
+		for t: Dictionary in m.things:
+			if String(t.kind) in ExploreRules.WALK_ON_KINDS:
+				ins.append(t.cell)
+			elif String(t.kind) in ["door", "rubble"]:  # a shut door or rubble opens onto its floor: what's behind counts
+				for key in CombatGrid.LETTERS:
+					if CombatGrid.LETTERS[key] == String(t.floor):
+						g.set_terrain(t.cell, key)
+			else:
+				blocked[t.cell] = true
+		var lost: Array = []
+		for t: Dictionary in m.things:
+			if (ROPE_GATED.get(name, []) as Array).has(t.id):
+				continue
+			var used := false
+			for c: Vector2i in ins:
+				if not ExploreRules.path_to_use(g, c, t.cell, 1, blocked, all, true).is_empty():
+					used = true
+					break
+			if not used:
+				lost.append("%s %s" % [t.id, t.cell])
+		eq(lost.size(), 0, "%s: can't get to %s" % [name, str(lost)])
+
+
 ## Brandon's bug (2026-10-30, note bug-f-key-no-interact): by the inn wall a "!" showed its F and F did nothing.
 ## On every map, wherever the overlay shows an F hint, F has a thing to use; and from that spot F starts using it.
 func test_f_answers_every_hint() -> void:
@@ -349,6 +388,15 @@ func test_f_answers_every_hint() -> void:
 			ev.pressed = true
 			s._unhandled_key_input(ev)
 			ok(s.walking_now or s.mode != 0, "F walks to the smithy's restore spot from beside the wall")
+			# The mossy home's door (Brandon's barrier): the party walks onto it, and F from there opens it.
+			s.walking_now = false
+			s._close_dialog()
+			s.mode = 0
+			ok(not s._blocked().has(Vector2i(29, 28)), "a door's cell is no wall")
+			lead.place(Vector2i(29, 28), g.height_at(Vector2i(29, 28)))
+			s._refresh_sight()
+			s._unhandled_key_input(ev)
+			ok(s.mode != 0, "F on the door's own cell opens it")
 		s.free()
 	Game.explore_map = "home"
 

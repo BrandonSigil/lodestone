@@ -229,7 +229,7 @@ func _blocked() -> Dictionary:
 			for c in _group_cells(g):
 				out[c] = true
 	for t in things:
-		if not t.done:
+		if not t.done and not String(t.kind) in ExploreRules.WALK_ON_KINDS:
 			out[t.cell] = true
 	return out
 

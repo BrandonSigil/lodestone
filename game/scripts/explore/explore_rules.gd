@@ -451,6 +451,11 @@ static func thing_to_use(things: Array, at: Vector2i, facing: Vector2i, lit: Dic
 	return best
 
 
+## Things the party walks over instead of round: doorways and ways out (Brandon's bug, 2026-10-30: a door's
+## "!" on the lane in front of a house was an invisible wall). A shut `door` and `rubble` still block.
+const WALK_ON_KINDS := ["enter", "exit"]
+
+
 ## Can someone standing at `at` use the thing at `thing`? Next to it (diagonals count) and not a cliff apart.
 static func can_use_from(grid: CombatGrid, at: Vector2i, thing: Vector2i) -> bool:
 	var g := CombatGrid.ground(at) - CombatGrid.ground(thing)
@@ -462,7 +467,7 @@ static func can_use_from(grid: CombatGrid, at: Vector2i, thing: Vector2i) -> boo
 ## Shortest walk to a cell from which the thing can be used. Empty when it can't be reached.
 static func path_to_use(grid: CombatGrid, from: Vector2i, thing: Vector2i, jump: int, blocked := {}, known := {}, diagonal := false) -> Array[Vector2i]:
 	var best: Array[Vector2i] = []
-	if can_use_from(grid, from, thing):
+	if from == thing or can_use_from(grid, from, thing):  # standing on a doorway uses it too
 		best.append(from)
 		return best
 	for dy in range(-1, 2):
