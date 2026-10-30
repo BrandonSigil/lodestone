@@ -47,7 +47,41 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 		guard = u.hp * 2 < u.max_hp
 	var target := CombatRules.unit_at(units, best_aim) if best_ability else null
 	return {"move": best_cell, "ability": best_ability, "aim": best_aim, "target": target,
-		"path": CombatRules.path_to(reach.prev, u.cell, best_cell), "guard": guard}
+		"path": CombatRules.path_to(reach.prev, u.cell, best_cell), "guard": guard, "cost": int(cost.get(best_cell, 0))}
+
+
+## Hit and run, after the strike: the nearest cell u can still reach that no foe who hits in melee could strike
+## next phase, without walking off a guard; where it stands if that's safe or nothing is. Same shape as plan's
+## move part: {"move", "path", "cost"}.
+static func retreat(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
+	var reach := CombatRules.reachable(grid, u, units)
+	var cost: Dictionary = reach.cost
+	var zone := melee_reach(grid, u, units)
+	var best := u.cell
+	if zone.has(u.cell):
+		for cell: Vector2i in cost:
+			if zone.has(cell) or leave_cost(grid, u, units, cell) > 0.0:
+				continue
+			if best == u.cell or int(cost[cell]) < int(cost[best]):
+				best = cell
+	return {"move": best, "path": CombatRules.path_to(reach.prev, u.cell, best), "cost": int(cost.get(best, 0))}
+
+
+## Every cell a foe of u whose basic hit is melee could strike next phase.
+static func melee_reach(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
+	var zone := {}
+	for o: CombatUnit in units:
+		if o.team == u.team or not o.alive() or o.has_status(CombatRules.STATUS_SLEEP):
+			continue
+		var r := CombatRules.ability_range(o, null)
+		if r.y > 1:
+			continue
+		for f: Vector2i in CombatRules.reachable(grid, o, units).cost:
+			for d in CombatRules.DIRS:
+				for n in grid.places_next(f, d):
+					if grid.in_bounds(n) and CombatRules.in_reach(grid, f, n, r):
+						zone[n] = true
+	return zone
 
 
 ## Aim points worth scoring: unit cells only (area skills centred on a unit or next to one).

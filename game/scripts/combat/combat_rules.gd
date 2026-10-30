@@ -20,6 +20,7 @@ const STATUS_GUIDED := "guided"  ## STAR POINT: more crit chance until the owner
 const STATUS_TAUNT := "taunt"  ## foes that can reach the taunter must hit it, until the taunter's next phase
 const STATUS_SLOW := "slow"  ## less move for a phase
 const STATUS_BLEED := "bleed"  ## loses a little HP at the start of each of its phases (a ranked bite)
+const STATUS_POISON := "poison"  ## the same, from the rogue's blades: `poison_damage` for `poison_turns` phases
 ## Cleared when the owner's next phase starts (they protect through the enemy phase).
 const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT]
 
@@ -32,6 +33,8 @@ const TRAIT_DEEP_ROOTS := &"deep_roots"  ## Bushberry: can't be pushed, regrows 
 const TRAIT_BONES := &"bones"  ## Skeleton: takes 2 less damage from arrows and other non-magic ranged hits
 const TRAIT_DOUBLE_STRIKE := &"double_strike"  ## Lewith & Flark: the basic hit swings twice at -1 damage each
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
+const TRAIT_POISON_BLADES := &"poison_blades"  ## Rogue: every hit leaves POISON ([USER] design-boss-daggers)
+const TRAIT_HIT_AND_RUN := &"hit_and_run"  ## Rogue: after a hit, may walk the move it didn't use before it
 const PERK_FLAMMABLE := &"flammable"  ## takes +2 damage from fire
 const STARLIT_HEIGHT := 2
 const BONES_DR := 2
@@ -69,6 +72,20 @@ static func move_points(u: CombatUnit) -> int:
 	return maxi(1, u.move + (SPOOKED_MOVE if u.spooked else 0) + (int(num("slow_move")) if u.has_status(STATUS_SLOW) else 0))
 
 
+## What's left of this phase's move: all of it, less what the piece already walked (hit and run spends the rest).
+static func move_left(u: CombatUnit) -> int:
+	return maxi(0, move_points(u) - u.move_spent)
+
+
+## Hit and run (the rogue, [USER] design-boss-daggers, Fire Emblem's Canto): after an attack the piece may still
+## walk what's left of its move. Reopens the move and returns true when there's any left.
+static func hit_and_run(u: CombatUnit, a: Ability) -> bool:
+	if a == null or a.kind != "attack" or not u.alive() or not u.has_trait(TRAIT_HIT_AND_RUN) or move_left(u) <= 0:
+		return false
+	u.moved = false
+	return true
+
+
 static func unit_at(units: Array, c: Vector2i) -> CombatUnit:
 	for o: CombatUnit in units:
 		if o.alive() and o.cell == c:
@@ -90,7 +107,7 @@ static func reachable(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictiona
 	var cost := {u.cell: 0}
 	var prev := {}
 	var open: Array[Vector2i] = [u.cell]
-	var budget := move_points(u)
+	var budget := move_left(u)
 	while not open.is_empty():
 		var bi := 0
 		for i in open.size():
@@ -533,6 +550,9 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 	if t.alive() and a.bleed > 0:
 		t.statuses[STATUS_BLEED] = a.bleed
 		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_BLEED})
+	if t.alive() and a.kind == "attack" and u.has_trait(TRAIT_POISON_BLADES):  # renews, doesn't stack
+		t.statuses[STATUS_POISON] = int(num("poison_turns"))
+		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_POISON})
 	if t.alive() and a.push > 0:
 		events.append_array(push(grid, units, u.cell, t, a.push))
 	return events
@@ -595,11 +615,13 @@ static func begin_phase(units: Array, team: int) -> Array:
 		u.moved = false
 		u.acted = false
 		u.move_origin = u.cell
+		u.move_spent = 0
 		u.left_guard = false
-		if u.alive() and u.has_status(STATUS_BLEED):
-			var n := mini(int(num("bleed_damage")), u.hp)
-			u.hp -= n
-			events.append({"type": "bleed", "unit": u, "amount": n})
+		for s: String in [STATUS_BLEED, STATUS_POISON]:  # through armor
+			if u.alive() and u.has_status(s):
+				var n := mini(int(num(s + "_damage")), u.hp)
+				u.hp -= n
+				events.append({"type": "bleed", "unit": u, "amount": n, "status": s})
 		if u.downed():
 			u.bleed -= 1  # one of its own phases gone; at 0 it's out for the fight
 			if u.bleed <= 0:
@@ -628,6 +650,7 @@ static func end_phase(units: Array, team: int) -> void:
 	for u: CombatUnit in units:
 		if u.team != team:
 			continue
+		u.move_spent = 0  # out of its own phase a piece's reach is its whole move (the other side's threat maps)
 		for s in u.statuses.keys():
 			if s in STATUS_UNTIL_OWN_PHASE:
 				continue

@@ -14,8 +14,15 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 		return plan
 	u.place(plan.move, grid.height_at(plan.move))
 	u.moved = true
+	u.move_spent += int(plan.cost)
 	if plan.ability != null:
 		events.append_array(CombatRules.resolve(rng, grid, u, plan.ability, plan.aim, units))
+		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of melee reach
+			var away := EnemyAi.retreat(grid, u, units)
+			events.append_array(CombatRules.leave_hits(rng, grid, u, units, away.move))
+			if u.alive():
+				u.place(away.move, grid.height_at(away.move))
+			u.moved = true
 	elif plan.guard:
 		CombatRules.guard(u)
 	u.acted = true
@@ -34,6 +41,8 @@ static func fight(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, su
 		rounds += 1
 		for team in [0, 1]:
 			CombatRules.begin_phase(units, team)
+			if not CombatRules.team_alive(units, team):  # poison can finish a side at the start of its phase
+				return {"winner": 1 - team, "rounds": rounds}
 			for u: CombatUnit in units:
 				if u.team == team and u.alive():
 					CombatRules.skittish_check(rng, u, units)

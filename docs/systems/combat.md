@@ -68,6 +68,8 @@ Every roster character has one combat trait (`traits` in their `.tres`), shown w
 | Skeleton Archer | bones | takes 2 less damage from non-magic hits at range 2+ (arrows go through) | a tank against archers, not against swords |
 | Lewith & Flark | double_strike | the basic HIT rolls twice at -1 damage each (also when hitting back) | two bodies, two swings; strong against high defense rolls, weak against armor |
 | Wolf (enemy) | pack | +1 damage on a target that another enemy is next to | wolves reward being surrounded |
+| Hero with daggers (rogue job, on `job_rogue`) | poison_blades | every hit (counters too) leaves POISON: `poison_damage` (1) at the start of each of the target's phases for `poison_turns` (3), through armor; a new hit renews it to 3 and doesn't stack. Ticks with BLEED's code in `begin_phase` | [USER] design-boss-daggers: the rogue wears a big foe down |
+| Hero with daggers (rogue job) | hit_and_run | after an attack the piece may still walk what's left of its move (`CombatUnit.move_spent`, `CombatRules.move_left`, `hit_and_run`). Player: the move tiles come straight back up after the hit. AI (`EnemyAi.retreat`): the nearest cell no foe who hits in melee could strike next phase, without walking off a guard, else stay | [USER] design-boss-daggers, Fire Emblem's Canto; also breaks the auto AI's help-up loop at the Lich |
 
 ## Spells and spell slots
 Casters pick their spells. A class has a `spell_pool` and `spell_slots` (both 2 for now); a character can set default picks in `spells`, otherwise the first spells in the pool are used. Picking only one spell, or leaving a slot empty, is allowed. Spells are the magic rows of `data/abilities.csv`; the `element` column (fire, moon, frost) is what traits like flammable look at.

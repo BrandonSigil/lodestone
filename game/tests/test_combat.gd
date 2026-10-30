@@ -795,3 +795,72 @@ func test_bows_reach_one_ring_further() -> void:
 		eq(CombatRules.ability_range(u, u.abilities[0]), Vector2i(2, 5), id)
 	eq(CombatRules.ability_range(_unit("hunter", 0, Vector2i(0, 0), g), Db.ability("snare")), Vector2i(2, 4), "SNARE")
 
+
+
+## [USER] design-boss-daggers: the rogue's blades leave POISON on every hit: 1 HP at the start of each of the
+## target's phases for 3 of them, through armor; a new hit renews it to 3 and doesn't stack.
+func test_rogue_blades_poison_through_armor_and_renew() -> void:
+	var g := CombatGrid.flat(3, 1)
+	var r := _unit("job_rogue", 0, Vector2i(0, 0), g)
+	var b := _unit("bandit", 1, Vector2i(1, 0), g)
+	b.max_hp = 99
+	b.hp = 99
+	var units := [r, b]
+	var rng := RandomNumberGenerator.new()
+	CombatRules.resolve(rng, g, r, r.abilities[0], b.cell, units, false)
+	eq(int(b.statuses.get(CombatRules.STATUS_POISON, 0)), 3, "a hit poisons for 3 phases")
+	b.armor = 9
+	var ticks := 0
+	for i in 5:
+		var before := b.hp
+		var ev := CombatRules.begin_phase(units, 1)
+		if b.hp == before - 1:
+			ticks += 1
+			ok(ev.any(func(e: Dictionary) -> bool: return e.type == "bleed" and e.status == CombatRules.STATUS_POISON), "the board sees it")
+		CombatRules.end_phase(units, 1)
+	eq(ticks, 3, "1 a phase for 3 phases, whatever the armor")
+	ok(not b.has_status(CombatRules.STATUS_POISON), "then it wears off")
+	CombatRules.resolve(rng, g, r, r.abilities[0], b.cell, units, false)
+	CombatRules.begin_phase(units, 1)
+	CombatRules.end_phase(units, 1)
+	CombatRules.resolve(rng, g, r, r.abilities[0], b.cell, units, false)
+	eq(int(b.statuses[CombatRules.STATUS_POISON]), 3, "a new hit renews it to 3")
+	var hp := b.hp
+	CombatRules.begin_phase(units, 1)
+	eq(b.hp, hp - 1, "and doesn't stack")
+	var k := _unit("knight", 0, Vector2i(2, 0), g)
+	b.statuses.clear()
+	CombatRules.resolve(rng, g, k, k.abilities[0], b.cell, [k, b], false)
+	ok(not b.has_status(CombatRules.STATUS_POISON), "other jobs' hits don't")
+
+
+## [USER] design-boss-daggers: hit and run. After a hit the rogue may walk what's left of its move; the AI steps
+## out of the reach of foes who hit in melee.
+func test_rogue_hits_and_runs() -> void:
+	var g := CombatGrid.flat(9, 1)
+	var r := _unit("job_rogue", 0, Vector2i(0, 0), g)
+	var b := _unit("bandit", 1, Vector2i(3, 0), g)
+	b.max_hp = 99
+	b.hp = 99
+	var units := [r, b]
+	CombatRules.begin_phase(units, 0)
+	r.place(Vector2i(2, 0), 0)
+	r.moved = true
+	r.move_spent = 2
+	CombatRules.resolve(RandomNumberGenerator.new(), g, r, r.abilities[0], b.cell, units, false)
+	r.acted = true
+	ok(CombatRules.hit_and_run(r, r.abilities[0]), "a hit reopens the move")
+	ok(not r.done(), "so the rogue isn't done")
+	eq(CombatRules.move_left(r), r.move - 2, "only what it didn't walk")
+	var cells: Dictionary = CombatRules.reachable(g, r, units).cost
+	ok(cells.has(Vector2i(0, 0)) and not cells.has(Vector2i(2 - r.move, 0)), "the move tiles are the rest of the move")
+	var away := EnemyAi.retreat(g, r, units)
+	ok(not EnemyAi.melee_reach(g, r, units).has(away.move) or away.move == r.cell, "the AI steps out of melee reach")
+	var k := _unit("knight", 0, Vector2i(2, 0), g)
+	k.moved = true
+	ok(not CombatRules.hit_and_run(k, k.abilities[0]), "other jobs don't")
+	r.move_spent = r.move
+	r.moved = true
+	ok(not CombatRules.hit_and_run(r, r.abilities[0]), "nothing left to walk: done")
+	CombatRules.end_phase(units, 0)
+	eq(r.move_spent, 0, "out of its phase its reach is its whole move again")

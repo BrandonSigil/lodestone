@@ -42,6 +42,7 @@ var moved := false
 var acted := false
 var spooked := false
 var move_origin := Vector2i(-1000, -1000)  ## where this piece began its phase (set by CombatRules.begin_phase)
+var move_spent := 0  ## move points walked this phase (hit and run walks the rest after a hit)
 var leader := false  ## a fight's leader: beating it wins a "leader" fight (FightGoals)
 var elite := false  ## from an elite group: tougher, and wears an ELITE badge
 var protect := false  ## must not fall: if it does, the fight is lost (FightGoals)

@@ -272,8 +272,15 @@ func _ai_turn(u: CombatUnit) -> void:
 	if plan.move != u.cell:
 		await board.animate_move(u, plan.path)
 		u.place(plan.move, grid.height_at(plan.move))
+	u.move_spent += int(plan.cost)
 	if plan.ability != null:
 		await _use(u, plan.ability, plan.aim)
+		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of melee reach
+			var away := EnemyAi.retreat(grid, u, units)
+			if away.move != u.cell and await _leave_guards(u, away.move):
+				await board.animate_move(u, away.path)
+				u.place(away.move, grid.height_at(away.move))
+			u.moved = true
 	elif plan.guard:
 		CombatRules.guard(u)
 		board.float_text(u.cell, Txt.t("TAG_GUARD"), Color(0.7, 0.85, 1.0))
@@ -691,18 +698,22 @@ func _on_wait() -> void:
 func _undo_move() -> void:
 	selected.place(selected.move_origin, grid.height_at(selected.move_origin))
 	selected.moved = false
+	selected.move_spent = 0
 	_select(selected)
 	_refresh_danger()
 
 
-func _after_action(u: CombatUnit) -> void:
+## run: hit and run reopened the move, so its tiles come straight up (CANCEL goes to the menu: WAIT ends it).
+func _after_action(u: CombatUnit, run := false) -> void:
 	u.acted = true
-	if not u.alive() or u.done() or CombatRules.move_points(u) == 0:
+	if not u.alive() or u.done() or CombatRules.move_left(u) == 0:
 		u.moved = true
 		_finish_unit()
 		return
 	_refresh_danger()
 	_select(u)
+	if run:
+		_begin_move()
 
 
 func _finish_unit() -> void:
@@ -788,7 +799,7 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 				await _use(who, a, c)
 				if _check_end():
 					return
-				_after_action(who)
+				_after_action(who, CombatRules.hit_and_run(who, a))
 
 
 func _move_selected(c: Vector2i) -> void:
@@ -799,6 +810,7 @@ func _move_selected(c: Vector2i) -> void:
 	_refresh_cancel()
 	board.highlights = {}
 	var path := CombatRules.path_to(reach.prev, u.cell, c)
+	u.move_spent += int(reach.cost[c])
 	if not await _leave_guards(u, c):
 		if not _check_end():
 			_finish_unit()

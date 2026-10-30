@@ -312,6 +312,10 @@ TRAIT_PACK,PACK
 TRAIT_PACK_DESC,friend next to prey: DMG +1
 TRAIT_FLAMMABLE,BURNY
 TRAIT_FLAMMABLE_DESC,fire DMG +2 on me
+TRAIT_POISON_BLADES,SICK KNIFE
+TRAIT_POISON_BLADES_DESC,knife hit make SICK. lose HP each turn
+TRAIT_HIT_AND_RUN,HIT RUN
+TRAIT_HIT_AND_RUN_DESC,hit. then walk rest of walk
 UI_EX_TITLE,WALK lorem ipsum
 UI_EX_HELP,WASD or click ground = walk. click thing = use. F = use near thing. arrows or right drag = look. wheel = zoom
 UI_EX_WIN,IT WORK. lorem.
@@ -395,6 +399,7 @@ UI_STAT_ARMOR,ARMOR
 UI_STAT_MAGIC,MAGIC
 UI_STAT_CRIT,CRIT
 TAG_BLEED,BLEED
+TAG_POISON,SICK
 UI_LS_PICK_WAITING,%s CAN MAKE SKILL STRONG. OPEN STONE.
 UI_LS_JOB,JOB: %s  LV %d  %s
 UI_LS_BRANCH,JOB GROW. PICK WAY. lorem.
