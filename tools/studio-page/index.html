@@ -403,7 +403,9 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
 .lb { position: fixed; inset: 0; background: rgba(10,14,12,.86); z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
 .lb img { max-width: 100%; max-height: calc(100% - 50px); object-fit: contain; border-radius: 4px; }
 .lb p { color: #e8ece8; margin: 0; font-size: 14px; }
-.lb button { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); background: #e8ece8; color: #111; border: 0; border-radius: 6px; padding: 6px 12px; }
+.lb-tools { display: flex; gap: 8px; }
+.lb-tools button { background: #e8ece8; color: #111; border: 0; border-radius: 6px; padding: 6px 14px; font-weight: 500; }
+#lb-close { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); background: #e8ece8; color: #111; border: 0; border-radius: 6px; padding: 6px 12px; }
 </style>
 
 <header class="band">
@@ -480,6 +482,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
   <button id="lb-close">Close</button>
   <img id="lb-img" alt="">
   <p id="lb-cap"></p>
+  <div class="lb-tools"><button id="lb-copy" type="button">Copy picture</button><button id="lb-save" type="button" hidden>Save picture</button></div>
 </div>
 <div class="toast" id="toast" hidden></div>
 <button class="chat-fab" id="chat-fab" aria-label="Chat with Wren, the project manager" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="dot" id="chat-dot" hidden></span><span class="pip" id="chat-pip" hidden></span></button>
@@ -1122,6 +1125,25 @@ function setTab(k) {
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => setTab(b.dataset.tab)));
 const closeLb = () => { $("lb").hidden = true; $("lb-img").src = ""; };
 $("lb-close").addEventListener("click", closeLb);
+// Right-click Copy image doesn't work inside the artifact frame, so the enlarged picture gets its own buttons.
+async function lbBlob(png) {
+  const b = await (await fetch($("lb-img").src)).blob();
+  if (!png || b.type === "image/png") return b;
+  const bmp = await createImageBitmap(b), c = document.createElement("canvas");
+  c.width = bmp.width; c.height = bmp.height; c.getContext("2d").drawImage(bmp, 0, 0);
+  return await new Promise((r) => c.toBlob(r, "image/png"));
+}
+$("lb-copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.write([new ClipboardItem({ "image/png": lbBlob(true) })]); toast("Picture copied"); }
+  catch { toast(S.downloads ? "Copying is blocked here. Use Save picture instead." : "Copying is blocked here."); }
+});
+$("lb-save").addEventListener("click", async () => {
+  try {
+    const b = await lbBlob(false), ext = (b.type.split("/")[1] || "png").replace("jpeg", "jpg");
+    const name = (($("lb-cap").textContent || "lodestone-picture").replace(/[^\w -]+/g, "").trim().slice(0, 60) || "lodestone-picture") + "." + ext;
+    await S.downloads.save({ filename: name, data: b });
+  } catch (e) { if (e?.code !== "declined" && e?.code !== "cancelled") toast("Couldn't save that picture."); }
+});
 $("lb").addEventListener("click", (e) => { if (e.target.id === "lb") closeLb(); });
 document.addEventListener("keydown", (e) => {
   if (S.pres && $("lb").hidden && !/TEXTAREA|INPUT/.test(document.activeElement?.tagName || "") && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
@@ -1232,6 +1254,8 @@ function watch(coll, key) {
   try { S.assets = await window.claude?.use?.("assets"); } catch { S.assets = null; }
   try { S.sample = await window.claude?.use?.("sample"); } catch { S.sample = null; }
   try { S.comments = await window.claude?.use?.("comments"); } catch { S.comments = null; }
+  try { S.downloads = await window.claude?.use?.("downloads"); } catch { S.downloads = null; }
+  $("lb-save").hidden = !S.downloads;
   checkWake();
   if (!S.db) { renderAll(); return; }
   watch("chat", "chat");
