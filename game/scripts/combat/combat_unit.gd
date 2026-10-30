@@ -13,6 +13,7 @@ var hp := 1:
 	set(v):
 		if v <= 0 and hp > 0 and team == 0:
 			bleed = int(CombatRules.num("bleed_turns"))
+			downs += 1
 		var fell := v <= 0 and hp > 0
 		hp = v
 		if fell:
@@ -72,9 +73,11 @@ var phase_no := 0  ## own phases begun this fight
 var ready_at := {}  ## boss move id -> the own phase it can next be used on
 var mark := {}  ## a big move marked and waiting: {"ability", "cells": Array[Vector2i], "left": own phases to go}
 var summon_cells: Array[Vector2i] = []  ## where its called pieces stand, if its map marks any; else near it
+var summon_avoid := {}  ## cells its called pieces never take (the fight's way out)
 var minions: Array = []  ## the pieces it called, standing or not
 var summoner: CombatUnit = null  ## who called this piece
 var hiding := false  ## an ambusher not seen yet (a map group's "hidden"): not drawn, not in the danger zone, until spotted or it strikes
+var downs := 0  ## times this party piece went down this fight (a close win, for the balance probes)
 var crumbled := false  ## fell because its summoner did, not to the party
 
 # View state, animated by CombatBoard.

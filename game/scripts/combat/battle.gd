@@ -221,6 +221,9 @@ func end_player_phase() -> void:
 	if not is_player_turn():
 		return
 	_deselect()
+	_show_phase_events(CombatRules.cold(units, 0))  # ice pillars chill the pieces next to them
+	if _check_end():
+		return
 	CombatRules.end_phase(units, 0)
 	_enemy_phase()
 
@@ -277,6 +280,9 @@ func _auto_player_phase() -> void:
 			again = true
 			if _check_end():
 				return
+	_show_phase_events(CombatRules.cold(units, 0))
+	if _check_end():
+		return
 	CombatRules.end_phase(units, 0)
 	_enemy_phase()
 

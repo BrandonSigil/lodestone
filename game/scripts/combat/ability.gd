@@ -27,6 +27,7 @@ var first := 1  ## the user's own phase it can first be used on
 var summon := ""
 var count := 0
 var limit := 0  ## at most this many called pieces standing at once
+var spot := ""  ## summon: "party" puts them 2 steps from a party piece, never next to one; "" round the caller
 ## Items only: the pack item it spends from the user's belt (data/items.csv id) and how many.
 var spends := ""
 var cost := 0
@@ -64,6 +65,7 @@ static func from_row(row: Dictionary) -> Ability:
 	a.summon = row.get("summon", "")
 	a.count = int(row.get("count", "0"))
 	a.limit = int(row.get("limit", "0"))
+	a.spot = row.get("spot", "")
 	return a
 
 

@@ -116,6 +116,8 @@ func _ready() -> void:
 			u.talk_to = g.has("talk") and int(g.talk.get("unit", -1)) == g.units.find(e)
 			u.summon_cells = g.get("summon", [] as Array[Vector2i])
 			u.hiding = bool(e.get("hidden", false))
+			for c in g.get("exit", []):  # what a boss raises never blocks the way out
+				u.summon_avoid[Vector2i(int(c[0]), int(c[1]))] = true
 			units.append(u)
 		groups.append({"def": g, "units": units, "state": "idle"})
 	var memory: Dictionary = Game.explore_memory.get(map.map_name, {})
@@ -1252,7 +1254,8 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		u.member.hp = maxi(1, u.hp)  # downed members get back up after a win
 	var xp := LevelRules.fight_xp(downed, boss, Db.levels, standing if escaped else 0)
 	# a boss's called pieces the party beat (not the ones that crumbled with him): a little XP each
-	xp += battle.units.filter(func(u: CombatUnit) -> bool: return u.summoner != null and not u.alive() and not u.crumbled).size() \
+	xp += battle.units.filter(func(u: CombatUnit) -> bool: return u.summoner != null and not u.alive() and not u.crumbled \
+		and not u.has_trait(CombatRules.TRAIT_STRUCTURE)).size() \
 		* int(Db.levels.get("xp_minion", 0))
 	if elite:
 		xp = xp * int(CombatRules.num("elite_xp_pct")) / 100  # better rewards; loot waits on the one-more-run theme

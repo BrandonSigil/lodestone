@@ -61,6 +61,9 @@ static func run_phase(rng: RandomNumberGenerator, grid: CombatGrid, units: Array
 	if play_phase(rng, grid, units, team):
 		return team
 	CombatRules.boss_end(grid, units, team)
+	CombatRules.cold(units, team)  # ice pillars chill whoever ends next to them
+	if not CombatRules.team_alive(units, team):
+		return 1 - team
 	CombatRules.end_phase(units, team)
 	return -1
 

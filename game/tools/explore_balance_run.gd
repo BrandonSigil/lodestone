@@ -93,6 +93,9 @@ func _fight(m: ExploreMap, g: Dictionary, how: String, level: int, weapon: Strin
 		var cls := Db.class_def(e.id)
 		var u := CombatUnit.enemy(cls, ExploreRules.depth_mods(m.map_name, m.level, String(g.id), g.units.find(e), cls))  # the place's depth
 		u.place(e.cell, grid.height_at(e.cell))
+		u.summon_cells = g.get("summon", [] as Array[Vector2i])
+		for c in g.get("exit", []):  # as the explore scene: nothing raised on the way out
+			u.summon_avoid[Vector2i(int(c[0]), int(c[1]))] = true
 		enemies.append(u)
 	var cells: Array = enemies.map(func(u: CombatUnit) -> Vector2i: return u.cell)
 	var blocked := {}

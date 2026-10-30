@@ -1096,3 +1096,32 @@ func test_action_layouts_build_and_keys_fire() -> void:
 	ok(hud.press_key(1), "key 2 fires the second skill")
 	eq(fired, [mage.abilities[1].id])
 	hud.queue_free()
+
+
+## Ice pillars (Brandon, 2026-10-30; built, not on the Lich yet): raised 2 steps from a party piece and next to none,
+## never on the way out or a stair; a party piece ending its phase next to them loses `pillar_cold` a pillar, at
+## most `pillar_cold_max`; they never act, don't count toward winning, and crumble when he falls.
+func test_ice_pillars_place_chill_and_crumble() -> void:
+	var g := CombatGrid.flat(10, 7)
+	var lich := _unit("lich", 1, Vector2i(8, 3), g)
+	lich.abilities.append(Db.ability("raise_ice"))
+	var knight := _unit("knight", 0, Vector2i(3, 3), g)
+	var units := [lich, knight]
+	lich.summon_avoid = {Vector2i(5, 3): true}
+	lich.phase_no = 2
+	CombatRules.begin_phase(units, 1)
+	CombatRules.boss_start(RandomNumberGenerator.new(), g, units, 1)
+	eq(lich.minions.size(), 2, "2 raised on his 3rd phase")
+	for p: CombatUnit in lich.minions:
+		eq(CombatRules.dist(p.cell, knight.cell), 2, "2 steps from the party")
+		ok(p.cell != Vector2i(5, 3), "never on the way out")
+		ok(p.has_trait(CombatRules.TRAIT_STRUCTURE) and p.tags.has(&"ice"), "a pillar, tagged ice")
+		eq(EnemyAi.plan(g, p, units).ability, null, "it never acts")
+	knight.place(lich.minions[0].cell + Vector2i(1, 0) if CombatRules.unit_at(units, lich.minions[0].cell + Vector2i(1, 0)) == null else lich.minions[0].cell - Vector2i(1, 0), 0)
+	var hp := knight.hp
+	var ev := CombatRules.cold(units, 0)
+	ok(knight.hp < hp and knight.hp >= hp - int(CombatRules.num("pillar_cold")) * int(CombatRules.num("pillar_cold_max")), "next to a pillar: cold, capped")
+	ok(not ev.is_empty())
+	lich.hp = 0
+	ok(not CombatRules.team_alive(units, 1), "pillars don't keep his side in the fight")
+	ok(lich.minions.all(func(p: CombatUnit) -> bool: return not p.alive()), "they crumble with him")

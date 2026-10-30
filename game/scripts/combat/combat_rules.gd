@@ -34,6 +34,7 @@ const TRAIT_BONES := &"bones"  ## Skeleton: makes the piece undead (arrows -2, f
 const TRAIT_DOUBLE_STRIKE := &"double_strike"  ## Lewith & Flark: the basic hit swings twice at -1 damage each
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
 const TRAIT_POISON_BLADES := &"poison_blades"  ## Rogue: every hit leaves POISON ([USER] design-boss-daggers)
+const TRAIT_STRUCTURE := &"structure"  ## an ice pillar: never acts or hits back, stands in the way, doesn't count toward winning
 const TRAIT_AMBUSH := &"ambush"  ## Ambusher: waits hidden; its first strike from hiding counts as a flank ([USER] design-foe-roles)
 const SPOT_RANGE := 3  ## a party piece ending a move this close, with line of sight, spots a hidden foe
 const TRAIT_HIT_AND_RUN := &"hit_and_run"  ## Rogue: after a hit, may walk the move it didn't use before it
@@ -452,7 +453,7 @@ static func expected_damage(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, 
 
 ## Would `tgt` strike back at `att` standing on `from`?
 static func counters_from(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i) -> bool:
-	if not counters or not tgt.alive() or tgt.team == att.team or tgt.has_status(STATUS_SLEEP):
+	if not counters or not tgt.alive() or tgt.team == att.team or tgt.has_status(STATUS_SLEEP) or tgt.has_trait(TRAIT_STRUCTURE):
 		return false
 	return in_reach(grid, tgt.cell, from, ability_range(tgt, null))
 
@@ -634,7 +635,7 @@ static func guard(u: CombatUnit) -> void:
 static func begin_phase(units: Array, team: int) -> Array:
 	var events := []
 	for side in [0, 1]:  # a side with nobody seen left standing: its hidden pieces come out, or the fight never ends
-		if not units.any(func(o: CombatUnit) -> bool: return o.team == side and o.alive() and not o.hiding):
+		if not units.any(func(o: CombatUnit) -> bool: return o.team == side and o.alive() and not o.hiding and not o.has_trait(TRAIT_STRUCTURE)):
 			for o: CombatUnit in units:
 				if o.team == side and o.alive() and o.hiding:
 					o.hiding = false
@@ -755,7 +756,9 @@ static func summon(grid: CombatGrid, u: CombatUnit, a: Ability, units: Array) ->
 	var standing := u.minions.filter(func(m: CombatUnit) -> bool: return m.alive()).size()
 	var n := mini(a.count, a.limit - standing) if a.limit > 0 else a.count
 	var spots: Array[Vector2i] = []
-	if not u.summon_cells.is_empty():
+	if a.spot == "party":
+		spots = party_spots(grid, u, units)
+	elif not u.summon_cells.is_empty():
 		spots = u.summon_cells.duplicate()
 	else:
 		var g := CombatGrid.ground(u.cell)
@@ -783,6 +786,56 @@ static func summon(grid: CombatGrid, u: CombatUnit, a: Ability, units: Array) ->
 		units.append(m)
 		n -= 1
 		events.append({"type": "summon", "src": u, "unit": m})
+	return events
+
+
+## Where pieces raised round the party go (ice pillars): empty floor exactly 2 steps from a party piece and next to none,
+## never on the way out or a stair, closest to the whole party first.
+static func party_spots(grid: CombatGrid, u: CombatUnit, units: Array) -> Array[Vector2i]:
+	var party := units.filter(func(o: CombatUnit) -> bool: return o.team != u.team and o.alive())
+	var out: Array[Vector2i] = []
+	var near := {}
+	for o: CombatUnit in party:
+		var g := CombatGrid.ground(o.cell)
+		for dy in range(-2, 3):
+			for dx in range(-2, 3):
+				var at := g + Vector2i(dx, dy)
+				if absi(dx) + absi(dy) != 2 or not grid.in_bounds(at):
+					continue
+				for c in grid.places_at(at):
+					near[c] = true
+	for c: Vector2i in near:
+		if not grid.passable(c) or grid.terrain_at(c) == CombatGrid.T.STAIRS or u.summon_avoid.has(c) or occupant(units, c) != null:
+			continue
+		if party.any(func(o: CombatUnit) -> bool: return dist(o.cell, c) <= 1):
+			continue
+		out.append(c)
+	var total := func(c: Vector2i) -> int:
+		var n := 0
+		for o: CombatUnit in party:
+			n += dist(o.cell, c)
+		return n
+	out.sort_custom(func(p: Vector2i, q: Vector2i) -> bool:
+		return total.call(p) < total.call(q) if total.call(p) != total.call(q) else (p.y < q.y if p.y != q.y else p.x < q.x))
+	return out
+
+
+## The end of `team`'s phase: each of its standing pieces next to the other side's ice pillars (4 sides) loses
+## `pillar_cold` HP a pillar, at most `pillar_cold_max` pillars, through armor. Events like poison's.
+static func cold(units: Array, team: int) -> Array:
+	var events := []
+	for u: CombatUnit in units:
+		if u.team != team or not u.alive():
+			continue
+		var n := 0
+		for o: CombatUnit in units:
+			if o.team != team and o.alive() and o.has_trait(TRAIT_STRUCTURE) and dist(o.cell, u.cell) == 1:
+				n += 1
+		n = mini(n, int(num("pillar_cold_max")))
+		if n > 0:
+			var d := mini(n * int(num("pillar_cold")), u.hp)
+			u.hp -= d
+			events.append({"type": "bleed", "unit": u, "amount": d, "status": "cold"})
 	return events
 
 
@@ -903,7 +956,7 @@ static func guard_ring(grid: CombatGrid, units: Array, team: int) -> Dictionary:
 static func danger_zone(grid: CombatGrid, units: Array, team: int) -> Dictionary:
 	var zone := {}
 	for u: CombatUnit in units:
-		if u.team != team or not u.alive() or u.has_status(STATUS_SLEEP) or u.hiding:
+		if u.team != team or not u.alive() or u.has_status(STATUS_SLEEP) or u.hiding or u.has_trait(TRAIT_STRUCTURE):
 			continue
 		var froms: Array = CombatRules.reachable(grid, u, units).cost.keys()
 		var ranges: Array[Vector2i] = []
@@ -956,6 +1009,6 @@ static func spot(grid: CombatGrid, units: Array, mover: CombatUnit) -> Array[Com
 
 static func team_alive(units: Array, team: int) -> bool:
 	for o: CombatUnit in units:
-		if o.team == team and o.alive():
+		if o.team == team and o.alive() and not o.has_trait(TRAIT_STRUCTURE):
 			return true
 	return false

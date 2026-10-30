@@ -17,6 +17,8 @@ const AMBUSH_PICK := 60.0  ## an ambusher's pull toward soft targets, so armor a
 ## Returns {"move": Vector2i, "ability": Ability or null, "aim": Vector2i, "path": Array[Vector2i], "guard": bool}.
 ## "target" is kept for the old single-strike callers: the unit at "aim" if any.
 static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
+	if u.has_trait(CombatRules.TRAIT_STRUCTURE):  # an ice pillar only stands there
+		return {"move": u.cell, "ability": null, "aim": u.cell, "target": null, "path": [] as Array[Vector2i], "guard": false, "cost": 0}
 	var reach := CombatRules.reachable(grid, u, units)
 	var cost: Dictionary = reach.cost
 	var best_score := 0.0
@@ -122,9 +124,10 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 		var side := 1.0 if t.team != u.team else -1.5
 		match a.kind:
 			"attack":
-				s += side * (_avg(e) * e.swings + int(e.help)) * 10.0
+				var worth := threat_worth(t, units) if t.team != u.team and CombatRules.num("threat_ai") > 0.0 else 1.0
+				s += side * (_avg(e) * e.swings + int(e.help)) * 10.0 * (0.1 if worth < 0.2 else 1.0)
 				if e.dmg * e.swings + int(e.help) >= t.hp:
-					s += side * KILL_BONUS
+					s += side * KILL_BONUS * worth
 				if a.status != "" and not t.has_status(a.status):
 					s += side * 6.0
 				if a.push > 0 and not t.has_trait(CombatRules.TRAIT_DEEP_ROOTS):
@@ -196,6 +199,20 @@ static func mark_aim(grid: CombatGrid, u: CombatUnit, a: Ability, units: Array) 
 			best_s = s
 			best = c
 	return best if best_s >= 10.0 else CombatGrid.NONE_CELL
+
+
+## What downing t is worth, 0.1 to 1 (game designer 2026-10-30, the threat-weighted AI): a piece by the damage it
+## deals (a full 6 or more counts whole), an ice pillar by the cold it would deal next phase. Without this the AI
+## spent its swings on harmless bodies for the kill bonus while the boss kept casting.
+static func threat_worth(t: CombatUnit, units: Array) -> float:
+	if t.has_trait(CombatRules.TRAIT_STRUCTURE):
+		var next := 0
+		for o: CombatUnit in units:
+			if o.team != t.team and o.alive() and CombatRules.dist(o.cell, t.cell) == 1:
+				next += 1
+		var cold := mini(next, int(CombatRules.num("pillar_cold_max"))) * CombatRules.num("pillar_cold")
+		return clampf(cold / 6.0, 0.1, 1.0)
+	return clampf(t.damage / 6.0, 0.3, 1.0)
 
 
 ## Average damage of one blow from a forecast entry: the middle of the range, crits counted.

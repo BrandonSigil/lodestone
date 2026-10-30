@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ice_pillar"
+name_key = "ENEMY_ICE_PILLAR"
+max_hp = 6
+move = 0
+jump = 0
+attack = 0
+defense = 10
+armor = 0
+damage = 1
+range_min = 1
+range_max = 1
+magic = false
+skills = {}
+traits = Array[StringName]([&"structure"])
+tags = Array[StringName]([&"ice"])
