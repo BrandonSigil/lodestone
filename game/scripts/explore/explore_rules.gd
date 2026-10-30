@@ -157,15 +157,19 @@ const WALL_HALF := 1  ## a wall between two floors stands this high
 ## `outdoors` ([USER] 2026-10-29): zones that are outside, not interior. Their rock between two floors stays
 ## natural rock; their edge rock is void, so the forest skirt's tree line frames the area, except a back edge
 ## facing a pocket the world's edge doesn't reach (the space between buildings), which is a tall wall.
-## `tall`: how many levels a back wall stands over its floor (a map's wall_tall; interiors stand them higher).
-## Returns {"walls": rock cells drawn as walls, "rims": front-edge floor cells}.
-static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := WALL_TALL) -> Dictionary:
+## `tall`: how many levels a back wall stands over its floor (a map's wall_tall).
+## `kit` ([USER] 2026-10-30, a map's wall_kit): back walls are thin wall pieces from a kit, not blocks. Their cells
+## stay at the floor's height and the board stands a piece on each, on the edge it shares with the room.
+## Returns {"walls": rock cells drawn as walls, "rims": front-edge floor cells, "backs": back-wall cell -> the
+## directions toward the room it faces (two at a corner)}.
+static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := WALL_TALL, kit := false) -> Dictionary:
 	var f0: Vector2i = front[0]
 	var f1: Vector2i = front[1]
 	var back: Array[Vector2i] = [-f0, -f1, -f0 - f1]
 	var heights := {}
 	var rims := {}
 	var floors := {}
+	var backs := {}
 	var mass: Array[Vector2i] = []
 	var world := _world(grid)
 	for y in grid.h:
@@ -196,6 +200,9 @@ static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := 
 				continue
 			if behind < 0:
 				heights[c] = floor_h + tall
+				if kit:
+					heights[c] = floor_h
+					backs[c] = _room_sides(grid, c, f0, f1)
 			elif _open_front(grid, c, f0, f1):
 				rims[c] = c + back[behind]
 			else:
@@ -212,7 +219,17 @@ static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := 
 		grid.set_terrain(c, grid.terrain_at(from))
 		grid.set_height(c, grid.height_at(from))
 		rims[c] = true
-	return {"walls": heights, "rims": rims}
+	return {"walls": heights, "rims": rims, "backs": backs}
+
+
+## The sides of a back-wall cell that face the room: the front directions with floor beyond them, or both at a
+## corner (floor only on the diagonal).
+static func _room_sides(grid: CombatGrid, c: Vector2i, f0: Vector2i, f1: Vector2i) -> Array:
+	var out := []
+	for d: Vector2i in [f0, f1]:
+		if _ground(grid, c + d):
+			out.append(d)
+	return out if not out.is_empty() else [f0, f1]
 
 
 ## The open world round the map: everything off the grid, plus the void and the rock touching no ground that

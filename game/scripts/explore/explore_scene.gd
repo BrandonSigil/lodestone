@@ -126,9 +126,11 @@ func _ready() -> void:
 			grid.set_terrain(t.cell, CombatGrid.T.RUIN)  # shut until opened
 	if map.walls:  # after the doors shut, so no front edge opens a way round one
 		var shaped := ExploreRules.shape_walls(grid, [board.front_dir(false), board.front_dir(true)], map.outdoors,
-			map.wall_tall if map.wall_tall > 0 else ExploreRules.WALL_TALL)
+			map.wall_tall if map.wall_tall > 0 else ExploreRules.WALL_TALL, map.wall_kit != "")
 		board.wall_cells = shaped.walls
 		board.rims = shaped.rims
+		board.wall_kit = map.wall_kit
+		board.backs = shaped.backs
 
 	hud = FrameHud.new()
 	add_child(hud)

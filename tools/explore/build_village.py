@@ -41,6 +41,7 @@ class Map:
         self.art_set = art_set
         self.walls = False  # rock is plain gray walls (ExploreMap.walls): the interiors
         self.wall_tall = 0  # back walls this many levels over the floor (ExploreMap.wall_tall; 0: the game's default)
+        self.wall_kit = ""  # the art set its back walls' pieces come from (ExploreMap.wall_kit); "" = block walls
 
     def fill(self, x0, y0, x1, y1, t=None, h=None):
         """Inclusive rect; None keeps what is there."""
@@ -81,6 +82,7 @@ class Map:
         data = {
             "name": self.name, "art_set": self.art_set, "strangeness": 0.0, "view": view,
             **({"walls": True} if self.walls else {}), **({"wall_tall": self.wall_tall} if self.wall_tall else {}),
+            **({"wall_kit": self.wall_kit} if self.wall_kit else {}),
             "turn": turn, "fog": fog,
             "grid": {"w": self.w, "h": self.h,
                      "terrain": ["".join(r) for r in self.terrain],
@@ -100,8 +102,8 @@ class Map:
 
 def room(m, x0, y0, x1, y1, floor="s", h=1, wall=2):
     """A room on [x0..x1] x [y0..y1]: walls along its back edges only (low x, low y); the front edges are open
-    floor, so the camera sees in ([USER] 2026-10-30). On arrival shape_walls stands the back walls the map's
-    wall_tall over the floor."""
+    floor, so the camera sees in ([USER] 2026-10-30). On arrival each back-wall cell gets a piece from the map's
+    wall kit (plain, or a corner where the walls meet); window() and door() set a cell's piece."""
     m.fill(x0, y0, x1, y1, floor, h)
     for x in range(x0, x1 + 1):
         m.put(x, y0, "r", h + wall)
@@ -622,10 +624,20 @@ V.save(fog=False)  # the whole town is in view: fog of war is for the bigger map
 
 # --- interiors (the village_in set: plank floors, plaster walls) ----------------------------------------
 
+def window(m, x, y):
+    """A window piece in a back wall (the wall kit's wall_window)."""
+    m.prop("wall_window", x, y)
+
+
+def door(m, x, y):
+    """A doorway piece in a back wall (the wall kit's wall_door; for show, the way out is the front edge)."""
+    m.prop("wall_door", x, y)
+
+
 def interior(name, w, h):
     m = Map(name, w, h, ".", 0, "village_in")
     m.walls = True
-    m.wall_tall = 9  # back walls three times the game's 3, so they read as real walls ([USER] 2026-10-30)
+    m.wall_kit = "village_in"  # thin plaster-and-timber back walls from the house wall kit ([USER] 2026-10-30)
     return m
 
 
@@ -633,6 +645,8 @@ def interior(name, w, h):
 H = interior("home", 8, 7)
 room(H, 0, 0, 7, 6)
 H.put(3, 6, "s", 1)  # doorway in the front-left wall
+window(H, 2, 0)  # over the bed
+window(H, 0, 4)
 H.prop("prop_bed", 1, 1, tall=0.75)
 H.prop("prop_hearth", 4, 1, tall=0.95, sight=1.0)
 H.prop("prop_cupboard", 6, 1, tall=1.3, sight=1.0)
@@ -653,6 +667,9 @@ Q.fill(6, 0, 6, 8, "r", 3)  # inner wall between the front room (x < 6) and the 
 Q.put(6, 8, "r", 2)
 Q.put(6, 6, "s", 1)  # gap into the inner room, near the front
 Q.put(3, 8, "s", 1)  # front door
+window(Q, 3, 0)
+window(Q, 0, 5)
+window(Q, 9, 0)
 Q.prop("prop_table", 2, 3, tall=0.7)
 Q.prop("prop_stool", 3, 3, tall=0.5)
 Q.prop("prop_broken_chair", 2, 5, tall=0.75)
@@ -673,6 +690,8 @@ Q.save()
 D = interior("house_dog", 8, 7)
 room(D, 0, 0, 7, 6)
 D.put(3, 6, "s", 1)
+window(D, 5, 0)
+window(D, 0, 3)
 D.prop("prop_bed", 1, 1, tall=0.75)
 D.prop("prop_cupboard", 3, 1, tall=1.3, sight=1.0)
 D.prop("prop_table", 2, 3, tall=0.7)
@@ -687,6 +706,10 @@ D.save()
 T = interior("tavern", 12, 11)
 room(T, 0, 0, 11, 10)
 T.put(3, 10, "s", 1)
+window(T, 6, 0)
+window(T, 9, 0)
+window(T, 0, 5)
+door(T, 0, 8)  # the back door
 T.prop("prop_bar", 2, 2, (2, 1), tall=0.8)
 T.prop("prop_bar", 4, 2, (2, 1), tall=0.8)
 T.prop("prop_ale_barrel", 1, 1, tall=0.8)

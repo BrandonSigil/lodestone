@@ -15,7 +15,8 @@ var turn := true  ## false locks the camera (building sprites only read from the
 var fog := true  ## false shows every cell from the start (the village): no fog of war
 var walls := false  ## rock is plain gray walls: tall along the back, half height in front (dungeons, interiors)
 var outdoors: Array = []  ## zones (set names) that are outside on a walls map: natural rock, a tree line at the edge
-var wall_tall := 0  ## on a walls map, back walls stand this many levels over the floor (0: ExploreRules.WALL_TALL; interiors 9)
+var wall_tall := 0  ## on a walls map, back walls stand this many levels over the floor (0: ExploreRules.WALL_TALL)
+var wall_kit := ""  ## on a walls map, the art set its back walls' pieces come from (village_in, dungeon); "" = block walls
 var start: Array[Vector2i] = []  ## party cells, leader first
 ## [{"id", "event", "sight", "loot", "boss": a boss fight (more XP), "end": beating it ends the E2E test,
 ##   "units": [{"id": class id, "cell": Vector2i}]}]
@@ -56,6 +57,7 @@ static func from_dict(d: Dictionary) -> ExploreMap:
 	m.walls = bool(d.get("walls", false))
 	m.outdoors = Array(d.get("outdoors", []))
 	m.wall_tall = int(d.get("wall_tall", 0))
+	m.wall_kit = String(d.get("wall_kit", ""))
 	for c in d.get("start", []):
 		m.start.append(_cell(c))
 	for g: Dictionary in d.get("groups", []):

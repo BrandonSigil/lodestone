@@ -38,6 +38,7 @@ Hearth and light, Storage). Drawers fold; the maker remembers which (`user://map
   map's own set's version (a crate in a dungeon is the dungeon crate).
 - New art: any `prop_*`, `b_*` or `ph_*` PNG in `game/art/source/battle/` (or a set folder) shows up under
   Unsorted at once. Give it a row in `data/catalog.csv` (drawer, group, footprint, height, sight) to sort it.
+  The **Walls** drawer holds the wall-kit pieces (plain, window, doorway, corner) for houses and dungeons: place one on a back-wall cell of a map with a `wall_kit` to set that cell's piece (`docs/systems/explore.md`, wall kits).
   A `walk` of `1` lets pieces stand on it (rugs); `arch` makes it a gateway: pillars on the two end cells of
   its long side, walkable cells between.
 - More angles: put `<sprite>_r1.png`, `_r2`, `_r3` next to the sprite (a quarter turn each).

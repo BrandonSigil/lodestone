@@ -4,7 +4,7 @@
  "strangeness": 0.0,
  "view": 0,
  "walls": true,
- "wall_tall": 9,
+ "wall_kit": "village_in",
  "turn": false,
  "fog": true,
  "grid": {
@@ -37,6 +37,62 @@
    "311111111111"
   ],
   "props": [
+   {
+    "sprite": "wall_window",
+    "cell": [
+     6,
+     0
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.0,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "wall_window",
+    "cell": [
+     9,
+     0
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.0,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "wall_window",
+    "cell": [
+     0,
+     5
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.0,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "wall_door",
+    "cell": [
+     0,
+     8
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.0,
+    "sight": 0.0,
+    "walk": false
+   },
    {
     "sprite": "prop_bar",
     "cell": [

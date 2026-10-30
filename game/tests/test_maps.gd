@@ -492,7 +492,9 @@ func test_catalog() -> void:
 	eq(String(hearth.group), "Hearth and light")
 	ok(BattleArt.texture(String(hearth.sprite)) != null, "catalog art exists")
 	for e in all:
-		if e.kind == "prop" and e.drawer != MakerCatalog.UNSORTED and not String(e.sprite).get_file().begins_with("ph_"):
+		# ph_ placeholders and wall-kit pieces (a graybox plane until the art runner's kit lands) have no art yet
+		if e.kind == "prop" and e.drawer != MakerCatalog.UNSORTED and not String(e.sprite).get_file().begins_with("ph_") \
+				and not String(e.sprite).get_file().begins_with("wall_"):
 			ok(BattleArt.texture(String(e.sprite)) != null, "art for " + String(e.id))
 		if e.kind == "thing":
 			ok(MakerCatalog.THING_KINDS.has(e.thing), "thing kind " + String(e.id))
@@ -575,3 +577,24 @@ func test_map_maker_places_things() -> void:
 func test_ground_rank_blend() -> void:
 	ok(CombatBoard.BLEND_RANK[T.STONE] > CombatBoard.BLEND_RANK[T.ROAD] and CombatBoard.BLEND_RANK[T.ROAD] > CombatBoard.BLEND_RANK[T.GRASS], "stone over road over grass")
 	ok(not CombatBoard.BLEND_RANK.has(T.WATER), "water never blends")
+
+
+func test_wall_kit_back_walls_face_the_room() -> void:
+	# A room with rock along its back edges (row 0, column 0) and floor at 1 ([USER] 2026-10-30: wall kits).
+	var make := func() -> CombatGrid:
+		var g := _island(5, 1)
+		for i in 5:
+			for c in [Vector2i(i, 0), Vector2i(0, i)]:
+				g.set_terrain(c, T.ROCK)
+				g.set_height(c, 3)
+		return g
+	var g: CombatGrid = make.call()
+	var shaped := ExploreRules.shape_walls(g, [Vector2i(0, 1), Vector2i(1, 0)], [], ExploreRules.WALL_TALL, true)
+	eq(shaped.backs[Vector2i(2, 0)], [Vector2i(0, 1)], "the back wall along x faces the room below it")
+	eq(shaped.backs[Vector2i(0, 2)], [Vector2i(1, 0)], "the wall along y faces the room beside it")
+	eq(shaped.backs[Vector2i(0, 0)], [Vector2i(0, 1), Vector2i(1, 0)], "the back corner faces both ways")
+	eq(g.height_at(Vector2i(2, 0)), 1, "a kit wall's cell stays at the floor; the piece stands on its edge")
+	var plain: CombatGrid = make.call()
+	var blocks := ExploreRules.shape_walls(plain, [Vector2i(0, 1), Vector2i(1, 0)])
+	ok((blocks.backs as Dictionary).is_empty(), "no kit, no pieces")
+	eq(plain.height_at(Vector2i(2, 0)), 1 + ExploreRules.WALL_TALL, "and the block walls stand as before")

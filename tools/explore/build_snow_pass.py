@@ -100,7 +100,7 @@ class Map:
     def save(self, strangeness=0.0, view=0, turn=False, fog=True, walls=False):
         data = {
             "name": self.name, "art_set": self.art_set, "strangeness": strangeness, "view": view,
-            **({"walls": True} if walls else {}), "turn": turn, "fog": fog,
+            **({"walls": True, "wall_kit": "dungeon"} if walls else {}), "turn": turn, "fog": fog,
             "grid": {"w": self.w, "h": self.h,
                      "terrain": ["".join(r) for r in self.terrain],
                      "heights": ["".join(str(v) for v in r) for r in self.height],

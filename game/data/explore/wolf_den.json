@@ -4,6 +4,7 @@
  "strangeness": 0.0,
  "view": 0,
  "walls": true,
+ "wall_kit": "dungeon",
  "turn": false,
  "fog": true,
  "grid": {

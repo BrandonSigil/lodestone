@@ -143,6 +143,7 @@ data = {
     "strangeness": 0.0,
     "view": 0,
     "walls": True,  # plain gray walls (ExploreMap.walls)
+    "wall_kit": "dungeon",  # thin stone back walls from the dungeon wall kit ([USER] 2026-10-30)
     "outdoors": ["forest"],
     "grid": {
         "w": W,

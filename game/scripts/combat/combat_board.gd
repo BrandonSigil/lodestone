@@ -42,6 +42,8 @@ const ALIEN_CLIFF := Color(0.42, 0.36, 0.5)
 const MASONRY := Color(0.7, 0.66, 0.55)  ## side faces of built stone
 const WALL_TOP := Color("6c6d74")  ## walls maps: a wall's top, a step lighter than its faces (graybox until wall art)
 const WALL_SIDE := Color("48484d")  ## and its faces, the dungeon cliff's grey
+const PIECE_HIGH := 6.0  ## a wall-kit piece's graybox stands this many levels over its floor (until the kit's art)
+const PIECE_THIN := 0.14  ## and this deep, in cells, on the edge it shares with the room
 const RIM_THIN := 0.25  ## a front edge's stubby wall: this deep in cells
 const RIM_HIGH := 1.0  ## and this many levels over its floor
 ## Which ground reaches onto which where they meet (higher over lower); others never blend.
@@ -99,6 +101,8 @@ var fog_on := false
 var walls := false  ## rock draws as plain grey walls: flat faces, square corners, no boulders (ExploreMap.walls)
 var rims := {}  ## floor cells on a walls map's front edge: a stubby wall stands on their outer edge
 var wall_cells := {}  ## the rock a walls map draws as walls; the rest of its rock stays natural (ExploreRules.shape_walls)
+var wall_kit := ""  ## the art set a walls map's back-wall pieces come from ([USER] 2026-10-30); "" = block walls
+var backs := {}  ## back-wall cell -> the directions toward the room it faces (shape_walls with a kit)
 var cull := Rect2()  ## board-local area worth drawing (big maps); empty draws everything
 var show_grid := true  ## cell outlines; off, only real ledges keep their rim (exploration hides the grid)
 ## The soft terrain pass (TerrainShape, docs/design/terrain-engine.md): rounded blocks, cliffs and lips that run
@@ -927,6 +931,8 @@ func _tint(t: int) -> Color:
 ## The still part of a cell (GROUND slab): its faces down to the neighbours in front, grass lips, the top,
 ## stairs, ledge lines. Falling water, overlays and props are drawn by the LIVE slab.
 func _draw_ground(c: Vector2i) -> void:
+	if _kit_wall(c):
+		return  # nothing under a wall-kit piece: the piece stands on the room's edge (_wall_piece)
 	if _soft():
 		_draw_ground_soft(c)
 		return
@@ -1138,6 +1144,54 @@ func _shape_radii(c: Vector2i) -> void:
 
 func _wall(c: Vector2i) -> bool:
 	return walls and wall_cells.has(c) and grid.terrain_at(c) == CombatGrid.T.ROCK
+
+
+func _kit_wall(c: Vector2i) -> bool:
+	return wall_kit != "" and backs.has(c) and _wall(c)
+
+
+## A back wall from the map's wall kit ([USER] 2026-10-30, docs/art/references/interior-walls-target.webp): a
+## thin wall on the cell's edge toward the room, not a block. The piece is a placed prop's sprite (wall_window,
+## wall_door...) or else wall_plain, wall_corner where two walls meet; the art is drawn for a wall facing the lit
+## side and mirrored for the shade side. Until the kit's art lands, a graybox plane PIECE_HIGH tall.
+func _wall_piece(c: Vector2i, sprite: String) -> void:
+	var faces: Array = backs.get(c, [])
+	var kind := sprite.substr(sprite.rfind("/") + 1) if sprite != "" else ("wall_corner" if faces.size() > 1 else "wall_plain")
+	var col := Color(0.45, 0.46, 0.52) if fog_on and fog.get(c, 2) == 1 else Color.WHITE
+	var h := _surf(c)
+	var tex := BattleArt.texture(kind, false, wall_kit)
+	if tex != null:
+		var r := _prop_rect(c, {"foot": Vector2i.ONE, "tall": 0.0}, tex)
+		if faces.size() == 1 and faces[0] == front_dir(true):
+			_ci.draw_set_transform(Vector2(r.get_center().x * 2.0, 0.0), 0.0, Vector2(-1, 1))
+			_ci.draw_texture_rect(tex, r, false, col)
+			_ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		else:
+			_ci.draw_texture_rect(tex, r, false, col)
+		return
+	for d: Vector2i in faces:
+		var lo := Vector2(c)
+		var hi := lo + Vector2.ONE
+		if d.x > 0:
+			lo.x = hi.x - PIECE_THIN
+		elif d.x < 0:
+			hi.x = lo.x + PIECE_THIN
+		if d.y > 0:
+			lo.y = hi.y - PIECE_THIN
+		elif d.y < 0:
+			hi.y = lo.y + PIECE_THIN
+		_box(lo, hi, h, h + PIECE_HIGH, Color(WALL_SIDE.lightened(0.25), 1.0) * col)
+		var e: Array = _side(lo, hi, d)
+		var hole := Rect2()  # (along the face 0..1, up from the floor in levels)
+		if kind == "wall_window":
+			hole = Rect2(0.3, 2.6, 0.4, 1.6)
+		elif kind == "wall_door":
+			hole = Rect2(0.25, 0.0, 0.5, 4.0)
+		if hole.size != Vector2.ZERO:
+			var a: Vector2 = e[0].lerp(e[1], hole.position.x)
+			var b: Vector2 = e[0].lerp(e[1], hole.end.x)
+			_ci.draw_colored_polygon(PackedVector2Array([iso(a.x, a.y, h + hole.end.y), iso(b.x, b.y, h + hole.end.y),
+				iso(b.x, b.y, h + hole.position.y), iso(a.x, a.y, h + hole.position.y)]), Color(0.12, 0.11, 0.1) * col)
 
 
 func _walkable(c: Vector2i) -> bool:
@@ -2007,6 +2061,10 @@ func _draw_props(c: Vector2i) -> void:
 	var top_col := _terrain_color(t).lightened(minf(h, 6.0) * 0.025)
 	var top_tex := BattleArt.top(t, zone)
 	var mid := cell_top(c)
+	if _kit_wall(c):
+		var a := grid.prop_anchor(c)
+		_wall_piece(c, String(grid.props[a].sprite) if a == c else "")
+		return
 	if grid.prop_anchor(c) != CombatGrid.NONE_CELL:
 		_placed(c)
 		return
