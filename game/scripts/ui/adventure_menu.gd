@@ -283,8 +283,15 @@ static func _label(box: VBoxContainer, text: String, font_size: int) -> void:
 	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(W, 0)
-	if font_size >= 20:
-		l.theme_type_variation = &"MenuTitle"  # the shared title look (UiTheme)
+	if font_size >= 20:  # a title on its plate (Brandon's frame, the long thin one)
+		l.theme_type_variation = &"MenuTitle"
+		l.custom_minimum_size = Vector2(W - 40, 0)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var plate := PanelContainer.new()
+		plate.theme_type_variation = &"TitlePlate"
+		plate.add_child(l)
+		box.add_child(plate)
+		return
 	elif font_size == 15:
 		l.theme_type_variation = &"SubTitle"
 	else:

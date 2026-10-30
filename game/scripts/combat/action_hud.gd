@@ -15,7 +15,7 @@ const BOX := 52.0
 const PORTRAIT := 84.0
 const FRAME_ART := 90.0  ## how far the bottom frame's art (the diamond crest, the leaves) reaches up into the play area
 const TIP_DELAY := 0.5  ## seconds resting on a box before its details show
-const TIP_W := 250.0
+const TIP_W := 205.0  ## narrow enough to sit beside the dock's portrait panel
 const PORTRAIT_DIR := "res://art/source/portraits/"
 
 var layout := "dock"
@@ -422,7 +422,7 @@ func _show_tip(s: ActionSlot) -> void:
 	_tip.reset_size()
 	await get_tree().process_frame
 	if _tip_for == s:
-		_tip.position = Vector2(_area.position.x + 10, _area.end.y - _tip.size.y - FRAME_ART * 0.6)
+		_tip.position = Vector2(_area.position.x + 10, _area.end.y - _tip.size.y - FRAME_ART * 0.6)  # bottom left, beside the dock
 
 
 func _hide_tip() -> void:
