@@ -389,23 +389,18 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			if _gate_open:
 				_gate_go()
 			elif mode == M.WALK:
-				var t := _nearest_thing()
+				var t := nearest_thing()
 				if not t.is_empty():
 					_go_use(t)
 
 
-func _nearest_thing() -> Dictionary:
+## What F uses: the thing the overlay puts its F hint on (ExploreRules.thing_to_use).
+func nearest_thing() -> Dictionary:
 	var lead := leader()
-	var best := {}
-	var best_d := INF
-	for t in things:
-		if t.done or not in_sight.has(t.cell) or not shown(t):
-			continue
-		var d := ExploreRules.dist(lead.cell, t.cell)
-		if d <= ExploreRules.HINT_RANGE and d < best_d:
-			best = t
-			best_d = d
-	return best
+	if lead == null:
+		return {}
+	var open := things.filter(func(t: Dictionary) -> bool: return not t.done and shown(t))
+	return ExploreRules.thing_to_use(open, lead.cell, lead.facing, board.fog)
 
 
 # --- sight -------------------------------------------------------------------------------

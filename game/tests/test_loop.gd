@@ -308,6 +308,51 @@ func test_no_fog_of_war() -> void:
 	Game.explore_map = "home"
 
 
+## Brandon's bug (2026-10-30, note bug-f-key-no-interact): by the inn wall a "!" showed its F and F did nothing.
+## On every map, wherever the overlay shows an F hint, F has a thing to use; and from that spot F starts using it.
+func test_f_answers_every_hint() -> void:
+	_db()
+	Game.save_enabled = false
+	Game.reset_meta()
+	Game.meta.flags.append_array(["met_dog"])
+	Game.run = null
+	var tree := Engine.get_main_loop() as SceneTree
+	for name in ["village", "home", "house_dog", "house_ne", "tavern", "snow_pass", "wolf_den", "crypt"]:
+		Game.explore_map = name
+		Game.explore_entry = Vector2i(-1, -1)
+		var s: Node = load("res://scenes/explore.tscn").instantiate()
+		tree.root.add_child(s)
+		var g: CombatGrid = s.grid
+		var lead: CombatUnit = s.leader()
+		var dead: Array = []
+		var spots := {}  # only places within the hint range of a thing can show a hint
+		for t: Dictionary in s.things:
+			for dy in range(-ExploreRules.HINT_RANGE, ExploreRules.HINT_RANGE + 1):
+				for dx in range(-ExploreRules.HINT_RANGE, ExploreRules.HINT_RANGE + 1):
+					for c in g.places_at(CombatGrid.ground(t.cell) + Vector2i(dx, dy)):
+						if g.in_bounds(c) and g.passable(c):
+							spots[c] = true
+		for c: Vector2i in spots:
+			lead.place(c, g.height_at(c))
+			s._refresh_sight()
+			var hinted: bool = s.things.any(func(t: Dictionary) -> bool:
+				return not t.done and s.shown(t) and s.board.fog.get(t.cell, 0) == 2 \
+					and ExploreRules.dist(c, t.cell) <= ExploreRules.HINT_RANGE)
+			if hinted and s.nearest_thing().is_empty():
+				dead.append(c)
+		eq(dead.size(), 0, "%s: F hint shows but F has nothing at %s" % [name, str(dead.slice(0, 6))])
+		if name == "village":
+			lead.place(Vector2i(9, 7), g.height_at(Vector2i(9, 7)))  # a spot by the smithy wall that failed
+			s._refresh_sight()
+			var ev := InputEventKey.new()
+			ev.keycode = KEY_F
+			ev.pressed = true
+			s._unhandled_key_input(ev)
+			ok(s.walking_now or s.mode != 0, "F walks to the smithy's restore spot from beside the wall")
+		s.free()
+	Game.explore_map = "home"
+
+
 ## Brandon's E2E notes (2026-10-28): wolves calmed by the dog, or beaten, came back and attacked after a trip
 ## into the wolf den and out. A map remembers its settled groups while the party is still on it, and a party
 ## stepping in beside a group gets the first look instead of an ambush.

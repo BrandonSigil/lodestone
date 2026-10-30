@@ -22,6 +22,7 @@ func _draw() -> void:
 		return
 	var lead: CombatUnit = scene.leader()
 	var font := ThemeDB.fallback_font
+	var use: Dictionary = scene.nearest_thing() if lead != null and scene.walking() else {}  # the one F uses gets the F
 	for t: Dictionary in scene.things:
 		if t.done or not scene.shown(t):
 			continue
@@ -49,7 +50,7 @@ func _draw() -> void:
 			draw_arc(top, 12.0, 0, TAU, 24, INK, 2.0, true)
 			draw_colored_polygon(PackedVector2Array([top + Vector2(-4, 10), top + Vector2(4, 10), top + Vector2(0, 17)]), ICON)
 			draw_string(font, top + Vector2(-12, 6), "!", HORIZONTAL_ALIGNMENT_CENTER, 24, 18, INK)
-			if near:
+			if near and use.get("id") == t.id and use.cell == t.cell:
 				draw_string_outline(font, top + Vector2(-30, -16), "F", HORIZONTAL_ALIGNMENT_CENTER, 60, 12, 3, Color(0, 0, 0, 0.8))
 				draw_string(font, top + Vector2(-30, -16), "F", HORIZONTAL_ALIGNMENT_CENTER, 60, 12, ICON)
 

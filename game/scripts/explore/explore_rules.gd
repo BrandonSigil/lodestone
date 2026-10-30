@@ -429,6 +429,28 @@ static func can_step_to(grid: CombatGrid, from: Vector2i, to: Vector2i, jump: in
 	return true
 
 
+## The thing F uses ([USER] bug f-key, 2026-10-30): the nearest of `things` (already shown and not done) whose
+## cell the board draws lit (`lit`: cell -> 2) within HINT_RANGE of `at`; a tie goes to the one `facing` points
+## at. It's the one the "!" with the F hint marks, so the key always answers the hint: no line-of-sight test
+## here (the board lights every cell while fog of war is off), and walking up to it goes round any corner.
+static func thing_to_use(things: Array, at: Vector2i, facing: Vector2i, lit: Dictionary) -> Dictionary:
+	var best := {}
+	var best_d := INF
+	var face := Vector2(facing).normalized()
+	for t: Dictionary in things:
+		var c: Vector2i = t.cell
+		if lit.get(CombatGrid.ground(c), 0) != 2:
+			continue
+		var d := dist(at, c)
+		if d > HINT_RANGE:
+			continue
+		d -= 0.01 * Vector2(CombatGrid.ground(c) - CombatGrid.ground(at)).normalized().dot(face)
+		if d < best_d:
+			best = t
+			best_d = d
+	return best
+
+
 ## Can someone standing at `at` use the thing at `thing`? Next to it (diagonals count) and not a cliff apart.
 static func can_use_from(grid: CombatGrid, at: Vector2i, thing: Vector2i) -> bool:
 	var g := CombatGrid.ground(at) - CombatGrid.ground(thing)

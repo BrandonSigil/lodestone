@@ -400,3 +400,27 @@ func test_only_full_height_props_see_through() -> void:
 	ok(not CombatBoard.see_through({"sprite": "prop_crates", "tall": 0.8}), "crates stay solid")
 	ok(CombatBoard.see_through({"sprite": "ph_building", "tall": 2.0}), "an uncatalogued gray box taller than a piece")
 	ok(not CombatBoard.see_through({"sprite": "prop_bush_2", "tall": 0.55}), "an uncatalogued bush")
+	for low in ["prop_bench", "prop_table", "prop_stool", "prop_barrel", "prop_fence", "prop_board", "prop_lamp", "prop_planter"]:
+		ok(not CombatBoard.see_through({"sprite": low, "tall": 1.5}), low + " stays solid whatever its height")
+	ok(CombatBoard.see_through({"sprite": "prop_well", "tall": 1.8}), "a roofed well taller than a piece")
+	ok(not CombatBoard.see_through({"sprite": "prop_well", "tall": 0.8}), "a low well")
+	ok(not CombatBoard.see_through({"sprite": "prop_stall", "tall": 0.9 - 0.01}), "a stall no taller than a piece")
+
+
+## Brandon's bug (2026-10-30, note bug-f-key-no-interact): a "!" with its F hint by a wall, and F did nothing.
+## F used the leader's line of sight, the hint the board's lit cells. Now both use thing_to_use.
+func test_f_uses_the_marked_thing_round_a_corner() -> void:
+	var lit := {}
+	for y in 6:
+		for x in 6:
+			lit[Vector2i(x, y)] = 2
+	var bench := {"id": "bench", "cell": Vector2i(3, 1)}
+	var far := {"id": "far", "cell": Vector2i(5, 5)}
+	eq(ExploreRules.thing_to_use([bench, far], Vector2i(1, 2), Vector2i(1, 0), lit).get("id"), "bench", "two cells off, wall or not")
+	eq(ExploreRules.thing_to_use([far], Vector2i(1, 2), Vector2i(1, 0), lit), {}, "past the hint range")
+	lit[Vector2i(3, 1)] = 1
+	eq(ExploreRules.thing_to_use([bench], Vector2i(1, 2), Vector2i(1, 0), lit), {}, "not on a cell drawn lit")
+	var left := {"id": "left", "cell": Vector2i(1, 3)}
+	var right := {"id": "right", "cell": Vector2i(3, 3)}
+	eq(ExploreRules.thing_to_use([left, right], Vector2i(2, 3), Vector2i(1, 0), lit).get("id"), "right", "a tie goes to the one faced")
+	eq(ExploreRules.thing_to_use([left, right], Vector2i(2, 3), Vector2i(-1, 0), lit).get("id"), "left")
