@@ -154,7 +154,7 @@ UI_TAKES_SLOTS,take %d friend slot
 UI_TAKES_PACK,book take %d pack space
 UI_STATUS_TAB,GOLD %d · DEATHS %d · BEST %d
 UI_PACK_HELP,drag thing. R or right click = turn. drop on SELL = sell.
-UI_PACK_HELP_RUN,drag thing. R or right click = turn. thing on belt = use in fight.
+UI_PACK_HELP_RUN,drag thing. R or right click = turn. thing on belt = use in fight. meat or potion on friend = they eat.
 UI_BELT_OF,%s BELT
 UI_PACK_FULL,PACK FULL. NEW THING NO FIT. lorem ipsum.
 UI_FOUND,NEW THING
@@ -633,3 +633,8 @@ UI_SHEET_COST,COST %d
 OPT_FISH,FISH
 UI_FISH_GOT,FISH BITE! +%d MEAT. lorem
 UI_FISH_NONE,NO BITE. lorem
+UI_WHO_EAT,WHO EAT? CLICK FRIEND. ESC = NO.
+UI_WHO_DRINK,WHO DRINK? CLICK FRIEND. ESC = NO.
+UI_GAIN_HP,+%d HP
+UI_FULL_HP,FULL
+UI_NO_GAIN,FRIEND FULL. NO NEED.

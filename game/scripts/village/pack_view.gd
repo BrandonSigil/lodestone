@@ -28,6 +28,13 @@ var grab := Vector2i.ZERO  ## which cell of the rotated shape the mouse holds
 var mouse := Vector2.ZERO
 var flash := ""  ## text key shown under the grids after a refused action
 var label_color := Riso.CREAM  ## grid names; the run's box is dark
+## Party cards ([USER] 2026-10-30: pick who eats or drinks): drop a food or potion stack on one, or after EAT
+## or DRINK click one. {"rect": Rect2, "name": String, "hp": int, "max_hp": int}.
+var targets: Array[Dictionary] = []
+var target_gain := Callable()  ## (card index, item id) -> HP that member would gain from one
+var use_on := Callable()  ## (card index, item id) -> bool: one was used on them
+var choosing := ""  ## the item EAT or DRINK picked: the cards show what each would gain; Esc cancels
+const TARGET_SIZE := Vector2(132, 58)
 
 
 func _init() -> void:
@@ -75,6 +82,8 @@ func _fit_size() -> void:
 		end = end.max(_rect_of(a).end)
 	if bin.is_valid():
 		end = end.max(bin_rect.end)
+	for t in targets:
+		end = end.max((t.rect as Rect2).end)
 	custom_minimum_size = end + Vector2(0, 30)
 	queue_redraw()
 
@@ -108,7 +117,14 @@ func _gui_input(e: InputEvent) -> void:
 		accept_event()
 	elif e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
 		mouse = e.position
-		if e.pressed:
+		if e.pressed and choosing != "":
+			var t := _target_at(e.position)
+			if t != -1 and _gain(t, choosing) > 0 and use_on.call(t, choosing):
+				choosing = ""
+				flash = ""
+				changed.emit()
+			queue_redraw()
+		elif e.pressed:
 			_pick(e.position)
 		else:
 			_drop(e.position)
@@ -116,6 +132,36 @@ func _gui_input(e: InputEvent) -> void:
 	elif e is InputEventKey and e.pressed and e.keycode == KEY_R:
 		_turn(mouse)
 		accept_event()
+
+
+func _unhandled_key_input(e: InputEvent) -> void:
+	if choosing != "" and e.pressed and e.keycode == KEY_ESCAPE:
+		choosing = ""
+		flash = ""
+		queue_redraw()
+		get_viewport().set_input_as_handled()
+
+
+## Lay the party cards out in a row from `at`.
+func add_targets(members: Array, at: Vector2) -> void:
+	targets.clear()
+	for k in members.size():
+		var m: Dictionary = members[k]
+		var card := m.duplicate()
+		card.rect = Rect2(at + Vector2(k * (TARGET_SIZE.x + 10.0), 0), TARGET_SIZE)
+		targets.append(card)
+	_fit_size()
+
+
+func _target_at(pos: Vector2) -> int:
+	for k in targets.size():
+		if (targets[k].rect as Rect2).has_point(pos):
+			return k
+	return -1
+
+
+func _gain(t: int, item: String) -> int:
+	return int(target_gain.call(t, item)) if target_gain.is_valid() else 0
 
 
 func _pick(pos: Vector2) -> void:
@@ -165,7 +211,12 @@ func _drop(pos: Vector2) -> void:
 	held = -1
 	held_area = -1
 	var k := _area_at(pos)
-	if _bin_rect().has_point(pos):
+	var t := _target_at(pos)
+	if t != -1:  # a food or potion dropped on a party card: one of it goes to them; the stack stays put
+		var id := String((areas[from].bag as InventoryGrid).items[i].id)
+		if _gain(t, id) <= 0 or not use_on.call(t, id):
+			flash = "UI_NO_GAIN"
+	elif _bin_rect().has_point(pos):
 		if not bin.call(areas[from].bag, i):
 			flash = refused_key
 	elif k == -1:
@@ -221,6 +272,11 @@ func _draw() -> void:
 		_dashed_rect(sr, Riso.RED)
 		Riso.draw_label(self, Txt.t(bin_key), Vector2(sr.position.x + 4, sr.get_center().y), 18, Riso.RED, HORIZONTAL_ALIGNMENT_CENTER, sr.size.x - 8)
 		bottom = maxf(bottom, sr.end.y)
+	var item := choosing
+	if held != -1:
+		item = String((areas[held_area].bag as InventoryGrid).items[held].id)
+	for k in targets.size():
+		bottom = maxf(bottom, _draw_target(k, item))
 	if flash != "":
 		Riso.draw_label(self, Txt.t(flash), Vector2(0, bottom + 16), 14, Riso.RED)
 	if held != -1:
@@ -237,6 +293,25 @@ func _draw() -> void:
 				draw_rect(cr.grow(-4), Riso.alpha(Riso.INK if ok else Riso.RED, 0.18))
 		draw_item(self, it.id, db, cells, top_left, cell, it.bound != "", 0.85)
 		_draw_count(self, cells, top_left, cell, int(it.get("n", 1)))
+
+
+## A party card: name and HP; while food or a potion is held or picked, what one would heal them, or FULL
+## (greyed) when it can't. Returns its bottom.
+func _draw_target(k: int, item: String) -> float:
+	var c: Dictionary = targets[k]
+	var r: Rect2 = c.rect
+	var g := _gain(k, item) if item != "" else 0
+	var live := item != "" and g > 0
+	var over := live and r.has_point(mouse)
+	draw_rect(r, Riso.mix(Riso.PAPER, Riso.INK, 0.12 if over else 0.0) if item == "" or live else Riso.alpha(Riso.PAPER, 0.4))
+	draw_rect(r, Riso.INK if live else Riso.alpha(Riso.INK, 0.4), false, 3.0 if live else 1.5)
+	var ink := Riso.INK if item == "" or live else Riso.alpha(Riso.INK, 0.45)
+	Riso.draw_label(self, String(c.name), r.position + Vector2(8, 18), 13, ink)
+	Riso.draw_label(self, "%d/%d" % [int(c.hp), int(c.max_hp)], r.position + Vector2(8, 40), 13, ink)
+	if item != "":
+		Riso.draw_label(self, Txt.f("UI_GAIN_HP", g) if g > 0 else Txt.t("UI_FULL_HP"), r.position + Vector2(r.size.x - 62, 40), 13,
+			Riso.mix(Riso.INK, Color(0.2, 0.55, 0.25), 0.8) if g > 0 else ink)
+	return r.end.y
 
 
 func _dashed_rect(r: Rect2, col: Color) -> void:

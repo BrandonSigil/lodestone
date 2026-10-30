@@ -135,21 +135,25 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	_label(box, Txt.t("UI_PACK"), 20)
 	if full:
 		_label(box, Txt.t("UI_PACK_FULL"), 14)
-	else:
+	var grid := PackView.new()
+	if not full:
+		# EAT and DRINK ask who ([USER] 2026-10-30): the party cards under the belts show what each would
+		# gain; click one (Esc cancels). A food or potion stack dropped on a card works the same.
 		var hurt := TravelRules.most_hurt(run) != {}
 		_use_row(box, Txt.f("UI_PACK_FOOD", run.food), Txt.t("UI_EAT"), run.food > 0 and hurt, func() -> void:
-			TravelRules.eat_one(run)
-			changed.call())
+			grid.choosing = RunState.FOOD_ITEM
+			grid.flash = "UI_WHO_EAT"
+			grid.queue_redraw())
 		_use_row(box, Txt.f("UI_PACK_POTION", run.medicine), Txt.t("UI_DRINK"), run.medicine > 0 and hurt, func() -> void:
-			TrailRules.heal(run)
-			changed.call())
+			grid.choosing = RunState.MED_ITEM
+			grid.flash = "UI_WHO_DRINK"
+			grid.queue_redraw())
 		var finds := run.items
 		for id: String in finds:
 			if id != RunState.FOOD_ITEM and id != RunState.MED_ITEM:
 				_label(box, "%s  x%d" % [Txt.t(String(Db.items[id].name_key)), int(finds[id])], 14)
 	_label(box, Txt.t("UI_PACK_HELP_RUN"), 12)
 	var cell := FULL_CELL if full else PACK_CELL
-	var grid := PackView.new()
 	grid.setup_bag(run.pack, Db.items, run.throw_away, cell)
 	var pack_size := Vector2(RunState.PACK_COLS, RunState.PACK_ROWS) * cell
 	if full:
@@ -163,6 +167,18 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 		var at := Vector2((k % per_row) * belt_w, y + floorf(float(k) / per_row) * (cell + PackView.LABEL_H + 10.0))
 		grid.add_area(m.belt, at, Txt.f("UI_BELT_OF", Txt.t((m.def as CharacterDef).name_key)))
 	y += ceilf(float(run.members.size()) / per_row) * (cell + PackView.LABEL_H + 10.0)
+	if not full:
+		var cards := []
+		for m in run.members:
+			cards.append({"name": Txt.t((m.def as CharacterDef).name_key), "hp": int(m.hp), "max_hp": run.max_hp(m)})
+		grid.add_targets(cards, Vector2(0, y + 4.0))
+		grid.target_gain = func(k: int, item: String) -> int: return TravelRules.gain(run, item, run.members[k])
+		grid.use_on = func(k: int, item: String) -> bool:
+			if not TravelRules.use_on(run, item, run.members[k]):
+				return false
+			Game.save_adventure()
+			return true
+		y += PackView.TARGET_SIZE.y + 14.0
 	var courier := run.courier()
 	var bag: InventoryGrid = run.open_courier_bag() if full else null
 	if bag != null:

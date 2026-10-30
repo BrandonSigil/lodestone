@@ -67,15 +67,37 @@ static func most_hurt(run: RunState) -> Dictionary:
 	return worst
 
 
-## EAT from the pack: one food heals the most hurt member a little.
-static func eat_one(run: RunState) -> bool:
-	var m := most_hurt(run)
-	if run.food <= 0 or m.is_empty():
+## EAT from the pack: one food heals member m a little ([USER] 2026-10-30: the player picks who; with no m,
+## the most hurt, for callers that don't ask).
+static func eat_one(run: RunState, m: Dictionary = {}) -> bool:
+	if m.is_empty():
+		m = most_hurt(run)
+	if run.food <= 0 or m.is_empty() or gain(run, RunState.FOOD_ITEM, m) <= 0:
 		return false
 	run.food -= 1
 	run.heal_member(m, EAT_HEAL)
 	run.note(Txt.f("LOG_SNACK", [Txt.t((m.def as CharacterDef).name_key), EAT_HEAL]))
 	return true
+
+
+## The HP member m would gain from one of this food or potion now: 0 when full, down or it heals nothing.
+static func gain(run: RunState, item: String, m: Dictionary) -> int:
+	if int(m.hp) <= 0:
+		return 0
+	var amount := EAT_HEAL if item == RunState.FOOD_ITEM else (TrailRules.potion_heal(run) if item == RunState.MED_ITEM else 0)
+	return mini(amount, run.max_hp(m) - int(m.hp))
+
+
+## Use one food or potion on member m (EAT / DRINK, or a stack dropped on their card). False if it can't help.
+static func use_on(run: RunState, item: String, m: Dictionary) -> bool:
+	if gain(run, item, m) <= 0:
+		return false
+	if item == RunState.FOOD_ITEM:
+		return eat_one(run, m)
+	if item == RunState.MED_ITEM and run.medicine > 0:
+		TrailRules.heal(run, m)
+		return true
+	return false
 
 
 ## Hunt, fish or forage: the party's best roll. Returns the roll with "food" and "medicine" gained.

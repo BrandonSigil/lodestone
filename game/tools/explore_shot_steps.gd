@@ -221,6 +221,25 @@ func run(s: Node, f: int, step: String) -> bool:
 				run.add_item("rope", 1)
 				run.add_item("potion", 2)
 			return f == 30
+		"eat":
+			# EAT pressed in the PACK box: the party cards show who would gain what (the dog met, the hero hurt).
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false
+				if not game.meta.flags.has("met_dog"):
+					game.meta.flags.append("met_dog")
+				game.refresh_party()
+				var run: RunState = game.run
+				run.food = 6
+				run.medicine = 2
+				run.members[0].hp = run.max_hp(run.members[0]) - 5
+				s._refresh_hud()
+				s._open_menu("pack")
+			if f == 20:  # press EAT, as the player would
+				for b: Button in s._dialog.find_children("*", "Button", true, false):
+					if b.text == Txt.t("UI_EAT"):
+						b.pressed.emit()
+			return f == 30
 		"pack":
 			# The PACK box with a few stacks and a find in it, to judge the grid.
 			if f == 5:

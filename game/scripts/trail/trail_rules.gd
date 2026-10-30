@@ -116,18 +116,24 @@ static func forage(run: RunState) -> void:
 	end_day(run)
 
 
-## Spend one medicine on the most hurt living member. Doesn't cost a day.
-static func heal(run: RunState) -> void:
+## What one potion heals: 5, plus the party's healing bonus.
+static func potion_heal(run: RunState) -> int:
+	return 5 + party_bonus(run, "heal")
+
+
+## Spend one medicine on `who` (the player's pick), or the most hurt living member. Doesn't cost a day.
+static func heal(run: RunState, who: Dictionary = {}) -> void:
 	if run.medicine <= 0:
 		run.note(Txt.t("LOG_NO_MEDICINE"))
 		return
-	var worst: Dictionary = {}
-	for m in run.alive():
-		if worst.is_empty() or run.max_hp(m) - m.hp > run.max_hp(worst) - worst.hp:
-			worst = m
+	var worst: Dictionary = who
+	if worst.is_empty():  # nobody picked: the most hurt
+		for m in run.alive():
+			if worst.is_empty() or run.max_hp(m) - m.hp > run.max_hp(worst) - worst.hp:
+				worst = m
 	if worst.is_empty():
 		return
-	var amount := 5 + party_bonus(run, "heal")
+	var amount := potion_heal(run)
 	run.medicine -= 1
 	run.heal_member(worst, amount)
 	run.note(Txt.f("LOG_HEAL", amount))

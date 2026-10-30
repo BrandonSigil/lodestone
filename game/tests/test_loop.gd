@@ -1008,3 +1008,59 @@ func test_fishing_from_any_dock_spot() -> void:
 	s.free()
 	Game.explore_map = "home"
 	_restore(saved)
+
+
+## Brandon (2026-10-30): "hard to know who you're using it on". EAT and DRINK ask who: party cards show what
+## each would gain, full ones can't take it; a food or potion dropped on a card works the same.
+func test_pick_who_eats_or_drinks() -> void:
+	_db()
+	var r := RunState.create([Db.character(&"lead"), Db.character(&"dog")], 3)
+	r.food = 3
+	r.medicine = 2
+	r.members[0].hp = r.max_hp(r.members[0]) - 1
+	r.members[1].hp = 3
+	eq(TravelRules.gain(r, RunState.FOOD_ITEM, r.members[0]), 1, "one short of full: one HP")
+	eq(TravelRules.gain(r, RunState.FOOD_ITEM, r.members[1]), TravelRules.EAT_HEAL)
+	ok(TravelRules.use_on(r, RunState.FOOD_ITEM, r.members[0]), "the player's pick eats, not the most hurt")
+	eq(int(r.members[0].hp), r.max_hp(r.members[0]))
+	eq(int(r.members[1].hp), 3, "the dog wasn't fed")
+	ok(not TravelRules.use_on(r, RunState.FOOD_ITEM, r.members[0]), "full: nothing used")
+	eq(r.food, 2)
+	ok(TravelRules.use_on(r, RunState.MED_ITEM, r.members[1]), "a potion on the dog")
+	eq(int(r.members[1].hp), mini(3 + TrailRules.potion_heal(r), r.max_hp(r.members[1])))
+	eq(r.medicine, 1)
+
+
+func test_pack_cards_take_a_pick_or_a_drop() -> void:
+	var saved := _fresh_game()
+	var run := Game.run
+	run.food = 5
+	run.members[0].hp = 2
+	var box := VBoxContainer.new()
+	AdventureMenu.pack(box, func() -> void: pass, func() -> void: pass)
+	var grid: PackView = box.find_children("*", "PackView", true, false)[0]
+	eq(grid.targets.size(), run.members.size(), "a card per member")
+	grid.choosing = RunState.FOOD_ITEM
+	grid._gui_input(_click((grid.targets[0].rect as Rect2).get_center()))
+	eq(int(run.members[0].hp), 2 + TravelRules.EAT_HEAL, "clicking the hero's card feeds him")
+	eq(grid.choosing, "", "and the pick is done")
+	var food_i := -1
+	for i in run.pack.items.size():
+		if run.pack.items[i].id == RunState.FOOD_ITEM:
+			food_i = i
+	grid.held = food_i
+	grid.held_area = 0
+	var food: int = run.food
+	grid._drop((grid.targets[0].rect as Rect2).get_center())
+	eq(int(run.members[0].hp), 2 + 2 * TravelRules.EAT_HEAL, "meat dropped on his card: he eats")
+	eq(run.food, food - 1, "one from the stack")
+	box.free()
+	_restore(saved)
+
+
+func _click(at: Vector2) -> InputEventMouseButton:
+	var e := InputEventMouseButton.new()
+	e.button_index = MOUSE_BUTTON_LEFT
+	e.pressed = true
+	e.position = at
+	return e
