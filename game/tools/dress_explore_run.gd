@@ -30,7 +30,7 @@ func run(args: PackedStringArray) -> void:
 		road = MapOps.road(grid, _beside(grid, cells[args[1]]), _beside(grid, cells[args[2]]))
 	for c in road:
 		keep[c] = true
-	var poles := MapOps.pillars(grid, name.hash(), int(args[3]) if args.size() > 3 else 3, keep)
+	var poles := MapOps.pillars(grid, name.hash(), int(args[3]) if args.size() > 3 else 3, keep, int(args[4]) if args.size() > 4 else MapOps.PILLAR_MAX)
 	data.grid = grid.to_dict()
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	f.store_string(JSON.stringify(data, " ") + "\n")

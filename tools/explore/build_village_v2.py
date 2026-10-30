@@ -420,5 +420,5 @@ with open(path, "w") as f:
 # The painted look's authoring rules, as the map maker's Generate menu applies them: V9 tidy edges, V10 pillars.
 GODOT = os.environ.get("GODOT") or shutil.which("godot") or "/Applications/Godot.app/Contents/MacOS/Godot"
 GAME = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "game"))
-subprocess.run([GODOT, "--headless", "--path", GAME, "-s", "res://tools/dress_explore.gd", "--", "village_v2", "", "", "4"],
+subprocess.run([GODOT, "--headless", "--path", GAME, "-s", "res://tools/dress_explore.gd", "--", "village_v2", "", "", "4", "24"],
                check=True)

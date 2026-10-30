@@ -422,7 +422,8 @@ static func pillar(grid: CombatGrid, c: Vector2i, down := false, cap := CombatGr
 ## the cap to 24 must not change a re-dressed map: the map builder, 2026-10-30).
 const PILLAR_MAX := 8
 
-static func pillars(grid: CombatGrid, seed_value: int, count := 3, keep := {}) -> Array[Vector2i]:
+## `cap`: a map built tall on purpose (village_v2) may let its pillars stand higher.
+static func pillars(grid: CombatGrid, seed_value: int, count := 3, keep := {}, cap := PILLAR_MAX) -> Array[Vector2i]:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var options := []
@@ -460,7 +461,7 @@ static func pillars(grid: CombatGrid, seed_value: int, count := 3, keep := {}) -
 		var before := reach(grid, start, 1)
 		var h0 := grid.height_at(c)
 		var t0 := grid.terrain_at(c)
-		if not pillar(grid, c, false, PILLAR_MAX):
+		if not pillar(grid, c, false, cap):
 			continue
 		var after := reach(grid, start if start != c else Vector2i(-1, -1), 1)
 		var lost := false
