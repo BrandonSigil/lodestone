@@ -98,6 +98,7 @@
 - GDScript errors on type inference from Variant; use explicit types or `int()`.
 - Autoloads don't `_ready` before a `-s` test script; tests call `Db.reload()`. A `-s` script that names game classes fails to compile; load a helper at runtime (see `game/tools/sandbox_shot.gd`).
 - Full `balance_report` at 100 fights takes about 8 minutes.
+- A windowed shot's capture lags the game by well over ten frames, so a brief state (a blink lasts a sixth of a second) never shows if it's set just before the capture frame: hold it for the last 30 frames (`explore_shot.gd` `blink:` does).
 - On the MacBook, a screenshot or frame-capture run whose window sits behind other apps can stop rendering (macOS pauses it), so animated frames come out identical. Pass `--always-on-top` to Godot for frame captures.
 - The run's food, medicine and items are views over grids (`RunState.pack`, the belts). Add or spend through `run.add_item` or the `food` / `medicine` setters; never write `run.items` (it's computed). A fight item spends the piece's own belt (`CombatUnit.belt`), not a shared count; test benches pass `supplies` counts and `CombatUnit.pack_belts` turns them into belts.
 - A new `class_name` script isn't known to `-s` test runs until an import runs (`tools/check.sh` imports first; a bare test run doesn't). And the test runner hangs instead of failing on a parse error: run it with `timeout`.

@@ -89,6 +89,17 @@ func run(s: Node, f: int, step: String) -> bool:
 		if f == 79:
 			print("hold: the lead ends at ", s.leader().cell, " vis ", s.leader().vis)
 		return f == 80
+	if step.begins_with("blink:"):
+		# blink:<x>,<y>[:open] - the lead close up at x,y, caught mid-blink (or with ":open", just before it).
+		var parts := step.substr(6).split(":")
+		if f == 5:
+			var xy := parts[0].split(",")
+			_put(s, Vector2i(int(xy[0]), int(xy[1])))
+			s.zoom = 2.6
+		if f >= 30:  # held for the last frames, so the capture lands inside the sixth of a second a blink lasts
+			var lead: CombatUnit = s.leader()
+			lead.blink_at = s.board._time + (5.0 if parts.size() > 1 else -0.02)
+		return f == 60
 	if step.begins_with("feet:"):
 		# feet:<x>,<y> - the lead stands at x,y but past the cell's middle toward the viewer, as free walking
 		# leaves it: the ground in front must not cover its feet.

@@ -273,3 +273,22 @@ func test_a_click_behind_a_front_wall_finds_the_floor() -> void:
 	b.pick_also = {Vector2i(3, 3): true}
 	eq(b.pick(at), Vector2i(3, 3), "unless a thing stands there (a shut door)")
 	b.free()
+
+
+## The hero blinks now and then while he stands (the approved blink frames): over his idle pose only, so in a
+## fight's weapon-drawn ready pose the weapon never flickers away (until there is a ready_blink frame).
+func test_a_standing_hero_blinks_now_and_then() -> void:
+	var b := CombatBoard.new()
+	var u := CombatUnit.new()
+	u.sprite = &"lead"
+	eq(b._blink(u, "idle"), "", "not at once")
+	ok(u.blink_at >= CombatBoard.BLINK_MIN and u.blink_at <= CombatBoard.BLINK_MAX, "timed a few seconds on")
+	b._time = u.blink_at + 0.01
+	eq(b._blink(u, "idle"), "blink", "then the eyes shut")
+	b._time += 0.5
+	eq(b._blink(u, "idle"), "", "and open again")
+	ok(u.blink_at > b._time, "the next one timed")
+	b._time = u.blink_at + 0.01
+	eq(b._blink(u, "ready"), "", "no blink over the ready pose without its own frame")
+	eq(b._blink(u, "walk"), "", "nor while walking")
+	b.free()

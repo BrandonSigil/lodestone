@@ -62,6 +62,8 @@ const GLOW_RINGS := 6
 const NAVY_DEPTH := 6000.0  ## how far down (board pixels) the navy under the front treeline reaches: past any view
 const REACH := Color(0.35, 0.6, 1.0)  ## the player's colour: an action's range while it's hovered in the menu
 const FENCE_THIN := 0.12  ## a wall between two floors: this deep in cells ([USER] 2026-10-30: not thick)
+const BLINK_MIN := 2.5  ## a standing piece blinks after this many seconds at the soonest
+const BLINK_MAX := 6.0  ## and this many at the latest
 const FOOT := 0.3  ## a piece's feet (and its ring) reach this far from its middle, in cells
 const WINDOW_R := 56.0  ## see-through window round a piece behind a prop: radius on screen
 const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
@@ -3319,6 +3321,21 @@ func _draw_sprite(u: CombatUnit, base: Vector2, col: Color, ring: Color) -> floa
 	return top
 
 
+## A piece standing still blinks every BLINK_MIN to BLINK_MAX seconds ([USER] approved blink frames): "blink"
+## over the idle pose, "ready_blink" over the weapon-drawn ready pose (when the art has it; without it the ready
+## pose doesn't blink, so the weapon never flickers away). Returns the blink anim to draw now, or "".
+func _blink(u: CombatUnit, stance: String) -> String:
+	var anim := "blink" if stance == "idle" else ("ready_blink" if stance == "ready" else "")
+	if anim == "" or not CharacterArt.has_anim(u.sprite, anim):
+		return ""
+	if u.blink_at < 0.0:
+		u.blink_at = _time + randf_range(BLINK_MIN, BLINK_MAX)
+	var length := CharacterArt.length(u.sprite, anim)
+	if _time >= u.blink_at + length:
+		u.blink_at = _time + randf_range(BLINK_MIN, BLINK_MAX)
+	return anim if _time >= u.blink_at else ""
+
+
 ## The anim to draw: in a fight, idle and walk become ready and advance (weapon out) when the art has them.
 func _stance(u: CombatUnit) -> String:
 	if combat_stance and (u.anim == "idle" or u.anim == "walk"):
@@ -3332,7 +3349,11 @@ func _stance(u: CombatUnit) -> String:
 func _draw_frame(u: CombatUnit, base: Vector2, mod: Color) -> float:
 	var d := Vector2(u.facing)
 	var dir := CharacterArt.screen_dir(iso(1.0 + d.x, 1.0 + d.y, 0.0) - iso(1.0, 1.0, 0.0))
-	var f := CharacterArt.frame(u.sprite, _stance(u), dir, _time - u.anim_start)
+	var stance := _stance(u)
+	var f := CharacterArt.frame(u.sprite, stance, dir, _time - u.anim_start)
+	var blink := _blink(u, stance)
+	if blink != "":  # a standing piece blinks now and then: the same pose with its eyes shut
+		f = CharacterArt.frame(u.sprite, blink, dir, _time - u.blink_at)
 	if f.is_empty():
 		return 48.0
 	var s: float = f.scale

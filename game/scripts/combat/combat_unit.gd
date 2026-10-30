@@ -67,6 +67,7 @@ var facing := Vector2i(1, 0)  ## grid direction the piece looks along; the board
 var figure := &""  ## character or class id, picks the placeholder's colour, weapon and glyph when there is no sprite
 var anim := "idle"  ## sprite anim playing (idle, walk, attack, cast, hurt)
 var anim_start := 0.0  ## board time the anim started
+var blink_at := -1.0  ## board time of the next blink while standing (CombatBoard._blink); -1 = not yet timed
 var shown_hp := 1  ## HP the board draws; trails hp while hits animate
 
 
