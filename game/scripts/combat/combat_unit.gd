@@ -43,6 +43,7 @@ var magic := false
 var magic_power := 0  ## extra damage on spells and magic hits (the Lodestone's MORE MAGIC pick)
 var abilities: Array[Ability] = []  ## strike first, then class skills, then picked spells
 var spells: Array[StringName] = []  ## the spells picked into this unit's slots
+var tags: Array[StringName] = []  ## foe tags from the class (data/tags.csv); the bones trait makes a piece undead
 var traits: Array[StringName] = []  ## combat traits from the class and the character, plus their perks (see CombatRules.TRAIT_*)
 
 var moved := false
@@ -113,6 +114,7 @@ func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 		if a:
 			abilities.append(a)
 	traits = c.traits.duplicate()
+	tags = c.tags.duplicate()
 	res_kind = c.resource
 	res_max = c.resource_max
 	res_every = c.resource_every
@@ -155,6 +157,8 @@ static func from_def(d: CharacterDef, mods: Dictionary = {}, spell_ids: Variant 
 	for t in d.traits + d.perks:
 		if not u.traits.has(t):
 			u.traits.append(t)
+	if u.has_trait(CombatRules.TRAIT_BONES) and not u.tags.has(&"undead"):
+		u.tags.append(&"undead")  # the bones trait folded into the undead tag (game designer 2026-10-30)
 	u.team = 0
 	u.hp = u.max_hp
 	u.shown_hp = u.hp

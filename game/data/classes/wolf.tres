@@ -22,3 +22,4 @@ magic = false
 skills = {}
 abilities = Array[StringName]([&"pounce"])
 traits = Array[StringName]([&"pack"])
+tags = Array[StringName]([&"beast"])

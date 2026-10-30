@@ -986,6 +986,8 @@ func unit_text(u: CombatUnit) -> String:
 	lines.append("DMG %d  ARMOR %d  CRIT +%d%%  RNG %d-%d" % [u.damage, u.armor, u.crit, u.range_min, u.range_max])
 	if u.res_kind != "":
 		lines.append("%s %d/%d" % [Txt.t("RES_" + u.res_kind.to_upper()), u.res, u.res_max])
+	if not u.tags.is_empty():  # foe tags, and what hits them harder or softer (data/tags.csv)
+		lines.append(", ".join(u.tags.map(func(t: StringName) -> String: return Txt.t("FOE_" + String(t).to_upper()))))
 	var skills: PackedStringArray = []
 	for a in u.abilities.slice(1):
 		skills.append(_ability_label(u, a))

@@ -11,6 +11,7 @@ var events: Array[Dictionary] = []
 var encounters: Dictionary = {}  # id -> {"units": Array[String], "loot": String, "goals": String (FightGoals)}
 var items: Dictionary = {}  # id -> row of data/items.csv
 var quests: Array[Dictionary] = []  # rows of data/quests.csv
+var foe_tags: Array[Dictionary] = []  # rows of data/tags.csv: tag, attack kind, damage change
 var abilities: Dictionary = {}  # id -> Ability, from data/abilities.csv
 var combat_items: Dictionary = {}  # id -> Ability, from data/combat_items.csv
 var explore_events: Dictionary = {}  # id -> event, from data/explore_events.csv (see ExploreRules.parse_events)
@@ -44,6 +45,7 @@ func reload() -> void:
 	for row in CsvTable.load_rows("res://data/items.csv"):
 		items[row.id] = row
 	quests = CsvTable.load_rows("res://data/quests.csv")
+	foe_tags = CsvTable.load_rows("res://data/tags.csv")
 	abilities.clear()
 	for row in CsvTable.load_rows("res://data/abilities.csv"):
 		abilities[row.id] = Ability.from_row(row)

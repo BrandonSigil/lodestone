@@ -30,14 +30,13 @@ const TRAIT_STARLIT := &"starlit"  ## Stardrop: spells get +1 damage when cast f
 const TRAIT_STEADY_AIM := &"steady_aim"  ## Hunter: more crit chance when attacking without having moved this turn
 const TRAIT_SCHOLAR := &"scholar"  ## Wizard: spells deal +1 damage and heal +1
 const TRAIT_DEEP_ROOTS := &"deep_roots"  ## Bushberry: can't be pushed, regrows 1 HP at the start of its phase
-const TRAIT_BONES := &"bones"  ## Skeleton: takes 2 less damage from arrows and other non-magic ranged hits
+const TRAIT_BONES := &"bones"  ## Skeleton: makes the piece undead (arrows -2, fire +2: data/tags.csv)
 const TRAIT_DOUBLE_STRIKE := &"double_strike"  ## Lewith & Flark: the basic hit swings twice at -1 damage each
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
 const TRAIT_POISON_BLADES := &"poison_blades"  ## Rogue: every hit leaves POISON ([USER] design-boss-daggers)
 const TRAIT_HIT_AND_RUN := &"hit_and_run"  ## Rogue: after a hit, may walk the move it didn't use before it
 const PERK_FLAMMABLE := &"flammable"  ## takes +2 damage from fire
 const STARLIT_HEIGHT := 2
-const BONES_DR := 2
 const FLAMMABLE_DMG := 2
 const REGROW := 1
 
@@ -336,11 +335,30 @@ static func damage_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, fro
 	var magic := att.magic or (a != null and a.magic)
 	if (magic or spell) and att.magic_power != 0:
 		parts.append(["MOD_MAGIC", att.magic_power])
-	if tgt.has_trait(TRAIT_BONES) and not magic and dist(from, tgt.cell) > 1:
-		parts.append(["MOD_BONES", -BONES_DR])
+	var kinds := attack_kinds(att, a, from, tgt)
+	for t in tgt.tags:  # foe tags ([USER] design-foe-weakness): at least 1 still gets through
+		var n := 0
+		for row: Dictionary in Db.foe_tags:
+			if row.tag == String(t) and kinds.has(String(row.kind)):
+				n += int(row.change)
+		if n != 0:
+			parts.append(["FOE_" + String(t).to_upper(), n])
 	if att.spooked:
 		parts.append(["MOD_SPOOKED", int(num("spooked_damage"))])
 	return parts
+
+
+## What kind of blow this is for the foe tags: blade (non-magic melee), arrow (non-magic ranged), spell (magic),
+## and fire as well when its element is fire.
+static func attack_kinds(att: CombatUnit, a: Ability, from: Vector2i, tgt: CombatUnit) -> Array[String]:
+	var out: Array[String] = []
+	if att.magic or (a != null and a.magic):
+		out.append("spell")
+	else:
+		out.append("blade" if dist(from, tgt.cell) <= 1 else "arrow")
+	if a != null and a.element == "fire":
+		out.append("fire")
+	return out
 
 
 ## What comes off every hit on tgt: its armor, GUARD, the veil, a shield wall, and half cover against ranged hits.

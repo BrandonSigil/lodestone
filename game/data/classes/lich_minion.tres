@@ -17,3 +17,4 @@ range_min = 1
 range_max = 1
 magic = false
 skills = {}
+tags = Array[StringName]([&"undead"])

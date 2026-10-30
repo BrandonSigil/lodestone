@@ -25,7 +25,8 @@ extends Resource
 @export var abilities: Array[StringName] = []  ## rows of data/abilities.csv beyond the basic strike
 @export var spell_pool: Array[StringName] = []  ## spells (magic rows of data/abilities.csv) this class can learn
 @export var spell_slots: int = 0  ## how many it brings into a fight
-@export var traits: Array[StringName] = []  ## combat traits every unit of this class has (see CombatRules.TRAIT_*)
+@export var traits: Array[StringName] = []
+@export var tags: Array[StringName] = []  ## foe tags (undead, beast, armored, flying): some attacks hit them harder or softer (data/tags.csv)  ## combat traits every unit of this class has (see CombatRules.TRAIT_*)
 
 
 ## The spells a unit of this class brings when nobody picked: the first ones in the pool.

@@ -1,0 +1,7 @@
+tag,kind,change,note
+undead,fire,2,fire hits the dead harder
+undead,arrow,-2,arrows pass through bones (the old bones trait)
+beast,blade,1,
+armored,spell,2,
+armored,blade,-1,
+flying,arrow,2,

@@ -166,7 +166,8 @@ func test_bones_shrug_off_arrows() -> void:
 	var archer := _cls("bandit_archer", 1, Vector2i(3, 1), g)
 	var bandit := _cls("bandit", 1, Vector2i(1, 1), g)
 	skel.armor = 0
-	eq(CombatRules.damage(g, archer, skel, archer.cell), maxi(1, archer.damage - CombatRules.BONES_DR))
+	ok(skel.tags.has(&"undead"), "bones make it undead")
+	eq(CombatRules.damage(g, archer, skel, archer.cell), maxi(1, archer.damage - 2))
 	eq(CombatRules.damage(g, bandit, skel, bandit.cell), bandit.damage, "melee hits full")
 
 
@@ -237,3 +238,26 @@ func test_sim_runs_with_every_spell() -> void:
 	setup.set_spell("stardrop", 0, "moon_tide")
 	r = setup.simulate(4)
 	ok(r.rounds > 0)
+
+
+## Foe tags ([USER] design-foe-weakness, data/tags.csv): applied with the other parts, at least 1 gets through.
+func test_foe_tags_change_damage_by_attack_kind() -> void:
+	var g := CombatGrid.flat(6, 3)
+	var bandit := _cls("bandit", 0, Vector2i(1, 1), g)
+	var archer := _cls("bandit_archer", 0, Vector2i(4, 1), g)
+	var wolf := _cls("wolf", 1, Vector2i(2, 1), g)
+	var plain := _cls("bandit", 1, Vector2i(2, 1), g)
+	plain.armor = wolf.armor
+	eq(CombatRules.damage(g, bandit, wolf, bandit.cell) - CombatRules.damage(g, bandit, plain, bandit.cell), 1, "beast: blades +1")
+	var bone := _cls("lich_minion", 1, Vector2i(2, 1), g)
+	var lich := _cls("lich", 1, Vector2i(2, 1), g)
+	ok(lich.tags.has(&"undead"), "the Lich is undead ([USER] design-lich-tag)")
+	var p := CombatRules.damage_parts(g, archer, bone, archer.cell)
+	ok(p.has(["FOE_UNDEAD", -2]), "undead: arrows -2, shown as a part")
+	var mage := _cls("wizard", 0, Vector2i(0, 1), g)
+	var fire := Db.ability("firebolt")
+	ok(CombatRules.damage_parts(g, mage, bone, mage.cell, fire).has(["FOE_UNDEAD", 2]), "undead: fire +2")
+	var moon := Db.ability("moonbeam")
+	ok(not CombatRules.damage_parts(g, mage, bone, mage.cell, moon).any(func(x: Array) -> bool: return x[0] == "FOE_UNDEAD"), "other spells: no change")
+	bone.armor = 9
+	eq(CombatRules.damage(g, archer, bone, archer.cell), 1, "at least 1 gets through")
