@@ -229,8 +229,11 @@ static var _strips := {}  # set + stems -> {"texs", "hs", "w"}
 
 
 ## The painted cliff strips for a terrain's faces (the `strips` column: stems split by "|"): {"texs": textures,
-## "hs": each one's height in levels, "w": cells across}, or {} when the set has none or their art isn't in yet
-## (the faces then keep the side texture). A strip is drawn at the side texture's density, 2 levels a cell.
+## "hs": each one's height in levels, "tones": each one's colour match, "w": cells across}, or {} when the set
+## has none or their art isn't in yet (the faces then keep the side texture). A strip is drawn at the side
+## texture's density, 2 levels a cell. Colour match ([USER] 2026-10-30, cliff-strips-review): each strip is
+## tinted so its mean is the cliff's main colour, the `strip_tone` column (a hex colour) or else the strips'
+## shared mean, so they read as one rock.
 static func side_strips(t: int, from_set := "") -> Dictionary:
 	var stems := String(_row(t, from_set).get("strips", ""))
 	if stems == "":
@@ -240,16 +243,27 @@ static func side_strips(t: int, from_set := "") -> Dictionary:
 		return _strips[key]
 	var texs: Array[Texture2D] = []
 	var hs: Array[float] = []
+	var means: Array[Color] = []
 	for stem in stems.split("|", false):
 		var src := texture(stem, false, from_set)
 		if src == null:
 			continue
+		means.append(average(src))
 		var img := src.get_image()
 		img.decompress()
 		img.generate_mipmaps()
 		texs.append(ImageTexture.create_from_image(img))
 		hs.append(STRIP_CELLS * SIDE_LEVELS / SIDE_TILES * float(img.get_height()) / img.get_width())
-	var res := {} if texs.is_empty() else {"texs": texs, "hs": hs, "w": STRIP_CELLS}
+	var want := Color(0, 0, 0)
+	for m in means:
+		want += m / float(means.size())
+	var tone := String(_row(t, from_set).get("strip_tone", ""))
+	if tone != "":
+		want = Color.html(tone)
+	var tones: Array[Color] = []
+	for m in means:
+		tones.append(Color(want.r / maxf(m.r, 0.01), want.g / maxf(m.g, 0.01), want.b / maxf(m.b, 0.01), 1.0))
+	var res := {} if texs.is_empty() else {"texs": texs, "hs": hs, "tones": tones, "w": STRIP_CELLS}
 	_strips[key] = res
 	return res
 

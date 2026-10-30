@@ -1837,14 +1837,23 @@ func _cliff_body(t: int, zone: String) -> Dictionary:
 	return body
 
 
-## Painted cliff strips ([USER] 2026-10-30, card cliff-no-breaks; docs/systems/cliff-strips.md). Each straight
-## line of faces (its facing, where it stands, its lip height) is cut into windows 1 to 3 cells long at hashed
-## spots, so the same cliff always comes out the same and no two cliffs match. A window shows one strip, picked
-## by hash, read from a hashed column offset (never tiled sideways) and a hashed depth, running on down the face
-## and mirrored where the strip runs out (the strips aren't seamless top to bottom). The window before carries
-## on over the first STRIP_FADE of each window and fades out, so the joins are soft.
+## Painted cliff strips ([USER] 2026-10-30, cards cliff-no-breaks and cliff-strips-review;
+## docs/systems/cliff-strips.md). Each straight line of faces (its facing, where it stands, its lip height) is cut
+## into windows 1 to 3 cells long at hashed spots, so the same cliff always comes out the same and no two cliffs
+## match. A window shows one strip, picked by hash, colour-matched to the cliff's main colour, read from a hashed
+## column offset (never tiled sideways), flipped left to right and top to bottom by hash, from a hashed depth,
+## running on down the face and mirrored where the strip runs out (the strips aren't seamless top to bottom).
+## The window before carries on over the first STRIP_FADE of each window and fades out, so the joins are soft.
+## Over all of it lies one big soft wash (_cliff_wash), so the repeat is broken across faces.
 const STRIP_FADE := 0.18  ## cells over which one window's strip fades into the next
 const STRIP_RUNS := 8  ## at most this many strip lengths down one face (a strip is ~24 levels; maps are 24 tall)
+const WASH_STEP := 3.0  ## levels between the wash's samples down a face
+const WASH_STEPS := 16  ## at most this many wash bands in one strip run
+const WASH_CELLS := 7.0  ## the wash's size across the map, in cells
+const WASH_LEVELS := 10.0  ## and up and down, in levels
+const WASH_VALUE := 0.16  ## how far it lightens or darkens (share of the colour)
+const WASH_WARM := 0.06  ## how far it warms or cools
+static var _wash_noise: FastNoiseLite = null
 
 
 func _strip_face(a: Vector2, b: Vector2, n: Vector2, top: float, foot: float, s: Dictionary, col: Color) -> void:
@@ -1855,25 +1864,29 @@ func _strip_face(a: Vector2, b: Vector2, n: Vector2, top: float, foot: float, s:
 		return
 	var line := "%d|%d|%d|%d" % [1 if along_x else 0, signf(n.y if along_x else n.x), roundi(a.y if along_x else a.x), roundi(top * 4.0)]
 	var w := _strip_window(line, floori((pa + pb) * 0.5))
-	var ua := _strip_u(line, w, pa, s)
-	var ub := _strip_u(line, w, pb, s)
-	var k := _strip_pick(line, w.x, s)
-	_strip_quad(a, b, top, foot, ua, ub, _strip_h(line, w.x, 3) * s.hs[k], s.hs[k], s.texs[k], col, col)
+	_strip_window_quad(line, w, s, a, b, _strip_u(line, w, pa, s), _strip_u(line, w, pb, s), top, foot, col, 1.0, 1.0)
 	# the window before, carried on over this one's first STRIP_FADE and fading out
 	var t0 := clampf((float(w.x) - pa) / (pb - pa), 0.0, 1.0)
 	var t1 := clampf((float(w.x) + STRIP_FADE - pa) / (pb - pa), 0.0, 1.0)
 	if absf(t1 - t0) < 0.001:
 		return
-	var p := a.lerp(b, t0)
-	var q := a.lerp(b, t1)
 	var pp := lerpf(pa, pb, t0)
 	var pq := lerpf(pa, pb, t1)
 	var prev := _strip_window(line, w.x - 1)
-	var kp := _strip_pick(line, prev.x, s)
-	var fade := func(pos: float) -> Color:
-		return Color(col, clampf(1.0 - (pos - float(w.x)) / STRIP_FADE, 0.0, 1.0))
-	_strip_quad(p, q, top, foot, _strip_u(line, prev, pp, s), _strip_u(line, prev, pq, s),
-		_strip_h(line, prev.x, 3) * s.hs[kp], s.hs[kp], s.texs[kp], fade.call(pp), fade.call(pq))
+	var fade := func(pos: float) -> float:
+		return clampf(1.0 - (pos - float(w.x)) / STRIP_FADE, 0.0, 1.0)
+	_strip_window_quad(line, prev, s, a.lerp(b, t0), a.lerp(b, t1), _strip_u(line, prev, pp, s), _strip_u(line, prev, pq, s),
+		top, foot, col, fade.call(pp), fade.call(pq))
+
+
+## One window's strip on a face from p to q: its pick, colour match, depth and up-or-down reading by hash.
+func _strip_window_quad(line: String, w: Vector2i, s: Dictionary, p: Vector2, q: Vector2, u0: float, u1: float,
+		top: float, foot: float, col: Color, ap: float, aq: float) -> void:
+	var k := _strip_pick(line, w.x, s)
+	var tone: Color = s.tones[k]
+	var sh: float = s.hs[k]
+	_strip_quad(p, q, top, foot, u0, u1, _strip_h(line, w.x, 3) * sh, sh, s.texs[k], col * tone, ap, aq,
+		_strip_h(line, w.x, 5) < 0.5)
 
 
 ## A hashed number in 0..1 for a window start on a line (salt picks which roll).
@@ -1916,12 +1929,13 @@ func _strip_u(line: String, w: Vector2i, pos: float, s: Dictionary) -> float:
 
 
 ## A strip quad from p to q (face points), top to foot, its columns u0..u1, read from depth d0 levels into the
-## strip (sh levels tall) and mirrored each time it runs out, so it's split where the reading turns.
+## strip (sh levels tall), flipped top to bottom when `flip`, and mirrored each time it runs out, so it's split
+## where the reading turns. It's cut every WASH_STEP levels too, so the wash can vary down the face. Both loops
+## count whole steps with a cap, so they always end.
 func _strip_quad(p: Vector2, q: Vector2, top: float, foot: float, u0: float, u1: float, d0: float, sh: float,
-		tex: Texture2D, cp: Color, cq: Color) -> void:
+		tex: Texture2D, col: Color, ap: float, aq: float, flip: bool) -> void:
 	if sh < 0.5 or top <= foot:
 		return
-	# Runs of the strip by an integer count (k), each split at the strip's end, so the loop always ends.
 	var k0 := floori(d0 / sh)
 	var k1 := mini(floori((d0 + top - foot) / sh), k0 + STRIP_RUNS - 1)
 	for k in range(k0, k1 + 1):
@@ -1929,15 +1943,42 @@ func _strip_quad(p: Vector2, q: Vector2, top: float, foot: float, u0: float, u1:
 		var db := minf(d0 + top - foot, float(k + 1) * sh)
 		if db - da < 0.0001:
 			continue
-		var fa := da / sh - float(k)
-		var fb := db / sh - float(k)
-		var v1 := fa if k % 2 == 0 else 1.0 - fa  # even runs read down the strip, odd ones back up it
-		var v2 := fb if k % 2 == 0 else 1.0 - fb
-		var ya := top - (da - d0)
-		var yb := top - (db - d0)
-		var quad := PackedVector2Array([iso(p.x, p.y, ya), iso(q.x, q.y, ya), iso(q.x, q.y, yb), iso(p.x, p.y, yb)])
-		_ci.draw_polygon(quad, PackedColorArray([cp, cq, cq, cp]),
-			PackedVector2Array([Vector2(u0, v1), Vector2(u1, v1), Vector2(u1, v2), Vector2(u0, v2)]), tex)
+		var bands := mini(ceili((db - da) / WASH_STEP), WASH_STEPS)
+		for j in bands:
+			var ea := lerpf(da, db, float(j) / bands)
+			var eb := lerpf(da, db, float(j + 1) / bands)
+			var fa := ea / sh - float(k)
+			var fb := eb / sh - float(k)
+			var v1 := fa if k % 2 == 0 else 1.0 - fa  # even runs read down the strip, odd ones back up it
+			var v2 := fb if k % 2 == 0 else 1.0 - fb
+			if flip:
+				v1 = 1.0 - v1
+				v2 = 1.0 - v2
+			var ya := top - (ea - d0)
+			var yb := top - (eb - d0)
+			var quad := PackedVector2Array([iso(p.x, p.y, ya), iso(q.x, q.y, ya), iso(q.x, q.y, yb), iso(p.x, p.y, yb)])
+			var cols := PackedColorArray([_washed(col, p, ya, ap), _washed(col, q, ya, aq), _washed(col, q, yb, aq),
+				_washed(col, p, yb, ap)])
+			_ci.draw_polygon(quad, cols,
+				PackedVector2Array([Vector2(u0, v1), Vector2(u1, v1), Vector2(u1, v2), Vector2(u0, v2)]), tex)
+
+
+## One big soft wash over every cliff ([USER] 2026-10-30, cliff-strips-review: "overlay a wash over the whole
+## thing"): seeded noise in world space, about WASH_CELLS across and WASH_LEVELS high, lightening or darkening a
+## face and warming or cooling it a little, so it runs on across faces and windows and breaks the repeat.
+func _washed(col: Color, p: Vector2, z: float, alpha: float) -> Color:
+	if _wash_noise == null:
+		_wash_noise = FastNoiseLite.new()
+		_wash_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+		_wash_noise.seed = 1630
+		_wash_noise.frequency = 1.0
+		_wash_noise.fractal_octaves = 2
+	var x := p.x / WASH_CELLS
+	var y := p.y / WASH_CELLS
+	var zz := z / WASH_LEVELS
+	var v := 1.0 + WASH_VALUE * _wash_noise.get_noise_3d(x, y, zz)
+	var warm := WASH_WARM * _wash_noise.get_noise_3d(x + 41.7, y - 17.3, zz + 9.1)
+	return Color(col.r * v * (1.0 + warm), col.g * v, col.b * v * (1.0 - warm), alpha)
 
 
 ## The lower ground showing where corner k was rounded off: the neighbour's own top (same texture at the same

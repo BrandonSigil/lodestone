@@ -9,6 +9,9 @@ breaks at each level.
   24 levels.
 - A set lists its strips in its `battle_art_<set>.csv`, `strips` column, stems split by `|`. Village lists them on the
   natural ground (grass, forest, road, rock). Built ground (stone, ruin, stairs) keeps its masonry.
+- Colour match ([USER] 2026-10-30, cliff-strips-review): each strip is tinted, through its vertex colour, so its mean
+  is the cliff's main colour: the set's `strip_tone` column (a hex colour) if given, else the six strips' shared mean.
+  So they read as one rock, not six.
 - `BattleArt.side_strips()` loads them once per set, mipmapped. If a strip file is missing it is left out; if none are
   there, the faces keep the side texture as before.
 
@@ -21,12 +24,17 @@ does (`build_village_v2.py`). The live village shares the village set but keeps 
   cells long at hashed spots (`_strip_cut`: about half the cells, never three in a row without a cut). Where the lip
   height changes, the key changes, so the strips break there too.
 - A window shows one strip, picked by hash. It reads a hashed column offset into the 3-cell strip (never tiled
-  sideways), is mirrored left to right on every other hash, and starts at a hashed depth.
+  sideways), is flipped left to right and top to bottom by hash (Brandon: "randomly flip and switch"), and starts at a
+  hashed depth.
 - Down the face the strip runs on from that depth. Where it runs out it is read back up (mirrored), since the strips
-  aren't seamless top to bottom. `_strip_quad` walks those runs by an integer count, at most `STRIP_RUNS` a face, so it
-  always ends. (A float-stepped loop that could stall on a run's end ran a screenshot out of memory once,
+  aren't seamless top to bottom. `_strip_quad` walks those runs by an integer count, at most `STRIP_RUNS` a face, and the wash
+  bands inside a run likewise (at most `WASH_STEPS`), so it always ends. (A float-stepped loop that could stall on a run's end ran a screenshot out of memory once,
   2026-10-30.)
 - The window before carries on over the first `STRIP_FADE` (0.18) cell of each window and fades out, so the joins are
   soft.
+- The wash ([USER] 2026-10-30: "overlay a wash over the whole thing"): one big soft noise in world space
+  (`_washed`: FastNoiseLite, seeded, about `WASH_CELLS` 7 cells across and `WASH_LEVELS` 10 levels high) lightens or
+  darkens the faces by up to `WASH_VALUE` (16%) and warms or cools them a little (`WASH_WARM`). It is sampled at each
+  face's corners and every `WASH_STEP` (3) levels down, as vertex colours, so it runs on across faces and windows.
 - Hashes are on world cells, so the same cliff always comes out the same and no two cliffs match. Stair risers, kit
   walls and the block look are unchanged.
