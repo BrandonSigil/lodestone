@@ -8,11 +8,29 @@ const MAX_ROUNDS := 40
 ## Runs one AI turn for unit u: move, then act or guard. Returns the plan plus the events.
 static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var plan := EnemyAi.plan(grid, u, units)
+	var stop := CombatRules.watch_stop(grid, u, plan.path, units)  # a foe on OVERWATCH stops the walk with a shot
+	if not stop.is_empty():
+		plan.move = stop.cell
+		plan.cost = int(plan.cost)
 	var events := CombatRules.leave_hits(rng, grid, u, units, plan.move)
 	if not u.alive():
 		plan["events"] = events
 		return plan
 	u.place(plan.move, grid.height_at(plan.move))
+	if not stop.is_empty():
+		events.append_array(CombatRules.watch_shot(rng, grid, stop.watcher, u, units))
+		u.moved = true
+		u.move_spent = CombatRules.move_points(u)  # its move ends here; it acts from where it stopped, if it still can
+		if not u.alive():
+			u.acted = true
+			plan["events"] = events
+			return plan
+		var again := EnemyAi.plan(grid, u, units)
+		plan.ability = again.ability
+		plan.aim = again.aim
+		plan.guard = again.guard
+		plan.dest = again.dest
+		plan.spot = again.spot
 	u.moved = true
 	u.move_spent += int(plan.cost)
 	CombatRules.spot(grid, units, u)
@@ -23,7 +41,12 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 	elif plan.ability != null and plan.ability.kind == "command":
 		events.append_array(CombatRules.command(u, plan.ability, CombatRules.unit_at(units, plan.aim)))
 		u.uses[plan.ability.id] = int(u.uses.get(plan.ability.id, 0)) + 1
+	elif plan.ability != null and plan.ability.kind == "swap":
+		events.append_array(CombatRules.shadow_swap(grid, u, plan.ability, CombatRules.occupant(units, plan.aim)))
+		u.uses[plan.ability.id] = int(u.uses.get(plan.ability.id, 0)) + 1
 	elif plan.ability != null:
+		if plan.ability.id in ["overwatch", "ward"]:
+			u.uses[plan.ability.id] = int(u.uses.get(plan.ability.id, 0)) + 1
 		events.append_array(CombatRules.resolve(rng, grid, u, plan.ability, plan.aim, units))
 		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of the foes' reach
 			var away := EnemyAi.retreat(grid, u, units)

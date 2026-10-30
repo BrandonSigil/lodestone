@@ -35,6 +35,8 @@ static func lines(u: CombatUnit, a: Ability) -> PackedStringArray:
 			nums.append(Txt.f("TIP_CARRY", a.power))
 		"command":
 			nums.append(Txt.t("TIP_COMMAND"))
+		"swap":
+			nums.append(Txt.t("TIP_SWAP"))
 	if a.status != "":
 		nums.append(Txt.f("TIP_STATUS", [Txt.t("TAG_" + a.status.to_upper()), a.status_turns]))
 	if a.magic:

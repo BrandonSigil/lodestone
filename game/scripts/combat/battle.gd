@@ -296,6 +296,10 @@ func _auto_player_phase() -> void:
 ## One piece's turn played by the AI: move, then use a skill or guard.
 func _ai_turn(u: CombatUnit) -> void:
 	var plan := EnemyAi.plan(grid, u, units)
+	var stop := CombatRules.watch_stop(grid, u, plan.path, units)  # a piece on OVERWATCH stops the walk with a shot
+	if not stop.is_empty():
+		plan.move = stop.cell
+		plan.path = plan.path.slice(0, plan.path.find(stop.cell) + 1)
 	if not await _leave_guards(u, plan.move):
 		return
 	if plan.move != u.cell:
@@ -303,7 +307,20 @@ func _ai_turn(u: CombatUnit) -> void:
 		u.place(plan.move, grid.height_at(plan.move))
 		await _spot(u)
 	u.move_spent += int(plan.cost)
-	if plan.ability != null and (plan.ability.kind == "carry" or plan.ability.kind == "command"):
+	if not stop.is_empty():
+		for ev in CombatRules.watch_shot(rng, grid, stop.watcher, u, units):
+			await _play(ev)
+		for o: CombatUnit in units:
+			o.sync_view()
+		u.moved = true
+		u.move_spent = CombatRules.move_points(u)  # it acts from where it stopped, if it still can
+		if not u.alive() or _check_end():
+			return
+		var again := EnemyAi.plan(grid, u, units)
+		plan.ability = again.ability
+		plan.aim = again.aim
+		plan.guard = again.guard
+	if plan.ability != null and plan.ability.kind in ["carry", "command", "swap"]:
 		await _use_clutch(u, plan.ability, plan.aim, plan.dest, plan.spot)
 	elif plan.ability != null:
 		await _use(u, plan.ability, plan.aim)
@@ -389,7 +406,14 @@ func _use_clutch(u: CombatUnit, a: Ability, aim: Vector2i, dest: Vector2i, spot:
 	if friend == null:
 		state = prev
 		return
-	var events := CombatRules.carry(rng, grid, u, friend, dest, spot, units) if a.kind == "carry" else CombatRules.command(u, a, friend)
+	var events: Array
+	match a.kind:
+		"carry":
+			events = CombatRules.carry(rng, grid, u, friend, dest, spot, units)
+		"swap":
+			events = CombatRules.shadow_swap(grid, u, a, friend)
+		_:
+			events = CombatRules.command(u, a, friend)
 	u.uses[a.id] = int(u.uses.get(a.id, 0)) + 1
 	for ev in events:
 		await _play(ev)
@@ -534,6 +558,12 @@ func _play(ev: Dictionary) -> void:
 			t.vis_h = grid.height_at(ev.to)
 			board.float_text(t.cell, Txt.t("SKILL_CARRY"), Color(0.6, 0.9, 1.0))
 			await get_tree().create_timer(0.25).timeout
+		"swap":
+			board.float_text(t.cell, Txt.t("SKILL_SHADOW_SWAP"), Color(0.7, 0.6, 1.0))
+			await get_tree().create_timer(0.25).timeout
+		"overwatch":
+			board.float_text(ev.src.cell, Txt.t("SKILL_OVERWATCH"), Color(1.0, 0.9, 0.5))
+			await get_tree().create_timer(0.2).timeout
 		"command":
 			board.float_text(t.cell, Txt.t("SKILL_COMMAND"), Color(1.0, 0.9, 0.5))
 			log_line.emit(Txt.f("LOG_COMMAND", Txt.t(t.name_key)))
@@ -1050,7 +1080,7 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 			if board.highlights.has(c):
 				var who := selected
 				var a := targeting
-				if a.kind == "command":
+				if a.kind == "command" or a.kind == "swap":
 					_hide_menu()
 					_cancel.visible = false
 					await _use_clutch(who, a, c, c, c)

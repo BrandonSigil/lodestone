@@ -1192,3 +1192,48 @@ func test_carry_and_command() -> void:
 	for i in 3:
 		CombatRules.begin_phase(units, 0)
 	ok(CombatRules.usable(hero, command), "3 of the hero's phases later, again")
+
+
+## The jobs' clutch tools ([USER] design-clutch-jobs): SHADOW SWAP (daggers) trades places with a friend up to 3
+## away through anything, then waits 3 phases; OVERWATCH (bow) stops the first foe to walk into reach with a shot;
+## WARD (book) makes the next hit on a friend do nothing.
+func test_shadow_swap_overwatch_and_ward() -> void:
+	var g := CombatGrid.flat(12, 5)
+	var rogue := _unit("job_rogue", 0, Vector2i(1, 2), g)
+	var dog := _unit("dog", 0, Vector2i(4, 2), g)
+	var foe := _unit("bandit", 1, Vector2i(3, 2), g)
+	var units := [rogue, dog, foe]
+	var swap := Db.ability("shadow_swap")
+	ok(rogue.abilities.has(swap), "the rogue job has it")
+	CombatRules.begin_phase(units, 0)
+	ok(CombatRules.target_cells(g, rogue, swap, units, rogue.cell).has(dog.cell), "a friend 3 away, a foe between")
+	CombatRules.shadow_swap(g, rogue, swap, dog)
+	eq([rogue.cell, dog.cell], [Vector2i(4, 2), Vector2i(1, 2)], "traded places")
+	ok(not CombatRules.usable(rogue, swap), "then a wait")
+	# OVERWATCH
+	var archer := _unit("job_archer", 0, Vector2i(10, 2), g)  # OVERWATCH is built but off the job until the game designer's call
+	var bandit := _unit("bandit", 1, Vector2i(10, 4), g)
+	bandit.place(Vector2i(4, 4), 0)
+	archer.range_min = 2  # the bow's reach (the weapon gives it in play)
+	archer.range_max = 4
+	archer.statuses[CombatRules.STATUS_OVERWATCH] = 1
+	var walk: Array[Vector2i] = [Vector2i(4, 4), Vector2i(5, 4), Vector2i(6, 4), Vector2i(7, 4), Vector2i(8, 4)]
+	var stop := CombatRules.watch_stop(g, bandit, walk, [archer, bandit])
+	ok(not stop.is_empty() and stop.watcher == archer, "the first cell in the bow's reach stops it")
+	ok(CombatRules.in_reach(g, archer.cell, stop.cell, CombatRules.ability_range(archer, null)), "in reach")
+	var hp := bandit.hp
+	bandit.place(stop.cell, 0)
+	CombatRules.watch_shot(RandomNumberGenerator.new(), g, archer, bandit, [archer, bandit])
+	ok(bandit.hp < hp and not archer.has_status(CombatRules.STATUS_OVERWATCH), "a shot, and the watch is spent")
+	# WARD
+	var mage := _unit("job_mage", 0, Vector2i(0, 0), g)
+	var knight := _unit("knight", 0, Vector2i(6, 0), g)
+	var thug := _unit("bandit", 1, Vector2i(7, 0), g)
+	knight.statuses[CombatRules.STATUS_WARD] = 1
+	hp = knight.hp
+	CombatRules.resolve(RandomNumberGenerator.new(), g, thug, Db.ability("kick"), knight.cell, [mage, knight, thug])
+	eq(knight.hp, hp, "the warded hit does nothing")
+	eq(knight.cell, Vector2i(6, 0), "and no shove")
+	ok(not knight.has_status(CombatRules.STATUS_WARD), "used up")
+	CombatRules.resolve(RandomNumberGenerator.new(), g, thug, thug.abilities[0], knight.cell, [mage, knight, thug])
+	ok(knight.hp < hp, "the next one lands")

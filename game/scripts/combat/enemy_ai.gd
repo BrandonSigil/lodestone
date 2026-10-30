@@ -19,6 +19,7 @@ const AMBUSH_PICK := 60.0  ## an ambusher's pull toward soft targets, so armor a
 static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	if u.has_trait(CombatRules.TRAIT_STRUCTURE):  # an ice pillar only stands there
 		return {"move": u.cell, "ability": null, "aim": u.cell, "target": null, "path": [] as Array[Vector2i], "guard": false, "cost": 0}
+	_reach_cache = {}
 	var reach := CombatRules.reachable(grid, u, units)
 	var cost: Dictionary = reach.cost
 	var best_score := 0.0
@@ -41,7 +42,7 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 			extra = c
 	for cell: Vector2i in cost:
 		for a in actions:
-			if not CombatRules.usable(u, a) or a.boss_move() or a.kind == "carry" or a.kind == "command":
+			if not CombatRules.usable(u, a) or a.boss_move() or a.kind in ["carry", "command", "swap"]:
 				continue
 			for aim in _aims(grid, u, a, units, cell):
 				var s := score(grid, u, a, aim, units, cell)
@@ -67,7 +68,9 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 
 
 const CARRY_DOWNED := 20.0  ## carrying a downed friend out of reach; below AID (REVIVE_SCORE), which gets them back up
-const CARRY_BAD_CELL := 12.0  ## a friend on a cold, marked or guarded cell
+const CARRY_BAD_CELL := 12.0
+const SWAP_DOWNED := 20.0  ## SHADOW SWAP on a downed friend: under AID, which gets them up
+const SWAP_HURT := 16.0  ## on a friend under a quarter HP next to a foe  ## a friend on a cold, marked or guarded cell
 
 
 ## The clutch tools' best uses from here ([USER] design-clutch-tools-2): CARRY when a friend is down or stands on a
@@ -99,6 +102,17 @@ static func _clutch(grid: CombatGrid, u: CombatUnit, units: Array, cost: Diction
 					best = f
 			if best != null:
 				out.append({"ability": a, "cell": u.cell, "aim": best.cell, "score": best_s})
+		elif a.kind == "swap":  # SHADOW SWAP: pull a friend who is down, or low next to a foe, to where the rogue stands
+			var threat := _foe_reach(grid, u, units)
+			for f: CombatUnit in units:
+				if f == u or f.team != u.team or not (f.downed() or (f.alive() and f.hp * 4 < f.max_hp and _next_to_foe(f, units))):
+					continue
+				for cell: Vector2i in cost:
+					if CombatRules.dist(cell, f.cell) > a.range_max:
+						continue
+					var s := (SWAP_DOWNED if f.downed() else SWAP_HURT) + (15.0 if threat.has(f.cell) else 0.0) \
+						- (15.0 if threat.has(cell) else 0.0) - int(cost[cell]) * 0.2 - float(leave[cell])
+					out.append({"ability": a, "cell": cell, "aim": f.cell, "score": s})
 		elif a.kind == "carry":
 			var marked := CombatRules.marks(units)
 			var guarded := CombatRules.guard_ring(grid, units, 1 - u.team)
@@ -225,7 +239,7 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 			"knockout":
 				s += KNOCKOUT_SCORE if t.team != u.team else 0.0
 			"buff":
-				s += _buff_value(u, t, a.status, units)
+				s += _buff_value(u, t, a.status, units, grid)
 	if a.kind != "attack" and s <= 0.0:
 		return -INF
 	if not f.counter.is_empty():
@@ -296,6 +310,19 @@ static func threat_worth(t: CombatUnit, units: Array) -> float:
 	return clampf(t.damage / 6.0, 0.3, 1.0)
 
 
+static var _reach_cache := {}  ## team -> the other side's hit reach, for one plan (WARD and OVERWATCH ask often)
+
+
+static func _foe_reach(grid: CombatGrid, t: CombatUnit, units: Array) -> Dictionary:
+	if not _reach_cache.has(t.team):
+		_reach_cache[t.team] = hit_reach(grid, t, units)
+	return _reach_cache[t.team]
+
+
+static func _next_to_foe(f: CombatUnit, units: Array) -> bool:
+	return units.any(func(o: CombatUnit) -> bool: return o.team != f.team and o.alive() and CombatRules.dist(o.cell, f.cell) == 1)
+
+
 ## Average damage of one blow from a forecast entry: the middle of the range, crits counted.
 static func _avg(e: Dictionary) -> float:
 	return (int(e.dmg_min) + int(e.dmg_max)) * 0.5 * (1.0 + float(e.crit) * (CombatRules.num("crit_mult") - 1.0))
@@ -311,10 +338,31 @@ static func _hex_value(t: CombatUnit, status: String) -> float:
 	return 4.0
 
 
-static func _buff_value(u: CombatUnit, t: CombatUnit, status: String, units: Array = []) -> float:
+static func _buff_value(u: CombatUnit, t: CombatUnit, status: String, units: Array = [], grid: CombatGrid = null) -> float:
 	if t.team != u.team or t.has_status(status):
 		return 0.0
 	match status:
+		CombatRules.STATUS_WARD:  # on the friend likeliest to go down: in the foes' reach, and low
+			if grid == null or not _foe_reach(grid, t, units).has(t.cell):
+				return 0.0
+			return 6.0 + 30.0 * (1.0 - float(t.hp) / t.max_hp)
+		CombatRules.STATUS_OVERWATCH:  # when a foe could reach a downed or hurt friend next phase, and would have to
+			if grid == null:  # walk into the bow's reach to do it (one already in reach is better shot now)
+				return 0.0
+			var hurt := units.filter(func(f: CombatUnit) -> bool:
+				return f.team == u.team and f != u and (f.downed() or (f.alive() and f.hp * 2 < f.max_hp)))
+			if hurt.is_empty():
+				return 0.0
+			var r := CombatRules.ability_range(u, null)
+			var best := 0.0
+			for o: CombatUnit in units:
+				if o.team == u.team or not o.alive() or o.hiding or o.has_trait(CombatRules.TRAIT_STRUCTURE) or CombatRules.in_reach(grid, u.cell, o.cell, r):
+					continue
+				var o_reach: Dictionary = CombatRules.reachable(grid, o, units).cost
+				for f: CombatUnit in hurt:
+					if o_reach.keys().any(func(c: Vector2i) -> bool: return CombatRules.dist(c, f.cell) <= CombatRules.ability_range(o, null).y):
+						best = maxf(best, CombatRules.expected_damage(grid, u, o, u.cell, null, units) * 10.0 + 6.0)  # a real shot's worth
+			return best
 		CombatRules.STATUS_GUIDED:
 			return 5.0 if t != u and not t.acted else 0.0
 		CombatRules.STATUS_TAUNT:

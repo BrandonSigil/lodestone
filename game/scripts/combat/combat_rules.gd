@@ -20,9 +20,11 @@ const STATUS_GUIDED := "guided"  ## STAR POINT: more crit chance until the owner
 const STATUS_TAUNT := "taunt"  ## foes that can reach the taunter must hit it, until the taunter's next phase
 const STATUS_SLOW := "slow"  ## less move for a phase
 const STATUS_BLEED := "bleed"  ## loses a little HP at the start of each of its phases (a ranked bite)
+const STATUS_WARD := "ward"  ## the book's WARD: the next hit on this piece does 0 and no status; gone at the mage's next phase
+const STATUS_OVERWATCH := "overwatch"  ## the bow's OVERWATCH: the first foe to move into its reach takes a plain shot and stops
 const STATUS_POISON := "poison"  ## the same, from the rogue's blades: `poison_damage` for `poison_turns` phases
 ## Cleared when the owner's next phase starts (they protect through the enemy phase).
-const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT]
+const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT, STATUS_WARD, STATUS_OVERWATCH]
 
 ## Combat traits (one per roster character, a few for enemy classes). Ids live in the .tres traits arrays.
 const TRAIT_SHIELD_WALL := &"shield_wall"  ## Lead: allies standing next to them get more armor
@@ -234,11 +236,13 @@ static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Arr
 				taunts.append(o.cell)
 		if not taunts.is_empty():
 			return taunts
-	if a.kind == "carry" or a.kind == "command":  # CARRY: a friend next to the dog, up or down; COMMAND: any standing friend
+	if a.kind == "carry" or a.kind == "command" or a.kind == "swap":
+		# CARRY: a friend next to the dog, up or down; COMMAND: any standing friend; SHADOW SWAP: a friend within 3,
+		# up or down, through anything in between
 		for o: CombatUnit in units:
-			if o == u or o.team != u.team or not (o.alive() or (a.kind == "carry" and o.downed())):
+			if o == u or o.team != u.team or not (o.alive() or (a.kind != "command" and o.downed())):
 				continue
-			if a.kind == "command" or dist(from, o.cell) == 1:
+			if a.kind == "command" or (a.kind == "carry" and dist(from, o.cell) == 1) or (a.kind == "swap" and dist(from, o.cell) <= a.range_max):
 				out.append(o.cell)
 		return out
 	match a.target:
@@ -564,6 +568,11 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 ## One blow of an attack or hex against one target. It always lands; an attack's damage wobbles and may crit.
 static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, a: Ability, t: CombatUnit, units: Array) -> Array:
 	var events := []
+	if t.has_status(STATUS_WARD) and t.team != u.team:  # WARD takes the whole blow: no damage, no status
+		t.statuses.erase(STATUS_WARD)
+		events.append({"type": "hit", "src": u, "unit": t, "amount": 0, "crit": false})
+		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_WARD})
+		return events
 	if a.kind == "attack":
 		var w := int(num("wobble"))
 		var crit := rng.randf() < crit_chance(grid, u, t, units, u.cell, a)
@@ -899,6 +908,33 @@ static func carry(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, f
 	u.place(dest, grid.height_at(dest))
 	friend.place(spot, grid.height_at(spot))
 	events.append({"type": "carry", "src": u, "unit": friend, "from": from, "to": spot})
+	return events
+
+
+## SHADOW SWAP: u and friend trade places, through foes and guard zones, with no free hits. Then the wait.
+static func shadow_swap(grid: CombatGrid, u: CombatUnit, a: Ability, friend: CombatUnit) -> Array:
+	u.ready_at[a.id] = u.phase_no + a.cooldown
+	var at := u.cell
+	u.place(friend.cell, grid.height_at(friend.cell))
+	friend.place(at, grid.height_at(at))
+	return [{"type": "swap", "src": u, "unit": friend, "to": friend.cell}]
+
+
+## OVERWATCH: the first cell on mover's path in reach of a foe on watch: {"watcher", "cell"}, or {} when none.
+static func watch_stop(grid: CombatGrid, mover: CombatUnit, path: Array, units: Array) -> Dictionary:
+	for i in range(1, path.size()):
+		var c: Vector2i = path[i]
+		for w: CombatUnit in units:
+			if w.team != mover.team and w.alive() and w.has_status(STATUS_OVERWATCH) and in_reach(grid, w.cell, c, ability_range(w, null)):
+				return {"watcher": w, "cell": c}
+	return {}
+
+
+## The watcher's readied shot: a plain hit on mover, no counter; the watch is spent.
+static func watch_shot(rng: RandomNumberGenerator, grid: CombatGrid, w: CombatUnit, mover: CombatUnit, units: Array) -> Array:
+	w.statuses.erase(STATUS_OVERWATCH)
+	var events := [{"type": "overwatch", "src": w, "unit": mover}]
+	events.append_array(resolve(rng, grid, w, w.abilities[0], mover.cell, units, false))
 	return events
 
 
