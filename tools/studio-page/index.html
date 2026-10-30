@@ -614,6 +614,7 @@ function cardHtml(d) {
         <div class="row"><button class="btn go" data-act="go" data-id="${esc(d.id)}">Go ahead</button><button class="btn" data-act="nogo" data-id="${esc(d.id)}">Not now</button></div></div>`;
     } else if (d.kind === "review") {
       const iv = draft.items || {};
+      body += `<div class="row"><small style="color:var(--muted)">Mark every picture:</small>${["approve", "redo", "reject"].map((k) => `<button class="btn small" data-act="verdictall" data-id="${esc(d.id)}" data-v="${k}">${{ approve: "Approve all", redo: "Redo all", reject: "Reject all" }[k]}</button>`).join("")}</div>`;
       body += `<div class="items">${(d.items || []).map((it) => {
         const v = iv[it.id]?.verdict;
         return `<div class="item">
@@ -627,7 +628,6 @@ function cardHtml(d) {
         </div>`;}).join("")}</div>`;
       const all = (d.items || []).every((it) => iv[it.id]?.verdict);
       body += `<div class="why"><textarea id="why-${esc(d.id)}" placeholder="Overall notes (optional)">${esc(draft.why || "")}</textarea>${attachHtml(d.id)}
-        <div class="row"><small style="color:var(--muted)">Mark every picture:</small>${["approve", "redo", "reject"].map((k) => `<button class="btn small" data-act="verdictall" data-id="${esc(d.id)}" data-v="${k}">${{ approve: "Approve all", redo: "Redo all", reject: "Reject all" }[k]}</button>`).join("")}</div>
         <div class="row"><button class="btn primary" data-act="sendreview" data-id="${esc(d.id)}" ${all ? "" : "disabled"}>Stamp and send</button><small style="color:var(--muted)">${all ? "" : "Give every picture a verdict first."}</small></div></div>`;
     } else if (d.kind === "todo") {
       body += `<div class="row"><button class="btn primary" data-act="todo" data-id="${esc(d.id)}">Mark done</button></div>`;
