@@ -619,6 +619,7 @@ func test_who_comes_along() -> void:
 
 func test_the_gate_asks_go_or_edit() -> void:
 	var saved := _fresh_game()
+	Game.take_weapon("sword")  # nobody leaves unarmed (test_no_leaving_town_unarmed)
 	Game.explore_map = "village"
 	Game.explore_entry = Vector2i(-1, -1)
 	var s: Node = load("res://scenes/explore.tscn").instantiate()
@@ -925,3 +926,33 @@ func test_lasting_rewards_are_for_good() -> void:
 	Game.explore_memory.clear()
 	Game.explore_map = "home"
 	_restore(saved)
+
+
+## [USER] 2026-10-30: nobody leaves the village without a weapon. The gate's way out shows Brandon's line
+## and the party stays; with the smithy sword it asks GO / EDIT PARTY as before.
+func test_no_leaving_town_unarmed() -> void:
+	_db()
+	Game.save_enabled = false
+	Game.reset_meta()
+	Game.meta.flags.append("has_lodestone")
+	Game.run = null
+	Game.explore_map = "village"
+	Game.explore_entry = Vector2i(-1, -1)
+	var tree := Engine.get_main_loop() as SceneTree
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	ok(not Game.armed(), "bare hands at the start")
+	eq(Txt.t("UI_NEED_WEAPON"), "You should probably find something to protect yourself with before heading out!")
+	s._apply_map_fx(["exit"], {})
+	ok(s.mode == 2 and not s._gate_open, "the gate holds the party with the line, no GO prompt")
+	eq(Game.explore_map, "village", "still in town")
+	s._close_dialog()
+	s.mode = 0
+	Game.take_weapon("sword")
+	ok(Game.armed())
+	s._apply_map_fx(["exit"], {})
+	ok(s._gate_open, "armed: the gate asks GO / EDIT PARTY")
+	s._close_dialog()
+	s.free()
+	Game.reset_meta()
+	Game.explore_map = "home"

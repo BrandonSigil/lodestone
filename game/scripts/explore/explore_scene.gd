@@ -913,6 +913,9 @@ func _apply_map_fx(list: Array, ctx: Dictionary) -> void:
 				if not near.is_empty():
 					start_fight(near, "ambushed")
 			"exit":
+				if map.map_name == "village" and not Game.armed():
+					_need_weapon()  # [USER] 2026-10-30: nobody leaves town with bare hands
+					return
 				if map.map_name == "village":
 					_gate_prompt()  # [USER] pc-10: one key to go, one to edit the party
 					return
@@ -1235,6 +1238,14 @@ func _end_fight() -> void:
 func _have() -> Dictionary:
 	return {"items": Game.run.items, "flags": Game.meta.flags,
 		"party": Game.adventure_defs().map(func(d: CharacterDef) -> String: return String(d.id))}
+
+
+## A way out of the village with nobody armed: Brandon's line, and the party stays ([USER] 2026-10-30).
+func _need_weapon() -> void:
+	mode = M.DIALOG
+	_dialog_button(_new_dialog(Txt.t("UI_NEED_WEAPON")), Txt.t("UI_CONTINUE"), func() -> void:
+		_close_dialog()
+		mode = M.WALK)
 
 
 ## Leaving the village by the gate ([USER] pc-10: "press F to proceed", "press P to edit party").

@@ -441,6 +441,11 @@ func weapon_level(id: String) -> int:
 	return RestoreRules.done_count(Db.restore, id, meta.restore)
 
 
+## Does anyone carry a weapon? Only the hero does, from the smithy rack; "none" is bare hands.
+func armed() -> bool:
+	return weapon_id() != "none"
+
+
 ## The weapon the hero holds now: the one whose flag is set (take_weapon keeps it to one).
 func weapon_id() -> String:
 	for id in Db.weapons:
