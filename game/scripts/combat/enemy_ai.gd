@@ -31,9 +31,17 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 		leave[cell] = leave_cost(grid, u, units, cell) + mark_cost(grid, u, units, cell, marked)
 	var actions: Array[Ability] = u.abilities.duplicate()
 	actions.append_array(CombatRules.extra_actions(u))  # AID or a knock-out too
+	var extra := {}  # CARRY's destination and set-down cell, when a clutch tool wins
+	for c: Dictionary in _clutch(grid, u, units, cost, leave):
+		if float(c.score) > best_score:
+			best_score = float(c.score)
+			best_cell = c.cell
+			best_ability = c.ability
+			best_aim = c.aim
+			extra = c
 	for cell: Vector2i in cost:
 		for a in actions:
-			if not CombatRules.usable(u, a) or a.boss_move():
+			if not CombatRules.usable(u, a) or a.boss_move() or a.kind == "carry" or a.kind == "command":
 				continue
 			for aim in _aims(grid, u, a, units, cell):
 				var s := score(grid, u, a, aim, units, cell)
@@ -45,6 +53,7 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 					best_cell = cell
 					best_ability = a
 					best_aim = aim
+					extra = {}
 	var guard := false
 	if best_ability == null and u.hiding:
 		best_cell = u.cell  # an ambusher waits where it hides until something comes in reach
@@ -53,7 +62,78 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 		guard = u.hp * 2 < u.max_hp
 	var target := CombatRules.unit_at(units, best_aim) if best_ability else null
 	return {"move": best_cell, "ability": best_ability, "aim": best_aim, "target": target,
-		"path": CombatRules.path_to(reach.prev, u.cell, best_cell), "guard": guard, "cost": int(cost.get(best_cell, 0))}
+		"path": CombatRules.path_to(reach.prev, u.cell, best_cell), "guard": guard, "cost": int(cost.get(best_cell, 0)),
+		"score": best_score, "dest": extra.get("dest", best_cell), "spot": extra.get("spot", best_aim)}
+
+
+const CARRY_DOWNED := 20.0  ## carrying a downed friend out of reach; below AID (REVIVE_SCORE), which gets them back up
+const CARRY_BAD_CELL := 12.0  ## a friend on a cold, marked or guarded cell
+
+
+## The clutch tools' best uses from here ([USER] design-clutch-tools-2): CARRY when a friend is down or stands on a
+## cold, marked or guarded cell, COMMAND when the friend's fresh phase would score more than u's own action.
+## [{"ability", "cell", "aim", "score", "dest", "spot"}].
+static func _clutch(grid: CombatGrid, u: CombatUnit, units: Array, cost: Dictionary, leave: Dictionary) -> Array:
+	var out := []
+	for a in u.abilities:
+		if not CombatRules.usable(u, a):
+			continue
+		if a.kind == "command":
+			var best: CombatUnit = null
+			var best_s := 0.0
+			for f: CombatUnit in units:
+				if f == u or f.team != u.team or not f.alive() or not f.done():
+					continue  # a friend still to act already has its turn
+				var keep := [f.moved, f.acted, f.move_spent, f.move_origin]
+				f.moved = false
+				f.acted = false
+				f.move_spent = 0
+				f.move_origin = f.cell
+				var p := plan(grid, f, units)
+				f.moved = keep[0]
+				f.acted = keep[1]
+				f.move_spent = keep[2]
+				f.move_origin = keep[3]
+				if p.ability != null and float(p.score) > best_s:
+					best_s = float(p.score)
+					best = f
+			if best != null:
+				out.append({"ability": a, "cell": u.cell, "aim": best.cell, "score": best_s})
+		elif a.kind == "carry":
+			var marked := CombatRules.marks(units)
+			var guarded := CombatRules.guard_ring(grid, units, 1 - u.team)
+			var bad := func(c: Vector2i) -> float:  # a big move about to land matters; a pillar's chill or a guard far less
+				var n := 0.0
+				if marked.has(c):
+					n += 20.0
+				if guarded.has(c):
+					n += 4.0
+				for o: CombatUnit in units:
+					if o.team != u.team and o.alive() and o.has_trait(CombatRules.TRAIT_STRUCTURE) and CombatRules.dist(o.cell, c) == 1:
+						n += 2.0
+				return n
+			# A standing friend is only worth carrying off a marked tile: one in melee chose to be there.
+			var needy := units.filter(func(f: CombatUnit) -> bool:
+				return f != u and f.team == u.team and (f.downed() or (f.alive() and marked.has(f.cell))))
+			if needy.is_empty():
+				continue
+			var threat := hit_reach(grid, u, units)
+			var danger := func(c: Vector2i) -> float: return bad.call(c) + (15.0 if threat.has(c) else 0.0)
+			var home := u.cell
+			for cell: Vector2i in cost:
+				for f: CombatUnit in needy:
+					if CombatRules.dist(cell, f.cell) != 1:
+						continue
+					u.cell = cell  # as if the carrier had walked here first
+					var spots := CombatRules.carry_spots(grid, u, f, a, units, threat)
+					u.cell = home
+					for dest: Vector2i in spots:
+						var s: float = (CARRY_DOWNED if f.downed() else CARRY_BAD_CELL) + danger.call(f.cell) - danger.call(spots[dest]) \
+							- int(cost[cell]) * 0.2 - mark_cost(grid, u, units, dest, marked)  # the carrier ends at dest
+						if danger.call(spots[dest]) >= danger.call(f.cell) and not f.downed():
+							continue
+						out.append({"ability": a, "cell": cell, "aim": f.cell, "score": s, "dest": dest, "spot": spots[dest]})
+	return out
 
 
 ## Hit and run, after the strike: the nearest cell u can still reach outside the foes' reach, without walking off

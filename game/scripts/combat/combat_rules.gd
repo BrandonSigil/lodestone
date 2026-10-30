@@ -105,11 +105,12 @@ static func occupant(units: Array, c: Vector2i) -> CombatUnit:
 
 ## Dijkstra over move cost. Returns {"cost": {cell: int}, "prev": {cell: cell}}.
 ## Units pass through allies but can't stop on them, and can't pass enemies.
-static func reachable(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
+static func reachable(grid: CombatGrid, u: CombatUnit, units: Array, budget := -1) -> Dictionary:
 	var cost := {u.cell: 0}
 	var prev := {}
 	var open: Array[Vector2i] = [u.cell]
-	var budget := move_left(u)
+	if budget < 0:
+		budget = move_left(u)
 	while not open.is_empty():
 		var bi := 0
 		for i in open.size():
@@ -207,6 +208,8 @@ static func can_attack(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from:
 static func usable(u: CombatUnit, a: Ability) -> bool:
 	if not u.can_use(a):
 		return false
+	if a.cooldown > 0 and not a.boss_move() and u.phase_no < int(u.ready_at.get(a.id, a.first)):
+		return false  # COMMAND: once every few of the user's phases
 	if a.is_item():
 		return u.belt != null and u.belt.count(a.spends) >= a.cost
 	return true
@@ -231,6 +234,13 @@ static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Arr
 				taunts.append(o.cell)
 		if not taunts.is_empty():
 			return taunts
+	if a.kind == "carry" or a.kind == "command":  # CARRY: a friend next to the dog, up or down; COMMAND: any standing friend
+		for o: CombatUnit in units:
+			if o == u or o.team != u.team or not (o.alive() or (a.kind == "carry" and o.downed())):
+				continue
+			if a.kind == "command" or dist(from, o.cell) == 1:
+				out.append(o.cell)
+		return out
 	match a.target:
 		"self":
 			out.append(from)
@@ -850,6 +860,56 @@ static func marks(units: Array) -> Dictionary:
 				out[c] = []
 			out[c].append({"src": u, "ability": u.mark.ability, "left": int(u.mark.left)})
 	return out
+
+
+# --- clutch tools ([USER] 2026-10-30 design-clutch-tools-2: CARRY for the dog, COMMAND for the sword job) ------
+
+## Where CARRY can take a friend: cells the carrier reaches in `power` (3) steps with a free cell next to them to
+## set the friend down. dest -> the set-down cell (the one fewest foes could hit next phase, nearest first).
+static func carry_spots(grid: CombatGrid, u: CombatUnit, friend: CombatUnit, a: Ability, units: Array, threat = null) -> Dictionary:
+	var out := {}
+	var others := units.filter(func(o: CombatUnit) -> bool: return o != friend)  # the friend comes along
+	var standing := others.filter(func(o: CombatUnit) -> bool: return o != u)  # and the carrier's own cell comes free
+	if threat == null:
+		threat = EnemyAi.hit_reach(grid, u, units)
+	var reach: Dictionary = reachable(grid, u, others, a.power).cost
+	for dest: Vector2i in reach:
+		var best := NONE_SPOT
+		for d in DIRS:
+			for n in grid.places_next(dest, d):
+				if n == dest or not grid.passable(n) or occupant(standing, n) != null or not grid.can_step(dest, n, u.jump + 1):
+					continue
+				if best == NONE_SPOT or (threat.has(best) and not threat.has(n)):
+					best = n
+		if best != NONE_SPOT:
+			out[dest] = best
+	return out
+
+
+const NONE_SPOT := Vector2i(-999, -999)
+
+
+## The carrier walks to dest (a free hit from any guard it leaves goes to it), and the friend comes along, set down
+## next to it at `spot`. A downed friend stays downed, its bleed still counting; a friend who hasn't acted still can.
+static func carry(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, friend: CombatUnit, dest: Vector2i, spot: Vector2i, units: Array) -> Array:
+	var events := leave_hits(rng, grid, u, units, dest)
+	if not u.alive():
+		return events
+	var from := friend.cell
+	u.place(dest, grid.height_at(dest))
+	friend.place(spot, grid.height_at(spot))
+	events.append({"type": "carry", "src": u, "unit": friend, "from": from, "to": spot})
+	return events
+
+
+## COMMAND: u gives up its action and friend takes a fresh phase at once (move and action), even after acting.
+static func command(u: CombatUnit, a: Ability, friend: CombatUnit) -> Array:
+	u.ready_at[a.id] = u.phase_no + a.cooldown
+	friend.moved = false
+	friend.acted = false
+	friend.move_spent = 0
+	friend.move_origin = friend.cell
+	return [{"type": "command", "src": u, "unit": friend}]
 
 
 # --- helping strikes ([USER] c12, c15, c19, combat build step 4) ------------------------------------------

@@ -77,6 +77,7 @@ var summon_avoid := {}  ## cells its called pieces never take (the fight's way o
 var minions: Array = []  ## the pieces it called, standing or not
 var summoner: CombatUnit = null  ## who called this piece
 var hiding := false  ## an ambusher not seen yet (a map group's "hidden"): not drawn, not in the danger zone, until spotted or it strikes
+var uses := {}  ## ability id -> times used this fight (the clutch tools' counts for the balance probes)
 var downs := 0  ## times this party piece went down this fight (a close win, for the balance probes)
 var crumbled := false  ## fell because its summoner did, not to the party
 

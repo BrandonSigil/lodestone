@@ -16,7 +16,14 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 	u.moved = true
 	u.move_spent += int(plan.cost)
 	CombatRules.spot(grid, units, u)
-	if plan.ability != null:
+	if plan.ability != null and plan.ability.kind == "carry":
+		var friend := CombatRules.occupant(units, plan.aim)
+		events.append_array(CombatRules.carry(rng, grid, u, friend, plan.dest, plan.spot, units))
+		u.uses[plan.ability.id] = int(u.uses.get(plan.ability.id, 0)) + 1
+	elif plan.ability != null and plan.ability.kind == "command":
+		events.append_array(CombatRules.command(u, plan.ability, CombatRules.unit_at(units, plan.aim)))
+		u.uses[plan.ability.id] = int(u.uses.get(plan.ability.id, 0)) + 1
+	elif plan.ability != null:
 		events.append_array(CombatRules.resolve(rng, grid, u, plan.ability, plan.aim, units))
 		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of the foes' reach
 			var away := EnemyAi.retreat(grid, u, units)
@@ -38,7 +45,7 @@ static func play_phase(rng: RandomNumberGenerator, grid: CombatGrid, units: Arra
 	var again := true
 	while again:
 		again = false
-		for u: CombatUnit in units:
+		for u: CombatUnit in by_turn(units):
 			if u.team == team and u.alive() and not u.done():
 				take_turn(rng, grid, u, units)
 				again = true
@@ -66,6 +73,13 @@ static func run_phase(rng: RandomNumberGenerator, grid: CombatGrid, units: Array
 		return 1 - team
 	CombatRules.end_phase(units, team)
 	return -1
+
+
+## The order a side's pieces take their turns: one that can COMMAND goes last, after the friend it would send
+## again has had its turn, as a player would order them ([USER] design-clutch-tools-2).
+static func by_turn(units: Array) -> Array:
+	var first := units.filter(func(u: CombatUnit) -> bool: return not u.abilities.any(func(a: Ability) -> bool: return a.kind == "command"))
+	return first + units.filter(func(u: CombatUnit) -> bool: return not first.has(u))
 
 
 ## Fights until one side falls. Mutates the units. Returns {"winner": 0, 1 or -1 for a stall, "rounds": int}.

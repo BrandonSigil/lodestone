@@ -1139,3 +1139,55 @@ func test_ice_pillars_place_chill_and_crumble() -> void:
 	lich.hp = 0
 	ok(not CombatRules.team_alive(units, 1), "pillars don't keep his side in the fight")
 	ok(lich.minions.all(func(p: CombatUnit) -> bool: return not p.alive()), "they crumble with him")
+
+
+## CARRY ([USER] design-clutch-tools-2): the dog takes a friend next to it, up or down, up to 3 cells and sets them
+## down beside it; a downed friend stays downed, its bleed still counting. The AI uses it for a friend on a marked
+## tile. COMMAND (the sword job): the hero gives up their action and the dog gets a fresh phase; once every 3 phases.
+func test_carry_and_command() -> void:
+	var g := CombatGrid.flat(10, 5)
+	var dog := _unit("dog", 0, Vector2i(2, 2), g)
+	var hero := _unit("job_knight", 0, Vector2i(3, 2), g)
+	var foe := _unit("bandit", 1, Vector2i(9, 4), g)
+	var units := [dog, hero, foe]
+	var carry := Db.ability("carry")
+	ok(CombatRules.target_cells(g, dog, carry, units, dog.cell).has(hero.cell), "a friend next to the dog")
+	hero.hp = 0
+	ok(CombatRules.target_cells(g, dog, carry, units, dog.cell).has(hero.cell), "down too")
+	var spots := CombatRules.carry_spots(g, dog, hero, carry, units)
+	ok(not spots.is_empty())
+	for d: Vector2i in spots:
+		ok(CombatRules.dist(d, dog.cell) <= carry.power and CombatRules.dist(spots[d], d) == 1, "3 cells at most, set down beside")
+	var dest: Vector2i = spots.keys()[0]
+	var bleed := hero.bleed
+	CombatRules.carry(RandomNumberGenerator.new(), g, dog, hero, dest, spots[dest], units)
+	eq(dog.cell, dest)
+	eq(hero.cell, spots[dest])
+	ok(hero.downed() and hero.bleed == bleed, "still down, the bleed as it was")
+	# the AI carries a friend off a marked tile
+	hero.hp = hero.max_hp
+	hero.bleed = 0
+	hero.place(Vector2i(5, 2), 0)
+	dog.place(Vector2i(4, 2), 0)
+	var lich := _unit("lich", 1, Vector2i(9, 0), g)
+	units.append(lich)
+	lich.mark = {"ability": Db.ability("lich_doom"), "cells": CombatRules.area(g, Db.ability("lich_doom"), hero.cell), "left": 1}
+	CombatRules.begin_phase(units, 0)
+	hero.acted = true
+	hero.moved = true
+	var p := EnemyAi.plan(g, dog, units)
+	ok(p.ability != null and p.ability.kind == "carry", "the dog carries the hero off the marked tiles")
+	ok(not CombatRules.marks(units).has(p.spot), "to a cell the big move won't hit")
+	# COMMAND
+	units.erase(lich)
+	var command := Db.ability("command")
+	ok(hero.abilities.has(command), "the sword job has it")
+	dog.acted = true
+	dog.moved = true
+	ok(CombatRules.usable(hero, command))
+	CombatRules.command(hero, command, dog)
+	ok(not dog.done() and dog.move_spent == 0, "the dog's fresh phase")
+	ok(not CombatRules.usable(hero, command), "then a wait")
+	for i in 3:
+		CombatRules.begin_phase(units, 0)
+	ok(CombatRules.usable(hero, command), "3 of the hero's phases later, again")

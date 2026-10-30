@@ -41,6 +41,8 @@ var goals := FightGoals.new()  ## how this fight is won (the host sets it before
 var talk_open := false  ## the host says TALK is open (the fight is written for it and its flag is set)
 var outcome := {"how": "", "joined": []}  ## after the end: the goal met, and flags set by foes talked round
 var enemy_speed := 1.0  ## animation speed multiplier for the enemy phase
+var _carry_friend: CombatUnit = null  ## CARRY: the friend picked, now picking where to go
+var _carry_spots := {}  ## CARRY: dest -> set-down cell
 var used := {}  ## piece -> ability ids it has used this fight: an unknown boss's card lists only these
 var deeds := {}  ## bond pair key -> {"help_up", "teamup"}: what party pieces did for each other this fight (BondRules)
 
@@ -275,7 +277,7 @@ func _auto_player_phase() -> void:
 	var again := true
 	while again:  # round the list again for a piece helped up after its place came by: it may act, as the player's can
 		again = false
-		for u: CombatUnit in units:
+		for u: CombatUnit in CombatSim.by_turn(units):
 			if u.team != 0 or not u.alive() or u.done() or state == S.OVER:
 				continue
 			await _ai_turn(u)
@@ -301,7 +303,9 @@ func _ai_turn(u: CombatUnit) -> void:
 		u.place(plan.move, grid.height_at(plan.move))
 		await _spot(u)
 	u.move_spent += int(plan.cost)
-	if plan.ability != null:
+	if plan.ability != null and (plan.ability.kind == "carry" or plan.ability.kind == "command"):
+		await _use_clutch(u, plan.ability, plan.aim, plan.dest, plan.spot)
+	elif plan.ability != null:
 		await _use(u, plan.ability, plan.aim)
 		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of the foes' reach
 			var away := EnemyAi.retreat(grid, u, units)
@@ -370,6 +374,31 @@ func award_bonds() -> PackedStringArray:
 	Game.meta.bonds = bonds
 	Game.save_meta()
 	return lines
+
+
+## CARRY or COMMAND ([USER] design-clutch-tools-2), from the player or the AI: aim is the friend's cell; for CARRY
+## the carrier walks to dest and sets the friend down at spot.
+func _use_clutch(u: CombatUnit, a: Ability, aim: Vector2i, dest: Vector2i, spot: Vector2i) -> void:
+	var prev := state
+	state = S.BUSY
+	board.highlights = {}
+	log_line.emit("%s: %s" % [Txt.t(u.name_key), Txt.t(a.name_key)])
+	var friend := CombatRules.occupant(units, aim)
+	_carry_friend = null
+	_carry_spots = {}
+	if friend == null:
+		state = prev
+		return
+	var events := CombatRules.carry(rng, grid, u, friend, dest, spot, units) if a.kind == "carry" else CombatRules.command(u, a, friend)
+	u.uses[a.id] = int(u.uses.get(a.id, 0)) + 1
+	for ev in events:
+		await _play(ev)
+	for o: CombatUnit in units:
+		o.sync_view()
+	targeting = null
+	changed.emit()
+	if prev != S.OVER and state != S.OVER:
+		state = prev
 
 
 ## A boss's big moves at a phase's edges (CombatRules.boss_start, boss_end): play them, then redraw the marks.
@@ -499,6 +528,16 @@ func _play(ev: Dictionary) -> void:
 		"counter":
 			board.float_text(ev.src.cell, Txt.t("UI_COUNTER"), Color(1, 1, 1))
 			await get_tree().create_timer(0.2).timeout
+		"carry":
+			_deed(ev.src, t, "help_up")  # counts as a help for their bond
+			t.vis = Vector2(CombatGrid.ground(ev.to))
+			t.vis_h = grid.height_at(ev.to)
+			board.float_text(t.cell, Txt.t("SKILL_CARRY"), Color(0.6, 0.9, 1.0))
+			await get_tree().create_timer(0.25).timeout
+		"command":
+			board.float_text(t.cell, Txt.t("SKILL_COMMAND"), Color(1.0, 0.9, 0.5))
+			log_line.emit(Txt.f("LOG_COMMAND", Txt.t(t.name_key)))
+			await get_tree().create_timer(0.25).timeout
 		"reveal":
 			board.float_text(t.cell, Txt.t("UI_AMBUSH"), Color(1.0, 0.5, 0.4), 22)
 			log_line.emit(Txt.f("LOG_AMBUSH", Txt.t(t.name_key)))
@@ -802,6 +841,8 @@ func _start_targeting(a: Ability) -> void:
 
 func _cancel_targeting() -> void:
 	targeting = null
+	_carry_friend = null
+	_carry_spots = {}
 	state = S.MENU
 	_forecast.visible = false
 	_show_attack_hints()
@@ -969,9 +1010,33 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 			elif u and u.team == 0 and u != selected and not u.done() and (not selected.moved or selected.acted):
 				_select(u)
 		S.TARGET:
+			if targeting != null and targeting.kind == "carry":  # CARRY: first the friend, then where to go
+				if _carry_friend == null and board.highlights.has(c):
+					_carry_friend = CombatRules.occupant(units, c)
+					_carry_spots = CombatRules.carry_spots(grid, selected, _carry_friend, targeting, units)
+					board.highlights = {}
+					for d: Vector2i in _carry_spots:
+						board.highlights[d] = MOVE_COLOR
+				elif _carry_friend != null and _carry_spots.has(c):
+					var who := selected
+					_hide_menu()
+					_cancel.visible = false
+					await _use_clutch(who, targeting, _carry_friend.cell, c, _carry_spots[c])
+					if _check_end():
+						return
+					_after_action(who)
+				return
 			if board.highlights.has(c):
 				var who := selected
 				var a := targeting
+				if a.kind == "command":
+					_hide_menu()
+					_cancel.visible = false
+					await _use_clutch(who, a, c, c, c)
+					if _check_end():
+						return
+					_after_action(who)
+					return
 				if a.target == "cell" and CombatRules.affected_units(grid, who, a, c, units, who.cell).is_empty():
 					return
 				_hide_menu()
