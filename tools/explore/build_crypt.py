@@ -158,7 +158,10 @@ data = {
     "start": [[27, 26], [28, 27], [26, 27]],
     "groups": [
         {"id": "plaza", "event": "spot_people", "sight": 4, "loot": "food:+6;gold:+10",
-         "units": [{"id": "bandit", "cell": [19, 9]}, {"id": "bandit", "cell": [20, 12]}, {"id": "bandit_archer", "cell": [16, 8]}]},
+         # An ambusher (design-foe-roles) hides behind the east pillar at (25, 9): out of sight from the stair up
+         # from the yard, spotted by a piece that steps round the pillar or along the plaza's back row.
+         "units": [{"id": "bandit", "cell": [19, 9]}, {"id": "bandit", "cell": [20, 12]}, {"id": "bandit_archer", "cell": [16, 8]},
+                   {"id": "ambusher", "cell": [25, 8], "hidden": True}]},
         {"id": "cave", "event": "spot_beasts", "sight": 4, "loot": "food:+10",
          "units": [{"id": "wolf", "cell": [2, 18]}, {"id": "wolf", "cell": [3, 20]}]},
         {"id": "tower", "event": "spot_people", "sight": 5, "loot": "medicine:+2",
