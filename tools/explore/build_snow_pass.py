@@ -454,7 +454,9 @@ W.things.append({"id": "den_out", "kind": "enter", "event": "", "cell": [4, 11],
 # rounds and they give up ([USER] 2026-10-29, card design-fight-goals-pick).
 W.groups.append({"id": "den_wolves", "event": "spot_beasts", "sight": 4, "loot": "food:+6", "goals": "hold:4",
                  "units": [{"id": "wolf", "cell": [5, 2]}, {"id": "wolf", "cell": [3, 2]}]})
-W.groups.append({"id": "den_lone", "event": "spot_beasts", "sight": 4, "loot": "food:+3",
+# The lone wolf is elite ([USER] 2026-10-30, card design-elite-pick): its side room can be skipped, and at
+# 6 cells from the pair it never joins their hold-out (groups don't move; JOIN_RANGE is 3).
+W.groups.append({"id": "den_lone", "event": "spot_beasts", "sight": 4, "loot": "food:+3", "elite": True,
                  "units": [{"id": "wolf", "cell": [10, 3]}]})
 W.things.append({"id": "den_bones", "kind": "chest", "event": "den_bones", "cell": [1, 1], "once": "got_den_bones"})
 W.prop("prop_bush", 8, 9, tall=0.6, sight=0.5)
@@ -464,6 +466,8 @@ wreach = W.reach((3, 9), set(wt.values()))
 assert W.usable_from(wreach, wt["den_bones"]) and W.usable_from(wreach, wt["den_out"])
 for u in W.groups[0]["units"]:
     assert tuple(u["cell"]) in wreach
+assert min(abs(a["cell"][0] - b["cell"][0]) + abs(a["cell"][1] - b["cell"][1])
+           for a in W.groups[0]["units"] for b in W.groups[1]["units"]) > 3, "the elite wolf would join the hold-out"
 
 # The den mouth leads to the den's start.
 for t in P.things:

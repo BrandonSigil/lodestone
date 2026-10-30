@@ -103,6 +103,7 @@
    "event": "spot_beasts",
    "sight": 4,
    "loot": "food:+3",
+   "elite": true,
    "units": [
     {
      "id": "wolf",
