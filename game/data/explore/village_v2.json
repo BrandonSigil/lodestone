@@ -10,60 +10,60 @@
   "h": 56,
   "terrain": [
    ".....fffffffffffwwfffffffffffffffffffffffffffffffff.....",
-   "....ffffffffffffwwffffffgffgffgfffffffffffffffffffff....",
-   "...gfgfffggfffffwwfffffggfggggggfffffffffffffffffffff...",
-   "..gggggfgggggfffwwfffffggggggggggfffffffffffffffffffff..",
-   ".fggggggggggggggwwggffgggggggggggffffffffffgggggfffffff.",
-   "ffggggggggggggggwwgggfgggggggggggfffffffffggggggggffffff",
-   "ffggggggggggsssgwwgggfgggggggggggfffffffffgggggggggggfff",
-   "ffgggggggggssgggwwgggfgggggggggggfffffffffgggggssssggfff",
-   "fffggggggggsggggwwgggfgggggdsggggfffffffffggggdssssggfff",
-   "ffggggggggssggggwwggfffggggssgggfffffffffggggggssssggfff",
-   "ffggggggggsgggggwwffffffgggssgggfffffffffggggggssssggfff",
-   "ffgggggggssggggfwwfffffggggttgggggfffffffggggggssssggfff",
-   "ffgggggggsggggffwwfffggggggttggggggfffffffgggggggggggfff",
-   "ffggggggssggggffwwffggggsssssssssgggfffgggggggggggggffff",
-   "ffgggggssggggggfwwffgggsssssssssssgggfgggggdddggffffffff",
-   "fffgggssgggggggfwwfgggsssssssssssssgggggddddggggffffffff",
-   "ffggggssgggggggfwwgggsssssssssssssssgggdddgggggfffffffff",
-   "ffggggssgggggggfwfggsssssssssssssssssdddgggggfffffffffff",
-   "ffggggssgggggggfwfggssssssssssssssssddgggggfffffffffffff",
-   "ffggggssggggggffwfggsssssssssssssssssggggfffffffffffffff",
-   "ffggggssgggfffffwfggsssssssssssssssssggfffffffffffffffff",
-   "ffffggggggfgggffwfggsssssssssssssssssggfffffffffffffffff",
-   "ffffggttggggggggwwggsssssssssssssssssggffggggggggggfffff",
-   "ffffggttggggggggwwggsssssssssssssssssggfggggggggggggffff",
-   "ffffgggggggggddgwwggsssssssssssssssssgggggggggggggggffff",
-   "fffffgggggggdddgwwggsssssssssssssssddgggggggggggggggffff",
-   "ffffffggggggggggwwgggssssssssssssssdddgggggggggggggfffff",
-   "fffffgggdddgggggwwggggsssssssssssssggdddggggggggggffffff",
-   "fffffggddggggfffwwffgggsssssssssssgggggddgggdgggggffffff",
-   "fffgfggddggggffffwfffgggsssssssssgggggggddggggggggffffff",
-   "fffggggddgggggfffwffffgggggggggggggggggggddgggggggffffff",
-   "fffggggddgggggfffwfffffggggggttggggggggggggggggggfffffff",
-   "fffggggddgggggfffwfffffffffggttggfggggggggggddggffffffff",
-   "fffggggddggggfgggwggggfffffggddggffgggfgggggddggffffffff",
-   "ffgggggggggggggggwwggggffffggddgggffffffffgggdggffffffff",
-   "ffggdggggggggggggwwddgggggggggddggffffffffgggdgggfffffff",
-   "fffggggggggggggggwwdddddddggggddgggffffffggggddgggffffff",
-   "ffggggggggggfffggwwgggggddddgggddggffffffggggddggggfffff",
-   "ffggggggggggfffggwwggggggggddddddgggfffffgggggggggggffff",
-   "ffggggggggfffffffwwfgggggggggdddddggffffffggggggggggffff",
-   "ffggggggggfffffgfwfggggggfgggggdddggfffffgggggggggggggff",
-   "ffggggggggfggggggwgggttggfggggggddgggffffgggddgggggggggf",
-   "ffgggggggggggggggwgggttggfgggggggddgggfffgggddgggggggggf",
+   "....ffgffgffgffgwwgffgffgffgffgffgffgffgffgffgffgffg....",
+   "...gfggggggfggggwwfggggggfggggggfggggggfggggggfgggggg...",
+   "..ggggggggggggggwwgggggggggggggggggggggggggggggggggggg..",
+   ".fggggggggggggggwwggggggggggggggggggggggggggggggggggggg.",
+   "ffggggggggggggggwwgggggggggggggggggggggggggggggggggggggf",
+   "ffggggggggggsssgwwgggggggggggggggggggggggggggggggggggggf",
+   "ffgggggggggssgggwwgggggggggggggggggggggggggggggssssggggf",
+   "fffggggggggsggggwwgggggggggdsgggggggggggggggggdssssggggf",
+   "ffggggggggssggggwwgggggggggssggggggggggggggggggssssggfgf",
+   "ffggggggggsgggggwwgggggggggssggggggggggggggggggssssggggf",
+   "ffgggggggssgggggwwgggggggggttggggggggggggggggggssssggggf",
+   "ffgggggggsggggggwwgggggggggttggggggggggggggggggggggggggf",
+   "ffggggggssggggggwwggggggsssssssssggggggggggggggggggggggf",
+   "ffgggggssgggggggwwgggggsssssssssssgggggggggdddgggggggggf",
+   "fffgggssggggggggwwggggsssssssssssssgggggddddgggggggggggf",
+   "ffggggssggggggggwwgggsssssssssssssssgggdddgggggggggggfgf",
+   "ffggggssggggggggwgggsssssssssssssssssdddgggggggggggggggf",
+   "ffggggssggggggggwgggssssssssssssssssddgggggggggggggggggf",
+   "ffggggssggggggggwgggsssssssssssssssssggggggggggggggggggf",
+   "ffggggssggggggggwgggsssssssssssssssssggggggggggggggggggf",
+   "ffggggggggggggggwgggsssssssssssssssssggggggggggggggggggf",
+   "fffgggttggggggggwwggsssssssssssssssssggggggggggggggggggf",
+   "ffggggttggggggggwwggsssssssssssssssssggggggggggggggggfgf",
+   "ffgggggggggggddgwwggsssssssssssssssssggggggggggggggggggf",
+   "ffggggggggggdddgwwggsssssssssssssssddggggggggggggggggggf",
+   "ffggggggggggggggwwgggssssssssssssssdddgggggggggggggggggf",
+   "ffggggggdddgggggwwggggsssssssssssssggdddgggggggggggggggf",
+   "ffgggggddgggggggwwgggggsssssssssssgggggddgggdggggggggggf",
+   "fffggggddggggggggwggggggsssssssssgggggggddgggggggggggggf",
+   "ffgggggddggggggggwgggggggggggggggggggggggddggggggggggfgf",
+   "ffgggggddggggggggwgggggggggggttggggggggggggggggggggggggf",
+   "ffgggggddggggggggwgggggggggggttgggggggggggggddgggggggggf",
+   "ffgggggddggggggggwgggggggggggddgggggggggggggddgggggggggf",
+   "ffgggggggggggggggwwggggggggggddggggggggggggggdgggggggggf",
+   "ffggdggggggggggggwwddgggggggggddgggggggggggggdgggggggggf",
+   "fffggggggggggggggwwdddddddggggddgggggggggggggddggggggggf",
+   "ffgggggggggggggggwwgggggddddgggddggggggggggggddggggggfgf",
+   "ffgggggggggggggggwwggggggggddddddggggggggggggggggggggggf",
+   "ffgggggggggggggggwwggggggggggdddddgggggggggggggggggggggf",
+   "ffgggggggggggggggwgggggggggggggdddgggggggggggggggggggggf",
+   "ffgggggggggggggggwgggttgggggggggddggggggggggddgggggggggf",
+   "ffgggggggggggggggwgggttggggggggggddgggggggggddgggggggggf",
    "fffgggggggggggggddddddgggggggggggddggggggggddggggggggggf",
-   "ffgggggggggddddddddgggggfgggggggggdddgggggddgggggggggfgf",
-   "ffggdgggggddgggggwgggggffgggggdgggdddddggddggggggggggggf",
-   "ffggwwwwwdddwwwggwgggggfffggggggggddddddddgggggggdgggggf",
-   "fwwwwwwwwdddwwwwwwgggggffffggggggggddggddggggggggggggggf",
-   "fwwwwwwwwdddwwwwwwwwgggffffffffffggddggggggggfggggffffff",
-   "fwwwwwwwwdddwwwwwwwwgggffffffffffgggdgggggggffffffffffff",
-   "fwwwwwwwwdddwwwwwwwwwggffffffffffgggdggggggggfffffffffff",
-   "fwwwwwwwwdddwwwwwwwwwggffffffffffgggdggdgggggffffffffff.",
-   "fwwwwwwwwwwwwwwwwwwwwggffffffffffgggdggggggggfffffffff..",
-   ".wwwwwwwwwwwwwwwwwwwggffffffffffffggdggggggffffffffff...",
-   ".wwwwwwwwwwwwwwwwwwffgffffffffffffffdfffffffffffffff....",
+   "ffgggggggggddddddddgggggggggggggggdddgggggddgggggggggfgf",
+   "ffggdgggggddgggggwggggggggggggdgggdddddggddggggggggggggf",
+   "ffggwwwwwdddwwwggwggggggggggggggggddddddddgggggggdgggggf",
+   "fwwwwwwwwdddwwwwwwgggggggggggggggggddggddggggggggggggggf",
+   "fwwwwwwwwdddwwwwwwwwgggggggggggggggddggggggggggggggggggf",
+   "fwwwwwwwwdddwwwwwwwwggggggggggggggggdggggggggggggggggggf",
+   "fwwwwwwwwdddwwwwwwwwwgggggggggggggggdggggggggggggggggggf",
+   "fwwwwwwwwdddwwwwwwwwwgggggggggggggggdggdgggggggggggggfg.",
+   "fwwwwwwwwwwwwwwwwwwwwgggggggggggggggdggggggggggggggggg..",
+   ".wwwwwwwwwwwwwwwwwwwggfggggggfggggggdggggggfggggggfgg...",
+   ".wwwwwwwwwwwwwwwwwwffgffgffgffgffgffdffgffgffgffgffg....",
    "...fffffffffffffffffffffffffffffffffdffffffffffffff....."
   ],
   "heights": [
@@ -1640,6 +1640,1168 @@
     "tall": 0.4,
     "sight": 0.0,
     "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     12,
+     1
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     42,
+     1
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     7,
+     2
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_2",
+    "cell": [
+     15,
+     2
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     38,
+     2
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     7,
+     3
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_1",
+    "cell": [
+     41,
+     3
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     42,
+     3
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     33,
+     6
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     40,
+     6
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_1",
+    "cell": [
+     53,
+     6
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_3",
+    "cell": [
+     34,
+     7
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     38,
+     8
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     32,
+     9
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     54,
+     9
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     37,
+     10
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     15,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     19,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     21,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     35,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     37,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     39,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     53,
+     11
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     14,
+     12
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_1",
+    "cell": [
+     35,
+     12
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_2",
+    "cell": [
+     52,
+     14
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     48,
+     15
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     47,
+     16
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     54,
+     16
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_3",
+    "cell": [
+     45,
+     17
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_3",
+    "cell": [
+     15,
+     18
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_1",
+    "cell": [
+     17,
+     18
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     14,
+     20
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_2",
+    "cell": [
+     45,
+     20
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_1",
+    "cell": [
+     53,
+     20
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     2,
+     21
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     17,
+     21
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     42,
+     21
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     47,
+     21
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     52,
+     21
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_3",
+    "cell": [
+     3,
+     22
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_1",
+    "cell": [
+     40,
+     22
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     54,
+     23
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     2,
+     24
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_3",
+    "cell": [
+     5,
+     26
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_3",
+    "cell": [
+     2,
+     27
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_2",
+    "cell": [
+     52,
+     27
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     4,
+     28
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_2",
+    "cell": [
+     53,
+     29
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     19,
+     30
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_3",
+    "cell": [
+     18,
+     31
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_2",
+    "cell": [
+     34,
+     34
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_2",
+    "cell": [
+     52,
+     34
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_3",
+    "cell": [
+     40,
+     35
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     51,
+     35
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     35,
+     36
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     39,
+     36
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     51,
+     36
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_3",
+    "cell": [
+     35,
+     37
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     38,
+     37
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_2",
+    "cell": [
+     12,
+     38
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_3",
+    "cell": [
+     53,
+     38
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_2",
+    "cell": [
+     37,
+     40
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_3",
+    "cell": [
+     39,
+     40
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_3",
+    "cell": [
+     54,
+     40
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     37,
+     41
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_3",
+    "cell": [
+     24,
+     45
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     28,
+     48
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_3",
+    "cell": [
+     29,
+     48
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     32,
+     49
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     44,
+     49
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_3",
+    "cell": [
+     24,
+     50
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_2",
+    "cell": [
+     46,
+     50
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     50,
+     50
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     27,
+     51
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_1",
+    "cell": [
+     30,
+     51
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder_2",
+    "cell": [
+     47,
+     51
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_2",
+    "cell": [
+     50,
+     51
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_5",
+    "cell": [
+     23,
+     52
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_pine_2",
+    "cell": [
+     50,
+     52
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     25,
+     53
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.5,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_boulder",
+    "cell": [
+     32,
+     53
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_2",
+    "cell": [
+     48,
+     54
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
    }
   ],
   "decks": [
@@ -1812,7 +2974,7 @@
   {
    "id": "gate",
    "kind": "exit",
-   "event": "village_gate",
+   "event": "door_stuck",
    "cell": [
     36,
     54

@@ -118,13 +118,6 @@ for y in range(H):
         near = min(x, y, W - 1 - x, H - 1 - y) + 1
         if near <= 1 or (near == 2 and (x * 7 + y * 3) % 3 != 0) or (near == 3 and (x * 5 + y * 11) % 7 == 0):
             V.put(x, y, "f")
-for x0, y0, x1, y1 in [(19, 0, 22, 3), (35, 0, 38, 2), (50, 2, 54, 5), (50, 31, 54, 35), (0, 30, 2, 33),
-                       (12, 37, 14, 40), (23, 32, 26, 34), (50, 48, 54, 54)]:
-    for y in range(y0, y1 + 1):
-        for x in range(x0, x1 + 1):
-            if V.terrain[y][x] == "g":
-                V.put(x, y, "f")  # copses between the districts
-
 # --- buildings, each with its own yard ---------------------------------------------------------------------
 def house(sprite, x, y, fx, fy, door_dx, yard=None):
     h = V.height[y][x]
@@ -136,6 +129,14 @@ def house(sprite, x, y, fx, fy, door_dx, yard=None):
 
 def p(sprite, x, y, tall, sight=0.0, foot=(1, 1)):
     V.prop(sprite, x, y, foot, tall=tall, sight=sight)
+
+
+TREE = {"prop_tree_2": 1.6, "prop_tree_3": 1.6, "prop_tree_4": 1.5, "prop_tree_5": 1.5, "prop_tree_bare": 1.5,
+        "prop_pine_1": 1.25, "prop_pine_2": 1.25, "prop_pine_3": 1.25}
+
+
+def tree(sprite, x, y):
+    p(sprite, x, y, TREE[sprite], 1.0)
 
 
 def fence(cells):
@@ -230,7 +231,7 @@ for x, y in [(2, 46), (14, 45), (20, 47)]:
 
 # --- things (doors stay shut in this test town; see the doc string) -------------------------------------------
 GATE = (36, 54)
-V.thing(id="gate", kind="exit", event="village_gate", cell=list(GATE))
+V.thing(id="gate", kind="exit", event="door_stuck", cell=list(GATE))  # shut: v2 is its own level, nothing leads on
 for i, d in enumerate([hall_door, smithy_door, tavern_door, hero_door, east_a, east_b, east_c, farm_door, dog_door,
                        lake_door]):
     V.thing(id="door_%d" % i, kind="enter", event="door_stuck", cell=list(d))
@@ -256,8 +257,8 @@ for x, y in [(5, 36), (11, 31)]:
 for x, y in [(36, 31), (49, 39)]:
     spot("town", x, y)
 
-# --- woods: grass well away from the roads, yards, squares and things grows trees, so the districts read as
-# clearings and the roads wind through the woods between them (woods block walking: 3aa981f) ---------------
+# --- trees: open grass between the districts, with lone trees and rocks scattered over it ([USER] 2026-10-30,
+# the sparser example: more breathing room everywhere); only the rim is wood -----------------------------------
 KEEP = set()
 for y in range(H):
     for x in range(W):
@@ -269,13 +270,19 @@ KEEP.update(tuple(t["cell"]) for t in V.things)
 KEEP.update(DECKS)
 KEEP.update(tuple(sp["cell"]) for sp in SPOTS)
 KEEP.update(c for c in LAKE)
-ROOM = 2  # cells of open ground kept round all of that
+ROOM = 2  # cells of open ground kept clear round all of that
 open_ground = {(x + dx, y + dy) for x, y in KEEP for dx in range(-ROOM, ROOM + 1) for dy in range(-ROOM, ROOM + 1)
                if abs(dx) + abs(dy) <= ROOM + 1}
+LONE = ["prop_tree_2", "prop_pine_1", "prop_tree_4", "prop_pine_2", "prop_tree_5", "prop_tree_3", "prop_pine_3"]
 for y in range(H):
     for x in range(W):
-        if V.terrain[y][x] == "g" and (x, y) not in open_ground and (x, y) not in OPEN:
-            V.put(x, y, "f")
+        if V.terrain[y][x] != "g" or (x, y) in open_ground or (x, y) in OPEN:
+            continue
+        r = (x * 73 + y * 151 + x * y * 7) % 100
+        if r < 10:
+            tree(LONE[(x + y * 3) % len(LONE)], x, y)
+        elif r < 12:
+            p("prop_boulder" if (x + y) % 2 else "prop_boulder_2", x, y, 0.6, 1.0)
 
 if "--dump" in sys.argv:
     dump(V)
