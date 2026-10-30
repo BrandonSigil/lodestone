@@ -1,0 +1,31 @@
+PROMPT 1 (sheet A: the frames)
+
+Image 1 = a fight menu for a cosy fantasy tactics game: a portrait frame and an action bar in deep green with pale parchment rules, a blue and silver rim, blue diamond gems, a tall diamond crest and olive-green leaves. Copy its LOOK exactly: the same colours, the same rim, the same gems, crests and leaves, the same soft hand-inked outline and painted finish. Do NOT copy its character, its icons, its words or its numbers.
+
+WHAT THIS IS: the separate pieces of that menu, painted one by one so a game can cut them out and put them back together at any size. Every piece is drawn flat and straight on, no perspective, no tilt, no shadow on the background.
+
+BACKGROUND: one flat solid magenta (#ff00ff) everywhere around the pieces, perfectly even, no texture, no gradient, no shading. Every piece is fully separate from the others with wide empty magenta between them; nothing touches or overlaps. No text, no letters, no numbers, no labels anywhere.
+
+LAYOUT, aspect 3:2, three rows:
+   row 1: (a) the PORTRAIT FRAME: a square frame with the tall diamond crest on its top edge and leaves at its corners; its square window is completely EMPTY, filled with plain flat cream (#efe6cf), no person; under the window, inside the same frame, a short empty dark green band where the health bars go (empty, no bars). (b) the LEFT END of the action bar: just the left end cap of the long frame, about as wide as it is tall, with its corner leaves and gem. (c) a plain MIDDLE SECTION of the action bar: the same top and bottom rims and dark green inside, straight and plain, no ornament, so it can be repeated. (d) the RIGHT END of the action bar, mirroring (b).
+   row 2: (e) the TOP CREST of the action bar on its own: the tall blue diamond with leaves spreading left and right, as it sits on the bar's top edge. (f) the BOTTOM CREST on its own, pointing down. (g) the TOP END of a narrow upright panel (a pop-up column for a stack of square slots): its top cap with a small gem. (h) a plain MIDDLE SECTION of that narrow panel, straight sides, no ornament, so it can be repeated. (i) the BOTTOM END of the narrow panel.
+   row 3: (j) one OLIVE LEAF SPRIG on its own, two leaves. (k) one BLUE DIAMOND GEM in its silver mount on its own. (l) a SMALL DIAMOND SEPARATOR like the little blue diamonds between the bar's words.
+
+Avoid: text, letters, numbers, icons, people, faces, weapons, labels, perspective, drop shadows, glow, pixel art, 3d render, photo, pieces touching each other, anything crossing between pieces.
+
+=====
+
+PROMPT 2 (sheet B: the slots, bars and pips)
+
+Image 1 = a fight menu for a cosy fantasy tactics game: dark square action slots with a pale rim, a red health bar and gold resource pips in dark troughs, in a deep green frame with parchment rules and blue diamonds. Copy its LOOK exactly: the same colours, the same soft hand-inked outline and painted finish. Do NOT copy its character, its icons, its words or its numbers.
+
+WHAT THIS IS: the separate small pieces of that menu, painted one by one so a game can cut them out. Every piece is flat and straight on, no perspective, no shadow on the background.
+
+BACKGROUND: one flat solid magenta (#ff00ff) everywhere around the pieces, perfectly even, no texture, no gradient. Every piece fully separate with wide empty magenta between them; nothing touches or overlaps. No text, no letters, no numbers, no labels anywhere.
+
+LAYOUT, aspect 3:2, three rows:
+   row 1: four ACTION SLOTS, the same size, square, each a dark inner window with a pale thin rim, the window completely EMPTY (no icon): (1) normal: as in image 1; (2) lit: the rim glowing a soft warm gold, the window a touch lighter; (3) pressed: the window darker and the rim pressed in, a shade darker; (4) greyed: the whole slot dull grey and faded, as if it cannot be used.
+   row 2: (5) a long EMPTY HEALTH TROUGH: the dark rounded trough with its rim, nothing inside; (6) the RED FILL on its own: a long rounded red bar that fits inside that trough, plain, so it can be stretched; (7) a short EMPTY PIP TROUGH: the dark rounded trough for two or three pips, nothing inside; (8) ONE GOLD PIP on its own: a single rounded gold pill that fits inside the pip trough.
+   row 3: (9) a small NUMBER PLATE: the little dark rounded tab that sits in a slot's top-left corner behind its key number, EMPTY (no number); (10) a small "times two" count tab like the one in a slot's bottom-right corner, EMPTY (no text).
+
+Avoid: text, letters, numbers, icons inside the slots, people, faces, labels, perspective, drop shadows, glow outside the lit slot's rim, pixel art, 3d render, photo, pieces touching each other.
