@@ -1682,7 +1682,7 @@
    "event": "settler_smith",
    "cell": [
     14,
-    11
+    15
    ],
    "once": "settler_smith"
   },
