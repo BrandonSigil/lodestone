@@ -194,6 +194,48 @@ html.locked { overflow: hidden; }
 .pv-dots button { width: 10px; height: 10px; border-radius: 50%; border: 0; padding: 0; background: var(--rule); }
 .pv-dots button[aria-current="true"] { background: var(--chat); }
 .pv-dots button.call { background: var(--amber); }
+
+/* A character-sheet slide: the game's own frames and icons (uploaded copies of game/art/source/ui and icons) */
+.sheet { --rim: #e9dfc3; --felt: #1f4a37; --felt-ink: #eef3ea; display: grid; grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); gap: 22px; align-items: start; }
+.sh-portrait { position: relative; aspect-ratio: 1; background: url(/_blob/8c237284c5444edf022d52fa61b0e277) center / 100% 100% no-repeat; }
+.sh-portrait img { position: absolute; left: 22%; top: 16%; width: 56%; height: 52%; object-fit: contain; filter: drop-shadow(0 3px 4px rgba(0,0,0,.25)); }
+.sh-portrait span { position: absolute; left: 12%; right: 12%; top: 77%; height: 13%; display: grid; place-items: center; color: var(--felt-ink); font: 400 clamp(15px, 1.6vw, 19px)/1 var(--display); text-transform: capitalize; }
+.sh-panel { border: 22px solid transparent; border-image: url(/_blob/7053ab1d633bb27781fd89fef36bb529) 70 fill / 22px stretch; color: var(--felt-ink); padding: 2px 6px; }
+.sh-panel b, .sh-panel h4 { color: #fff; }
+.sh-panel p, .sh-panel .lbl, .sh-panel small, .sh-panel .sh-tag { color: var(--felt-ink) !important; }
+.sh-res { margin-top: 14px; }
+.sh-res .lbl { display: flex; justify-content: space-between; align-items: baseline; font: 600 13px var(--body); letter-spacing: .08em; text-transform: uppercase; }
+.sh-res .lbl small { font: 400 12px var(--mono); letter-spacing: 0; opacity: .8; text-transform: none; }
+.sh-res p { font-size: 13.5px !important; margin: 8px 0 0; opacity: .92; }
+.meter { display: flex; gap: 4px; margin-top: 8px; }
+.meter i { flex: 1; height: 12px; border-radius: 3px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); }
+.meter i.on { background: var(--res); border-color: var(--res); box-shadow: 0 0 6px var(--res); }
+.meter.pips i { flex: none; width: 16px; height: 16px; border-radius: 50%; }
+.meter.gems i { flex: none; width: 18px; height: 18px; border-radius: 3px; transform: rotate(45deg); margin: 3px 5px; }
+.sh-plate { border: 18px solid transparent; border-image: url(/_blob/e9ffa4829d56dcaff332721c35a3fb4d) 40 70 fill / 18px 34px stretch; color: var(--felt-ink); padding: 0 8px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.sh-plate h3 { font: 400 clamp(24px, 2.6vw, 32px)/1.1 var(--display) !important; margin: 0 !important; color: #fff; text-transform: capitalize; }
+.sh-plate span { font-size: 14px; opacity: .9; }
+.sh-kit { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 14px 0; }
+.sh-ab { display: flex; gap: 10px; align-items: flex-start; }
+.slot { flex: none; width: 56px; height: 56px; border-radius: 7px; background: var(--felt); border: 3px solid var(--rim); box-shadow: 0 0 0 2px #3f74b8, inset 0 0 10px rgba(0,0,0,.35); display: grid; place-items: center; }
+.slot img { width: 44px; height: 44px; object-fit: contain; }
+.slot.sm { width: 38px; height: 38px; border-width: 2px; border-radius: 6px; }
+.slot.sm img { width: 30px; height: 30px; }
+.sh-ab b { display: block; font-size: 15px; text-transform: capitalize; }
+.sh-ab small { font: 500 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.sh-ab p { font-size: 14px !important; margin: 2px 0 0; }
+.sh-uses { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.sh-uses h4 { margin: 0 0 4px !important; color: #fff !important; font-size: 12.5px !important; }
+.sh-uses p { font-size: 14px !important; margin: 0; }
+.sh-evo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.sh-evo .sh-panel { border-image-source: url(/_blob/6021ba20ca8d5253c50b16a2f49b66b8); border-image-slice: 60 fill; }
+.sh-evo h4 { margin: 0 !important; font: 400 20px/1.1 var(--display) !important; text-transform: capitalize !important; letter-spacing: 0 !important; }
+.sh-evo .lede { font-size: 13.5px !important; margin: 2px 0 8px; opacity: .9; }
+.sh-evo .sh-ab { margin-top: 6px; }
+.sh-evo .sh-ab b { font-size: 14px; color: #fff; }
+.sh-evo .sh-ab p { font-size: 13px !important; opacity: .9; }
+.sh-tag { font: 500 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+@media (max-width: 760px) { .sheet { grid-template-columns: 1fr; } .sh-left { max-width: 280px; } .sh-uses, .sh-evo { grid-template-columns: 1fr; } }
 @media (max-width: 640px) {
   .rv { padding: 0; }
   .rv-in { border: 0; border-radius: 0; min-height: 100%; padding: 0 16px 32px; box-shadow: none; }
@@ -738,6 +780,29 @@ function renderRoleView(force) {
 function rerenderCards() { if (S.pres) renderPres(); if (S.openRole) renderRoleView(true); else renderDesk(); }
 
 /* ---------- presentations ---------- */
+// A slide with layout "sheet" is a class's in-game character sheet: {title, role, icon, resource {kind, why}, kit [{slot, name, icon, text}], road, village, evolved [{id, text, kit [{name, icon, text}]}]}.
+// Icons are named as in game/art/source/icons; the `ui/art` doc maps each name to its uploaded copy.
+const RES = { rage: ["#d2503a", "bar", 6], mana: ["#4d86d6", "pips", 7], charges: ["#d99a2b", "gems", 3], focus: ["#58a86a", "bar", 5] };
+const icon = (n) => S.art?.icons?.[n] || "";
+function slotHtml(n, sm) { const u = icon(n); return `<span class="slot${sm ? " sm" : ""}">${u ? `<img src="${esc(u)}" alt="">` : ""}</span>`; }
+function sheetHtml(sl) {
+  const r = sl.resource || {}, [col, style, on] = RES[r.kind] || ["#9aa89f", "bar", 5];
+  const cells = style === "bar" ? 10 : style === "pips" ? 10 : 4;
+  const ab = (a, sm) => `<div class="sh-ab">${slotHtml(a.icon, sm)}<div>${a.slot ? `<small>${esc(a.slot)}</small>` : ""}<b>${esc(a.name)}</b>${a.text ? `<p>${esc(a.text)}</p>` : ""}</div></div>`;
+  return `<div class="sheet">
+    <div class="sh-left">
+      <div class="sh-portrait">${icon(sl.icon) ? `<img src="${esc(icon(sl.icon))}" alt="">` : ""}<span>${esc(sl.title)}</span></div>
+      <div class="sh-panel sh-res" style="--res:${col}"><div class="lbl">${esc(r.kind || "resource")}<small>${esc(r.note || "")}</small></div>
+        <div class="meter ${style === "bar" ? "" : style}">${Array.from({ length: cells }, (_, k) => `<i class="${k < on ? "on" : ""}"></i>`).join("")}</div>${r.why ? `<p>${esc(r.why)}</p>` : ""}</div>
+    </div>
+    <div class="sh-right">
+      <div class="sh-plate"><h3>${esc(sl.title)}</h3>${sl.role ? `<span>${esc(sl.role)}</span>` : ""}</div>
+      <div class="sh-kit">${(sl.kit || []).map((a) => ab(a)).join("")}</div>
+      ${sl.road || sl.village ? `<div class="sh-panel sh-uses">${sl.road ? `<div><h4>On the road</h4><p>${esc(sl.road)}</p></div>` : ""}${sl.village ? `<div><h4>In the village</h4><p>${esc(sl.village)}</p></div>` : ""}</div>` : ""}
+      ${sl.evolved?.length ? `<div class="sh-evo">${sl.evolved.map((e) => `<div class="sh-panel"><span class="sh-tag">evolves into</span><h4>${esc(e.id)}</h4>${e.text ? `<p class="lede">${esc(e.text)}</p>` : ""}${(e.kit || []).map((a) => ab(a, true)).join("")}</div>`).join("")}</div>` : ""}
+    </div>
+  </div>`;
+}
 // S.pres = {id, i}: the card being presented and the slide on screen. The last slide is Brandon's call (or his answer, once sent).
 function renderPres() {
   const pv = $("pv"), d = S.pres && S.desk.find((x) => x.id === S.pres.id);
@@ -747,7 +812,7 @@ function renderPres() {
   let stage;
   if (i < slides.length) {
     const sl = slides[i];
-    stage = `<h3>${esc(sl.title || "")}</h3>${sl.text ? mdLite(sl.text) : ""}${shotsHtml(sl.images)}`;
+    stage = sl.layout === "sheet" ? sheetHtml(sl) : `<h3>${esc(sl.title || "")}</h3>${sl.text ? mdLite(sl.text) : ""}${shotsHtml(sl.images)}`;
   } else {
     stage = `<h3>Your call</h3>${d.ask ? `<p class="lead">${esc(d.ask)}</p>` : ""}${open ? choiceBody(d, S.drafts[d.id] || {}) : answerSummary(d)}`;
   }
@@ -1168,6 +1233,7 @@ function watch(coll, key) {
   checkWake();
   if (!S.db) { renderAll(); return; }
   watch("chat", "chat");
+  S.db.collection("ui").onSnapshot((snap) => { S.art = snap.docs.find((x) => x.id === "art")?.data() || {}; if (S.pres) renderPres(); }, () => {});
   watch("desk", "desk"); watch("roles", "roles"); watch("log", "log"); watch("notes", "notes"); watch("refs", "refs"); watch("library", "library"); watch("roadmap", "roadmap"); watch("requests", "requests");
 })();
 setInterval(renderTally, 60000);
