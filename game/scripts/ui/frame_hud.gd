@@ -157,7 +157,11 @@ func use_leaf_frame() -> void:
 	_leaf_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	leaf.add_child(_leaf_art)
 	leaf_pack = Button.new()
-	leaf_pack.text = Txt.t("UI_PACK")
+	leaf_pack.tooltip_text = Txt.t("UI_PACK")
+	leaf_pack.icon = load("res://art/source/icons/sack.png")  # [USER] 2026-10-30: an inventory asset, not the word
+	leaf_pack.expand_icon = true
+	leaf_pack.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	leaf_pack.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
 	leaf_pack.flat = true
 	leaf_pack.add_theme_color_override("font_color", INK)
 	leaf_pack.add_theme_font_size_override("font_size", 18)
@@ -248,8 +252,7 @@ func _process(_delta: float) -> void:
 
 ## A member's square in the party panel: as tall as the panel, four fit across.
 func _member_size() -> Vector2:
-	var side_len := minf(leaf_party.size.y, leaf_party.size.x / LEAF_PARTY_MAX - 6.0)
-	return Vector2(side_len, side_len)
+	return Vector2(leaf_party.size.x / LEAF_PARTY_MAX - 6.0, leaf_party.size.y)
 
 
 ## One member in the leaf frame's party panel ([USER] 2026-10-29: little square frames that fit inside that
@@ -279,15 +282,37 @@ func _leaf_member(e: Dictionary) -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 3)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var icon := PawnIcon.new()
-	icon.tint = e.tint
-	icon.dim = e.hp <= 0
-	icon.custom_minimum_size = Vector2(16, 22)
-	row.add_child(icon)
+	var face := minf(_member_size().y * 0.58, _member_size().x * 0.4)
+	var pf := "res://art/source/portraits/%s.png" % String(e.get("figure", ""))
+	if ResourceLoader.exists(pf):  # [USER] 2026-10-30: the character's portrait, not a pawn
+		var t := TextureRect.new()
+		t.texture = load(pf)
+		t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		t.custom_minimum_size = Vector2(face, face)
+		t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		t.modulate = Color(0.55, 0.55, 0.55) if e.hp <= 0 else Color.WHITE
+		row.add_child(t)
+	else:
+		var icon := PawnIcon.new()
+		icon.tint = e.tint
+		icon.dim = e.hp <= 0
+		icon.custom_minimum_size = Vector2(16, 22)
+		row.add_child(icon)
 	var words := VBoxContainer.new()
 	words.add_theme_constant_override("separation", -2)
-	words.add_child(_label(e.name, 10))
-	words.add_child(_label("%d/%d%s" % [e.hp, e.max_hp, (" " + e.note) if e.get("note", "") != "" else ""], 9))
+	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var nm := _label(e.name, 10)
+	nm.clip_text = true
+	nm.custom_minimum_size.x = 10.0
+	words.add_child(nm)
+	var hpl := _label("%d/%d" % [e.hp, e.max_hp], 9)
+	hpl.clip_text = true
+	hpl.custom_minimum_size.x = 10.0
+	words.add_child(hpl)
+	if e.get("note", "") != "":
+		words.add_child(_label(e.note, 8))
 	row.add_child(words)
 	col.add_child(row)
 	var bar := ProgressBar.new()
@@ -296,6 +321,9 @@ func _leaf_member(e: Dictionary) -> Control:
 	bar.show_percentage = false
 	bar.custom_minimum_size = Vector2(0, 5)
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var hp_fill := StyleBoxFlat.new()
+	hp_fill.bg_color = Color(0.78, 0.2, 0.17)
+	bar.add_theme_stylebox_override("fill", hp_fill)
 	col.add_child(bar)
 	if e.get("res_kind", "") != "":
 		col.add_child(_res_bar(e, Vector2(0, 4)))
@@ -429,5 +457,5 @@ static func party_entries_from_run(run: RunState) -> Array:
 	var out := []
 	for m in run.members:
 		var d: CharacterDef = m.def
-		out.append({"name": Txt.t(d.name_key), "hp": m.hp, "max_hp": run.max_hp(m), "tint": d.tint, "note": ""})
+		out.append({"name": Txt.t(d.name_key), "figure": d.id, "hp": m.hp, "max_hp": run.max_hp(m), "tint": d.tint, "note": ""})
 	return out

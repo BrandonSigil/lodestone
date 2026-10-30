@@ -1538,7 +1538,7 @@ func _log(line: String) -> void:
 func _refresh_hud() -> void:
 	var entries := []
 	for u: CombatUnit in party:
-		entries.append({"name": Txt.t(u.name_key), "id": _member_id(u), "hp": u.hp, "max_hp": u.max_hp, "tint": u.tint,
+		entries.append({"name": Txt.t(u.name_key), "id": _member_id(u), "figure": u.figure, "hp": u.hp, "max_hp": u.max_hp, "tint": u.tint,
 			"note": Txt.t("TAG_SPOOKED") if u.spooked else "", "res_kind": u.res_kind if battle != null else "",
 			"res": u.res, "res_max": u.res_max})
 	hud.set_party(entries)
