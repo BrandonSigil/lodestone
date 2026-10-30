@@ -159,7 +159,7 @@ func use_leaf_frame() -> void:
 	leaf_pack = Button.new()
 	leaf_pack.tooltip_text = Txt.t("UI_PACK")
 	var sack := TextureRect.new()  # [USER] 2026-10-30: an inventory asset, not the word; big enough to fill the square
-	sack.texture = load("res://art/source/icons/sack.png")
+	sack.texture = load("res://art/source/icons/backpack.png")
 	sack.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	sack.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	sack.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
