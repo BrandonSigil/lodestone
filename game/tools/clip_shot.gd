@@ -1,7 +1,7 @@
 extends SceneTree
 ## Saves a short run of frames from an explore map, for a clip of something that moves (the trees in the
 ## wind, the snow): godot --path game -s res://tools/clip_shot.gd -- <out prefix> <map> <x>,<y> [frames] [every] [calm]
-## calm: no wind and no weather, for a before picture.
+## calm: no wind and no weather, for a before picture. A 7th arg `lit` drops the fog of war (map mock shots).
 ## Writes <out prefix>_000.png and on. Needs a window (tools/godot.sh). The shot tools' own rule: no real save.
 
 var _f := 0
@@ -26,6 +26,9 @@ func _process(_delta: float) -> bool:
 		var c := Vector2i(int(xy[0]), int(xy[1]))
 		var lead = s.call("leader")
 		lead.place(c, s.get("grid").height_at(c))
+		if _args.size() > 6 and _args[6] == "lit":  # a mock shot: no fog of war, the whole map lit
+			s.get("map").set("fog", false)
+			s.get("board").set("fog_on", false)
 		s.call("_refresh_sight")
 		s.call("_refresh_units")
 		s.set("focus", Vector2(c) + Vector2(0.5, 0.5))
