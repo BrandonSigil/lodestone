@@ -45,5 +45,17 @@ func run(m: Node, script: String) -> void:
 			"zoom":
 				m.set("zoom", float(a[1]))
 				m.call("_look_at", Vector2i(int(a[2]), int(a[3])))
+			"blank":  # blank:<w>:<h>, a new blank map that size
+				m.get("_w_spin").value = int(a[1])
+				m.get("_h_spin").value = int(a[2])
+				m.call("new_blank")
+			"flat":  # flat:on|off, the flat sketch mode
+				m.call("set_flat", a[1] == "on")
+			"fpaint":  # fpaint:<x1>:<y1>:<x2>:<y2>:<ground>:<height>: paint a line in the flat view
+				var fv: FlatView = m.get("flat")
+				fv.set_ground(int(a[5]))
+				fv.set_height(int(a[6]))
+				m.call("_push_undo")
+				fv.paint_line(Vector2i(int(a[1]), int(a[2])), Vector2i(int(a[3]), int(a[4])))
 			"view":  # flip a top-bar view toggle: soft, grid, heights, labels
 				m.call("_toggle_view", a[1])

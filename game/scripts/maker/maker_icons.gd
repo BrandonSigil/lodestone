@@ -285,6 +285,10 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 		"start":
 			_line([Vector2(0.26, 0.92), Vector2(0.26, 0.1)])
 			_poly([Vector2(0.26, 0.1), Vector2(0.84, 0.24), Vector2(0.26, 0.42)])
+		"flat":  # a top-down grid of squares
+			for i in 3:
+				for j in 3:
+					_line([Vector2(0.14 + i * 0.25, 0.14 + j * 0.25), Vector2(0.14 + i * 0.25 + 0.2, 0.14 + j * 0.25), Vector2(0.14 + i * 0.25 + 0.2, 0.14 + j * 0.25 + 0.2), Vector2(0.14 + i * 0.25, 0.14 + j * 0.25 + 0.2)], true)
 		"note":
 			_line([Vector2(0.16, 0.12), Vector2(0.84, 0.12), Vector2(0.84, 0.66), Vector2(0.6, 0.9), Vector2(0.16, 0.9)], true)
 			for y in [0.32, 0.5]:

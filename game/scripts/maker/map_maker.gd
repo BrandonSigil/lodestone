@@ -61,6 +61,7 @@ const FOE_COLOR := Color(1.0, 0.48, 0.42)
 var doc: MapDoc
 var board: CombatBoard
 var overlay: MakerOverlay
+var flat: FlatView  ## the flat sketch mode (Tab): a top-down grid of the same map
 var tool := "select"
 var radius := 0  ## brush size: 0 = one cell
 var square := false
@@ -458,6 +459,12 @@ func _process(delta: float) -> void:
 	if pan != Vector2.ZERO:
 		focus += pan.normalized() * PAN_SPEED * delta / zoom
 	_apply_camera()
+	if flat != null and flat.visible:
+		var area := _map_area()
+		if flat.position != area.position or flat.size != area.size:
+			flat.position = area.position
+			flat.size = area.size
+			flat.fit()
 	_hover()
 	_title.text = "%s%s" % [doc.key(), "  *" if _dirty else ""]
 
@@ -538,6 +545,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				_copy_to_stamp()
 		return
 	match k.keycode:
+		KEY_TAB:
+			set_flat(not flat.visible)
+			get_viewport().set_input_as_handled()
 		KEY_H:
 			hide_ui = not hide_ui
 			_root.visible = not hide_ui
@@ -1419,6 +1429,11 @@ func _build_ui() -> void:
 	get_viewport().size_changed.connect(_fit_root)
 	_root.theme = MakerUI.make_theme()
 	_ui.add_child(_root)
+	flat = FlatView.new()
+	flat.maker = self
+	flat.visible = false
+	_ui.add_child(flat)
+	_ui.move_child(flat, 0)  # behind the panels
 	_build_top()
 	_build_rail()
 	_build_options()
@@ -1538,7 +1553,8 @@ func _build_top() -> void:
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bar.add_child(_title)
 	for v in [["soft", "soft", "Painted terrain  (K): the look players see. Off shows plain blocks, to check every cell", true],
-			["grid", "grid", "Grid lines  (G)", true], ["heights", "heights", "Height numbers", false], ["labels", "note", "Names over things and blobs", true]]:
+			["grid", "grid", "Grid lines  (G)", true], ["heights", "heights", "Height numbers", false], ["labels", "note", "Names over things and blobs", true],
+			["flat", "flat", "Flat sketch mode  (Tab): a top-down grid of this map to paint ground, height, walls, water and stairs quickly. Toggle back to see it isometric.", false]]:
 		var b := MakerUI.IconButton.new(v[1], v[2], 34.0)
 		b.toggle_mode = true
 		b.button_pressed = v[3]
@@ -1557,6 +1573,24 @@ func _build_top() -> void:
 	play.add_theme_color_override("font_color", MakerUI.ACCENT)
 
 
+## Switch between the isometric board and the flat sketch grid (both edit doc.grid).
+func set_flat(on: bool) -> void:
+	if flat == null:
+		return
+	flat.visible = on
+	board.visible = not on
+	if _view_buttons.has("flat"):
+		(_view_buttons["flat"] as Button).set_pressed_no_signal(on)
+	if on:
+		var a := _map_area()
+		flat.position = a.position
+		flat.size = a.size
+		flat.fit()
+		_say("flat sketch mode: drag to paint, right click picks up, 0-9 sets the height")
+	else:
+		_refresh_marks()
+
+
 func _on_view(on: bool, key: String) -> void:
 	match key:
 		"soft":
@@ -1567,6 +1601,8 @@ func _on_view(on: bool, key: String) -> void:
 			overlay.show_heights = on
 		"labels":
 			overlay.show_labels = on
+		"flat":
+			set_flat(on)
 
 
 func _build_rail() -> void:

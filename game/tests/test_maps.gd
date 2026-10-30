@@ -423,6 +423,41 @@ func test_valley_river_has_a_bridge_near_the_middle() -> void:
 	ok(checked >= 20, "enough seeds had a river near the middle to check (%d)" % checked)
 
 
+## The flat sketch mode paints the same grid the isometric board shows, and undo covers it.
+func test_map_maker_flat_mode_paints_the_same_map() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	var keep: String = tree.root.get_node("Game").get("maker_map")
+	var maker: Node = load("res://scenes/map_maker.tscn").instantiate()
+	tree.root.add_child(maker)
+	maker.call("_open", MapDoc.create("battle", "test_tmp", _island(10, 1), "village_in"))
+	maker.call("set_flat", true)
+	var fv: FlatView = maker.get("flat")
+	ok(fv.visible and not (maker.get("board") as CanvasItem).visible, "flat mode shows the grid, not the board")
+	fv.set_ground(CombatGrid.T.FOREST)
+	fv.set_height(5)
+	maker.call("_push_undo")
+	fv.paint_line(Vector2i(1, 1), Vector2i(4, 1))
+	var g: CombatGrid = maker.get("doc").grid
+	for x in range(1, 5):
+		eq(g.terrain_at(Vector2i(x, 1)), CombatGrid.T.FOREST, "ground painted at %d" % x)
+		eq(g.height_at(Vector2i(x, 1)), 5, "height painted at %d" % x)
+	eq(g.height_at(Vector2i(5, 1)), 1, "nothing painted past the stroke")
+	fv.set_ground(CombatGrid.T.VOID)
+	fv.paint_at(Vector2i(7, 7))
+	eq((maker.get("doc").grid as CombatGrid).terrain_at(Vector2i(7, 7)), CombatGrid.T.VOID, "empty cuts the map")
+	fv.pick_up(Vector2i(2, 1))
+	eq(fv.ground, CombatGrid.T.FOREST, "right click picks up the ground")
+	eq(fv.height, 5, "and the height")
+	maker.call("set_flat", false)
+	ok(not fv.visible and (maker.get("board") as CanvasItem).visible, "toggling back shows the board")
+	eq((maker.get("board") as CombatBoard).grid.height_at(Vector2i(3, 1)), 5, "the board shows the same edit")
+	maker.call("undo")
+	eq((maker.get("doc").grid as CombatGrid).height_at(Vector2i(3, 1)), 1, "undo takes the flat strokes back")
+	tree.root.remove_child(maker)
+	maker.free()
+	tree.root.get_node("Game").set("maker_map", keep)
+
+
 func test_map_doc_files() -> void:
 	var g := MapGen.valley(2, 14, 12)
 	var battle := MapDoc.create("battle", "Test Map!", g, "alpine").to_dict()
