@@ -89,6 +89,9 @@ These fill the gaps the answers leave so the build can start; each is `[AI]` unt
 ### Still open in combat (not blocking a build)
 Boss shapes (fortress, objective, several parts, minions); foe types and behaviours (charger, guard, ambusher); actions per turn (move + act is still `[AI]`); a mercy rewind for misclicks; whether counters still feel fair now that they always land. These come after the first build is playable.
 
+### The first boss and the light builds (2026-10-30)
+Brandon: every build should be able to beat the Lich King, the first real skill check. At level 5 the sword and bow win about 42%. Daggers win 50%, but 43% of their fights never end. The book wins 20%. The cause is staying alive, not damage: his FIREBOLT downs a light hero in 2 or 3 rounds, then a help-up and knock-down loop runs to the round cap. First the AI fixes go to the developer (no AID that the foe will undo, the dog taunts for a soft ally, the mage keeps its distance and heals), then a re-run. Then, if a build is still short, its own answer: cards `design-boss-daggers` (hit and run, VANISH, a jump behind, bleed on crits) and `design-boss-book` (a ward against spells, a WARD spell, spells through armor, longer reach).
+
 ### Build order (card `design-combat-build`, approved 2026-10-29 with the default numbers, handed to the systems developer after the inventory build and the bottom UI frame)
 1. **The damage model.** Sure hits, the wobble, armor and GUARD, height damage, crits with flanking, the leftover bonuses converted, half cover and the sight preview, pop-up numbers (crits bigger), and a forecast that shows the damage range and crit chance. Everything else sits on these numbers. Rerun the balance sim after.
 2. **Guard zones.** Foes next to a guarding piece attack it or take a free hit to leave; the ring is drawn; the AI respects it.
