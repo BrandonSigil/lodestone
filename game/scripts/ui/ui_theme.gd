@@ -199,13 +199,14 @@ static func fade_in(c: Control) -> void:
 
 
 ## pop_in once the menu has its size (the next frame), unless it was freed or swapped by then (a menu rebuilt at
-## once, a fight starting): a deferred call straight to pop_in errored on the freed dialog (playtest, 2026-10-30).
+## once, a fight starting): a deferred call straight to pop_in errored on the freed dialog (playtest, 2026-10-30), and
+## a deferred weak reference errored at shutdown ("slot >= slot_max"), so it waits a frame on the tree instead.
 static func pop_in_later(c: Control) -> void:
-	var ref: WeakRef = weakref(c)
-	(func() -> void:
-		var live := ref.get_ref() as Control
-		if live != null and live.is_inside_tree():
-			pop_in(live)).call_deferred()
+	if not c.is_inside_tree():
+		return
+	await c.get_tree().process_frame  # a frame's wait on the tree: if the game is shutting down it never resumes
+	if is_instance_valid(c) and c.is_inside_tree():
+		pop_in(c)
 
 
 ## A menu closing: shrinks a touch and fades, then frees itself. Its buttons die at once, so nothing on the way

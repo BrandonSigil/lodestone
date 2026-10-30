@@ -1062,7 +1062,7 @@ func _new_dialog(text: String, top := false) -> VBoxContainer:
 	_dialog.scale = Vector2(k, k)
 	_dialog.position = Vector2(r.get_center().x - 220 * k, r.position.y + 16 if top else r.end.y - 230 * k)
 	if not top:
-		_sit_on_frame.call_deferred(_dialog, k)
+		_sit_on_frame(_dialog, k)
 	if text == "":
 		l.queue_free()
 	if fresh:
@@ -1071,7 +1071,9 @@ func _new_dialog(text: String, top := false) -> VBoxContainer:
 
 
 ## A dialogue at the bottom stands just above the frame's crest once its size is known.
+## (A frame's wait on the tree, not a deferred call: the dialogue may be swapped or freed by then; see docs/context.)
 func _sit_on_frame(d: Control, k: float) -> void:
+	await get_tree().process_frame
 	if not is_instance_valid(d) or d != _dialog:
 		return
 	d.reset_size()
