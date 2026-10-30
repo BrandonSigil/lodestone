@@ -123,3 +123,19 @@ Method: the same one the tactical-combat research set (hits to kill, a point val
 - **New effects to build:** terrain hazards (`trap`, `caltrops`, `ignite`), cleave, extra-move buffs, and the heal-at-range revive. Everything else exists.
 - **Whether moon sleep affects undead** (D&D: undead are immune to sleep).
 - **The flavor.** Nothing here names or describes a person. The story, characters and names are Brandon's.
+
+## Evolved classes (pc-13: two branches per job at job level 10)
+Visual overview: https://claude.ai/artifact/8rdAXgqcZogHZDsFVjsUgU (the Class Map; each evolved class keeps the base kit and adds two skills). All `[AI]`; the knight, rogue, archer and mage pairs follow the draft pairs in `decisions.md`.
+
+| Base | Evolved A | Evolved B |
+| --- | --- | --- |
+| bulwark | guardian (zone 2, armor) | vanguard (rage to damage) |
+| reaver | warlord (wide sweeps) | berserker (damage for armor) |
+| shade | assassin (first strike) | thief (lifts items) |
+| sharpshooter | hunter (beasts, fliers) | marksman (reach, pierce) |
+| tracker | beastmaster (two beasts) | trapper (hazards) |
+| ember | wizard (area, terrain) | healer (mend, ward) |
+| moon | seer (foresight) | hexer (debuffs, long sleep) |
+| mender | cleric (sanctuary, smite) | medic (rest care, cleanse) |
+| chanter | herald (rally the line) | diplomat (talk wins) |
+| tinker | bomber (bigger blasts) | engineer (turret, repair) |
