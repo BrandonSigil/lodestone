@@ -213,3 +213,34 @@ func test_sight_tells_the_deck_from_the_lane() -> void:
 	ok(not g.line_of_sight(Vector2i(2, 0), Vector2i(2, 4)), "the house hides the far bank")
 	var low := ExploreRules.sight(g, [deck], 2)
 	ok(low.has(deck) and low.has(Vector2i(2, 1)), "an eye on the deck looks out from up there")
+
+
+# --- tall maps ([USER] 2026-10-30: maps with high vertical inclines) -----------------------------------------
+
+func test_tall_heights_save_and_play() -> void:
+	var g := CombatGrid.flat(6, 1)
+	g.set_height(Vector2i(0, 0), 20)
+	g.set_height(Vector2i(1, 0), 16)
+	g.set_height(Vector2i(2, 0), 9)
+	var d: Dictionary = JSON.parse_string(JSON.stringify(g.to_dict()))
+	eq(String(d.heights[0]).substr(0, 3), "kg9", "base-36 digits: 20 is k, 16 is g, 9 stays 9")
+	var back := CombatGrid.from_dict(d)
+	eq(back.height_at(Vector2i(0, 0)), 20, "20 comes back")
+	eq(back.height_at(Vector2i(1, 0)), 16)
+	eq(back.height_at(Vector2i(2, 0)), 9, "an old map's digits read the same")
+	g.set_height(Vector2i(0, 0), CombatGrid.MAX_HEIGHT)
+	eq(CombatGrid.from_dict(g.to_dict()).height_at(Vector2i(0, 0)), 24, "up to the cap")
+	ok(g.line_of_sight(Vector2i(0, 0), Vector2i(5, 0)), "sight down a 24-level cliff")
+	var top := CombatUnit.enemy(load("res://data/classes/bandit.tres"))
+	top.place(Vector2i(2, 0), 9)
+	var shover := CombatUnit.enemy(load("res://data/classes/knight.tres"))
+	shover.team = 0
+	shover.place(Vector2i(1, 0), 16)
+	var hp := top.hp
+	g.set_height(Vector2i(1, 0), 16)
+	g.set_height(Vector2i(2, 0), 16)
+	g.set_height(Vector2i(3, 0), 0)
+	top.place(Vector2i(2, 0), 16)
+	CombatRules.push(g, [shover, top], shover.cell, top, 1)
+	eq(top.cell, Vector2i(3, 0), "shoved off a 16-level drop")
+	eq(top.hp, maxi(0, hp - 15 * CombatRules.FALL_DAMAGE), "a long fall hurts by the level")

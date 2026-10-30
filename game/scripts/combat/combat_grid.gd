@@ -14,7 +14,9 @@ const COVER := {T.GRASS: 0, T.FOREST: 2, T.WATER: -2, T.ROCK: 0, T.ROAD: 0, T.ST
 const SIGHT_BLOCK := {T.GRASS: 0.0, T.FOREST: 0.8, T.WATER: 0.0, T.ROCK: 1.0, T.ROAD: 0.0, T.STONE: 0.0, T.STAIRS: 0.0, T.RUIN: 2.0, T.VOID: 0.0}
 const RUIN_RISE := 2
 const STAIRS_CLIMB := 2
-const MAX_HEIGHT := 8  ## editor and saved maps
+const MAX_HEIGHT := 24  ## editor and saved maps (was 8: [USER] 2026-10-30, maps with high vertical inclines)
+## A saved height is one character a cell: 0-9, then a-z for 10 to 35 (old maps' 0-9 read and write the same).
+const HEIGHT_DIGITS := "0123456789abcdefghijklmnopqrstuvwxyz"
 const GEN_MAX_HEIGHT := 4  ## the random generator stays gentle; stairs keep it crossable
 const PLATEAU_LEVEL := 4  ## the high floor of a plateau map (see _plateau)
 const DEPLOY_COLS := 2  ## columns kept clear at each side for deployment
@@ -394,7 +396,7 @@ func to_dict() -> Dictionary:
 		var hr := ""
 		for x in w:
 			tr += LETTERS[terrain_at(Vector2i(x, y))]
-			hr += str(height_at(Vector2i(x, y)))
+			hr += HEIGHT_DIGITS[height_at(Vector2i(x, y))]
 		t_rows.append(tr)
 		h_rows.append(hr)
 	var d := {"w": w, "h": h, "terrain": t_rows, "heights": h_rows}
@@ -452,7 +454,7 @@ static func from_dict(d: Dictionary) -> CombatGrid:
 			if y < t_rows.size() and x < String(t_rows[y]).length():
 				g.set_terrain(c, from_letter.get(String(t_rows[y])[x], T.GRASS))
 			if y < h_rows.size() and x < String(h_rows[y]).length():
-				g.set_height(c, clampi(int(String(h_rows[y])[x]), 0, MAX_HEIGHT))
+				g.set_height(c, clampi(maxi(0, HEIGHT_DIGITS.find(String(h_rows[y])[x].to_lower())), 0, MAX_HEIGHT))
 	var z_rows: Array = d.get("zones", [])
 	var key: Dictionary = d.get("zone_key", {})
 	for y in mini(g.h, z_rows.size()):
