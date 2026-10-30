@@ -48,3 +48,11 @@ Pictures from Brandon: any answer, and any note, may carry `images` [{url, id}] 
 - **Status report**: Claude writes it in the page from the desk, roles, log and roadmap (the page's `sample` capability). Nothing to do here, except keep those records true.
 - **Roadmap**: one `roadmap` doc per track. When a role finishes or starts a step, it flips that item's `status` and adds the commit as `ref`; new approved build orders become new items. The project manager keeps tracks and order tidy.
 - **Launch game**: the page calls the local MCP tool `host:lodestone` / `launch_game` through the Claude app (`tools/launcher/lodestone_mcp.py`, standard-library Python; register it once with `python3 tools/launcher/install_mcp.py` and restart the Claude app). It only works with the page open in the Claude app on the Mac. Otherwise the window's "Ask the project manager" button writes a `requests` doc with `kind: "launch"`; the desk watch launches the game and marks it `done` with `done_at` and a one-line `result`. A web page can't open `lodestone://` links from the artifact frame, so the Launch button no longer uses them; `tools/launcher/build_launcher.sh` still builds a Dock/Spotlight Lodestone Launcher app.
+
+## Keeping usage low (Brandon, 2026-10-30)
+Every step a session takes re-reads its whole memory, so a long session is expensive even when it only says "still waiting". The rules:
+- **Sonnet by default.** Roles run on Sonnet; switch a role to Opus only for a hard engine or design problem, then back.
+- **Fresh sessions from handoff notes.** Each role keeps `docs/context/roles/<role>.md` (under about 60 lines: job, rules, now and next step, open card and note ids, key files, gotchas, uncommitted work). When a role's memory passes about 300k tokens, it updates the note, says "handoff ready", and the project manager starts a fresh session from it and archives the old one.
+- **No idle steps.** Don't take a turn just to report "waiting on the robot" or "still running". Start long runs in the background and say nothing until they finish.
+- **Batch.** One balance run with every variant, not rounds of tweak and re-run. One message per handoff, not a running commentary.
+- **Lean desk watch.** The project manager checks the desk hourly, in one parallel batch, and stays silent when nothing is new.
