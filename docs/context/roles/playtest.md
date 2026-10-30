@@ -30,6 +30,13 @@ Studio role id `playtest`, name "Playtester". Page: https://claude.ai/artifact/B
 - Lich tries per run: sword 2.1, daggers 2.7, bow 3.1 (was 2.3 / 2.7 / 2.3). Sim at level 5 (60 fights): sword 42%, daggers 57%, bow 37% (ambushed 27 / 48 / 15). Every other group is 100% in the sim.
 - Ordinary fights are all but unloseable; only the Lich bites. Bow is the hardest weapon on him.
 
+## Outing measurement (dd916d0, check.sh 332 tests 0 failures; 2026-10-30)
+- 108 runs, all pass, no script errors. Robot variants: "noheal" (never uses pack potions/food, 24 seeds per weapon) and "heal" (the stock robot, heals before each fight, 12 seeds). Instrument by printing HP and `Game.member_res` before and after each `_fight` in a scratch copy of `e2e_play_steps.gd`.
+- Lich win rate, attempt 1: about 3% (noheal 2/72, heal 1/36), target 5-10%. Attempt 2 (after one fall): about 21% (noheal 15/70, heal 7/35), target 25-50%. Slightly too hard, both.
+- Arrival at the throne (noheal, first try), HP / resources: sword 41% / 15%, daggers 29% / 55%, bow 31% / 6%. Target about 50% / 25%. Daggers keep their charges; sword and bow are spent.
+- Ceiling (fresh level 5, sim 60 fights): throne win sword 38%, daggers 55%, bow 52%. Beatable.
+- Per-road-fight cost is noisy across seeds (HP 0-40%, resources 2-46%); no reliable average. Mana/charges are what the road spends.
+
 ## Open
 - Nothing filed by me is open. Last rule from the game designer: ambusher softens if `pass_bandits` loses over half its first tries (it does not).
 - Clutch tools: WARD only helps if cast after the Lich's mark (wiped at your next phase otherwise); SHADOW SWAP repositions but does not revive; forcing tools in the sim lowers Lich wins. Not played by hand (no window control); CARRY and COMMAND wording untested. Log line has a garbled figure ("14 to 8 hurt, 6 left"): correct is 14 to 6.
