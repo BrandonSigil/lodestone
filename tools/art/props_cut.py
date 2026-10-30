@@ -44,26 +44,40 @@ def _runs(on: np.ndarray, min_gap: int) -> list:
 
 
 def _drop_edge_bits(a: np.ndarray, share: float = 0.15) -> None:
-    """Clear small pieces touching the cell's edge (a neighbour's spark or tip poking in), in place."""
+    """Clear pieces that came from a neighbouring cell, in place: small pieces touching the cell's edge (a
+    spark or tip poking in) and small pieces lying wholly above or below the icon itself, well apart from it
+    (the tip of a flame from the row below)."""
+    a[a[..., 3] <= 40, 3] = 0  # faint haze would join a fleck to the icon
     on = a[..., 3] > 0
     h, w = on.shape
     seen = np.zeros_like(on)
     total = on.sum()
+    comps = []
     for y0, x0 in zip(*np.nonzero(on)):
         if seen[y0, x0]:
             continue
-        stack, comp, edge = [(y0, x0)], [], False
+        stack, comp = [(y0, x0)], []
         seen[y0, x0] = True
         while stack:
             y, x = stack.pop()
             comp.append((y, x))
-            edge |= y in (0, h - 1) or x in (0, w - 1)
             for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
                 if 0 <= ny < h and 0 <= nx < w and on[ny, nx] and not seen[ny, nx]:
                     seen[ny, nx] = True
                     stack.append((ny, nx))
-        if edge and len(comp) < share * total:
-            ys, xs = zip(*comp)
+        comps.append(comp)
+    if not comps:
+        return
+    main = max(comps, key=len)
+    my = [y for y, _ in main]
+    top, bottom, gap = min(my), max(my), h * 0.08
+    for comp in comps:
+        if comp is main or len(comp) >= share * total:
+            continue
+        ys, xs = zip(*comp)
+        edge = min(ys) == 0 or max(ys) == h - 1 or min(xs) == 0 or max(xs) == w - 1
+        apart = min(ys) > bottom + gap or max(ys) < top - gap
+        if edge or apart:
             a[list(ys), list(xs), 3] = 0
 
 

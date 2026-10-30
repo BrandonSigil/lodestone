@@ -12,7 +12,7 @@ LAYOUT: aspect 3:2, plain flat cream paper (#eae8d6) background, no title, no la
    top right: one TITLE PLATE, a long thin plate about 5 wide by 1 tall, empty (no words);
    middle right: one BUTTON, a short rounded plate about 3 wide by 1 tall, empty (no words);
    bottom right: one TOOLTIP BOX, a small plain rectangle about 3 wide by 2 tall with a small pointer on its bottom edge, empty.
-Straight on, flat, no perspective, no tilt.
+Straight on, flat, no perspective, no tilt. Every line is drawn like a dip pen: rounded ends, a slight natural tremor, a little thicker and thinner along its length; the paper of each piece may be a very slightly irregular hand-cut shape, never ragged or torn.
 
 NINE-SLICE (essential, the game stretches these to any size): all ornament sits in the FOUR CORNERS only. The edges between the corners are a plain straight border of even width that could be repeated or stretched, with nothing in the middle of an edge (no crest, no centre gem, no leaf in the middle). The inside of each piece is one plain flat fill, no picture, no pattern, no vignette. Corners are compact, about one eighth of the panel's width.
 
