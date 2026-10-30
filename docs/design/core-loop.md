@@ -358,7 +358,7 @@ Tensions to watch: an ambusher bends danger-zone-only (c2); a boss big-move warn
 - **Retry:** after the first fight with a boss, his card shows his HP and all his moves for good.
 - **Foe scale:** by depth. A place's foes are set by its level and never change.
 - **Foe roles, in order:** ambusher, caster/support, charger, guard.
-- **Weakness:** a few tags (undead, beast, armored, flying), each a small damage change for some attack kinds. The Lich is undead (fire +2, arrows -2; `design-lich-tag`), so the book gets stronger against him and the bow weaker. He's re-measured against the 15% floor.
+- **Weakness:** a few tags (undead, beast, armored, flying), each a small damage change for some attack kinds. The Lich is undead (fire +2, arrows -2; `design-lich-tag`), so the book gets stronger against him and the bow weaker. To keep the bow over the 15% floor he drops to 38 HP: sword 53%, daggers 60%, bow 17%, book 95% (party first).
 - **Village:** restore only, with one twist: a settler's service can come with a plot by their house (a garden for crops, a pen for animals).
 - **Settlers:** bonds grow between pairs in the party (fights together, help-ups, team-ups). Three levels; each adds +1 team-up damage for the pair and opens a talk at home. The talks are Brandon's to write. Built after the first boss and foe build.
 
