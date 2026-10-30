@@ -1,6 +1,6 @@
-id,name_key,kind,x,y,open,map,entry_x,entry_y,maps,clear_flag,after
-town,WN_TOWN,town,500,610,1,village,20,35,village|home|house_ne|house_dog|tavern,,
-pass,WN_PASS,peak,500,120,1,snow_pass,-1,-1,snow_pass|wolf_den|crypt,beat_lich,
-prairie,WN_PRAIRIE,plain,860,330,0,,,,,,
-northwest,WN_NORTHWEST,wood,140,250,0,,,,,,
-beyond,WN_BEYOND,far,760,60,1,,,,,,pass
+id,name_key,kind,x,y,open,map,entry_x,entry_y,maps,clear_flag,after,weather
+town,WN_TOWN,town,500,610,1,village,20,35,village|home|house_ne|house_dog|tavern,,,
+pass,WN_PASS,peak,500,120,1,snow_pass,-1,-1,snow_pass|wolf_den|crypt,beat_lich,,snow
+prairie,WN_PRAIRIE,plain,860,330,0,,,,,,,
+northwest,WN_NORTHWEST,wood,140,250,0,,,,,,,
+beyond,WN_BEYOND,far,760,60,1,,,,,,pass,

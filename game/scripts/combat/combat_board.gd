@@ -240,6 +240,7 @@ func _sink_colour() -> Color:
 
 static var _silhouettes := {}  ## flat silhouettes made from the tree sprites, by sprite and colour
 static var _see := {}  ## sprite stem -> the catalog's `see` column (data/catalog.csv)
+static var _sway := {}  ## sprite stem -> the catalog's `sway` column: how much it bends in the wind
 
 
 ## A sprite as a flat silhouette (skirt trees, the see-through window's tint): its shape in one colour, hard edged, made once and kept.
@@ -526,6 +527,7 @@ func _sync_slabs() -> void:
 		queue_redraw()
 	BattleArt.use_set(art_set)
 	_resolve_look()
+	_sway_mat.set_shader_parameter("wind", look.wind)
 	var valley := _valley()
 	if valley:
 		_refresh_skirt()
@@ -671,6 +673,8 @@ func _build_slabs(n: int) -> void:
 		sl.depth = depth
 		if kind == Slab.K.WATER:
 			sl.material = _water_mat
+		elif kind == Slab.K.PROPS:
+			sl.material = _sway_mat
 		elif kind == Slab.K.FALLS:
 			sl.material = _fall_mat
 		_stack.add_child(sl)
@@ -2239,8 +2243,8 @@ func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color, zone := "")
 		var dst := Rect2(base.x - pw * 0.5, base.y - ph, pw, ph)
 		if _fade.has(c):  # a soft window round a piece standing behind it
 			_draw_windowed(tex, dst, Color(tint, 1.0), _fade[c])
-		else:
-			_ci.draw_texture_rect(tex, dst, false, Color(tint, 1.0))
+		else:  # a wood's trees bend in the wind; rocks and ruins hold still
+			_ci.draw_texture_rect(tex, dst, false, Color(tint, SWAY_TREE if t == CombatGrid.T.FOREST else 1.0))
 	return true
 
 
@@ -2315,10 +2319,21 @@ func _placed(c: Vector2i) -> void:
 		_draw_windowed(tex, r, col, holes, Rect2(0, 0, 1, 1), p.get("flip", false))
 	elif p.get("flip", false):
 		_ci.draw_set_transform(Vector2(r.get_center().x * 2.0, 0.0), 0.0, Vector2(-1, 1))
-		_ci.draw_texture_rect(tex, r, false, col)
+		_ci.draw_texture_rect(tex, r, false, Color(col, _sway_alpha(p)) if col.a >= 1.0 else col)
 		_ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	else:
-		_ci.draw_texture_rect(tex, r, false, col)
+		_ci.draw_texture_rect(tex, r, false, Color(col, _sway_alpha(p)) if col.a >= 1.0 else col)
+
+
+## A placed prop's alpha for the sway shader: the catalog's `sway` (1 a tree, 0.5 a bush), else still.
+static func _sway_alpha(p: Dictionary) -> float:
+	if _sway.is_empty():
+		for row in CsvTable.load_rows("res://data/catalog.csv"):
+			var full := String(row.sprite)
+			if full != "":
+				_sway[full.substr(full.rfind("/") + 1)] = float(row.get("sway", "0"))
+	var amount := float(_sway.get(String(p.sprite), 0.0))
+	return SWAY_TREE if amount >= 1.0 else (SWAY_BUSH if amount > 0.0 else 1.0)
 
 
 ## A texture (its `uv` share) drawn into dst as a fine mesh whose alpha opens a soft window round each hole
@@ -2681,7 +2696,7 @@ func _draw_skirt(c: Vector2i) -> void:
 			MapBackdrop.pine(_ci, base, ph, Color(tint * look.color("wood").lightened(0.3), 0.3 if faint else 1.0))
 			continue
 		var pw := ph * tex.get_width() / float(tex.get_height())
-		_ci.draw_texture_rect(tex, Rect2(base.x - pw * 0.5, base.y - ph, pw, ph), false, Color(tint, 0.28 if faint else 1.0))
+		_ci.draw_texture_rect(tex, Rect2(base.x - pw * 0.5, base.y - ph, pw, ph), false, Color(tint, 0.28 if faint else SWAY_TREE))
 
 
 ## Water spilling off a ledge onto lower ground: a pale sheet, moving streaks and foam at the bottom.
@@ -2789,10 +2804,15 @@ func _fall_span(a: Vector2, b: Vector2, h: float, _hb: float, c: Vector2i, d: Ve
 # banks are, which way the river runs and where falls land. docs/systems/water.md.
 
 const WATER_SHADER := preload("res://shaders/water_surface.gdshader")
+const SWAY_SHADER := preload("res://shaders/sway.gdshader")
+## A draw's alpha that tells the sway shader to bend it in the wind (shaders/sway.gdshader): a tree, a bush.
+const SWAY_TREE := 254.0 / 255.0
+const SWAY_BUSH := 253.0 / 255.0
 const FALL_SHADER := preload("res://shaders/water_fall.gdshader")
 const MAX_WAKES := 8
 
 var _water_mat := ShaderMaterial.new()
+var _sway_mat := ShaderMaterial.new()  ## the props slabs: trees and bushes bend in the look's wind
 var _fall_mat := ShaderMaterial.new()
 var _water_tex: ImageTexture
 var _water_img: Image
@@ -2802,6 +2822,7 @@ var _water_version := -1
 
 
 func _init_water() -> void:
+	_sway_mat.shader = SWAY_SHADER
 	_water_mat.shader = WATER_SHADER
 	_fall_mat.shader = FALL_SHADER
 	_water_mat.set_shader_parameter("shore_reach", WaterField.SHORE_REACH)

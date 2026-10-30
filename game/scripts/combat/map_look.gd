@@ -19,6 +19,10 @@ var ridge := "peaks"  ## mountain shape behind the map: peaks, hills, mesas, spi
 var trees: Array[String] = []  ## prop stems for the forest around the map ("set/stem" borrows another set's art)
 var tree_scale := 1.8  ## forest tree height in tile widths
 var colors := {}  ## sky_top, sky_low, cloud, far, near, snow, haze, wood_far, wood, floor_col, tree
+## Ambience ([USER] 2026-10-30): how hard the breeze bends the trees (0 still air, 1 a light breeze), and the
+## weather falling over the map ("snow", "leaves" or ""). A map's own look can set either (grid.look).
+var wind := 0.0
+var weather := ""
 
 static var _rows := {}
 
@@ -53,6 +57,8 @@ static func resolve(map_look: Dictionary, art_set: String, strangeness := 0.0) -
 	m.skirt = int(map_look.get("skirt", row.get("skirt", "3")))
 	m.ridge = String(row.get("ridge", "peaks"))
 	m.tree_scale = float(row.get("tree_scale", "1.8"))
+	m.wind = float(map_look.get("wind", row.get("wind", "0")))
+	m.weather = String(map_look.get("weather", row.get("weather", "")))
 	for stem in String(row.get("trees", "prop_pine_1")).split("|", false):
 		m.trees.append(stem)
 	var alien: Dictionary = _rows.get(ALIEN, row)

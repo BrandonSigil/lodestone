@@ -34,6 +34,8 @@ var _elites := {}  ## place id -> elite groups still standing on its maps (the r
 var _note := ""  ## a short line under the party (PATH SHUT, a talk line)
 var _note_time := 0.0
 var _rng := RandomNumberGenerator.new()
+var _weather: MapWeather
+const SNOW_REACH := 190.0  ## map units round a snowy place that the snow falls over
 
 
 func _ready() -> void:
@@ -44,6 +46,10 @@ func _ready() -> void:
 	_rng.randomize()  # talk lines only; encounters roll on the run's dice
 	if not Game.travel.has("at") and not Game.travel.has("to"):
 		Game.travel = {"at": "town"}
+	_weather = MapWeather.new()  # snow round the snowy places ([USER] 2026-10-30, ambience)
+	add_child(_weather)
+	_weather.setup("snow" if Db.world_nodes.values().any(func(n: Dictionary) -> bool: return String(n.get("weather", "")) == "snow") else "",
+		get_viewport().get_visible_rect(), 7)
 	hud = FrameHud.new()
 	add_child(hud)
 	hud.use_leaf_frame()
@@ -75,6 +81,12 @@ func leg() -> Dictionary:
 
 func _process(delta: float) -> void:
 	_time += delta
+	_weather.mask = []  # only over the places whose `weather` is snow (data/overworld_nodes.csv)
+	for id in Db.world_nodes:
+		var n: Dictionary = Db.world_nodes[id]
+		if String(n.get("weather", "")) == "snow":
+			var c := _to_screen(Vector2(float(n.x), float(n.y)))
+			_weather.mask.append(Vector3(c.x, c.y, SNOW_REACH * float(_view().k)))
 	_note_time = maxf(0.0, _note_time - delta)
 	if not _busy and _dialog == null and Game.run.overfull():
 		_open_menu("pack")  # a pickup found no room: the player decides before walking on

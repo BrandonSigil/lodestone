@@ -292,3 +292,37 @@ func test_a_standing_hero_blinks_now_and_then() -> void:
 	eq(b._blink(u, "ready"), "", "no blink over the ready pose without its own frame")
 	eq(b._blink(u, "walk"), "", "nor while walking")
 	b.free()
+
+
+## Ambience ([USER] 2026-10-30): the trees bend in the breeze and snow or leaves fall, all from data.
+func test_ambience_comes_from_the_look() -> void:
+	var snow := MapLook.resolve({}, "snow")
+	ok(snow.wind > 0.0 and snow.weather == "snow", "the snow pass: a breeze and snow")
+	eq(MapLook.resolve({}, "village").weather, "leaves", "the fall village: leaves")
+	eq(MapLook.resolve({}, "village_in").wind, 0.0, "indoors: still air")
+	eq(MapLook.resolve({"wind": 0.2, "weather": ""}, "snow").weather, "", "a map's own look can turn it off")
+	eq(CombatBoard._sway_alpha({"sprite": "prop_tree"}), CombatBoard.SWAY_TREE, "a tree bends")
+	eq(CombatBoard._sway_alpha({"sprite": "prop_bush"}), CombatBoard.SWAY_BUSH, "a bush a little")
+	eq(CombatBoard._sway_alpha({"sprite": "prop_well"}), 1.0, "a well holds still")
+	ok(load("res://shaders/sway.gdshader") is Shader)
+
+
+func test_weather_falls_slowly_and_comes_round() -> void:
+	var w := MapWeather.new()
+	var view := Rect2(0, 0, 400, 300)
+	w.setup("snow", view, 1)
+	eq(w.flakes.size(), MapWeather.SNOW_COUNT, "sparse")
+	var again := MapWeather.new()
+	again.setup("snow", view, 1)
+	eq(again.flakes[3].pos, w.flakes[3].pos, "the same seed, the same snow")
+	var f: Dictionary = w.flakes[0]
+	var y: float = f.pos.y
+	MapWeather.step_flake(f, 1.0, 0.0, view)
+	ok(f.pos.y > y and f.pos.y - y < 40.0, "a second: down a little")
+	f.pos = Vector2(200, 311)
+	MapWeather.step_flake(f, 0.01, 0.0, view)
+	ok(f.pos.y < 0.0, "past the bottom it starts again at the top")
+	w.setup("", view, 1)
+	ok(w.flakes.is_empty() and not w.visible, "no weather: nothing")
+	w.free()
+	again.free()

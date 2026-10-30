@@ -26,6 +26,7 @@ var map: ExploreMap
 var grid: CombatGrid
 var board: CombatBoard
 var overlay: ExploreOverlay
+var weather: MapWeather
 var hud: FrameHud
 var party: Array = []  ## CombatUnit, leader first; only the leader stands on the map outside fights
 ## {"def": the map's group dict, "units": Array of CombatUnit, "state": idle / noticed / calm / fighting / gone}
@@ -79,8 +80,12 @@ func _ready() -> void:
 	board.backdrop = true  # the map's look: sky, mountains and forest for valley looks, a dark floor indoors
 	# Outdoors, the painted look's staging (as in the map maker and fights): the set's skyline fixed behind
 	# the view and a solid foreground band. Interiors keep their dark floor.
-	board.wallpaper = MapLook.resolve(grid.look, map.art_set, map.strangeness).staging != "plain"
+	var map_look := MapLook.resolve(grid.look, map.art_set, map.strangeness)
+	board.wallpaper = map_look.staging != "plain"
 	add_child(board)
+	weather = MapWeather.new()  # snow or fall leaves from the map's look ([USER] 2026-10-30, ambience)
+	add_child(weather)
+	weather.setup(map_look.weather, get_viewport().get_visible_rect(), map.map_name.hash())
 	overlay = ExploreOverlay.new()
 	overlay.scene = self
 	board.add_child(overlay)
