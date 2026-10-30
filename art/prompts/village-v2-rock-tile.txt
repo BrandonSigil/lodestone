@@ -1,0 +1,20 @@
+LODESTONE VILLAGE V2 ROCK FACE, TILEABLE (redo of the repeat; Brandon approved the look of rocks 4 and 5 on 2026-10-30 but not how they stack)
+
+Image 1 = the approved blue-grey rock (docs/art/references/village-v2-rock-4.png). Image 2 = the approved warm grey rock with broad calm slabs (docs/art/references/village-v2-rock-5.png). Copy their look exactly: the same colours, the same soft flat painted fills, the same soft wobbly warm charcoal line in the cracks, the same tall vertical slabs and ridges with darker cracks between them, the same small amount of detail. Image 3 = docs/art/references/style-flat-forest.png, the house finish; nothing in this picture may be more detailed than it.
+
+WHAT THIS IS: a texture swatch that the game repeats across and down a tall cliff face, side by side and one above the other, many times. Seen perfectly STRAIGHT ON and flat: no top, no corner, no perspective, no grass, no ground, no sky.
+It must TILE PERFECTLY and look natural when repeated (most important):
+- the left edge continues exactly into the right edge, and the top edge exactly into the bottom edge; every slab and crack that leaves one edge comes back in at the opposite edge;
+- EVEN all over: the same density of slabs and cracks everywhere, no feature that catches the eye (no single big slab, no lone dark crack, no bright patch, no moss, no tuft, no chip, no mark) because it would repeat in a grid;
+- slabs of many DIFFERENT widths, some narrow, some broad, irregular spacing, cracks that wander a little, slabs that end at different heights and overlap, so no column or row lines up;
+- about twice as many slabs as image 1 or image 2 show in one square (this square covers twice the cliff, so each slab stays the same size);
+- no horizontal band, ledge, layer or line across the square; light perfectly even from top to bottom and left to right (the game shades the faces).
+
+LAYOUT: aspect 3:2, plain cream paper (#eae8d6), no title, no labels, no text. Two equal SQUARE swatches side by side with a clear cream gap between them and around them; each swatch filled edge to edge with rock; nothing crosses a swatch edge.
+   left swatch: the blue-grey rock of image 1 (about #8c8f94 lit, #626670 in the cracks);
+   right swatch: the warm grey rock of image 2 (about #9f8874 lit, #756354 in the cracks).
+
+Avoid: focal features, any one slab bigger or darker than the rest, moss, grass, tufts, horizontal bands, ledges, strata, bricks, cut blocks, masonry, isometric blocks, perspective, a vignette or darker corners, lighter middle, every chip drawn, speckle, noise, pebbles, pixel art, dithering, cast shadows, text, labels, borders around the swatches, 3d render, glossy, photo, saturated colours, black.
+
+CELL TO GAME FILE: cut the two swatches (wall_kit_cut.py-style: cells from the cream gaps, trim the rim, 512 square), run seam_wrap.py --axis xy only if tile_seam_check.py says the edges don't meet, then show tiled mock-ups at real cliff heights (6, 12 and 24 levels) on a review card. Brandon's pick goes to game/art/source/battle/village/side_rock.png, drawn at 4 cells x 8 levels a square if the map builder's village v2 side scale lands.
+Run: cd tools/art && ~/.lodestone/venv/bin/python picsart_sheet.py --name village_v2_rock_tile --prompt-file ../../art/prompts/village-v2-rock-tile.txt --ref ../../docs/art/references/village-v2-rock-4.png --ref ../../docs/art/references/village-v2-rock-5.png --ref ../../docs/art/references/style-flat-forest.png --aspect 3:2 --resolution 2K --count 3 --out-dir ../../art/picsart/out/village-v2
