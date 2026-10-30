@@ -950,7 +950,7 @@ func _draw_ground(c: Vector2i) -> void:
 	var seed_v := _hash(c)
 	var zone := grid.zone_at(c)  # "" = the map's set
 	var top_tex: Texture2D = null if wall else BattleArt.top(t, zone)
-	var side_tex: Texture2D = null if wall else BattleArt.side(CombatGrid.T.GRASS if t == CombatGrid.T.WATER else t, zone)  # river walls are the bank's rock
+	var side_tex: Texture2D = _kit_plain() if wall else BattleArt.side(CombatGrid.T.GRASS if t == CombatGrid.T.WATER else t, zone)  # river walls are the bank's rock; walls wear their kit
 	var tint := _tint(t)
 	var fl := _floor()
 	var lip := 0.0 if built or t == CombatGrid.T.WATER else BattleArt.lip(t, zone)
@@ -1151,6 +1151,11 @@ func _wall(c: Vector2i) -> bool:
 	return walls and wall_cells.has(c) and grid.terrain_at(c) == CombatGrid.T.ROCK
 
 
+## The map's wall kit's plain wall, for the block walls it still has (inner walls, dungeon walls); null = graybox.
+func _kit_plain() -> Texture2D:
+	return BattleArt.texture("wall_plain", true, wall_kit) if wall_kit != "" else null
+
+
 func _kit_wall(c: Vector2i) -> bool:
 	return wall_kit != "" and backs.has(c) and _wall(c)
 
@@ -1340,7 +1345,7 @@ func _draw_ground_soft(c: Vector2i) -> void:
 			_gap_floor(c, k, r[k])
 	# River walls are the rock around them, not the set's masonry.
 	var side_t := CombatGrid.T.GRASS if t == CombatGrid.T.WATER else t
-	var body := {} if wall else BattleArt.side_body(side_t, zone)
+	var body := ({"tex": _kit_plain(), "u": BattleArt.SIDE_TILES, "v": BattleArt.SIDE_LEVELS} if _kit_plain() != null else {}) if wall else BattleArt.side_body(side_t, zone)
 	var built := t == CombatGrid.T.STONE or t == CombatGrid.T.RUIN
 	var face := WALL_SIDE if wall else (MASONRY if built else CLIFF).lerp(ALIEN_CLIFF, strangeness)
 	# Faces, and the runs of shown segments that drop (each gets one unbroken lip).
