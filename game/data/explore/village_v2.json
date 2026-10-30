@@ -955,7 +955,7 @@
     "walk": false
    },
    {
-    "sprite": "ph_crypt_gate",
+    "sprite": "prop_crypt_gate",
     "cell": [
      5,
      19
@@ -964,7 +964,7 @@
      2,
      1
     ],
-    "tall": 1.5,
+    "tall": 1.6,
     "sight": 2.0,
     "walk": false
    },
@@ -1172,7 +1172,7 @@
     "walk": false
    },
    {
-    "sprite": "ph_windmill",
+    "sprite": "prop_windmill",
     "cell": [
      9,
      32
@@ -1228,7 +1228,7 @@
     "walk": false
    },
    {
-    "sprite": "ph_boathouse",
+    "sprite": "prop_boathouse",
     "cell": [
      16,
      43
@@ -1237,7 +1237,7 @@
      2,
      2
     ],
-    "tall": 1.5,
+    "tall": 1.8,
     "sight": 2.0,
     "walk": false
    },

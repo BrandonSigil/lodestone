@@ -403,7 +403,7 @@ V.arch("prop_arch", 5, 8, (4, 1))
 for x in (4, 6, 8):
     for y in (12, 14, 16):
         V.prop("prop_headstone" if (x + y) % 4 == 0 else "prop_grave_mound", x, y, (1, 1), tall=0.75, sight=0.3)
-V.prop("ph_crypt_gate", 5, 19, (2, 1), tall=1.5, sight=2.0)
+V.prop("prop_crypt_gate", 5, 19, (2, 1), tall=1.6, sight=2.0)
 for x, y in [(x, 11) for x in range(3, 10)] + [(2, y) for y in range(12, 18)]:  # an iron fence round the graves' north and west
     V.prop("prop_iron_fence", x, y, (1, 1), tall=0.8, sight=0.0)
     if y == 11:
@@ -412,7 +412,7 @@ p("prop_tree_bare", 10, 17, 1.5, 1.0)
 KEEP_OPEN.update((x, y) for x in range(2, 13) for y in range(4, 21))
 
 # The farm (windmill and fields).
-V.prop("ph_windmill", 9, 32, (2, 2), tall=3.0, sight=3.0)
+V.prop("prop_windmill", 9, 32, (2, 2), tall=3.0, sight=3.0)
 for x in (3, 5):  # the beds' long side runs along the grid's y axis (down-left on screen), so the footprint is 1 x 3
     V.prop("prop_crops", x, 35, (1, 3), tall=0.7, sight=0.0)
 p("prop_hay", 8, 36, 0.65, 0.5)
@@ -422,7 +422,7 @@ KEEP_OPEN.update((x, y) for x in range(2, 13) for y in range(29, 39))
 bx, by = next((x, y) for y in range(DOCK[0][1] - 2, 36, -1) for x in range(12, 20)
               if len({V.height[y + dy][x + dx] for dx in (0, 1) for dy in (0, 1)}) == 1
               and all(V.terrain[y + dy][x + dx] == "g" for dx in (0, 1) for dy in (0, 1)))
-V.prop("ph_boathouse", bx, by, (2, 2), tall=1.5, sight=2.0)  # on flat shore beside the dock's root
+V.prop("prop_boathouse", bx, by, (2, 2), tall=1.8, sight=2.0)  # on flat shore beside the dock's root
 V.prop("prop_rowboat", 8, DOCK[0][1] - 2, (1, 2), tall=0.7, sight=0.0)  # pulled up on the shore by the dock
 KEEP_OPEN.update((x, y) for x in range(8, 15) for y in range(DOCK[0][1] - 4, DOCK[0][1] + 6))
 reeds = [(x, y) for y in range(40, H) for x in range(0, 24) if V.terrain[y][x] == "g" and V.height[y][x] == 1
