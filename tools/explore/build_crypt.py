@@ -143,7 +143,7 @@ data = {
     "name": "crypt",
     "art_set": "ruins",
     "strangeness": 0.0,
-    "level": 3,  # foes by depth (design-to-builder-map-levels): two deeper than the snow pass
+    "level": 2,  # foes by depth (design-to-builder-map-levels; 3 made the plaza a wall in playtests, 9ae5045)
     "view": 0,
     "walls": True,  # plain gray walls (ExploreMap.walls)
     "wall_kit": "dungeon",  # thin stone back walls from the dungeon wall kit ([USER] 2026-10-30)
