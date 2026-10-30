@@ -581,6 +581,10 @@ func _play(ev: Dictionary) -> void:
 			board.float_text(t.cell, Txt.t("UI_AMBUSH"), Color(1.0, 0.5, 0.4), 22)
 			log_line.emit(Txt.f("LOG_AMBUSH", Txt.t(t.name_key)))
 			await get_tree().create_timer(0.35).timeout
+		"hp_phase":
+			board.float_text(ev.unit.cell, Txt.t("UI_PHASE"), Color(0.9, 0.6, 1.0), 22)
+			log_line.emit(Txt.f("LOG_PHASE", Txt.t(ev.unit.name_key)))
+			await get_tree().create_timer(0.4).timeout
 		"mark":
 			_saw(ev.src, ev.ability)
 			log_line.emit(Txt.f("LOG_MARK", [Txt.t(ev.src.name_key), Txt.t(ev.ability.name_key)]))

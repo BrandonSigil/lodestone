@@ -11,6 +11,7 @@ const REVIVE_SCORE := 40.0  ## helping a downed teammate up beats most hits
 const KNOCKOUT_SCORE := 12.0  ## a downed foe kept down for the fight: about a solid hit's worth
 const COST_WEIGHT := 0.4  ## how much a point of mana, rage or charge weighs against a skill's worth
 const TAUNT_RANGE := 5
+const HEXES := [CombatRules.STATUS_SPOOK, CombatRules.STATUS_SLOW]  ## a hero under one hex is not hexed again
 const AMBUSH_PICK := 60.0  ## an ambusher's pull toward soft targets, so armor and HP outweigh the damage it would do  ## foes this close are the ones a taunt will pull
 
 
@@ -34,6 +35,9 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 		leave[u.cell] = float(leave[u.cell]) - watch_value(grid, u, units)  # standing still readies the watch shot, out of harm's way
 	var actions: Array[Ability] = u.abilities.duplicate()
 	actions.append_array(CombatRules.extra_actions(u))  # AID or a knock-out too
+	var safe := _safe_cells(u, units, cost) if u.has_trait(CombatRules.TRAIT_KEEPS_BACK) else {}
+	if not safe.is_empty():  # a piece that keeps back never strikes while it has somewhere to stand 2 tiles off the heroes
+		actions = actions.filter(func(a: Ability) -> bool: return a.kind != "attack")
 	var extra := {}  # CARRY's destination and set-down cell, when a clutch tool wins
 	for c: Dictionary in _clutch(grid, u, units, cost, leave):
 		if float(c.score) > best_score:
@@ -43,6 +47,8 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 			best_aim = c.aim
 			extra = c
 	for cell: Vector2i in cost:
+		if not safe.is_empty() and not safe.has(cell):
+			continue
 		for a in actions:
 			if not CombatRules.usable(u, a) or a.boss_move() or a.kind in ["carry", "command", "swap"]:
 				continue
@@ -61,7 +67,7 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	if best_ability == null and u.hiding:
 		best_cell = u.cell  # an ambusher waits where it hides until something comes in reach
 	elif best_ability == null:
-		best_cell = _approach(grid, u, units, cost, leave)
+		best_cell = _stay_back(u, units, safe, cost) if not safe.is_empty() else _approach(grid, u, units, cost, leave)
 		guard = u.hp * 2 < u.max_hp
 	var target := CombatRules.unit_at(units, best_aim) if best_ability else null
 	return {"move": best_cell, "ability": best_ability, "aim": best_aim, "target": target,
@@ -240,7 +246,7 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 				if u.has_trait(CombatRules.TRAIT_AMBUSH) and t.team != u.team:
 					s += AMBUSH_PICK - t.armor * 10.0 - t.hp * 0.5  # the softest piece: lowest armor, then HP
 			"hex":
-				if not t.has_status(a.status):
+				if not t.has_status(a.status) and not (a.status in HEXES and HEXES.any(func(h: String) -> bool: return t.has_status(h))):
 					s += side * _hex_value(t, a.status)
 			"heal":
 				s += e.heal * 6.0 if t.team == u.team else -e.heal * 6.0
@@ -317,7 +323,15 @@ static func threat_worth(t: CombatUnit, units: Array) -> float:
 				next += 1
 		var cold := mini(next, int(CombatRules.num("pillar_cold_max"))) * CombatRules.num("pillar_cold")
 		return clampf(cold / 6.0, 0.1, 1.0)
-	return clampf(t.damage / 6.0, 0.3, 1.0)
+	var support := 0.0  # a healer, warder or hexer is worth more than its own hits: it undoes or weakens everyone else's
+	for a: Ability in t.abilities:
+		if a.kind == "heal" and a.target == "ally" and t.team == 1:
+			support = maxf(support, 1.0)
+		elif a.status == CombatRules.STATUS_FOE_WARD:
+			support = maxf(support, 0.8)
+		elif a.kind == "hex" and t.team == 1:
+			support = maxf(support, 0.7)
+	return maxf(support, clampf(t.damage / 6.0, 0.3, 1.0))
 
 
 ## What a readied watch shot is worth to u (OVERWATCH): only when a foe out of the bow's reach could walk in on a
@@ -364,6 +378,10 @@ static func _hex_value(t: CombatUnit, status: String) -> float:
 			return 8.0 + t.damage * 6.0
 		CombatRules.STATUS_ROOTED:
 			return 6.0
+		CombatRules.STATUS_SPOOK:  # the hero who hits hardest first, so the hexes spread
+			return 6.0 + t.damage * 3.0
+		CombatRules.STATUS_SLOW:
+			return 4.0 + t.damage * 2.0
 	return 4.0
 
 
@@ -377,6 +395,12 @@ static func _buff_value(u: CombatUnit, t: CombatUnit, status: String, units: Arr
 			return 6.0 + 30.0 * (1.0 - float(t.hp) / t.max_hp)
 		CombatRules.STATUS_OVERWATCH:
 			return watch_value(grid, u, units) if grid != null else 0.0
+		CombatRules.STATUS_FOE_WARD:  # the foe closest to a hero, once one is near enough to matter
+			var nearest := 99
+			for o: CombatUnit in units:
+				if o.team != u.team and o.alive() and not o.hiding:
+					nearest = mini(nearest, CombatRules.dist(o.cell, t.cell))
+			return 5.0 + float(8 - nearest) if nearest < 8 else 0.0
 		CombatRules.STATUS_GUIDED:
 			return 5.0 if t != u and not t.acted else 0.0
 		CombatRules.STATUS_TAUNT:
@@ -389,6 +413,44 @@ static func _buff_value(u: CombatUnit, t: CombatUnit, status: String, units: Arr
 					near += 1
 			return 4.0 * near
 	return 5.0 if t.hp < t.max_hp else 0.0
+
+
+## Cells u could end on that are 2 or more tiles from every hero (a keeps_back piece's room). Empty when cornered.
+static func _safe_cells(u: CombatUnit, units: Array, cost: Dictionary) -> Dictionary:
+	var out := {}
+	if not units.any(func(o: CombatUnit) -> bool:  # with no fighting friend left it has nothing to hide behind: no stalls
+			return o != u and o.team == u.team and o.alive() and not o.has_trait(CombatRules.TRAIT_KEEPS_BACK) and not o.has_trait(CombatRules.TRAIT_STRUCTURE)):
+		return out
+	for c: Vector2i in cost:
+		var near := 99
+		for o: CombatUnit in units:
+			if o.team != u.team and o.alive() and not o.hiding and not o.has_trait(CombatRules.TRAIT_STRUCTURE):
+				near = mini(near, CombatRules.dist(o.cell, c))
+		if near >= 2:
+			out[c] = true
+	return out
+
+
+## Nothing to do from where it keeps back: stay with the line, the safe cell nearest a friend (the farthest from the
+## heroes on a tie).
+static func _stay_back(u: CombatUnit, units: Array, safe: Dictionary, cost: Dictionary) -> Vector2i:
+	var best := u.cell
+	var best_s := INF
+	for c: Vector2i in safe:
+		var friend := 99
+		var hero := 99
+		for o: CombatUnit in units:
+			if o == u or not o.alive() or o.hiding:
+				continue
+			if o.team == u.team:
+				friend = mini(friend, CombatRules.dist(o.cell, c))
+			else:
+				hero = mini(hero, CombatRules.dist(o.cell, c))
+		var s := friend * 10.0 - hero + int(cost[c]) * 0.1
+		if s < best_s:
+			best_s = s
+			best = c
+	return best
 
 
 ## Nobody in reach: walk toward the nearest foe by the way there on foot (round cliffs, up the stairs),

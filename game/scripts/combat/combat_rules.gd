@@ -19,12 +19,14 @@ const STATUS_SLEEP := "sleep"  ## skips the owner's next phase, can't hit back; 
 const STATUS_GUIDED := "guided"  ## STAR POINT: more crit chance until the owner's next phase
 const STATUS_TAUNT := "taunt"  ## foes that can reach the taunter must hit it, until the taunter's next phase
 const STATUS_SLOW := "slow"  ## less move for a phase
+const STATUS_SPOOK := "spook"  ## a hexer's scare: hits for less until the end of the phase it lands in (acts as spooked)
+const STATUS_FOE_WARD := "foe_ward"  ## a warder's ward on a foe: more armor until that side next moves
 const STATUS_BLEED := "bleed"  ## loses a little HP at the start of each of its phases (a ranked bite)
 const STATUS_WARD := "ward"  ## the book's WARD: the next hit on this piece does 0 and no status; gone at the mage's next phase
 const STATUS_OVERWATCH := "overwatch"  ## the bow's OVERWATCH: the first foe to move into its reach takes a plain shot and stops
 const STATUS_POISON := "poison"  ## the same, from the rogue's blades: `poison_damage` for `poison_turns` phases
 ## Cleared when the owner's next phase starts (they protect through the enemy phase).
-const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT, STATUS_WARD, STATUS_OVERWATCH]
+const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT, STATUS_WARD, STATUS_OVERWATCH, STATUS_FOE_WARD]
 
 ## Combat traits (one per roster character, a few for enemy classes). Ids live in the .tres traits arrays.
 const TRAIT_SHIELD_WALL := &"shield_wall"  ## Lead: allies standing next to them get more armor
@@ -34,6 +36,8 @@ const TRAIT_SCHOLAR := &"scholar"  ## Wizard: spells deal +1 damage and heal +1
 const TRAIT_DEEP_ROOTS := &"deep_roots"  ## Bushberry: can't be pushed, regrows 1 HP at the start of its phase
 const TRAIT_BONES := &"bones"  ## Skeleton: makes the piece undead (arrows -2, fire +2: data/tags.csv)
 const TRAIT_DOUBLE_STRIKE := &"double_strike"  ## Lewith & Flark: the basic hit swings twice at -1 damage each
+const TRAIT_KEEPS_BACK := &"keeps_back"  ## Mender foe: stays 2 or more tiles from heroes, attacks only when cornered
+const TRAIT_CHARGE := &"charge"  ## Rusher and bull: a straight run of 3 or more tiles this phase adds charge_bonus to its hits
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
 const TRAIT_POISON_BLADES := &"poison_blades"  ## Rogue: every hit leaves POISON ([USER] design-boss-daggers)
 const TRAIT_STAND_WATCH := &"stand_watch"  ## Bow: an archer that doesn't move in its phase ends it on OVERWATCH, free
@@ -361,9 +365,17 @@ static func damage_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, fro
 				n += int(row.change)
 		if n != 0:
 			parts.append(["FOE_" + String(t).to_upper(), n])
-	if att.spooked:
+	if att.spooked or att.has_status(STATUS_SPOOK):
 		parts.append(["MOD_SPOOKED", int(num("spooked_damage"))])
+	if att.has_trait(TRAIT_CHARGE) and charged(att, from):
+		parts.append(["MOD_CHARGE", int(num("charge_bonus"))])
 	return parts
+
+
+## Did att run in a straight line (along a row or a column) for charge_min tiles or more this phase, ending on `from`?
+static func charged(att: CombatUnit, from: Vector2i) -> bool:
+	var d := CombatGrid.ground(from) - CombatGrid.ground(att.move_origin)
+	return (d.x == 0 or d.y == 0) and maxi(absi(d.x), absi(d.y)) >= int(num("charge_min"))
 
 
 ## What kind of blow this is for the foe tags: blade (non-magic melee), arrow (non-magic ranged), spell (magic),
@@ -388,6 +400,8 @@ static func armor_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from
 		parts.append(["MOD_GUARD", int(num("guard_armor"))])
 	if tgt.has_status(STATUS_VEIL):
 		parts.append(["MOD_VEIL", int(num("veil_armor"))])
+	if tgt.has_status(STATUS_FOE_WARD):
+		parts.append(["MOD_FOE_WARD", int(num("foe_ward_armor"))])
 	if shielded(tgt, units):
 		parts.append(["MOD_SHIELD", int(num("shield_wall_armor"))])
 	if dist(from, tgt.cell) > 1 and grid.cover(tgt.cell) > 0:
@@ -717,6 +731,35 @@ static func end_phase(units: Array, team: int) -> void:
 
 # --- a boss's big moves ([USER] 2026-10-30 design-boss-warning, design-boss-shape) ---------------------------
 
+## How many of its class's health lines u's HP is at or under (ClassDef.hp_phases).
+static func hp_phase_of(u: CombatUnit) -> int:
+	var n := 0
+	if u.cls == null:
+		return 0
+	for line: Dictionary in u.cls.hp_phases:
+		if u.hp * 100 <= int(line.below) * u.max_hp:
+			n += 1
+	return n
+
+
+## At the start of u's phase: if its HP has fallen under the next health line, it moves up one phase (the earlier
+## phase's abilities out, the new one's in). One step a phase, so a burst turn does not skip a phase.
+static func hp_phase_step(u: CombatUnit) -> Array:
+	if u.cls == null or u.cls.hp_phases.is_empty() or hp_phase_of(u) <= u.hp_phase:
+		return []
+	u.hp_phase += 1
+	for a in u.phase_abilities:
+		u.abilities.erase(a)
+	u.phase_abilities.clear()
+	var line: Dictionary = u.cls.hp_phases[u.hp_phase - 1]
+	for id in line.get("abilities", []):
+		var a := Db.ability(String(id))
+		if a != null:
+			u.abilities.append(a)
+			u.phase_abilities.append(a)
+	return [{"type": "hp_phase", "unit": u, "phase": u.hp_phase}]
+
+
 ## Is boss move `a` ready on u's current phase? From its `first` phase, then `cooldown` phases after each use.
 static func boss_ready(u: CombatUnit, a: Ability) -> bool:
 	return u.phase_no >= int(u.ready_at.get(a.id, a.first))
@@ -729,6 +772,7 @@ static func boss_start(rng: RandomNumberGenerator, grid: CombatGrid, units: Arra
 	for u: CombatUnit in units.duplicate():
 		if u.team != team or not u.alive():
 			continue
+		events.append_array(hp_phase_step(u))
 		if not u.mark.is_empty():
 			u.mark.left = int(u.mark.left) - 1
 			if int(u.mark.left) <= 0:

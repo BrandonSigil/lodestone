@@ -35,3 +35,6 @@ upgrade_damage,1,each weapon upgrade at the smithy adds this much damage ([USER]
 pillar_cold,1,HP a party piece loses at the end of its phase for each ice pillar next to it (through armor)
 pillar_cold_max,2,at most this many pillars count
 threat_ai,1,1: the AI weighs a kill by what the target threatens (a pillar by its cold); 0 every kill the same (game designer dcba358: on with the pillars)
+foe_ward_armor,2,a foe warded by a warder has this much more armor until the warder's side next moves (game designer foe-roles-build)
+charge_bonus,2,a charging piece's hit does this much more
+charge_min,3,tiles it must have run in a straight line this phase to charge

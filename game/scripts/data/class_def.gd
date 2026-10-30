@@ -25,6 +25,11 @@ extends Resource
 @export var abilities: Array[StringName] = []  ## rows of data/abilities.csv beyond the basic strike
 @export var spell_pool: Array[StringName] = []  ## spells (magic rows of data/abilities.csv) this class can learn
 @export var spell_slots: int = 0  ## how many it brings into a fight
+## A boss's phases by health ([USER] 2026-10-30 design-foes-boss2): entries {"below": % of max HP, "abilities": [ids]},
+## in falling order, e.g. 67 and 33 for 2/3 and 1/3. Once its HP is at or under an entry's `below` it moves to that
+## phase at the start of its next phase, one phase at a time (a burst does not skip one), and has the base abilities
+## plus that phase's set (the earlier phase's set goes). No boss has any yet: what a phase changes is not picked.
+@export var hp_phases: Array = []
 @export var traits: Array[StringName] = []
 @export var tags: Array[StringName] = []  ## foe tags (undead, beast, armored, flying): some attacks hit them harder or softer (data/tags.csv)  ## combat traits every unit of this class has (see CombatRules.TRAIT_*)
 

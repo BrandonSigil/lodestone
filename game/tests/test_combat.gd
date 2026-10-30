@@ -1270,3 +1270,106 @@ func test_an_archer_that_stands_still_watches() -> void:
 	archer.place(Vector2i(3, 1), 0)
 	CombatRules.end_phase(units, 0)
 	ok(not archer.has_status(CombatRules.STATUS_OVERWATCH), "moved: no watch")
+
+
+## Caster foes (game designer foe-roles-build, [USER] design-foes-boss2): the mender heals from 2 tiles and keeps
+## back, the hexer picks the hardest hitter and never stacks, the warder armors the foe nearest a hero.
+func test_caster_foes() -> void:
+	var g := CombatGrid.flat(12, 5)
+	var hero := _unit("knight", 0, Vector2i(2, 2), g)
+	var bandit := _unit("bandit", 1, Vector2i(8, 2), g)
+	var mender := _unit("foe_mender", 1, Vector2i(10, 2), g)
+	bandit.hp = 3
+	var units := [hero, bandit, mender]
+	var p := EnemyAi.plan(g, mender, units)
+	ok(p.ability != null and p.ability.id == "foe_mend" and p.aim == bandit.cell, "the mender heals the wounded foe from range")
+	bandit.hp = bandit.max_hp
+	hero.place(Vector2i(6, 2), 0)
+	p = EnemyAi.plan(g, mender, units)
+	ok(p.ability == null, "nothing to heal: it does not strike")
+	ok(CombatRules.dist(p.move, hero.cell) >= 2, "and keeps 2 tiles off the hero")
+	var tight := CombatGrid.flat(2, 1)
+	var h2 := _unit("bandit_archer", 0, Vector2i(0, 0), tight)  # no counter-hit at 1 tile
+	var m2 := _unit("foe_mender", 1, Vector2i(1, 0), tight)
+	p = EnemyAi.plan(tight, m2, [h2, m2])
+	ok(p.ability != null and p.ability.id == "strike", "cornered, it hits (1)")
+	# the hexer
+	var k := _unit("knight", 0, Vector2i(4, 1), g)
+	var a := _unit("bandit_archer", 0, Vector2i(4, 3), g)
+	var hexer := _unit("foe_hexer", 1, Vector2i(8, 2), g)
+	p = EnemyAi.plan(g, hexer, [k, a, hexer])
+	ok(p.ability != null and p.aim == k.cell, "the hexer picks the hardest hitter")
+	k.statuses[CombatRules.STATUS_SLOW] = 1
+	p = EnemyAi.plan(g, hexer, [k, a, hexer])
+	ok(p.ability != null and p.aim == a.cell, "a hexed hero is not hexed again: it spreads")
+	hexer.statuses.clear()
+	var ev := CombatRules.resolve(RandomNumberGenerator.new(), g, hexer, Db.ability("foe_spook"), a.cell, [k, a, hexer])
+	ok(a.has_status(CombatRules.STATUS_SPOOK), "the scare lands")
+	ok(CombatRules.damage_parts(g, a, hexer, a.cell, null, [k, a, hexer]).any(func(x: Array) -> bool: return x[0] == "MOD_SPOOKED"), "and the scared hero hits softer")
+	# the warder
+	var near := _unit("bandit", 1, Vector2i(5, 2), g)
+	var far := _unit("bandit", 1, Vector2i(11, 4), g)
+	var warder := _unit("foe_warder", 1, Vector2i(9, 2), g)
+	var hh := _unit("knight", 0, Vector2i(3, 2), g)
+	p = EnemyAi.plan(g, warder, [hh, near, far, warder])
+	ok(p.ability != null and p.ability.id == "foe_ward" and p.aim == near.cell, "the warder armors the foe nearest a hero")
+	near.statuses[CombatRules.STATUS_FOE_WARD] = 1
+	ok(CombatRules.armor_parts(g, hh, near, hh.cell, null, [hh, near]).any(func(x: Array) -> bool: return x[0] == "MOD_FOE_WARD" and x[1] == 2), "the ward is +2 armor")
+	p = EnemyAi.plan(g, warder, [hh, near, far, warder])
+	ok(p.ability == null or p.aim != near.cell, "it does not stack on a warded foe")
+	ev.clear()
+
+
+## Chargers: a straight run of 3 or more tiles adds 2; the bull's gore also shoves 1.
+func test_charger_foes() -> void:
+	var g := CombatGrid.flat(12, 6)
+	var hero := _unit("knight", 0, Vector2i(6, 2), g)
+	var rusher := _unit("foe_rusher", 1, Vector2i(0, 2), g)
+	rusher.move_origin = Vector2i(0, 2)
+	var has := func(from: Vector2i) -> bool:
+		return CombatRules.damage_parts(g, rusher, hero, from, null, [hero, rusher]).any(func(x: Array) -> bool: return x[0] == "MOD_CHARGE" and x[1] == 2)
+	ok(has.call(Vector2i(5, 2)), "five tiles straight: it charges")
+	ok(not has.call(Vector2i(2, 2)), "two tiles: no")
+	ok(not has.call(Vector2i(4, 3)), "not in a line: no")
+	var p := EnemyAi.plan(g, rusher, [hero, rusher])
+	ok(p.ability != null and p.aim == hero.cell and CombatRules.charged(rusher, p.move), "the AI runs in a line when it can")
+	var bull := _unit("foe_bull", 1, Vector2i(7, 2), g)
+	var gore := Db.ability("gore")
+	CombatRules.resolve(RandomNumberGenerator.new(), g, bull, gore, hero.cell, [hero, bull])
+	eq(hero.cell, Vector2i(5, 2), "the bull's gore shoves its target 1 tile")
+
+
+## Boss phases by health (design-foes-boss2): the trigger is data on the class, one phase a boss phase, and a
+## phase's ability set replaces the last one's. What a phase changes is not picked, so no real boss has any yet.
+func test_boss_phases_by_health() -> void:
+	var c := ClassDef.new()
+	c.id = &"phase_test"
+	c.name_key = "ENEMY_BANDIT"
+	c.max_hp = 30
+	c.hp_phases = [{"below": 67, "abilities": ["bark"]}, {"below": 33, "abilities": ["bite"]}]
+	var g := CombatGrid.flat(4, 4)
+	var boss := CombatUnit.enemy(c)
+	boss.place(Vector2i(1, 1), 0)
+	var rng := RandomNumberGenerator.new()
+	var ids := func() -> Array:
+		return boss.abilities.map(func(a: Ability) -> String: return a.id)
+	boss.hp = 21  # 70%: above the first line
+	CombatRules.boss_start(rng, g, [boss], 1)
+	eq(boss.hp_phase, 0, "above the first line: no change")
+	boss.hp = 20  # 66.7%
+	var ev := CombatRules.boss_start(rng, g, [boss], 1)
+	eq(boss.hp_phase, 1, "at 2/3: the first phase, at the start of its next phase")
+	ok(ids.call().has("bark") and ev.any(func(e: Dictionary) -> bool: return e.type == "hp_phase"), "its set comes in")
+	boss.hp = 3  # a burst turn: under both lines at once
+	CombatRules.boss_start(rng, g, [boss], 1)
+	eq(boss.hp_phase, 2, "then the second")
+	ok(ids.call().has("bite") and not ids.call().has("bark"), "the second set replaces the first")
+	CombatRules.boss_start(rng, g, [boss], 1)
+	eq(boss.hp_phase, 2, "and it stays there")
+	var one := CombatUnit.enemy(c)
+	one.place(Vector2i(2, 2), 0)
+	one.hp = 3
+	CombatRules.boss_start(rng, g, [one], 1)
+	eq(one.hp_phase, 1, "a burst does not skip a phase: one a phase")
+	CombatRules.boss_start(rng, g, [one], 1)
+	eq(one.hp_phase, 2)

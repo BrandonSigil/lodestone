@@ -6,7 +6,7 @@ const SCALES := {"today": [1.0, 1.0, 1.0], "a": [1.25, 1.25, 1.25], "b": [1.5, 1
 
 
 
-func run(s: Node, frames: int, which: String) -> void:
+func run(s: Node, frames: int, which: String, group := "") -> void:
 	var study: RefCounted = load("res://tools/scale_study_run.gd").new()
 	var k: Array = SCALES[which]
 	if frames == 3:
@@ -21,7 +21,7 @@ func run(s: Node, frames: int, which: String) -> void:
 		for id in ["lead", "stardrop", "hunter"]:
 			setup.party.append({"id": id, "cell": spots.pop_front()})
 		var es := setup.grid.deploy_cells(1)
-		for id in ["bandit", "bandit", "bandit_archer", "wolf"]:
+		for id in (Db.encounters[group].units if group != "" else ["bandit", "bandit", "bandit_archer", "wolf"]):
 			setup.enemies.append({"id": id, "cell": es.pop_front()})
 		s.set("setup", setup)
 		study.set("_k", k[1])
@@ -37,15 +37,19 @@ func run(s: Node, frames: int, which: String) -> void:
 		study.set("_fast", k[2])
 		for u: CombatUnit in b.units:
 			study.call("_stretch", u)
-		var hunter: CombatUnit = b.units[2]
-		b._select(hunter)
-		b._show_move_tiles()
 		for child in b.get_children():
 			if child != b.board:
 				child.visible = false
 		for child in s.get_children():
 			if child != b and child is CanvasItem:
 				(child as CanvasItem).visible = false
+		if group != "":  # a foe group: the danger zone shows where its pieces could hit
+			b.show_danger = true
+			b._refresh_danger()
+			return
+		var hunter: CombatUnit = b.units[2]
+		b._select(hunter)
+		b._show_move_tiles()
 		var move_cells: Dictionary = CombatRules.reachable(b.grid, hunter, b.units).cost
 		var threat := {}
 		for from: Vector2i in move_cells:  # every cell within the piece's reach of somewhere it could stand

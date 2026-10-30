@@ -69,6 +69,10 @@ func _helper() -> RefCounted:
 	return load("res://tools/explore_balance_run.gd").new()
 
 
+func _party_of(who: String) -> Array:
+	return _helper().call("_party", 1, "sword") if who == "duo" else _quad(1)
+
+
 func _quad(level: int) -> Array:
 	var party: Array = _helper().call("_party", level, "sword")
 	for id in [&"wizard", &"hunter"]:
