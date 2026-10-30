@@ -508,7 +508,8 @@ import shutil
 import subprocess
 GODOT = os.environ.get("GODOT") or shutil.which("godot") or "/Applications/Godot.app/Contents/MacOS/Godot"
 GAME = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "game"))
-subprocess.run([GODOT, "--headless", "--path", GAME, "-s", "res://tools/dress_explore.gd", "--",
+GUARD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mem_guard.sh")  # killed over GODOT_MEM_CAP_MB
+subprocess.run([GUARD, GODOT, "--headless", "--path", GAME, "-s", "res://tools/dress_explore.gd", "--",
                 "snow_pass", "pass_exit", "crypt_stair", "3"], check=True)
 
 
