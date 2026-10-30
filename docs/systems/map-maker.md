@@ -115,6 +115,7 @@ recoloured to on load, marks kept; the snow set's road borrows the base sand ton
 - **Map**: name, kind (battle map in `data/maps`, explore map in `data/explore`), size and resize.
 - **Look**: tile set, look, "Use this view as the map's angle" (players only ever see that angle; turning
   while editing doesn't change it), cliff depth, forest rings, strangeness.
+- **Size** (scale C, [USER] 2026-10-30): new maps and valleys default to 21 x 18 (`MapGen.FIGHT_W` / `FIGHT_H`), the fight area with a start gap of 18; the MAP tab's size spinners start there.
 - **Generate**: seed, new valley, next seed, roughen outline, link with stairs, tidy edges, add pillars,
   templates. New valleys keep V9 to V11 (tidy edges, pillars, rivers with big falls).
 - **Keys**: every shortcut.

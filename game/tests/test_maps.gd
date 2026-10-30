@@ -346,6 +346,22 @@ func test_road_fight_deploy_on_one_ground() -> void:
 			ok(ground.has(c), "seed %d: %s is on the main ground" % [s, c])
 
 
+## Scale C (2026-10-30): road fights and new maps are 21 x 18 and the sides start about 18 cells apart.
+func test_road_fight_is_scale_c() -> void:
+	eq(MapGen.FIGHT_W, 21)
+	eq(MapGen.FIGHT_H, 18)
+	for s in 20:
+		var g := MapGen.valley(s, MapGen.FIGHT_W, MapGen.FIGHT_H, "snow")
+		var mine := g.deploy_cells(0)
+		var theirs := g.deploy_cells(1)
+		ok(mine.size() >= 4 and theirs.size() >= 4, "seed %d: room for four a side" % s)
+		var gap := 99
+		for a in mine:
+			for b in theirs:
+				gap = mini(gap, absi(a.x - b.x))
+		ok(gap >= 14, "seed %d: sides start %d columns apart" % [s, gap])
+
+
 func test_map_doc_files() -> void:
 	var g := MapGen.valley(2, 14, 12)
 	var battle := MapDoc.create("battle", "Test Map!", g, "alpine").to_dict()

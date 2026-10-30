@@ -2307,9 +2307,9 @@ func _build_map_page(body: VBoxContainer) -> void:
 	var size_row := HBoxContainer.new()
 	m.body.add_child(size_row)
 	size_row.add_child(MakerUI.label("size", 12, MakerUI.DIM))
-	_w_spin = _spin(size_row, 6, MAX_SIZE, 1, 22)
+	_w_spin = _spin(size_row, 6, MAX_SIZE, 1, MapGen.FIGHT_W)
 	size_row.add_child(MakerUI.label("x", 12, MakerUI.DIM))
-	_h_spin = _spin(size_row, 6, MAX_SIZE, 1, 20)
+	_h_spin = _spin(size_row, 6, MAX_SIZE, 1, MapGen.FIGHT_H)
 	var rs := Button.new()
 	rs.text = "Resize"
 	rs.pressed.connect(_resize)

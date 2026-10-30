@@ -10,7 +10,13 @@ extends RefCounted
 const LEVELS: Array[int] = [0, 3, 6, 8]  ## terrace heights: two or three levels apart, so every step is a cliff
 
 
-static func valley(seed_value: int, w := 22, h := 20, look_id := "alpine") -> CombatGrid:
+## Scale C ([USER] 2026-10-30, dev-scale-c-test: "this feels right"): a fight area is 21 x 18, a start gap of 18.
+## Road fights and new maps come out at this size; docs/design/scale-study.md.
+const FIGHT_W := 21
+const FIGHT_H := 18
+
+
+static func valley(seed_value: int, w := FIGHT_W, h := FIGHT_H, look_id := "alpine") -> CombatGrid:
 	var g := CombatGrid.flat(w, h)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value

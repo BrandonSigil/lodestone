@@ -17,7 +17,7 @@ func _ready() -> void:
 	# A tile set means a road fight from the overworld: a valley from the map generator, built to the painted
 	# look's rules (V9 to V11). Without one (the shelved trail), the old generated island.
 	var art_set := String(setup.get("art_set", ""))
-	var grid := MapGen.valley(setup.seed, 14, 12, art_set) if art_set != "" else CombatGrid.generate(setup.seed, 10, 8, setup.strangeness)
+	var grid := MapGen.valley(setup.seed, MapGen.FIGHT_W, MapGen.FIGHT_H, art_set) if art_set != "" else CombatGrid.generate(setup.seed, 10, 8, setup.strangeness)
 	var enc: Dictionary = Db.encounters.get(setup.encounter, Db.encounters["debug"])
 	loot = enc.loot
 
