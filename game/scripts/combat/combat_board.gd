@@ -1695,9 +1695,7 @@ func _seg_foot(c: Vector2i, s: Dictionary, h: float) -> float:
 		var n: Vector2i = c + TerrainShape.NORMALS[s.edge]
 		low = _surf_or_floor(n)
 		if grid.solid(n) and grid.terrain_at(n) == CombatGrid.T.STAIRS:  # its low steps sit under its own level
-			var run := MapDress.stair_run(grid, n)
-			if not run.is_empty():
-				low = minf(low, float(run.lo))
+			low = minf(low, _stair_low(n))
 	else:
 		low = TerrainShape.gap(grid, c, s.corner, _surf_or_floor).h
 	return maxf(_floor(), minf(low, h))
@@ -1971,54 +1969,118 @@ func _lip_colour(base: Color, n: Vector2) -> Color:
 ## Soft stairs: treads in the path's ground, risers a shade darker, and the flight's sides in the rock of the
 ## cliff it is cut from, that rock's texture hung from the terrace above so it runs on from the cliff beside
 ## the stairs. False when there's no slope to show.
+## The stair kit (docs/design/stairs.md): a stair cell climbs from the ground below it to its own height (its top
+## tread flush with the cell above), in treads of one constant rise, the map's `look.stair_treads` a level (1: block
+## steps, 3: fine treads), so every step on the map is the same size and a flight runs on unbroken from cell to cell.
+## Straight cells climb toward `up`; a cell with lower plain ground on one x side and one y side, and its own height
+## on the other two, is an outside corner, its treads L-shaped.
+
+## How low a stair cell's bottom tread starts: the lowest ground beside it, one to three levels down (the kit).
+func _stair_low(c: Vector2i) -> float:
+	var h := float(grid.height_at(c))
+	var low := h - 1.0
+	for d: Vector2i in CombatRules.DIRS:
+		var n := c + d
+		if grid.solid(n) and grid.passable(n) and float(grid.height_at(n)) < h - 0.01:
+			low = minf(low, float(grid.height_at(n)))
+	return clampf(low, h - 3.0, h - 1.0)
+
+
 func _stair_steps_soft(c: Vector2i, h: float) -> bool:
-	var run := MapDress.stair_run(grid, c)
-	if run.is_empty():
-		return false
+	var hgt := func(d: Vector2i) -> float:  # a neighbour's height, or -1 where nobody stands
+		var n := c + d
+		return float(grid.height_at(n)) if grid.solid(n) and grid.passable(n) else -1.0
+	var is_stair := func(d: Vector2i) -> bool:
+		return grid.solid(c + d) and grid.terrain_at(c + d) == CombatGrid.T.STAIRS
+	var downs: Array[Vector2i] = []
+	var low := h
+	for d: Vector2i in CombatRules.DIRS:
+		var nh: float = hgt.call(d)
+		if nh >= 0.0 and nh < h - 0.01:
+			downs.append(d)
+			low = minf(low, nh)
+	var level: Array[Vector2i] = []
+	for d: Vector2i in CombatRules.DIRS:
+		if absf(float(hgt.call(d)) - h) < 0.01:
+			level.append(d)
+	# an outside corner (plaza steps wrapping round): two sides drop to plain ground, one in x and one in y,
+	# and the other two carry on at this cell's own height
+	var corner: bool = downs.size() == 2 and downs[0].x != downs[1].x and downs[0].y != downs[1].y \
+		and not is_stair.call(downs[0]) and not is_stair.call(downs[1]) and level.size() == 2
+	var up := Vector2i.ZERO
+	if not corner:
+		for d: Vector2i in CombatRules.DIRS:  # in a flight: toward the next step up
+			if is_stair.call(d) and absf(float(hgt.call(d)) - (h + 1.0)) < 0.01:
+				up = d
+		if up == Vector2i.ZERO:
+			for d: Vector2i in CombatRules.DIRS:  # the flight's top: toward the ground it meets, the far side lower
+				var far: float = hgt.call(-d)
+				if absf(float(hgt.call(d)) - h) < 0.01 and far >= 0.0 and far < h - 0.01 and not is_stair.call(d):
+					up = d
+		if up == Vector2i.ZERO:
+			var run := MapDress.stair_run(grid, c)
+			if run.is_empty():
+				return false
+			up = run.up
+		var below: float = hgt.call(-up)
+		low = below if below >= 0.0 else h - 1.0
+		downs = [-up]
+	low = clampf(low, h - 3.0, h - 1.0)
 	var zone := grid.zone_at(c)
 	var tread_tex := BattleArt.top(CombatGrid.T.ROAD, zone)
 	var tread_tint := _tint(CombatGrid.T.ROAD)
 	var rock := BattleArt.side_body(CombatGrid.T.GRASS, zone)
 	var rock_tint := _tint(CombatGrid.T.GRASS)
-	var up: Vector2i = run.up
-	var e_lo: float = run.lo
-	var e_hi: float = run.hi
-	var anchor := maxf(e_hi, _surf_or_floor(c + up))
-	var n := clampi(roundi((e_hi - e_lo) * 3.0), 2, 8)
-	var base := e_lo
+	var anchor := h
+	var n := maxi(1, roundi((h - low) * look.stair_treads))
+	var base := low
 	for shade in [false, true]:
 		base = minf(base, _surf_or_floor(c + front_dir(shade)))
 	base = maxf(base, _floor())
 	var slabs: Array[Dictionary] = []
+	var rect := func(u0: float, u1: float, v0: float, v1: float, sh: float) -> void:
+		# u runs along x, v along y, both 0..1 across the cell
+		var lo := Vector2(c.x + u0, c.y + v0)
+		var hi := Vector2(c.x + u1, c.y + v1)
+		var m := _rot((lo.x + hi.x) * 0.5, (lo.y + hi.y) * 0.5)
+		slabs.append({"lo": lo, "hi": hi, "h": sh, "depth": m.x + m.y})
 	for k in n:
+		var sh := low + (h - low) * float(k + 1) / n  # tread k (0 at the bottom); the top one flush with h
 		var f0 := float(k) / n
 		var f1 := float(k + 1) / n
-		var lo: Vector2
-		var hi: Vector2
-		if up == Vector2i(1, 0):
-			lo = Vector2(c.x + f0, c.y)
-			hi = Vector2(c.x + f1, c.y + 1)
+		if corner:
+			# tread k is the L of points whose distance to the nearer low edge is k/n..(k+1)/n
+			var dx: int = downs[0].x if downs[0].x != 0 else downs[1].x
+			var dy: int = downs[0].y if downs[0].y != 0 else downs[1].y
+			var span := func(d0: float, d1: float, pos: bool) -> Vector2:  # distance range -> cell range
+				return Vector2(1.0 - d1, 1.0 - d0) if pos else Vector2(d0, d1)
+			var u_k: Vector2 = span.call(f0, f1, dx > 0)
+			var v_rest: Vector2 = span.call(f0, 1.0, dy > 0)
+			var v_k: Vector2 = span.call(f0, f1, dy > 0)
+			var u_rest: Vector2 = span.call(f1, 1.0, dx > 0)
+			rect.call(u_k.x, u_k.y, v_rest.x, v_rest.y, sh)
+			rect.call(u_rest.x, u_rest.y, v_k.x, v_k.y, sh)
+		elif up == Vector2i(1, 0):
+			rect.call(f0, f1, 0.0, 1.0, sh)
 		elif up == Vector2i(-1, 0):
-			lo = Vector2(c.x + 1 - f1, c.y)
-			hi = Vector2(c.x + 1 - f0, c.y + 1)
+			rect.call(1.0 - f1, 1.0 - f0, 0.0, 1.0, sh)
 		elif up == Vector2i(0, 1):
-			lo = Vector2(c.x, c.y + f0)
-			hi = Vector2(c.x + 1, c.y + f1)
+			rect.call(0.0, 1.0, f0, f1, sh)
 		else:
-			lo = Vector2(c.x, c.y + 1 - f1)
-			hi = Vector2(c.x + 1, c.y + 1 - f0)
-		var m := _rot((lo.x + hi.x) * 0.5, (lo.y + hi.y) * 0.5)
-		slabs.append({"lo": lo, "hi": hi, "h": lerpf(e_lo, e_hi, float(k) / (n - 1)), "depth": m.x + m.y})
+			rect.call(0.0, 1.0, 1.0 - f1, 1.0 - f0, sh)
 	slabs.sort_custom(func(p: Dictionary, q: Dictionary) -> bool: return p.depth < q.depth)
 	for sl in slabs:
 		var lo: Vector2 = sl.lo
 		var hi: Vector2 = sl.hi
 		var sh: float = sl.h
+		if hi.x - lo.x < 0.001 or hi.y - lo.y < 0.001:
+			continue
 		for shade in [false, true]:
 			var d := front_dir(shade)
 			var e := _side(lo, hi, d)
 			var nv := Vector2(d)
-			if d == -up:  # a riser: the tread's ground, darker
+			if downs.has(d) or not (lo.x <= c.x + 0.001 and d.x < 0 or hi.x >= c.x + 0.999 and d.x > 0 or lo.y <= c.y + 0.001 and d.y < 0 or hi.y >= c.y + 0.999 and d.y > 0):
+				# a riser: the tread's own front (inside the cell, or on the flight's low edge)
 				var m := Color(tread_tint * (0.8 if not shade else 0.62), 1.0)
 				var uv := PackedVector2Array([e[0] / BattleArt.TOP_TILES, e[1] / BattleArt.TOP_TILES,
 					(e[1] + Vector2(0, (sh - base) * 0.5)) / BattleArt.TOP_TILES, (e[0] + Vector2(0, (sh - base) * 0.5)) / BattleArt.TOP_TILES])
@@ -2027,7 +2089,7 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 					_ci.draw_polygon(quad, PackedColorArray([m, m, m, m]), uv, tread_tex)
 				else:
 					_ci.draw_colored_polygon(quad, _terrain_color(CombatGrid.T.ROAD) * m)
-			else:  # the flight's side: the cliff's rock, carrying on from the terrace above
+			else:  # the flight's side: the cliff's rock
 				_soft_face(e[0], e[1], nv, nv, sh, base, rock, rock_tint, CLIFF, anchor)
 		var cap := PackedVector2Array([iso(lo.x, lo.y, sh), iso(hi.x, lo.y, sh), iso(hi.x, hi.y, sh), iso(lo.x, hi.y, sh)])
 		var lift := Color(tread_tint * 1.04, 1.0)
@@ -2037,11 +2099,11 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 			_ci.draw_polygon(cap, PackedColorArray([lift, lift, lift, lift]), uv, tread_tex)
 		else:
 			_ci.draw_colored_polygon(cap, _terrain_color(CombatGrid.T.ROAD).lightened(0.05))
-		var nose := _side(lo, hi, -up)
-		if Vector2(-up).dot(Vector2(front_dir(false) + front_dir(true))) > 0.0:
-			_ci.draw_line(iso(nose[0].x, nose[0].y, sh), iso(nose[1].x, nose[1].y, sh), Color(1, 1, 0.92, 0.5), 1.2, true)
+		for d in downs:
+			var nose := _side(lo, hi, d)
+			if Vector2(d).dot(Vector2(front_dir(false) + front_dir(true))) > 0.0:
+				_ci.draw_line(iso(nose[0].x, nose[0].y, sh), iso(nose[1].x, nose[1].y, sh), Color(1, 1, 0.92, 0.5), 1.2, true)
 	return true
-
 
 ## Ground that blends into its neighbours: where a higher-ranked ground (road over grass, stone over road)
 ## or another tile set (ruins zone inside a forest) meets this cell at the same height, the neighbour's own

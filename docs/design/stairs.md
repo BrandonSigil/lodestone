@@ -56,13 +56,15 @@ facing is the same piece turned.**
 - Flights climb toward the camera's up-screen diagonals; sideways two-cell flights are avoided.
 - Turns (switchbacks) happen on a terrace between two flights, never inside one.
 
-## What the engine needs (systems developer)
-- `CombatBoard._stair_steps_soft` (and the block-look `_stair_steps`): draw a stair cell from its lower neighbour's
-  height up to its own, in treads of a constant rise (`STAIR_TREADS`), with the climb direction and corner rule
-  above. A working prototype is in the shared notes folder (`stair-kit-board.patch`); it was tested on the
-  `stair_test` patch, not on the live maps.
-- `MapDress.stair_run` is used elsewhere (stair ledge lines, the block look); it should agree with the kit's climb
-  direction.
-- Existing maps: the live village and snow pass flights are built `top, top - 1, ...` down from the upper ground,
-  which already fits the kit (each cell one level over the one below). Check them after the switch.
-- A piece standing on a stair cell stands at its top tread (the cell's height), as now.
+## In the engine (landed 2026-10-30, map builder, with the systems developer's OK)
+- `CombatBoard._stair_steps_soft` draws the kit in the soft look (explore maps): a stair cell climbs from its lower
+  neighbour (`_stair_low`: the lowest ground beside it, one to three levels down) to its own height, the climb
+  direction and corner rule as above, `MapDress.stair_run` only as the last fallback.
+- The tread size is per map data, not a constant: `MapLook.stair_treads`, set by `"look": {"stairs": 1}` in a map's
+  JSON grid (or a `stairs` column in `data/looks.csv`), 1 to 6, default 3. 1 is the block-step look, 3 the fine one.
+- The ledge lines under a stair's neighbours (`_seg_foot`) start at the same `_stair_low`, so they meet the bottom tread.
+- The block look (`_stair_steps`, the plain staging combat maps use) is unchanged: it still centres its treads on
+  `MapDress.stair_run`. Converting it waits for Brandon's pick.
+- Live maps after the switch: the village and snow pass flights are already built one level a cell down from the
+  upper ground, so they draw as kit flights with no map change.
+- A piece standing on a stair cell stands at its top tread (the cell's height), as before.
