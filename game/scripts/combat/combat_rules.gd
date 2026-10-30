@@ -657,8 +657,12 @@ static func helper(att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2
 
 # --- bleeding out ([USER] c6 and c11, combat build step 3) ---------------------------------------------
 
-## The HP AID brings a downed piece back with: a quarter of its max, at least 1.
+## The HP AID brings a downed piece back with: `aid_hp` when that's set above 0, else `aid_pct` of its max (a
+## quarter), at least 1.
 static func aid_hp(t: CombatUnit) -> int:
+	var flat := int(Db.combat.get("aid_hp", "0"))  # a set number of HP, whoever is helped up (game designer, design-boss-mix-2)
+	if flat > 0:
+		return mini(flat, t.max_hp)
 	return maxi(1, ceili(t.max_hp * num("aid_pct") / 100.0))
 
 

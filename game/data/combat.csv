@@ -16,6 +16,7 @@ cover_ranged,1,brush and low walls and forest take this off ranged hits
 spooked_damage,-1,a spooked piece hits for this much less
 bleed_turns,3,a downed party piece can be helped up for this many of its own phases
 aid_pct,25,AID brings a downed piece back at this % of its max HP
+aid_hp,0,when above 0 AID brings a downed piece back at this many HP instead (game designer's mix; off: 6 to 10 tried 2026-10-30)
 help_damage,1,a teammate next to the same foe adds this to a hit (no wobble and no crit)
 teamup_opposite,1,1: two teammates on opposite sides of a foe team up too ([USER] c19); 0: they must also be next to each other
 mana_regen_pct,20,mana comes back this % of its max at the start of each of the owner's phases

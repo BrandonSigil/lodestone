@@ -88,6 +88,13 @@ func play(t: SceneTree) -> void:
 	# A fall costs nothing: wake in the square with everything.
 	var rope: int = game.run.item_count("rope")
 	var gold: int = game.run.gold
+	var mats := 0  # materials in the pack at the fall, and the pile before it
+	for k: String in game.run.items:
+		if String(Db.items[k].kind) == "material":
+			mats += int(game.run.items[k])
+	var pile_before := 0
+	for k in game.meta.materials:
+		pile_before += int(game.meta.materials[k])
 	game.run.members[0].hp = 0
 	game.recall()
 	s = await _explore("village")
@@ -98,8 +105,9 @@ func play(t: SceneTree) -> void:
 	var pile := 0
 	for k in game.meta.materials:
 		pile += int(game.meta.materials[k])
-	_check(pile >= 4 and game.run.items.keys().all(func(k: String) -> bool: return String(Db.items[k].kind) != "material"),
-		"the materials found on the way went to the village pile")
+	# Whatever the run carried went home, however thin the loot (playtest bug 02: seed 7 found under 4).
+	_check(pile >= pile_before + mats and game.run.items.keys().all(func(k: String) -> bool: return String(Db.items[k].kind) != "material"),
+		"the materials found on the way went to the village pile (%d carried)" % mats)
 
 	# A beaten boss stays beaten: back in the crypt after the fall, the throne is empty.
 	game.explore_map = "crypt"
