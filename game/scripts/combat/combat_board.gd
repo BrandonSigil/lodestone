@@ -3339,7 +3339,7 @@ func _draw_frame(u: CombatUnit, base: Vector2, mod: Color) -> float:
 	_ci.draw_set_transform(base, 0.0, Vector2(-s if f.flip else s, s))
 	_ci.draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, mod)
 	_ci.draw_set_transform(Vector2.ZERO)
-	return f.anchor.y * s * 0.72
+	return float(f.bar) * s
 
 
 ## Start a sprite anim from its first frame. Non-looping anims fall back to idle when done.

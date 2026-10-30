@@ -87,7 +87,8 @@ static func frame(id: StringName, anim: String, dir: String, t: float) -> Dictio
 	i = posmod(i, n) if a.get("loop", false) else mini(i, n - 1)
 	var size := float(m.frame)
 	return {"tex": tex, "region": Rect2(i * size, 0, size, size), "flip": flip,
-		"scale": float(m.scale), "anchor": Vector2(m.anchor[0], m.anchor[1])}
+		"scale": float(m.scale), "anchor": Vector2(m.anchor[0], m.anchor[1]),
+		"bar": float(m.get("bar", float(m.anchor[1]) * 0.72))}  # art px over the feet the HP pips sit at (a small dog's are lower)
 
 
 static func _strip(id: StringName, anim: String, dir: String) -> Texture2D:
