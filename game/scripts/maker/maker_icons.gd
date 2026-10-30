@@ -67,14 +67,24 @@ static func _arrow(a: Vector2, b: Vector2, head := 0.16) -> void:
 const ART_ICONS := {"boost": "strength", "key": "key", "rare": "rare"}
 
 
+static var _art_cache := {}
+
+
+static func _art(stem: String) -> Texture2D:
+	if not _art_cache.has(stem):
+		var img := Image.load_from_file(ProjectSettings.globalize_path("res://art/source/icons/%s.png" % stem))
+		_art_cache[stem] = ImageTexture.create_from_image(img) if img != null else null
+	return _art_cache[stem]
+
+
 static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 	_ci = ci
 	var side := minf(r.size.x, r.size.y)
 	_r = Rect2(r.position + (r.size - Vector2(side, side)) * 0.5, Vector2(side, side))
 	if ART_ICONS.has(id):
-		var path := "res://art/source/icons/%s.png" % ART_ICONS[id]
-		if ResourceLoader.exists(path):
-			ci.draw_texture_rect(load(path) as Texture2D, _r, false, Color(1, 1, 1, col.a))
+		var tex := _art(String(ART_ICONS[id]))
+		if tex != null:
+			ci.draw_texture_rect(tex, _r, false, Color(1, 1, 1, col.a))
 			return
 	_col = col
 	_w = maxf(1.5, side / 13.0)
