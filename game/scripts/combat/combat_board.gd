@@ -1845,7 +1845,9 @@ func _cliff_body(t: int, zone: String) -> Dictionary:
 ## running on down the face and mirrored where the strip runs out (the strips aren't seamless top to bottom).
 ## The window before carries on over the first STRIP_FADE of each window and fades out, so the joins are soft.
 ## Over all of it lies one big soft wash (_cliff_wash), so the repeat is broken across faces.
-const STRIP_FADE := 0.18  ## cells over which one window's strip fades into the next
+const STRIP_FADE := 0.4  ## cells over which one window's strip fades into the next
+const STRIP_HSCALE := Vector2(0.55, 1.6)  ## a window reads this many strip cells per cell along the face (hashed), so streaks get narrower or wider
+const STRIP_VSCALE := Vector2(0.65, 1.5)  ## and stretches the strip down the face by this much (hashed)
 const STRIP_RUNS := 8  ## at most this many strip lengths down one face (a strip is ~24 levels; maps are 24 tall)
 const WASH_STEP := 3.0  ## levels between the wash's samples down a face
 const WASH_STEPS := 16  ## at most this many wash bands in one strip run
@@ -1884,7 +1886,7 @@ func _strip_window_quad(line: String, w: Vector2i, s: Dictionary, p: Vector2, q:
 		top: float, foot: float, col: Color, ap: float, aq: float) -> void:
 	var k := _strip_pick(line, w.x, s)
 	var tone: Color = s.tones[k]
-	var sh: float = s.hs[k]
+	var sh: float = s.hs[k] * lerpf(STRIP_VSCALE.x, STRIP_VSCALE.y, _strip_h(line, w.x, 7))  # stretched down the face by hash
 	_strip_quad(p, q, top, foot, u0, u1, _strip_h(line, w.x, 3) * sh, sh, s.texs[k], col * tone, ap, aq,
 		_strip_h(line, w.x, 5) < 0.5)
 
@@ -1923,8 +1925,9 @@ func _strip_pick(line: String, start: int, s: Dictionary) -> int:
 ## shorter window shows a different part of it, and every other window mirrored.
 func _strip_u(line: String, w: Vector2i, pos: float, s: Dictionary) -> float:
 	var width: float = s.w
-	var off := _strip_h(line, w.x, 2) * maxf(0.0, width - float(w.y))
-	var u := clampf((off + pos - float(w.x)) / width, 0.0, 1.0)
+	var sc := minf(lerpf(STRIP_HSCALE.x, STRIP_HSCALE.y, _strip_h(line, w.x, 6)), width / float(w.y))
+	var off := _strip_h(line, w.x, 2) * maxf(0.0, width - float(w.y) * sc)
+	var u := clampf((off + (pos - float(w.x)) * sc) / width, 0.0, 1.0)
 	return 1.0 - u if _strip_h(line, w.x, 4) < 0.5 else u
 
 

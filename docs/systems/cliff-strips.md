@@ -30,7 +30,10 @@ does (`build_village_v2.py`). The live village shares the village set but keeps 
   aren't seamless top to bottom. `_strip_quad` walks those runs by an integer count, at most `STRIP_RUNS` a face, and the wash
   bands inside a run likewise (at most `WASH_STEPS`), so it always ends. (A float-stepped loop that could stall on a run's end ran a screenshot out of memory once,
   2026-10-30.)
-- The window before carries on over the first `STRIP_FADE` (0.18) cell of each window and fades out, so the joins are
+- Repeat breaking (Brandon, cliff-wash-review: "wallpapering a repeated pattern"): each window also reads its strip at a hashed
+  width (`STRIP_HSCALE` 0.55 to 1.6 strip cells per cell) and stretched down the face (`STRIP_VSCALE` 0.65 to 1.5), so
+  streak spacing and length differ window to window.
+- The window before carries on over the first `STRIP_FADE` (0.4) cell of each window and fades out, so the joins are
   soft.
 - The wash ([USER] 2026-10-30: "overlay a wash over the whole thing"): one big soft noise in world space
   (`_washed`: FastNoiseLite, seeded, about `WASH_CELLS` 7 cells across and `WASH_LEVELS` 10 levels high) lightens or
