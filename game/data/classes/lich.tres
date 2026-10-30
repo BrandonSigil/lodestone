@@ -20,5 +20,5 @@ range_min = 1
 range_max = 2
 magic = true
 skills = {}
-abilities = Array[StringName]([&"firebolt", &"lich_doom"])
+abilities = Array[StringName]([&"firebolt", &"lich_doom", &"raise_ice"])
 tags = Array[StringName]([&"undead"])

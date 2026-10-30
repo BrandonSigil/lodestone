@@ -968,7 +968,8 @@ func test_the_party_ai_steps_off_marked_tiles() -> void:
 func test_lich_calls_minions_and_they_crumble_with_him() -> void:
 	var g := CombatGrid.flat(9, 7)
 	var lich := _unit("lich", 1, Vector2i(4, 3), g)
-	lich.abilities.append(Db.ability("raise_dead"))  # off his class until the game designer's call (2026-10-30)
+	lich.abilities = lich.abilities.filter(func(a: Ability) -> bool: return a.kind != "summon")  # just the minion call here
+	lich.abilities.append(Db.ability("raise_dead"))  # off his class (Brandon picked ice pillars instead)
 	var knight := _unit("knight", 0, Vector2i(8, 6), g)
 	var units := [lich, knight]
 	_boss_phase(g, units, 1)
@@ -1001,6 +1002,7 @@ func test_lich_calls_minions_and_they_crumble_with_him() -> void:
 func test_minions_come_on_the_maps_summon_cells() -> void:
 	var g := CombatGrid.flat(9, 7)
 	var lich := _unit("lich", 1, Vector2i(1, 1), g)
+	lich.abilities = lich.abilities.filter(func(a: Ability) -> bool: return a.kind != "summon")
 	lich.abilities.append(Db.ability("raise_dead"))
 	var knight := _unit("knight", 0, Vector2i(8, 6), g)
 	var units := [lich, knight]
@@ -1104,7 +1106,11 @@ func test_action_layouts_build_and_keys_fire() -> void:
 func test_ice_pillars_place_chill_and_crumble() -> void:
 	var g := CombatGrid.flat(10, 7)
 	var lich := _unit("lich", 1, Vector2i(8, 3), g)
-	lich.abilities.append(Db.ability("raise_ice"))
+	ok(lich.abilities.has(Db.ability("raise_ice")), "on his class (game designer dcba358)")
+	var call := Db.ability("raise_ice").copy()
+	call.count = 2  # two at once, to check they never share a cell or stand next to the party
+	lich.abilities = lich.abilities.filter(func(a: Ability) -> bool: return a.id != "raise_ice")
+	lich.abilities.append(call)
 	var knight := _unit("knight", 0, Vector2i(3, 3), g)
 	var units := [lich, knight]
 	lich.summon_avoid = {Vector2i(5, 3): true}

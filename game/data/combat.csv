@@ -34,4 +34,4 @@ elite_xp_pct,150,a won fight against an elite group pays this % of the XP
 upgrade_damage,1,each weapon upgrade at the smithy adds this much damage ([USER] pc-14)
 pillar_cold,1,HP a party piece loses at the end of its phase for each ice pillar next to it (through armor)
 pillar_cold_max,2,at most this many pillars count
-threat_ai,0,1: the AI weighs a kill by what the target threatens (a pillar by its cold); 0 every kill the same. Off until the game designer lands the pillars
+threat_ai,1,1: the AI weighs a kill by what the target threatens (a pillar by its cold); 0 every kill the same (game designer dcba358: on with the pillars)
