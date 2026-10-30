@@ -72,6 +72,20 @@ func test_stair_run_spans_the_climb() -> void:
 	eq(MapDress.stair_run(g, Vector2i(0, 4)), {}, "a flat cell has no run")
 
 
+func test_a_wide_flight_climbs_the_right_way() -> void:
+	# Three wide, two deep, climbing toward -y ([USER] city review: stairs must face the climb).
+	var g := _island(6, 1)
+	for x in range(1, 4):
+		g.set_height(Vector2i(x, 0), 4)
+		for y in [1, 2]:
+			g.set_terrain(Vector2i(x, y), T.STAIRS)
+		g.set_height(Vector2i(x, 1), 3)
+		g.set_height(Vector2i(x, 2), 2)
+	for x in range(1, 4):
+		for y in [1, 2]:
+			eq(MapDress.stair_run(g, Vector2i(x, y)).up, Vector2i(0, -1), "step %d,%d climbs toward the top" % [x, y])
+
+
 func test_river_never_flows_uphill() -> void:
 	var g := _island(8, 5)
 	for y in 8:

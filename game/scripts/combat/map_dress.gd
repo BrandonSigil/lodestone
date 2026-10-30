@@ -83,7 +83,19 @@ static func stair_run(grid: CombatGrid, c: Vector2i) -> Dictionary:
 	var h := float(grid.height_at(c))
 	var best := Vector2i.ZERO
 	var best_score := 0.0
+	# A wide flight: when only one axis has a stair neighbour at another height, that axis is the climb (the
+	# level stairs beside it are the same step, wider; [USER] city review: stairs must face the climb).
+	var climbs: Array[Vector2i] = []
 	for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+		for e: Vector2i in [d, -d]:
+			var n := c + e
+			if grid.solid(n) and grid.passable(n) and grid.terrain_at(n) == CombatGrid.T.STAIRS \
+					and grid.height_at(n) != grid.height_at(c) and not climbs.has(d):
+				climbs.append(d)
+	var axes: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1)]
+	if climbs.size() == 1:
+		axes = climbs
+	for d: Vector2i in axes:
 		var score := 0.0
 		for e: Vector2i in [d, -d]:
 			var n := c + e

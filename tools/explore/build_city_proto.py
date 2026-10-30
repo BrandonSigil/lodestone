@@ -2,47 +2,46 @@
 """Builds game/data/explore/city_proto.json: a dense town layout test ([USER] 2026-10-29, after Brandon's
 references docs/art/references/city-bustle-*.webp; layout only, the look stays the fall set).
 
-- Two towns: an upper terrace at the back (streets at level 4) and the lower town in front (streets at 1),
-  joined by a grand stair and a narrow stair along the terrace wall.
-- Houses are masonry blocks two or three levels over the street. Their flat roofs are walkable: stairs
-  climb onto some, the terrace steps down onto others, and neighbouring roofs a level apart hop.
-- Streets are one or two cells wide, wind and fork, and open into two small squares.
-- A house over a lane you walk under is faked with a graybox arch (CombatGrid.under_arch): its pillars stand
-  on the houses either side and its top spans the lane. The grid holds one height per cell, so the span
-  can't be walked on; a real two-level cell is a question on the studio desk.
-- The fall village's houses, stalls and props fill in; anything without art is a graybox.
+Pass 2, after Brandon's review (desk card builder-city-proto-review): a much bigger map, gray boxes for the
+other buildings, lanes two cells wide at least, walkable roofs a full storey higher, and a grand stair four
+levels high and three flights wide that climbs the right way (MapDress.stair_run).
+
+- Two towns: an upper terrace at the back (streets at 5) over the lower town (streets at 1), joined by the
+  grand stair and two narrow stairs along the terrace wall.
+- Streets are laid out as rects; the lots between them are cut into parcels. A parcel becomes a fall village
+  house (when its door opens onto a street) or a gray box building (no art: CombatBoard draws a graybox).
+  A few lots are walkable roof blocks level with the terrace, reached by flights of three steps.
+- A house over a lane you walk under is faked with a graybox arch (CombatGrid.under_arch) whose span sits
+  flush with the roofs; the real two-level cell is engine work Brandon approved (builder-city-overpass).
 
 Run again after editing: python3 tools/explore/build_city_proto.py [--dump]
 """
 import json
 import os
+import random
 import sys
 
-W, H = 30, 30
-LOW, HIGH = 1, 4  # street levels: the lower town and the upper terrace
+W, H = 44, 44
+LOW, HIGH = 1, 5  # street levels: the lower town and the upper terrace (four levels apart)
+ROOF = HIGH  # walkable roofs stand level with the terrace, a full storey over the lower street
+TERRACE = 13  # last row of the upper terrace
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "game", "data", "explore", "city_proto.json")
 BLOCKED = "ru."
 JUMP, STAIRS_CLIMB = 1, 2  # the lead's jump; CombatGrid.STAIRS_CLIMB
+rng = random.Random(7)
 
 terrain = [["s"] * W for _ in range(H)]
-height = [[0] * W for _ in range(H)]
+height = [[HIGH if y <= TERRACE else LOW] * W for y in range(H)]
 props, things = [], []
+street = set()
+reserved = set()  # lot cells kept out of the parcels (stair flights, roof blocks, overpass pillars)
 
 
-def fill(x0, y0, x1, y1, t=None, h=None):
-    """Inclusive rect; None keeps what is there."""
+def lay(x0, y0, x1, y1):
+    """A street, square or lane (inclusive rect)."""
     for y in range(y0, y1 + 1):
         for x in range(x0, x1 + 1):
-            if t is not None:
-                terrain[y][x] = t
-            if h is not None:
-                height[y][x] = h
-
-
-def block(x0, y0, x1, y1, lvl):
-    """A masonry house (or a run of them) with a flat roof at `lvl`. Roofs take the warm road top and
-    streets the pale stone, so a roof reads apart from the street below it."""
-    fill(x0, y0, x1, y1, "d", lvl)
+            street.add((x, y))
 
 
 def prop(sprite, x, y, foot=(1, 1), tall=0.0, sight=0.0, walk=False, **extra):
@@ -50,127 +49,162 @@ def prop(sprite, x, y, foot=(1, 1), tall=0.0, sight=0.0, walk=False, **extra):
                   "walk": walk, **extra})
 
 
-def house(sprite, x, y, fx, fy, door_dx):
-    """A fall village house on flat street ground; returns the cell in front of its door (left wall)."""
-    lvl = height[y + fy][x + door_dx]
-    fill(x, y, x + fx - 1, y + fy - 1, "s", lvl)
-    prop(sprite, x, y, (fx, fy), 0.0, 3.0)
-    return (x + door_dx, y + fy)
-
-
-def overpass(x, y, foot, top):
-    """A house over the lane, faked: an arch whose pillars are cut into the house walls either side, down at
-    street level, and whose top spans the lane flush with the roofs at `top` (graybox until art; ph_
-    sprites have none). The span can't be walked on: one height per cell."""
-    fx, fy = foot
-    ends = [(x, y), (x + fx - 1, y + fy - 1)]
-    lvl = min(height[c[1]][c[0]] for c in [(x + dx, y + dy) for dy in range(fy) for dx in range(fx)] if c not in ends)
-    for cx, cy in ends:
-        terrain[cy][cx] = "s"
-        height[cy][cx] = lvl
-    prop("ph_overpass", x, y, foot, tall=(top - lvl) / 2.0, sight=2.0, arch=True)
-
-
 def stair(cells):
-    """A flight: [(x, y, level), ...] in climbing order."""
+    """A flight: [(x, y, level), ...]. Its cells leave the lot."""
     for x, y, lvl in cells:
         terrain[y][x] = "t"
         height[y][x] = lvl
+        reserved.add((x, y))
 
 
-# --- ground: streets everywhere at their town's level; the houses go on top ------------------------------
-fill(0, 0, W - 1, 9, "s", HIGH)  # the upper terrace
-fill(0, 10, W - 1, H - 1, "s", LOW)  # the lower town
+def overpass(x, y, foot, top):
+    """A house over the lane, faked: an arch whose pillars are cut into the buildings either side, down at
+    street level, and whose span sits flush with the roofs at `top` (graybox until art)."""
+    fx, fy = foot
+    ends = [(x, y), (x + fx - 1, y + fy - 1)]
+    lvl = min(height[cy][cx] for cy in range(y, y + fy) for cx in range(x, x + fx) if (cx, cy) not in ends)
+    for cx, cy in ends:
+        terrain[cy][cx] = "s"
+        height[cy][cx] = lvl
+        reserved.add((cx, cy))
+    prop("ph_overpass", x, y, foot, tall=(top - lvl) / 2.0, sight=2.0, arch=True)
 
-# --- upper terrace houses (streets at 4; the promenade along its edge, y 8-9, looks down on the lower town)
-block(0, 0, 4, 3, HIGH + 2)
-block(6, 0, 10, 2, HIGH + 2)
-block(6, 3, 8, 7, HIGH + 1)  # a one-floor annex: its roof hops up to the house behind
-block(13, 0, 18, 2, HIGH + 3)
-block(16, 3, 18, 7, HIGH + 2)
-block(20, 0, 23, 2, HIGH + 2)
-block(26, 0, 29, 2, HIGH + 2)
-block(20, 4, 23, 7, HIGH + 2)
 
-# --- lower town houses (streets at 1) ------------------------------------------------------------------
-# Against the terrace wall: tall houses that stand a floor over the promenade, and one low roof the
-# promenade steps down onto.
-block(0, 10, 1, 18, LOW + 6)  # stairs climb three: houses beside a flight stand four over it
-block(4, 10, 9, 13, HIGH - 1)  # the roof off the promenade
-block(10, 10, 12, 13, LOW + 6)
-block(16, 10, 21, 11, LOW + 6)
-block(22, 10, 29, 11, LOW + 4)
-# The middle: blocks two or three floors high, one-cell lanes between them, roofs that hop.
-block(4, 14, 9, 16, LOW + 3)
-block(10, 14, 12, 16, LOW + 4)
-block(15, 14, 22, 15, LOW + 3)  # north of the alley
-block(15, 17, 22, 17, LOW + 2)  # south of the alley, over the market
-block(15, 18, 17, 20, LOW + 2)
-block(25, 12, 29, 17, LOW + 4)
-block(4, 17, 4, 18, LOW + 2)
-block(7, 17, 9, 20, LOW + 3)
-block(12, 18, 13, 20, LOW + 3)
-# The front: lower houses, so the camera sees into the streets.
-block(0, 19, 1, 29, LOW + 2)
-block(2, 21, 4, 25, LOW + 3)
-block(12, 25, 18, 29, LOW + 2)
-block(14, 21, 17, 24, LOW + 3)
-block(5, 28, 8, 29, LOW + 2)
-block(19, 23, 21, 29, LOW + 3)
+# --- streets ---------------------------------------------------------------------------------------------
+# Upper terrace (level 5): the promenade along its edge, lanes to the back, a square.
+lay(0, 10, W - 1, TERRACE)
+lay(6, 0, 7, 9)
+lay(16, 0, 17, 9)
+lay(18, 3, 29, 9)  # the upper square
+lay(34, 0, 35, 9)
+# Lower town (level 1).
+lay(16, 17, 26, 19)  # the foot of the grand stair
+lay(26, 17, 33, 19)  # on east
+lay(20, 20, 21, 29)  # main street
+lay(3, 14, 4, H - 1)  # the west lane, from the wall stair to the front
+lay(5, 14, 5, 16)  # three wide beside the wall stair, so the flight leaves two
+lay(5, 22, 19, 23)  # a cross lane
+lay(8, 30, 21, 36)  # square A
+lay(14, 37, 15, H - 1)  # out the front
+lay(5, 39, 13, 40)  # the front-left lane
+lay(22, 22, 31, 23)  # the alley (two wide)
+lay(32, 20, 33, 27)  # the east street
+lay(24, 28, 39, 33)  # square B, the market
+lay(39, 14, 40, 27)  # the east lane, from the east wall stair
+lay(38, 14, 38, 16)
+lay(34, 21, 38, 22)  # a link from the east street to the east lane
+lay(30, 34, 31, H - 1)  # out the front, right
+lay(16, 40, 29, 41)  # the front lane
+lay(32, 40, W - 1, 41)
 
-# --- stairs ------------------------------------------------------------------------------------------
-stair([(13, 11, 2), (14, 11, 2), (15, 11, 2), (13, 10, 3), (14, 10, 3), (15, 10, 3)])  # the grand stair
-stair([(2, 10, 2), (3, 10, 3)])  # the narrow stair along the terrace wall
-# Up a floor onto a roof: a flight along the house wall, then the roof is a terrace.
-stair([(4, 16, 2), (4, 15, 3)])  # from the west lane, along the west wall
-stair([(15, 14, 2), (16, 14, 3)])  # from main street, along the back wall
-stair([(18, 18, 2)])  # from the market onto the low roofs over it
-stair([(4, 26, 2), (4, 25, 3)])  # from the front-left lane
+# --- stairs (each climbs four levels in three steps) -------------------------------------------------------
+stair([(x, y, lvl) for x in (20, 21, 22) for y, lvl in ((14, 4), (15, 3), (16, 2))])  # the grand stair
+stair([(3, 16, 2), (3, 15, 3), (3, 14, 4)])  # along the terrace wall, west
+stair([(40, 16, 2), (40, 15, 3), (40, 14, 4)])  # along the terrace wall, east
+# Up a floor onto the roofs: two-wide flights out of a street, into the roof block.
+stair([(x, y, lvl) for x in (6, 7) for y, lvl in ((21, 2), (20, 3), (19, 4))])  # off the cross lane
+stair([(x, y, lvl) for x in (28, 29) for y, lvl in ((27, 2), (26, 3), (25, 4))])  # off the market
+stair([(x, y, lvl) for y in (25, 26) for x, lvl in ((38, 2), (37, 3), (36, 4))])  # off the east lane
 
-# --- houses over the lanes (faked) -------------------------------------------------------------------
-overpass(9, 19, (4, 1), LOW + 3)  # over main street, house to house
-overpass(18, 15, (1, 3), LOW + 3)  # over the alley
-overpass(22, 14, (4, 1), LOW + 4)  # over the east street
+# --- walkable roof blocks (level with the terrace) ---------------------------------------------------------
+ROOFS = [(5, 17, 15, 21), (22, 24, 31, 27), (34, 23, 38, 27), (22, 20, 31, 21)]
+for x0, y0, x1, y1 in ROOFS:
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            if (x, y) not in street and (x, y) not in reserved:
+                terrain[y][x] = "d"  # roofs take the warm road top, streets the pale stone
+                height[y][x] = ROOF
+                reserved.add((x, y))
 
-# --- fall village houses and street life --------------------------------------------------------------
+# --- houses over lanes (faked) ---------------------------------------------------------------------------
+overpass(26, 21, (1, 4), ROOF)  # over the alley
+overpass(31, 25, (4, 1), ROOF)  # over the east street
+overpass(19, 25, (4, 1), ROOF)  # over main street (approved)
+
+
+# --- the lots: everything else, cut into parcels ----------------------------------------------------------
+def rects(cells):
+    """Greedy cover of a cell set by rects, row-major."""
+    left, out = set(cells), []
+    for y in range(H):
+        for x in range(W):
+            if (x, y) not in left:
+                continue
+            x1 = x
+            while (x1 + 1, y) in left:
+                x1 += 1
+            y1 = y
+            while all((cx, y1 + 1) in left for cx in range(x, x1 + 1)):
+                y1 += 1
+            for cy in range(y, y1 + 1):
+                for cx in range(x, x1 + 1):
+                    left.discard((cx, cy))
+            out.append((x, y, x1, y1))
+    return out
+
+
+def parcels(r):
+    """Guillotine a rect into parcels two to six cells a side."""
+    x0, y0, x1, y1 = r
+    w, h = x1 - x0 + 1, y1 - y0 + 1
+    if w > 6 or (w > 4 and rng.random() < 0.3 and w >= h):
+        cut = x0 + rng.randint(2, w - 3) if w >= 5 else x0 + w // 2
+        return parcels((x0, y0, cut, y1)) + parcels((cut + 1, y0, x1, y1))
+    if h > 6 or (h > 4 and rng.random() < 0.3):
+        cut = y0 + rng.randint(2, h - 3) if h >= 5 else y0 + h // 2
+        return parcels((x0, y0, x1, cut)) + parcels((x0, cut + 1, x1, y1))
+    return [r]
+
+
+HOUSES = {(3, 3): ["b_home_a"], (4, 3): ["b_home_b", "b_home_c"], (3, 4): ["b_smithy"], (6, 4): ["b_tavern"]}
+DOOR_DX = {"b_home_a": 1, "b_home_b": 1, "b_home_c": 1, "b_smithy": 0, "b_tavern": 2}
 doors = []
-doors.append(house("b_home_b", 0, 4, 4, 3, 1))  # upper town
-doors.append(house("b_home_c", 26, 4, 4, 3, 1))
-doors.append(house("b_home_a", 26, 18, 3, 3, 1))  # on the market
-doors.append(house("b_tavern", 22, 23, 6, 4, 2))  # down the front-right street
-prop("prop_stall", 20, 19, (1, 1), 0.9, 1.0)
-prop("prop_stall", 23, 19, (1, 1), 0.9, 1.0)
-prop("prop_crates", 19, 21, (1, 1), 0.6, 0.5)
-prop("prop_barrel", 24, 21, (1, 1), 0.6, 0.5)
-prop("prop_well", 11, 23, (1, 1), 0.8, 0.5)
-prop("prop_bench", 7, 24, (1, 1), 0.6, 0.0)
-prop("prop_lamp", 13, 21, (1, 1), 1.2, 0.0)
-prop("prop_lamp", 16, 12, (1, 1), 1.2, 0.0)
-prop("prop_planter", 12, 6, (1, 1), 0.8, 0.5)
-prop("prop_tree_3", 14, 4, (1, 1), 1.6, 1.0)
-prop("prop_bench", 10, 4, (1, 1), 0.6, 0.0)
-prop("prop_lamp", 19, 9, (1, 1), 1.2, 0.0)
-prop("prop_cart", 27, 9, (1, 1), 0.8, 0.5)
-# Timber houses standing on the stone blocks nobody climbs: a stone floor below, the house above.
-prop("b_home_a", 0, 0, (3, 3), 0.0, 3.0)
-prop("b_home_b", 13, 0, (4, 3), 0.0, 3.0)
-prop("b_home_b", 26, 0, (4, 3), 0.0, 3.0)
-prop("b_home_c", 20, 4, (4, 3), 0.0, 3.0)
-prop("b_home_a", 10, 10, (3, 3), 0.0, 3.0)
-# On the walkable roofs, so they read as lived on.
-prop("prop_planter", 6, 11, (1, 1), 0.8, 0.5)
-prop("prop_bench", 7, 15, (1, 1), 0.6, 0.0)
-prop("prop_crates", 20, 14, (1, 1), 0.6, 0.5)
-prop("prop_barrel", 16, 19, (1, 1), 0.6, 0.5)
-prop("prop_planter", 3, 22, (1, 1), 0.8, 0.5)
-prop("prop_hay", 27, 15, (1, 1), 0.65, 0.5)
-prop("prop_crates", 26, 12, (1, 1), 0.6, 0.5)
-prop("prop_planter", 24, 10, (1, 1), 0.8, 0.5)
-prop("prop_bench", 15, 26, (1, 1), 0.6, 0.0)
-prop("prop_planter", 20, 27, (1, 1), 0.8, 0.5)
-prop("prop_barrel", 9, 12, (1, 1), 0.6, 0.5)
+lots = {(x, y) for y in range(H) for x in range(W)} - street - reserved
+for r in rects(lots):
+    for x0, y0, x1, y1 in parcels(r):
+        w, h = x1 - x0 + 1, y1 - y0 + 1
+        # A house along the street side (its door faces +y), a gray box behind it if the parcel runs deeper.
+        fh = 4 if (w, h) == (6, 4) else 3
+        names = HOUSES.get((w, fh), []) if h >= fh else []
+        if names and rng.random() < 0.8:
+            name = rng.choice(names)
+            door = (x0 + DOOR_DX[name], y1 + 1)
+            if door in street:
+                prop(name, x0, y1 - fh + 1, (w, fh), 0.0, 3.0)
+                doors.append(door)
+                if h > fh:
+                    prop("ph_building", x0, y0, (w, h - fh), rng.choice([2.0, 2.5, 3.0]), 3.0)
+                continue
+        tall = rng.choice([1.5, 2.0, 2.0, 2.5, 3.0]) if y0 > TERRACE else rng.choice([1.5, 2.0, 2.5])
+        prop("ph_building", x0, y0, (w, h), tall, 3.0)
 
-start = (10, 28)
+# --- street life -----------------------------------------------------------------------------------------
+LIFE = [
+    ("prop_well", 14, 33, 0.8, 0.5), ("prop_tree_3", 10, 31, 1.6, 1.0), ("prop_bench", 11, 35, 0.6, 0.0),
+    ("prop_lamp", 18, 31, 1.2, 0.0), ("prop_stall", 17, 34, 0.9, 1.0), ("prop_crates", 19, 35, 0.6, 0.5),
+    ("prop_stall", 26, 30, 0.9, 1.0), ("prop_stall", 30, 30, 0.9, 1.0), ("prop_stall", 34, 30, 0.9, 1.0),
+    ("prop_barrel", 37, 29, 0.6, 0.5), ("prop_crates", 25, 32, 0.6, 0.5), ("prop_cart", 36, 32, 0.8, 0.5),
+    ("prop_lamp", 24, 18, 1.2, 0.0), ("prop_lamp", 17, 18, 1.2, 0.0),
+    ("prop_tree_2", 23, 5, 1.6, 1.0), ("prop_well", 26, 6, 0.8, 0.5), ("prop_bench", 20, 7, 0.6, 0.0),
+    ("prop_lamp", 12, 11, 1.2, 0.0), ("prop_lamp", 30, 11, 1.2, 0.0), ("prop_planter", 9, 12, 0.8, 0.5),
+    ("prop_planter", 33, 12, 0.8, 0.5), ("prop_bench", 40, 11, 0.6, 0.0),
+    # on the roofs
+    ("prop_planter", 9, 18, 0.8, 0.5), ("prop_bench", 12, 19, 0.6, 0.0), ("prop_crates", 24, 26, 0.6, 0.5),
+    ("prop_planter", 30, 24, 0.8, 0.5), ("prop_hay", 35, 24, 0.65, 0.5),
+]
+taken = {}
+for pr in props:
+    for dy in range(pr["foot"][1]):
+        for dx in range(pr["foot"][0]):
+            taken[(pr["cell"][0] + dx, pr["cell"][1] + dy)] = pr["sprite"]
+for sprite, x, y, tall, sight in LIFE:
+    if (x, y) in taken or terrain[y][x] == "t" or (x, y) in doors:
+        print("skipped", sprite, "at", (x, y), "on", taken.get((x, y), terrain[y][x]))
+        continue
+    prop(sprite, x, y, (1, 1), tall, sight)
+
+start = (14, 42)
+
 
 # --- checks ------------------------------------------------------------------------------------------
 def inb(x, y):
@@ -224,36 +258,57 @@ def dump(r):
     print("   " + "".join("%2d" % (x % 100) for x in range(W)))
 
 
+def _cells(pr):
+    return {(pr["cell"][0] + dx, pr["cell"][1] + dy) for dy in range(pr["foot"][1]) for dx in range(pr["foot"][0])}
+
+
+def narrow():
+    """Street cells pinched to one cell across (Brandon: two cells wide at least). Flights don't count, and
+    street furniture (one-cell props) doesn't either."""
+    pc = {c for pr in props if pr["foot"] != [1, 1] for c in _cells(pr)} & prop_cells()
+    is_open = lambda c: c in street and c not in pc and terrain[c[1]][c[0]] != "t"
+    bad = []
+    for (x, y) in sorted(street):
+        if not is_open((x, y)):
+            continue
+        if not is_open((x - 1, y)) and not is_open((x + 1, y)):
+            bad.append((x, y))
+        elif not is_open((x, y - 1)) and not is_open((x, y + 1)):
+            bad.append((x, y))
+    return bad
+
+
 def check():
     r = reach(start)
     if "--dump" in sys.argv:
         dump(r)
     for d in doors:
         assert d in r, "door %s can't be reached" % (d,)
-    for name, cell in [("upper square", (12, 5)), ("market", (22, 19)), ("square A", (9, 22)),
-                       ("roof off main street", (19, 14)), ("roof off the west lane", (6, 14)),
-                       ("roofs over the market", (16, 18)), ("front-left roof", (3, 23)),
-                       ("roof off the promenade", (6, 12)), ("under the main street house", (10, 19)),
-                       ("under the alley house", (18, 16)), ("under the east street house", (23, 14))]:
+    for name, cell in [("upper square", (24, 6)), ("market", (31, 31)), ("square A", (12, 33)),
+                       ("roof off the cross lane", (10, 17)), ("roof off the market", (25, 25)),
+                       ("roof off the east lane", (35, 26)), ("terrace by the grand stair", (21, 12)),
+                       ("under the main street house", (20, 25)), ("under the alley house", (26, 22)),
+                       ("under the east street house", (32, 25)), ("the west wall stair top", (3, 13)),
+                       ("the east wall stair top", (40, 13))]:
         assert cell in r, name + " can't be reached"
-    for pr in props:
-        if pr["sprite"].startswith("b_"):
-            x0, y0 = pr["cell"]
-            lv = {height[y0 + dy][x0 + dx] for dy in range(pr["foot"][1]) for dx in range(pr["foot"][0])}
-            assert len(lv) == 1, pr["sprite"] + " isn't on flat ground"
-    taken = {}
+    seen = {}
     for pr in props:
         for dy in range(pr["foot"][1]):
             for dx in range(pr["foot"][0]):
                 c = (pr["cell"][0] + dx, pr["cell"][1] + dy)
-                assert c not in taken, "%s and %s overlap at %s" % (pr["sprite"], taken[c], c)
-                taken[c] = pr["sprite"]
-    walkable = {(x, y) for y in range(H) for x in range(W) if terrain[y][x] not in BLOCKED} - prop_cells()
-    return r, walkable - r
+                assert c not in seen, "%s and %s overlap at %s" % (pr["sprite"], seen[c], c)
+                seen[c] = pr["sprite"]
+        if pr["sprite"].startswith(("b_", "ph_building")):
+            x0, y0 = pr["cell"]
+            lv = {height[y0 + dy][x0 + dx] for dy in range(pr["foot"][1]) for dx in range(pr["foot"][0])}
+            assert len(lv) == 1, pr["sprite"] + " isn't on flat ground"
+    bad = narrow()
+    if bad:
+        print("one cell wide at", bad)
+    return r
 
 
-reached, cut_off = check()
-
+reached = check()
 data = {
     "name": "city_proto", "art_set": "village", "strangeness": 0.0, "view": 0, "turn": False, "fog": False,
     "grid": {"w": W, "h": H, "terrain": ["".join(r) for r in terrain],
@@ -263,5 +318,5 @@ data = {
 with open(OUT, "w") as f:
     json.dump(data, f, indent=1)
     f.write("\n")
-print("wrote", os.path.normpath(OUT), "%dx%d" % (W, H), len(props), "props;", len(reached), "cells walkable from the start,",
-      len(cut_off), "roof cells with no way up")
+print("wrote", os.path.normpath(OUT), "%dx%d" % (W, H), len(props), "props (%d houses, %d gray boxes);" % (
+    len(doors), sum(p["sprite"] == "ph_building" for p in props)), len(reached), "cells walkable from the start")
