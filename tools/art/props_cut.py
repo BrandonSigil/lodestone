@@ -42,7 +42,7 @@ def _runs(on: np.ndarray, min_gap: int) -> list:
     return merged
 
 
-def cut(sheet: str, cols: int, rows: int, names: list, out: Path, width: int = 0) -> list:
+def cut(sheet: str, cols: int, rows: int, names: list, out: Path, width: int = 0, scale: float = 0.0) -> list:
     """Rows and props are found from the paper gaps between them, so uneven rows still cut cleanly."""
     img = Image.open(sheet).convert("RGB")
     rgb = np.asarray(img).astype(int)
@@ -69,7 +69,9 @@ def cut(sheet: str, cols: int, rows: int, names: list, out: Path, width: int = 0
             a[np.abs(a[..., :3].astype(int) - paper).max(-1) <= PAPER_TOL, 3] = 0
             p = Image.fromarray(a, "RGBA")
             p = p.crop(p.getchannel("A").getbbox())
-            if width:
+            if scale:  # one factor for every prop, so figures from one sheet keep their sizes
+                p = p.resize((max(1, round(p.width * scale)), max(1, round(p.height * scale))), Image.LANCZOS)
+            elif width:
                 # The front corner is the lowest solid pixel; walls run up-left and up-right from it.
                 ys, xs = np.where(np.asarray(p.getchannel("A")) > 128)
                 print("%s: left wall share %.2f" % (names[i], xs[ys >= ys.max() - 3].mean() / p.width))
@@ -88,9 +90,10 @@ def main() -> None:
     ap.add_argument("--names", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--width", type=int, default=0, help="scale to this width (buildings) instead of 256 tall")
+    ap.add_argument("--scale", type=float, default=0.0, help="scale every prop by this one factor (1 = as painted), instead of 256 tall")
     args = ap.parse_args()
     cols, rows = (int(x) for x in args.grid.split("x"))
-    done = cut(args.sheet, cols, rows, args.names.split(","), Path(args.out), args.width)
+    done = cut(args.sheet, cols, rows, args.names.split(","), Path(args.out), args.width, args.scale)
     print("cut", len(done), "props to", args.out)
 
 
