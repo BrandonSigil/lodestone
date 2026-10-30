@@ -13,13 +13,14 @@
   `origin/main`, run `--import`, then `E2E=1 tools/check.sh`, then remove the worktree.
 
 ## Now
-- Waiting on Brandon's stamp on card `builder-cliff-wash-review` (cliff strips colour-matched, one wash, flips; f94d3c5).
+- Cliff wash approved; repeat-break pass (hashed width/stretch per window) in 8f5eafb, no review card yet.
+- Maker: boost/key/rare things with icon art and fight goals in the group inspector (24308ac, 7bb95c1). Waiting on cards `builder-maker-goals-review` and `builder-crypt-redesign-present` (options A finish / B loop / C climb).
 - Next if he asks for more: tune the `WASH_*` constants in `combat_board.gd`, the strip colour (`strip_tone` column in
   `game/data/battle_art_village.csv`), or window sizes (`_strip_cut`). Then village v2 art.
 - Uncommitted work of mine: none. The six strip PNGs are the art runner's to commit on stamp.
 
 ## Open threads
-- Desk: `builder-cliff-wash-review` (open). Notes: none open.
+- Desk: `builder-maker-goals-review`, `builder-crypt-redesign-present` (open). Notes: none open.
 - The art runner (`local_b246bd54-…`) sends Brandon's picks on art cards; the systems developer owns engine rules;
   the game designer sets map levels and foe placement; the playtester reruns after map changes (tell them).
 - E2E on main fails "engine errors" from `_sit_on_frame` (4810f09, not ours). Reported to main.
