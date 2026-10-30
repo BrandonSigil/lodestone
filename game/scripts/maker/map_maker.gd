@@ -169,6 +169,7 @@ func _ready() -> void:
 	overlay = MakerOverlay.new()
 	overlay.maker = self
 	board.add_child(overlay)
+	get_tree().node_added.connect(_on_node_added)
 	_build_ui()
 	var opened: MapDoc = null
 	if Game.maker_map != "":
@@ -468,6 +469,49 @@ func _process(delta: float) -> void:
 			flat.fit()
 	_hover()
 	_title.text = "%s%s" % [doc.key(), "  *" if _dirty else ""]
+
+
+## Let go of keyboard focus, so painting and the shortcuts work again ([USER] 2026-10-30: the level box "doesnt really let
+## you unfocus this text box"). Every number box and text box lets go on Enter, Escape, a click anywhere outside it and
+## after its arrows change the value.
+func _drop_focus() -> void:
+	var f := get_viewport().gui_get_focus_owner()
+	if f != null:
+		f.release_focus()
+
+
+func _edit_owner() -> Control:
+	var f := get_viewport().gui_get_focus_owner()
+	if f == null:
+		return null
+	if f.get_parent() is SpinBox:
+		return f.get_parent() as Control
+	return f if (f is LineEdit or f is TextEdit or f is SpinBox) else null
+
+
+func _input(event: InputEvent) -> void:
+	var owner := _edit_owner()
+	if owner == null:
+		return
+	if event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
+		var rect: Rect2 = owner.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, owner.size)
+		if not rect.has_point((event as InputEventMouseButton).position):
+			_drop_focus()  # a click outside the box (the click itself still goes on to what it hit)
+	elif event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo:
+		var k := event as InputEventKey
+		if k.keycode == KEY_ESCAPE:
+			_drop_focus()
+			get_viewport().set_input_as_handled()
+		elif k.keycode == KEY_ENTER or k.keycode == KEY_KP_ENTER:
+			_drop_focus.call_deferred()  # after the box has taken its value
+
+
+## Wire every number box the maker builds (the panels rebuild them): the arrows and Enter hand focus back.
+func _on_node_added(n: Node) -> void:
+	if n is SpinBox and _ui != null and _ui.is_ancestor_of(n):
+		var sb := n as SpinBox
+		sb.value_changed.connect(func(_v: float) -> void: _drop_focus.call_deferred())
+		sb.get_line_edit().text_submitted.connect(func(_t: String) -> void: _drop_focus.call_deferred())
 
 
 func _typing() -> bool:

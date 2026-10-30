@@ -458,6 +458,42 @@ func test_map_maker_flat_mode_paints_the_same_map() -> void:
 	tree.root.get_node("Game").set("maker_map", keep)
 
 
+## A number box lets go of keyboard focus on Enter, Escape, an outside click and after its arrows ([USER] 2026-10-30).
+func test_map_maker_boxes_let_go_of_focus() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	var keep: String = tree.root.get_node("Game").get("maker_map")
+	var maker: Node = load("res://scenes/map_maker.tscn").instantiate()
+	tree.root.add_child(maker)
+	maker.call("_open", MapDoc.create("battle", "test_tmp", _island(8, 1), "village_in"))
+	var box := SpinBox.new()
+	box.size = Vector2(100, 30)
+	maker.get("_root").add_child(box)  # built after the maker's wiring: the node_added hook catches it
+	var le := box.get_line_edit()
+	le.grab_focus()
+	ok(maker.call("_typing"), "the box has focus")
+	var esc := InputEventKey.new()
+	esc.keycode = KEY_ESCAPE
+	esc.pressed = true
+	maker.call("_input", esc)
+	ok(not maker.call("_typing"), "Escape lets go")
+	le.grab_focus()
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = Vector2(1500, 900)  # far from the box
+	maker.call("_input", click)
+	ok(not maker.call("_typing"), "a click outside lets go")
+	le.grab_focus()
+	box.value = 5  # the arrows (or Enter) change the value
+	maker.call("_drop_focus")  # what the deferred hook does one frame on
+	ok(not maker.call("_typing"), "focus is dropped after the value changes")
+	maker.get("_root").remove_child(box)
+	box.free()
+	tree.root.remove_child(maker)
+	maker.free()
+	tree.root.get_node("Game").set("maker_map", keep)
+
+
 func test_map_doc_files() -> void:
 	var g := MapGen.valley(2, 14, 12)
 	var battle := MapDoc.create("battle", "Test Map!", g, "alpine").to_dict()
