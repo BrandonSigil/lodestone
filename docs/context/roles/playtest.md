@@ -24,10 +24,11 @@ Studio role id `playtest`, name "Playtester". Page: https://claude.ai/artifact/B
 - `Cannot convert argument 1 from Object to Object` (`pop_in`) appears in most logs; no effect on results, unknown if new.
 - Studio writes to an existing doc need `if_version`.
 
-## Baseline (clean worktree, crypt level 1, ambusher on `pass_bandits`, 9395491)
-- 35 of 36 pass; no script errors, no stalls. Fails: bow seed 8 (road fight lost).
-- First try lost (of 12): pass_bandits 1 / 0 / 0; plaza 1 / 6 / 1; tower 1 / 4 / 4 (sword / daggers / bow).
-- Lich tries per run: sword 2.3, daggers 2.7, bow 2.3. Lich at level 5 in the sim: sword 43%, daggers 57%, bow 28%, book 85%.
+## Baseline (clean worktree, scale C on, 48909e0, 2026-10-30)
+- 36 of 36 pass; no script errors, no stalls; no pop_in errors. Fights now: pass_wolves, pass_bandits, den_wolves, den_lone, plaza, cave, tower, throne.
+- Runs with a first-try loss (of 12), sword / daggers / bow: pass_wolves 1/0/0; pass_bandits 0/1/0; den_wolves 0/2/0; den_lone 0/2/4; plaza 0/0/1; tower 2/3/1; throne 11/12/10.
+- Lich tries per run: sword 2.1, daggers 2.7, bow 3.1 (was 2.3 / 2.7 / 2.3). Sim at level 5 (60 fights): sword 42%, daggers 57%, bow 37% (ambushed 27 / 48 / 15). Every other group is 100% in the sim.
+- Ordinary fights are all but unloseable; only the Lich bites. Bow is the hardest weapon on him.
 
 ## Open
 - Nothing filed by me is open. Last rule from the game designer: ambusher softens if `pass_bandits` loses over half its first tries (it does not).
