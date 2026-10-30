@@ -1,0 +1,15 @@
+Image 1 = the look: a fall village props sheet for a cosy fantasy tactics game. Copy its finish exactly: its shapes, wood brown, warm stone and fall colours, soft painted edges, one flat colour plus one shadow tone per surface, one soft dark outline round each whole piece. Take the finish, not the props or the layout.
+
+WHAT THIS IS: four larger landmark pieces for a village on a hill, game-ready, each a single standalone piece. Plain flat cream paper (#eae8d6) background, no title, no labels, no text, no numbers, nothing written on any piece.
+
+LAYOUT: aspect 3:2, a grid of 2 columns and 2 rows = 4 equal cells with a wide clear cream gap between cells. ONE piece per cell, large, centred, filling most of its cell, nothing crosses a cell edge, nothing touches another piece. Row by row, left to right:
+   1 a stone-based windmill with a round tower, a wooden cap, a small door and four plain wooden sails
+   2 a lakeside boathouse: a small low wooden building with a pitched roof and a wide double door at the front, built on short wooden posts
+   3 an old stone crypt gate: two weathered stone pillars with a plain pointed arch over a closed iron-barred gate, a little moss, no writing, no carvings of faces
+   4 a straight wooden dock: a short run of plank boards on thick posts, three posts a side, one rope coil at the end
+
+VIEW: every piece in 2:1 dimetric three-quarter view from above (camera turned 45 degrees, looking down 30 degrees), the same angle as image 1, the building fronts facing the lower right. The base sits at the bottom centre of its cell. Nothing seen flat-on.
+BASE: no ground disc, no grass patch, no water, no floor, no cast shadow. At most two or three small golden grass tufts touching the very base.
+FINISH: light from the upper left (top lightest, left faces mid, right faces darkest). One soft dark charcoal outline (#373335, never pure black) round each whole piece only, no inner lines. No wood grain, no plank lines, no stone-by-stone outlines. Big simple silhouettes, the same amount of detail as image 1.
+
+Avoid: ground under pieces, water, cast shadows, perspective, flat-on views, pixel art, fine detail, text, letters, numbers, borders round cells, 3d render, glossy, photo, people, animals, skulls, watermark, saturated red, saturated blue.

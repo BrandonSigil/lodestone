@@ -1,0 +1,14 @@
+LODESTONE HERO PORTRAIT, EYES SHOWING (one close-up, for the left side of the character sheet)
+
+Image 1 = the character key art. Draw THIS character and nobody else: same messy brown hair, green hooded cloak with a round gold clasp, blue tunic, cream undershirt, the same colours, the same costume, the same simple flat shading and drawing style. Do not add detail.
+
+FACE (changed from before): the fringe a little shorter and parted so BOTH EYES SHOW. Two small simple eyes set wide on the face: a dark brown oval iris with a tiny light catch-light, and a very SMALL, SOFT eye white behind it, a warm cream colour (#f1e7d0), never bright white, never bigger than the iris. Calm, steady look, no eyelashes, no shine, a small plain mouth.
+
+FRAMING: aspect 3:4, a close-up portrait, head and shoulders only, the character large and filling most of the picture. The head sits in the upper half; the shoulders and the top of the chest run off the BOTTOM edge of the picture. Plain flat cream paper (#eae8d6) behind, with clear empty cream above and to the sides of the head.
+VIEW: three-quarter view, the character turned toward the RIGHT edge of the picture, looking that way. Eye level, straight on, no high game camera for this picture.
+Same chibi proportions as image 1, only seen closer: the same big round head and simple face. Bigger, not more detailed: one flat colour per material plus one flat shadow tone, light from the upper left.
+
+LINE ART (essential, the house style): a soft, imperfect paint-marker outline round the whole silhouette and its big parts, dark warm charcoal (#373335, not pure black), slightly wobbly and uneven in weight like a felt marker drawn by hand, a little bolder than on the small sprites. Not a thin, even vector hairline.
+
+Rules: no text, no labels, no frame, no border, no background scenery, no gradient behind, no hands, no weapons in the picture, no extra characters.
+Avoid: realistic anatomy, anime shine on the hair, glossy eyes, big white eyes, bright white eyes, a different costume, armour, extra detail, texture, thin even hairline outlines, pure black outlines, 3d render, photo, text.

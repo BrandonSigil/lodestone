@@ -1,0 +1,17 @@
+Image 1 = the look: a fall village props sheet for a cosy fantasy tactics game. Copy its props' finish exactly: their shapes, wood brown, warm stone and fall colours, soft painted edges, one flat colour plus one shadow tone per surface, one soft dark outline round each whole prop. Take the finish, not the props or the layout.
+
+WHAT THIS IS: six small outdoor pieces for a village on a hill, game-ready, each a single standalone piece a game places on one map tile. Plain flat cream paper (#eae8d6) background, no title, no labels, no text, no numbers, nothing written on any piece.
+
+LAYOUT: aspect 3:2, a grid of 3 columns and 2 rows = 6 equal cells with a wide clear cream gap between cells. ONE piece per cell, standing alone, centred, nothing crosses a cell edge, nothing touches another piece. Row by row, left to right:
+   1 a weathered grey stone headstone with a rounded top, leaning very slightly, a little moss at its foot
+   2 a small grave mound of earth with a plain stone cross at its head, a few dry fall leaves on it
+   3 a short section of black wrought-iron fence, three upright bars with pointed tips between two stone posts
+   4 a patch of crop rows: three short ridges of dark soil with small green and gold plants growing in a neat row
+   5 a clump of tall reeds with brown cattail heads, a few grass blades round the base
+   6 a small wooden rowing boat, plain planks, one oar laid across it, empty
+
+VIEW: every piece in 2:1 dimetric three-quarter view from above (camera turned 45 degrees, looking down 30 degrees), the same angle as image 1. The base sits at the bottom centre of its cell, as if standing on one map tile. Nothing seen flat-on.
+BASE: no ground disc, no grass patch, no floor, no cast shadow, no water under the boat. At most two or three small golden grass tufts touching the very base.
+FINISH: light from the upper left (top lightest, left faces mid, right faces darkest). One soft dark charcoal outline (#373335, never pure black) round each whole piece only, no inner lines. No wood grain, no stone-by-stone outlines. Big simple silhouettes, the same amount of detail as image 1.
+
+Avoid: ground under pieces, cast shadows, perspective, flat-on views, pixel art, fine detail, text, letters, numbers, borders round cells, 3d render, glossy, photo, people, animals, skulls, gore, watermark, saturated red, saturated blue.
