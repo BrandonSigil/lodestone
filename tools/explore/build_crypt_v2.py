@@ -120,21 +120,21 @@ def link(name, a, b, first="x", width=3, bridge=False, door=None, to_off=(0, 0))
 room("court", 9, 54, 7, 6, 2, "g", 2.2)
 room("lookout", 6, 41, 3, 3, 4, "g", 2.4)  # a jut-out north of the courtyard, a dead end with a boost
 room("gate", 23, 50, 4, 3, 3, "s")
-room("hall", 37, 44, 8, 6, 3, "s")
+room("hall", 37, 44, 7, 5, 3, "s")
 room("chapel", 55, 52, 4, 5, 3, "s")
 room("cellar", 24, 37, 6, 4, 1, "s")
-room("gallery", 49, 28, 8, 5, 7, "s")
+room("gallery", 49, 28, 7, 4, 7, "s")
 room("library", 13, 25, 5, 7, 6, "s")
-room("junction", 30, 20, 7, 5, 10, "s")
+room("junction", 30, 20, 6, 4, 10, "s")
 room("wing", 65, 21, 4, 6, 9, "s")
-room("throne", 52, 7, 12, 4, 13, "s", 4.0)
+room("throne", 52, 7, 13, 5, 13, "s", 4.0)
+room("tower", 5, 7, 3, 3, 16, "s", 2.4)  # a tall jut-out at the top-left, a dead end with a chest
 pillars("hall", [(-5, -4), (-5, 4), (0, -4), (0, 4), (5, -4), (5, 4)])
 pillars("gallery", [(-5, -3), (-5, 3), (0, -3), (0, 3), (5, -3), (5, 3)])
 pillars("junction", [(-4, -3), (-4, 3), (4, -3), (4, 3)])
 pillars("library", [(-3, -5), (3, -5), (-3, 5), (3, 5)])
 pillars("wing", [(-2, -4), (2, -4), (-2, 4), (2, 4)])
 pillars("chapel", [(-2, -3), (2, -3), (-2, 3), (2, 3)])
-pillars("throne", [(-10, -2), (-10, 2), (-5, -2), (-5, 2), (5, -2), (5, 2), (10, -2), (10, 2)])
 # pools: the cellar's sink and the junction's basin
 for (r, offs) in (("cellar", [(-1, 0), (0, 0), (1, 0), (0, 1), (0, -1)]), ("junction", [(0, 0), (1, 0)])):
     cx, cy = ROOMS[r]["box"][:2]
@@ -156,6 +156,7 @@ link("gallery_junction", "gallery", "junction", "x", 3)
 link("junction_throne", "junction", "throne", "y", 3)
 link("library_throne", "library", "throne", "y", 1, to_off=(0, -3))
 link("wing_throne", "wing", "throne", "y", 1)
+link("library_tower", "library", "tower", "x", 1)
 link("bridge_wing", "junction", "wing", "y", 1, bridge=True) if False else None
 # the long bridge from the junction's east edge to the east wing, over a drop (heights 10 and 9)
 ROOMS["junction"]["h"], ROOMS["wing"]["h"] = 10, 9
@@ -163,6 +164,30 @@ link("bridge_long", "junction", "wing", "x", 1, bridge=True)
 # the bridge starts and ends one level off a room's floor; level it to the lower room
 for (x, y) in LINKS["bridge_long"]:
     height[y][x] = 9
+
+# The throne room: big doors in at the west end, a carpet lane down the middle, the throne on a platform two levels up
+# with a stair to it (the lich stands on it); the way out is round the platform's south side, so an escape walks by him.
+tx, ty = ROOMS["throne"]["box"][:2]
+for x in range(41, 58):
+    for y in (6, 7, 8):
+        terrain[y][x] = "d"
+        height[y][x] = 13  # the carpet
+for y in (6, 7, 8):
+    terrain[y][58], height[y][58] = "t", 13
+    terrain[y][59], height[y][59] = "t", 14
+for y in range(4, 11):
+    for x in range(60, 66):
+        terrain[y][x], height[y][x] = "s", 15  # the platform
+for x in range(42, 57, 4):
+    for y in (4, 10):
+        if terrain[y][x] == "s":
+            terrain[y][x] = "u"  # pillars flank the lane
+for y in (5, 9):
+    terrain[y][39] = "u"  # the door posts
+for x in range(62, 65):
+    for y in (11, 12):
+        terrain[y][x], height[y][x] = "s", 13  # the way out, past the platform
+terrain[2][66] = terrain[2][66]
 
 # Walls: rock rises 2 above its tallest open neighbour; rock with no ground next to it is void (the outline).
 for y in range(H):
@@ -223,9 +248,9 @@ data = {
          "units": [{"id": "bandit_archer", "cell": c("wing", 1, -4)}, {"id": "bandit", "cell": c("wing", -1, 2)}]},
         {"id": "throne", "event": "spot_boss", "sight": 4, "loot": "medicine:+3;gold:+20;unlock:beat_lich",
          "boss": True, "end": True, "goals": "defeat|exit",
-         "exit": [[c("throne", -13, dy)[0] + dx, c("throne", -13, dy)[1]] for dy in (-1, 0, 1) for dx in (0, 1)],
-         "summon": [c("throne", -2, 0), c("throne", 2, 0), c("throne", -1, 1), c("throne", 1, 1)],
-         "units": [{"id": "lich", "cell": c("throne", 4, 0)}]},
+         "exit": [[x, y] for y in (11, 12) for x in (62, 63, 64)],
+         "summon": [[62, 6], [62, 8], [61, 7], [63, 5]],
+         "units": [{"id": "lich", "cell": [63, 7]}]},
     ],
     "things": [
         gate_thing,
@@ -235,7 +260,9 @@ data = {
         {"id": "chapel_chest", "kind": "chest", "event": "chest", "cell": c("chapel", 0, 4)},
         {"id": "wing_key", "kind": "key", "event": "crypt_key", "cell": c("wing", 2, 5)},
         {"id": "library_rare", "kind": "rare", "event": "rare:1;metal:2", "cell": c("library", -3, -2)},
-        {"id": "way_out", "kind": "exit", "event": "exit", "cell": c("throne", -13, 0)},
+        {"id": "way_out", "kind": "exit", "event": "exit", "cell": [63, 12]},
+        {"id": "throne_doors", "kind": "door", "event": "locked_door", "cell": [39, 7], "floor": "s"},
+        {"id": "tower_chest", "kind": "chest", "event": "chest", "cell": c("tower", 0, 0)},
         {"id": "up_stair", "kind": "enter", "event": "", "cell": c("court", -6, 3), "to": "snow_pass", "at": [9, 8]},
     ],
 }
