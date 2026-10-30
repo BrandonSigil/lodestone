@@ -503,6 +503,7 @@ function cardHtml(d) {
         </div>`;}).join("")}</div>`;
       const all = (d.items || []).every((it) => iv[it.id]?.verdict);
       body += `<div class="why"><textarea id="why-${esc(d.id)}" placeholder="Overall notes (optional)">${esc(draft.why || "")}</textarea>${attachHtml(d.id)}
+        <div class="row"><small style="color:var(--muted)">Mark every picture:</small>${["approve", "redo", "reject"].map((k) => `<button class="btn small" data-act="verdictall" data-id="${esc(d.id)}" data-v="${k}">${{ approve: "Approve all", redo: "Redo all", reject: "Reject all" }[k]}</button>`).join("")}</div>
         <div class="row"><button class="btn primary" data-act="sendreview" data-id="${esc(d.id)}" ${all ? "" : "disabled"}>Stamp and send</button><small style="color:var(--muted)">${all ? "" : "Give every picture a verdict first."}</small></div></div>`;
     } else if (d.kind === "todo") {
       body += `<div class="row"><button class="btn primary" data-act="todo" data-id="${esc(d.id)}">Mark done</button></div>`;
@@ -876,6 +877,11 @@ document.addEventListener("click", async (ev) => {
         dr.why = why(); dr.items ||= {};
         const it = t.dataset.item, cur = dr.items[it] || {};
         dr.items[it] = { ...cur, verdict: cur.verdict === t.dataset.v ? undefined : t.dataset.v };
+        rerenderCards(); break;
+      }
+      case "verdictall": {  // fills every picture's verdict; sending stays a separate click
+        dr.why = why(); dr.items ||= {};
+        for (const it of d?.items || []) dr.items[it.id] = { ...(dr.items[it.id] || {}), verdict: t.dataset.v };
         rerenderCards(); break;
       }
       case "sendreview":
