@@ -10,6 +10,7 @@ var _out := ""
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
 	_out = args[1]
+	root.get_node("Game").set("save_enabled", false)  # screens bookmark as they open: a shot never writes the real save
 	change_scene_to_file(args[0])
 
 

@@ -122,6 +122,7 @@ func run(s: Node, f: int, step: String) -> bool:
 				game.refresh_party()
 				s._refresh_hud()
 				s._open_menu("lodestone")
+				s.hud.flash_saved()  # the cue a bookmark shows (saving is off in shots)
 			return f == 30
 		"pack_full":
 			# A pickup with no room: FOUND beside the pack, the dog's saddlebag and THROW AWAY under it.

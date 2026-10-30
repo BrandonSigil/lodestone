@@ -53,7 +53,7 @@ func _sections_row() -> HBoxContainer:
 	var sections := [
 		["PLAY", [
 			["New game", "fresh save: the cottage, the E2E loop", Game.new_game],
-			["Continue", "the cottage, keeping what you found", _start_game],
+			["Continue", "back to the bookmark: where you saved and quit" if Game.has_bookmark() else "the cottage, keeping what you found", _continue],
 			["Overworld", "town, the paths, the snowy pass", _go.bind(Game.OVERWORLD)],
 		]],
 		["+SHELVED", [
@@ -108,6 +108,14 @@ func _button(label: String, desc: String, cb: Callable) -> Button:
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	b.pressed.connect(cb)
 	return b
+
+
+## Back to the bookmark ([USER] omr-11), or with none the cottage with what this save has found.
+func _continue() -> void:
+	if Game.has_bookmark():
+		Game.continue_game()
+	else:
+		_start_game()
 
 
 ## Back to the cottage with what this save has found (New game wipes the save).

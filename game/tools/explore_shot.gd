@@ -13,6 +13,7 @@ func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
 	_out = args[0]
 	_step = args[1] if args.size() > 1 else "start"
+	root.get_node("Game").set("save_enabled", false)  # screens bookmark as they open: a shot never writes the real save
 	root.get_node("Game").set("explore_map", args[2] if args.size() > 2 else "crypt")
 	change_scene_to_file("res://scenes/explore.tscn")
 

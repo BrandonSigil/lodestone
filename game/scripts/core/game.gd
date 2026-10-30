@@ -46,6 +46,94 @@ var _hero: CharacterDef = null
 func _ready() -> void:
 	TranslationServer.set_locale("en")
 	load_meta()
+	get_tree().auto_accept_quit = false  # closing the window bookmarks first (_notification)
+
+
+## Closing the window is a save and quit ([USER] omr-11): the screen writes its bookmark, then the game ends.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		var scene := get_tree().current_scene
+		if scene != null and scene.has_method("bookmark"):
+			scene.call("bookmark")
+		get_tree().quit()
+
+
+# --- the bookmark save ([USER] omr-4, omr-11: save and quit anywhere outside a fight; a fight quit
+# midway restarts from its first turn) ----------------------------------------------------------------
+
+signal bookmarked  ## a bookmark was just written: screens show the SAVED cue
+
+var resume_fight := {}  ## set by continue_game: the fight to start over, {"group": id, "how": ...} or {"road": ...}
+
+
+## Writes where the party is. state: {"scene": "explore" | "overworld", "map", "cell": [x, y], "fight": {}}.
+## Explore memory and the overworld walk come along. A screen in the middle of a fight doesn't call this:
+## the bookmark taken when the fight began stands, so a quit fight restarts from its first turn.
+func bookmark(state: Dictionary) -> void:
+	if not save_enabled or run == null or not run.adventure:
+		return
+	var b := state.duplicate(true)
+	b["memory"] = memory_to_save(explore_memory)
+	b["travel"] = travel.duplicate(true)
+	meta.bookmark = b
+	save_adventure()
+	bookmarked.emit()
+
+
+func has_bookmark() -> bool:
+	return not (meta.get("bookmark", {}) as Dictionary).is_empty()
+
+
+## Back to exactly where the bookmark was: the map and the hero's cell, or the overworld walk; a fight that
+## was going starts again from its first turn. No bookmark: the cottage.
+func continue_game() -> void:
+	restore_bookmark()
+	if String(meta.bookmark.get("scene", "")) == "overworld" and resume_fight.has("road"):
+		var f := resume_fight
+		resume_fight = {}
+		start_combat(String(f.road), String(f.get("art_set", "")), OVERWORLD)
+		return
+	go(OVERWORLD if String(meta.bookmark.get("scene", "")) == "overworld" else EXPLORE)
+
+
+## Puts the run, the explore memory, the walk and the map back as the bookmark had them. Returns the scene
+## to open (continue_game opens it).
+func restore_bookmark() -> String:
+	var b: Dictionary = meta.get("bookmark", {})
+	run = null
+	ensure_run()
+	explore_memory = memory_from_save(b.get("memory", {}))
+	travel = Dictionary(b.get("travel", {"at": "town"})).duplicate(true)
+	resume_fight = Dictionary(b.get("fight", {})).duplicate(true)
+	if String(b.get("scene", "")) == "overworld":
+		return OVERWORLD
+	explore_map = String(b.get("map", "home"))
+	var cell: Array = b.get("cell", [-1, -1])
+	explore_entry = Vector2i(int(cell[0]), int(cell[1]))
+	return EXPLORE
+
+
+## Explore memory with its cell keys as [x, y] pairs, for JSON.
+static func memory_to_save(mem: Dictionary) -> Dictionary:
+	var out := {}
+	for name in mem:
+		var m: Dictionary = mem[name]
+		var seen_cells := []
+		for c: Vector2i in m.get("seen", {}):
+			seen_cells.append([c.x, c.y])
+		out[name] = {"seen": seen_cells, "done": m.get("done", []).duplicate(), "groups": Dictionary(m.get("groups", {})).duplicate()}
+	return out
+
+
+static func memory_from_save(saved: Dictionary) -> Dictionary:
+	var out := {}
+	for name in saved:
+		var m: Dictionary = saved[name]
+		var seen_cells := {}
+		for c in m.get("seen", []):
+			seen_cells[Vector2i(int(c[0]), int(c[1]))] = true
+		out[String(name)] = {"seen": seen_cells, "done": Array(m.get("done", [])), "groups": Dictionary(m.get("groups", {}))}
+	return out
 
 
 ## Developer shortcuts from anywhere: F7 the launch menu, F8 the map maker, F10 the walkable map.
@@ -122,7 +210,7 @@ func save_meta() -> void:
 
 static func _fresh_meta() -> Dictionary:
 	return {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": [],
-		"levels": {}, "pack": {}, "materials": {}, "benched": []}
+		"levels": {}, "pack": {}, "materials": {}, "benched": [], "bookmark": {}}
 
 
 func reset_meta() -> void:
@@ -496,6 +584,9 @@ func absorb(unlocks: Array) -> void:
 ## returns to ("" = the trail).
 func start_combat(encounter_id: String, art_set := "", back_to := "") -> void:
 	ensure_run()
+	if back_to == OVERWORLD:
+		# a road fight quit midway starts over from the road ([USER] omr-11)
+		bookmark({"scene": "overworld", "fight": {"road": encounter_id, "art_set": art_set}})
 	run.marks.append({"d": run.distance, "kind": "combat"})
 	_combat_setup = {"encounter": encounter_id, "seed": run.rng.randi(), "strangeness": run.strangeness(), "art_set": art_set}
 	combat_return = back_to

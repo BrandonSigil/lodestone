@@ -63,6 +63,12 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 		_button(box, Txt.t("UI_LS_HOME"), func() -> void:
 			close.call()
 			Game.wake_in_town(false))
+	_button(box, Txt.t("UI_LS_SAVE_QUIT"), func() -> void:
+		# [USER] omr-4, omr-11: put a bookmark in; Continue on the launch menu comes back right here
+		var tree := Engine.get_main_loop() as SceneTree
+		if tree.current_scene.has_method("bookmark"):
+			tree.current_scene.call("bookmark")
+		tree.quit())
 	_button(box, Txt.t("UI_CLOSE_MENU"), close)
 
 

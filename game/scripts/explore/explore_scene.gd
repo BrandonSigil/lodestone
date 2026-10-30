@@ -143,11 +143,24 @@ func _ready() -> void:
 	var lead := leader()
 	if lead:
 		_snap_to(lead)
+	Game.bookmarked.connect(hud.flash_saved)
+	if not Game.resume_fight.is_empty():
+		# a fight that was going when the game was quit starts again from its first turn
+		var f := Game.resume_fight
+		Game.resume_fight = {}
+		var g := {}
+		for x in groups:
+			if String(x.def.id) == String(f.get("group", "")):
+				g = x
+		if not g.is_empty() and g.state != "gone":
+			start_fight(g, String(f.get("how", "party")))
+			return
 	if not Game.pending_lines.is_empty():
 		_show_pending()
 	elif lead:
 		check_groups(true)  # stepping in beside a group: the party gets the first look, not an ambush
 		_refresh_units()
+	bookmark.call_deferred()
 
 
 ## Lines left for this screen (waking in the square after a fall, GO HOME).
@@ -670,15 +683,7 @@ func _letter_terrain(letter: String) -> int:
 
 ## Walk through a door into another map (a house, back out to the street). This map is remembered.
 func _travel(t: Dictionary) -> void:
-	var done: Array = []
-	for x in things:
-		if x.done:
-			done.append(x.id)
-	var settled := {}
-	for g in groups:
-		if g.state == "gone" or g.state == "calm":
-			settled[String(g.def.id)] = g.state
-	Game.explore_memory[map.map_name] = {"seen": seen.duplicate(), "done": done, "groups": settled}
+	_remember()
 	mode = M.OVER
 	Game.explore_map = String(t.to)
 	Game.explore_entry = t.at
@@ -894,6 +899,7 @@ func _close_dialog() -> void:
 func start_fight(g: Dictionary, how: String) -> void:
 	if battle != null or mode == M.DEPLOY:
 		return  # one fight at a time: a second Battle would leave the first one playing with no owner
+	bookmark({"group": String(g.def.id), "how": how})  # the fight as it began: a quit restarts it here
 	_walk_token += 1
 	walking_now = false
 	_close_dialog()
@@ -1099,6 +1105,7 @@ func _end_fight() -> void:
 	follow = true
 	_rebuild_party()  # levels from the fight show up in the pieces' stats
 	_walk_side()
+	bookmark()
 	_refresh_sight()
 	_refresh_units()
 
@@ -1155,6 +1162,31 @@ func _finish_map() -> void:
 	Game.explore_memory.clear()
 	Game.travel = {"at": TravelRules.node_for_map(Db.world_nodes, map.map_name)}
 	Game.go(Game.OVERWORLD)
+
+
+## This map's state into Game.explore_memory: what's been seen, things used, groups beaten or calmed.
+func _remember() -> void:
+	var done: Array = []
+	for x in things:
+		if x.done:
+			done.append(x.id)
+	var settled := {}
+	for g in groups:
+		if g.state == "gone" or g.state == "calm":
+			settled[String(g.def.id)] = g.state
+	Game.explore_memory[map.map_name] = {"seen": seen.duplicate(), "done": done, "groups": settled}
+
+
+## The bookmark ([USER] omr-11): this map and where the hero stands. Not in a fight: the one taken when it
+## began stands, so a quit fight restarts from its first turn. fight: {"group": id, "how": ...} or {}.
+func bookmark(fight := {}) -> void:
+	if (battle != null or mode == M.DEPLOY or mode == M.OVER) and fight.is_empty():
+		return
+	var lead := leader()
+	if lead == null:
+		return
+	_remember()
+	Game.bookmark({"scene": "explore", "map": map.map_name, "cell": [lead.cell.x, lead.cell.y], "fight": fight})
 
 
 # --- hud ----------------------------------------------------------------------------------------

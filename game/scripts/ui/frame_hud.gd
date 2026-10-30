@@ -358,6 +358,17 @@ func set_tools(entries: Array) -> void:
 		tools_box.add_child(b)
 
 
+## The "saved" cue ([USER] omr-11): a word that shows in the top left and fades.
+func flash_saved() -> void:
+	var l := _label(Txt.t("UI_SAVED"), 15)
+	l.position = Vector2(16, 12)
+	root.add_child(l)
+	var tw := l.create_tween()
+	tw.tween_interval(0.8)
+	tw.tween_property(l, "modulate:a", 0.0, 0.7)
+	tw.tween_callback(l.queue_free)
+
+
 func clear_side() -> void:
 	for c in side.get_children():
 		c.queue_free()

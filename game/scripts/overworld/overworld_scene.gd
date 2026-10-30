@@ -53,6 +53,13 @@ func _ready() -> void:
 	_side()
 	_refresh_hud()
 	get_viewport().size_changed.connect(queue_redraw)
+	Game.bookmarked.connect(hud.flash_saved)
+	bookmark.call_deferred()
+
+
+## The bookmark ([USER] omr-11): the walk as it stands, mid-leg included (Game.travel).
+func bookmark() -> void:
+	Game.bookmark({"scene": "overworld", "fight": {}})
 
 
 # --- the clock ------------------------------------------------------------------------------------
@@ -115,6 +122,7 @@ func _arrive() -> void:
 	var to := String(Game.travel.to)
 	var then: Array = Game.travel.get("then", [])
 	Game.travel = {"at": to}
+	bookmark()
 	Game.save_adventure()
 	if not then.is_empty():
 		_say(Txt.f("UI_OW_PASSING", Txt.t(_node(to).name_key)))

@@ -596,3 +596,41 @@ func test_an_escape_is_not_a_beating() -> void:
 	Game.explore_memory.clear()
 	Game.explore_map = "home"
 	_restore(saved)
+
+
+# --- the bookmark save ([USER] omr-4, omr-11; one-more-run step 1) -------------------------------
+
+func test_explore_memory_survives_json() -> void:
+	var mem := {"crypt": {"seen": {Vector2i(3, 4): true, Vector2i(5, 6): true}, "done": ["chest_a"], "groups": {"cave": "gone"}}}
+	var back := Game.memory_from_save(JSON.parse_string(JSON.stringify(Game.memory_to_save(mem))))
+	eq(back.crypt.seen.size(), 2)
+	ok(back.crypt.seen.has(Vector2i(5, 6)), "cells come back as cells")
+	eq(back.crypt.groups, {"cave": "gone"})
+
+
+func test_a_bookmark_comes_back_to_the_spot() -> void:
+	var saved := _fresh_game()
+	Game.run.adventure = true
+	# bookmark() returns while saving is off (tests never write the real save), so build the record as it would
+	Game.explore_memory = {"crypt": {"seen": {Vector2i(1, 1): true}, "done": ["x"], "groups": {}}}
+	Game.travel = {"at": "pass"}
+	Game.meta.bookmark = {"scene": "explore", "map": "crypt", "cell": [7, 9], "fight": {"group": "cave", "how": "party"},
+		"memory": Game.memory_to_save(Game.explore_memory), "travel": Game.travel.duplicate()}
+	Game.explore_memory = {}
+	Game.travel = {"at": "town"}
+	eq(Game.restore_bookmark(), Game.EXPLORE)
+	eq(Game.explore_map, "crypt")
+	eq(Game.explore_entry, Vector2i(7, 9), "right where the hero stood")
+	ok(Game.explore_memory.crypt.seen.has(Vector2i(1, 1)), "the map remembered")
+	eq(Game.travel, {"at": "pass"})
+	eq(Game.resume_fight, {"group": "cave", "how": "party"}, "a quit fight is waiting to start over")
+	# the explore scene starts it again from its first turn
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	ok(Game.resume_fight.is_empty())
+	eq(s.mode, s.M.DEPLOY, "straight into the deploy, as the fight began")
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"
+	Game.explore_entry = Vector2i(-1, -1)
+	_restore(saved)
