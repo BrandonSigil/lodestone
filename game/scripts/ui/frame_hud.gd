@@ -158,10 +158,13 @@ func use_leaf_frame() -> void:
 	leaf.add_child(_leaf_art)
 	leaf_pack = Button.new()
 	leaf_pack.tooltip_text = Txt.t("UI_PACK")
-	leaf_pack.icon = load("res://art/source/icons/sack.png")  # [USER] 2026-10-30: an inventory asset, not the word
-	leaf_pack.expand_icon = true
-	leaf_pack.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	leaf_pack.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+	var sack := TextureRect.new()  # [USER] 2026-10-30: an inventory asset, not the word; big enough to fill the square
+	sack.texture = load("res://art/source/icons/sack.png")
+	sack.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sack.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	sack.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	sack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	leaf_pack.add_child(sack)
 	leaf_pack.flat = true
 	leaf_pack.add_theme_color_override("font_color", INK)
 	leaf_pack.add_theme_font_size_override("font_size", 18)
