@@ -1,0 +1,14 @@
+LODESTONE CHARACTER SHEET PORTRAIT (one close-up per picture, for the left side of the character sheet; --zones fills THIS CHARACTER)
+
+Image 1 = the character's own approved art. Draw THIS character and nobody else, with the same colours, the same costume, the same simple flat shading and the same drawing style. Do not add detail.
+Image 2 = more approved art of the same character, for the face and the line art.
+[ZONE]
+
+FRAMING: aspect 3:4, a close-up portrait, head and shoulders only, the character large and filling most of the picture. The head sits in the upper half; the shoulders and the top of the chest run off the BOTTOM edge of the picture. Plain flat cream paper (#eae8d6) behind, with clear empty cream above and to the sides of the head.
+VIEW: three-quarter view, the character turned toward the RIGHT edge of the picture, looking that way with a calm, steady face. Eye level, straight on, no high game camera for this picture.
+Same chibi proportions as image 1, only seen closer: the same big round head and simple face, now big enough to read the eyes and the hair shapes. Bigger, not more detailed: keep the same flat shapes, one flat colour per material plus one flat shadow tone, light from the upper left.
+
+LINE ART (essential, the house style): a soft, imperfect paint-marker outline round the whole silhouette and its big parts, dark warm charcoal (#373335, not pure black), slightly wobbly and uneven in weight like a felt marker drawn by hand, a little bolder than on the small sprites. Not a thin, even vector hairline.
+
+Rules: no text, no labels, no frame, no border, no background scenery, no gradient behind, no hands, no weapons in the picture, no extra characters.
+Avoid: realistic anatomy, anime shine on the hair, glossy eyes, big white eyes, a different costume, armour, extra detail, texture, thin even hairline outlines, pure black outlines, 3d render, photo, text.

@@ -1,0 +1,9 @@
+ASKS FOR sheet-character-portrait.txt (each THIS CHARACTER line fills [ZONE] through --zones)
+
+Run one picture per try, 3:4 at 2K, two tries (--count 2); image 1 and image 2 as named on the line. Then cut with props_cut.py --grid 1x1 and bring the better try to the desk.
+
+  cd tools/art && ~/.lodestone/venv/bin/python picsart_sheet.py --name portrait_<id> --prompt-file ../../art/prompts/sheet-character-portrait.txt \
+      --zones "$(sed -n 's/^<id>: //p' ../../art/prompts/sheet-character-portrait-asks.txt)" \
+      --ref <image 1> --ref <image 2> --aspect 3:4 --resolution 2K --count 2 --out-dir ../../art/picsart/out/portraits
+
+lead: THIS CHARACTER: the hero (image 1 docs/art/characters/00-reference-sheet.png, image 2 art/picsart/out/anim-lead-se_v2.png). Messy brown hair, the fringe a little shorter and parted so BOTH EYES SHOW: two simple dark oval eyes with a tiny light catch-light, set wide, exactly as in image 2. Green hooded cloak with the hood down and a round gold clasp at the throat, blue tunic, cream undershirt, a brown leather strap across the chest, the top of the rolled pack just showing behind one shoulder. One portrait serves every weapon build, so no weapon shows.

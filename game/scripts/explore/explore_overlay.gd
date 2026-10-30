@@ -6,6 +6,7 @@ extends Node2D
 
 const ICON := Color(1.0, 0.86, 0.4)
 const INK := Color(0.12, 0.11, 0.1)
+const NO_MARK_KINDS := ["enter", "door"]  ## doorways, map exits and locked doors: no "!" over them
 
 var scene: Node  ## the explore scene: things, party, mode
 var _time := 0.0
@@ -40,6 +41,8 @@ func _draw() -> void:
 				PlaceholderFigure.draw(self, p, 26.0, StringName(who), 0, "idle", _time, false, Color(0.4, 0.7, 1.0), dim)
 		if dim or lead == null or not scene.walking():
 			continue
+		if NO_MARK_KINDS.has(String(t.kind)):
+			continue  # doors get no "!" ([USER] 2026-10-30); F still opens them
 		var near := ExploreRules.dist(lead.cell, c) <= ExploreRules.HINT_RANGE
 		var hovered := board.hover == c
 		if near or hovered:

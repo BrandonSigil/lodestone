@@ -1,0 +1,27 @@
+LODESTONE DOG CONCEPT GRID (8 candidate dogs on one picture, to choose the companion dog's look; not a game sprite)
+
+Image 1 = the character key art (docs/art/characters/00-reference-sheet.png). Copy its drawing style, colours, shading and line art exactly; the dogs belong in the same game as this hero. Do not draw the hero.
+
+THIS RUN (one numbered line per dog, plain visual words only: size, coat, ears, tail, one silhouette feature; no names, no backstory):
+1: a medium dog with a short tan coat and a cream chest, tall upright pointed ears, a tail curled over the back
+2: a medium scruffy wire-haired dog, grey-brown, bushy eyebrows and a little beard, folded ears
+3: a medium-large shaggy dog with a long rust-red coat, soft floppy ears, a long feathered tail
+4: a medium black dog with a cream muzzle, chest and paws, one ear up and one ear flopped over, a long thin tail
+5: a stocky broad-chested brindle dog, a big square head with a wrinkled brow, short ears, a short tail
+6: a lean sandy dog with long legs and a long narrow snout, small folded-back ears, a thin low tail
+7: a fluffy cream-and-grey dog with a thick ruff round the neck, small pointed ears, a plumed tail curled up
+8: a medium brown-and-white spotted hound with long drooping ears and a white muzzle
+
+Every dog: a little scruffy, as if it has lived on its own in an empty village for a while, but healthy and friendly; a plain worn rope collar. Simple dark oval eyes with a tiny light catch-light, readable at small size, never big white eyes.
+
+Layout: aspect 3:2, plain flat cream paper (#eae8d6). Four columns by two rows of equal cells, read left to right, top row first. ONE dog per cell, standing on all four legs, alone and fully inside its cell with clear empty cream around it. Every dog drawn at the scale of image 1's hero: its back about as high as the hero's waist. Same baseline across each row. No cell borders, no grid lines, no numbers, no labels, no text or letters anywhere.
+
+View: every dog in the same direction: a three-quarter front view, turned toward the viewer's lower right. The viewer sees the face, the chest and the right side. Seen from the high orthographic game camera of image 1, looking down about 30 degrees (2:1 dimetric, no perspective). This is the combat facing, so it must read clearly.
+
+Shape: a chibi board-game piece like image 1: big round head, small body, short legs, one strong silhouette feature per dog (ears, coat or tail). Make the eight silhouettes different from each other at a glance.
+
+LINE ART (essential, the house style): a soft, imperfect paint-marker outline round each whole dog and its big parts, dark warm charcoal (#373335, not pure black), slightly wobbly and uneven in weight like a felt marker drawn by hand. Not a thin, even vector hairline.
+
+Style: the flat storybook print of image 1. One flat colour per coat colour plus ONE flat shadow tone, soft light from the upper left (never rim light, never a cast shadow). Soft, slightly faded printed-book colours. No gradients, no fur strands drawn, no texture inside shapes.
+
+Avoid: a corgi, realistic dogs, fur texture, floor, ground, tile, grass, shadow under the feet, scenery, people, the hero, text, letters, numbers, watermark, perspective, low angle, 3d render, photo, busy detail, big white eyes, thin even hairline outlines, pure black outlines, a different facing from the others.
