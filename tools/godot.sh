@@ -18,6 +18,13 @@ if [ "$(uname)" != Darwin ] || [[ " $* " == *" --headless "* ]]; then
 	exec "$GUARD" "$BIN" "$@"
 fi
 
+# Brandon (2026-10-30): windowed runs keep pulling his windows and focus around. Until the
+# focus-free capture is in, refuse them outright.
+if [ -z "${GODOT_ALLOW_WINDOW:-}" ]; then
+	echo "tools/godot.sh: windowed Godot runs are paused (they steal Brandon's focus). Use headless runs, or ask the PM." >&2
+	exit 3
+fi
+
 args=("$@")
 if [[ " $* " != *" --screen "* ]]; then
 	args=(--screen "${GODOT_SCREEN:-1}" "${args[@]}")
