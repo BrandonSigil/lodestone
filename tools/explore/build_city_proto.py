@@ -19,6 +19,8 @@ Run again after editing: python3 tools/explore/build_city_proto.py [--dump]
 """
 import json
 import os
+
+HEIGHT_DIGITS = "0123456789abcdefghijklmnopqrstuvwxyz"  # one digit a cell, as CombatGrid saves heights (0-24)
 import random
 import sys
 
@@ -337,7 +339,7 @@ reached = check()
 data = {
     "name": "city_proto", "art_set": "village", "strangeness": 0.0, "view": 0, "turn": False, "fog": False,
     "grid": {"w": W, "h": H, "terrain": ["".join(r) for r in terrain],
-             "heights": ["".join(str(v) for v in r) for r in height], "props": props,
+             "heights": ["".join(HEIGHT_DIGITS[v] for v in r) for r in height], "props": props,
              "decks": [{"x": x, "y": y, "h": h, "t": "s"} for (x, y), h in sorted(decks.items())]},
     "start": [list(start)], "groups": [], "things": things,
 }

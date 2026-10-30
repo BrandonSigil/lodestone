@@ -11,6 +11,8 @@ so walls stand over the floor and block sight. Run it again after editing: pytho
 import json
 import os
 
+HEIGHT_DIGITS = "0123456789abcdefghijklmnopqrstuvwxyz"  # one digit a cell, as CombatGrid saves heights (0-24)
+
 W, H = 34, 30
 LETTERS = "gfwrdstu"  # grass forest water rock road stone stairs ruin
 
@@ -149,7 +151,7 @@ data = {
         "w": W,
         "h": H,
         "terrain": ["".join(row) for row in terrain],
-        "heights": ["".join(str(v) for v in row) for row in height],
+        "heights": ["".join(HEIGHT_DIGITS[v] for v in row) for row in height],
         "zones": ["".join(row) for row in zones],
         "zone_key": ZONE_KEY,
     },

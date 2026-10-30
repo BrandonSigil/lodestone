@@ -18,6 +18,8 @@ Run again after editing: python3 tools/explore/build_snow_pass.py
 import json
 import math
 import os
+
+HEIGHT_DIGITS = "0123456789abcdefghijklmnopqrstuvwxyz"  # one digit a cell, as CombatGrid saves heights (0-24)
 from collections import deque
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "game", "data", "explore")
@@ -103,7 +105,7 @@ class Map:
             **({"walls": True, "wall_kit": "dungeon"} if walls else {}), "turn": turn, "fog": fog,
             "grid": {"w": self.w, "h": self.h,
                      "terrain": ["".join(r) for r in self.terrain],
-                     "heights": ["".join(str(v) for v in r) for r in self.height],
+                     "heights": ["".join(HEIGHT_DIGITS[v] for v in r) for r in self.height],
                      "props": self.props},
             "start": self.start, "groups": self.groups, "things": self.things,
         }
