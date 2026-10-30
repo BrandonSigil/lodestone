@@ -1,0 +1,15 @@
+Image 1 = a grey block-out guide on cream paper: six plain grey pieces on a strict 2:1 dimetric grid (every floor edge runs exactly 2 across to 1 down, like a diamond tile twice as wide as it is tall; uprights perfectly vertical). Paint each piece INSIDE its grey shape, in the same place and the same size, so its edges and outline follow the grey shape's edges exactly. Do not tilt, rotate, flatten or round any edge. No edge may run at 45 degrees or look like a top-down plan view. Do not draw the grey shapes, only the pieces that fill them.
+
+WHAT THIS IS: a modular WOODEN BRIDGE KIT for a cosy fantasy tactics game, six pieces, each exactly one map tile, so a game can lay them along any line over water, a gap or any ground. Plain flat cream paper (#eae8d6) background, wide empty cream between pieces, no text, no labels, no numbers, no water or ground drawn under the pieces.
+
+THE SIX PIECES (3 columns by 2 rows, in the place of the grey shapes):
+   top left: a straight bridge deck running down-right (the long way along the down-right grid direction), made of three or four wide wooden planks laid across the deck with thin gaps, a thin plank edge on each side, with a low rail along each long side. The two open ends are plain flat cuts with no end cap and no outline across them, and the deck and rails look identical at both ends, so identical pieces placed end to end join seamlessly.
+   top middle: the same straight deck running the other way, down-left, with the same rails.
+   top right: a corner deck: a square deck with one arm leading to the up-left edge and one arm to the lower-left edge, rails round the outside of the turn only, open ends at the two arms.
+   bottom left: a landing, a ramp that rises from ground level at its lower end up to the deck height at its upper end, running down-right, rails on both sides, its upper end open to join a deck, its lower end meeting the ground with a flat cut.
+   bottom middle: the same landing running down-left.
+   bottom right: a tall support: a thick round wooden post with a rope wrap near its top, wider at the base, straight, for standing in water or a gap under the deck, its top square and flat to meet the deck's underside.
+
+FINISH (the fall village look): warm weathered brown wood, darker brown iron-grey nails kept to a minimum, rope in tan, a few golden fall leaves on the deck. Soft flat painted fills with a little soft mottle, one flat colour plus one shadow tone per surface, light from the upper left (top lightest, left faces mid, right faces darkest). One soft dark charcoal outline (#373335, never pure black) round each whole piece only, no inner lines. No ground disc, no cast shadows, no water. Big simple silhouettes, the same amount of detail on every piece so they match as a set.
+
+Avoid: tilted or rotated pieces, 45 degree or top-down views, true isometric (30 degree) edges, perspective, flat-on views, end caps or outlines across the open ends, water, ground, cast shadows, pixel art, fine detail, text, letters, numbers, 3d render, glossy, photo, people, animals, watermark.
