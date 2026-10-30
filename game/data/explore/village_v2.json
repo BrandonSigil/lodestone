@@ -76,121 +76,115 @@
  "grid": {
   "decks": [
    {
-    "h": 4,
+    "h": 9,
     "t": "s",
     "x": 13,
     "y": 37
    },
    {
-    "h": 6,
+    "h": 16,
     "t": "s",
     "x": 14,
     "y": 22
    },
    {
-    "h": 6,
+    "h": 16,
     "t": "s",
     "x": 14,
     "y": 23
    },
    {
-    "h": 4,
+    "h": 9,
     "t": "s",
     "x": 14,
     "y": 37
    },
    {
-    "h": 6,
+    "h": 16,
     "t": "s",
     "x": 15,
     "y": 22
    },
    {
-    "h": 6,
+    "h": 16,
     "t": "s",
     "x": 15,
     "y": 23
    },
    {
-    "h": 4,
+    "h": 9,
     "t": "s",
     "x": 15,
     "y": 37
    },
    {
-    "h": 6,
+    "h": 16,
     "t": "s",
     "x": 16,
     "y": 22
    },
    {
-    "h": 6,
+    "h": 16,
     "t": "s",
     "x": 16,
     "y": 23
    },
    {
-    "h": 4,
+    "h": 9,
     "t": "s",
     "x": 16,
     "y": 37
    },
    {
-    "h": 6,
+    "h": 16,
     "t": "s",
     "x": 17,
     "y": 22
    },
    {
-    "h": 6,
+    "h": 16,
     "t": "s",
     "x": 17,
     "y": 23
    },
    {
-    "h": 4,
+    "h": 9,
     "t": "s",
     "x": 17,
     "y": 37
    },
    {
-    "h": 6,
+    "h": 16,
     "t": "s",
     "x": 18,
     "y": 22
    },
    {
-    "h": 6,
+    "h": 16,
     "t": "s",
     "x": 18,
     "y": 23
    },
    {
-    "h": 4,
+    "h": 9,
     "t": "s",
     "x": 18,
     "y": 37
    },
    {
-    "h": 6,
-    "t": "s",
-    "x": 19,
-    "y": 22
-   },
-   {
-    "h": 4,
+    "h": 9,
     "t": "s",
     "x": 19,
     "y": 37
    },
    {
-    "h": 4,
+    "h": 9,
     "t": "s",
     "x": 20,
     "y": 37
    },
    {
-    "h": 4,
+    "h": 9,
     "t": "s",
     "x": 21,
     "y": 37
@@ -198,62 +192,62 @@
   ],
   "h": 56,
   "heights": [
-   "00000000000002622222222888888222222222000000000000000000",
-   "00000000000422662222288888888888888882200000000000000000",
-   "00000000000222662222288888888888888882220000000000000000",
-   "00000000002222662222888888888888888888222000000000000000",
-   "00000000088222662222888888888888888888222200000000000000",
-   "00000008888882662222288888888888888888222220000000000000",
-   "00000008888882662222288888888888888888222222000000000000",
-   "00000888888886662222222888888888888882266662222000000000",
-   "00000888888886662222222888888888888882266666622200000000",
-   "00088888888886442222222888888888822226666666622220000000",
-   "00088888888884442222222888888882222226666666666668200000",
-   "00888888888884242222222228888666622266666666666666622000",
-   "00888888888884242222222226667666666666666666666666622000",
-   "08888888888882244222222666666666666666666666666666622200",
-   "08888888888882244222222666666666666666666666666666622200",
-   "88888888888882244222266666666666666666666666666666622220",
-   "88888888888882244222266666666666666666666666666666622222",
-   "88888888888882244222666666666666666666666666666662222222",
-   "28888888888882244222666666666666666666666666666662222222",
-   "22288888888882244222266666666666666666666666666662222222",
-   "22288888888882224222266666666666666666666666666662222222",
-   "22228888888882224222666666666666666666666666622222222222",
-   "26666668888876224222666666666666666666666662222222222222",
-   "66666666688766424426666666666666666666666222222222222222",
-   "66666666667666424426666666666666666666666222222222222222",
-   "26666666666662222222666666666666666666662222222222222222",
-   "26666666666662222222666666666666666666642222222223333222",
-   "22666666666662222222266666666666666666444444433333333332",
-   "25555666666662222222266666666666666654444444433333333332",
-   "25555555566555222222222666666666644444444444444333333332",
-   "55555555555555222222222222222225444444444444444333333332",
-   "55555555555555222222222222222444444444444444444333333333",
-   "55555555555555222222222222222444444444444444444333333333",
-   "55555555555555222222222222222444444444444444444333333333",
-   "75555555555555222222222222222444444444444444444333333333",
-   "55555555555555222222222222222224444444444444444333333333",
-   "55555555555555222222222222222222444444444444444333333333",
-   "22555555555552222222222222222222324444444444444333333330",
-   "02555555555111111222222222222222222444444444433333333330",
-   "02255555511111110112222223333333333222222223333333333300",
-   "02255555511111100111111113333333333222222223333333333000",
-   "00111115511111100111111133333333333332222222233333333000",
-   "00111111111111100111111133333333333332222222233333333000",
-   "00111111111111101111111133333333333333322222222333330000",
-   "00011111111111001111111133333333333333322222222333300000",
-   "00011111111111001111113333333333333333333222222223300000",
-   "00001111111100000111233333333333333333333222222223300000",
-   "00001100001100000001133333333333333333322222222220000000",
-   "00000000001100000000113333333333333333322222222220000000",
-   "00000000001100000000011333333333333332222222222000000000",
-   "00000000001100000000011112222333322222222222200000000000",
-   "00000000001000000000111122222222222222222220000000000000",
-   "00000000000000000001111122222222222222222000000000000000",
-   "00000000000000000001111222222222222222200000000000000000",
-   "00000000000000000002222222222222222200000000000000000000",
-   "00000000000000000022222224222222200000000000000000000000"
+   "00000000000003e33333336mmmmmm666666663000000000000000000",
+   "00000000000033ee33366cmmmmmmmmmmmmmmm6300000000000000000",
+   "00000000000333ee669cfmmmmmmmmmmmmmmmmm633000000000000000",
+   "00000000006669ee9cfimmmmmmmmmmmmmmmmmmc33000000000000000",
+   "000000000mmmmeeeeiiimmmmmmmmmmmmmmmmmmf63330000000000000",
+   "00000000mmmmmeeeeiiimmmmmmmmmmmmmmmmmmic6330000000000000",
+   "0000000mmmmmmeeeeeiiimmmmmmmmmmmmmmmmmifc933300000000000",
+   "000000mmmmmmmeeeeeiiimmmmmmmmmmmmmmmmifgggg3330000000000",
+   "00000mmmmmmmmeeeeeiiillmmmmmmmmmmmmmifggggggg33330000000",
+   "0000mmmmmmmmmeaaaeiiillmmmmmmmmmmlllifggggggg993i0000000",
+   "000mmmmmmmmmmaaaaaiiiiilmmmmmmmiiiiifgggggggggggggg00000",
+   "00mmmmmmmmmmmaaaaaiiiiiiimommggggfffggggggggggggggg30000",
+   "0mmmmmmmmmmmmaaaaaiffffgggggkigggggfggggggggggggggg33000",
+   "0mmmmmmmmmmmmaaaaafffffgggggggggggggggggggggggggggg33300",
+   "0mmmmmmmmmmmmaaaaafffggggggggggggggggggggggggggggggc6330",
+   "mmmmmmmmmmmmmaaaaafffggggggggggggggggggggggggggggggc6330",
+   "mmmmmmmmmmmmmlaaaaffgggggggggggggggggggggggggggggggc9333",
+   "mmmmmmmmmmmmmlaaaaffgggggggggggggggggggggggggggggggc9333",
+   "6mmmmmmmmmmmmlaaaaaffggggggggggggggggggggggggggggfc96333",
+   "3mmmmmmmmmmmmlaaaaaffggggggggggggggggggggggggggggfc96333",
+   "39fmmmmmmmmmmiaaaaaffgggggggggggggggggggggggggggfcc66333",
+   "39cmmmmmmmmmmiaaaaaffggggggggggggggggggggggggfffccc66333",
+   "3gggggggmmmgggaaaaaggggggggggggggggggggggggffcccc9966333",
+   "gggggggggmmgggaaaaaggggggggggggggggggggggggcccccc9966333",
+   "ggggggggggggggaaaaaggggggggggggggggggggggcc9999999666633",
+   "3ggggggggggggga5555ggggggggggggggggggggggcc9999999666633",
+   "39gggggggggggff5555fgggggggggggggggggggcccc9999999999993",
+   "39gggggggggggff5555fgggggggggggggggggggcccc9999999999993",
+   "3ccccgggggggccc5555ffgggggggggggggggecccccccccc999999993",
+   "3cccccecggggccc5555ffggggggggggggcccccccccccccc999999993",
+   "cccccccccccccc55555ccffffffffcceccccccccccccccc999999993",
+   "cccccccccccccc55555ccffffcccccccccccccccccccccc999999999",
+   "cccccccccccccc55555cccccccccccccccccccccccccccc999999999",
+   "cccccccccccccc5555599ccccccccccccccccccccccccca99999999b",
+   "cccccccccccccc55555999999999999cccccccccccccccc999999999",
+   "cccccccccccccc55555666666999999cccccccccccccccc999999999",
+   "cccccccccccccc555553366666699999ccccccccccccccc999999999",
+   "3cccccccccccc6335333333336699999a9ccccccccccccc999999990",
+   "03ccccccccc222211111133336669999999999999cccc99999999990",
+   "036cccccccc222210111111147999999999999999999999999999990",
+   "033cccccc22222100112222229999999999999999999999999999000",
+   "0022222cc22222100112222299999999999999999999999999999000",
+   "00222222222221100122222299999999999999999999999999990000",
+   "00222222222221101122222299999999999999999999999999990000",
+   "00022222222221001122222999999999999999999666666999900000",
+   "00022222222221001223222999999999999999999666666999900000",
+   "00002222222100000225799999999999999999999666633339000000",
+   "00002200001100000002299999999999999999999666633330000000",
+   "00000000001100000000222999999999999999966333333300000000",
+   "00000000001100000000022999999b99999996666333333000000000",
+   "00000000001100000000022223666669976666633333300000000000",
+   "00000000001000000000222223666666666663333330000000000000",
+   "00000000000000000002222213333666633433333000000000000000",
+   "00000000000000000002222133333333333333300000000000000000",
+   "00000000000000000003333333333333333300000000000000000000",
+   "00000000000000000033333333333333300000000000000000000000"
   ],
   "props": [
    {
@@ -863,7 +857,7 @@
     "arch": true,
     "cell": [
      34,
-     52
+     53
     ],
     "foot": [
      3,
@@ -1171,8 +1165,8 @@
    },
    {
     "cell": [
-     12,
-     44
+     16,
+     43
     ],
     "foot": [
      2,
@@ -1215,34 +1209,6 @@
     "cell": [
      17,
      42
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "sight": 0.0,
-    "sprite": "ph_reeds",
-    "tall": 0.4,
-    "walk": false
-   },
-   {
-    "cell": [
-     17,
-     46
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "sight": 0.0,
-    "sprite": "ph_reeds",
-    "tall": 0.4,
-    "walk": false
-   },
-   {
-    "cell": [
-     21,
-     49
     ],
     "foot": [
      1,
@@ -2459,6 +2425,20 @@
    },
    {
     "cell": [
+     20,
+     51
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "sight": 1.0,
+    "sprite": "prop_tree_3",
+    "tall": 1.6,
+    "walk": false
+   },
+   {
+    "cell": [
      27,
      51
     ],
@@ -2515,62 +2495,62 @@
    }
   ],
   "terrain": [
-   ".............gwggffgfffgggggggggggggff..................",
-   "...........gfgwwgfggfffgggggggggggggffg.................",
-   "...........ffgwwggggggggggggggggggggfff.................",
-   "..........ggggwwgggggggggggggggggggggffff...............",
-   ".........gggggwwggggggggggggggggggggggfff...............",
-   ".......gggggggwwgggggggggggggggggggggggfggg.............",
-   ".......gggggggwwggggggggggggggggggggggggfff.............",
-   ".....gggggggggwwgggggggggggggdgggggggggggfgfffg.........",
-   ".....gggggggggwwgggggggggggggdggggggggggggffgff.........",
-   "...ggggggggggggggggggggggggggdggggggggggggggggggg.......",
-   "...ggggggggdggggggggggggggggddggggggggggggggggggggf.....",
-   "..ggggggggddgggwggggggggggggtgggggggggggggggggggffffg...",
-   "..ggggggggdggggwggggggggggggtdgggggggggggggggggggfffg...",
-   ".ggggggggddggggwwggggggggggggdggggggggggggggdgggggffgf..",
-   ".ggggggggdgggggwwgggggggggggsdssgggggggggggggggggggffg..",
-   "fgggggggddgggggwwgggggggggsssssssggggggggggddgggggggfgg.",
-   "fgggggggdggggggwwggggggggsssssssssgggggggdddggggggggfffg",
-   "fggggggddggggggwwgggggggssssssssssssggggddgggggggggggfff",
-   "fggggggdgggggggwwggggggssssssssssssssggddgggggggggggggff",
-   "fggggggddggggggwwggggggssssssssssssssgddgggggggggggggggg",
-   "fgggggggdgggggggwggggggssssssssssssssddgggggggggggggggff",
-   "ggggggggdgggggggwggggggsssssssssssssddggggggggggggggggfg",
-   "ffgggggggggttgggwggggddsssssssssssssssgggggggggggggggggf",
-   "gfggggggggttggggwwgggggsssssssssssssssggggggggggggggggff",
-   "ffgggggggdtgggggwwgggggssssssssssssssgggggggggggggggggfg",
-   "gfggggggddgggggggggggggsssssssssssssggggggggggggggggggff",
-   "fggggdggdgggggggwwggggggssssssdssssdgggggggggggggggggggf",
-   "gfgggggddgggggggwwgggggggsssssdssggdtgggggggggggggggggfg",
-   "fgggggddggggggggwwggggggggggggddggggtdggggggggggggggggff",
-   "ggggggdgggggggggwwgggggggggggggtgggggggggggggggggggggggf",
-   "fggggggdggggggggwwgggggggggggggtggggggggggggggggggggggfg",
-   "gggggggdggggggggwwgggggggggggggdggggggggggggggggggggggff",
-   "fgggggggggggggggwwgggggggggggggdgggggggggggggggggggggggf",
-   "gggggdggggggggggwwgggggggggggggdggggggdgggggdddddggggggf",
-   "ggggggggggggggggwwgggggggggggggdgggggggggggddggddgggggff",
-   "ggggggggggggggggwwgggggggggggggddgggggggggggggggddgggffg",
-   "fgggggggggggggggwgggggggggggggggtggggggggggggggggdgggggf",
+   ".............gwgggfggffgggggggggggggff..................",
+   ".............gwwgfgggffgggggggggggggffg.................",
+   "...........gggwwggggggggggggggggggggfffgg...............",
+   "...........gggwwgggggggggggggggggggggffff...............",
+   ".........gggggwwggggggggggggggggggggggggggg.............",
+   ".........gggggwwggggggggggggggggggggggggggg.............",
+   ".......gggggggwwggggggggggggggggggggggggffggg...........",
+   ".......gggggggwwgggggggggggggdgggggggggggggff...........",
+   ".....gggggggggwwgggggggggggggdggggggggggggfggfggg.......",
+   ".....ggggggggggggggggggggggggdggggggggggggggggggg.......",
+   "...ggggggggdggggggggggggggggddgggggggggggggggggggfg.....",
+   "...gggggggddgggwggggggggggggdggggggggggggggggggggfg.....",
+   ".gggggggggdggggwggggggggggggttgggggggggggggggggggfgfg...",
+   ".ggggggggddggggwwggggggggggggdggggggggggggggdggggggfg...",
+   ".ggggggggdgggggwwgggggggggggsdssggggggggggggggggggggfgg.",
+   "ggggggggddgggggwwgggggggggsssssssggggggggggddgggggggfgg.",
+   "fgggggggdggggggwwggggggggsssssssssgggggggdddgggggggggffg",
+   "gggggggddggggggwwgggggggssssssssssssggggddgggggggggggggf",
+   "fggggggdgggggggwwggggggssssssssssssssggddggggggggggggggg",
+   "gggggggddggggggwwggggggssssssssssssssgddgggggggggggggggg",
+   "fgggggggdgggggggwggggggssssssssssssssddgggggggggggggggfg",
+   "ggggggggdgggggggwggggggsssssssssssssddgggggggggggggggggg",
+   "fgggggggggggdgggwggggddsssssssssssssssgggggggggggggggggf",
+   "gfggggggggggdgggwwgggggsssssssssssssssggggggggggggggggfg",
+   "fgggggggggdddgggwwgggggssssssssssssssggggggggggggggggggg",
+   "gfgggggggddggggggggggggsssssssssssssgggggggggggggggggggf",
+   "fggggdggddggggggwwggggggssssssdssssdgggggggggggggggggggg",
+   "gggggggddgggggggwwgggggggsssssdssggddgggggggggggggggggfg",
+   "fgggggddggggggggwwggggggggggggddggggtdgggggggggggggggggf",
+   "ggggggtgggggggggwwgggggggggggggdgggggggggggggggggggggggg",
+   "fgggggggggggggggwwgggggggggggggtggggggggggggggggggggggfg",
+   "ggggggggggggggggwwgggggggggggggdgggggggggggggggggggggggf",
+   "fgggggggggggggggwwgggggggggggggdgggggggggggggggggggggggg",
+   "gggggdggggggggggwwgggggggggggggdggggggdgggggddtddggggggg",
+   "fgggggggggggggggwwgggggggggggggdgggggggggggddggddgggggfg",
+   "ggggggggggggggggwwgggggggggggggddgggggggggggggggddgggggg",
+   "ggggggggggggggggwgggggggggggggggdggggggggggggggggdgggggf",
    "ggggggggggddggggwgggggddggggggggtgggggggggggggggggggggg.",
    ".ggggggggggggggggggggggddgggggggdgggggggggggggggggggggg.",
-   ".gggggggggggggggwgggggggddggggggddggggggggggggggggggg...",
+   ".gggggggggggggggwgggggggttggggggddggggggggggggggggggggg.",
    ".ggggggggggggggwwggggggggddggggggddgggggggggggggggggg...",
    "..gggggggggggggwwgggggggggdddgggggddgggggggggggggdggg...",
-   "..gggggggggggggwwgggggggggggdggggggdggggggggggggggggg...",
-   "...ggggggggggggwgggggggggggggggggggddgggggggggggggg.....",
+   "..gggggggggggggwwgggggggggggdggggggdgggggggggggggggg....",
+   "..gggggggggggggwgggggggggggggggggggddggggggggggggggg....",
    "...gdgggggggddwwggggggggggggggddggddggggggggggggffg.....",
-   "...ggggggggddgwwddddgggggggggggggddggggggggggggfffg.....",
-   "....gggggggdwwwwwggdttddddddgggggdggggggggggggffffg.....",
-   "....ggwwwwddwwwwwwwggggddggggggggdggggggggggggggg.......",
-   ".....wwwwwddwwwwwwwwggggggggggggddgggggggggffffgg.......",
-   ".....wwwwwddwwwwwwwwwgggggggggggddgggggggfggfff.........",
-   "......wwwwddwwwwwwwwwggggggggggggdddgggfggfff...........",
-   ".......wwwdwwwwwwwwwgggggggggggggggdggfgfff.............",
-   ".......wwwwwwwwwwwwggggggggggggggggdggfgf...............",
-   ".........wwwwwwwwwwggggggggggggffggddgg.................",
-   "..........wwwwwwwwwfgfgfgfgfgfgfgfgg....................",
-   "..............wwwwffffgfggfgfgfff......................."
+   "...ggggggggddgwwdddtgggggggggggggddggggggggggggfffg.....",
+   "....gggggggdwwwwwggttdddddddgggggdggggggggggggfff.......",
+   "....ffwwwwddwwwwwwwggggddggggggggdggggggggggggggg.......",
+   ".....wwwwwddwwwwwwwwggggggggggggddggggggggggggg.........",
+   ".....wwwwwddwwwwwwwwwgggggggggggddggggggggggffg.........",
+   "......wwwwddwwwwwwwwwggggggggggggtddggggggfgg...........",
+   ".......wwwdwwwwwwwwwgggggggggggggggdgfggffg.............",
+   ".......wwwwwwwwwwwwggggggggggggggggtggggf...............",
+   ".........wwwwwwwwwwgggggggggggggfggddgg.................",
+   "..........wwwwwwwwwfgfgfgfgfgfgggggg....................",
+   "..............wwwwgfgfggggfgfggfg......................."
   ],
   "w": 56
  },
@@ -2782,8 +2762,8 @@
   },
   {
    "cell": [
-    5.0,
-    48.0
+    13.0,
+    46.0
    ],
    "event": "fish_dock",
    "id": "shore_fish_0",
@@ -2791,8 +2771,8 @@
   },
   {
    "cell": [
-    20.0,
-    50.0
+    16.0,
+    41.0
    ],
    "event": "fish_dock",
    "id": "shore_fish_1",

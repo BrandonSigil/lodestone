@@ -67,7 +67,7 @@ class Map:
             "turn": turn, "fog": fog,
             "grid": {"w": self.w, "h": self.h,
                      "terrain": ["".join(r) for r in self.terrain],
-                     "heights": ["".join(str(v) for v in r) for r in self.height],
+                     "heights": ["".join(HEIGHT_DIGITS[v] for v in r) for r in self.height],
                      "props": self.props},
             "start": self.start, "groups": [], "things": self.things,
         }
@@ -92,6 +92,7 @@ def room(m, x0, y0, x1, y1, floor="s", h=1, wall=2):
         m.put(x0, y, "r", h + wall)
 
 
+HEIGHT_DIGITS = "0123456789abcdefghijklmnopqrstuvwxyz"  # one digit a cell, as CombatGrid saves heights (0-24)
 BLOCKED = "ru."  # rock, rubble and void can't be walked (CombatGrid.STEP_COST)
 WALK_OUT = "wf"  # nor, on the explore maps, water and woods (CombatGrid.WALK_OUT)
 JUMP, STAIRS_CLIMB, INTERACT_CLIMB = 1, 2, 2  # the lead's jump; CombatGrid and ExploreRules

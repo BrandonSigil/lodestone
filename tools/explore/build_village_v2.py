@@ -6,7 +6,7 @@ Pass 2 after Brandon's review ("so flat and square... I want a lot more vertical
 shaped"): every district is an organic blob (noisy outline, no rectangles) at its own height, with cliffs several
 levels tall between them, so the town climbs from the lake to the ruins:
 
-  8  the ruins and the cemetery on their cliff top (screen top left), the town hall's crag (top right)
+  22 the ruins and the cemetery on their cliff top (screen top left), the town hall's crag (top right)
   6  the square's plateau with the smithy (the middle, room to breathe), the ruins' foot over the gorge
   5  the farm's shelf with the windmill (left)
   4  the tavern's shelf under the square
@@ -64,42 +64,74 @@ def raise_to(cells, h, t="g"):
 
 # --- the island and its districts (lowest first; each higher one is laid over) -----------------------------
 ISLAND = blob(27.5, 27.5, 29.5, 29.5, 1.3, 0.09)
-for x, y in ISLAND:
-    V.put(x, y, "g", 2)  # the meadow
 SHORE = blob(13, 47, 13, 10, 2.2, 0.2)
-raise_to(SHORE, 1)
 LAKE = blob(12.5, 51, 8.5, 5, 4.1, 0.18)
-raise_to(LAKE, 0, "w")
 SOUTH = blob(31, 45, 9, 6, 0.4)  # the hero's cottage and the gate road
-raise_to(SOUTH, 3)
 EAST = blob(49, 35, 7, 10, 3.3)  # the east homes
-raise_to(EAST, 3)
 TAVERN = blob(39, 33, 9, 6, 5.0)
-raise_to(TAVERN, 4)
 FARM = blob(7, 34, 7.5, 7, 2.7)
-raise_to(FARM, 5)
 PLATEAU = blob(30, 21, 11, 9.5, 0.9, 0.16) + blob(43, 15, 7.5, 7.5, 1.8)  # the square and the smithy
-raise_to(PLATEAU, 6)
 FOOT = blob(8, 25, 7, 4.5, 3.9)  # the ruins' foot, where the stone bridge lands
-raise_to(FOOT, 6)
 RUINS = blob(7, 13, 7.5, 10, 4.6)
-raise_to(RUINS, 8)
 HALL = blob(29, 5.5, 9, 5.5, 2.4)
-raise_to(HALL, 8)
+inside = set(ISLAND)
+RIM = [c for c in ISLAND if any((c[0] + dx, c[1] + dy) not in inside for dx in (-1, 0, 1) for dy in (-1, 0, 1))]
+DISTRICTS = [(SHORE, 2), (SOUTH, 9), (EAST, 9), (TAVERN, 12), (FARM, 12), (PLATEAU, 16), (FOOT, 16), (RUINS, 22), (HALL, 22)]
+TERRACE = 3  # the ground between districts steps down in terraces this many levels apart
+
+
+def spread(cells):
+    """Steps from the nearest of cells, over the island."""
+    dist = {c: 0 for c in cells if c in inside}
+    todo = list(dist)
+    while todo:
+        nxt = []
+        for x, y in todo:
+            for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                if n in inside and n not in dist:
+                    dist[n] = dist[(x, y)] + 1
+                    nxt.append(n)
+        todo = nxt
+    return dist
+
+
+# The districts stand at their own levels; the ground between follows the districts round it, weighted by
+# nearness, falls toward the island's rim, and is cut into terraces: a stack of shelves and cliffs, not a meadow.
+fields = [(spread(cells), lvl) for cells, lvl in DISTRICTS] + [(spread(RIM), 4)]
+owner = {}
+for cells, lvl in DISTRICTS:
+    for c in cells:
+        if c in inside:
+            owner[c] = lvl
+for x, y in ISLAND:
+    if (x, y) in owner:
+        V.put(x, y, "g", owner[(x, y)])
+        continue
+    num = den = 0.0
+    for dist, lvl in fields:
+        d = dist.get((x, y))
+        if d is not None:
+            w = 1.0 / (d + 1) ** 3
+            num += w * lvl
+            den += w
+    V.put(x, y, "g", max(1, int(num / den) // TERRACE * TERRACE))
+for x, y in LAKE:
+    if (x, y) in inside:
+        V.put(x, y, "w", 0)
 
 # --- the gorge and the stream: the floor drops 6, 4, 2 and the water falls at each step into the lake ---------
-GORGE = [((14.5, -1), (15.5, 11.5), 6), ((15.5, 11.5), (17, 27), 4), ((17, 27), (16.5, 40), 2), ((16.5, 40), (15, 45), 0)]
+GORGE = [((14.5, -1), (15.5, 11.5), 14), ((15.5, 11.5), (17, 27), 10), ((17, 27), (16.5, 40), 5), ((16.5, 40), (15, 45), 0)]
 for a, b, floor in GORGE:
     for c in ribbon(V, [a, b], 2.4, only=lambda x, y: V.terrain[y][x] != "."):
         if V.height[c[1]][c[0]] > floor:
-            V.put(c[0], c[1], "g", max(floor, 1))
+            V.put(c[0], c[1], "g", max(floor, 1))  # a real gorge: cut down to the water's step
     for c in ribbon(V, [a, b], 0.85, "w", floor, only=lambda x, y: V.terrain[y][x] != "."):
         KEEP_OPEN.add(c)
 
 # The square: one big paved floor, room to breathe (an irregular octagon).
-SQUARE = [c for c in blob(30, 21.5, 7.5, 7, 1.1, 0.12) if V.height[c[1]][c[0]] == 6]
+SQUARE = [c for c in blob(30, 21.5, 7.5, 7, 1.1, 0.12) if V.height[c[1]][c[0]] == 16]
 for x, y in SQUARE:
-    V.put(x, y, "s", 6)
+    V.put(x, y, "s", 16)
 KEEP_OPEN.update(SQUARE)
 
 
@@ -120,8 +152,9 @@ def course(pts):
 
 
 def road(pts, t="d"):
-    """A road along the course. Where it meets a cliff more than a level high, a flight one level a step is cut
-    into the low side along the course (so it reads as stairs built up the cliff face)."""
+    """A road along the course. Where it meets a cliff more than a level high, a flight is cut into the low side
+    along the course (or back into the high side when the low side has no room), climbing two levels a step: the
+    lead's jump is 1, and a stair lets it climb 2 more (CombatGrid.STAIRS_CLIMB)."""
     cells = [c for c in course(pts) if 0 <= c[0] < W and 0 <= c[1] < H and V.terrain[c[1]][c[0]] != "."]
     hs = [V.height[y][x] for x, y in cells]
     stairs = {}
@@ -130,29 +163,31 @@ def road(pts, t="d"):
         if abs(a - b) <= 1:
             continue
         hi, lo = max(a, b), min(a, b)
-        n = hi - lo - 1
-        low = range(i + 1, i + 1 + n) if a > b else range(i, i - n, -1)  # along the low side, away from the cliff
-        high = range(i, i - n, -1) if a > b else range(i + 1, i + 1 + n)  # or cut back into the high side
-        if all(0 <= j < len(cells) and hs[j] == lo for j in low):
-            run, levels = list(low), [hi - 1 - k for k in range(n)]
-        elif all(0 <= j < len(cells) and hs[j] == hi for j in high):
-            run, levels = list(high), [lo + 1 + k for k in range(n)]
+        mids = list(range(hi - 2, lo, -2))  # the steps between, from the top down
+        down = 1 if a > b else -1  # the direction along the course that walks down the cliff
+        lo_side = [i + 1 + k * down for k in range(len(mids))] if a > b else [i - k for k in range(len(mids))]
+        hi_side = [i - k for k in range(len(mids))] if a > b else [i + 1 + k for k in range(len(mids))]
+        along_x = cells[i][0] != cells[i + 1][0]
+        if all(0 <= j < len(cells) and hs[j] == lo for j in lo_side):
+            plan = list(zip(lo_side, mids))
+        elif all(0 <= j < len(cells) and hs[j] == hi for j in hi_side):
+            plan = list(zip(hi_side, [lo + 2 + 2 * k for k in range(len(mids))]))
         else:
             raise SystemExit("road at %s: no room either side for a flight of %s: %s" % (cells[i], hi - lo, list(zip(cells, hs))))
-        top = (i if a > b else i + 1) if run == list(low) else run[-1] + (-1 if a > b else 1)
-        along_x = cells[i][0] != cells[i + 1][0]  # the flight climbs the way the road crosses the cliff
-        for j, lvl in list(zip(run, levels)) + [(top, hi)]:  # the top step too, so the flight reads up its course
-            stairs[cells[j]] = (lvl, along_x)
+        if not plan:  # a two- or three-level step: the top cell is the stair
+            plan = [(i if a > b else i + 1, hi)]
+        for j, lvl in plan:
+            stairs[cells[j]] = (lvl, along_x and len(plan) > 1, len(plan) > 1)
     for c in cells:
         x, y = c
         if V.terrain[y][x] == "w":
             continue
         if c in stairs:
-            h, along_x = stairs[c]
+            h, along_x, run = stairs[c]
             V.put(x, y, "t", h)
             k = cells.index(c)
             nb = [cells[j] for j in (k - 1, k + 1) if 0 <= j < len(cells)]
-            if len({q[0] for q in nb + [c]}) == 1 or len({q[1] for q in nb + [c]}) == 1:
+            if run and (len({q[0] for q in nb + [c]}) == 1 or len({q[1] for q in nb + [c]}) == 1):
                 FLIGHTS[c] = (1, 0) if along_x else (0, 1)  # a straight run: hold the drawing to it (on a
                 # diagonal the steps zig-zag and the game's own reading stands)
         elif V.terrain[y][x] != "t":
@@ -170,10 +205,10 @@ def deck(cells, h):
 
 
 # The bridges first, so the roads run onto them.
-STONE_BRIDGE = [(x, y) for x in range(13, 21) for y in (22, 23) if V.height[y][x] < 6 and (x, y) in set(ISLAND)]
-deck(STONE_BRIDGE, 6)  # the square's west bridge, high over the gorge, to the ruins' foot
-FOOT_BRIDGE = [(x, y) for x in range(12, 22) for y in (37,) if V.height[y][x] <= 2]
-deck(FOOT_BRIDGE, 4)  # the wooden footbridge lower down, from the farm to the south town
+STONE_BRIDGE = [(x, y) for x in range(13, 21) for y in (22, 23) if V.height[y][x] <= 14 and (x, y) in set(ISLAND)]
+deck(STONE_BRIDGE, 16)  # the square's west bridge, high over the gorge, to the ruins' foot
+FOOT_BRIDGE = [(x, y) for x in range(12, 22) for y in (37,) if V.height[y][x] <= 7]
+deck(FOOT_BRIDGE, 9)  # the wooden footbridge lower down, from the farm to the south town
 
 road([(36.5, 56), (35.5, 51), (32.5, 49), (33.5, 46.5)])  # the gate road up to the south town
 road([(33.5, 46.5), (36, 43), (33, 39), (31.5, 33), (31.5, 29.5), (30.5, 26.5)])  # the south town up to the square (switchback)
@@ -182,7 +217,7 @@ road([(36.5, 21.5), (41, 17.5), (44, 15.5)])  # to the smithy
 road([(35.5, 26.5), (38, 29.5), (40.5, 31.5)])  # down to the tavern
 road([(43, 34.5), (47, 33), (49.5, 36)])  # on to the east homes
 road([(22.5, 22.5), (21, 22.5)])  # onto the stone bridge
-road([(12.5, 22.5), (10, 24), (8, 27.5), (6.5, 29.5), (7.5, 31)])  # the ruins' foot down to the farm
+road([(12.5, 22.5), (12.5, 24.5), (9.5, 25.5), (8, 27.5), (6.5, 29.5), (6.5, 32)])  # the ruins' foot down to the farm
 road([(8.5, 21), (7.5, 18), (9.5, 14), (11.5, 10.5)])  # the ruins' foot up into the cemetery
 road([(10.5, 37.5), (11.5, 37.5)])  # the farm onto the footbridge
 road([(22.5, 37.5), (25, 39.5), (28, 42), (31, 44.5)])  # off the footbridge to the south town
@@ -276,8 +311,11 @@ p("prop_barrel", 47, 15, 0.7)
 p("prop_bench", 35, 33, 0.6)
 p("prop_lamp", 40, 34, 1.5)
 p("prop_barrel", 42, 30, 0.7)
-V.arch("prop_arch", 34, 52, (3, 1))  # the town gate, across the gate road
-KEEP_OPEN.update((x, 52) for x in range(34, 37))
+gx, gy = next((x, y) for y in range(54, 44, -1) for x in range(31, 38)
+              if V.terrain[y][x + 1] == "d" and len({V.height[y][x + k] for k in range(3)}) == 1
+              and all(V.terrain[y][x + k] in "dg" for k in range(3)))
+V.arch("prop_arch", gx, gy, (3, 1))  # the town gate, across the gate road on a flat stretch
+KEEP_OPEN.update((x, gy) for x in range(gx, gx + 3))
 
 # The ruins and the cemetery (graybox where we have no art).
 V.prop("ruins/prop_ruin", 10, 9, (1, 1), tall=1.1, sight=1.0)
@@ -300,7 +338,10 @@ p("prop_hay", 8, 36, 0.65, 0.5)
 KEEP_OPEN.update((x, y) for x in range(2, 13) for y in range(29, 39))
 
 # The lake.
-V.prop("ph_boathouse", 12, DOCK[0][1] - 3, (2, 2), tall=1.5, sight=2.0)  # on the shore beside the dock's root
+bx, by = next((x, y) for y in range(DOCK[0][1] - 2, 36, -1) for x in range(12, 20)
+              if len({V.height[y + dy][x + dx] for dx in (0, 1) for dy in (0, 1)}) == 1
+              and all(V.terrain[y + dy][x + dx] == "g" for dx in (0, 1) for dy in (0, 1)))
+V.prop("ph_boathouse", bx, by, (2, 2), tall=1.5, sight=2.0)  # on flat shore beside the dock's root
 V.prop("ph_boat", 8, DOCK[0][1] - 2, (1, 2), tall=0.4, sight=0.0)  # pulled up on the shore by the dock
 KEEP_OPEN.update((x, y) for x in range(8, 15) for y in range(DOCK[0][1] - 4, DOCK[0][1] + 6))
 reeds = [(x, y) for y in range(40, H) for x in range(0, 24) if V.terrain[y][x] == "g" and V.height[y][x] == 1
@@ -356,7 +397,7 @@ for y in range(H):
             continue
         rim = any((x + dx, y + dy) not in inside for dx in (-2, 0, 2) for dy in (-2, 0, 2))
         r = (x * 73 + y * 151 + x * y * 7) % 100
-        if rim and r < 70:
+        if rim and r < 35:
             V.put(x, y, "f")
         elif r < 11:
             tree(LONE[(x + y * 3) % len(LONE)], x, y)
