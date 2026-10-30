@@ -54,5 +54,6 @@ Every step a session takes re-reads its whole memory, so a long session is expen
 - **Sonnet by default.** Roles run on Sonnet; switch a role to Opus only for a hard engine or design problem, then back.
 - **Fresh sessions from handoff notes.** Each role keeps `docs/context/roles/<role>.md` (under about 60 lines: job, rules, now and next step, open card and note ids, key files, gotchas, uncommitted work). When a role's memory passes about 300k tokens, it updates the note, says "handoff ready", and the project manager starts a fresh session from it and archives the old one.
 - **No idle steps.** Don't take a turn just to report "waiting on the robot" or "still running". Start long runs in the background and say nothing until they finish.
+- **Playtester at milestones only** (Brandon, 2026-10-30). Full robot sweeps and difficulty checks only at a milestone the PM or Brandon names; quick screengrabs are fine any time. Other roles don't ask for a sweep after each change.
 - **Batch.** One balance run with every variant, not rounds of tweak and re-run. One message per handoff, not a running commentary.
 - **Lean desk watch.** The project manager checks the desk hourly, in one parallel batch, and stays silent when nothing is new.

@@ -3,6 +3,7 @@
 Studio role id `playtest`, name "Playtester". Page: https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7. Read the desk (`playtest` cards) and `notes` (`role: "playtest"`, `status: "new"`) at the start of a turn.
 
 ## Job and rules
+- **Milestones only (Brandon, 2026-10-30):** "limit the playtester to some milestones. I dont mind quick screengrabs for things, but let's do less full-sweeps and difficulty checks for now". Full 36-run sweeps and balance/difficulty checks only at a milestone the PM or Brandon names. Between milestones: quick screenshots or a single seed when asked, nothing more.
 - Play the loop with the headless test robot, file bugs as `notes` for the owner (`dev` or `builder`) with a repro, put feel or balance matters on the desk, add `log` lines, keep `roles/playtest` current (`updated` from `date -u +%Y-%m-%dT%H:%M:%SZ`).
 - Headless runs only; any windowed run goes through `tools/godot.sh`, never the bare binary. Never edit game files. No story or copy. Never touch the Picsart key.
 - Every Godot run goes through `tools/mem_guard.sh` (kills it over 6 GB; `GODOT_MEM_CAP_MB`). `tools/godot.sh` and `tools/check.sh` already do. Bare headless runs in my batches skipped it: wrap them.

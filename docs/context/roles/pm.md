@@ -20,6 +20,8 @@ Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the
 
 ## Working rules learned
 - Keep usage low (`docs/systems/studio.md`): no idle turns; batch; reset a role past ~300k tokens. A role is reset by writing its handoff note, then unpin, `clear_session`, `set_session_model` claude-sonnet-5-5, re-pin and a kickoff message. New sessions can't be started while Brandon is on Remote Control, and clearing fails while a session has a background task running.
+- Playtester at milestones only (Brandon, 2026-10-30): name the milestone before asking for a full sweep or difficulty check; quick screengrabs any time.
+- Desk watch cron dies with this session; after any restart run CronList and recreate it.
 - Brandon runs Picsart by hand from prompt cards (memory `picsart-by-hand`). Godot runs go through `tools/godot.sh` / `tools/mem_guard.sh` (6 GB cap).
 - Shared checkout: commit only your own files; `git pull --rebase --autostash` before pushing.
 - Talk to Brandon in plain words: what changed, what's on his desk. Commit hashes in backticks.
