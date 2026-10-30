@@ -567,3 +567,30 @@ func test_map_groups_keep_their_fight_data() -> void:
 	eq(int(g.talk.times), 2)
 	ok(g.elite)
 	ok(g.units[0].leader, "the leader mark reaches the unit entry")
+
+
+## [USER] c10: escaping the Lich King pays some XP, but it isn't beating him: no loot, no beaten flag, no end
+## screen, and he's waiting there next time (the map builder's catch).
+func test_an_escape_is_not_a_beating() -> void:
+	var saved := _fresh_game()
+	Game.explore_map = "crypt"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	var throne: Dictionary = s.groups.filter(func(g: Dictionary) -> bool: return g.def.id == "throne")[0]
+	var b := Battle.new()
+	b.outcome = {"how": "exit", "joined": []}
+	b.units = throne.units.duplicate()
+	s.battle = b
+	var xp_before := int(Game.level_state("lead").xp) + int(Game.level_state("lead").level) * 100
+	s._on_fight_over(true, [throne])
+	ok(not Game.has_flag(ExploreRules.beaten_flag("crypt", "throne")), "not beaten")
+	ok(not Game.has_flag("beat_lich"), "no loot, so the pass isn't cleared")
+	ok(not Game.has_flag("e2e_done"), "no end screen")
+	eq(throne.state, "escaped", "he's still there, leaving the party be for now")
+	ok(int(Game.level_state("lead").xp) + int(Game.level_state("lead").level) * 100 > xp_before, "some XP")
+	b.free()
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"
+	_restore(saved)

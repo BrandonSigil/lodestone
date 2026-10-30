@@ -32,6 +32,11 @@ func _draw() -> void:
 		var p := board.cell_top(c)
 		var dim := state == 1
 		_thing(String(t.kind), p, dim)
+		if String(t.kind) == "companion":
+			# a companion stands at home while benched ([USER] pc-10: walk up to invite them)
+			var who := String(t.get("event", "")).trim_prefix("companion_")
+			if who != "" and not Game.in_party(who):
+				PlaceholderFigure.draw(self, p, 26.0, StringName(who), 0, "idle", _time, false, Color(0.4, 0.7, 1.0), dim)
 		if dim or lead == null or not scene.walking():
 			continue
 		var near := ExploreRules.dist(lead.cell, c) <= ExploreRules.HINT_RANGE

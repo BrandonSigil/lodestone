@@ -295,11 +295,15 @@ func _fight(s: Node, group_id: String) -> Node:
 				return s
 		await _frames(3)
 		var units: Array = s.get("battle").units
-		if CombatRules.team_alive(units, 0) and CombatRules.team_alive(units, 1):
+		# A fight can be won with foes still standing (a leader down, rounds held: FightGoals), so the goal the
+		# battle names decides; auto's stalemate guard ends a fight with no goal named.
+		var how: String = s.get("battle").outcome.how
+		var lost := not CombatRules.team_alive(units, 0)
+		if not lost and how == "":
 			_check(false, "the fight with %s ended in a stalemate (the AI couldn't reach)" % group_id)
 			return s
-		if not CombatRules.team_alive(units, 1):
-			_check(true, "won the fight with %s" % group_id)
+		if not lost:
+			_check(true, "won the fight with %s (%s)" % [group_id, how])
 			var after: int = game.level_state("lead").xp + game.level_state("lead").level * 1000
 			_check(after > xp, "XP for the %s fight" % group_id)
 			if not game.has_flag("e2e_done"):

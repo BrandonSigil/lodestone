@@ -83,6 +83,16 @@ func run(s: Node, f: int, step: String) -> bool:
 				s._refresh_units()
 				s.open_event(String(g.def.event), {"group": g})
 			return f == 30
+		"benched":
+			# The dog left at home ([USER] pc-10): he stands at his home spot, ready to be invited.
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false  # a shot never writes the real save
+				game.meta.flags.append_array(["has_lodestone", "met_dog"])
+				game.dismiss("dog")
+				s._after_change()
+				_put(s, Vector2i(5, 24))
+			return f == 30
 		"gate":
 			# The village gate's prompt ([USER] pc-10): GO (F) or EDIT PARTY (P); then the party editor.
 			if f == 5:

@@ -1032,13 +1032,18 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	var ends := false
 	for flag: String in battle.outcome.joined:
 		Game.set_flag(flag)  # a foe talked round ([USER] c17)
+	# [USER] c10: an escape is a win for "some XP", not a beating: no loot, no beaten flag, no end, and the
+	# group is still there (it leaves the party be for the rest of this visit; next time it's waiting again)
+	var escaped: bool = battle.outcome.how == "exit"
 	for f: Dictionary in foes:
-		f.state = "gone"  # beaten, fled, talked round or left behind: the group is done with the party
+		f.state = "escaped" if escaped else "gone"  # beaten, fled or talked round: done with the party
 		for u: CombatUnit in f.units:
 			if not u.alive():
 				downed += 1
 			elif battle.units.has(u):
 				standing += 1
+		if escaped:
+			continue
 		if f.def.get("boss", false) or f.def.get("elite", false):
 			Game.set_flag(ExploreRules.beaten_flag(map.map_name, String(f.def.id)))
 		elite = elite or bool(f.def.get("elite", false))
@@ -1049,7 +1054,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 			Game.absorb(out.unlocks)
 	for u: CombatUnit in party:
 		u.member.hp = maxi(1, u.hp)  # downed members get back up after a win
-	var xp := LevelRules.fight_xp(downed, boss, Db.levels, standing if battle.outcome.how == "exit" else 0)
+	var xp := LevelRules.fight_xp(downed, boss, Db.levels, standing if escaped else 0)
 	if elite:
 		xp = xp * int(CombatRules.num("elite_xp_pct")) / 100  # better rewards; loot waits on the one-more-run theme
 	var lines := Game.award_xp(xp)
@@ -1064,7 +1069,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		_dialog_button(box, Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.LAUNCH))
 		mode = M.OVER
 		return
-	box = _new_dialog("%s\n%s" % [Txt.t("UI_VICTORY"), "\n".join(lines)])
+	box = _new_dialog("%s\n%s" % [Txt.t("UI_ESCAPED" if escaped else "UI_VICTORY"), "\n".join(lines)])
 	_dialog_button(box, Txt.t("UI_CONTINUE"), _end_fight)
 
 
