@@ -179,3 +179,13 @@ The wizard branch's `wall_of_fire` becomes "ignite lines last 3 phases and hit h
 | tinker | bomb, caltrops, smoke_bomb, patch | bomber: bomb radius 2 | engineer: caltrops also shoot foes within 2 for 2 phases |
 
 This replaces the evolved-class table above. Dropped: the ember healer branch (the mender covers healing), the old wall_of_fire branch (now halo and cinder), chanter's dissonance, and reaver's leap and shade's kick (swap them back in over a passive if he prefers).
+
+## Second rework (2026-10-30, card design-kits-fourth)
+`[USER]` All ten kits approved, with four changes. `[AI]` numbers below.
+
+- **reaver:** no `long_reach` yet. Passive `bloodied`: more attack power or crit the lower its health (+1 damage under half HP, +2 under a quarter, +10% crit under half). Berserker still upgrades `second_wind`.
+- **shade:** passive `quick_hands` is two smaller hits per regular attack (each a point or so lighter than one full hit). `backstab` is gone for now. New ability `throw_dagger`: range 2 to 3, a short ranged attack to finish a foe off. Assassin now upgrades `throw_dagger` (+20% crit against a foe under half HP). Thief still upgrades `shadow_swap`.
+- **moon:** `moon_sleep` knocks a foe out for 1 to 3 rounds (a roll) and ends the moment it takes damage. Hexer upgrades it: a 2 to 4 roll that only a crit or 3 or more damage breaks.
+- **moon:** `moonbeam` is a 2x2 area: allies in it heal 2, foes in it take damage and burn 1 a phase for 2 phases.
+
+Revised rows: reaver (cleave, shove, second_wind, passive bloodied); shade (throw_dagger, poison blades, shadow_swap, passive quick_hands); moon (moonbeam 2x2 heal or burn, moon_sleep 1-3 rounds, star_guide, moon_veil).
