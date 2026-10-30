@@ -9,6 +9,8 @@ func run(args: PackedStringArray) -> void:
 	var n := int(args[0]) if args.size() > 0 else 200
 	var level := int(args[1]) if args.size() > 1 else 1
 	var weapon := args[2] if args.size() > 2 else "sword"
+	if args.size() > 3:  # 0 or 1: force the scale C switch (combat.csv scale_standard) for this run
+		Db.combat["scale_standard"] = float(args[3])
 	print("party: hero (%s) + dog, level %d, %d fights each" % [weapon, level, n])
 	for map_name in MAPS:
 		var m := ExploreMap.load_named(map_name)
@@ -29,7 +31,7 @@ func run(args: PackedStringArray) -> void:
 		var wins := 0
 		var stalls := 0
 		for i in n:
-			var grid := MapGen.valley(i, 14, 12, "snow")
+			var grid := MapGen.valley(i, MapGen.FIGHT_W, MapGen.FIGHT_H, "snow")
 			var units: Array = []
 			var spots := grid.deploy_cells(0)
 			for u: CombatUnit in _party(level, weapon):

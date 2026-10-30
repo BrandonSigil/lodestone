@@ -185,4 +185,4 @@ Kit changes of 2026-10-30 (card design-kits-fourth, `data/kits.csv`): reaver's f
 ## The combat log (2026-10-30)
 `CombatLog` (bottom right of every fight screen, in `Battle`'s UI layer) shows every event in plain words, newest at the bottom, wheel-scrollable, narrowed to stay clear of the action dock (`ActionHud.dock_rect`): the round, who walks how far, each hit with its damage and CRIT, heals, statuses, pushes, counters, watch shots, downs, aid, knock-outs, boss moves, phases, goals, win and lose. It listens to `Battle.log_line`, so a line emitted there shows in the host's own log as well.
 
-Scale C as the standard: `data/scale_standard.csv` and the `scale_standard` switch in `combat.csv` (0 for now); see `docs/design/scale-study.md`.
+Scale C as the standard: `data/scale_standard.csv` and the `scale_standard` switch in `combat.csv` (1 since 2026-10-30); see `docs/design/scale-study.md`.

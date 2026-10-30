@@ -234,3 +234,18 @@ Launch screen, FIGHT column, "Scale C test": the 21 x 18 arena (`data/maps/arena
 
 ## Scale C as the standard: ready to switch (2026-10-30)
 Brandon picked scale C on `design-scale`. The numbers for every class and ranged ability are in `game/data/scale_standard.csv`, made by the study's rule (move and ranged reach x1.25; a base move of 5 or more, or a reach of 4 or more, x1.5; melee reach 1 and jump unchanged), and applied by `ScaleTest.standard` to each piece as it is built. The switch is `scale_standard` in `game/data/combat.csv`, **0 for now**: flip it to 1 once the fight areas are resized (the road valley 14 x 12 becomes 21 x 18, `CombatScene`'s `MapGen.valley` call, and the map builder's fixed maps). With it on, a knight walks 5, the dog and hunter 8, the wolf 9, the archers reach 8, the mage's fire reaches 6. For the map makers: the walk across a fight area is about 3 rounds for a regular piece on a 21 x 18 board, 2 for the fast ones.
+
+### Switched on (2026-10-30)
+`scale_standard` is 1 in `game/data/combat.csv`: every piece's move and reach are scale C's, on the road fights (21 x 18) and on the explore maps (not resized). Re-measured once with `tools/explore_balance.gd -- 40 <level> <weapon> <0|1>` (the last number forces the switch), hero and dog, party first and ambushed; the road fights are now 21 x 18.
+
+| fight | off | on |
+| --- | --- | --- |
+| road, pair of wolves, level 1 and 5 | 100%, no stalemates | 100%, no stalemates |
+| road, pair of bandits, level 1 | 100% | 98% |
+| snow pass bandits, level 1, ambushed | 100% | 93% |
+| other explore groups, level 1 and 5 | 98 to 100% | 100% (rounds fall by 0 to 3, a round or two on the plaza and tower) |
+| the Lich, level 5, sword (party first / ambushed) | 48% / 43% | 48% / 25% |
+| the Lich, level 5, book | 83% / 93% | 83% / 93% |
+| the Lich, level 1 (any weapon) | 0% | 0% |
+
+Nothing stalls. The one clear loss is the ambushed Lich with the sword (43 to 25%): his foes and pillars reach further now. The unit tests run with the switch paused (`ScaleTest.PAUSE_META`), since they were written for the old numbers; the E2E robot plays with it on and passes.
