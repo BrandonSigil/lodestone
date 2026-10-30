@@ -15,7 +15,7 @@ shield_wall_armor,1,the lead's shield wall adds this armor to allies next to the
 cover_ranged,1,brush and low walls and forest take this off ranged hits
 spooked_damage,-1,a spooked piece hits for this much less
 poison_damage,1,a poisoned piece loses this much HP at the start of each of its phases, through armor (the rogue's blades)
-run_melee_only,0,hit and run's AI steps only to a cell no foe could hit next phase (spells too; the danger zone); 1: only out of their reach-1 hits
+run_melee_only,1,hit and run's AI steps out of the foes' reach-1 hits (game designer 2026-10-30); 0: only to a cell no foe could hit next phase, spells too (the danger zone), else stays
 poison_turns,1,a dagger hit poisons for this many of the target's phases; a new hit renews it and doesn't stack (game designer 2026-10-30: 3 and 2 tried)
 bleed_turns,3,a downed party piece can be helped up for this many of its own phases
 aid_pct,25,AID brings a downed piece back at this % of its max HP

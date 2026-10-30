@@ -51,9 +51,9 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 
 
 ## Hit and run, after the strike: the nearest cell u can still reach outside the foes' reach, without walking off
-## a guard; where it stands if that's safe or nothing is, so it stays by the foe and its teammate keeps the
-## team-up. It counts everything they could hit next phase, spells too (the danger zone, game designer
-## 2026-10-30); combat.csv `run_melee_only` 1: only their reach-1 plain hits. Same shape as plan's move part:
+## a guard; where it stands if that's safe or nothing is. combat.csv `run_melee_only` 1 (the default, game
+## designer 2026-10-30): the reach of foes whose plain hit reaches 1; 0: everything they could hit next phase,
+## spells too (the danger zone), so it stays by the foe and its teammate keeps the team-up. Same shape as plan's move part:
 ## {"move", "path", "cost"}.
 static func retreat(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var reach := CombatRules.reachable(grid, u, units)

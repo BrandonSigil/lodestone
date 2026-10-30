@@ -854,7 +854,12 @@ func test_rogue_hits_and_runs() -> void:
 	var cells: Dictionary = CombatRules.reachable(g, r, units).cost
 	ok(cells.has(Vector2i(0, 0)) and not cells.has(Vector2i(2 - r.move, 0)), "the move tiles are the rest of the move")
 	var away := EnemyAi.retreat(g, r, units)
-	ok(not CombatRules.danger_zone(g, units, 1).has(away.move) or away.move == r.cell, "the AI steps out of the danger zone")
+	ok(not EnemyAi.hit_reach(g, r, units, true).has(away.move) or away.move == r.cell, "the AI steps out of melee reach")
+	var keep: float = Db.combat["run_melee_only"]
+	Db.combat["run_melee_only"] = 0.0  # the safe-cell rule, kept behind the switch
+	away = EnemyAi.retreat(g, r, units)
+	ok(not CombatRules.danger_zone(g, units, 1).has(away.move) or away.move == r.cell, "or out of the danger zone")
+	Db.combat["run_melee_only"] = keep
 	var boxed := CombatGrid.flat(3, 1)
 	var r2 := _unit("job_rogue", 0, Vector2i(0, 0), boxed)
 	var b2 := _unit("bandit", 1, Vector2i(1, 0), boxed)
