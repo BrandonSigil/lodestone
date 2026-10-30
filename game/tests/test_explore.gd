@@ -448,3 +448,15 @@ func test_no_walking_into_water() -> void:
 	var u := CombatUnit.enemy(load("res://data/classes/bandit.tres"))
 	u.place(Vector2i(1, 1), 0)
 	ok(CombatRules.reachable(g, u, [u]).cost.has(Vector2i(2, 1)), "in a fight a piece can still wade in")
+
+
+## [USER] 2026-10-30: trees are obstructed terrain. Walking goes round a wood; in a fight it is still cover.
+func test_trees_block_walking() -> void:
+	var g := CombatGrid.flat(5, 3)
+	for y in 3:
+		g.set_terrain(Vector2i(2, y), CombatGrid.T.FOREST)
+	ok(ExploreRules.find_path(g, Vector2i(0, 1), Vector2i(4, 1), 1).is_empty(), "a belt of trees: no way through")
+	ok(not g.walkable(Vector2i(2, 1)))
+	var u := CombatUnit.enemy(load("res://data/classes/bandit.tres"))
+	u.place(Vector2i(1, 1), 0)
+	ok(CombatRules.reachable(g, u, [u]).cost.has(Vector2i(2, 1)), "in a fight a piece can still step into the trees")

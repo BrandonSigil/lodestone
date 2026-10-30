@@ -492,9 +492,10 @@ func passable(c: Vector2i) -> bool:
 	return p.is_empty() or p.walk or under_arch(c)
 
 
-## Ground the party never walks onto outside fights ([USER] 2026-10-30: no jumping into the water). Fights
-## keep `passable`, so a piece can still wade in a fight.
-const WALK_OUT := [T.WATER]
+## Ground the party never walks onto outside fights ([USER] 2026-10-30: no jumping into the water; trees are
+## obstructed terrain, so dense forest blocks the way). Fights keep `passable`, so a piece can still wade or
+## stand in the trees for cover in a fight.
+const WALK_OUT := [T.WATER, T.FOREST]
 
 
 ## Can the party walk here on a map (explore walking: clicks, keys, paths)? A deck over water is dry.
