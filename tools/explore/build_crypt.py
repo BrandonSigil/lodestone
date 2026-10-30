@@ -170,6 +170,9 @@ data = {
         {"id": "throne", "event": "spot_boss", "sight": 4, "loot": "medicine:+3;gold:+20;unlock:beat_lich",
          "boss": True, "end": True, "goals": "defeat|exit",
          "exit": [[12, 1], [13, 1], [12, 2], [13, 2], [12, 3], [13, 3]],
+         # where his called pieces rise, in order: in front of the throne, then either side, all within 2 of
+         # him and clear of the way out
+         "summon": [[17, 3], [19, 3], [16, 2], [20, 2]],
          "units": [{"id": "lich", "cell": [18, 2]}]},
     ],
     "things": [
