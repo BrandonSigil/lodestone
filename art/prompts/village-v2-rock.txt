@@ -1,0 +1,23 @@
+LODESTONE VILLAGE V2 ROCK FACES (the cliff face texture for village v2's tall stack of shelves; six options on one picture, Brandon picks one)
+
+Image 1 = the target rock: cliff faces cut from Brandon's village v2 picture (docs/art/references/village-v2-cliffs.png). Copy what the rock is like: tall grey rock faces broken into big vertical slabs and ridges with deep vertical cracks between them, a little darker in the cracks. Do NOT copy its pixel-art finish, its grass, trees, water or camera angle.
+Image 2 = the finish: docs/art/references/style-flat-forest.png. Copy its soft flat painted fills, its soft hand-drawn line and its small amount of detail exactly. The rock must sit beside the approved fall village buildings: warm, earthy, a little mossy, quiet.
+
+WHAT THIS IS: a flat texture the game wraps onto every cliff face of the village v2 map, repeated across and DOWN: a tall cliff repeats it up to six times, one above the other. So each square is seen perfectly STRAIGHT ON, flat, like a texture swatch: no isometric block, no top surface, no corner, no perspective, no grass lip and no moss hanging over the top edge (the game draws the grass lip itself), no ground or rubble at the bottom.
+SEAMLESS BOTH WAYS (most important): the left edge meets the right edge and the TOP edge meets the BOTTOM edge, so copies stacked and side by side show no seam and no repeating band. Slabs and cracks run up and down and carry on through the top and bottom edges; no horizontal line or ledge across the whole square.
+
+Aspect 3:2, plain cream paper (#eae8d6), no title, no labels, no text anywhere. A 3 x 2 grid of six equal SQUARE cells with a clear cream gap between cells; each cell filled edge to edge by one rock face; nothing crosses a cell edge. Six options of the same idea, left to right, top row first:
+   1 warm grey rock in tall vertical slabs and ridges, a few deep vertical cracks;
+   2 the same rock, a little darker, with one small soft patch of golden fall moss;
+   3 the same rock with two or three small tufts of golden grass and fern growing out of cracks;
+   4 a cooler blue-grey version, closer to image 1's colour;
+   5 the same slabs, broader and fewer, calmer, most of the face plain;
+   6 the same rock with a little soft green moss streaked down two cracks.
+
+FINISH: one flat stone colour plus one darker tone for the cracks and the shaded sides of the slabs; light even across the face (the game shades the faces). Only a few big soft shapes, most of the face plain, never every stone or chip drawn. Cracks and slab edges in a soft, slightly wobbly darker line of warm charcoal (#373335, not pure black), never a hard outline round the square.
+Colour: warm grey stone (about #9f8874 lit, #756354 in the cracks) for 1, 2, 3, 5 and 6; blue-grey (about #8c8f94, #626670) for 4; moss the golden grass colour of the fall village, a soft muted green for 6. No black.
+
+Avoid: horizontal bands, ledges, layers or strata across the square, bricks, cut blocks, masonry, isometric blocks, cube corners, top surfaces, grass lips, moss drips over the top, rubble at the foot, perspective, every chip drawn, speckle, noise, pebbles, pixel art, dithering, cast shadows, text, labels, borders around cells, 3d render, glossy, photo, saturated red, saturated blue.
+
+CELL TO GAME FILE: the pick -> game/art/source/battle/village/side_rock.png (512 x 512; the map builder wires it to village v2 only through a zone set). Cut the six cells (wall_kit_cut.py-style: find cells from the cream gaps, trim the rim, 512 square), run seam_wrap.py --axis xy, then tile_seam_check.py both ways.
+Run: cd tools/art && ~/.lodestone/venv/bin/python picsart_sheet.py --name village_v2_rock --prompt-file ../../art/prompts/village-v2-rock.txt --ref ../../docs/art/references/village-v2-cliffs.png --ref ../../docs/art/references/style-flat-forest.png --aspect 3:2 --resolution 2K --count 2 --out-dir ../../art/picsart/out/village-v2
