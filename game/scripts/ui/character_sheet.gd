@@ -206,14 +206,20 @@ func _text(t: String, at: Vector2, fs: int, col: Color, align := HORIZONTAL_ALIG
 		draw_string(_font, at, t, HORIZONTAL_ALIGNMENT_LEFT, width, fs, col)
 
 
-## The portrait slot: real portrait art when it lands, else a close crop of the sprite's idle (or the code
-## figure), with the build's weapon drawn in code.
+## The portrait slot. On the rack's pages, the build's pose when it exists (art/source/characters/<id>/
+## <id>_build_<job>.png: the hero holding that weapon); else the portrait (art/source/portraits/<id>.png),
+## else a close crop of the sprite's idle or the code figure, with the build's weapon drawn in code.
 func _portrait(s: Dictionary) -> void:
 	draw_rect(PORTRAIT, GREEN_LIGHT.darkened(0.25))
 	var id: StringName = s.portrait
+	var wid := String(s.get("weapon_id", ""))
+	var job := String(Db.weapons.get(wid, {}).get("job", ""))
+	var pose := "res://art/source/characters/%s/%s_build_%s.png" % [id, id, job]
 	var path := PORTRAIT_DIR + String(id) + ".png"
-	if ResourceLoader.exists(path):
-		draw_texture_rect(load(path) as Texture2D, PORTRAIT, false)
+	if not takes.is_empty() and job != "" and ResourceLoader.exists(pose):
+		_fit(_art(pose), false)
+	elif ResourceLoader.exists(path):
+		_fit(_art(path), true)
 	else:
 		var f := CharacterArt.frame(id, "idle", "se", _time) if CharacterArt.has_art(id) else {}  # its own art, not the dummy
 		if not f.is_empty():
@@ -222,11 +228,35 @@ func _portrait(s: Dictionary) -> void:
 			draw_texture_rect_region(f.tex, PORTRAIT, crop)
 		else:
 			PlaceholderFigure.draw(self, PORTRAIT.position + Vector2(PORTRAIT.size.x * 0.5, PORTRAIT.size.y * 0.9), 64.0, id, 0, "idle", _time, false, Color(0, 0, 0, 0))
-	_weapon(String(Db.weapons.get(String(s.get("weapon_id", "")), {}).get("look", "")))
+		if not takes.is_empty():
+			_weapon(String(Db.weapons.get(wid, {}).get("look", "")))
 	draw_rect(PORTRAIT, RULE, false, 2.0)
 
 
-## The build's weapon, drawn in code over the portrait's lower right until the job poses exist.
+static var _arts := {}  ## path -> texture, loaded once
+
+
+func _art(path: String) -> Texture2D:
+	if not _arts.has(path):
+		_arts[path] = ImageTexture.create_from_image((load(path) as Texture2D).get_image())
+	return _arts[path]
+
+
+## A picture in the portrait slot without stretching it: cover crops it to fill (a portrait), else it fits
+## whole, standing on the slot's floor (a full-length pose).
+func _fit(tex: Texture2D, cover: bool) -> void:
+	var ts := Vector2(tex.get_size())
+	if cover:
+		var k := maxf(PORTRAIT.size.x / ts.x, PORTRAIT.size.y / ts.y)
+		var src := PORTRAIT.size / k
+		draw_texture_rect_region(tex, PORTRAIT, Rect2((ts - src) * Vector2(0.5, 0.0), src))
+		return
+	var k := minf(PORTRAIT.size.x / ts.x, PORTRAIT.size.y / ts.y) * 0.96
+	var sz := ts * k
+	draw_texture_rect(tex, Rect2(PORTRAIT.position + Vector2((PORTRAIT.size.x - sz.x) * 0.5, PORTRAIT.size.y - sz.y), sz), false)
+
+
+## The build's weapon, drawn in code over the portrait's lower right where a build has no pose yet.
 func _weapon(look: String) -> void:
 	var o := PORTRAIT.end - Vector2(62, 70)
 	var steel := Color(0.82, 0.85, 0.9)
