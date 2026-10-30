@@ -919,6 +919,8 @@ func test_lich_marks_his_big_move_and_it_lands_next_phase() -> void:
 	var g := CombatGrid.flat(12, 5)
 	var lich := _unit("lich", 1, Vector2i(1, 2), g)
 	var knight := _unit("knight", 0, Vector2i(4, 2), g)
+	knight.max_hp = 99  # a crit mustn't down it before his next mark
+	knight.hp = 99
 	var units := [lich, knight]
 	_boss_phase(g, units, 1)
 	ok(CombatRules.marks(units).is_empty(), "nothing marked on his 1st phase")
@@ -1018,8 +1020,9 @@ func test_ambusher_hides_until_spotted_and_strikes_soft() -> void:
 	amb.hiding = true
 	var knight := _unit("knight", 0, Vector2i(1, 1), g)
 	var mage := _unit("mage", 0, Vector2i(1, 2), g)
-	var units := [amb, knight, mage]
-	ok(not CombatRules.danger_zone(g, units, 1).has(Vector2i(9, 1)), "not in the danger zone")
+	var lookout := _unit("bandit", 1, Vector2i(11, 0), g)  # a seen piece of its side, so it stays hidden
+	var units := [amb, knight, mage, lookout]
+	ok(not CombatRules.danger_zone(g, units, 1).has(Vector2i(5, 1)), "not in the danger zone")
 	CombatRules.begin_phase(units, 1)
 	var p := EnemyAi.plan(g, amb, units)
 	eq(p.move, amb.cell, "nothing in reach: it stays hidden where it is")
@@ -1038,3 +1041,20 @@ func test_ambusher_hides_until_spotted_and_strikes_soft() -> void:
 	amb.place(Vector2i(10, 1), 0)
 	eq(CombatRules.spot(g, units, knight), [amb] as Array[CombatUnit], "3 away in sight: spotted")
 	ok(not amb.hiding)
+
+
+## The last foes the party can see fall: a hidden one comes out at the next phase start, so the fight can end
+## (the map builder's plaza ambusher stalled the robot, 2026-10-30).
+func test_a_hidden_piece_comes_out_when_its_side_is_otherwise_gone() -> void:
+	var g := CombatGrid.flat(12, 3)
+	var amb := _unit("ambusher", 1, Vector2i(10, 1), g)
+	amb.hiding = true
+	var bandit := _unit("bandit", 1, Vector2i(3, 1), g)
+	var knight := _unit("knight", 0, Vector2i(1, 1), g)
+	var units := [amb, bandit, knight]
+	CombatRules.begin_phase(units, 0)
+	ok(amb.hiding, "still hidden while a bandit stands")
+	bandit.hp = 0
+	var ev := CombatRules.begin_phase(units, 1)
+	ok(not amb.hiding, "out once nobody else of its side is left")
+	ok(ev.any(func(e: Dictionary) -> bool: return e.type == "reveal"), "and the board is told")

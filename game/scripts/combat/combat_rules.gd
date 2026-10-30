@@ -633,6 +633,12 @@ static func guard(u: CombatUnit) -> void:
 ## Returns heal events for traits that regrow, so the board can show them.
 static func begin_phase(units: Array, team: int) -> Array:
 	var events := []
+	for side in [0, 1]:  # a side with nobody seen left standing: its hidden pieces come out, or the fight never ends
+		if not units.any(func(o: CombatUnit) -> bool: return o.team == side and o.alive() and not o.hiding):
+			for o: CombatUnit in units:
+				if o.team == side and o.alive() and o.hiding:
+					o.hiding = false
+					events.append({"type": "reveal", "unit": o})
 	for u: CombatUnit in units:
 		if u.team != team:
 			continue
