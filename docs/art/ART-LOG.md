@@ -49,6 +49,7 @@ The generated outputs are not in git, so a second machine can't see them. The re
 | UI frame mock-up and shrine concept | `docs/art/references/ui-frame-mockup.png`, `ui-frame-shrine-concept.png` | Brandon | **reference** | Earlier ideas, kept on file; the shrine centre was dropped for the diamond. Never attach them to a frame prompt (models copy them). |
 | UI frame leaf reference | `docs/art/references/ui-frame-leaf-reference.png` | Brandon | **retired** (2026-10-30) | The full-border look (thin green bands, leaves, blue diamonds). The game now uses only the bottom band, `game/art/source/ui/frame_bottom.webp`; the side and top bands and the grey full-border layout are retired. |
 | Bustling city layout | `docs/art/references/city-bustle-street.webp`, `city-bustle-overview.webp` | Brandon | **reference** | 2026-10-29: layout target for the city prototype (tight winding streets, stairs up onto roofs, houses on bridges you walk under). Layout only: never attach to a Picsart prompt. |
+| Character sheet layout | `docs/art/references/character-sheet-layout.webp` | Brandon | **reference** | 2026-10-30: layout target for the character sheet (Fire Emblem style: portrait, level, stats, four moves). Layout only: never attach to a Picsart prompt. |
 | UI frame, bottom band | `game/art/source/ui/frame_bottom.webp` (2000 x 261, transparent above) | Brandon | **approved** | Brandon, 2026-10-29: goes along the bottom of the player screen; left square = inventory button, right panel = party and health. |
 
 ## Batch log
