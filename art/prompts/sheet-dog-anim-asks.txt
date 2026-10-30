@@ -1,0 +1,11 @@
+ASKS FOR sheet-dog-anim.txt (one facing line per run, passed as char_sheet.py --facing)
+
+  ~/.lodestone/venv/bin/python tools/art/char_sheet.py --id dog --dir <dir> --prompt-file art/prompts/sheet-dog-anim.txt \
+      --ref docs/art/characters/dog-reference-sheet.png --facing "$(sed -n 's/^<dir>: //p' art/prompts/sheet-dog-anim-asks.txt)"
+  then cut with tools/art/anim_sheet_cut.py (rows idle 5 incl. blink, walk 6, swing 6 = bite, cast 6 = bark, hurt 4) into a staging --out until Brandon stamps it.
+
+se: SE: three-quarter front view, the dog faces toward the LOWER RIGHT of the picture. We see his face, chest and right side; the pack sits on his back at the upper left.
+ne: NE: three-quarter back view, the dog faces toward the UPPER RIGHT of the picture. We see the back of his head and ears, the pack and his fluffy rump; no face.
+s: S: facing straight DOWN the screen toward the viewer. We see his face centred, both ears up, the brass clasp on his chest, the pack peeking out behind. Body symmetric left to right.
+e: E: a true side profile facing the RIGHT edge of the picture. We see his left side: nose pointing right, the pack and saddlebag on his back, his rump at the LEFT. Bites and steps go to the right.
+n: N: seen from straight BEHIND, facing UP the screen away from the viewer. We see the back of his ears and head, the pack and his fluffy rump; no face. Body symmetric left to right.

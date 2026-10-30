@@ -1,0 +1,18 @@
+LODESTONE DOG ANIMATION SHEET (one facing per picture; char_sheet.py --facing fills the facing below from sheet-dog-anim-asks.txt)
+
+Image 1 = the dog's reference sheet (docs/art/characters/dog-reference-sheet.png, approved 2026-10-30). Draw THIS dog and nobody else: the corgi with the orange-tan and cream coat, big upright ears, short legs, fluffy rump, simple dark dot eyes, the faded brick-red cloak with a brass clasp, the rolled pack and saddlebag on his back. Same chibi proportions, same flat colours, same simple shading. Copy the drawing style of image 1; do not add detail.
+
+LINE ART (essential, the house style): a soft, imperfect paint-marker outline round the whole dog and his big parts (ears, head, legs, cloak, pack), dark warm charcoal (#373335, not pure black), slightly wobbly and uneven in weight like a felt marker drawn by hand. Not a thin, even vector hairline.
+
+FACING for every frame on this sheet: [ZONE]
+Every frame shows the dog from this same direction, seen from the high game camera of image 1 (2:1 dimetric, looking down about 30 degrees, no perspective).
+
+LAYOUT: a sprite sheet on plain flat cream paper (#eae8d6). Five rows, frames evenly spaced left to right, each figure fully separate from its neighbours with clear empty cream between them. Every figure is the same size and stands on the same invisible baseline within its row, feet in the same place, as if the frames will be played over each other.
+   row 1 IDLE and BLINK, 5 frames: frames 1 to 4 standing, breathing, tongue out, the tail-stump and ears twitching a little. Frame 5 BLINK: exactly frame 1 with the eyes closed (two short soft curved lines). If the face cannot be seen from this facing, frame 5 simply repeats frame 1.
+   row 2 WALK, 6 frames: a trot cycle in place, short legs moving in pairs, ears and cloak bouncing.
+   row 3 BITE, 6 frames: crouches, springs forward in the facing direction, mouth open on frame 3 (the bite, fully stretched out), lands, steps back, back to standing.
+   row 4 BARK, 6 frames: braces, lifts his head, barks with his mouth open and two or three small blue marks above his head on frame 4 (like image 1's bark), holds, settles.
+   row 5 HURT and DOWN, 4 frames: flinch backwards with ears flat, recoil, then sitting down dazed, then the same sitting pose.
+
+Rules: no text, no labels, no numbers, no frame borders, no grid lines, no floor, no tiles, no ground shadow, no grass, no scenery, no people, no other animals. Only the bark marks are an effect; nothing else glows.
+Avoid: perspective, different camera angles between frames, a different facing in any frame, a green cloak, extra detail, fur strands, texture, big white eyes, thin even hairline outlines, pure black outlines, 3d render, photo, motion blur, speed lines, text.
