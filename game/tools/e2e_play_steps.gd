@@ -128,6 +128,8 @@ func play(t: SceneTree) -> void:
 		var w: Dictionary = game.run.found.items[0]
 		bag.items[bag.place(String(w.id), w.shape, 0, Vector2i.ZERO)].n = int(w.n)
 		game.run.found.items.clear()
+		s.call("_open_menu", "pack")  # filled behind the menu's back: rebuild it, as a player's drag does
+		await _frames(2)
 		var carried := int(w.n)
 		await _press_text(s, Txt.f("UI_SEND_HOME", Txt.t("CHAR_DOG")))
 		_check(game.run.is_away(&"dog") and not game.run.overfull(), "the dog took the bag home")
@@ -253,11 +255,13 @@ func _kept(items: Dictionary) -> Dictionary:
 	return out
 
 
+## Press the open box's nth button a player could press (a disabled one can't be: playtest bug 04, the robot sent
+## the dog home with an empty saddlebag through a greyed-out SEND HOME).
 func _press(s: Node, n: int) -> void:
 	var d: Node = s.get("_dialog")
 	if d == null:
 		return
-	var buttons := d.find_children("*", "Button", true, false)
+	var buttons := d.find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return not (b as Button).disabled)
 	if n < buttons.size():
 		(buttons[n] as Button).pressed.emit()
 	await _frames(2)
@@ -276,7 +280,7 @@ func _press_text(s: Node, text: String) -> bool:
 	if d == null:
 		return false
 	for b in d.find_children("*", "Button", true, false):
-		if (b as Button).text == text:
+		if (b as Button).text == text and not (b as Button).disabled:
 			(b as Button).pressed.emit()
 			await _frames(2)
 			return true
