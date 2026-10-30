@@ -514,7 +514,7 @@ function answerSummary(d) {
     const n = (k) => v.filter((x) => x.verdict === k).length;
     what = `${n("approve")} approved, ${n("redo")} redo, ${n("reject")} rejected`;
   } else if (d.kind === "todo") what = "Done";
-  return `<div class="answered"><span><b>You:</b> ${esc(what)}</span>${a.why ? `<span>“${esc(a.why)}”</span>` : ""}${shownImages(a.images)}<small>${esc(ago(a.at))}${d.status === "answered" ? " · waiting for " + esc(roleName(d.role)) + " to pick it up" : ""}</small></div>`;
+  return `<div class="answered"><span><b>You:</b> ${esc(what)}</span>${a.why ? `<span>“${esc(a.why)}”</span>` : ""}${shownImages(a.images)}<small>${esc(ago(a.at))}${d.status === "answered" ? " · sent to " + esc(roleName(d.role)) : ""}</small></div>`;
 }
 
 function cardHtml(d) {
@@ -879,6 +879,7 @@ function renderAll() { renderTally(); renderDesk(); renderTeam(); renderRefs(); 
 
 /* ---------- actions ---------- */
 async function save(id, patch, msg) {
+  if (patch.status === "answered") { const d = S.desk.find((x) => x.id === id); wake(`Desk answer from Brandon on ${id} for ${roleName(d?.role)}: route it to that role now.`); }
   try { await S.db.doc("desk/" + id).update(patch); delete S.drafts[id]; if (msg) toast(msg); }
   catch (e) { toast(e?.code === "invalid_argument" ? "You can't change this card from here." : "Couldn't save. Try again in a moment."); }
 }
@@ -968,6 +969,7 @@ document.addEventListener("click", async (ev) => {
         const txt = ($("note-role")?.value || "").trim(), nk = "note:" + id;
         if (stillUploading(nk)) { toast("Wait for the picture to finish uploading."); return; }
         if (!txt && !attached(nk).length) return;
+        wake(`Note from Brandon for ${roleName(id)}: route it to that role now.`);
         try { await S.db.collection("notes").add({ role: id, text: txt, images: attached(nk), at: new Date().toISOString(), status: "new" }); $("note-role").value = ""; delete S.drafts[nk]; renderRoleView(); toast("Note left for " + roleName(id)); }
         catch { toast("Couldn't leave the note. Try again in a moment."); }
         break;
@@ -1041,9 +1043,13 @@ function toggleChat(open) {
   else renderChat();
 }
 function wakePm(text, pics) {
+  wake("Studio chat from Brandon: " + (text || "(a picture)") + (pics ? ` [+${pics} picture${pics > 1 ? "s" : ""} in the chat]` : ""));
+}
+// Card answers and notes wake the PM too, so it routes them to the role at once instead of at the hourly desk watch.
+function wake(text) {
   if (S.chatWake !== "available") return;
   // A comment is one plain line of at most 4 KiB.
-  const line = ("Studio chat from Brandon: " + (text || "(a picture)") + (pics ? ` [+${pics} picture${pics > 1 ? "s" : ""} in the chat]` : "")).replace(/\s+/g, " ").slice(0, 1500);
+  const line = text.replace(/\s+/g, " ").slice(0, 1500);
   (async () => {
     try {
       if (S.chatThread) { await S.comments.sendToClaude({ threadId: S.chatThread, text: line }); return; }
