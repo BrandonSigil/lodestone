@@ -18,6 +18,7 @@ const SUITES := [
 	"res://tests/test_snow_pass.gd",
 	"res://tests/test_loop.gd",
 	"res://tests/test_pack.gd",
+	"res://tests/test_decks.gd",
 ]
 
 

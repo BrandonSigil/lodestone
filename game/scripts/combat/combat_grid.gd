@@ -20,6 +20,14 @@ const PLATEAU_LEVEL := 4  ## the high floor of a plateau map (see _plateau)
 const DEPLOY_COLS := 2  ## columns kept clear at each side for deployment
 const DEPLOY_MIN := 6  ## starting cells each side needs; fewer on the main ground and the side borrows more
 const NONE_CELL := Vector2i(-999, -999)
+## Two-level cells ([USER] 2026-10-30, card builder-city-overpass): a deck is a second floor over a cell, a bridge
+## you walk on with a lane you walk under. A place is a Vector2i: a cell is its own ground, and the same cell
+## with DECK added to y is its deck (deck_of). Everything that takes a cell takes a place; ground() strips it.
+const DECK := 4096
+const DECK_CLEAR := 2  ## a deck stands at least this many levels over its ground for the lane under it to stay open
+## For sight, a deck is a slab DECK_THICK levels thick under its floor: a line through the cell between
+## h - DECK_THICK and h is blocked; above it (on the deck) or below it (in the lane) it passes.
+const DECK_THICK := 1
 
 var w := 0
 var h := 0
@@ -36,7 +44,8 @@ var props := {}
 ## optional "staging", "floor", "skirt" overrides}. Empty = the look named like the tile set.
 var look := {}
 var version := 0  ## goes up on every height or terrain edit, so drawing caches know to rebuild
-var _prop_at := {}  ## every footprint cell -> its anchor
+var decks := {}  ## ground cell -> {"h": deck floor height, "t": T} (see DECK)
+var _prop_at := {}  ## every footprint cell -> its anchor (deck props: deck places -> deck anchor)
 var _sight := {}  ## line of sight cache, cleared on any edit
 
 
@@ -168,15 +177,57 @@ static func _plateau(seed_value: int, width: int, height: int) -> CombatGrid:
 	return g
 
 
+## The ground cell of a place (a deck place's cell under it).
+static func ground(p: Vector2i) -> Vector2i:
+	return Vector2i(p.x, p.y - DECK) if p.y >= DECK else p
+
+
+static func on_deck(p: Vector2i) -> bool:
+	return p.y >= DECK
+
+
+## The deck place over a ground cell.
+static func deck_of(c: Vector2i) -> Vector2i:
+	return Vector2i(c.x, ground(c).y + DECK)
+
+
+func has_deck(c: Vector2i) -> bool:
+	return decks.has(ground(c))
+
+
+## A deck over cell c at height dh, floored with terrain t (STONE, ROAD or STAIRS so a flight can climb on).
+func add_deck(c: Vector2i, dh: int, t := T.STONE) -> void:
+	decks[ground(c)] = {"h": dh, "t": t}
+	version += 1
+	_sight.clear()
+
+
+func remove_deck(c: Vector2i) -> void:
+	decks.erase(ground(c))
+	version += 1
+	_sight.clear()
+
+
+## The places at a cell: its ground, and its deck if it has one.
+func places_at(c: Vector2i) -> Array[Vector2i]:
+	var out: Array[Vector2i] = [ground(c)]
+	if has_deck(c):
+		out.append(deck_of(c))
+	return out
+
+
 func idx(c: Vector2i) -> int:
 	return c.y * w + c.x
 
 
 func in_bounds(c: Vector2i) -> bool:
-	return c.x >= 0 and c.y >= 0 and c.x < w and c.y < h
+	var g := ground(c)
+	return g.x >= 0 and g.y >= 0 and g.x < w and g.y < h
 
 
 func height_at(c: Vector2i) -> int:
+	if c.y >= DECK:
+		return int(decks.get(ground(c), {"h": heights[idx(ground(c))]}).h)
 	return heights[idx(c)]
 
 
@@ -187,6 +238,8 @@ func set_height(c: Vector2i, v: int) -> void:
 
 
 func terrain_at(c: Vector2i) -> int:
+	if c.y >= DECK:
+		return int(decks.get(ground(c), {"t": T.VOID}).t)
 	return terrain[idx(c)]
 
 
@@ -202,7 +255,7 @@ func solid(c: Vector2i) -> bool:
 
 
 func zone_at(c: Vector2i) -> String:
-	return zones[idx(c)]
+	return zones[idx(ground(c))]
 
 
 func set_zone(c: Vector2i, z: String) -> void:
@@ -216,7 +269,8 @@ func set_zone(c: Vector2i, z: String) -> void:
 const PROP_EXTRA := ["face", "flip", "id", "blob", "name", "note", "arch", "open"]
 
 
-## Stand a prop on the map. Its footprint runs from the anchor toward +x and +y.
+## Stand a prop on the map. Its footprint runs from the anchor toward +x and +y. An anchor on a deck place
+## stands it on the deck (a house on the bridge): its footprint blocks the deck, not the lane under it.
 func add_prop(anchor: Vector2i, sprite: String, foot := Vector2i.ONE, tall := 0.0, sight := 1.0, walk := false, extra := {}) -> void:
 	props[anchor] = {"sprite": sprite, "foot": foot, "tall": tall, "sight": sight, "walk": walk}
 	for k in PROP_EXTRA:
@@ -291,8 +345,12 @@ func resized(width: int, height: int) -> CombatGrid:
 			g.set_zone(c, zone_at(c))
 	for a: Vector2i in props:
 		var p: Dictionary = props[a]
-		if a.x + p.foot.x <= width and a.y + p.foot.y <= height:
+		var ga := ground(a)
+		if ga.x + p.foot.x <= width and ga.y + p.foot.y <= height:
 			g.add_prop(a, p.sprite, p.foot, p.tall, p.sight, p.walk, p)
+	for c: Vector2i in decks:
+		if c.x < width and c.y < height:
+			g.add_deck(c, int(decks[c].h), int(decks[c].t))
 	g.look = look.duplicate()
 	return g
 
@@ -337,12 +395,20 @@ func to_dict() -> Dictionary:
 		var list: Array = []
 		for a: Vector2i in props:
 			var p: Dictionary = props[a]
-			var e := {"sprite": p.sprite, "cell": [a.x, a.y], "foot": [p.foot.x, p.foot.y], "tall": p.tall, "sight": p.sight, "walk": p.walk}
+			var ga := ground(a)
+			var e := {"sprite": p.sprite, "cell": [ga.x, ga.y], "foot": [p.foot.x, p.foot.y], "tall": p.tall, "sight": p.sight, "walk": p.walk}
+			if on_deck(a):
+				e["deck"] = true
 			for k in PROP_EXTRA:
 				if p.has(k):
 					e[k] = p[k]
 			list.append(e)
 		d["props"] = list
+	if not decks.is_empty():
+		var list: Array = []
+		for c: Vector2i in decks:
+			list.append({"x": c.x, "y": c.y, "h": int(decks[c].h), "t": LETTERS[int(decks[c].t)]})
+		d["decks"] = list
 	if not look.is_empty():
 		d["look"] = look.duplicate()
 	return d
@@ -367,10 +433,15 @@ static func from_dict(d: Dictionary) -> CombatGrid:
 	for y in mini(g.h, z_rows.size()):
 		for x in mini(g.w, String(z_rows[y]).length()):
 			g.set_zone(Vector2i(x, y), String(key.get(String(z_rows[y])[x], "")))
+	for dk: Dictionary in d.get("decks", []):
+		g.add_deck(Vector2i(int(dk.x), int(dk.y)), clampi(int(dk.h), 0, MAX_HEIGHT), from_letter.get(String(dk.get("t", "s")), T.STONE))
 	for p: Dictionary in d.get("props", []):
 		var cell: Array = p.get("cell", [0, 0])
 		var foot: Array = p.get("foot", [1, 1])
-		g.add_prop(Vector2i(int(cell[0]), int(cell[1])), String(p.get("sprite", "")), Vector2i(int(foot[0]), int(foot[1])),
+		var anchor := Vector2i(int(cell[0]), int(cell[1]))
+		if bool(p.get("deck", false)):
+			anchor = deck_of(anchor)
+		g.add_prop(anchor, String(p.get("sprite", "")), Vector2i(int(foot[0]), int(foot[1])),
 			float(p.get("tall", 0.0)), float(p.get("sight", 1.0)), bool(p.get("walk", false)), _extra(p))
 	g.look = (d.get("look", {}) as Dictionary).duplicate()
 	return g
@@ -395,6 +466,8 @@ func cover(c: Vector2i) -> int:
 func passable(c: Vector2i) -> bool:
 	if not in_bounds(c) or step_cost(c) >= BLOCKED:
 		return false
+	if not on_deck(c) and has_deck(c) and int(decks[c].h) - height_at(c) < DECK_CLEAR:
+		return false  # a deck too low over the ground leaves no room underneath
 	var p := prop_at(c)
 	return p.is_empty() or p.walk or under_arch(c)
 
@@ -413,6 +486,8 @@ func under_arch(c: Vector2i) -> bool:
 
 ## Can a piece with this Jump step between two neighbouring cells? Stairs on either end help it climb.
 func can_step(a: Vector2i, b: Vector2i, jump: int) -> bool:
+	if ground(a) == ground(b):
+		return false  # no straight way between a deck and the lane under it
 	var limit := jump
 	if terrain_at(a) == T.STAIRS or terrain_at(b) == T.STAIRS:
 		limit += STAIRS_CLIMB
@@ -429,6 +504,8 @@ func top_height() -> int:
 	var m := 0
 	for v in heights:
 		m = maxi(m, v)
+	for c: Vector2i in decks:
+		m = maxi(m, int(decks[c].h))
 	return m
 
 
