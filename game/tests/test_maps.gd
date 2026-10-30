@@ -365,6 +365,7 @@ func test_road_fight_is_scale_c() -> void:
 ## Scale C road fight maps ([USER] 2026-10-30: "no way to get up onto that central shelf, stairs seem flat or lead to
 ## nowhere"): every walkable cell is on one stretch of ground, and every stair climbs one level and lands.
 func test_valley_every_shelf_has_a_stair_up() -> void:
+	var bridged := 0
 	for s in 80:
 		var g := MapGen.valley(s, MapGen.FIGHT_W, MapGen.FIGHT_H, "snow")
 		var start := MapOps._biggest_walk(g, 1)
@@ -375,16 +376,31 @@ func test_valley_every_shelf_has_a_stair_up() -> void:
 				if g.passable(Vector2i(x, y)) and not got.has(Vector2i(x, y)):
 					lost += 1
 		eq(lost, 0, "seed %d: %d walkable cells cut off" % [s, lost])
+		if not g.decks.is_empty():
+			bridged += 1
 		for y in g.h:
 			for x in g.w:
 				var c := Vector2i(x, y)
 				if g.terrain_at(c) != CombatGrid.T.STAIRS or not g.passable(c):
 					continue
+				# the stair climbs to dry, walkable ground one level up, and has dry ground to step on from
 				var up := false
+				var entry := false
 				for d: Vector2i in CombatRules.DIRS:
-					if g.passable(c + d) and g.height_at(c + d) == g.height_at(c) + 1:
+					var n := c + d
+					if g.has_deck(n):  # a bridge deck beside it counts as a place to step from
+						var dh := int(g.decks[CombatGrid.ground(n)].h)
+						if dh <= g.height_at(c) and dh >= g.height_at(c) - 1:
+							entry = true
+					if not g.passable(n) or g.terrain_at(n) == CombatGrid.T.WATER:
+						continue
+					if g.height_at(n) == g.height_at(c) + 1:
 						up = true
-				ok(up, "seed %d: the stair at %s climbs somewhere" % [s, c])
+					elif g.height_at(n) <= g.height_at(c) and g.height_at(n) >= g.height_at(c) - 1:
+						entry = true
+				var landed := up and entry
+				ok(landed, "seed %d: the stair at %s climbs and lands" % [s, c])
+	ok(bridged >= 5, "shelves facing across a gap get bridges (%d of 80 seeds)" % bridged)
 
 
 func test_map_doc_files() -> void:

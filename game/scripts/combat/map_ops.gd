@@ -497,8 +497,11 @@ static func reach(grid: CombatGrid, from: Vector2i, jump := 1) -> Dictionary:
 ## stepping one level at a time, from the part's edge out to the main ground ([USER] 2026-10-30, scale C road fight:
 ## "no way to get up onto that central shelf, stairs seem flat or lead to nowhere"). The run climbs by the cheapest
 ## line; each rise's lower cell becomes a stair. A part no run can reach (water or a third part in the way) is made
-## rock, so nothing walkable is left cut off. Returns how many stair cells it placed.
+## rock, so nothing walkable is left cut off. Where two shelves of about the same height face each other across a gap
+## (water or a low dip) up to BRIDGE_MAX wide, it lays a deck bridge instead ([USER] 2026-10-30: "this area should have a
+## bridge between it, not a stair that goes down to nowhere"). Returns how many stair or bridge cells it placed.
 const RAMP_MAX := 12  ## the longest run, in cells
+const BRIDGE_MAX := 4  ## the widest gap a bridge spans, in cells
 
 
 static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
@@ -523,19 +526,36 @@ static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
 						part = got
 		var best: Array = []
 		var best_cost := INF
+		var best_bridge := false
 		for p: Vector2i in part:
+			if grid.terrain_at(p) == T.WATER:
+				continue  # a flight or bridge starts on dry ground
 			for d: Vector2i in CombatRules.DIRS:
 				var run: Array[Vector2i] = [p]
+				var stair_ok := true
+				var hp := grid.height_at(p)
 				for k in range(1, RAMP_MAX + 1):
 					var q := p + d * k
-					if not grid.solid(q) or part.has(q) or grid.terrain_at(q) == T.WATER:
+					if not grid.solid(q) or part.has(q):
 						break
 					run.append(q)
-					if main.has(q):
-						var hp := grid.height_at(p)
+					if main.has(q) and grid.terrain_at(q) != T.WATER:
 						var ht := grid.height_at(q)
-						if absi(ht - hp) <= k:
-							var cost := float(k) + rng.randf() * 0.5
+						# a bridge: two shelves of about the same height facing each other across a gap or a low dip
+						if k >= 2 and k <= BRIDGE_MAX + 1 and absi(ht - hp) <= 1:
+							var gap := true
+							for j in range(1, k):
+								var g := run[j]
+								if grid.terrain_at(g) != T.WATER and grid.height_at(g) > mini(hp, ht) - 1:
+									gap = false
+							if gap:
+								var bc := float(k) * 0.7 + rng.randf() * 0.3
+								if bc < best_cost:
+									best_cost = bc
+									best = run.duplicate()
+									best_bridge = true
+						if stair_ok and absi(ht - hp) <= k:
+							var cost := float(k) + 2.0 + rng.randf() * 0.5
 							for j in range(1, k):
 								var want := hp + signi(ht - hp) * mini(j, absi(ht - hp))
 								if want != grid.height_at(run[j]):
@@ -543,12 +563,20 @@ static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
 							if cost < best_cost:
 								best_cost = cost
 								best = run.duplicate()
+								best_bridge = false
+					if grid.terrain_at(q) == T.WATER:
+						stair_ok = false
 		if best.is_empty():
 			for c: Vector2i in part:  # nothing can reach it: it is rock now
 				grid.set_terrain(c, T.ROCK)
 			continue
 		var hp := grid.height_at(best[0])
 		var ht := grid.height_at(best[best.size() - 1])
+		if best_bridge:  # a deck span over the gap, level with the lower shelf
+			for j in range(1, best.size() - 1):
+				grid.add_deck(best[j], mini(hp, ht), T.STONE)
+			placed += best.size() - 2
+			continue
 		for j in range(1, best.size() - 1):
 			var q: Vector2i = best[j]
 			grid.set_height(q, hp + signi(ht - hp) * mini(j, absi(ht - hp)))
@@ -559,6 +587,8 @@ static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
 			var b: Vector2i = best[j + 1]
 			if absi(grid.height_at(a) - grid.height_at(b)) == 1:
 				var low := a if grid.height_at(a) < grid.height_at(b) else b
+				if low == best[0] or low == best[best.size() - 1]:
+					continue  # the ends stay as they are: a one-level step needs no stair of its own
 				if grid.terrain_at(low) != T.STAIRS:
 					grid.set_terrain(low, T.STAIRS)
 					placed += 1
