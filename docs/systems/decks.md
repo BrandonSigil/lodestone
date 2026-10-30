@@ -28,7 +28,7 @@
 ## Drawing (step 4)
 - `CombatBoard` has a DECK slab per depth, after that depth's pieces: the deck slab, overlays on deck places (highlights, danger, area, guard ring, goals, the cursor), props standing on decks, then the pieces on decks. So a deck covers the lane's pieces at its depth and sits under its own.
 - A deck draws as a slab `DECK_THICK` deep with the ground's top and side art (graybox colours without it). Side faces and outline only where the deck ends, so a run of deck reads as one bridge.
-- A piece under or behind a deck: with `deck_window` on, the deck (and a prop on it) goes see-through while the piece stands there; off, the deck stays solid and the piece gets the ghost copy and foot ring. Which one is a design call on the desk (card `dev-deck-covered-piece`); the window is on until it's answered.
+- A piece under or behind a deck: with `deck_window` on, the deck (and a prop on it) goes see-through while the piece stands there; off, the deck stays solid and the piece gets the ghost copy and foot ring. [USER] 2026-10-30 (card `dev-deck-covered-piece`): the window, as buildings do. `deck_window` stays on; off is kept for the test picture only.
 - Picking returns the deck place where the deck's top is under the mouse, the lane cell elsewhere. Drawing helpers (`_diamond`, `cell_top`, `_depth_at`, `hidden`, prop rects) take places and draw at the ground cell.
 - Test picture: `tools/godot.sh --path game -s res://tools/map_shot.gd -- out.png demo:bridge 0 [nowindow]`.
 
