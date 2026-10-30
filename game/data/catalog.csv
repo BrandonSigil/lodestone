@@ -1,70 +1,70 @@
-id,drawer,group,kind,sprite,foot_w,foot_h,tall,sight,walk,thing,event,label
-pine_1,Nature,Trees and plants,prop,base/prop_pine_1,1,1,1.25,1,,,,pine
-pine_2,Nature,Trees and plants,prop,base/prop_pine_2,1,1,1.25,1,,,,pine (tall)
-tree,Nature,Trees and plants,prop,village/prop_tree,1,1,1.6,1,,,,tree
-bush,Nature,Trees and plants,prop,base/prop_bush,1,1,0.55,0.5,,,,bush
-stump,Nature,Trees and plants,prop,village/prop_stump,1,1,0.5,0,,,,stump
-boulder,Nature,Rocks,prop,base/prop_boulder,1,1,0.6,1,,,,boulder
-detail,Nature,Rocks,prop,base/prop_detail,1,1,0.45,0,,,,ground detail
-home_a,Village,Buildings,prop,village/b_home_a,3,3,0,3,,,,home A
-home_b,Village,Buildings,prop,village/b_home_b,4,3,0,3,,,,home B
-home_c,Village,Buildings,prop,village/b_home_c,4,3,0,3,,,,home C
-home_hero,Village,Buildings,prop,village/b_home_hero,3,3,0,3,,,,hero's home
-smithy,Village,Buildings,prop,village/b_smithy,3,4,0,3,,,,smithy
-tavern,Village,Buildings,prop,village/b_tavern,6,4,0,3,,,,tavern
-townhall,Village,Buildings,prop,village/b_townhall,7,5,0,3,,,,town hall
-well,Village,Street,prop,village/prop_well,2,2,1.8,1,,,,well
-lamp,Village,Street,prop,village/prop_lamp,1,1,1.5,0,,,,lamp post
-bench,Village,Street,prop,village/prop_bench,1,1,0.6,0,,,,bench
-board,Village,Street,prop,village/prop_board,1,1,1,0,,,,notice board
-fence,Village,Street,prop,village/prop_fence,1,1,0.6,0,,,,fence
-planter,Village,Street,prop,village/prop_planter,1,1,0.8,0,,,,planter
-stall,Village,Street,prop,village/prop_stall,2,2,1.8,1,,,,market stall
-cart,Village,Street,prop,village/prop_cart,2,2,1.3,1,,,,cart
-arch,Village,Street,prop,village/prop_arch,4,1,1.8,2,arch,,,stone archway
-arch_timber,Village,Street,prop,village/prop_arch_timber,4,1,1.8,2,arch,,,timber archway
-hay,Village,Farm and work,prop,village/prop_hay,1,1,0.65,0,,,,hay bale
-anvil,Village,Farm and work,prop,village/prop_anvil,1,1,0.75,0,,,,anvil
-grindstone,Village,Farm and work,prop,village/prop_grindstone,1,1,0.85,0,,,,grindstone
-rack,Village,Farm and work,prop,village/prop_rack,1,1,1,0,,,,weapon rack
-barrel,Village,Farm and work,prop,village/prop_barrel,1,1,0.7,0,,,,barrel
-crates,Village,Farm and work,prop,village/prop_crates,1,1,0.8,0,,,,crates
-crate,Village,Farm and work,prop,base/prop_crate,1,1,0.6,0,,,,crate
-bed,Building interior,Furniture,prop,village_in/prop_bed,1,1,0.75,0,,,,bed
-table,Building interior,Furniture,prop,village_in/prop_table,1,1,0.7,0,,,,table
-long_table,Building interior,Furniture,prop,village_in/prop_long_table,2,1,0.7,0,,,,long table
-chair,Building interior,Furniture,prop,village_in/prop_chair,1,1,0.75,0,,,,chair
-broken_chair,Building interior,Furniture,prop,village_in/prop_broken_chair,1,1,0.75,0,,,,broken chair
-stool,Building interior,Furniture,prop,village_in/prop_stool,1,1,0.5,0,,,,stool
-desk,Building interior,Furniture,prop,village_in/prop_desk,1,1,0.75,0,,,,desk
-bar,Building interior,Furniture,prop,village_in/prop_bar,2,1,0.8,0,,,,bar counter
-cupboard,Building interior,Furniture,prop,village_in/prop_cupboard,1,1,1.3,1,,,,cupboard
-bookshelf,Building interior,Furniture,prop,village_in/prop_bookshelf,1,1,1.3,1,,,,bookshelf
-rug,Building interior,Furniture,prop,village_in/prop_rug,1,1,0.45,0,1,,,rug
-hearth,Building interior,Hearth and light,prop,village_in/prop_hearth,1,1,0.95,1,,,,fireplace
-brazier,Building interior,Hearth and light,prop,base/prop_brazier,1,1,0.8,0,,,,brazier
-chest_prop,Building interior,Storage,prop,village_in/prop_chest,1,1,0.6,0,,,,chest (decor)
-pots,Building interior,Storage,prop,village_in/prop_pots,1,1,0.6,0,,,,pots
-jar_shelf,Building interior,Storage,prop,village_in/prop_jar_shelf,1,1,0.55,0,,,,jar shelf
-ale_barrel,Building interior,Storage,prop,village_in/prop_ale_barrel,1,1,0.8,0,,,,ale barrel
-pillar,Ruins and dungeon,Stone,prop,dungeon/prop_pillar,1,1,1.6,2,,,,pillar
-ruin,Ruins and dungeon,Stone,prop,ruins/prop_ruin,1,1,1.1,1.5,,,,ruin wall
-landmark,Ruins and dungeon,Stone,prop,ruins/prop_landmark,1,1,1.6,2,,,,landmark stone
-dungeon_brazier,Ruins and dungeon,Light,prop,dungeon/prop_brazier,1,1,0.8,0,,,,dungeon brazier
-dungeon_crate,Ruins and dungeon,Clutter,prop,dungeon/prop_crate,1,1,0.6,0,,,,dungeon crate
-door_locked,Interactables,Doors,thing,,1,1,,,,door,locked_door,locked door
-door_sealed,Interactables,Doors,thing,,1,1,,,,door,sealed_door,sealed door
-door_into,Interactables,Doors,thing,,1,1,,,,enter,,door into a map
-door_stuck,Interactables,Doors,thing,,1,1,,,,enter,door_stuck,stuck door
-way_out,Interactables,Doors,thing,,1,1,,,,exit,exit,way out
-chest,Interactables,Loot,thing,,1,1,,,,chest,chest,chest
-weapon_rack,Interactables,Loot,thing,,1,1,,,,rack,smithy_rack,weapon rack
-hidden,Interactables,Loot,thing,,1,1,,,,hidden,hidden_book,hidden find
-shrine,Interactables,Other,thing,,1,1,,,,shrine,shrine,shrine
-rubble,Interactables,Other,thing,,1,1,,,,rubble,rubble,rubble
-blob_1x1,Placeholders,Blobs,blob,,1,1,0.8,1,,,,blob 1x1
-blob_1x2,Placeholders,Blobs,blob,,1,2,0.8,1,,,,blob 1x2
-blob_2x2,Placeholders,Blobs,blob,,2,2,1,2,,,,blob 2x2
-blob_2x3,Placeholders,Blobs,blob,,2,3,1.2,2,,,,blob 2x3
-blob_3x3,Placeholders,Blobs,blob,,3,3,1.5,3,,,,blob 3x3
-start,Markers,Party,start,,1,1,,,,,,party start
+id,drawer,group,kind,sprite,foot_w,foot_h,tall,sight,walk,thing,event,label,see
+pine_1,Nature,Trees and plants,prop,base/prop_pine_1,1,1,1.25,1,,,,pine,1
+pine_2,Nature,Trees and plants,prop,base/prop_pine_2,1,1,1.25,1,,,,pine (tall),1
+tree,Nature,Trees and plants,prop,village/prop_tree,1,1,1.6,1,,,,tree,1
+bush,Nature,Trees and plants,prop,base/prop_bush,1,1,0.55,0.5,,,,bush,
+stump,Nature,Trees and plants,prop,village/prop_stump,1,1,0.5,0,,,,stump,
+boulder,Nature,Rocks,prop,base/prop_boulder,1,1,0.6,1,,,,boulder,
+detail,Nature,Rocks,prop,base/prop_detail,1,1,0.45,0,,,,ground detail,
+home_a,Village,Buildings,prop,village/b_home_a,3,3,0,3,,,,home A,1
+home_b,Village,Buildings,prop,village/b_home_b,4,3,0,3,,,,home B,1
+home_c,Village,Buildings,prop,village/b_home_c,4,3,0,3,,,,home C,1
+home_hero,Village,Buildings,prop,village/b_home_hero,3,3,0,3,,,,hero's home,1
+smithy,Village,Buildings,prop,village/b_smithy,3,4,0,3,,,,smithy,1
+tavern,Village,Buildings,prop,village/b_tavern,6,4,0,3,,,,tavern,1
+townhall,Village,Buildings,prop,village/b_townhall,7,5,0,3,,,,town hall,1
+well,Village,Street,prop,village/prop_well,2,2,1.8,1,,,,well,1
+lamp,Village,Street,prop,village/prop_lamp,1,1,1.5,0,,,,lamp post,
+bench,Village,Street,prop,village/prop_bench,1,1,0.6,0,,,,bench,
+board,Village,Street,prop,village/prop_board,1,1,1,0,,,,notice board,
+fence,Village,Street,prop,village/prop_fence,1,1,0.6,0,,,,fence,
+planter,Village,Street,prop,village/prop_planter,1,1,0.8,0,,,,planter,
+stall,Village,Street,prop,village/prop_stall,2,2,1.8,1,,,,market stall,1
+cart,Village,Street,prop,village/prop_cart,2,2,1.3,1,,,,cart,
+arch,Village,Street,prop,village/prop_arch,4,1,1.8,2,arch,,,stone archway,1
+arch_timber,Village,Street,prop,village/prop_arch_timber,4,1,1.8,2,arch,,,timber archway,1
+hay,Village,Farm and work,prop,village/prop_hay,1,1,0.65,0,,,,hay bale,
+anvil,Village,Farm and work,prop,village/prop_anvil,1,1,0.75,0,,,,anvil,
+grindstone,Village,Farm and work,prop,village/prop_grindstone,1,1,0.85,0,,,,grindstone,
+rack,Village,Farm and work,prop,village/prop_rack,1,1,1,0,,,,weapon rack,
+barrel,Village,Farm and work,prop,village/prop_barrel,1,1,0.7,0,,,,barrel,
+crates,Village,Farm and work,prop,village/prop_crates,1,1,0.8,0,,,,crates,
+crate,Village,Farm and work,prop,base/prop_crate,1,1,0.6,0,,,,crate,
+bed,Building interior,Furniture,prop,village_in/prop_bed,1,1,0.75,0,,,,bed,
+table,Building interior,Furniture,prop,village_in/prop_table,1,1,0.7,0,,,,table,
+long_table,Building interior,Furniture,prop,village_in/prop_long_table,2,1,0.7,0,,,,long table,
+chair,Building interior,Furniture,prop,village_in/prop_chair,1,1,0.75,0,,,,chair,
+broken_chair,Building interior,Furniture,prop,village_in/prop_broken_chair,1,1,0.75,0,,,,broken chair,
+stool,Building interior,Furniture,prop,village_in/prop_stool,1,1,0.5,0,,,,stool,
+desk,Building interior,Furniture,prop,village_in/prop_desk,1,1,0.75,0,,,,desk,
+bar,Building interior,Furniture,prop,village_in/prop_bar,2,1,0.8,0,,,,bar counter,
+cupboard,Building interior,Furniture,prop,village_in/prop_cupboard,1,1,1.3,1,,,,cupboard,1
+bookshelf,Building interior,Furniture,prop,village_in/prop_bookshelf,1,1,1.3,1,,,,bookshelf,1
+rug,Building interior,Furniture,prop,village_in/prop_rug,1,1,0.45,0,1,,,rug,
+hearth,Building interior,Hearth and light,prop,village_in/prop_hearth,1,1,0.95,1,,,,fireplace,
+brazier,Building interior,Hearth and light,prop,base/prop_brazier,1,1,0.8,0,,,,brazier,
+chest_prop,Building interior,Storage,prop,village_in/prop_chest,1,1,0.6,0,,,,chest (decor),
+pots,Building interior,Storage,prop,village_in/prop_pots,1,1,0.6,0,,,,pots,
+jar_shelf,Building interior,Storage,prop,village_in/prop_jar_shelf,1,1,0.55,0,,,,jar shelf,
+ale_barrel,Building interior,Storage,prop,village_in/prop_ale_barrel,1,1,0.8,0,,,,ale barrel,
+pillar,Ruins and dungeon,Stone,prop,dungeon/prop_pillar,1,1,1.6,2,,,,pillar,1
+ruin,Ruins and dungeon,Stone,prop,ruins/prop_ruin,1,1,1.1,1.5,,,,ruin wall,1
+landmark,Ruins and dungeon,Stone,prop,ruins/prop_landmark,1,1,1.6,2,,,,landmark stone,1
+dungeon_brazier,Ruins and dungeon,Light,prop,dungeon/prop_brazier,1,1,0.8,0,,,,dungeon brazier,
+dungeon_crate,Ruins and dungeon,Clutter,prop,dungeon/prop_crate,1,1,0.6,0,,,,dungeon crate,
+door_locked,Interactables,Doors,thing,,1,1,,,,door,locked_door,locked door,
+door_sealed,Interactables,Doors,thing,,1,1,,,,door,sealed_door,sealed door,
+door_into,Interactables,Doors,thing,,1,1,,,,enter,,door into a map,
+door_stuck,Interactables,Doors,thing,,1,1,,,,enter,door_stuck,stuck door,
+way_out,Interactables,Doors,thing,,1,1,,,,exit,exit,way out,
+chest,Interactables,Loot,thing,,1,1,,,,chest,chest,chest,
+weapon_rack,Interactables,Loot,thing,,1,1,,,,rack,smithy_rack,weapon rack,
+hidden,Interactables,Loot,thing,,1,1,,,,hidden,hidden_book,hidden find,
+shrine,Interactables,Other,thing,,1,1,,,,shrine,shrine,shrine,
+rubble,Interactables,Other,thing,,1,1,,,,rubble,rubble,rubble,
+blob_1x1,Placeholders,Blobs,blob,,1,1,0.8,1,,,,blob 1x1,
+blob_1x2,Placeholders,Blobs,blob,,1,2,0.8,1,,,,blob 1x2,
+blob_2x2,Placeholders,Blobs,blob,,2,2,1,2,,,,blob 2x2,
+blob_2x3,Placeholders,Blobs,blob,,2,3,1.2,2,,,,blob 2x3,
+blob_3x3,Placeholders,Blobs,blob,,3,3,1.5,3,,,,blob 3x3,
+start,Markers,Party,start,,1,1,,,,,,party start,

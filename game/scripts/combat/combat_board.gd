@@ -59,6 +59,7 @@ const WINDOW_MIN := 0.12  ## the prop's alpha in the open middle
 const WINDOW_CELL := 8.0  ## mesh cell size the window's soft edge is drawn with
 const WINDOW_RING_ONLY := true  ## a piece only props hide gets its foot ring, not the tinted x-ray copy
 const WINDOW_TINT := Color(0.55, 0.75, 1.0, 0.3)  ## a flat wash in the prop's shape where the window clears it
+const WINDOW_TALL := 0.9  ## tile widths: a prop the catalog doesn't list, or a tile set's terrain prop, opens the window only this tall (over a piece)
 const FG_FADE := 0.05  ## how far the band's top edge feathers up into the wallpaper, as a share of the view
 const WALL_SKY := 0.22  ## where the wallpaper's horizon sits, as a share of the view's height from the top
 const WALL_HORIZON := 0.38  ## where the picture's mountains start, as a share of the picture's height (the stand-in skyline)
@@ -218,6 +219,7 @@ func _sink_colour() -> Color:
 
 
 static var _silhouettes := {}  ## flat silhouettes made from the tree sprites, by sprite and colour
+static var _see := {}  ## sprite stem -> the catalog's `see` column (data/catalog.csv)
 
 
 ## A sprite as a flat silhouette (skirt trees, the see-through window's tint): its shape in one colour, hard edged, made once and kept.
@@ -2932,7 +2934,7 @@ func _find_cover() -> void:
 				var h := float(grid.height_at(c))
 				var mid := cell_top(c)
 				var art := BattleArt.props(grid.terrain_at(c), grid.zone_at(c))
-				if not art.list.is_empty() and art.count > 0 and not _wall(c):
+				if not art.list.is_empty() and art.count > 0 and art.height >= WINDOW_TALL and not _wall(c):
 					var ph: float = art.height * TW * 1.1
 					var prop := Rect2(mid.x - TW * 0.45, mid.y - ph, TW * 0.9, ph)
 					if _overlap(box, prop) > 0.2:
@@ -2943,7 +2945,7 @@ func _find_cover() -> void:
 				if a != CombatGrid.NONE_CELL and _prop_front(a, grid.props[a]) == c and grid.prop_anchor(uc) != a:
 					var pr: Dictionary = grid.props[a]
 					var tex := prop_texture(pr, grid.zone_at(a))
-					if tex != null and _overlap(box, _prop_rect(a, pr.merged({"tall": 0.0}, true) if pr.get("arch", false) else pr, tex)) > 0.2:
+					if tex != null and see_through(pr) and _overlap(box, _prop_rect(a, pr.merged({"tall": 0.0}, true) if pr.get("arch", false) else pr, tex)) > 0.2:
 						_fade[a] = _fade.get(a, []) + [box.get_center()]
 						if u.team == 0:
 							_covered[u] = _covered.get(u, false)
@@ -2955,6 +2957,22 @@ func _find_cover() -> void:
 						col = col.expand(q + Vector2(0, (h - u.vis_h) * HS))
 					if _overlap(box, col) > 0.35:
 						_covered[u] = true
+
+
+## Does this prop open the see-through window round a piece behind it? Only full-height things do ([USER]
+## 2026-10-30: rocks, bushes, carts and crates stay solid): buildings, arches, what the catalog marks `see`
+## (trees, walls, pillars, stalls...), and a prop the catalog doesn't list when it's taller than a piece.
+static func see_through(p: Dictionary) -> bool:
+	if float(p.tall) <= 0.0 or p.get("arch", false):
+		return true
+	if _see.is_empty():
+		for row in CsvTable.load_rows("res://data/catalog.csv"):
+			var full := String(row.sprite)
+			if full != "":
+				_see[full.substr(full.rfind("/") + 1)] = row.get("see", "") == "1"
+	var stem := String(p.sprite)
+	stem = stem.substr(stem.rfind("/") + 1)
+	return bool(_see[stem]) if _see.has(stem) else float(p.tall) >= WINDOW_TALL
 
 
 ## A deck draws after the lane's pieces at its depth, so it (and what stands on it) can hide a piece under or

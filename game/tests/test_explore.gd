@@ -388,3 +388,15 @@ func test_a_beaten_boss_stays_beaten() -> void:
 	ok(not ExploreRules.stays_beaten("snow_pass", throne, [flag]), "the flag is per map")
 	var crypt := _crypt()
 	ok(crypt.groups.any(func(g: Dictionary) -> bool: return g.id == "throne" and g.boss), "the crypt's throne group is a boss")
+
+
+func test_only_full_height_props_see_through() -> void:
+	# [USER] 2026-10-30: rocks, bushes, carts and crates stay solid; buildings, trees and arches open the window.
+	ok(CombatBoard.see_through({"sprite": "b_home_a", "tall": 0.0}), "a building")
+	ok(CombatBoard.see_through({"sprite": "prop_arch", "tall": 1.8, "arch": true}), "an arch")
+	ok(CombatBoard.see_through({"sprite": "village/prop_tree", "tall": 1.6}), "a tree, marked in the catalog")
+	ok(not CombatBoard.see_through({"sprite": "prop_cart", "tall": 1.3}), "a cart stays solid though it's tall")
+	ok(not CombatBoard.see_through({"sprite": "prop_boulder", "tall": 0.6}), "a rock stays solid")
+	ok(not CombatBoard.see_through({"sprite": "prop_crates", "tall": 0.8}), "crates stay solid")
+	ok(CombatBoard.see_through({"sprite": "ph_building", "tall": 2.0}), "an uncatalogued gray box taller than a piece")
+	ok(not CombatBoard.see_through({"sprite": "prop_bush_2", "tall": 0.55}), "an uncatalogued bush")
