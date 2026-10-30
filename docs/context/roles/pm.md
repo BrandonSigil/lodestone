@@ -16,6 +16,7 @@ Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the
 - Cron "Studio desk watch, hourly and lean" at :07. If CronList doesn't show it after a restart, recreate it (prompt in the 2026-10-30 transcript; the gist is below).
 - Gist: in ONE parallel batch, run list_sessions linked, a desk query (answered), a notes query (new), a requests query (new), and `rm -rf tickN; date -u`. Then run `python3 <scratchpad>/tick_filter.py` (filters against `<scratchpad>/nudged.json`, card/note id -> answer time). Say "Nothing new." if nothing is new. Otherwise wake each idle role once with the ids and Brandon's words verbatim, fix wrong role statuses, and record the ids in nudged.json.
 - Scratchpad: `/private/tmp/claude-501/-Users-brandonwirth-lodestone/4056efc5-591c-407a-8bc2-aae3d3c5685f/scratchpad/`.
+- Chat: Brandon's messages arrive as comments sent to Claude (live, while this session watches the page) or through the desk watch's NEW CHAT lines. Reply in the `chat` collection, not in the comment thread (see `docs/systems/studio.md`, The chat).
 - Launch requests: `open -n -a Godot --args --path /Users/brandonwirth/lodestone/game`, if the game isn't already running.
 
 ## Working rules learned

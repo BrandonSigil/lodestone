@@ -239,6 +239,35 @@ html.locked { overflow: hidden; }
 
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 8px 16px; border-radius: 8px; font-size: 14px; z-index: 30; }
 
+/* The chat: a round button bottom right, opening a small Slack-like window with the project manager */
+.chat-fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 38; width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--leaf); color: var(--leaf-ink); box-shadow: var(--shadow), 0 6px 18px rgba(20,30,24,.25); display: grid; place-items: center; }
+.chat-fab svg { width: 26px; height: 26px; }
+.chat-fab .dot { position: absolute; top: 2px; right: 2px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--stamp); color: #fff; font-size: 12px; font-weight: 600; line-height: 20px; }
+.chat { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 38; width: min(380px, calc(100vw - 32px)); height: min(560px, calc(100vh - 120px)); background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow), 0 12px 32px rgba(20,30,24,.22); display: flex; flex-direction: column; overflow: hidden; }
+.chat-head { background: var(--leaf); color: var(--leaf-ink); padding: 10px 12px 10px 16px; display: flex; align-items: center; gap: 10px; }
+.chat-head h2 { font-family: var(--display); font-weight: 400; font-size: 17px; margin: 0; }
+.chat-head small { display: block; font-size: 12px; opacity: .85; }
+.chat-head .live { width: 8px; height: 8px; border-radius: 50%; background: #8fd19e; display: inline-block; margin-right: 5px; }
+.chat-head .live.slow { background: var(--amber); }
+.chat-head button { margin-left: auto; background: none; border: 0; color: inherit; font-size: 22px; line-height: 1; padding: 4px 8px; border-radius: 6px; }
+.chat-log { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: var(--paper); }
+.chat-log .empty { margin: auto; text-align: center; color: var(--muted); font-size: 13.5px; max-width: 260px; }
+.msg { max-width: 85%; display: flex; flex-direction: column; gap: 2px; }
+.msg .who { font-size: 12px; color: var(--muted); }
+.msg .who b { color: var(--ink); font-weight: 600; margin-right: 6px; }
+.msg .bubble { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px 12px 12px 12px; padding: 7px 11px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.msg.mine { align-self: flex-end; align-items: flex-end; }
+.msg.mine .bubble { background: var(--leaf-soft); border-color: transparent; border-radius: 12px 4px 12px 12px; }
+.msg .shots { margin-top: 4px; }
+.msg .shots .shot { max-width: 180px; }
+.chat-typing { font-size: 12.5px; color: var(--muted); padding: 0 14px 6px; background: var(--paper); }
+.chat-form { border-top: 1px solid var(--rule); padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 6px; }
+.chat-form .attach { margin: 0; }
+.chat-row { display: flex; gap: 8px; align-items: flex-end; }
+.chat-row textarea { flex: 1; resize: none; min-height: 40px; max-height: 140px; border: 1.5px solid var(--rule); border-radius: 8px; padding: 8px 10px; background: var(--sheet); }
+.chat-row textarea.dropping { border-color: var(--gem); }
+@media (max-width: 560px) { .chat { left: 16px; right: 16px; width: auto; height: calc(100vh - 110px); } }
+
 /* Pictures attached to an answer or a note */
 .attach { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .attach:empty { display: none; }
@@ -373,9 +402,19 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
   <p id="lb-cap"></p>
 </div>
 <div class="toast" id="toast" hidden></div>
+<button class="chat-fab" id="chat-fab" aria-label="Chat with the project manager" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="dot" id="chat-dot" hidden></span></button>
+<section class="chat" id="chat" hidden aria-labelledby="chat-h">
+  <div class="chat-head" id="chat-anchor"><div><h2 id="chat-h">Project manager</h2><small id="chat-sub">Opening…</small></div><button id="chat-x" aria-label="Close chat">×</button></div>
+  <div class="chat-log" id="chat-log" aria-live="polite"></div>
+  <div class="chat-typing" id="chat-typing" hidden></div>
+  <form class="chat-form" id="chat-form">
+    <div id="chat-att"></div>
+    <div class="chat-row"><textarea id="chat-in" rows="1" placeholder="Message the project manager" aria-label="Message"></textarea><button class="btn primary" id="chat-send" type="submit">Send</button></div>
+  </form>
+</section>
 
 <script>
-const S = { db: null, desk: [], roles: [], log: [], notes: [], refs: [], library: [], roadmap: [], requests: [], qa: null, reportHtml: "", tab: "open", libTab: "all", room: "office", openRole: null, openFolder: null, drafts: {} };
+const S = { db: null, chat: [], chatWake: "off", chatThread: null, desk: [], roles: [], log: [], notes: [], refs: [], library: [], roadmap: [], requests: [], qa: null, reportHtml: "", tab: "open", libTab: "all", room: "office", openRole: null, openFolder: null, drafts: {} };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const KIND = { choice: "Your call", go: "Picsart go-ahead", review: "Art review", todo: "To do" };
@@ -407,7 +446,7 @@ function attachHtml(key) {
 }
 // While a role window is open its cards repeat ones on the desk behind it, so look inside the window first.
 function byId(x) { return (S.openRole ? $("rv") : document).querySelector("#" + CSS.escape(x)); }
-function renderAttach(key) { const el = byId("att-" + key); if (el) el.outerHTML = attachHtml(key); }
+function renderAttach(key) { const el = key === "chat" ? $("att-chat") : byId("att-" + key); if (el) el.outerHTML = attachHtml(key); }
 function shownImages(images) {
   return images?.length ? `<div class="attach">${images.map((im) => `<span class="att"><img src="${esc(im.url)}" alt="Attached picture" data-zoom="${esc(im.url)}" data-cap="Your picture" loading="lazy"></span>`).join("")}</div>` : "";
 }
@@ -431,6 +470,7 @@ function attachKeyFor(el) {
   if (!el || el.tagName !== "TEXTAREA") return null;
   if (el.id?.startsWith("why-")) return el.id.slice(4);
   if (el.id === "note-role" && S.openRole) return "note:" + S.openRole;
+  if (el.id === "chat-in") return "chat";
   return null;
 }
 document.addEventListener("paste", (e) => {
@@ -946,12 +986,86 @@ document.addEventListener("keydown", (e) => {
   if (!$("lb").hidden) closeLb();
   else if (S.qa) closeQa();
   else if (S.openRole) closeRole();
+  else if (chatOpen()) toggleChat(false);
 });
+
+/* ---------- chat with the project manager ---------- */
+// Messages live in the `chat` collection: {from: "brandon" | a role id, text, images, at, status}.
+// The PM marks Brandon's message "seen" while working on it and "answered" when it replies.
+// Sending also posts a comment to Claude, which wakes the PM session at once; without that, the hourly desk watch picks it up.
+const CHAT_SEEN_KEY = "studio-chat-seen";
+function chatSeen() { try { return localStorage.getItem(CHAT_SEEN_KEY) || ""; } catch { return ""; } }
+function markChatSeen() { const last = S.chat.at(-1)?.at; if (last) try { localStorage.setItem(CHAT_SEEN_KEY, last); } catch {} }
+function chatOpen() { return !$("chat").hidden; }
+function renderChatHead() {
+  const live = S.chatWake === "available";
+  $("chat-sub").innerHTML = `<span class="live${live ? "" : " slow"}"></span>${live ? "Answers here in a minute or two" : "Picks this up within the hour"}`;
+}
+function renderChat() {
+  S.chat.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  const unread = S.chat.filter((m) => m.from !== "brandon" && String(m.at) > chatSeen()).length;
+  $("chat-dot").hidden = chatOpen() || !unread; $("chat-dot").textContent = unread > 9 ? "9+" : unread;
+  const lastMine = [...S.chat].reverse().find((m) => m.from === "brandon");
+  const working = lastMine && lastMine.status === "seen";
+  $("chat-typing").hidden = !working; $("chat-typing").textContent = working ? "Project manager is on it…" : "";
+  if (!chatOpen()) return;
+  const log = $("chat-log"), atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+  log.innerHTML = S.chat.length ? S.chat.map((m) => {
+    const mine = m.from === "brandon";
+    const ims = (m.images || []).map((im) => ({ url: im.url, caption: im.caption || "" }));
+    return `<div class="msg${mine ? " mine" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Project manager" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.text ? `<div class="bubble">${esc(m.text)}</div>` : ""}${shotsHtml(ims)}</div>`;
+  }).join("") : `<div class="empty">Talk to the project manager here like a teammate: ask what's going on, pass on a decision, or paste a picture.</div>`;
+  if (atEnd || S.chatJump) { log.scrollTop = log.scrollHeight; S.chatJump = false; }
+  markChatSeen();
+}
+async function checkWake() {
+  try { S.chatWake = S.comments ? await S.comments.canSendToClaude() : "off"; } catch { S.chatWake = "off"; }
+  renderChatHead();
+}
+function toggleChat(open) {
+  $("chat").hidden = !open; $("chat-fab").setAttribute("aria-expanded", String(open));
+  if (open) { S.chatJump = true; if (!$("att-chat")) $("chat-att").innerHTML = attachHtml("chat"); renderChat(); checkWake(); $("chat-in").focus(); }
+  else renderChat();
+}
+function wakePm(text, pics) {
+  if (S.chatWake !== "available") return;
+  // A comment is one plain line of at most 4 KiB.
+  const line = ("Studio chat from Brandon: " + (text || "(a picture)") + (pics ? ` [+${pics} picture${pics > 1 ? "s" : ""} in the chat]` : "")).replace(/\s+/g, " ").slice(0, 1500);
+  (async () => {
+    try {
+      if (S.chatThread) { await S.comments.sendToClaude({ threadId: S.chatThread, text: line }); return; }
+      const anchor = await S.comments.anchorFor($("chat-anchor"));
+      S.chatThread = (await S.comments.sendToClaude({ anchor, text: line })).threadId;
+    } catch (e) {
+      if (e?.code === "not_found") S.chatThread = null;
+      if (e?.code === "claude_unavailable") { S.chatWake = "no_session"; renderChatHead(); }
+    }
+  })();
+}
+async function sendChat() {
+  const text = $("chat-in").value.trim(), images = attached("chat");
+  if (!text && !images.length) return;
+  if (stillUploading("chat")) { toast("Wait for the picture to finish uploading."); return; }
+  if (!S.db) { toast("The chat can't save from this view."); return; }
+  wakePm(text, images.length);  // straight from the click, before any await
+  $("chat-send").disabled = true;
+  try {
+    await S.db.collection("chat").add({ from: "brandon", text, images, at: new Date().toISOString(), status: "new" });
+    $("chat-in").value = ""; $("chat-in").style.height = ""; delete S.drafts.chat; renderAttach("chat"); S.chatJump = true;
+  } catch { toast("Couldn't send that. Try again."); }
+  $("chat-send").disabled = false;
+}
+$("chat-fab").addEventListener("click", () => toggleChat($("chat").hidden));
+$("chat-x").addEventListener("click", () => toggleChat(false));
+$("chat-form").addEventListener("submit", (e) => { e.preventDefault(); sendChat(); });
+$("chat-in").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendChat(); } });
+$("chat-in").addEventListener("input", (e) => { const t = e.target; t.style.height = ""; t.style.height = Math.min(t.scrollHeight, 140) + "px"; });
 
 /* ---------- data ---------- */
 function watch(coll, key) {
   S.db.collection(coll).onSnapshot((snap) => {
     S[key] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (key === "chat") { renderChat(); return; }
     // a live update shouldn't wipe what you were typing in a card
     const active = document.activeElement;
     if (key === "desk" && active && active.closest?.("#desk") && (active.tagName === "TEXTAREA" || active.tagName === "INPUT")) { renderTally(); renderTeam(); return; }
@@ -962,7 +1076,10 @@ function watch(coll, key) {
   try { S.db = await window.claude?.use?.("db"); } catch { S.db = null; }
   try { S.assets = await window.claude?.use?.("assets"); } catch { S.assets = null; }
   try { S.sample = await window.claude?.use?.("sample"); } catch { S.sample = null; }
+  try { S.comments = await window.claude?.use?.("comments"); } catch { S.comments = null; }
+  checkWake();
   if (!S.db) { renderAll(); return; }
+  watch("chat", "chat");
   watch("desk", "desk"); watch("roles", "roles"); watch("log", "log"); watch("notes", "notes"); watch("refs", "refs"); watch("library", "library"); watch("roadmap", "roadmap"); watch("requests", "requests");
 })();
 setInterval(renderTally, 60000);

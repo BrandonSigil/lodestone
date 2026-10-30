@@ -11,7 +11,7 @@ Three rooms:
 Any decision Brandon owes goes on the desk as a card, with screenshots, not as a question buried in chat. That includes every Picsart batch: a "go" card before the run, then a "review" card with the results, each scored against the References wall, for his stamp. You may also ask in chat, but the card is the record.
 
 ## The records (the page's database)
-Read and write them with the `ArtifactData` tool and the URL above. Pin every write to a document you read with `if_version`; create new ones without it.
+Read and write them with the `ArtifactData` tool and the URL above. Pin every write to a document you read with `if_version`; create new ones without it. An `update` takes the fields themselves (`{status: "done", result}`), never wrapped in `data`: a wrapped write lands as a nested `data` field and the card stays answered.
 
 | Collection | One document is | Fields |
 | --- | --- | --- |
@@ -20,6 +20,7 @@ Read and write them with the `ArtifactData` tool and the URL above. Pin every wr
 | `log` | one line of a role's work | `role`, `at`, `text`, `image` (optional) |
 | `notes` | a note Brandon left a role | `role`, `text`, `images` [{url, id}], `at`, `status` (`new`, `seen`) |
 | `roadmap` | a track on the Roadmap (quick action) | `title`, `order`, `owner` (role id), `items` [{title, status (`done`, `doing`, `next`, `later`), ref (commit)}] |
+| `chat` | one message in the Studio chat (the round button bottom right) | `from` (`brandon`, `pm` or a role id), `text`, `images` [{url, id}], `at`, `status` (Brandon's: `new`, `seen` while the PM works on it, `answered`) |
 | `requests` | a quick-action request from the page | `kind` (`launch`), `status` (`new`, `done`), `at`, `result`, `done_at` |
 | `refs` | a group on the References wall | `title`, `used_for`, `warning`, `images` [{url, caption, path, slot}], `prompts`, `order`, `retired` |
 | `library` | a shelf | `title`, `path`, `kind` (`ingame`, `raw`, `code`), `status`, `note`, `items` [{url, name}], `order` |
@@ -39,6 +40,9 @@ Pictures from Brandon: any answer, and any note, may carry `images` [{url, id}] 
 3. Post progress: update your `roles` doc (`status`, `now`, `next`, `updated`) every time you start a new item, not only when you finish, and take `updated` from the clock (`date -u +%Y-%m-%dT%H:%M:%SZ`), never a guess. The project manager's desk watch also copies your live working/idle state from the Claude app every 15 minutes and add `log` lines for real milestones (a commit, a batch back), with a screenshot when there is one.
 4. Pictures: upload with the Artifact tool (`url`, `asset: true`, `file_paths`), then use the returned `/_blob/<id>` url in the record. Make web copies first (`magick in.png -resize '1600x1600>' -quality 82 out.webp`); several art files on the Mac are Git LFS stubs and won't convert.
 5. Approved art still goes into `docs/art/ART-LOG.md` and `game/art/source` as before; the stamp on the page is the approval to record.
+
+## The chat
+Brandon talks to the project manager from the chat button on the page instead of the Claude window. Each message is a `chat` doc. Sending also posts a comment to Claude on the chat header, which wakes the PM session at once while it watches the artifact (the header says "Answers here in a minute or two"); otherwise the hourly desk watch answers it ("Picks this up within the hour"). The PM marks his message `seen`, does the work, writes its reply as a new doc with `from: "pm"`, then marks his `answered`. Other roles may post with their own role id when they have something for him, sparingly. The comment threads it leaves behind are only the wake-up signal; the conversation is the `chat` collection.
 
 ## Keep the walls true
 - References: when a prompt starts sending a different picture, change its group on the wall the same day. If it isn't on the wall, Claude isn't using it.
