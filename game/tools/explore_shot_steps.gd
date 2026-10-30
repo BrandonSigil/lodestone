@@ -50,6 +50,26 @@ func run(s: Node, f: int, step: String) -> bool:
 			else:
 				s._go_use(_thing(s, step.substr(4)))
 		return f == 90
+	if step.begins_with("hold:"):
+		# hold:<x>,<y>:<keys> - the lead stands at x,y and holds WASD keys (e.g. "a" or "wa") for a second:
+		# where it ends up shows what walking lets it into (the bank of a stream, the edge of a wood).
+		var parts := step.substr(5).split(":")
+		var keys: Array = []
+		for ch in parts[1]:
+			keys.append({"w": KEY_W, "a": KEY_A, "s": KEY_S, "d": KEY_D}[ch])
+		if f == 5:
+			var xy := parts[0].split(",")
+			_put(s, Vector2i(int(xy[0]), int(xy[1])))
+		if f == 8 or f == 70:
+			for k in keys:
+				var ev := InputEventKey.new()
+				ev.keycode = k
+				ev.physical_keycode = k
+				ev.pressed = f == 8
+				Input.parse_input_event(ev)
+		if f == 79:
+			print("hold: the lead ends at ", s.leader().cell, " vis ", s.leader().vis)
+		return f == 80
 	if step.begins_with("feet:"):
 		# feet:<x>,<y> - the lead stands at x,y but past the cell's middle toward the viewer, as free walking
 		# leaves it: the ground in front must not cover its feet.

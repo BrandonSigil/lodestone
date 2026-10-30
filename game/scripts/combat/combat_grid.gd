@@ -229,7 +229,7 @@ func step_place(from: Vector2i, c: Vector2i, jump: int, blocked := {}) -> Vector
 		return from
 	var best := NO_PLACE
 	for p in places_at(c):
-		if not passable(p) or blocked.has(p) or not can_step(from, p, jump):
+		if not walkable(p) or blocked.has(p) or not can_step(from, p, jump):
 			continue
 		if best == NO_PLACE or absi(height_at(p) - height_at(from)) < absi(height_at(best) - height_at(from)):
 			best = p
@@ -490,6 +490,16 @@ func passable(c: Vector2i) -> bool:
 		return false  # a deck too low over the ground leaves no room underneath
 	var p := prop_at(c)
 	return p.is_empty() or p.walk or under_arch(c)
+
+
+## Ground the party never walks onto outside fights ([USER] 2026-10-30: no jumping into the water). Fights
+## keep `passable`, so a piece can still wade in a fight.
+const WALK_OUT := [T.WATER]
+
+
+## Can the party walk here on a map (explore walking: clicks, keys, paths)? A deck over water is dry.
+func walkable(c: Vector2i) -> bool:
+	return passable(c) and not terrain_at(c) in WALK_OUT
 
 
 ## Is this cell the open middle of an arch (between its two pillars)?

@@ -430,3 +430,21 @@ func test_f_uses_the_marked_thing_round_a_corner() -> void:
 	var right := {"id": "right", "cell": Vector2i(3, 3)}
 	eq(ExploreRules.thing_to_use([left, right], Vector2i(2, 3), Vector2i(1, 0), lit).get("id"), "right", "a tie goes to the one faced")
 	eq(ExploreRules.thing_to_use([left, right], Vector2i(2, 3), Vector2i(-1, 0), lit).get("id"), "left")
+
+
+## [USER] 2026-10-30: for now the party can't walk into water. Paths and keys go round it; a deck over it is
+## dry ground; fights still wade.
+func test_no_walking_into_water() -> void:
+	var g := CombatGrid.flat(5, 3)
+	for y in 3:
+		g.set_terrain(Vector2i(2, y), CombatGrid.T.WATER)
+	ok(ExploreRules.find_path(g, Vector2i(0, 1), Vector2i(4, 1), 1).is_empty(), "a stream across the map: no way over")
+	g.set_terrain(Vector2i(2, 2), CombatGrid.T.ROAD)
+	ok(not ExploreRules.find_path(g, Vector2i(0, 1), Vector2i(4, 1), 1).has(Vector2i(2, 1)), "round by the ford, not through")
+	var p := ExploreRules.slide(g, Vector2(1.5, 0.5), Vector2(1.0, 0), ExploreRules.BODY, 1)
+	ok(p.x < 2.0, "keys stop at the bank")
+	g.add_deck(Vector2i(2, 0), 0)
+	ok(g.walkable(CombatGrid.deck_of(Vector2i(2, 0))), "a bridge deck over the water is walkable")
+	var u := CombatUnit.enemy(load("res://data/classes/bandit.tres"))
+	u.place(Vector2i(1, 1), 0)
+	ok(CombatRules.reachable(g, u, [u]).cost.has(Vector2i(2, 1)), "in a fight a piece can still wade in")

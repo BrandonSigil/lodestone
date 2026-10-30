@@ -243,7 +243,7 @@ func _free_start() -> Vector2i:
 		for dy in range(-r, r + 1):
 			for dx in range(-r, r + 1):
 				var c := from + Vector2i(dx, dy)
-				if grid.passable(c):
+				if grid.walkable(c):
 					return c
 	return from
 

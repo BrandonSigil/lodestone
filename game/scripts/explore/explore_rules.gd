@@ -352,7 +352,7 @@ static func find_path(grid: CombatGrid, from: Vector2i, to: Vector2i, jump: int,
 
 
 static func _open(grid: CombatGrid, c: Vector2i, blocked: Dictionary, known: Dictionary) -> bool:
-	return grid.passable(c) and not blocked.has(c) and (known.is_empty() or known.has(CombatGrid.ground(c)))
+	return grid.walkable(c) and not blocked.has(c) and (known.is_empty() or known.has(CombatGrid.ground(c)))
 
 
 # --- free walking (WASD) ------------------------------------------------------------
