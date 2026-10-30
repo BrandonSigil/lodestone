@@ -360,7 +360,7 @@ Tensions to watch: an ambusher bends danger-zone-only (c2); a boss big-move warn
 - **Foe roles, in order:** ambusher, caster/support, charger, guard.
 - **Weakness:** a few tags (undead, beast, armored, flying), each a small damage change for some attack kinds. The Lich is undead (fire +2, arrows -2; `design-lich-tag`), so the book gets stronger against him and the bow weaker. To keep the bow over the 15% floor he drops to 38 HP: sword 53%, daggers 60%, bow 17%, book 95% (party first).
 - **Village:** restore only, with one twist: a settler's service can come with a plot by their house (a garden for crops, a pen for animals).
-- **Settlers:** bonds grow between pairs in the party (fights together, help-ups, team-ups). Three levels; each adds +1 team-up damage for the pair and opens a talk at home. The talks are Brandon's to write. Built after the first boss and foe build.
+- **Settlers:** bonds grow between pairs in the party (fights together, help-ups, team-ups). Three levels; each adds +1 team-up damage for the pair and opens a talk at home. The talks are Brandon's to write, as `BOND_TALK_<A>_<B>_<n>` lines in `game/text/placeholder.csv`. Built in 16a0813 (`docs/systems/bonds.md`).
 
 ### First build (handed to the systems developer and the map builder, 2026-10-30)
 1. The Lich's big move with its warning (windup 1, cooldown 3, a 5-cell plus, power 4, hits his own minions too).
