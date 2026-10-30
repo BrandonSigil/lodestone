@@ -23,14 +23,22 @@ func _init() -> void:
 	z_index = 5
 
 
+## Live in the world instead: a child of the board, falling over `world` (board pixels) so it scrolls with the map
+## and stays put when the camera moves ([USER] 2026-10-30: leaves "locked to the map not to the screen"). The count
+## is the screen count scaled by how much bigger the world is than `screen`, so it looks as dense as before.
+func fit_world(weather: String, world: Rect2, screen: Rect2, seed_value: int) -> void:
+	top_level = false
+	setup(weather, world, seed_value, clampf(world.get_area() / maxf(screen.get_area(), 1.0), 1.0, 12.0))
+
+
 ## Fill the area with this weather, seeded by the map so it's the same every visit.
-func setup(weather: String, view: Rect2, seed_value: int) -> void:
+func setup(weather: String, view: Rect2, seed_value: int, density := 1.0) -> void:
 	kind = weather
 	area = view
 	flakes.clear()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
-	var n := SNOW_COUNT if kind == "snow" else (LEAF_COUNT if kind == "leaves" else 0)
+	var n := roundi((SNOW_COUNT if kind == "snow" else (LEAF_COUNT if kind == "leaves" else 0)) * density)
 	for i in n:
 		flakes.append(make_flake(rng, kind, area, true))
 	visible = n > 0

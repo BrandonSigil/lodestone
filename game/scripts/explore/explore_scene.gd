@@ -27,6 +27,7 @@ var grid: CombatGrid
 var board: CombatBoard
 var overlay: ExploreOverlay
 var weather: MapWeather
+var _weather_kind := ""
 var hud: FrameHud
 var party: Array = []  ## CombatUnit, leader first; only the leader stands on the map outside fights
 ## {"def": the map's group dict, "units": Array of CombatUnit, "state": idle / noticed / calm / fighting / gone}
@@ -84,8 +85,9 @@ func _ready() -> void:
 	board.wallpaper = map_look.staging != "plain"
 	add_child(board)
 	weather = MapWeather.new()  # snow or fall leaves from the map's look ([USER] 2026-10-30, ambience)
-	add_child(weather)
-	weather.setup(map_look.weather, get_viewport().get_visible_rect(), map.map_name.hash())
+	board.add_child(weather)  # in the world: it scrolls and zooms with the map
+	_weather_kind = map_look.weather
+	_fit_weather()
 	overlay = ExploreOverlay.new()
 	overlay.scene = self
 	board.add_child(overlay)
@@ -320,6 +322,7 @@ func _snap_to(u: CombatUnit) -> void:
 ## Q turns the view about the party: while the camera follows the leader, the leader stays in the middle.
 ## Otherwise the turn keeps the same grid point in the middle (a fight, or after the player panned).
 func _on_rotated() -> void:
+	_fit_weather()
 	if mode == M.WALK and leader() != null:
 		follow = true
 		_snap_to(leader())
@@ -379,6 +382,16 @@ func _wasd(delta: float) -> void:
 		if _after_step():
 			_keys_walking = false
 			board.play_anim(leader(), "idle")
+
+
+## Weather falls over the whole map in board pixels (the corners at the grid's tallest), so it stays put as the camera moves.
+func _fit_weather() -> void:
+	var top := 24.0  # maps are at most 24 levels tall
+	var r := Rect2(board.iso(0.0, 0.0, 0.0), Vector2.ZERO)
+	for c in [Vector2(grid.w, 0), Vector2(0, grid.h), Vector2(grid.w, grid.h)]:
+		r = r.expand(board.iso(c.x, c.y, 0.0))
+	r = r.expand(board.iso(0.0, 0.0, top))
+	weather.fit_world(_weather_kind, r.grow(40.0), get_viewport().get_visible_rect(), map.map_name.hash())
 
 
 func _apply_camera() -> void:
