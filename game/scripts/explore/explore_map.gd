@@ -66,7 +66,8 @@ static func from_dict(d: Dictionary) -> ExploreMap:
 		for c in g.get("summon", []):
 			summon.append(_cell(c))
 		for u: Dictionary in g.get("units", []):
-			units.append({"id": String(u.id), "cell": _cell(u.cell), "leader": bool(u.get("leader", false))})
+			units.append({"id": String(u.id), "cell": _cell(u.cell), "leader": bool(u.get("leader", false)),
+				"hidden": bool(u.get("hidden", false))})  # an ambusher, unseen until spotted
 		# goals, exit and talk: how the fight is won (FightGoals); elite: a tougher, badged group ([USER] pc-15)
 		m.groups.append({"id": String(g.get("id", "group%d" % m.groups.size())), "event": String(g.get("event", "spot_people")),
 			"sight": int(g.get("sight", ExploreRules.ENEMY_SIGHT)), "loot": String(g.get("loot", "")), "units": units,

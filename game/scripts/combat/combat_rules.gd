@@ -34,6 +34,8 @@ const TRAIT_BONES := &"bones"  ## Skeleton: makes the piece undead (arrows -2, f
 const TRAIT_DOUBLE_STRIKE := &"double_strike"  ## Lewith & Flark: the basic hit swings twice at -1 damage each
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
 const TRAIT_POISON_BLADES := &"poison_blades"  ## Rogue: every hit leaves POISON ([USER] design-boss-daggers)
+const TRAIT_AMBUSH := &"ambush"  ## Ambusher: waits hidden; its first strike from hiding counts as a flank ([USER] design-foe-roles)
+const SPOT_RANGE := 3  ## a party piece ending a move this close, with line of sight, spots a hidden foe
 const TRAIT_HIT_AND_RUN := &"hit_and_run"  ## Rogue: after a hit, may walk the move it didn't use before it
 const PERK_FLAMMABLE := &"flammable"  ## takes +2 damage from fire
 const STARLIT_HEIGHT := 2
@@ -239,8 +241,8 @@ static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Arr
 			for o: CombatUnit in units:
 				if not o.alive():
 					continue
-				if (a.target == "enemy") != (o.team != u.team):
-					continue
+				if (a.target == "enemy") != (o.team != u.team) or (o.hiding and o.team != u.team):
+					continue  # a hidden foe can't be picked; an area blast still catches it
 				var oc := from if o == u else o.cell
 				if in_reach(grid, from, oc, r):
 					out.append(oc)
@@ -381,7 +383,7 @@ static func armor_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from
 ## the attacker's own (class and attack bonuses), steady aim and STAR POINT.
 static func crit_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2i, a: Ability = null) -> Array:
 	var parts := [["MOD_CRIT", int(num("crit_base"))]]
-	if flanked(att, tgt, units, from):
+	if flanked(att, tgt, units, from) or att.hiding:  # a strike from hiding counts as a flank
 		parts.append(["MOD_FLANK", int(num("crit_flank"))])
 	if a != null and a.crit != 0:
 		parts.append(["MOD_SKILL", a.crit])
@@ -501,6 +503,8 @@ static func forecast(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector
 ## Item costs are paid from the user's belt here.
 static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector2i, units: Array, allow_counter := true) -> Array:
 	var events := []
+	if u.hiding and a.hostile():
+		events.append({"type": "reveal", "unit": u})  # the strike still counts from hiding (crit_parts reads it first)
 	if a.res_cost > 0:
 		u.res = maxi(0, u.res - a.res_cost)
 	if a.is_item():
@@ -536,6 +540,8 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 				if a.status != "":
 					t.statuses[a.status] = a.status_turns
 					events.append({"type": "status", "src": u, "unit": t, "status": a.status})
+	if u.hiding and a.hostile():
+		u.hiding = false
 	if allow_counter and a.kind == "attack" and a.radius == 0 and hit_list.size() == 1:
 		var t: CombatUnit = hit_list[0]
 		if u.alive() and counters_from(grid, u, t, u.cell):
@@ -886,7 +892,7 @@ static func guard_ring(grid: CombatGrid, units: Array, team: int) -> Dictionary:
 static func danger_zone(grid: CombatGrid, units: Array, team: int) -> Dictionary:
 	var zone := {}
 	for u: CombatUnit in units:
-		if u.team != team or not u.alive() or u.has_status(STATUS_SLEEP):
+		if u.team != team or not u.alive() or u.has_status(STATUS_SLEEP) or u.hiding:
 			continue
 		var froms: Array = CombatRules.reachable(grid, u, units).cost.keys()
 		var ranges: Array[Vector2i] = []
@@ -924,6 +930,17 @@ static func skittish_check(rng: RandomNumberGenerator, u: CombatUnit, units: Arr
 	var r := Dice.check(rng, int(u.skills.get("nerve", 0)), SKITTISH_DC)
 	u.spooked = not r.success
 	return r
+
+
+## A piece of `mover`'s side ended a move: hidden foes within SPOT_RANGE it can see come out. Returns them.
+static func spot(grid: CombatGrid, units: Array, mover: CombatUnit) -> Array[CombatUnit]:
+	var out: Array[CombatUnit] = []
+	for o: CombatUnit in units:
+		if o.hiding and o.alive() and o.team != mover.team and dist(o.cell, mover.cell) <= SPOT_RANGE \
+				and grid.line_of_sight(mover.cell, o.cell):
+			o.hiding = false
+			out.append(o)
+	return out
 
 
 static func team_alive(units: Array, team: int) -> bool:

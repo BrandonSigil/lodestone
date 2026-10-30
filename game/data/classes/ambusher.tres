@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ambusher"
+name_key = "ENEMY_AMBUSHER"
+max_hp = 12
+move = 5
+jump = 2
+attack = 3
+defense = 10
+armor = 0
+damage = 4
+range_min = 1
+range_max = 1
+magic = false
+skills = {}
+traits = Array[StringName]([&"ambush"])

@@ -280,6 +280,7 @@ func _ai_turn(u: CombatUnit) -> void:
 	if plan.move != u.cell:
 		await board.animate_move(u, plan.path)
 		u.place(plan.move, grid.height_at(plan.move))
+		await _spot(u)
 	u.move_spent += int(plan.cost)
 	if plan.ability != null:
 		await _use(u, plan.ability, plan.aim)
@@ -288,6 +289,7 @@ func _ai_turn(u: CombatUnit) -> void:
 			if away.move != u.cell and await _leave_guards(u, away.move):
 				await board.animate_move(u, away.path)
 				u.place(away.move, grid.height_at(away.move))
+				await _spot(u)
 			u.moved = true
 	elif plan.guard:
 		CombatRules.guard(u)
@@ -299,6 +301,13 @@ func _on_auto_toggled(on: bool) -> void:
 	if on and is_player_turn():
 		_deselect()
 		_auto_player_phase()
+
+
+## u ended a move: hidden foes it can see within 3 come out ([USER] design-foe-roles, the ambusher).
+func _spot(u: CombatUnit) -> void:
+	for o in CombatRules.spot(grid, units, u):
+		await _play({"type": "reveal", "unit": o})
+	_refresh_danger()
 
 
 ## A boss's big moves at a phase's edges (CombatRules.boss_start, boss_end): play them, then redraw the marks.
@@ -422,6 +431,10 @@ func _play(ev: Dictionary) -> void:
 		"counter":
 			board.float_text(ev.src.cell, Txt.t("UI_COUNTER"), Color(1, 1, 1))
 			await get_tree().create_timer(0.2).timeout
+		"reveal":
+			board.float_text(t.cell, Txt.t("UI_AMBUSH"), Color(1.0, 0.5, 0.4), 22)
+			log_line.emit(Txt.f("LOG_AMBUSH", Txt.t(t.name_key)))
+			await get_tree().create_timer(0.35).timeout
 		"mark":
 			log_line.emit(Txt.f("LOG_MARK", [Txt.t(ev.src.name_key), Txt.t(ev.ability.name_key)]))
 			board.float_text(ev.src.cell, Txt.t(ev.ability.name_key), Color(0.9, 0.6, 1.0))
@@ -860,6 +873,7 @@ func _move_selected(c: Vector2i) -> void:
 	await board.animate_move(u, path)
 	u.place(c, grid.height_at(c))
 	u.moved = true
+	await _spot(u)
 	state = S.MENU
 	if u.acted:
 		_finish_unit()
@@ -882,6 +896,8 @@ func _on_cell_hovered(c: Vector2i) -> void:
 			_forecast.visible = false
 		return
 	var u := CombatRules.unit_at(units, c)
+	if u and u.hiding and u.team != 0:
+		u = null  # nothing to see there yet
 	_show_sight(u)
 	var marked: Array = CombatRules.marks(units).get(c, [])
 	if u and not marked.is_empty():

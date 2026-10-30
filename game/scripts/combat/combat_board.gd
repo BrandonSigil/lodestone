@@ -427,7 +427,7 @@ func pick(local: Vector2) -> Vector2i:
 	var body := NONE
 	var body_depth := -INF
 	for u: CombatUnit in units:
-		if u.shown_hp <= 0 or hidden(u.cell) or not _unit_box(u).has_point(local):
+		if u.shown_hp <= 0 or u.hiding or hidden(u.cell) or not _unit_box(u).has_point(local):
 			continue
 		var d := _unit_depth(u)
 		if d > body_depth:
@@ -621,7 +621,7 @@ func _sync_slabs() -> void:
 	_units_by_depth.clear()
 	_deck_units.clear()
 	for u: CombatUnit in units:
-		if u.shown_hp > 0 or u.downed():
+		if (u.shown_hp > 0 or u.downed()) and not u.hiding:  # an ambusher not spotted yet isn't drawn
 			var d := clampi(_unit_depth(u) + _off, 0, _depths.size() - 1)
 			var into := _deck_units if CombatGrid.on_deck(u.cell) else _units_by_depth
 			if not into.has(d):

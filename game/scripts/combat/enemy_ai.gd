@@ -10,7 +10,8 @@ const GUARD_SCORE := 4.0  ## guard when hurt and nothing better to do
 const REVIVE_SCORE := 40.0  ## helping a downed teammate up beats most hits
 const KNOCKOUT_SCORE := 12.0  ## a downed foe kept down for the fight: about a solid hit's worth
 const COST_WEIGHT := 0.4  ## how much a point of mana, rage or charge weighs against a skill's worth
-const TAUNT_RANGE := 5  ## foes this close are the ones a taunt will pull
+const TAUNT_RANGE := 5
+const AMBUSH_PICK := 60.0  ## an ambusher's pull toward soft targets, so armor and HP outweigh the damage it would do  ## foes this close are the ones a taunt will pull
 
 
 ## Returns {"move": Vector2i, "ability": Ability or null, "aim": Vector2i, "path": Array[Vector2i], "guard": bool}.
@@ -43,7 +44,9 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 					best_ability = a
 					best_aim = aim
 	var guard := false
-	if best_ability == null:
+	if best_ability == null and u.hiding:
+		best_cell = u.cell  # an ambusher waits where it hides until something comes in reach
+	elif best_ability == null:
 		best_cell = _approach(grid, u, units, cost, leave)
 		guard = u.hp * 2 < u.max_hp
 	var target := CombatRules.unit_at(units, best_aim) if best_ability else null
@@ -76,7 +79,7 @@ static func retreat(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary
 static func hit_reach(grid: CombatGrid, u: CombatUnit, units: Array, melee_only := false) -> Dictionary:
 	var zone := {}
 	for o: CombatUnit in units:
-		if o.team == u.team or not o.alive() or o.has_status(CombatRules.STATUS_SLEEP):
+		if o.team == u.team or not o.alive() or o.has_status(CombatRules.STATUS_SLEEP) or o.hiding:
 			continue
 		var r := CombatRules.ability_range(o, null)
 		if melee_only and r.y > 1:
@@ -102,7 +105,7 @@ static func _aims(grid: CombatGrid, u: CombatUnit, a: Ability, units: Array, fro
 	var out: Array[Vector2i] = []
 	for c in cells:
 		for o: CombatUnit in units:
-			if o.alive() and o.team != u.team and CombatRules.dist(o.cell, c) <= a.radius:
+			if o.alive() and o.team != u.team and not o.hiding and CombatRules.dist(o.cell, c) <= a.radius:
 				out.append(c)
 				break
 	return out
@@ -126,6 +129,8 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 					s += side * 6.0
 				if a.push > 0 and not t.has_trait(CombatRules.TRAIT_DEEP_ROOTS):
 					s += side * 3.0
+				if u.has_trait(CombatRules.TRAIT_AMBUSH) and t.team != u.team:
+					s += AMBUSH_PICK - t.armor * 10.0 - t.hp * 0.5  # the softest piece: lowest armor, then HP
 			"hex":
 				if not t.has_status(a.status):
 					s += side * _hex_value(t, a.status)
@@ -240,7 +245,7 @@ static func _approach(grid: CombatGrid, u: CombatUnit, units: Array, cost: Dicti
 		else:
 			d = INF
 			for t: CombatUnit in units:
-				if t.team != u.team and t.alive():
+				if t.team != u.team and t.alive() and not t.hiding:
 					d = minf(d, 1000.0 + CombatRules.dist(cell, t.cell))
 		d -= grid.height_at(cell) * 0.1
 		d += float(leave.get(cell, 0.0)) * 0.2
@@ -255,7 +260,7 @@ static func walk_distance(grid: CombatGrid, u: CombatUnit, units: Array) -> Dict
 	var out := {}
 	var queue: Array[Vector2i] = []
 	for t: CombatUnit in units:
-		if t.team != u.team and t.alive():
+		if t.team != u.team and t.alive() and not t.hiding:
 			out[t.cell] = 0
 			queue.append(t.cell)
 	var i := 0

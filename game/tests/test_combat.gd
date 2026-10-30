@@ -1007,3 +1007,34 @@ func test_minions_come_on_the_maps_summon_cells() -> void:
 	CombatRules.begin_phase(units, 1)
 	CombatRules.boss_start(RandomNumberGenerator.new(), g, units, 1)
 	eq(lich.minions.map(func(m: CombatUnit) -> Vector2i: return m.cell), [Vector2i(7, 0), Vector2i(6, 0)], "the empty summon cells, in order")
+
+
+## The ambusher ([USER] design-foe-roles, game designer 2026-10-30): hidden, it's out of the danger zone and
+## can't be picked, until a party piece ends a move within 3 with line of sight; it waits for prey, strikes the
+## softest piece in reach, and that first strike from hiding counts as a flank.
+func test_ambusher_hides_until_spotted_and_strikes_soft() -> void:
+	var g := CombatGrid.flat(12, 3)
+	var amb := _unit("ambusher", 1, Vector2i(10, 1), g)
+	amb.hiding = true
+	var knight := _unit("knight", 0, Vector2i(1, 1), g)
+	var mage := _unit("mage", 0, Vector2i(1, 2), g)
+	var units := [amb, knight, mage]
+	ok(not CombatRules.danger_zone(g, units, 1).has(Vector2i(9, 1)), "not in the danger zone")
+	CombatRules.begin_phase(units, 1)
+	var p := EnemyAi.plan(g, amb, units)
+	eq(p.move, amb.cell, "nothing in reach: it stays hidden where it is")
+	knight.place(Vector2i(6, 1), 0)
+	eq(CombatRules.spot(g, units, knight), [] as Array[CombatUnit], "4 away: not spotted")
+	knight.place(Vector2i(7, 1), 0)
+	mage.place(Vector2i(7, 2), 0)
+	ok(not CombatRules.target_cells(g, knight, knight.abilities[0], units, Vector2i(9, 1)).has(amb.cell), "a hidden foe can't be picked")
+	p = EnemyAi.plan(g, amb, units)
+	eq(p.target, mage, "it goes for the softest piece")
+	ok(CombatRules.crit_parts(g, amb, mage, units, p.move).any(func(x: Array) -> bool: return x[0] == "MOD_FLANK"), "its strike from hiding is a flank")
+	amb.place(p.move, 0)
+	CombatRules.resolve(RandomNumberGenerator.new(), g, amb, p.ability, p.aim, units)
+	ok(not amb.hiding, "striking gives it away")
+	amb.hiding = true
+	amb.place(Vector2i(10, 1), 0)
+	eq(CombatRules.spot(g, units, knight), [amb] as Array[CombatUnit], "3 away in sight: spotted")
+	ok(not amb.hiding)

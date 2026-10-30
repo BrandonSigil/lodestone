@@ -112,6 +112,7 @@ func _ready() -> void:
 			u.leader = bool(e.get("leader", false))  # FightGoals: beat this one to win a "leader" fight
 			u.talk_to = g.has("talk") and int(g.talk.get("unit", -1)) == g.units.find(e)
 			u.summon_cells = g.get("summon", [] as Array[Vector2i])
+			u.hiding = bool(e.get("hidden", false))
 			units.append(u)
 		groups.append({"def": g, "units": units, "state": "idle"})
 	var memory: Dictionary = Game.explore_memory.get(map.map_name, {})
@@ -233,15 +234,16 @@ func group_at(c: Vector2i) -> Dictionary:
 		if g.state == "gone":
 			continue
 		for u: CombatUnit in g.units:
-			if u.alive() and u.cell == c:
+			if u.alive() and not u.hiding and u.cell == c:
 				return g
 	return {}
 
 
+## Where a group's pieces stand that the party can know of: a hidden ambusher neither shows nor watches.
 func _group_cells(g: Dictionary) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	for u: CombatUnit in g.units:
-		if u.alive():
+		if u.alive() and not u.hiding:
 			out.append(u.cell)
 	return out
 
@@ -251,8 +253,9 @@ func _blocked() -> Dictionary:
 	var out := {}
 	for g in groups:
 		if g.state != "gone":
-			for c in _group_cells(g):
-				out[c] = true
+			for u: CombatUnit in g.units:  # a hidden piece still stands in the way
+				if u.alive():
+					out[u.cell] = true
 	for t in things:
 		if not t.done and not String(t.kind) in ExploreRules.WALK_ON_KINDS:
 			out[t.cell] = true
@@ -494,7 +497,7 @@ func _refresh_units() -> void:
 		if g.state == "gone":
 			continue
 		for u: CombatUnit in g.units:
-			if u.alive() and (in_sight.has(u.cell) or not fogged()) and not locked.has(u.cell):
+			if u.alive() and not u.hiding and (in_sight.has(u.cell) or not fogged()) and not locked.has(u.cell):
 				shown.append(u)
 	board.units = shown
 
@@ -613,6 +616,12 @@ func _glide(u: CombatUnit, to: Vector2i, spare: float) -> float:
 ## After each step: update the fog, then see who spotted whom. True when the walk must stop.
 func _after_step() -> bool:
 	_refresh_sight()
+	for g in groups:  # an ambusher close by, in plain sight, is spotted
+		if g.state != "gone":
+			for u: CombatUnit in g.units:
+				if u.hiding and u.alive() and ExploreRules.sees(grid, [leader().cell], [u.cell], CombatRules.SPOT_RANGE):
+					u.hiding = false
+					board.float_text(u.cell, Txt.t("UI_AMBUSH"), Color(1.0, 0.5, 0.4), 22)
 	var spotted := check_groups()
 	_refresh_units()
 	return spotted

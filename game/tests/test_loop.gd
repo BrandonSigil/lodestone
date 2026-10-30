@@ -683,7 +683,8 @@ func test_map_groups_keep_their_fight_data() -> void:
 	var grid := CombatGrid.flat(4, 4)
 	var d := {"grid": grid.to_dict() if grid.has_method("to_dict") else {}, "groups": [{"id": "boss_camp", "goals": "leader|exit",
 		"exit": [[0, 0]], "talk": {"unit": 0, "times": 2, "result": "flee"}, "elite": true,
-		"units": [{"id": "bandit", "cell": [2, 2], "leader": true}]}]}
+		"summon": [[1, 1], [3, 0]],
+		"units": [{"id": "bandit", "cell": [2, 2], "leader": true}, {"id": "ambusher", "cell": [3, 3], "hidden": true}]}]}
 	var m := ExploreMap.from_dict(d)
 	var g: Dictionary = m.groups[0]
 	eq(g.goals, "leader|exit")
@@ -691,6 +692,8 @@ func test_map_groups_keep_their_fight_data() -> void:
 	eq(int(g.talk.times), 2)
 	ok(g.elite)
 	ok(g.units[0].leader, "the leader mark reaches the unit entry")
+	ok(not g.units[0].hidden and g.units[1].hidden, "and the hidden mark (an ambusher)")
+	eq(g.summon, [Vector2i(1, 1), Vector2i(3, 0)] as Array[Vector2i], "a boss's summon cells")
 
 
 ## [USER] c10: escaping the Lich King pays some XP, but it isn't beating him: no loot, no beaten flag, no end

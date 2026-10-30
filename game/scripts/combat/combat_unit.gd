@@ -72,6 +72,7 @@ var mark := {}  ## a big move marked and waiting: {"ability", "cells": Array[Vec
 var summon_cells: Array[Vector2i] = []  ## where its called pieces stand, if its map marks any; else near it
 var minions: Array = []  ## the pieces it called, standing or not
 var summoner: CombatUnit = null  ## who called this piece
+var hiding := false  ## an ambusher not seen yet (a map group's "hidden"): not drawn, not in the danger zone, until spotted or it strikes
 var crumbled := false  ## fell because its summoner did, not to the party
 
 # View state, animated by CombatBoard.
