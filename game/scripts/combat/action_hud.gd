@@ -12,7 +12,11 @@ extends Control
 const LAYOUTS := ["dock", "list"]
 const BASIC := ["move", "undo", "talk", "guard", "wait"]
 const BOX := 52.0
-const PORTRAIT := 84.0
+const DOCK_ART := "res://art/source/ui/dock/"  ## Brandon's painted dock pieces (approved 2026-10-30)
+const KS := 0.36  ## bar pieces: the art's pixels to dock units (the ends stay fixed, the fill stretches to the boxes)
+const KP := 0.32  ## portrait frame
+const KC := 0.7  ## pop-up column pieces
+const PW := 127.0  ## the portrait frame's inner width, window and meters
 const FRAME_ART := 90.0  ## how far the bottom frame's art (the diamond crest, the leaves) reaches up into the play area
 const TIP_DELAY := 0.5  ## seconds resting on a box before its details show
 const TIP_W := 205.0  ## narrow enough to sit beside the dock's portrait panel
@@ -140,10 +144,12 @@ var _pop_slots: Array[ActionSlot] = []
 var _pop_entries: Array = []
 var _pop_for: ActionSlot = null
 var _pop_panel: PanelContainer = null
+var _bar: PanelContainer = null
 
 
 func _build() -> void:
 	_bar_slots.clear()
+	_tex("bar_fill")  # loads every piece
 	_dock = PanelContainer.new()  # a bare holder: the portrait panel and the bar are framed apart, as in his picture
 	_dock.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	add_child(_dock)
@@ -151,10 +157,10 @@ func _build() -> void:
 	row.add_theme_constant_override("separation", 6)
 	_dock.add_child(row)
 	row.add_child(_portrait_panel(_unit))
-	var bar := PanelContainer.new()
-	bar.theme_type_variation = &"DialogPanel"
+	var bar := _art_panel(Vector2(38, 20), Vector2(38, 20), Vector2(0, 292 * KS), _draw_bar)  # left piece, fill, right piece
 	bar.size_flags_vertical = Control.SIZE_SHRINK_END
 	row.add_child(bar)
+	_bar = bar
 	var boxes := HBoxContainer.new()
 	boxes.add_theme_constant_override("separation", 4)
 	bar.add_child(boxes)
@@ -223,6 +229,58 @@ func _box(e: Dictionary, parent: Control) -> ActionSlot:
 	return s
 
 
+const PIECES := ["bar_left", "bar_fill", "bar_right", "bar_crest_top", "bar_crest_bottom", "portrait_frame", "column_top", "column_mid", "column_bottom"]
+var _pieces := {}
+
+
+## A dock piece. They are all loaded before the first build: a texture first loaded mid-draw paints white.
+func _tex(n: String) -> Texture2D:
+	if _pieces.is_empty():
+		for k in PIECES:
+			_pieces[k] = load(DOCK_ART + k + ".png")
+	return _pieces[n]
+
+
+## A panel whose frame is painted pieces: empty margins keep the content clear of the rims; draw paints the pieces.
+func _art_panel(margin_from: Vector2, margin_to: Vector2, min_size: Vector2, painter: Callable) -> PanelContainer:
+	var p := PanelContainer.new()
+	var sb := StyleBoxEmpty.new()
+	sb.content_margin_left = margin_from.x
+	sb.content_margin_top = margin_from.y
+	sb.content_margin_right = margin_to.x
+	sb.content_margin_bottom = margin_to.y
+	p.add_theme_stylebox_override("panel", sb)
+	p.custom_minimum_size = min_size
+	p.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS  # painted big, drawn small
+	p.draw.connect(painter.bind(p))
+	return p
+
+
+## The bar: fixed left and right ends, a fill that grows or shrinks with the boxes, the crests on top and under.
+func _draw_bar(c: Control) -> void:
+	var left := _tex("bar_left")
+	var lw := left.get_width() * KS
+	c.draw_texture_rect(_tex("bar_fill"), Rect2(lw - 1.0, 0, c.size.x - 2.0 * lw + 2.0, c.size.y), false)
+	c.draw_texture_rect(left, Rect2(0, 0, lw, c.size.y), false)
+	c.draw_texture_rect(_tex("bar_right"), Rect2(c.size.x - lw, 0, lw, c.size.y), false)
+	var top := _tex("bar_crest_top")
+	var tw := top.get_width() * KS
+	c.draw_texture_rect(top, Rect2((c.size.x - tw) * 0.5, 55 * KS - top.get_height() * KS, tw, top.get_height() * KS), false)
+	var bottom := _tex("bar_crest_bottom")
+	var bw := bottom.get_width() * KS
+	c.draw_texture_rect(bottom, Rect2((c.size.x - bw) * 0.5, c.size.y - 55 * KS, bw, bottom.get_height() * KS), false)
+
+
+## A pop-up column: the arched top, a middle that stretches to the entries, the hanging bottom.
+func _draw_column(c: Control) -> void:
+	var th := _tex("column_top").get_height() * KC
+	var bh := _tex("column_bottom").get_height() * KC
+	if c.size.y - th - bh > 0.0:
+		c.draw_texture_rect(_tex("column_mid"), Rect2(0, th - 1.0, c.size.x, c.size.y - th - bh + 2.0), false)
+	c.draw_texture_rect(_tex("column_top"), Rect2(0, 0, c.size.x, th), false)
+	c.draw_texture_rect(_tex("column_bottom"), Rect2(0, c.size.y - bh, c.size.x, bh), false)
+
+
 func _diamond_sep() -> Control:
 	var c := Control.new()
 	c.custom_minimum_size = Vector2(10, BOX)
@@ -240,8 +298,7 @@ func _pop(s: ActionSlot) -> void:
 	var entries: Array = s.entry.pop
 	_pop_for = s
 	_pop_entries = entries
-	_pop_panel = PanelContainer.new()
-	_pop_panel.theme_type_variation = &"MenuPanel"
+	_pop_panel = _art_panel(Vector2(24, 75 * KC), Vector2(24, 40 * KC), Vector2(160 * KC, (128 + 104) * KC), _draw_column)
 	add_child(_pop_panel)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 2)
@@ -268,7 +325,15 @@ func _pop(s: ActionSlot) -> void:
 	var k := UiTheme.small()
 	_pop_panel.scale = Vector2(k, k)
 	var r := s.get_global_rect()
-	_pop_panel.global_position = Vector2(r.get_center().x - _pop_panel.size.x * k * 0.5, r.position.y - _pop_panel.size.y * k - 4)
+	var top := r.position.y - _pop_panel.size.y * k - 4
+	var x := r.get_center().x - _pop_panel.size.x * k * 0.5
+	if _bar != null and is_instance_valid(_bar):  # the bar's top crest rises above the boxes: a column over it stands on the crest
+		var crest := _tex("bar_crest_top")
+		var cw := crest.get_width() * KS * k
+		var bx := _bar.global_position.x + (_bar.size.x * k - cw) * 0.5
+		if x < bx + cw and x + _pop_panel.size.x * k > bx:
+			top = minf(top, _bar.global_position.y + (55 * KS - crest.get_height() * KS) * k - _pop_panel.size.y * k - 2)
+	_pop_panel.global_position = Vector2(x, top)
 	_tip.move_to_front()
 
 
@@ -311,64 +376,75 @@ func _place() -> void:
 		_bar_slots[0].grab_focus()
 
 
-## The portrait panel (his picture): the selected character's face, an HP bar with HP/max, and the job's resource
-## as pips with res/max.
+## The portrait panel: the painted frame, the selected character's face in its window, an HP bar with HP/max and the
+## job's resource as pips with res/max in the green band under it.
 func _portrait_panel(u: CombatUnit) -> Control:
-	var panel := PanelContainer.new()
-	panel.theme_type_variation = &"DialogPanel"
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 3)
-	panel.add_child(col)
-	col.add_child(_portrait(u))
-	col.add_child(_meter(u.hp, u.max_hp, Color(0.78, 0.2, 0.17), false))
+	var frame := _tex("portrait_frame")
+	var panel := Control.new()
+	panel.custom_minimum_size = frame.get_size() * KP
+	panel.size_flags_vertical = Control.SIZE_SHRINK_END
+	panel.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	panel.draw.connect(func() -> void: panel.draw_texture_rect(frame, Rect2(Vector2.ZERO, frame.get_size() * KP), false))
+	var window := Rect2(Vector2(82, 108) * KP, Vector2(392, 322) * KP)  # the cream window, in the art's pixels
+	panel.add_child(_portrait(u, window))
+	var x := 80.0 * KP
+	var y := 442.0 * KP
+	var hp := _meter(u.hp, u.max_hp, Color(0.78, 0.2, 0.17), false)
+	hp.position = Vector2(x, y)
+	panel.add_child(hp)
 	if u.res_kind != "":
 		var tint: Color = {"mana": Color(0.35, 0.55, 1.0), "rage": Color(0.9, 0.35, 0.2), "charges": Color(0.9, 0.7, 0.2)}.get(u.res_kind, Color.WHITE)
-		col.add_child(_meter(u.res, u.res_max, tint, true))
+		var res := _meter(u.res, u.res_max, tint, true)
+		res.position = Vector2(x, y + 13.0)
+		panel.add_child(res)
 	return panel
 
 
 ## A bar (HP) or a row of pips (the resource), with value/max beside it.
 func _meter(v: int, most: int, tint: Color, pips: bool) -> Control:
 	var c := Control.new()
-	c.custom_minimum_size = Vector2(PORTRAIT, 14)
+	c.custom_minimum_size = Vector2(PW, 13)
+	c.size = c.custom_minimum_size
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	c.draw.connect(func() -> void:
-		var w := PORTRAIT - 34.0
-		var r := Rect2(0, 2, w, 10)
+		var w := PW - 32.0
+		var r := Rect2(0, 1, w, 11)
 		c.draw_rect(r, Color(0.06, 0.08, 0.07))
 		if pips and most > 0:
 			var each := (w - 2.0) / most
 			for i in most:
-				var pr := Rect2(1 + i * each + 1, 3, each - 2, 8)
+				var pr := Rect2(1 + i * each + 1, 2, each - 2, 9)
 				c.draw_rect(pr, tint if i < v else Color(tint, 0.15))
 		elif most > 0:
-			c.draw_rect(Rect2(1, 3, (w - 2) * clampf(float(v) / most, 0, 1), 8), tint)
+			c.draw_rect(Rect2(1, 2, (w - 2) * clampf(float(v) / most, 0, 1), 9), tint)
 		c.draw_rect(r, UiTheme.RULE, false, 1.0)
-		c.draw_string(ThemeDB.fallback_font, Vector2(w + 3, 12), "%d/%d" % [v, most], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, UiTheme.PARCHMENT))
+		c.draw_string(ThemeDB.fallback_font, Vector2(w + 3, 11), "%d/%d" % [v, most], HORIZONTAL_ALIGNMENT_LEFT, -1, 9, UiTheme.PARCHMENT))
 	return c
 
 
 ## The selected character's face: its approved portrait (art/source/portraits/<id>.png), else its name.
-func _portrait(u: CombatUnit) -> Control:
-	var frame := PanelContainer.new()
-	frame.theme_type_variation = &"InfoPanel"
-	frame.custom_minimum_size = Vector2(PORTRAIT, PORTRAIT)
+func _portrait(u: CombatUnit, window: Rect2) -> Control:
 	var p := PORTRAIT_DIR + String(u.figure) + ".png"
+	var c: Control
 	if ResourceLoader.exists(p):
 		var t := TextureRect.new()
 		t.texture = load(p)
 		t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		t.custom_minimum_size = Vector2(PORTRAIT - 8, PORTRAIT - 8)
-		frame.add_child(t)
+		c = t
 	else:
 		var l := Label.new()
 		l.text = Txt.t(u.name_key)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		frame.add_child(l)
-	return frame
+		l.add_theme_color_override("font_color", Color(0.2, 0.17, 0.12))
+		c = l
+	c.position = window.position
+	c.size = window.size
+	c.clip_contents = true
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return c
 
 
 func _hover(s: ActionSlot) -> void:
