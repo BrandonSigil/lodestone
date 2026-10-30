@@ -54,7 +54,7 @@ static func make() -> Theme:
 		t.set_type_variation(v, "PanelContainer")
 	# Brandon's approved painted pieces where they exist (art/source/ui/menu/look_*.png), else FramedBox's code drawing.
 	# Panel corners: the leaves and the gem reach about 105 px into the painted piece, so 110 keeps them whole.
-	t.set_stylebox("panel", "DialogPanel", look("look_panel.png", 110, 110, 0.45, 22.0, 20.0))
+	t.set_stylebox("panel", "DialogPanel", look("look_panel.png", 110, 110, 0.45, 32.0, 28.0))  # text clear of the corner leaves
 	t.set_stylebox("panel", "MenuPanel", look("look_panel.png", 110, 110, 0.3, 14.0, 12.0))
 	t.set_stylebox("panel", "InfoPanel", framed(8.0, false))
 	t.set_stylebox("panel", "TitlePlate", look("look_title_plate.png", 88, 0, 0.3, 30.0, 8.0))
@@ -170,15 +170,25 @@ static func diamond(ci: CanvasItem, c: Vector2, r: float) -> void:
 
 # --- open and close ([USER] 2026-10-30: menus built in-engine so they can animate) -------------------------
 
-## A menu opening: grows a little from its middle and fades in.
+const SMALL := 0.5  ## [USER] 2026-10-30 (dev-menu-frame): all but the full-page screens about half the size
+const SIZE_STEP := 0.05  ## the UI size option moves in 5% notches
+
+
+## The size of the small UI (the fight dock, its details, event dialogues): half, times the UI size option.
+static func small() -> float:
+	return SMALL * clampf(float(Game.meta.get("settings", {}).get("ui_size", 1.0)), 0.5, 2.0)
+
+
+## A menu opening: grows a little from its middle and fades in (to whatever size it was set to).
 static func pop_in(c: Control) -> void:
 	if not c.is_inside_tree():
 		return
-	c.pivot_offset = c.size * 0.5
-	c.scale = Vector2(0.94, 0.94)
+	var target := c.scale
+	c.pivot_offset = Vector2.ZERO  # it grows in place: its position already accounts for its size
+	c.scale = target * 0.94
 	c.modulate.a = 0.0
 	var tw := c.create_tween().set_parallel().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(c, "scale", Vector2.ONE, OPEN_TIME)
+	tw.tween_property(c, "scale", target, OPEN_TIME)
 	tw.tween_property(c, "modulate:a", 1.0, OPEN_TIME * 0.8)
 
 
@@ -208,9 +218,8 @@ static func pop_out(c: Control) -> void:
 	for b in c.find_children("*", "BaseButton", true, false):
 		(b as BaseButton).disabled = true
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	c.pivot_offset = c.size * 0.5
 	var tw := c.create_tween().set_parallel()
-	tw.tween_property(c, "scale", Vector2(0.96, 0.96), OPEN_TIME * 0.7)
+	tw.tween_property(c, "scale", c.scale * 0.96, OPEN_TIME * 0.7)
 	tw.tween_property(c, "modulate:a", 0.0, OPEN_TIME * 0.7)
 	tw.chain().tween_callback(c.queue_free)
 

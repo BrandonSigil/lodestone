@@ -240,6 +240,22 @@ static func options(box: VBoxContainer, changed: Callable, back: Callable) -> vo
 			changed.call())
 		row.add_child(b)
 	box.add_child(row)
+	_label(box, Txt.t("UI_OPT_UI_SIZE"), 15)  # [USER] 2026-10-30: the small UI in 5% notches
+	var size_row := HBoxContainer.new()
+	size_row.add_theme_constant_override("separation", 6)
+	var size := clampf(float(Game.meta.get("settings", {}).get("ui_size", 1.0)), 0.5, 2.0)
+	for step: float in [-UiTheme.SIZE_STEP, UiTheme.SIZE_STEP]:
+		var b := Button.new()
+		b.text = "-5%" if step < 0 else "+5%"
+		b.custom_minimum_size = Vector2(90, 30)
+		b.pressed.connect(func() -> void:
+			Game.set_setting("ui_size", snappedf(clampf(size + step, 0.5, 2.0), UiTheme.SIZE_STEP))
+			changed.call())
+		size_row.add_child(b)
+	var shown := Label.new()
+	shown.text = "%d%%" % roundi(size * 100)
+	size_row.add_child(shown)
+	box.add_child(size_row)
 	_label(box, Txt.t("UI_OPT_WINDOW"), 15)
 	var full := bool(Game.meta.get("settings", {}).get("fullscreen", false))
 	_button(box, Txt.t("UI_OPT_WINDOWED") if full else Txt.t("UI_OPT_FULL"), func() -> void:

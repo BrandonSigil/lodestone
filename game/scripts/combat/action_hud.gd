@@ -264,8 +264,10 @@ func _pop(s: ActionSlot) -> void:
 	if not is_instance_valid(_pop_panel) or _pop_for != s:
 		return
 	_pop_panel.reset_size()
+	var k := UiTheme.small()
+	_pop_panel.scale = Vector2(k, k)
 	var r := s.get_global_rect()
-	_pop_panel.global_position = Vector2(r.get_center().x - _pop_panel.size.x * 0.5, r.position.y - _pop_panel.size.y - 6)
+	_pop_panel.global_position = Vector2(r.get_center().x - _pop_panel.size.x * k * 0.5, r.position.y - _pop_panel.size.y * k - 4)
 	_tip.move_to_front()
 
 
@@ -301,7 +303,9 @@ func _place() -> void:
 	if _dock == null:
 		return
 	_dock.reset_size()
-	_dock.position = Vector2(_area.get_center().x - _dock.size.x * 0.5, _area.end.y - FRAME_ART - _dock.size.y)
+	var k := UiTheme.small()  # [USER] 2026-10-30: the fight dock much smaller, with a size option
+	_dock.scale = Vector2(k, k)
+	_dock.position = Vector2(_area.get_center().x - _dock.size.x * k * 0.5, _area.end.y - FRAME_ART - _dock.size.y * k)
 	if not _bar_slots.is_empty() and not hovering():
 		_bar_slots[0].grab_focus()
 
@@ -422,7 +426,9 @@ func _show_tip(s: ActionSlot) -> void:
 	_tip.reset_size()
 	await get_tree().process_frame
 	if _tip_for == s:
-		_tip.position = Vector2(_area.position.x + 10, _area.end.y - _tip.size.y - FRAME_ART * 0.6)  # bottom left, beside the dock
+		var k := UiTheme.small()
+		_tip.scale = Vector2(k, k)
+		_tip.position = Vector2(_area.position.x + 10, _area.end.y - _tip.size.y * k - FRAME_ART * 0.6)  # bottom left
 
 
 func _hide_tip() -> void:

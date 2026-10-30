@@ -611,7 +611,9 @@ func _new_dialog(text: String) -> VBoxContainer:
 		box.add_child(l)
 	_ui.add_child(_dialog)
 	var r := hud.center_rect()
-	_dialog.position = Vector2(r.get_center().x - 230, r.position.y + 24)
+	var k := 1.0 if _menu_open else UiTheme.small()  # [USER] 2026-10-30: event dialogues about half size
+	_dialog.scale = Vector2(k, k)
+	_dialog.position = Vector2(r.get_center().x - 230 * k, r.position.y + 24)
 	if fresh:
 		UiTheme.pop_in_later(_dialog)
 	return box

@@ -1057,12 +1057,25 @@ func _new_dialog(text: String, top := false) -> VBoxContainer:
 	box.add_child(l)
 	_ui.add_child(_dialog)
 	var r := hud.center_rect()
-	_dialog.position = Vector2(r.get_center().x - 220, r.position.y + 16 if top else r.end.y - 230)
+	# [USER] 2026-10-30: event dialogues about half size; the Lodestone menu, the pack and options stay full
+	var k := 1.0 if _menu_open else UiTheme.small()
+	_dialog.scale = Vector2(k, k)
+	_dialog.position = Vector2(r.get_center().x - 220 * k, r.position.y + 16 if top else r.end.y - 230 * k)
+	if not top:
+		_sit_on_frame.call_deferred(_dialog, k)
 	if text == "":
 		l.queue_free()
 	if fresh:
 		UiTheme.pop_in_later(_dialog)
 	return box
+
+
+## A dialogue at the bottom stands just above the frame's crest once its size is known.
+func _sit_on_frame(d: Control, k: float) -> void:
+	if not is_instance_valid(d) or d != _dialog:
+		return
+	d.reset_size()
+	d.position.y = hud.center_rect().end.y - ActionHud.FRAME_ART - d.size.y * k
 
 
 func _dialog_button(box: VBoxContainer, text: String, cb: Callable) -> void:
