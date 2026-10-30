@@ -50,6 +50,15 @@ func run(s: Node, f: int, step: String) -> bool:
 			else:
 				s._go_use(_thing(s, step.substr(4)))
 		return f == 90
+	if step.begins_with("feet:"):
+		# feet:<x>,<y> - the lead stands at x,y but past the cell's middle toward the viewer, as free walking
+		# leaves it: the ground in front must not cover its feet.
+		if f == 5:
+			var xy := step.substr(5).split(",")
+			_put(s, Vector2i(int(xy[0]), int(xy[1])))
+			s.leader().vis += Vector2(0.4, 0.4)
+			s.zoom = 2.0
+		return f == 40
 	if step.begins_with("goal:"):
 		# goal:<group id>:<x>,<y> - the lead at x,y fights that group: the goal line, a BOSS tag, green exit cells.
 		var parts := step.split(":")

@@ -238,3 +238,21 @@ func test_every_look_draws_the_one_moving_water() -> void:
 				mats[sl.material] = true
 		eq(mats.size(), 2, "every depth's water and falls go through the two water shaders (soft %s)" % soft)
 		b.free()
+
+
+## Brandon's bug (2026-10-30): walking freely, a piece stops past its cell's middle and the flat ground in front
+## was drawn over its feet. A piece draws after any ground its feet reach that is no higher than they are.
+func test_feet_draw_over_the_flat_ground_in_front() -> void:
+	var g := CombatGrid.flat(5, 5)
+	var b := CombatBoard.new()
+	b.grid = g
+	var u := CombatUnit.new()
+	u.vis = Vector2(2.4, 2.4)  # its middle at (2.9, 2.9): feet over the cells in front, (2, 3), (3, 2) and (3, 3)
+	u.vis_h = 0.0
+	ok(b._unit_depth(u) >= b.depth_of(2, 3), "drawn after the flat cell its feet stand over")
+	ok(b._unit_depth(u) >= b.depth_of(3, 3), "and the one diagonally in front")
+	g.set_height(Vector2i(2, 3), 2)
+	g.set_height(Vector2i(3, 3), 2)
+	g.set_height(Vector2i(3, 2), 2)
+	eq(b._unit_depth(u), b.depth_of(2.4, 2.4), "a step up in front still covers the feet")
+	b.free()

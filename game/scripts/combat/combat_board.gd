@@ -53,6 +53,7 @@ const INK := Color(0.216, 0.2, 0.208)  ## the art's outline colour (#373335, B14
 const WATER_INSET := 0.3  ## water sits this many levels below its banks, so the banks show a little earth
 const PLATE_SCALE := 1.35  ## a painted backdrop plate's width as a multiple of the board's footprint
 const FG_HEIGHT := 0.16  ## the solid foreground band's height as a share of the view
+const FOOT := 0.3  ## a piece's feet (and its ring) reach this far from its middle, in cells
 const WINDOW_R := 56.0  ## see-through window round a piece behind a prop: radius on screen
 const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
 const WINDOW_MIN := 0.12  ## the prop's alpha in the open middle
@@ -322,6 +323,13 @@ func depth_of(x: float, y: float) -> int:
 ## building, which sorts by its front-most cell and would otherwise cover it.
 func _unit_depth(u: CombatUnit) -> int:
 	var d := depth_of(u.vis.x, u.vis.y)
+	# Free walking leaves a piece anywhere, not just at a cell's middle: feet past the middle reach into the
+	# cells in front, and ground there no higher than the feet must not be drawn over them (Brandon's bug,
+	# 2026-10-30). Higher ground in front (a cliff, a step up) still covers them.
+	for o: Vector2 in [Vector2(-FOOT, -FOOT), Vector2(FOOT, -FOOT), Vector2(-FOOT, FOOT), Vector2(FOOT, FOOT)]:
+		var c := Vector2i((u.vis + Vector2(0.5, 0.5) + o).floor())
+		if grid.in_bounds(c) and grid.height_at(c) <= u.vis_h + 0.05:
+			d = maxi(d, depth_of(c.x, c.y))
 	var uc := Vector2i(roundi(u.vis.x), roundi(u.vis.y))
 	for shade in [false, true]:
 		var a := grid.prop_anchor(uc - front_dir(shade))
