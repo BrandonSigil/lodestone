@@ -106,8 +106,9 @@ func _ready() -> void:
 			if cls == null or not grid.passable(e.cell):
 				continue
 			var elite := bool(g.get("elite", false))
+			var depth := 1 if bool(g.get("boss", false)) else map.level  # a boss is tuned by hand: no depth rolls
 			var mods := LevelRules.merge(ExploreRules.elite_mods() if elite else {},
-				ExploreRules.depth_mods(map.map_name, map.level, String(g.get("id", "")), g.units.find(e), cls))
+				ExploreRules.depth_mods(map.map_name, depth, String(g.get("id", "")), g.units.find(e), cls))
 			var u := CombatUnit.enemy(cls, mods)
 			u.elite = elite
 			u.place(e.cell, grid.height_at(e.cell))

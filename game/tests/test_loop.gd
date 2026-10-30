@@ -1216,3 +1216,22 @@ func test_foes_grow_with_the_place_level() -> void:
 	ok(u.max_hp >= bandit.max_hp and u.damage >= bandit.damage, "and the foe is no weaker")
 	eq(ExploreMap.from_dict({"grid": {}, "level": 3}).level, 3, "the map's level")
 	eq(ExploreMap.from_dict({"grid": {}}).level, 1, "default 1")
+
+
+## A boss is tuned by hand, so his group never rolls depth (game designer 2026-10-30): at crypt level 3 the Lich is
+## the Lich; the plaza's bandits grow.
+func test_bosses_skip_the_depth_rolls() -> void:
+	var saved := _fresh_game()
+	Game.explore_map = "crypt"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	ok(s.map.level > 1, "the crypt is deeper than 1")
+	var throne: Dictionary = s.groups.filter(func(g: Dictionary) -> bool: return g.def.id == "throne")[0]
+	var lich: CombatUnit = throne.units[0]
+	eq(lich.max_hp, Db.class_def("lich").max_hp, "the Lich keeps his own HP")
+	eq(lich.damage, Db.class_def("lich").damage, "and damage")
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"
+	_restore(saved)
