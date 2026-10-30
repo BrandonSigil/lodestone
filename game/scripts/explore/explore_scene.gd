@@ -1252,6 +1252,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		xp = xp * int(CombatRules.num("elite_xp_pct")) / 100  # better rewards; loot waits on the one-more-run theme
 	var lines := Game.award_xp(xp)
 	lines.insert(0, Txt.f("UI_XP_GAIN", xp))
+	lines.append_array(battle.award_bonds())
 	_sync_party_hp()
 	_refresh_hud()
 	if ends:

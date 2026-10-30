@@ -65,6 +65,7 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 	if not Game.run.meal.is_empty():
 		_label(box, Txt.f("UI_LS_MEAL", [Txt.t(String(Db.recipes.get(String(Game.run.meal.recipe), {}).get("name_key", ""))),
 			int(Game.run.meal.fights)]), 13)
+	_bonds(box, not home)
 	if home:
 		_button(box, Txt.t("UI_LS_HOME"), func() -> void:
 			close.call()
@@ -217,6 +218,36 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	if not run.lines.is_empty():
 		_label(box, run.lines[run.lines.size() - 1], 12)
 	_button(box, Txt.t("UI_CLOSE_MENU"), close)
+
+
+## The party's bonds (BondRules): each pair with points, its level, and a TALK per level reached. Talks happen at
+## home ([USER] 2026-10-30 design-village-life): elsewhere the buttons wait. The lines are Brandon's to write.
+static func _bonds(box: VBoxContainer, at_home: bool) -> void:
+	var bonds: Dictionary = Game.meta.get("bonds", {})
+	var ids: Array = Game.run.members.map(func(m: Dictionary) -> String: return String(m.def.id))
+	var shown := false
+	for i in ids.size():
+		for j in range(i + 1, ids.size()):
+			var k := BondRules.key(ids[i], ids[j])
+			var pts := int(bonds.get(k, 0))
+			if pts <= 0:
+				continue
+			if not shown:
+				_label(box, Txt.t("UI_LS_BONDS"), 15)
+				shown = true
+			var lv := BondRules.level(pts, Db.bonds)
+			var next := int(Db.bonds.get("level_%d" % mini(lv + 1, BondRules.LEVELS), 0))
+			var names := Array(k.split("+")).map(func(id: String) -> String: return Txt.t(Db.character(StringName(id)).name_key) if Db.character(StringName(id)) else id)
+			_label(box, Txt.f("UI_LS_BOND", [names[0], names[1], lv, pts, next]), 13)
+			for n in range(1, lv + 1):
+				var b := _button(box, Txt.f("UI_LS_TALK", n) if at_home else Txt.t("UI_LS_TALK_AWAY"), func() -> void:
+					var heard: Array = Game.meta.get("talks_heard", [])
+					if not heard.has("%s:%d" % [k, n]):
+						heard.append("%s:%d" % [k, n])
+						Game.meta.talks_heard = heard
+						Game.save_meta()
+					_label(box, Txt.t(BondRules.talk_key(k, n)), 13))
+				b.disabled = not at_home
 
 
 static func _label(box: VBoxContainer, text: String, font_size: int) -> void:

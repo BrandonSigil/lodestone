@@ -41,6 +41,7 @@ var goals := FightGoals.new()  ## how this fight is won (the host sets it before
 var talk_open := false  ## the host says TALK is open (the fight is written for it and its flag is set)
 var outcome := {"how": "", "joined": []}  ## after the end: the goal met, and flags set by foes talked round
 var enemy_speed := 1.0  ## animation speed multiplier for the enemy phase
+var deeds := {}  ## bond pair key -> {"help_up", "teamup"}: what party pieces did for each other this fight (BondRules)
 
 var _ui: CanvasLayer
 var _menu: PanelContainer
@@ -310,6 +311,37 @@ func _spot(u: CombatUnit) -> void:
 	_refresh_danger()
 
 
+## Two party pieces did something for each other: it counts toward their bond after the fight.
+func _deed(a: CombatUnit, b: CombatUnit, what: String) -> void:
+	if a == null or b == null or a == b or a.team != 0 or b.team != 0 or a.member.is_empty() or b.member.is_empty():
+		return
+	var k := BondRules.key(String(a.figure), String(b.figure))
+	if not deeds.has(k):
+		deeds[k] = {}
+	deeds[k][what] = true
+
+
+## The party's bonds after a won fight: points for every pair that fought, from deeds and who's still up. Lines to show.
+func award_bonds() -> PackedStringArray:
+	var ids := []
+	var standing := []
+	for u: CombatUnit in units:
+		if u.team == 0 and not u.member.is_empty():
+			ids.append(String(u.figure))
+			if u.alive():
+				standing.append(String(u.figure))
+	var bonds: Dictionary = Game.meta.get("bonds", {})
+	var lines: PackedStringArray = []
+	for up in BondRules.award(bonds, ids, standing, deeds, Db.bonds):
+		var names := Array(String(up[0]).split("+")).map(func(id: String) -> String:
+			var d := Db.character(StringName(id))
+			return Txt.t(d.name_key) if d else id)
+		lines.append(Txt.f("UI_BOND_UP", [names[0], names[1], int(up[1])]))
+	Game.meta.bonds = bonds
+	Game.save_meta()
+	return lines
+
+
 ## A boss's big moves at a phase's edges (CombatRules.boss_start, boss_end): play them, then redraw the marks.
 func _boss_events(events: Array) -> void:
 	for ev in events:
@@ -414,11 +446,13 @@ func _play(ev: Dictionary) -> void:
 			log_line.emit("  %s %s -%d" % [Txt.t(t.name_key), Txt.t("UI_" + String(ev.type).to_upper()), ev.amount])
 			await get_tree().create_timer(0.25).timeout
 		"help":
+			_deed(ev.get("by"), ev.src, "teamup")
 			await board.animate_attack(ev.src, t, true)
 			board.float_text(t.cell, "-%d %s" % [ev.amount, Txt.t("UI_HELP")], Color(0.7, 0.9, 1.0))
 			log_line.emit(Txt.f("LOG_HELP", [Txt.t(ev.src.name_key), ev.amount]))
 			t.shown_hp = maxi(0, t.shown_hp - int(ev.amount))
 		"revive":
+			_deed(ev.src, t, "help_up")
 			t.shown_hp = int(ev.amount)
 			board.float_text(t.cell, Txt.t("UI_AIDED"), Color(0.5, 1.0, 0.6))
 			log_line.emit(Txt.f("LOG_AIDED", [Txt.t(ev.src.name_key), Txt.t(t.name_key)]))

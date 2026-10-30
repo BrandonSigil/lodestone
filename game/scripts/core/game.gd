@@ -210,7 +210,8 @@ func save_meta() -> void:
 
 static func _fresh_meta() -> Dictionary:
 	return {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": [],
-		"levels": {}, "pack": {}, "materials": {}, "benched": [], "bookmark": {}, "restore": {}, "tracked": [], "trips": 0}
+		"levels": {}, "pack": {}, "materials": {}, "benched": [], "bookmark": {}, "restore": {}, "tracked": [], "trips": 0,
+		"bonds": {}, "talks_heard": []}
 
 
 func reset_meta() -> void:

@@ -1,0 +1,9 @@
+key,value,note
+fight,1,a fight both of the pair finish standing
+help_up,1,one of them helped the other up (AID) in the fight
+teamup,1,one of them helped the other's strike (a team-up) in the fight
+fight_max,3,at most this many points a fight
+level_1,10,points for bond level 1 (Fire Emblem's C)
+level_2,25,level 2 (B)
+level_3,45,level 3 (A)
+teamup_per_level,1,extra team-up damage between the pair per bond level

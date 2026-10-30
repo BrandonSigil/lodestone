@@ -480,7 +480,7 @@ static func forecast(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector
 				e.crit_parts = crit_parts(grid, u, t, units, from, a)
 				var h := helper(u, t, units, from)
 				if h != null:
-					e.help = int(num("help_damage"))
+					e.help = help_damage(u, h)
 					e.helper = h
 			"heal":
 				e.heal = mini(heal_amount(u, a), t.max_hp - t.hp)
@@ -519,10 +519,10 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 					events.append_array(_swing(rng, grid, u, a, t, units))
 				var h := helper(u, t, units, u.cell) if allow_counter and a.kind == "attack" else null
 				if h != null and t.alive():
-					var n := int(num("help_damage"))
+					var n := help_damage(u, h)
 					t.hp = maxi(0, t.hp - n)
 					t.statuses.erase(STATUS_SLEEP)
-					events.append({"type": "help", "src": h, "unit": t, "amount": n})
+					events.append({"type": "help", "src": h, "unit": t, "amount": n, "by": u})
 			"heal":
 				var before := t.hp
 				t.hp = mini(t.max_hp, t.hp + heal_amount(u, a))
@@ -816,6 +816,11 @@ static func helper(att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2
 		if any_side or maxi(absi(side.x), absi(side.y)) == 1:
 			return o
 	return null
+
+
+## What h's help adds to att's strike: `help_damage`, plus their bond's team-up bonus (BondRules, data/bonds.csv).
+static func help_damage(att: CombatUnit, h: CombatUnit) -> int:
+	return int(num("help_damage")) + int(att.bonds.get(String(h.figure), 0)) * int(Db.bonds.get("teamup_per_level", 1))
 
 
 # --- bleeding out ([USER] c6 and c11, combat build step 3) ---------------------------------------------

@@ -114,6 +114,7 @@ func _on_finished(won: bool) -> void:
 		var xp := LevelRules.fight_xp(foes, false, Db.levels)
 		var lines := Game.award_xp(xp)
 		lines.insert(0, Txt.f("UI_XP_GAIN", xp))
+		lines.append_array(battle.award_bonds())
 		var x := Label.new()
 		x.text = "\n".join(lines)
 		box.add_child(x)

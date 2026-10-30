@@ -1122,3 +1122,56 @@ func test_a_one_time_find_gives_the_rod() -> void:
 	Game.explore_map = "home"
 	_restore(saved)
 
+
+
+## Bonds (game designer 2026-10-30, design-village-life): +1 for a fight both finish standing, +1 for a help-up,
+## +1 for a team-up, at most 3 a fight; levels at 10, 25 and 45.
+func test_bond_points_and_levels() -> void:
+	_db()
+	var cfg := Db.bonds
+	eq(BondRules.key("lead", "dog"), "dog+lead", "one key either way round")
+	eq(BondRules.key("dog", "lead"), "dog+lead")
+	eq(BondRules.fight_points(true, false, false, cfg), 1, "both stood")
+	eq(BondRules.fight_points(true, true, true, cfg), 3, "stood, helped up, teamed up")
+	eq(BondRules.fight_points(false, true, false, cfg), 1, "a help-up counts though one fell")
+	eq([BondRules.level(9, cfg), BondRules.level(10, cfg), BondRules.level(25, cfg), BondRules.level(45, cfg), BondRules.level(99, cfg)], [0, 1, 2, 3, 3])
+	var bonds := {"dog+lead": 8}
+	var ups := BondRules.award(bonds, ["lead", "dog", "hunter"], ["lead", "dog"], {"dog+lead": {"teamup": true}}, cfg)
+	eq(bonds["dog+lead"], 10, "both up and a team-up: +2")
+	eq(ups, [["dog+lead", 1]], "and that reaches level 1")
+	ok(not bonds.has("hunter+lead"), "the hunter fell: nothing for the pairs it's in")
+	eq(BondRules.levels_for("lead", bonds, cfg), {"dog": 1})
+	eq(BondRules.talk_key("dog+lead", 1), "BOND_TALK_EMPTY", "an empty slot until Brandon writes it")
+
+
+## A bond adds to team-ups between the pair, a point a level, and a won fight's deeds feed it.
+func test_bonds_grow_in_fights_and_boost_teamups() -> void:
+	var saved := _fresh_game()
+	var g := CombatGrid.flat(5, 5)
+	var lead := CombatUnit.from_member(Game.run.members[0])
+	var dog := CombatUnit.from_member(Game.run.members.filter(func(m: Dictionary) -> bool: return m.def.id == &"dog")[0])
+	var foe := CombatUnit.enemy(Db.class_def("bandit"))
+	foe.team = 1
+	foe.place(Vector2i(2, 2), 0)
+	lead.place(Vector2i(1, 2), 0)
+	dog.place(Vector2i(2, 1), 0)
+	var units := [lead, dog, foe]
+	var base := CombatRules.help_damage(lead, dog)
+	lead.bonds = {"dog": 2}
+	eq(CombatRules.help_damage(lead, dog), base + 2, "bond 2: +2 on the dog's help")
+	lead.bonds = {}
+	var b := Battle.new()
+	b.units = units
+	for ev in CombatRules.resolve(RandomNumberGenerator.new(), g, lead, lead.abilities[0], foe.cell, units):
+		if ev.type == "help":
+			b._deed(ev.by, ev.src, "teamup")
+	ok(b.deeds.has("dog+lead"), "the team-up is noted")
+	foe.hp = 0
+	var lines := b.award_bonds()
+	eq(int(Game.meta.bonds["dog+lead"]), 2, "after the fight: both up and a team-up")
+	eq(lines.size(), 0, "no level yet")
+	Game.meta.bonds["dog+lead"] = 9
+	b.award_bonds()
+	eq(CombatUnit.from_member(Game.run.members[0]).bonds, {"dog": 1}, "a level carries into the next fight")
+	b.free()
+	_restore(saved)

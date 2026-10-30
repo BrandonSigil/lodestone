@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://c3gt20qowni3i"
+
+[deps]
+
+files=["res://data/bonds.value.translation", "res://data/bonds.note.translation"]
+
+source_file="res://data/bonds.csv"
+dest_files=["res://data/bonds.value.translation", "res://data/bonds.note.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

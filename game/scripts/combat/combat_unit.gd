@@ -26,6 +26,7 @@ var tint := Color.GRAY
 var deficiency: StringName = &""
 var skills: Dictionary = {}
 var member: Dictionary = {}  ## the RunState member this unit came from (party only)
+var bonds: Dictionary = {}  ## character id -> bond level with this piece (BondRules): team-ups between them hit harder
 var belt: InventoryGrid = null  ## what this piece can use in a fight: its member's belt, spent in place
 
 # Combat stats after scaling.
@@ -180,6 +181,7 @@ static func from_member(m: Dictionary, mods: Dictionary = {}) -> CombatUnit:
 	u.shown_hp = u.hp
 	u.member = m
 	u.belt = m.get("belt")
+	u.bonds = BondRules.levels_for(String(m.def.id), Game.meta.get("bonds", {}), Db.bonds)
 	var ranks: Dictionary = m.get("ranks", {})
 	for i in u.abilities.size():  # skills ranked up in the Lodestone menu carry their effects
 		u.abilities[i] = LevelRules.ranked(u.abilities[i], int(ranks.get(u.abilities[i].id, 0)), Db.skill_ranks)
