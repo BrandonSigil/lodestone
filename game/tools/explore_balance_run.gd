@@ -12,6 +12,7 @@ func run(args: PackedStringArray) -> void:
 	print("party: hero (%s) + dog, level %d, %d fights each" % [weapon, level, n])
 	for map_name in MAPS:
 		var m := ExploreMap.load_named(map_name)
+		_open_ways(m)
 		for g: Dictionary in m.groups:
 			var line := "%-10s %-12s" % [map_name, g.id]
 			for how in ["party", "ambushed"]:
@@ -47,6 +48,16 @@ func run(args: PackedStringArray) -> void:
 			wins += 1 if w == 0 else 0
 			stalls += 1 if w == -1 else 0
 		print("road       %-12s | party    %3d%%  (stalemates %d%%)" % [enc_id, roundi(100.0 * wins / n), roundi(100.0 * stalls / n)])
+
+
+## Shut doors and rubble open onto their floor, as they are by the time the walk reaches what's behind them
+## (the crypt's plaza, tower and throne all sit behind one: with them shut the fights never met).
+func _open_ways(m: ExploreMap) -> void:
+	for t: Dictionary in m.things:
+		if String(t.kind) in ["door", "rubble"]:
+			for key in CombatGrid.LETTERS:
+				if CombatGrid.LETTERS[key] == String(t.floor):
+					m.grid.set_terrain(t.cell, key)
 
 
 func _party(level: int, weapon: String) -> Array:
