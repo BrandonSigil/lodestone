@@ -57,6 +57,7 @@ const PLATE_SCALE := 1.35  ## a painted backdrop plate's width as a multiple of 
 const FG_HEIGHT := 0.16  ## the solid foreground band's height as a share of the view
 const GLOW := Color(1.0, 0.97, 0.82)  ## a door's light when the party is close: warm white, to read on golden grass
 const GLOW_RINGS := 6
+const NAVY_DEPTH := 6000.0  ## how far down (board pixels) the navy under the front treeline reaches: past any view
 const FOOT := 0.3  ## a piece's feet (and its ring) reach this far from its middle, in cells
 const WINDOW_R := 56.0  ## see-through window round a piece behind a prop: radius on screen
 const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
@@ -2534,6 +2535,10 @@ func _draw_skirt(c: Vector2i) -> void:
 	# Trees in front of the ground (nearer the camera) frame the map and stand bigger; the ones behind it
 	# are mostly hidden by its cliffs. Next to the ground the wood thins so the cliffs still show.
 	var front := depth_of(c.x, c.y) > depth_of(src.x, src.y)
+	if wallpaper and front and ring == look.skirt:
+		# Under the outermost front trees the navy carries on down past the frame ([USER] 2026-10-30), so the
+		# lighter wallpaper never shows below the treeline: a column of the trees' own flat colour.
+		_ci.draw_rect(Rect2(mid.x - TW * 0.5, mid.y - TH * 0.5, TW, NAVY_DEPTH), _sink_colour())
 	var count := 1 if seed_v % 3 != 0 else 0
 	if ring == 2:
 		count = 1 if seed_v % 4 != 0 else 2
