@@ -231,20 +231,22 @@ static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Arr
 		"cell":
 			for y in grid.h:
 				for x in grid.w:
-					var c := Vector2i(x, y)
-					if in_reach(grid, from, c, r):
-						out.append(c)
+					for c in grid.places_at(Vector2i(x, y)):
+						if in_reach(grid, from, c, r):
+							out.append(c)
 	return out
 
 
-## Cells hit when aiming at `center` (a plus shape for radius 1).
+## Cells hit when aiming at `center` (a plus shape for radius 1). On a deck the blast stays on the deck where
+## the deck goes on and spills to the ground past its edge; in the lane under a deck the deck shields what's on it.
 static func area(grid: CombatGrid, a: Ability, center: Vector2i) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
-	for y in range(center.y - a.radius, center.y + a.radius + 1):
-		for x in range(center.x - a.radius, center.x + a.radius + 1):
+	var mid := CombatGrid.ground(center)
+	for y in range(mid.y - a.radius, mid.y + a.radius + 1):
+		for x in range(mid.x - a.radius, mid.x + a.radius + 1):
 			var c := Vector2i(x, y)
-			if grid.in_bounds(c) and dist(c, center) <= a.radius:
-				out.append(c)
+			if grid.in_bounds(c) and dist(c, mid) <= a.radius:
+				out.append(CombatGrid.deck_of(c) if CombatGrid.on_deck(center) and grid.has_deck(c) else c)
 	return out
 
 
@@ -522,13 +524,13 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 	var events := []
 	if t.has_trait(TRAIT_DEEP_ROOTS):
 		return events
-	var delta := t.cell - from
+	var delta := CombatGrid.ground(t.cell) - CombatGrid.ground(from)
 	var dir := Vector2i(signi(delta.x), 0) if absi(delta.x) >= absi(delta.y) else Vector2i(0, signi(delta.y))
 	if dir == Vector2i.ZERO:
 		return events
 	var path: Array[Vector2i] = [t.cell]
 	for i in n:
-		var dest := t.cell + dir
+		var dest := push_place(grid, t.cell, CombatGrid.ground(t.cell) + dir)
 		var blocked := not grid.passable(dest) or occupant(units, dest) != null
 		if not blocked and grid.height_at(dest) - grid.height_at(t.cell) > 1:
 			blocked = true
@@ -548,6 +550,16 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 	if path.size() > 1:
 		events.push_front({"type": "push", "unit": t, "path": path})
 	return events
+
+
+## Where a piece shoved from place `at` into cell c lands: on the highest floor there it isn't shoved up into
+## (a deck it slides onto level), else the ground below: off the side of a bridge it falls.
+static func push_place(grid: CombatGrid, at: Vector2i, c: Vector2i) -> Vector2i:
+	var best := c
+	for p in grid.places_at(c):
+		if grid.passable(p) and grid.height_at(p) <= grid.height_at(at) + 1 and grid.height_at(p) > grid.height_at(best):
+			best = p
+	return best
 
 
 static func guard(u: CombatUnit) -> void:
@@ -618,7 +630,8 @@ static func helper(att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2
 			continue
 		if dist(o.cell, tgt.cell) != 1 or o.cell == from:
 			continue
-		if any_side or maxi(absi(o.cell.x - from.x), absi(o.cell.y - from.y)) == 1:
+		var side := CombatGrid.ground(o.cell) - CombatGrid.ground(from)
+		if any_side or maxi(absi(side.x), absi(side.y)) == 1:
 			return o
 	return null
 
@@ -689,8 +702,9 @@ static func guard_ring(grid: CombatGrid, units: Array, team: int) -> Dictionary:
 	for g: CombatUnit in units:
 		if g.alive() and g.team == team and g.has_status(STATUS_GUARD) and not g.has_status(STATUS_SLEEP):
 			for d in DIRS:
-				if grid.in_bounds(g.cell + d) and grid.passable(g.cell + d):
-					out[g.cell + d] = true
+				for n in grid.places_next(g.cell, d):
+					if grid.in_bounds(n) and grid.passable(n) and in_reach(grid, g.cell, n, ability_range(g, null)):
+						out[n] = true
 	return out
 
 
@@ -712,13 +726,13 @@ static func danger_zone(grid: CombatGrid, units: Array, team: int) -> Dictionary
 		for f: Vector2i in froms:
 			for y in grid.h:
 				for x in grid.w:
-					var c := Vector2i(x, y)
-					if zone.has(c):
-						continue
-					for r in ranges:
-						if in_reach(grid, f, c, r):
-							zone[c] = true
-							break
+					for c in grid.places_at(Vector2i(x, y)):
+						if zone.has(c):
+							continue
+						for r in ranges:
+							if in_reach(grid, f, c, r):
+								zone[c] = true
+								break
 	return zone
 
 

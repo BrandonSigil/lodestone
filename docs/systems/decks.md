@@ -18,8 +18,15 @@
 - Free walking (WASD) keeps the walker's level: `ExploreRules.slide` takes the leader's place, and `grid.step_place(from, cell, jump)` picks the place at the next cell it steps onto (the walkable one nearest its own height). From the bank that is the deck; from the lane it is the lane.
 - Distances (`CombatRules.dist`, `ExploreRules.dist`) and drawing positions (`unit.vis`, move and push animations, facing) use `ground()`. Seen cells (`known`) are ground cells: seeing a cell is seeing its deck until step 5.
 
+## Fights (step 3)
+- Reach, distance and helpers measure on ground cells, so melee between a deck and the lane beside it is a height gap like any cliff (`MELEE_REACH`), and a piece straight under a deck is never next to the piece on it.
+- **Pushes** (`CombatRules.push_place`): a shoved piece lands on the highest floor at the next cell it isn't pushed up into. Along a bridge or from a level bank onto one, it stays on top; off the side or end of a deck it falls to the ground (fall damage as usual); in the lane it slides under the deck. Under a deck too low to walk under it bumps.
+- **Blasts** (`CombatRules.area`): aimed at a deck, the blast covers the deck where the deck goes on and the ground past its edge; aimed in the lane, the deck over it shields whatever stands on it.
+- **Guard zones**: the ring shows only places the guard can hit (as holding already required), so a guard on a bridge doesn't ring the lane three levels down.
+- Cell-aimed abilities and the danger zone list deck places too. The AI moves through `reachable` and `walk_distance`, so it walks bridges and lanes.
+
 ## Sight (rule for map checks; built in step 5)
 A deck is a slab `DECK_THICK` (1) level thick under its floor. A sight line through the cell between `h - 1` and `h` is blocked; above it (on the deck) or below it (in the lane) it passes.
 
 ## Still to come
-3. Fights on two levels (reach, guard zones, pushes and falls off a deck, the AI). 4. Drawing the deck slab and what stands on it (with the map builder; the see-through window opens it over a piece underneath). 5. Sight and fog per layer. 6. The map maker paints decks (map builder). Until step 4, a map with decks loads and saves but doesn't draw them.
+4. Drawing the deck slab and what stands on it (with the map builder; the see-through window opens it over a piece underneath). 5. Sight and fog per layer. 6. The map maker paints decks (map builder). Until step 4, a map with decks loads and saves but doesn't draw them.

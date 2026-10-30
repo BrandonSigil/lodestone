@@ -128,3 +128,48 @@ func test_fight_moves_and_deploys_on_both_levels() -> void:
 	eq(int(EnemyAi.walk_distance(g, foe, [top, low, foe]).get(Vector2i(2, 4), -1)), 2, "the AI measures over the bridge")
 	var cells := ExploreRules.deploy_cells(g, deck, _walker(g, Vector2i(0, 0)), 1)
 	ok(cells.has(Vector2i(2, 1)) and cells.has(Vector2i(2, 3)) and not cells.has(Vector2i(2, 2)), "deploy round a leader on the deck")
+
+
+# --- step 3: fights on two levels ---------------------------------------------------------
+
+func test_pushed_along_a_deck_or_off_its_side() -> void:
+	var g := _bridge()
+	g.add_deck(Vector2i(3, 2), 3)
+	var deck := CombatGrid.deck_of(Vector2i(2, 2))
+	var k := _walker(g, deck)
+	var b := _walker(g, CombatGrid.deck_of(Vector2i(3, 2)), 1)
+	var hp := b.hp
+	CombatRules.push(g, [k, b], k.cell, b, 1)
+	eq(b.cell, Vector2i(4, 2), "off the end of the bridge, down into the lane")
+	eq(b.hp, hp - 2 * CombatRules.FALL_DAMAGE, "a 3 level fall")
+	b.place(Vector2i(2, 1), 3)
+	b.hp = hp
+	k.place(Vector2i(2, 0), 3)
+	CombatRules.push(g, [k, b], k.cell, b, 1)
+	eq(b.cell, deck, "from the bank onto the bridge, level")
+	eq(b.hp, hp, "no fall")
+	var low := _walker(g, Vector2i(1, 2), 1)
+	var shover := _walker(g, Vector2i(0, 2))
+	CombatRules.push(g, [shover, low, k, b], shover.cell, low, 1)
+	eq(low.cell, Vector2i(2, 2), "in the lane it slides under the bridge")
+
+
+func test_blasts_keep_to_their_level() -> void:
+	var g := _bridge()
+	g.add_deck(Vector2i(3, 2), 3)
+	var deck := CombatGrid.deck_of(Vector2i(2, 2))
+	var moon := Db.ability("moonbeam")
+	var top := CombatRules.area(g, moon, deck)
+	ok(top.has(CombatGrid.deck_of(Vector2i(3, 2))) and top.has(Vector2i(1, 2)), "on the deck: along it, and down past its edge")
+	ok(not top.has(Vector2i(2, 2)) and not top.has(Vector2i(3, 2)), "not the lane under it")
+	var low := CombatRules.area(g, moon, Vector2i(2, 2))
+	ok(low.has(Vector2i(3, 2)) and not low.has(deck), "under the deck: the deck shields what's on it")
+
+
+func test_guard_ring_only_where_the_guard_can_hit() -> void:
+	var g := _bridge()
+	var gd := _walker(g, CombatGrid.deck_of(Vector2i(2, 2)))
+	CombatRules.guard(gd)
+	var ring := CombatRules.guard_ring(g, [gd], 0)
+	ok(ring.has(Vector2i(2, 1)) and ring.has(Vector2i(2, 3)), "the banks beside the bridge")
+	ok(not ring.has(Vector2i(1, 2)) and not ring.has(Vector2i(3, 2)), "not the lane three levels down")
