@@ -550,7 +550,9 @@ func test_elite_groups_are_tougher_badged_and_stay_beaten() -> void:
 	var g := {"id": "camp", "elite": true}
 	ok(not ExploreRules.stays_beaten("snow_pass", g, []))
 	ok(ExploreRules.stays_beaten("snow_pass", g, [ExploreRules.beaten_flag("snow_pass", "camp")]), "beaten once, gone for good")
-	eq(ExploreRules.elites_left(["snow_pass", "wolf_den", "crypt"], []), 0, "no elite placed on today's maps yet")
+	var maps := ["snow_pass", "wolf_den", "crypt"]
+	eq(ExploreRules.elites_left(maps, []), 1, "the den's lone wolf is the first elite")
+	eq(ExploreRules.elites_left(maps, [ExploreRules.beaten_flag("wolf_den", "den_lone")]), 0, "beaten, it's gone")
 
 
 ## The map loader keeps a group's goals, way out, TALK, elite mark and leader (they were dropped before).
