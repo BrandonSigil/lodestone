@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"job_tinker"
+name_key = "JOB_TINKER"
+max_hp = 16
+move = 4
+jump = 1
+attack = 4
+defense = 11
+armor = 0
+crit = 0
+resource = "charges"
+resource_max = 3
+resource_every = 2
+damage = 2
+range_min = 2
+range_max = 3
+magic = false
+skills = {"sneak": 1, "forage": 1}
+abilities = Array[StringName]([&"bomb", &"caltrops", &"patch", &"smoke_bomb"])

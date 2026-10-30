@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"job_ember"
+name_key = "JOB_EMBER"
+max_hp = 14
+move = 3
+jump = 1
+attack = 4
+defense = 11
+armor = 0
+crit = 0
+resource = "mana"
+resource_max = 10
+resource_every = 0
+damage = 3
+range_min = 2
+range_max = 3
+magic = true
+skills = {"forage": 1, "wayfind": 1}
+abilities = Array[StringName]([&"firebolt", &"fireball", &"ignite", &"flash"])

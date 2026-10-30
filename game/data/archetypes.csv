@@ -1,0 +1,11 @@
+id,name_key,role,class,resource,clutch,branch_a,branch_b,state
+bulwark,JOB_BULWARK,tank,job_knight,rage,command,EVO_GUARDIAN,EVO_VANGUARD,[AI] until Brandon retags
+reaver,JOB_REAVER,bruiser,job_reaver,rage,second_wind,EVO_WARLORD,EVO_BERSERKER,[AI] until Brandon retags
+shade,JOB_SHADE,skirmisher,job_rogue,charges,shadow_swap,EVO_ASSASSIN,EVO_THIEF,[AI] until Brandon retags
+sharpshooter,JOB_SHARPSHOOTER,ranged,job_archer,charges,overwatch,EVO_HUNTER,EVO_MARKSMAN,[AI] until Brandon retags
+tracker,JOB_TRACKER,controller,job_tracker,charges,call_companion,EVO_BEASTMASTER,EVO_TRAPPER,[AI] until Brandon retags
+ember,JOB_EMBER,blaster,job_ember,mana,flash,EVO_WIZARD,EVO_HEALER,[AI] until Brandon retags
+moon,JOB_MOON,controller,job_moon,mana,moon_veil,EVO_SEER,EVO_HEXER,[AI] until Brandon retags
+mender,JOB_MENDER,support,job_mender,mana,far_aid,EVO_CLERIC,EVO_MEDIC,[AI] until Brandon retags
+chanter,JOB_CHANTER,support,job_chanter,charges,last_stand,EVO_HERALD,EVO_DIPLOMAT,[AI] until Brandon retags
+tinker,JOB_TINKER,utility,job_tinker,charges,patch,EVO_BOMBER,EVO_ENGINEER,[AI] until Brandon retags

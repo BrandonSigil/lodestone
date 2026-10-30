@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://54crk4upeas5"
+
+[deps]
+
+files=["res://data/archetypes.name.translation", "res://data/archetypes.role.translation", "res://data/archetypes.class.translation", "res://data/archetypes.resource.translation", "res://data/archetypes.clutch.translation", "res://data/archetypes.branch.translation", "res://data/archetypes.branch.translation", "res://data/archetypes.state.translation"]
+
+source_file="res://data/archetypes.csv"
+dest_files=["res://data/archetypes.name.translation", "res://data/archetypes.role.translation", "res://data/archetypes.class.translation", "res://data/archetypes.resource.translation", "res://data/archetypes.clutch.translation", "res://data/archetypes.branch.translation", "res://data/archetypes.branch.translation", "res://data/archetypes.state.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

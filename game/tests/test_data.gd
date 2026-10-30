@@ -117,3 +117,55 @@ func test_village_art_is_its_own() -> void:
 		ok(not String(s).contains("/") or String(s).begins_with("village/"), "%s (%s) borrows another set" % [s, stems[s]])
 		var path := "res://art/source/battle/village/%s.png" % String(s).trim_prefix("village/")
 		ok(ResourceLoader.exists(path), "%s (%s) is missing from the village set" % [path, stems[s]])
+
+
+## The ten class archetypes ([USER] 2026-10-30, docs/design/archetypes.md): kits, resources and evolved classes load
+## from data/archetypes.csv, kits.csv and evolved.csv, and every piece they name exists.
+func test_archetypes_load() -> void:
+	if Db.explore_events.is_empty():
+		Db.reload()
+	var keys := _text_keys()
+	var arch := CsvTable.load_rows("res://data/archetypes.csv")
+	eq(arch.size(), 10, "ten archetypes")
+	var kits := CsvTable.load_rows("res://data/kits.csv")
+	var evolved := CsvTable.load_rows("res://data/evolved.csv")
+	for a in arch:
+		var id := String(a.id)
+		ok(keys.has(a.name_key), "%s name key" % id)
+		var cls: ClassDef = load("res://data/classes/%s.tres" % a["class"])
+		ok(cls != null, "%s class %s" % [id, a["class"]])
+		if cls == null:
+			continue
+		eq(cls.resource, a.resource, "%s job resource" % id)
+		ok(["rage", "mana", "charges"].has(String(cls.resource)), "%s resource kind" % id)
+		var mine := kits.filter(func(r: Dictionary) -> bool: return r.archetype == id)
+		var slots := {}
+		for r in mine:
+			slots[int(r.slot)] = true
+			match String(r.source):
+				"ability":
+					ok(Db.abilities.has(String(r.ability)), "%s: %s is in abilities.csv" % [id, r.ability])
+					ok(Txt.has("DESC_" + String(r.ability).to_upper()), "%s: a line for %s" % [id, r.ability])
+				"trait":
+					ok([CombatRules.TRAIT_SHIELD_WALL, CombatRules.TRAIT_POISON_BLADES].has(StringName(r.ability)), "%s: %s is a combat trait" % [id, r.ability])
+				"action":
+					ok(BASIC_ACTIONS.has(String(r.ability)), "%s: %s is a basic action" % [id, r.ability])
+				_:
+					ok(false, "%s: bad source %s" % [id, r.source])
+		eq(slots.size(), 4, "%s has four ability slots" % id)
+		ok(mine.any(func(r: Dictionary) -> bool: return r.ability == a.clutch), "%s: the clutch is in its kit" % id)
+		var evo := evolved.filter(func(r: Dictionary) -> bool: return r.base == id)
+		eq(evo.map(func(r: Dictionary) -> String: return String(r.branch)), ["A", "B"], "%s forks in two" % id)
+		eq([a.branch_a, a.branch_b], evo.map(func(r: Dictionary) -> String: return String(r.name_key)), "%s fork names match" % id)
+		for r in evo:
+			ok(keys.has(r.name_key), "%s name key" % r.id)
+	# the seven new jobs carry their kit, except slots that are traits or actions
+	for a in arch:
+		var cls: ClassDef = load("res://data/classes/%s.tres" % a["class"])
+		if not String(a["class"]) in ["job_knight", "job_rogue", "job_archer"]:
+			var want := kits.filter(func(r: Dictionary) -> bool: return r.archetype == a.id and r.source == "ability" and r.alt == "0").map(func(r: Dictionary) -> String: return String(r.ability))
+			eq(cls.abilities.map(func(s: StringName) -> String: return String(s)), want, "%s's class holds its kit" % a.id)
+	eq(evolved.size(), 20, "two evolved classes each")
+
+
+const BASIC_ACTIONS := ["guard", "move", "wait", "talk", "aid"]

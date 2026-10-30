@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cj36knd7jww56"
+
+[deps]
+
+files=["res://data/evolved.base.translation", "res://data/evolved.branch.translation", "res://data/evolved.name.translation", "res://data/evolved.note.translation"]
+
+source_file="res://data/evolved.csv"
+dest_files=["res://data/evolved.base.translation", "res://data/evolved.branch.translation", "res://data/evolved.name.translation", "res://data/evolved.note.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

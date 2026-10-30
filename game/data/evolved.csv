@@ -1,0 +1,21 @@
+id,base,branch,name_key,note
+guardian,bulwark,A,EVO_GUARDIAN,zone 2, armor
+vanguard,bulwark,B,EVO_VANGUARD,rage into damage
+warlord,reaver,A,EVO_WARLORD,wide sweeps
+berserker,reaver,B,EVO_BERSERKER,damage for armor
+assassin,shade,A,EVO_ASSASSIN,first strike
+thief,shade,B,EVO_THIEF,lifts items
+hunter,sharpshooter,A,EVO_HUNTER,beasts and fliers
+marksman,sharpshooter,B,EVO_MARKSMAN,reach, pierce
+beastmaster,tracker,A,EVO_BEASTMASTER,two beasts
+trapper,tracker,B,EVO_TRAPPER,hazards
+wizard,ember,A,EVO_WIZARD,area, terrain
+healer,ember,B,EVO_HEALER,mend, ward
+seer,moon,A,EVO_SEER,foresight
+hexer,moon,B,EVO_HEXER,debuffs, long sleep
+cleric,mender,A,EVO_CLERIC,sanctuary, smite
+medic,mender,B,EVO_MEDIC,rest care, cleanse
+herald,chanter,A,EVO_HERALD,rally the line
+diplomat,chanter,B,EVO_DIPLOMAT,talk wins
+bomber,tinker,A,EVO_BOMBER,bigger blasts
+engineer,tinker,B,EVO_ENGINEER,turret, repair

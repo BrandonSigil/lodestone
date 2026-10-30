@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bfi58fuuivrfs"
+
+[deps]
+
+files=["res://data/kits.slot.translation", "res://data/kits.alt.translation", "res://data/kits.ability.translation", "res://data/kits.source.translation", "res://data/kits.built.translation", "res://data/kits.needs.translation"]
+
+source_file="res://data/kits.csv"
+dest_files=["res://data/kits.slot.translation", "res://data/kits.alt.translation", "res://data/kits.ability.translation", "res://data/kits.source.translation", "res://data/kits.built.translation", "res://data/kits.needs.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true
