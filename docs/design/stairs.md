@@ -1,4 +1,4 @@
-# Stairs: a kit (proposal)
+# Stairs: a kit
 
 Brandon on village v2 pass 4 (2026-10-30): "The stairs still look janky... they connect oddly to each other, these flat
 spots in the middle of them are weird. They should be constant repeatable stairs. Can you research how other games do
@@ -61,10 +61,19 @@ facing is the same piece turned.**
   neighbour (`_stair_low`: the lowest ground beside it, one to three levels down) to its own height, the climb
   direction and corner rule as above, `MapDress.stair_run` only as the last fallback.
 - The tread size is per map data, not a constant: `MapLook.stair_treads`, set by `"look": {"stairs": 1}` in a map's
-  JSON grid (or a `stairs` column in `data/looks.csv`), 1 to 6, default 3. 1 is the block-step look, 3 the fine one.
+  JSON grid (or a `stairs` column in `data/looks.csv`), 1 to 6. 1 is the block-step look, 3 the fine one.
+  Brandon picked block steps (2026-10-30), so 1 is the default on every map.
 - The ledge lines under a stair's neighbours (`_seg_foot`) start at the same `_stair_low`, so they meet the bottom tread.
 - The block look (`_stair_steps`, the plain staging combat maps use) is unchanged: it still centres its treads on
   `MapDress.stair_run`. Converting it waits for Brandon's pick.
 - Live maps after the switch: the village and snow pass flights are already built one level a cell down from the
   upper ground, so they draw as kit flights with no map change.
 - A piece standing on a stair cell stands at its top tread (the cell's height), as before.
+- A flight's top cell faces the level ground ahead of it when its own next step down is behind it, before any
+  other level ground beside it (so a one-wide flight on a cliff edge still reads along its run).
+
+## Village v2 on the kit (2026-10-30)
+`tools/explore/build_village_v2.py` builds every flight with `kit_flight()` (see `docs/systems/explore.md`). No
+stubs: every flight is at least 2 cells (a 2-level cliff needs 2). Of 20 flights, 16 are two or three wide. One wide:
+the footbridge's (as wide as the bridge), two short ones on ledges by the gorge, and the long one from the gorge
+floor up to the plateau, where neither side has ground for a twin to land on.

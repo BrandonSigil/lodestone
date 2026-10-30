@@ -152,47 +152,70 @@ def course(pts):
     return out
 
 
-def road(pts, t="d"):
-    """A road along the course. Where it meets a cliff more than a level high, a flight is cut into the low side
-    along the course (or back into the high side when the low side has no room), climbing two levels a step: the
-    lead's jump is 1, and a stair lets it climb 2 more (CombatGrid.STAIRS_CLIMB)."""
+def _ground_at(c, h):
+    """Plain ground a flight can land on: on the map, walkable, not a stair, at height h."""
+    x, y = c
+    return (0 <= x < W and 0 <= y < H and V.terrain[y][x] in "gds" and V.height[y][x] == h
+            and c not in _prop_cells(V) and c not in DECKS)
+
+
+LANDINGS = set()  # the ground at each flight's ends: later flights leave it clear
+
+
+def kit_flight(hi_c, lo_c, free, wide=True, high_first=False):
+    """A stair kit flight (docs/design/stairs.md) across the cliff between hi_c and lo_c, its neighbour: hi - lo
+    cells at lo + 1 .. hi, one level a cell, straight out from the cliff, no landing inside, the top cell flush
+    with the ground above. It is cut into the low side, or back into the high side, or split across the cliff,
+    whichever fits first (`high_first`: the high side first); then made two wide where the cells beside are free
+    (cut or built to the flight's levels) and its ends land on the same ground. `free(c)` says a cell may become a
+    stair; `wide` is True, False or the sides to try. Returns ({cell: height}, axis, [end cells]), or None."""
+    hi, lo = V.height[hi_c[1]][hi_c[0]], V.height[lo_c[1]][lo_c[0]]
+    e = (lo_c[0] - hi_c[0], lo_c[1] - hi_c[1])
+    at = lambda c, k: (c[0] + e[0] * k, c[1] + e[1] * k)
+    n = hi - lo
+    for j in (range(n + 1) if high_first else range(n, -1, -1)):  # j cells on the low side, the rest in the high
+        cells = {at(lo_c, k): (lo + j - k, lo) for k in range(j)}
+        cells.update({at(hi_c, -k): (lo + j + 1 + k, hi) for k in range(n - j)})
+        ends = [(at(lo_c, j), lo), (at(hi_c, -(n - j)), hi)]  # the ground the flight lands on, below and above
+        if not all(free(c) and c not in LANDINGS and V.height[c[1]][c[0]] == base for c, (_, base) in cells.items()):
+            continue
+        if not all(_ground_at(c, h) or c in (lo_c, hi_c) and V.terrain[c[1]][c[0]] in "gds" for c, h in ends):
+            continue
+        out = {c: h for c, (h, _) in cells.items()}
+        sides = wide if isinstance(wide, list) else [(e[1], e[0]), (-e[1], -e[0])] if wide else []
+        twin = []
+        for side in sides:
+            sh = lambda c: (c[0] + side[0], c[1] + side[1])
+            if all(free(sh(c)) and sh(c) not in LANDINGS and lo <= V.height[sh(c)[1]][sh(c)[0]] <= hi for c in cells) \
+                    and all(_ground_at(sh(c), h) for c, h in ends):
+                out.update({sh(c): h for c, (h, _) in cells.items()})
+                twin = [sh(c) for c, _ in ends]
+                break
+        return out, ((1, 0) if e[0] else (0, 1)), [c for c, _ in ends] + twin
+    return None
+
+
+def road(pts, t="d", wide=True, high_first=False):
+    """A road along the course. Where it meets a cliff more than a level high (the lead's jump is 1), a stair kit
+    flight is cut straight out from the cliff (kit_flight), two wide where it fits (`wide`: unless a building
+    is coming beside it)."""
     cells = [c for c in course(pts) if 0 <= c[0] < W and 0 <= c[1] < H and V.terrain[c[1]][c[0]] != "."]
     hs = [V.height[y][x] for x, y in cells]
     stairs = {}
     props = _prop_cells(V)
-    open_at = lambda c, h: (0 <= c[0] < W and 0 <= c[1] < H and V.terrain[c[1]][c[0]] in "gds" and c not in props
-                            and V.height[c[1]][c[0]] == h and c not in stairs)
+    free = lambda c: (0 <= c[0] < W and 0 <= c[1] < H and V.terrain[c[1]][c[0]] in "gds" and c not in props
+                      and c not in stairs and c not in DECKS)
     for i in range(len(cells) - 1):
         a, b = hs[i], hs[i + 1]
         if abs(a - b) <= 1:
             continue
         hi_c, lo_c = (cells[i], cells[i + 1]) if a > b else (cells[i + 1], cells[i])
-        hi, lo = max(a, b), min(a, b)
-        e = (lo_c[0] - hi_c[0], lo_c[1] - hi_c[1])  # straight out from the cliff, whatever the road's bend
-        axis = (1, 0) if e[0] else (0, 1)
-        done = False
-        for rise in (1, 2):  # one level a step; two where there's no room for one (a stair climbs up to 3)
-            n = (hi - lo - 1) // rise
-            low = [(lo_c[0] + e[0] * k, lo_c[1] + e[1] * k) for k in range(n + 1)]  # the flight, then its landing
-            high = [(hi_c[0] - e[0] * k, hi_c[1] - e[1] * k) for k in range(n + 1)]
-            if n and all(open_at(c, lo) for c in low):
-                for k, c in enumerate(low[:-1]):
-                    stairs[c] = (hi - rise * (k + 1), axis)
-                done = True
-            elif n and all(open_at(c, hi) for c in high):
-                for k, c in enumerate(high[:-1]):
-                    stairs[c] = (lo + rise * (k + 1), axis)
-                done = True
-            elif not n:  # a step of 2 or 3: the cliff top cell is the stair
-                stairs[hi_c] = (hi, None)
-                done = True
-            if done:
-                break
-        if not done and hi - lo <= 3:  # no room for a run: the cliff top cell is the stair (it climbs up to 3)
-            stairs[hi_c] = (hi, None)  # a lone step: the game reads which way it climbs
-            done = True
-        if not done:
-            raise SystemExit("road at %s: no straight run either side for a flight of %s" % (cells[i], hi - lo))
+        got = kit_flight(hi_c, lo_c, free, wide, high_first)
+        if got is None:
+            raise SystemExit("road at %s: no straight run for a flight of %s" % (cells[i], abs(a - b)))
+        LANDINGS.update(got[2])
+        for c, h in got[0].items():
+            stairs[c] = (h, got[1])
     for c in cells:
         x, y = c
         if V.terrain[y][x] == "w":
@@ -223,8 +246,8 @@ STONE_BRIDGE = [(x, y) for x in range(13, 21) for y in (22, 23) if V.height[y][x
 deck(STONE_BRIDGE, 18)  # the square's west bridge, high over the gorge, to the ruins' foot
 FOOT_BRIDGE = [(x, y) for x in range(12, 27) for y in (37,) if V.height[y][x] <= 10]
 deck(FOOT_BRIDGE, 12)  # the wooden footbridge lower down, level with the farm (13) at its west end
-_east = (max(x for x, _ in FOOT_BRIDGE) + 1, 37)  # its east end steps down to the south town's lane (9)
-V.put(_east[0], _east[1], "t", 10)
+_east = (max(x for x, _ in FOOT_BRIDGE) + 1, 37)  # its east end: an abutment level with the deck, then a flight
+V.put(_east[0], _east[1], "d", 12)                 # down to the south town's lane (9)
 KEEP_OPEN.add(_east)
 
 road([(36.5, 56), (35.5, 51), (32.5, 49), (33.5, 46.5)])  # the gate road up to the south town
@@ -232,31 +255,23 @@ road([(33.5, 46.5), (36, 43), (33, 39), (31.5, 33), (31.5, 29.5), (30.5, 26.5)])
 # (the square up to the hall: a grand staircase, below)
 road([(36.5, 21.5), (41, 17.5), (44, 15.5)])  # to the smithy
 road([(36.5, 26.5), (43.5, 27.5), (43.5, 33.5), (38.5, 33.5)])  # down round the tavern to its front door
-road([(43, 34.5), (47, 33), (49.5, 36)])  # on to the east homes
+road([(42.5, 34.5), (47.5, 34.5), (49.5, 36)], high_first=True)  # on to the east homes: a flight cut into the tavern's shelf
 road([(22.5, 22.5), (21, 22.5)])  # onto the stone bridge
-road([(12.5, 22.5), (12.5, 24.5), (9.5, 25.5), (8, 27.5), (7.5, 28.5), (7.5, 33.5)])  # the ruins' foot down to the farm
+road([(12.5, 22.5), (12.5, 24.5), (9.5, 25.5), (8, 27.5), (7.5, 28.5), (7.5, 33.5)], wide=[(1, 0)])  # the ruins' foot down to the farm (its house to the west)
 # (the ruins' foot up into the cemetery: a grand staircase, below)
 road([(10.5, 37.5), (11.5, 37.5)])  # the farm onto the footbridge
-road([(28.5, 37.5), (28.5, 42), (31, 44.5)])  # off the footbridge to the south town
+road([(_east[0] + 0.5, 37.5), (31.5, 37.5), (31.5, 42), (31, 44.5)])  # off the footbridge to the south town
 road([(27.5, 46.5), (24, 47), (21, 46.5), (18, 45.5), (14, 44.5), (11, 45.5)])  # the south town down to the lake shore
 
-# --- grand staircases: straight, wide, one level a step, a landing every few steps ([USER] 2026-10-30) ------
-def grand_stair(start, up, width, lo, hi, landing_every=3):
-    """A flight from a bottom landing at `lo` to a top landing at `hi`. `start` is the first step's cell on one
-    edge of the flight; `up` the direction it climbs; `width` cells across (toward +x or +y, whichever is across).
-    Cells are cut or built to the flight's levels, so it reads as a stair laid into the cliff."""
+# --- grand staircases: straight, wide, one level a step ([USER] 2026-10-30), kit flights with no landings ---------
+def grand_stair(start, up, width, lo, hi):
+    """A kit flight from a bottom landing at `lo` to a top landing at `hi`: hi - lo cells at lo + 1 .. hi, the top
+    one flush with the landing above. `start` is the first step's cell on one edge of the flight; `up` the
+    direction it climbs; `width` cells across (toward +x or +y, whichever is across). Cells are cut or built to the
+    flight's levels, so it reads as a stair laid into the cliff."""
     ux, uy = up
     across = (0, 1) if ux else (1, 0)
-    rows = []
-    lvl, run = lo, 0
-    while lvl < hi - 1:
-        lvl += 1
-        rows.append(("t", lvl))
-        run += 1
-        if run == landing_every and lvl < hi - 1:
-            rows.append(("s", lvl))  # a landing
-            run = 0
-    rows = [("s", lo)] + rows + [("s", hi), ("s", hi)]
+    rows = [("s", lo)] + [("t", lvl) for lvl in range(lo + 1, hi + 1)] + [("s", hi), ("s", hi)]
     cells = []
     for k, (t, h) in enumerate(rows):
         for w in range(width):
@@ -286,7 +301,8 @@ DOCK_END = max(DOCK, key=lambda c: c[1])
 
 # --- buildings, each with a yard ---------------------------------------------------------------------------
 def house(sprite, x, y, fx, fy, door_dx, yard=None):
-    hit = [(xx, yy) for yy in range(y, y + fy) for xx in range(x, x + fx) if V.terrain[yy][xx] == "t"]
+    hit = [(xx, yy) for yy in range(y, y + fy + 1) for xx in range(x, x + fx) if V.terrain[yy][xx] == "t"
+           and (yy < y + fy or xx == x + door_dx)]  # its footprint and its door step
     assert not hit, "%s at %s would stand on a stair: %s" % (sprite, (x, y), hit)
     h = V.height[y + fy - 1][x + door_dx]
     V.fill(x, y, x + fx - 1, y + fy - 1, "g", h)
@@ -363,11 +379,13 @@ p("prop_barrel", 47, 15, 0.7)
 p("prop_bench", 35, 33, 0.6)
 p("prop_lamp", 40, 34, 1.5)
 p("prop_barrel", 42, 30, 0.7)
-gx, gy = next((x, y) for y in range(54, 44, -1) for x in range(31, 38)
-              if V.terrain[y][x + 1] == "d" and len({V.height[y][x + k] for k in range(3)}) == 1
-              and all(V.terrain[y][x + k] in "dg" for k in range(3)))
-V.arch("prop_arch", gx, gy, (3, 1))  # the town gate, across the gate road on a flat stretch
-KEEP_OPEN.update((x, gy) for x in range(gx, gx + 3))
+# the town gate, across the gate road on a flat stretch: its pillars on the grass either side, the road (one or
+# two wide, where it leaves a two-wide flight) in the gap
+gx, gy, gw = next((x, y, w) for y in range(54, 44, -1) for w in (4, 3) for x in range(31, 38)
+                  if all(V.terrain[y][x + k] == "d" for k in range(1, w - 1)) and len({V.height[y][x + k] for k in range(w)}) == 1
+                  and V.terrain[y][x] == "g" and V.terrain[y][x + w - 1] == "g")
+V.arch("prop_arch", gx, gy, (gw, 1))
+KEEP_OPEN.update((x, gy) for x in range(gx, gx + gw))
 
 # The ruins and the cemetery (graybox where we have no art).
 V.prop("ruins/prop_ruin", 10, 9, (1, 1), tall=1.1, sight=1.0)
@@ -529,40 +547,32 @@ def connect_shelves(start, rounds=200):
                 if abs(hu - hv) < 2:
                     continue
                 hi_c, lo_c = (u, v) if hu > hv else (v, u)
-                hi, lo = max(hu, hv), min(hu, hv)
-                e = (lo_c[0] - hi_c[0], lo_c[1] - hi_c[1])  # away from the cliff, on the low side
-                n = hi - lo - 1
-                run = [(lo_c[0] + e[0] * k, lo_c[1] + e[1] * k) for k in range(n)]
-                land = (lo_c[0] + e[0] * n, lo_c[1] + e[1] * n)
-                axis = (1, 0) if e[0] else (0, 1)
-                ok_low = all(free(c) and V.height[c[1]][c[0]] == lo for c in run) and 0 <= land[0] < W \
-                    and 0 <= land[1] < H and V.height[land[1]][land[0]] == lo and V.terrain[land[1]][land[0]] not in "ru.wf"
-                if ok_low and (best is None or n < best[0]):
-                    best = (n, run, [hi - 1 - k for k in range(n)], axis, e)
-                # or cut back into the high side, when the low side has no room
-                back = [(hi_c[0] - e[0] * k, hi_c[1] - e[1] * k) for k in range(n)]
-                top = (hi_c[0] - e[0] * n, hi_c[1] - e[1] * n)
-                ok_high = all(free(c) and V.height[c[1]][c[0]] == hi for c in back) and 0 <= top[0] < W \
-                    and 0 <= top[1] < H and V.height[top[1]][top[0]] == hi and V.terrain[top[1]][top[0]] not in "ru.wf"
-                if ok_high and (best is None or n + 0.5 < best[0]):
-                    best = (n + 0.5, back, [lo + 1 + k for k in range(n)], axis, e)
+                got = kit_flight(hi_c, lo_c, free)
+                if got is None:
+                    continue
+                up = (hi_c[0] - lo_c[0], hi_c[1] - lo_c[1])
+                # shortest first; then flights whose risers face the camera (climbing -x or -y), then two wide ones
+                score = abs(hu - hv) + (0.0 if up in ((-1, 0), (0, -1)) else 0.25) - (0.1 if len(got[0]) > abs(hu - hv) else 0.0)
+                if best is None or score < best[0]:
+                    best = (score, got)
+        on_rim = any(not (0 <= x + dx < W and 0 <= y + dy < H) or V.terrain[y + dy][x + dx] == "."
+                     for x, y in comp for dx in (-2, -1, 0, 1, 2) for dy in (-2, -1, 0, 1, 2))
+        if on_rim and len(comp) < 16:
+            best = None  # a small ledge on the rim isn't worth a flight: it goes to woods below
         if best is None:
             on_rim = any(not (0 <= x + dx < W and 0 <= y + dy < H) or V.terrain[y + dy][x + dx] == "."
                          for x, y in comp for dx in (-2, -1, 0, 1, 2) for dy in (-2, -1, 0, 1, 2))
-            if not on_rim:
+            if not on_rim and len(comp) >= 8:
                 return sorted(comp)  # a shelf inside the town with no way to it: the build fails
             for x, y in comp:
                 if V.terrain[y][x] == "g":
-                    V.put(x, y, "f")  # a ledge hanging on the rim: woods, like the rest of the rim
+                    V.put(x, y, "f")  # a ledge on the rim, or one too small for a flight: woods
             if any(V.terrain[y][x] != "f" for x, y in comp):
                 return sorted(comp)
             continue
-        _, run, levels, axis, e = best
-        _flight(run, levels, axis)
-        side = (e[1], e[0])  # two wide where the cells beside are free and level too
-        twin = [(x + side[0], y + side[1]) for x, y in run]
-        if all(free(c) and V.height[c[1]][c[0]] == V.height[run[0][1]][run[0][0]] for c in twin):
-            _flight(twin, levels, axis)
+        cells, axis, ends = best[1]
+        _flight(list(cells), list(cells.values()), axis)
+        LANDINGS.update(ends)
     return sorted(set(_walk_places(start)[1]) - _walk_places(start)[0])
 
 
@@ -614,6 +624,10 @@ for y in range(H):
         V.put(x, y, dressed["terrain"][y][x], HEIGHT_DIGITS.index(dressed["heights"][y][x]))
 for (x, y), (t, h) in UNDER.items():
     V.put(x, y, t, h)  # the tidy never reshapes the ground under a building or a prop
+for y in range(H):
+    for x in range(W):
+        if V.terrain[y][x] in "gds" and perch((x, y)):
+            V.put(x, y, "f")  # a pillar's top nobody can climb to: wooded, not a stray patch of open ground
 CUT_OFF = connect_shelves(tuple(V.start[0]))  # again: a tree or the tidy may have closed a narrow way
 if "--dump" in sys.argv:
     dump(V)

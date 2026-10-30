@@ -2013,7 +2013,12 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 			if is_stair.call(d) and absf(float(hgt.call(d)) - (h + 1.0)) < 0.01:
 				up = d
 		if up == Vector2i.ZERO:
-			for d: Vector2i in CombatRules.DIRS:  # the flight's top: toward the ground it meets, the far side lower
+			for d: Vector2i in CombatRules.DIRS:  # the flight's top: toward the ground it meets, its next step down behind
+				if absf(float(hgt.call(d)) - h) < 0.01 and not is_stair.call(d) and is_stair.call(-d) \
+						and absf(float(hgt.call(-d)) - (h - 1.0)) < 0.01:
+					up = d
+		if up == Vector2i.ZERO:
+			for d: Vector2i in CombatRules.DIRS:  # a lone top: toward the ground it meets, the far side lower
 				var far: float = hgt.call(-d)
 				if absf(float(hgt.call(d)) - h) < 0.01 and far >= 0.0 and far < h - 0.01 and not is_stair.call(d):
 					up = d
@@ -2103,6 +2108,8 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 			var nose := _side(lo, hi, d)
 			if Vector2(d).dot(Vector2(front_dir(false) + front_dir(true))) > 0.0:
 				_ci.draw_line(iso(nose[0].x, nose[0].y, sh), iso(nose[1].x, nose[1].y, sh), Color(1, 1, 0.92, 0.5), 1.2, true)
+			else:  # a flight climbing toward the camera hides its risers: an ink line marks each step's edge
+				_ci.draw_line(iso(nose[0].x, nose[0].y, sh), iso(nose[1].x, nose[1].y, sh), Color(INK, 0.45), 1.2, true)
 	return true
 
 ## Ground that blends into its neighbours: where a higher-ranked ground (road over grass, stone over road)

@@ -23,8 +23,9 @@ var colors := {}  ## sky_top, sky_low, cloud, far, near, snow, haze, wood_far, w
 ## weather falling over the map ("snow", "leaves" or ""). A map's own look can set either (grid.look).
 var wind := 0.0
 var weather := ""
-## Stairs ([USER] 2026-10-30, docs/design/stairs.md): treads a level, every step the same size: 1 block steps, 3 fine.
-var stair_treads := 3
+## Stairs (docs/design/stairs.md): treads a level, every step the same size. [USER] 2026-10-30 block steps (1);
+## a map can still ask for fine treads (3) with "stairs" in its look.
+var stair_treads := 1
 
 static var _rows := {}
 
@@ -61,7 +62,7 @@ static func resolve(map_look: Dictionary, art_set: String, strangeness := 0.0) -
 	m.tree_scale = float(row.get("tree_scale", "1.8"))
 	m.wind = float(map_look.get("wind", row.get("wind", "0")))
 	m.weather = String(map_look.get("weather", row.get("weather", "")))
-	m.stair_treads = clampi(int(map_look.get("stairs", row.get("stairs", "3"))), 1, 6)
+	m.stair_treads = clampi(int(map_look.get("stairs", row.get("stairs", "1"))), 1, 6)
 	for stem in String(row.get("trees", "prop_pine_1")).split("|", false):
 		m.trees.append(stem)
 	var alien: Dictionary = _rows.get(ALIEN, row)

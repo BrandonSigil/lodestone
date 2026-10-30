@@ -213,8 +213,44 @@ def check_village(m, decks=None):
                 break
         if not pr["sprite"].startswith(("b_", "ph_")) and m.terrain[y0][x0] in "dt":
             problems.append("%s at %s sits on a lane or stair" % (pr["sprite"], (x0, y0)))
-    # Stair flights: the run axis the board will draw must be the flight's own, with a slope to show.
+    # Stair flights: the run axis the board will draw must be the flight's own, with a slope to show. The soft
+    # look draws the stair kit (CombatBoard._stair_steps_soft, docs/design/stairs.md): a cell climbs toward a
+    # stair one level up; else toward level ground with lower ground opposite; outside corners wrap; only then
+    # MapDress.stair_run's axis scoring.
+    def kit_h(c):
+        p = props.get(c)
+        return hgt(c) if ok_cell(c) and m.terrain[c[1]][c[0]] not in BLOCKED and (p is None or p["walk"]) else -1
+
+    def is_t(c):
+        return ok_cell(c) and m.terrain[c[1]][c[0]] == "t"
+
+    def kit_up(c):
+        h = hgt(c)
+        nb = lambda d: (c[0] + d[0], c[1] + d[1])
+        dirs = ((1, 0), (-1, 0), (0, 1), (0, -1))
+        downs = [d for d in dirs if 0 <= kit_h(nb(d)) < h]
+        level = [d for d in dirs if kit_h(nb(d)) == h]
+        if len(downs) == 2 and downs[0][0] != downs[1][0] and downs[0][1] != downs[1][1] \
+                and not any(is_t(nb(d)) for d in downs) and len(level) == 2:
+            return "corner"
+        back = lambda d: nb((-d[0], -d[1]))
+        rules = (lambda d: is_t(nb(d)) and kit_h(nb(d)) == h + 1,  # toward the next step up
+                 lambda d: kit_h(nb(d)) == h and not is_t(nb(d)) and is_t(back(d)) and kit_h(back(d)) == h - 1,
+                 lambda d: kit_h(nb(d)) == h and 0 <= kit_h(back(d)) < h and not is_t(nb(d)))
+        for rule in rules:
+            hits = [d for d in dirs if rule(d)]
+            if hits:
+                return hits[-1]  # the board keeps the last match, in CombatRules.DIRS order
+        return None
+
     for (x, y), axis in FLIGHTS.items():
+        up = kit_up((x, y))
+        if up == "corner":
+            continue
+        if up is not None:
+            if ((1, 0) if up[0] else (0, 1)) != axis:
+                problems.append("stair %s climbs toward %s, not along %s" % ((x, y), up, axis))
+            continue
         h = hgt((x, y))
         best, best_score = None, 0.0
         # MapDress.stair_run: when only one axis has a stair at another height, that axis is the climb
