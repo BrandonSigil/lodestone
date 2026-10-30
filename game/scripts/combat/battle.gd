@@ -275,7 +275,7 @@ func _ai_turn(u: CombatUnit) -> void:
 	u.move_spent += int(plan.cost)
 	if plan.ability != null:
 		await _use(u, plan.ability, plan.aim)
-		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of melee reach
+		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of the foes' reach
 			var away := EnemyAi.retreat(grid, u, units)
 			if away.move != u.cell and await _leave_guards(u, away.move):
 				await board.animate_move(u, away.path)

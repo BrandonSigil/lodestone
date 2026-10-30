@@ -17,7 +17,7 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 	u.move_spent += int(plan.cost)
 	if plan.ability != null:
 		events.append_array(CombatRules.resolve(rng, grid, u, plan.ability, plan.aim, units))
-		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of melee reach
+		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of the foes' reach
 			var away := EnemyAi.retreat(grid, u, units)
 			events.append_array(CombatRules.leave_hits(rng, grid, u, units, away.move))
 			if u.alive():

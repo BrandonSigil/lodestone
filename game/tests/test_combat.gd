@@ -798,7 +798,7 @@ func test_bows_reach_one_ring_further() -> void:
 
 
 ## [USER] design-boss-daggers: the rogue's blades leave POISON on every hit: 1 HP at the start of each of the
-## target's phases for 3 of them, through armor; a new hit renews it to 3 and doesn't stack.
+## target's phases for `poison_turns` of them, through armor; a new hit renews it and doesn't stack.
 func test_rogue_blades_poison_through_armor_and_renew() -> void:
 	var g := CombatGrid.flat(3, 1)
 	var r := _unit("job_rogue", 0, Vector2i(0, 0), g)
@@ -808,7 +808,8 @@ func test_rogue_blades_poison_through_armor_and_renew() -> void:
 	var units := [r, b]
 	var rng := RandomNumberGenerator.new()
 	CombatRules.resolve(rng, g, r, r.abilities[0], b.cell, units, false)
-	eq(int(b.statuses.get(CombatRules.STATUS_POISON, 0)), 3, "a hit poisons for 3 phases")
+	var turns := int(CombatRules.num("poison_turns"))
+	eq(int(b.statuses.get(CombatRules.STATUS_POISON, 0)), turns, "a hit poisons for poison_turns phases")
 	b.armor = 9
 	var ticks := 0
 	for i in 5:
@@ -818,13 +819,11 @@ func test_rogue_blades_poison_through_armor_and_renew() -> void:
 			ticks += 1
 			ok(ev.any(func(e: Dictionary) -> bool: return e.type == "bleed" and e.status == CombatRules.STATUS_POISON), "the board sees it")
 		CombatRules.end_phase(units, 1)
-	eq(ticks, 3, "1 a phase for 3 phases, whatever the armor")
+	eq(ticks, turns, "1 a phase for poison_turns phases, whatever the armor")
 	ok(not b.has_status(CombatRules.STATUS_POISON), "then it wears off")
 	CombatRules.resolve(rng, g, r, r.abilities[0], b.cell, units, false)
-	CombatRules.begin_phase(units, 1)
-	CombatRules.end_phase(units, 1)
 	CombatRules.resolve(rng, g, r, r.abilities[0], b.cell, units, false)
-	eq(int(b.statuses[CombatRules.STATUS_POISON]), 3, "a new hit renews it to 3")
+	eq(int(b.statuses[CombatRules.STATUS_POISON]), turns, "a new hit renews it, no higher")
 	var hp := b.hp
 	CombatRules.begin_phase(units, 1)
 	eq(b.hp, hp - 1, "and doesn't stack")
@@ -835,7 +834,7 @@ func test_rogue_blades_poison_through_armor_and_renew() -> void:
 
 
 ## [USER] design-boss-daggers: hit and run. After a hit the rogue may walk what's left of its move; the AI steps
-## out of the reach of foes who hit in melee.
+## out of the reach of every foe's plain hit.
 func test_rogue_hits_and_runs() -> void:
 	var g := CombatGrid.flat(9, 1)
 	var r := _unit("job_rogue", 0, Vector2i(0, 0), g)
@@ -855,7 +854,7 @@ func test_rogue_hits_and_runs() -> void:
 	var cells: Dictionary = CombatRules.reachable(g, r, units).cost
 	ok(cells.has(Vector2i(0, 0)) and not cells.has(Vector2i(2 - r.move, 0)), "the move tiles are the rest of the move")
 	var away := EnemyAi.retreat(g, r, units)
-	ok(not EnemyAi.melee_reach(g, r, units).has(away.move) or away.move == r.cell, "the AI steps out of melee reach")
+	ok(not EnemyAi.hit_reach(g, r, units).has(away.move) or away.move == r.cell, "the AI steps out of the foes' reach")
 	var k := _unit("knight", 0, Vector2i(2, 0), g)
 	k.moved = true
 	ok(not CombatRules.hit_and_run(k, k.abilities[0]), "other jobs don't")
@@ -864,3 +863,16 @@ func test_rogue_hits_and_runs() -> void:
 	ok(not CombatRules.hit_and_run(r, r.abilities[0]), "nothing left to walk: done")
 	CombatRules.end_phase(units, 0)
 	eq(r.move_spent, 0, "out of its phase its reach is its whole move again")
+
+
+## Game designer 2026-10-30: hit and run steps out of every foe's plain hit, the Lich's reach 2 too.
+func test_hit_and_run_counts_reach_two() -> void:
+	var g := CombatGrid.flat(30, 1)
+	var r := _unit("job_rogue", 0, Vector2i(0, 0), g)
+	var lich := _unit("lich", 1, Vector2i(20, 0), g)
+	var reach := CombatRules.ability_range(lich, null)
+	eq(reach.y, 2, "the Lich hits 2 away")
+	var far := 20 - CombatRules.move_points(lich) - reach.y
+	var zone := EnemyAi.hit_reach(g, r, [r, lich])
+	ok(zone.has(Vector2i(far, 0)), "his walk plus his reach is in")
+	ok(not zone.has(Vector2i(far - 1, 0)), "one further is out")

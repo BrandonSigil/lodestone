@@ -50,13 +50,13 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 		"path": CombatRules.path_to(reach.prev, u.cell, best_cell), "guard": guard, "cost": int(cost.get(best_cell, 0))}
 
 
-## Hit and run, after the strike: the nearest cell u can still reach that no foe who hits in melee could strike
-## next phase, without walking off a guard; where it stands if that's safe or nothing is. Same shape as plan's
+## Hit and run, after the strike: the nearest cell u can still reach that no foe's plain hit could strike next
+## phase (the Lich's reach 2 too, game designer 2026-10-30), without walking off a guard; where it stands if that's safe or nothing is. Same shape as plan's
 ## move part: {"move", "path", "cost"}.
 static func retreat(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var reach := CombatRules.reachable(grid, u, units)
 	var cost: Dictionary = reach.cost
-	var zone := melee_reach(grid, u, units)
+	var zone := hit_reach(grid, u, units)
 	var best := u.cell
 	if zone.has(u.cell):
 		for cell: Vector2i in cost:
@@ -67,20 +67,23 @@ static func retreat(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary
 	return {"move": best, "path": CombatRules.path_to(reach.prev, u.cell, best), "cost": int(cost.get(best, 0))}
 
 
-## Every cell a foe of u whose basic hit is melee could strike next phase.
-static func melee_reach(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
+## Every cell a foe of u could strike with its plain hit next phase, whatever its reach.
+static func hit_reach(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var zone := {}
 	for o: CombatUnit in units:
 		if o.team == u.team or not o.alive() or o.has_status(CombatRules.STATUS_SLEEP):
 			continue
 		var r := CombatRules.ability_range(o, null)
-		if r.y > 1:
-			continue
 		for f: Vector2i in CombatRules.reachable(grid, o, units).cost:
-			for d in CombatRules.DIRS:
-				for n in grid.places_next(f, d):
-					if grid.in_bounds(n) and CombatRules.in_reach(grid, f, n, r):
-						zone[n] = true
+			var g := CombatGrid.ground(f)
+			for dy in range(-r.y, r.y + 1):
+				for dx in range(-r.y, r.y + 1):
+					var at := g + Vector2i(dx, dy)
+					if absi(dx) + absi(dy) > r.y or not grid.in_bounds(at):
+						continue
+					for n in grid.places_at(at):
+						if not zone.has(n) and CombatRules.in_reach(grid, f, n, r):
+							zone[n] = true
 	return zone
 
 
