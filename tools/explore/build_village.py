@@ -491,9 +491,11 @@ bush(15, 10, 2)
 bush(24, 12, 3)
 V.arch("prop_arch_timber", 19, 11, (4, 1))  # the hall gate, at the head of the stair
 
-# The smithy yard (its anvil and forge are in the building art): the rack, a grindstone, the rope barrel.
-p("prop_rack", 12, 11, 1.0)
-p("prop_grindstone", 13, 10, 0.85)
+# The smithy yard (its anvil and forge are in the building art, on its front wall): the rack against the
+# smithy wall on the yard side, the grindstone on the grass beside the forge, the rope barrel; the yard
+# between its two stairs and the door stays open ([USER] 2026-10-30).
+p("prop_rack", 11, 12, 1.0)
+p("prop_grindstone", 8, 13, 0.85)
 p("prop_barrel", 14, 9, 0.7)
 p("prop_crates", 14, 12, 0.8)
 p("prop_hay", 7, 13, 0.65)
@@ -601,10 +603,10 @@ V.thing(id="far_door", kind="enter", event="door_stuck", cell=far_door)
 V.thing(id="bluff_door", kind="enter", event="door_stuck", cell=bluff_door)
 # The restore loop ([USER] omr-5): walk up to a building to see its next step. The settlers who run them
 # move in by a placeholder WELCOME and are gone once welcomed (unlock:<flag>;remove, then `once`).
-V.thing(id="smithy_restore", kind="restore", event="smithy", cell=[11, 9])  # the yard's back corner, at the forge
+V.thing(id="smithy_restore", kind="restore", event="smithy", cell=[9, 13])  # in front of the forge
 V.thing(id="smith", kind="settler", event="settler_smith", cell=[14, 11], once="settler_smith")
 V.thing(id="inn_restore", kind="restore", event="inn", cell=[33, 22])  # beside the tavern door
-V.thing(id="weapon_rack", kind="rack", event="smithy_rack", cell=[12, 11],
+V.thing(id="weapon_rack", kind="rack", event="smithy_rack", cell=[11, 12],
         once="weapon_sword|weapon_daggers|weapon_bow")
 V.thing(id="statue", kind="statue", event="statue_lodestone", cell=[21, 22], once="has_lodestone")
 V.thing(id="food_barrel", kind="cache", event="cache_food", cell=[35, 19], once="got_food_barrel")

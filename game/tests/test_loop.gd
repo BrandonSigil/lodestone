@@ -381,7 +381,7 @@ func test_f_answers_every_hint() -> void:
 				dead.append(c)
 		eq(dead.size(), 0, "%s: F hint shows but F has nothing at %s" % [name, str(dead.slice(0, 6))])
 		if name == "village":
-			lead.place(Vector2i(9, 7), g.height_at(Vector2i(9, 7)))  # a spot by the smithy wall that failed
+			lead.place(Vector2i(7, 12), g.height_at(Vector2i(7, 12)))  # behind the smithy: the restore spot is round its wall
 			s._refresh_sight()
 			var ev := InputEventKey.new()
 			ev.keycode = KEY_F

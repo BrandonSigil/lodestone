@@ -556,8 +556,8 @@
    {
     "sprite": "prop_rack",
     "cell": [
-     12,
-     11
+     11,
+     12
     ],
     "foot": [
      1,
@@ -570,8 +570,8 @@
    {
     "sprite": "prop_grindstone",
     "cell": [
-     13,
-     10
+     8,
+     13
     ],
     "foot": [
      1,
@@ -1672,8 +1672,8 @@
    "kind": "restore",
    "event": "smithy",
    "cell": [
-    11,
-    9
+    9,
+    13
    ]
   },
   {
@@ -1700,8 +1700,8 @@
    "kind": "rack",
    "event": "smithy_rack",
    "cell": [
-    12,
-    11
+    11,
+    12
    ],
    "once": "weapon_sword|weapon_daggers|weapon_bow"
   },
