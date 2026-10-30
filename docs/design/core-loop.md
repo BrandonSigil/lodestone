@@ -284,6 +284,7 @@ Settled by that: items have shapes, are packed by hand and can be turned. A way 
 - **Auto-place on pickup, rearrange by hand, no tidy button** (inv-11). Rearranging is the little game for the overworld walk.
 - **The dog's saddlebag is 2 x 2** (inv-12), to balance later.
 - **A belt cell holds a full stack, like a pack cell** (`design-inv-belt-stack`, asked by the developer once belts were built). Stack sizes per item get balanced so belts aren't too strong.
+- **Fishing rod** (card `dev-fishing-rules`, 2026-10-30): fishing needs a rod in the pack ([USER]). *Defaults:* 3 x 1, stack 1; the first one found once in a cache by the water in each village; a spare at the stuff hut for 6 gold; the world map's FISH needs it too; a spot rests until the next trip out (built).
 
 ### Still open (not blocking a build)
 - **Upgrade steps:** how big each pack upgrade is, and which settler unlocks it. Belongs to the one-more-run theme.
