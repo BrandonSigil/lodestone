@@ -3,7 +3,7 @@ extends RefCounted
 ## functions the buttons call, so it checks the loop's wiring, data and fights, not the clicking.
 
 const SECONDS_CAP := 400.0  ## give up on a wait after this much game time
-const TRIES := 4  ## a lost fight: wake in the square, come back and fight again, up to this many times
+const TRIES := 8  ## a lost fight: wake in the square, come back and fight again, up to this many times (the Lich King is tuned to be lost now and then)
 
 var tree: SceneTree
 var game: Node
@@ -75,10 +75,13 @@ func play(t: SceneTree) -> void:
 	await _through(s, "crypt_stair")
 
 	s = await _explore("crypt")
+	# The way to the throne runs past the plaza and the tower's guards, as a player walks it.
+	s = await _fight(s, "plaza")
+	s = await _fight(s, "tower")
 	_spend_picks()
 	var lv: int = game.level_state("lead").level
 	print("  hero level %d, HP %d/%d before the boss" % [lv, game.run.members[0].hp, game.run.max_hp(game.run.members[0])])
-	s = await _fight(s, "throne")
+	s = await _fight(s, "throne", true, ["plaza", "tower"])
 	_check(game.has_flag("e2e_done"), "the Lich King is down: test done")
 	print("  fights lost on the way: %d" % falls)
 
@@ -275,7 +278,10 @@ func _press_text(s: Node, text: String) -> bool:
 ## A fight on the explore map against one group, played on auto, then OK through the result.
 ## Lost: the party wakes in the square; the robot checks that, comes back to this map and fights again.
 ## Returns the explore scene it ends on.
-func _fight(s: Node, group_id: String) -> Node:
+## must_defeat: a fight its goals also let the party win by escaping (the Lich King's way out) only counts when
+## the foes are beaten; an escape is one more try, straight back in.
+## grind: groups that come back after a fall, fought again between tries for the XP (a player stuck on a boss).
+func _fight(s: Node, group_id: String, must_defeat := false, grind: Array = []) -> Node:
 	var map_name := String(s.get("map").map_name)
 	for attempt in TRIES:
 		var g := {}
@@ -289,9 +295,15 @@ func _fight(s: Node, group_id: String) -> Node:
 		_heal_up()
 		_approach(s, g)
 		_check(s.get("battle") == null, "no fight already running before the %s fight" % group_id)
+		if attempt > 0:  # a player tries something new after a fall; the robot plays the same, so new dice stand in
+			game.run.rng.seed = game.run.rng.seed + 7919 * attempt
 		s.call("start_fight", g, "party")
 		var waited := 0.0
+		var narrowed := false
 		while s.get("battle") == null or s.get("battle").state != Battle.S.OVER:
+			if must_defeat and not narrowed and s.get("battle") != null:
+				s.get("battle").goals = FightGoals.parse("defeat")  # the robot plays to beat it, never to slip out
+				narrowed = true
 			await tree.process_frame
 			waited += tree.root.get_process_delta_time()
 			if waited > SECONDS_CAP:
@@ -306,6 +318,12 @@ func _fight(s: Node, group_id: String) -> Node:
 		if not lost and how == "":
 			_check(false, "the fight with %s ended in a stalemate (the AI couldn't reach)" % group_id)
 			return s
+		if not lost and must_defeat and how == "exit":
+			print("  escaped the fight with %s: back in to beat it" % group_id)
+			if not game.has_flag("e2e_done"):
+				await _press(s, 0)
+			await _frames(3)
+			continue
 		if not lost:
 			_check(true, "won the fight with %s (%s)" % [group_id, how])
 			var after: int = game.level_state("lead").xp + game.level_state("lead").level * 1000
@@ -318,6 +336,10 @@ func _fight(s: Node, group_id: String) -> Node:
 		game.explore_entry = Vector2i(-1, -1)
 		game.go(game.EXPLORE)
 		s = await _explore(map_name)
+		for gid: String in grind:
+			if (s.get("groups") as Array).any(func(x: Dictionary) -> bool: return x.def.id == gid and x.state != "gone"):
+				s = await _fight(s, gid)
+		_spend_picks()
 	_check(false, "won the fight with %s in %d tries" % [group_id, TRIES])
 	return s
 
