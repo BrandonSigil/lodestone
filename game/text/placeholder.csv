@@ -158,7 +158,7 @@ UI_PACK_HELP_RUN,drag thing. R or right click = turn. thing on belt = use in fig
 UI_BELT_OF,%s BELT
 UI_PACK_FULL,PACK FULL. NEW THING NO FIT. lorem ipsum.
 UI_FOUND,NEW THING
-UI_COURIER_BAG,%s SADDLEBAG
+UI_COURIER_BAG,%s PACK
 UI_SEND_HOME,%s TAKE BAG HOME
 UI_THROW,THROW AWAY
 UI_BOUND_THROW,friend need this. no throw.

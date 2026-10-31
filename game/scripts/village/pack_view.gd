@@ -12,6 +12,7 @@ signal changed
 const CELL := 72.0
 const SELL_SIZE := Vector2(150, 110)
 const LABEL_H := 20.0  ## room above a labeled grid for its name
+const FACE := 18.0  ## a small face before a grid's name
 
 var bag: InventoryGrid  ## the first grid (the pack)
 var areas: Array[Dictionary] = []  ## {"bag": InventoryGrid, "at": Vector2 (top-left here), "label": String}
@@ -65,15 +66,12 @@ func place_bin(r: Rect2, key: String, refused: String) -> void:
 	_fit_size()
 
 
-## Another grid in the same view, its top-left at `at` (a label takes LABEL_H above it). With a `portrait`, a square
-## picture as tall as the grid stands to its left (the dog's face by his saddlebag): the same helper holds a
-## container's or a loot grid, with or without a face.
+## Another grid in the same view, its top-left at `at` (a label takes LABEL_H above it). With a `portrait`, a small face
+## stands in front of the label (the dog's, on his saddlebag's name): the same helper holds a container's or a loot
+## grid, with or without a face.
 func add_area(grid: InventoryGrid, at: Vector2, label := "", portrait: Texture2D = null) -> void:
 	var top := LABEL_H if label != "" else 0.0
-	var side := grid.rows * cell
-	var shift := side + 10.0 if portrait != null else 0.0
-	areas.append({"bag": grid, "at": at + Vector2(shift, top), "label": label, "portrait": portrait,
-		"face_at": at + Vector2(0, top), "face": side})
+	areas.append({"bag": grid, "at": at + Vector2(0, top), "label": label, "portrait": portrait, "face_at": at})
 	_fit_size()
 
 
@@ -268,13 +266,14 @@ func _draw() -> void:
 	for k in areas.size():
 		var a := areas[k]
 		draw_bag(self, a.bag, db, a.at, cell, true, held if k == held_area else -1)
-		if a.get("portrait") != null:
-			var face := Rect2(a.face_at, Vector2(a.face, a.face))
+		var label_x := 0.0
+		if a.get("portrait") != null:  # a small face before the label
+			var face := Rect2(a.face_at, Vector2(FACE, FACE))
 			draw_texture_rect(a.portrait, face, false)
-			draw_rect(face, Riso.INK, false, 2.0)
+			draw_rect(face, label_color, false, 1.0)
+			label_x = FACE + 6.0
 		if a.label != "":
-			var label_at: Vector2 = a.get("face_at", a.at)
-			Riso.draw_label(self, a.label, label_at - Vector2(0, LABEL_H * 0.55), 13, label_color)
+			Riso.draw_label(self, a.label, a.at - Vector2(-label_x, LABEL_H * 0.55), 13, label_color)
 		bottom = maxf(bottom, _rect_of(a).end.y)
 	var sr := _bin_rect()
 	if bin.is_valid():

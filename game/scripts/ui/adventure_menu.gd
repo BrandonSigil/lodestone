@@ -182,10 +182,10 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 		face = load(face_path) if ResourceLoader.exists(face_path) else null
 	if bag != null and full:  # sorting the finds: the bag below the party cards, the bin by it
 		grid.add_area(bag, Vector2(0, y), bag_label, face)
-		grid.place_bin(Rect2(Vector2((bag.cols + 2) * cell + 24.0, y + PackView.LABEL_H), Vector2(150, bag.rows * cell)), "UI_THROW", "UI_BOUND_THROW")
-	elif bag != null:  # the saddlebag with his face right of the pack, the bin a thin bar under it
+		grid.place_bin(Rect2(Vector2(bag.cols * cell + 24.0, y + PackView.LABEL_H), Vector2(150, bag.rows * cell)), "UI_THROW", "UI_BOUND_THROW")
+	elif bag != null:  # the saddlebag, his small face on its name, right of the pack, the bin a thin bar under it
 		grid.add_area(bag, Vector2(pack_size.x + 24.0, 0), bag_label, face)
-		var bag_w := bag.rows * cell + 10.0 + bag.cols * cell
+		var bag_w := maxf(bag.cols * cell, 150.0)
 		grid.place_bin(Rect2(Vector2(pack_size.x + 24.0, PackView.LABEL_H + bag.rows * cell + 12.0), Vector2(bag_w, 28)), "UI_THROW", "UI_BOUND_THROW")
 	elif full:
 		grid.place_bin(Rect2(Vector2(0, y + PackView.LABEL_H), Vector2(150, cell)), "UI_THROW", "UI_BOUND_THROW")
