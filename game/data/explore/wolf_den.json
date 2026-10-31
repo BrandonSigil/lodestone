@@ -9,42 +9,78 @@
  "turn": false,
  "fog": true,
  "grid": {
-  "w": 14,
-  "h": 12,
+  "w": 30,
+  "h": 30,
   "terrain": [
-   "rrrrrrrrrr.r.r",
-   "rssssssssrrrrr",
-   "rsssssrssggggr",
-   "rsrssssssggggr",
-   "rsstsssssggggr",
-   "rrrggggggggggr",
-   ".rggggggggttrr",
-   "rrggggggggggr.",
-   ".rggggggggggrr",
-   "rrrggggggggrr.",
-   ".rggdgggggggrr",
-   "rrrrdrrrrrrrr."
+   "..............................",
+   "...................rrrrrrrrr..",
+   "..................rrsssssssrr.",
+   ".................rrsssssssssr.",
+   "rrrrrrr..........rdsssssssssr.",
+   "rsssssrrrr.......rdsssssssssr.",
+   "rsssssdddr.......rdrsssssssdr.",
+   "rsssssrrtr.......rtrrrrrrrrdr.",
+   "rrrrrrrrtr.......rtr......rdr.",
+   ".......rtr......rrdrr.....rtr.",
+   ".....rrrdrrr...rrsssrr....rtr.",
+   "....rrsssssrrrrrsssssr....rtr.",
+   "....rsssssssttddsssssr...rrtrr",
+   "....rsssssssrrrrsssssr...rsssr",
+   "....rsssssssr..rdsssrr...rsssr",
+   "....rsssssssr..rdrrrr....rsssr",
+   "....rsssssssr..rtr.......rsssr",
+   "....rrsssssrr..rtr.......rsssr",
+   ".rrrrrrrdrrr...rtr.......rdrrr",
+   ".rgggrrrdr..rrrrtrrrr....rdrrr",
+   ".rgggddrdr.rrgggggggrr...rdggg",
+   ".rgggrdrdrrrgggggggggrrrrrtggg",
+   ".rrrrrdrttddgggggggggddddddggg",
+   "...rrrdrrrrrgggggggggrrrrrdrdr",
+   "..rrgggggrrrrgggggggrr.rrgggdr",
+   "..rgggggggrrrrrrdrrrr..rgggggr",
+   "..rgggggggddttdddr.....rgggggr",
+   "..rgggggggrrrrrrrr.....rgggggr",
+   "..rrggdggrrrrrrrrrrrrrrrrgggrr",
+   "...rrrddddddddddddddddddttdddd"
   ],
   "heights": [
-   "55555555550202",
-   "53333333355555",
-   "53333343333335",
-   "53433333333335",
-   "53333333333335",
-   "55521111133334",
-   "03111111112244",
-   "23111111111130",
-   "03111111111121",
-   "23211111111220",
-   "03111111111121",
-   "23331332222220"
+   "000000000000000000000000000000",
+   "0000000000000000000bbbbbbbbb00",
+   "000000000000000000bb9999999bb0",
+   "00000000000000000bb999999999b0",
+   "aaaaaaa0000000000b9999999999b0",
+   "a88888aaaa0000000b9999999999b0",
+   "a88888888a0000000b9b99999999b0",
+   "a88888aa7a0000000b8bbbbbbbb9b0",
+   "aaaaaaa9690000000a7a000000b9b0",
+   "00000008580000009979900000b8b0",
+   "00000777577700099777990000a7a0",
+   "000077555557899977777900009690",
+   "000075555555567777777900078587",
+   "000075555555899977777900075557",
+   "000075555555700977779900075557",
+   "000075555555700979999000075557",
+   "000075555555700969000000075557",
+   "000077555557700858000000075557",
+   "033337775777000747000000075777",
+   "031113375700555636555000075755",
+   "031111175705533333335500075333",
+   "031113175755333333333555574333",
+   "033333174333333333333333333333",
+   "000333166655333333333555553535",
+   "003311111335533333335505533335",
+   "003111111133555535555005333335",
+   "003111111111123335000005333335",
+   "003111111133455555000005333335",
+   "003311111333333333333335533355",
+   "000333111111111111111111123333"
   ],
   "props": [
    {
     "sprite": "prop_bush",
     "cell": [
-     8,
-     9
+     12,
+     22
     ],
     "foot": [
      1,
@@ -57,8 +93,8 @@
    {
     "sprite": "prop_boulder",
     "cell": [
-     7,
-     4
+     10,
+     14
     ],
     "foot": [
      1,
@@ -72,8 +108,8 @@
  },
  "start": [
   [
-   3,
-   9
+   6,
+   25
   ]
  ],
  "groups": [
@@ -87,15 +123,15 @@
     {
      "id": "wolf",
      "cell": [
-      5,
-      2
+      9,
+      15
      ]
     },
     {
      "id": "wolf",
      "cell": [
-      3,
-      2
+      7,
+      13
      ]
     }
    ]
@@ -110,8 +146,8 @@
     {
      "id": "wolf",
      "cell": [
-      10,
-      3
+      22,
+      5
      ]
     }
    ]
@@ -123,8 +159,8 @@
    "kind": "enter",
    "event": "",
    "cell": [
-    4,
-    11
+    6,
+    28
    ],
    "to": "snow_pass",
    "at": [
@@ -137,8 +173,8 @@
    "kind": "chest",
    "event": "den_bones",
    "cell": [
-    1,
-    1
+    6,
+    12
    ],
    "once": "got_den_bones"
   },
@@ -147,8 +183,8 @@
    "kind": "rare",
    "event": "rare:+1;metal:+2",
    "cell": [
-    12,
-    2
+    25,
+    3
    ]
   }
  ]

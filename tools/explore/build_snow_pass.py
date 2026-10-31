@@ -7,7 +7,7 @@
              right; wolves on the first terrace, a cave mouth into the wolf den at the back of it, a high
              ledge only a rope reaches, a bandit choke under the summit, a hidden nook, and at the top the
              stair down into the Lich King's dungeon (the crypt map).
-- wolf_den:  a small cave on two levels (dungeon set): wolves deep inside, old bones at the back.
+- wolf_den:  a winding cave of nine levels (dungeon set, cave_kit.py): wolves in the bone chamber, an elite wolf's lair at the top.
 
 The pass is laid out in screen terms: u = x - y runs left to right across the screen, d = x + y runs from
 the back (top of the screen, d small) to the front (d large). Terraces are bands of d, so cliffs face the
@@ -433,57 +433,61 @@ for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, 1)):
 assert DEN_FRONT is not None
 
 # --- the wolf den --------------------------------------------------------------------------------------
-W = Map("wolf_den", 14, 12, "dungeon")
-# Floors carved out of rock: an entry hall at level 1 (front), a raised back chamber at level 3.
-for y in range(12):
-    for x in range(14):
-        W.put(x, y, "r", 0)
-for x0, y0, x1, y1, t, h in [(2, 6, 11, 10, "g", 1), (4, 5, 9, 6, "g", 1), (1, 1, 8, 4, "s", 3), (9, 2, 12, 5, "g", 3)]:
-    for y in range(y0, y1 + 1):
-        for x in range(x0, x1 + 1):
-            W.put(x, y, t, h)
-W.put(10, 6, "t", 2)
-W.put(11, 6, "t", 2)
-W.put(3, 5, "g", 2)  # a slope up the left
-W.put(3, 4, "t", 3)
-for x, y in [(6, 2), (2, 3), (11, 9), (2, 9)]:
-    W.put(x, y, "r", 4 if y < 5 else 2)
-# Rock walls rise two over their tallest open neighbour; deep rock goes void.
-open_cells = [(x, y) for y in range(12) for x in range(14) if W.t(x, y) not in "r"]
-for y in range(12):
-    for x in range(14):
-        if W.t(x, y) != "r":
-            continue
-        best = max([W.ht(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
-                    if W.inb(x + dx, y + dy) and W.t(x + dx, y + dy) != "r"] or [-1])
-        if best < 0:
-            W.put(x, y, ".", 0)
-        elif (x, y) in [(6, 2), (2, 3), (11, 9), (2, 9)]:
-            continue
-        else:
-            W.put(x, y, "r", min(8, best + (1 if x + y > 17 else 2)))  # front walls low, so the camera sees in
-W.start = [[3, 9]]
-W.put(4, 10, "d", 1)
-W.put(4, 11, "d", 1)
-W.things.append({"id": "den_out", "kind": "enter", "event": "", "cell": [4, 11], "to": "snow_pass", "at": list(DEN_FRONT)})
-# Two packs, not one: the pair by the bones and a lone wolf at the far end, more than 3 cells apart so
+# The den is a winding cave ([USER] 2026-10-30: unique shapes, jut outs, verticality; tools/map_shape.py): an entry hall at
+# the front, a hall, a bone chamber with the wolf pair, a nook, a ledge, and the elite wolf's lair at the top, joined by
+# climbs, with a second way up through an alcove and a chimney. Built from rounded rooms (cave_kit.py).
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from cave_kit import Cave
+C = Cave(30, 30)
+C.room("entry", 6, 26, 3, 2, 1)
+C.room("hall", 16, 22, 4, 2, 3)
+C.room("bones", 8, 14, 3, 3, 5, "s")
+C.room("nook", 3, 6, 2, 1, 8, "s")
+C.room("ledge", 18, 12, 2, 2, 7, "s")
+C.room("lair", 23, 4, 4, 2, 9, "s")
+C.room("alcove", 26, 26, 2, 2, 3)
+C.room("chimney", 27, 15, 1, 2, 5, "s")
+C.link("entry_hall", "entry", "hall", "x", 1)
+C.link("hall_bones", "hall", "bones", "x", 1)
+C.link("bones_nook", "bones", "nook", "y", 1)
+C.link("bones_ledge", "bones", "ledge", "y", 1)
+C.link("hall_ledge", "hall", "ledge", "y", 1)
+C.link("ledge_lair", "ledge", "lair", "y", 1)
+C.link("hall_alcove", "hall", "alcove", "x", 1)
+C.link("alcove_chimney", "alcove", "chimney", "y", 1)
+C.link("chimney_lair", "chimney", "lair", "y", 1)
+C.link("entry_alcove", "entry", "alcove", "y", 1, to_off=(20, 3))  # the long way round, along the south edge
+C.room("pocket_w", 3, 20, 1, 1, 1)  # two dead-end pockets
+C.room("pocket_e", 28, 21, 1, 1, 3)
+C.link("entry_pocket", "entry", "pocket_w", "y", 1)
+C.link("alcove_pocket", "alcove", "pocket_e", "x", 1)
+C.finish()
+W = Map("wolf_den", 30, 30, "dungeon")
+for y in range(30):
+    for x in range(30):
+        W.put(x, y, C.t[y][x], C.hts[y][x])
+W.start = [[6, 25]]
+W.put(6, 28, "d", 1)
+W.things.append({"id": "den_out", "kind": "enter", "event": "", "cell": [6, 28], "to": "snow_pass", "at": list(DEN_FRONT)})
+# Two packs, not one: the pair in the bone chamber and a lone wolf in the lair at the top, far apart so
 # they fight separately (a party of two loses most three-wolf fights). The pair is a hold-out: last 4
 # rounds and they give up ([USER] 2026-10-29, card design-fight-goals-pick).
 W.groups.append({"id": "den_wolves", "event": "spot_beasts", "sight": 4, "loot": "food:+6", "goals": "hold:4",
-                 "units": [{"id": "wolf", "cell": [5, 2]}, {"id": "wolf", "cell": [3, 2]}]})
-# The lone wolf is elite ([USER] 2026-10-30, card design-elite-pick): its side room can be skipped, and at
-# 6 cells from the pair it never joins their hold-out (groups don't move; JOIN_RANGE is 3).
+                 "units": [{"id": "wolf", "cell": [9, 15]}, {"id": "wolf", "cell": [7, 13]}]})
+# The lone wolf is elite ([USER] 2026-10-30, card design-elite-pick): its lair can be skipped, and it is far from the
+# pair, so it never joins their hold-out (groups don't move; JOIN_RANGE is 3).
 W.groups.append({"id": "den_lone", "event": "spot_beasts", "sight": 4, "loot": "food:+3", "elite": True,
-                 "units": [{"id": "wolf", "cell": [10, 3]}]})
-W.things.append({"id": "den_bones", "kind": "chest", "event": "den_bones", "cell": [1, 1], "once": "got_den_bones"})
-W.things.append({"id": "den_rare", "kind": "rare", "event": "rare:+1;metal:+2", "cell": [12, 2]})  # behind the elite wolf (omr-10)
-W.prop("prop_bush", 8, 9, tall=0.6, sight=0.5)
-W.prop("prop_boulder", 7, 4, tall=0.6, sight=0.5)
+                 "units": [{"id": "wolf", "cell": [22, 5]}]})
+W.things.append({"id": "den_bones", "kind": "chest", "event": "den_bones", "cell": [6, 12], "once": "got_den_bones"})
+W.things.append({"id": "den_rare", "kind": "rare", "event": "rare:+1;metal:+2", "cell": [25, 3]})  # behind the elite wolf (omr-10)
+W.prop("prop_bush", 12, 22, tall=0.6, sight=0.5)
+W.prop("prop_boulder", 10, 14, tall=0.6, sight=0.5)
 wt = {t["id"]: tuple(t["cell"]) for t in W.things}
-wreach = W.reach((3, 9), set(wt.values()))
+wreach = W.reach((6, 25), set(wt.values()))
 assert W.usable_from(wreach, wt["den_bones"]) and W.usable_from(wreach, wt["den_out"]) and W.usable_from(wreach, wt["den_rare"])
-for u in W.groups[0]["units"]:
-    assert tuple(u["cell"]) in wreach
+for u in W.groups[0]["units"] + W.groups[1]["units"]:
+    assert tuple(u["cell"]) in wreach, u
 assert min(abs(a["cell"][0] - b["cell"][0]) + abs(a["cell"][1] - b["cell"][1])
            for a in W.groups[0]["units"] for b in W.groups[1]["units"]) > 3, "the elite wolf would join the hold-out"
 
