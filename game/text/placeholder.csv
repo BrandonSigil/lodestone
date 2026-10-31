@@ -711,7 +711,7 @@ UI_OPT_BACK,BACK
 ACT_BACK,BACK
 ACT_ABILITIES,TRICKS
 ACT_ITEMS,STUFF
-SKILL_CARRY,CARRY
+SKILL_CARRY,Fetch
 SKILL_COMMAND,GO DOG
 DESC_CARRY,"After you move, pick up an adjacent friend, standing or downed, and set them down up to 3 tiles further on."
 DESC_COMMAND,"Give up your action. A friend takes a full extra turn right away, move and action. Once every 3 turns."
