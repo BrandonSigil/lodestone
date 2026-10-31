@@ -134,3 +134,6 @@ frost_bind,3,res_cost:-1,,Costs 1 less
 bite,1,status_turns:+1,,Its effect lasts 1 turn longer
 bite,2,bleed:+2,,Also makes the target bleed: 1 HP a turn for 2 turns
 bite,3,power:+1,,Does 1 more damage
+carry,1,power:+1,,Carries a friend 1 tile further
+carry,2,power:+1,,Carries a friend 1 tile further
+carry,3,range_max:+1,,Can pick up a friend 2 tiles away
