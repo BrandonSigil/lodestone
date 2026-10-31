@@ -852,6 +852,9 @@ func _draw_deck(c: Vector2i) -> void:
 	var col := Color(1, 1, 1, 0.35 if _fade.has(p) else 1.0)
 	if fog_on and fog.get(c, 2) == 1:
 		col = Color(0.45, 0.46, 0.52, col.a)  # remembered, out of sight: the veil's wash
+	if (grid.decks[CombatGrid.ground(c)] as Dictionary).get("bridge", false):
+		_draw_bridge(c, col)  # the bridge kit's grey boxes (BridgeKit), a piece a cell
+		return
 	var lo := Vector2(c)
 	var hi := lo + Vector2.ONE
 	for shade in [false, true]:
@@ -882,6 +885,69 @@ func _draw_deck(c: Vector2i) -> void:
 		var side := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)][i] as Vector2i
 		if not grid.has_deck(c + side) or grid.height_at(CombatGrid.deck_of(c + side)) != grid.height_at(p):
 			_ci.draw_line(top[i], top[(i + 1) % 4], Color(INK, 0.55 * col.a), 1.5, true)
+
+
+## A bridge cell as the kit's grey boxes: a deck slab with rails along its open sides, arms to each side it carries on, a
+## pier under it down to whatever is below (water, lower ground, nothing). One piece per shape (BridgeKit.PIECES): a
+## piece with art in res://art/source/battle/bridge/ is drawn from that instead.
+const BRIDGE_DECK := Color(0.66, 0.66, 0.7)
+const BRIDGE_RAIL := Color(0.48, 0.48, 0.52)
+const BRIDGE_PIER := Color(0.36, 0.36, 0.4)
+const BRIDGE_RAIL_H := 0.8  ## levels
+const BRIDGE_ARM := Vector2(0.14, 0.86)  ## the deck's width across its run
+
+
+func _draw_bridge(c: Vector2i, col: Color) -> void:
+	var p := CombatGrid.deck_of(c)
+	var h := float(grid.height_at(p))
+	var k := BridgeKit.connections(grid, c)
+	var lo := Vector2(c)
+	var z0 := h - CombatGrid.DECK_THICK
+	# the pier: every other cell and each end, down to the ground under it (or the floor of the map)
+	var parity := (c.x + c.y) % 2 == 0
+	var open_ends := 0
+	for s: String in ["w", "e", "n", "s"]:
+		if not k[s]:
+			open_ends += 1
+	if parity or open_ends >= 3:
+		var below := float(grid.height_at(c)) if grid.solid(c) else 0.0
+		_box(lo + Vector2(0.36, 0.36), lo + Vector2(0.64, 0.64), minf(below, z0 - 1.0), z0, BRIDGE_PIER * col)
+	var arms := []  # [from, to] of each slab, in the cell's 0..1 coordinates
+	var ax: bool = k.w or k.e
+	var ay: bool = k.n or k.s
+	if ax and not ay:
+		arms.append([Vector2(0, BRIDGE_ARM.x), Vector2(1, BRIDGE_ARM.y)])
+	elif ay and not ax:
+		arms.append([Vector2(BRIDGE_ARM.x, 0), Vector2(BRIDGE_ARM.y, 1)])
+	else:
+		arms.append([Vector2(BRIDGE_ARM.x, BRIDGE_ARM.x), Vector2(BRIDGE_ARM.y, BRIDGE_ARM.y)])
+		if k.w:
+			arms.append([Vector2(0, BRIDGE_ARM.x), Vector2(BRIDGE_ARM.x, BRIDGE_ARM.y)])
+		if k.e:
+			arms.append([Vector2(BRIDGE_ARM.y, BRIDGE_ARM.x), Vector2(1, BRIDGE_ARM.y)])
+		if k.n:
+			arms.append([Vector2(BRIDGE_ARM.x, 0), Vector2(BRIDGE_ARM.y, BRIDGE_ARM.x)])
+		if k.s:
+			arms.append([Vector2(BRIDGE_ARM.x, BRIDGE_ARM.y), Vector2(BRIDGE_ARM.y, 1)])
+	for a: Array in arms:
+		_box(lo + a[0], lo + a[1], z0, h, BRIDGE_DECK * col)
+	# rails along the sides that are not carrying on
+	var w := 0.05
+	if ax and not ay:
+		_box(lo + Vector2(0, BRIDGE_ARM.x), lo + Vector2(1, BRIDGE_ARM.x + w), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+		_box(lo + Vector2(0, BRIDGE_ARM.y - w), lo + Vector2(1, BRIDGE_ARM.y), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+	elif ay and not ax:
+		_box(lo + Vector2(BRIDGE_ARM.x, 0), lo + Vector2(BRIDGE_ARM.x + w, 1), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+		_box(lo + Vector2(BRIDGE_ARM.y - w, 0), lo + Vector2(BRIDGE_ARM.y, 1), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+	else:  # a corner: rails round the outside corner
+		if not k.w:
+			_box(lo + Vector2(BRIDGE_ARM.x, BRIDGE_ARM.x), lo + Vector2(BRIDGE_ARM.x + w, BRIDGE_ARM.y), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+		if not k.n:
+			_box(lo + Vector2(BRIDGE_ARM.x, BRIDGE_ARM.x), lo + Vector2(BRIDGE_ARM.y, BRIDGE_ARM.x + w), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+		if not k.e:
+			_box(lo + Vector2(BRIDGE_ARM.y - w, BRIDGE_ARM.x), lo + Vector2(BRIDGE_ARM.y, BRIDGE_ARM.y), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+		if not k.s:
+			_box(lo + Vector2(BRIDGE_ARM.x, BRIDGE_ARM.y - w), lo + Vector2(BRIDGE_ARM.y, BRIDGE_ARM.y), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
 
 
 func _paint_top() -> void:

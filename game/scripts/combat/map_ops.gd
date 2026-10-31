@@ -572,10 +572,8 @@ static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
 			continue
 		var hp := grid.height_at(best[0])
 		var ht := grid.height_at(best[best.size() - 1])
-		if best_bridge:  # a deck span over the gap, level with the lower shelf
-			for j in range(1, best.size() - 1):
-				grid.add_deck(best[j], mini(hp, ht), T.STONE)
-			placed += best.size() - 2
+		if best_bridge:  # the bridge kit's span over the gap, at the landings' height
+			placed += (bridge_span(grid, best[0], best[best.size() - 1]).cells as Array).size()
 			continue
 		for j in range(1, best.size() - 1):
 			var q: Vector2i = best[j]
@@ -593,6 +591,52 @@ static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
 					grid.set_terrain(low, T.STAIRS)
 					placed += 1
 	return placed
+
+
+## A bridge from landing a to landing b ([USER] 2026-10-30): a straight run of bridge deck over whatever is between (water,
+## a gap, lower ground), at the landings' height, with one step where they differ by one. It never changes the terrain
+## under it. b is snapped onto a's row or column. Returns {"cells": placed cells, "error": why not}.
+static func bridge_span(grid: CombatGrid, a: Vector2i, b: Vector2i) -> Dictionary:
+	var out := {"cells": [] as Array[Vector2i], "error": ""}
+	if absi(b.x - a.x) >= absi(b.y - a.y):
+		b = Vector2i(b.x, a.y)
+	else:
+		b = Vector2i(a.x, b.y)
+	var n := maxi(absi(b.x - a.x), absi(b.y - a.y))
+	if n < 2:
+		out.error = "drag from one landing to another, with something to cross between them"
+		return out
+	if not grid.solid(a) or not grid.solid(b) or grid.terrain_at(a) == T.WATER or grid.terrain_at(b) == T.WATER:
+		out.error = "a bridge starts and ends on dry ground"
+		return out
+	var ha := grid.height_at(a)
+	var hb := grid.height_at(b)
+	if absi(ha - hb) > 1:
+		out.error = "the landings are %d levels apart; a bridge steps at most one" % absi(ha - hb)
+		return out
+	var step := Vector2i(signi(b.x - a.x), signi(b.y - a.y))
+	var plan: Array = []
+	for i in range(1, n):
+		var c := a + step * i
+		var dh := ha if i <= n / 2 else hb
+		if grid.solid(c) and grid.terrain_at(c) != T.WATER and grid.height_at(c) >= dh:
+			out.error = "the bridge would run into higher ground at (%d, %d)" % [c.x, c.y]
+			return out
+		plan.append([c, dh])
+	for pr: Array in plan:
+		grid.add_deck(pr[0], pr[1], T.STONE, true)
+		(out.cells as Array[Vector2i]).append(pr[0])
+	return out
+
+
+## Take the bridge decks away along a line.
+static func bridge_clear(grid: CombatGrid, a: Vector2i, b: Vector2i) -> int:
+	var n := 0
+	for c in line(a, b):
+		if grid.has_deck(c) and (grid.decks[CombatGrid.ground(c)] as Dictionary).get("bridge", false):
+			grid.remove_deck(c)
+			n += 1
+	return n
 
 
 ## Steps from `from` to every cell it can walk to (stairs help, as in `reach`).
@@ -678,16 +722,16 @@ static func cross_river(grid: CombatGrid, count := 2) -> int:
 		var step := Vector2i(signi(b.x - a.x), signi(b.y - a.y))
 		var ha := grid.height_at(a)
 		var hb := grid.height_at(b)
-		var c := a + step
-		var j := 1
-		while c != b:
-			if absi(ha - hb) <= 1:
-				grid.add_deck(c, mini(ha, hb), T.STONE)
-			else:  # a ford: the water steps from one bank's height to the other's, a level a cell
+		if absi(ha - hb) <= 1:
+			n += (bridge_span(grid, a, b).cells as Array).size()
+		else:
+			var c := a + step
+			var j := 1
+			while c != b:  # a ford: the water steps from one bank's height to the other's, a level a cell
 				grid.set_height(c, ha + signi(hb - ha) * mini(j, absi(hb - ha) - 1))
-			n += 1
-			c += step
-			j += 1
+				n += 1
+				c += step
+				j += 1
 		laid.append((a + b) / 2)
 	return n
 

@@ -149,6 +149,26 @@ func _draw() -> void:
 				draw_rect(r, Color(0, 0, 0, 0.08), false, 1.0)
 
 
+## Bridges and decks over the ground: grey planks with rails along the run.
+func _draw_decks(o: Control, g: CombatGrid) -> void:
+	for c: Vector2i in g.decks:
+		var r := _cell_rect(c)
+		var bridge: bool = (g.decks[c] as Dictionary).get("bridge", false)
+		o.draw_rect(r, Color(0.78, 0.78, 0.82) if bridge else Color(0.7, 0.66, 0.6))
+		if bridge and cs >= 8.0:
+			var k := BridgeKit.connections(g, c)
+			var ax: bool = k.w or k.e
+			var rail := Color(0.35, 0.35, 0.4)
+			if ax and not (k.n or k.s):
+				o.draw_line(r.position + Vector2(0, cs * 0.14), r.position + Vector2(cs, cs * 0.14), rail, 1.5)
+				o.draw_line(r.position + Vector2(0, cs * 0.86), r.position + Vector2(cs, cs * 0.86), rail, 1.5)
+			elif (k.n or k.s) and not ax:
+				o.draw_line(r.position + Vector2(cs * 0.14, 0), r.position + Vector2(cs * 0.14, cs), rail, 1.5)
+				o.draw_line(r.position + Vector2(cs * 0.86, 0), r.position + Vector2(cs * 0.86, cs), rail, 1.5)
+			else:
+				o.draw_rect(r.grow(-cs * 0.14), rail, false, 1.5)
+
+
 func _cell_rect(c: Vector2i) -> Rect2:
 	return Rect2(origin + Vector2(c) * cs, Vector2(cs, cs))
 
@@ -170,6 +190,7 @@ func _draw_marks() -> void:
 	for gr in d.get("groups", []):
 		for u in gr.get("units", []):
 			dot.call(Vector2i(int(u.cell[0]), int(u.cell[1])), Color(1.0, 0.48, 0.42))
+	_draw_decks(o, g)
 	var show_labels: bool = ov.show_labels
 	for t in d.get("things", []):
 		var c := Vector2i(int(t.cell[0]), int(t.cell[1]))

@@ -44,9 +44,10 @@ const TOOLS := [
 	["path", "path", "L", "Path", "drag a path's course; stairs are cut where it climbs. With 'follow ground' it finds the easiest walk from where you press to where you let go."],
 	["river", "river", "W", "River", "drag along the river's course from high ground down: it digs a channel that never runs uphill; every drop becomes a waterfall."],
 	["stairs", "stairs", "T", "Stairs", "click a cell at a cliff: stairs that join both sides. Drag from the bottom to the top of a cliff: a flight. Right drag: clear stairs."],
+	["bridge", "deck", "N", "Bridge", "drag from one landing to another across water, a gap or lower ground: a bridge is built between them at the landings' height (a step if they differ by one), with rails and piers, and the ground under it is not touched. Right drag: take a bridge away along the line."],
 	["deck", "deck", "J", "Deck", "drag: a bridge floor at the level height over the cells, with the lane under it still open (it stands at least two levels over the ground). Right drag: take decks away."],
 	["|"],
-	["region", "select", "A", "Area", "drag a box (or click a flat area) to select cells; then Raise or Lower moves every cell in it one level, keeping its ground, walls, stairs, decks and props. Right click clears the selection. PageUp and PageDown do the same."],
+	["region", "square", "A", "Area", "drag a box (or click a flat area) to select cells; then Raise or Lower moves every cell in it one level, keeping its ground, walls, stairs, decks and props. Right click clears the selection. PageUp and PageDown do the same."],
 	["cut", "cut", "C", "Cut", "cut cells out of the map: the outline, chasms, pits. Right: fill them back."],
 	["fill", "fill", "F", "Fill", "give holes ground again at the height around them. Right: cut."],
 	["zone", "zone", "Z", "Zone", "paint another tile set onto cells (blend forest into ruins). Right: back to the map's set."],
@@ -779,7 +780,7 @@ func _hover() -> void:
 
 
 func _path_tool() -> bool:
-	return tool == "river" or tool == "stairs" or tool == "path"
+	return tool == "river" or tool == "stairs" or tool == "path" or tool == "bridge"
 
 
 func _brush_cells(c: Vector2i) -> Array[Vector2i]:
@@ -833,7 +834,7 @@ func _stroke_to(c: Vector2i) -> void:
 		var path: Array[Vector2i] = _stroke.path
 		for p in cells.slice(1):
 			path.append(p)
-		overlay.path = MapOps.line(_stroke.start, c) if tool == "stairs" or (tool == "path" and follow_ground) else path
+		overlay.path = MapOps.line(_stroke.start, c) if tool == "stairs" or tool == "bridge" or (tool == "path" and follow_ground) else path
 		return
 	if tool == "stamp" and not _row_item():
 		return
@@ -853,6 +854,19 @@ func _end_stroke() -> void:
 			if course.is_empty():
 				_say("no walkable way between those cells")
 		MapOps.path(g, course, path_t, radius + 1)
+	elif tool == "bridge":
+		var a: Vector2i = _stroke.start
+		var b: Vector2i = _stroke.last
+		if right:
+			var n := MapOps.bridge_clear(g, a, b)
+			_say("took away %d bridge cells" % n if n > 0 else "no bridge along that line")
+		else:
+			var res := MapOps.bridge_span(g, a, b)
+			if String(res.error) != "":
+				_say(String(res.error))
+				_undo.pop_back()
+			else:
+				_say("bridge: %d cells" % (res.cells as Array).size())
 	elif tool == "stairs":
 		var a: Vector2i = _stroke.start
 		var b: Vector2i = _stroke.last

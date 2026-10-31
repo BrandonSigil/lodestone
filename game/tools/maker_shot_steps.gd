@@ -72,6 +72,10 @@ func run(m: Node, script: String) -> void:
 				m.set("_box", {})
 			"shift":  # shift:<dz>: raise or lower the selected area
 				m.call("region_shift", int(a[1]))
+			"bridge":  # bridge:<x1>:<y1>:<x2>:<y2>: the Bridge tool's drag from one landing to another
+				m.call("_push_undo")
+				var res: Dictionary = MapOps.bridge_span(m.get("doc").grid, Vector2i(int(a[1]), int(a[2])), Vector2i(int(a[3]), int(a[4])))
+				print("BRIDGE ", res.error, " ", (res.cells as Array).size())
 			"phase":  # phase:<shape|decor|play>
 				m.call("_set_phase", a[1])
 			"level":  # level:<n>: the level height (and the Level tool)

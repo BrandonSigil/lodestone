@@ -830,3 +830,34 @@ func test_map_maker_area_raise_and_lower() -> void:
 	tree.root.remove_child(maker)
 	maker.free()
 	tree.root.get_node("Game").set("maker_map", keep)
+
+
+## The bridge kit ([USER] 2026-10-30): drag between two landings across water and a deck is built over it, at the landings'
+## height, without touching the terrain under it, and it survives saving; the generator uses the same bridge.
+func test_bridge_span_and_kit() -> void:
+	var g := _island(12, 2)
+	for y in 12:
+		for x in range(5, 8):
+			g.set_terrain(Vector2i(x, y), CombatGrid.T.WATER)
+			g.set_height(Vector2i(x, y), 0)
+	var res := MapOps.bridge_span(g, Vector2i(4, 4), Vector2i(8, 6))  # b is snapped onto a's row
+	eq(String(res.error), "", "the span is built")
+	eq((res.cells as Array).size(), 3, "three cells between the landings")
+	for x in range(5, 8):
+		ok(g.has_deck(Vector2i(x, 4)), "a deck at %d" % x)
+		eq(int(g.decks[Vector2i(x, 4)].h), 2, "at the landings' height")
+	eq(g.terrain_at(Vector2i(6, 4)), CombatGrid.T.WATER, "the water under it is untouched")
+	eq(BridgeKit.piece_at(g, Vector2i(6, 4)), "deck_a", "a straight run is a deck")
+	eq(BridgeKit.piece_at(g, Vector2i(5, 4)), "landing_a", "an end that meets the ground is a landing")
+	ok(ExploreRules.path_to_use(g, Vector2i(2, 4), Vector2i(9, 4), 1).size() > 0, "a piece can walk across it")
+	var back := CombatGrid.from_dict(g.to_dict())
+	ok(back.has_deck(Vector2i(6, 4)) and bool((back.decks[Vector2i(6, 4)] as Dictionary).get("bridge", false)), "the bridge survives saving")
+	eq(MapOps.bridge_clear(g, Vector2i(4, 4), Vector2i(8, 4)), 3, "right drag takes it away")
+	# landings a level apart step once; further apart is refused
+	g.set_height(Vector2i(8, 7), 3)
+	var step := MapOps.bridge_span(g, Vector2i(4, 7), Vector2i(8, 7))
+	eq(String(step.error), "", "a one level difference is allowed")
+	eq(int(g.decks[Vector2i(5, 7)].h), 2, "the near half at the near landing's height")
+	eq(int(g.decks[Vector2i(7, 7)].h), 3, "the far half at the far landing's")
+	g.set_height(Vector2i(8, 9), 5)
+	ok(String(MapOps.bridge_span(g, Vector2i(4, 9), Vector2i(8, 9)).error) != "", "three levels apart is refused")

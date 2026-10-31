@@ -204,8 +204,8 @@ func has_deck(c: Vector2i) -> bool:
 
 
 ## A deck over cell c at height dh, floored with terrain t (STONE, ROAD or STAIRS so a flight can climb on).
-func add_deck(c: Vector2i, dh: int, t := T.STONE) -> void:
-	decks[ground(c)] = {"h": dh, "t": t}
+func add_deck(c: Vector2i, dh: int, t := T.STONE, bridge := false) -> void:
+	decks[ground(c)] = {"h": dh, "t": t, "bridge": true} if bridge else {"h": dh, "t": t}
 	version += 1
 	_sight.clear()
 
@@ -378,7 +378,7 @@ func resized(width: int, height: int) -> CombatGrid:
 			g.add_prop(a, p.sprite, p.foot, p.tall, p.sight, p.walk, p)
 	for c: Vector2i in decks:
 		if c.x < width and c.y < height:
-			g.add_deck(c, int(decks[c].h), int(decks[c].t))
+			g.add_deck(c, int(decks[c].h), int(decks[c].t), bool(decks[c].get("bridge", false)))
 	g.look = look.duplicate()
 	return g
 
@@ -435,7 +435,10 @@ func to_dict() -> Dictionary:
 	if not decks.is_empty():
 		var list: Array = []
 		for c: Vector2i in decks:
-			list.append({"x": c.x, "y": c.y, "h": int(decks[c].h), "t": LETTERS[int(decks[c].t)]})
+			var e := {"x": c.x, "y": c.y, "h": int(decks[c].h), "t": LETTERS[int(decks[c].t)]}
+			if decks[c].get("bridge", false):
+				e["b"] = true  # a bridge piece (BridgeKit)
+			list.append(e)
 		d["decks"] = list
 	if not look.is_empty():
 		d["look"] = look.duplicate()
@@ -462,7 +465,7 @@ static func from_dict(d: Dictionary) -> CombatGrid:
 		for x in mini(g.w, String(z_rows[y]).length()):
 			g.set_zone(Vector2i(x, y), String(key.get(String(z_rows[y])[x], "")))
 	for dk: Dictionary in d.get("decks", []):
-		g.add_deck(Vector2i(int(dk.x), int(dk.y)), clampi(int(dk.h), 0, MAX_HEIGHT), from_letter.get(String(dk.get("t", "s")), T.STONE))
+		g.add_deck(Vector2i(int(dk.x), int(dk.y)), clampi(int(dk.h), 0, MAX_HEIGHT), from_letter.get(String(dk.get("t", "s")), T.STONE), bool(dk.get("b", false)))
 	for p: Dictionary in d.get("props", []):
 		var cell: Array = p.get("cell", [0, 0])
 		var foot: Array = p.get("foot", [1, 1])
