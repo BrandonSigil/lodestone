@@ -1,0 +1,136 @@
+skill,step,effect,param,text
+guard,1,,guard_armor:+1,GUARD gives 1 more armor
+guard,2,,guard_armor:+1,GUARD gives 1 more armor
+guard,3,,guard_hit:+1,The free hit on a foe that walks away from you does 1 more damage
+goad,1,status_turns:+1,,Its effect lasts 1 turn longer
+goad,2,res_cost:-1,,Costs 1 less
+goad,3,,taunt_armor:+1,You get 1 armor while your taunt lasts
+command,1,cooldown:-1,,The wait after using it is 1 turn shorter
+command,2,cooldown:-1,,The wait after using it is 1 turn shorter
+command,3,,command_bonus:+1,The friend you command hits for 1 more damage on that turn
+shield_wall,1,,shield_wall_armor:+1,Friends next to you get 1 more armor
+shield_wall,2,,shield_wall_armor:+1,Friends next to you get 1 more armor
+shield_wall,3,,shield_wall_radius:+1,Friends 2 tiles away are covered too
+cleave,1,power:+1,,Does 1 more damage
+cleave,2,crit:+10,,+10% crit chance
+cleave,3,power:+1,,Does 1 more damage
+second_wind,1,power:+2,,Heals 2 more HP
+second_wind,2,res_cost:-1,,Costs 1 less
+second_wind,3,power:+2,,Heals 2 more HP
+bloodied,1,,bloodied_damage:+1,The damage bonus when hurt is 1 bigger
+bloodied,2,,bloodied_crit:+10,The crit bonus when hurt is 10% bigger
+bloodied,3,,bloodied_threshold:+10,It starts working 10% of your max HP sooner
+throw_dagger,1,range_max:+1,,Reaches 1 tile further
+throw_dagger,2,crit:+10,,+10% crit chance
+throw_dagger,3,power:+1,,Does 1 more damage
+poison_blades,1,,poison_damage:+1,Poison takes 1 more HP each turn
+poison_blades,2,,poison_turns:+1,Poison lasts 1 turn longer
+poison_blades,3,,poison_damage:+1,Poison takes 1 more HP each turn
+shadow_swap,1,range_max:+1,,Reaches 1 tile further
+shadow_swap,2,cooldown:-1,,The wait after using it is 1 turn shorter
+shadow_swap,3,,swap_move:+2,After swapping you may still walk 2 tiles
+quick_hands,1,,quick_damage:+1,Each of the two hits does 1 more damage
+quick_hands,2,,quick_crit:+5,Each hit has 5% more crit chance
+quick_hands,3,,quick_damage:+1,Each of the two hits does 1 more damage
+volley,1,power:+1,,Does 1 more damage
+volley,2,range_max:+1,,Reaches 1 tile further
+volley,3,res_cost:-1,,Costs 1 less
+overwatch,1,,watch_damage:+1,The watch shot does 1 more damage
+overwatch,2,,watch_crit:+15,The watch shot has 15% more crit chance
+overwatch,3,,watch_stops:+1,Stops and shoots a second foe
+trap,1,power:+1,,Does 1 more damage
+trap,2,status_turns:+1,,The trap stays 1 turn longer
+trap,3,radius:+1,,The trap covers 1 more tile around it
+call_companion,1,res_cost:-1,,Costs 1 less
+call_companion,2,range_max:+1,,Reaches 1 tile further
+call_companion,3,,companion_bonus:+1,Your companion hits for 1 more damage on the extra turn
+lure,1,push:-1,,Pulls the foe 1 tile further
+lure,2,power:+1,,Does 1 more damage
+lure,3,range_max:+1,,Reaches 1 tile further
+ignite,1,power:+1,,Does 1 more damage
+ignite,2,status_turns:+1,,The burn lasts 1 turn longer
+ignite,3,,line_length:+1,The line of fire is 1 tile longer
+flash,1,status_turns:+1,,The blind lasts 1 turn longer
+flash,2,radius:+1,,The area is 1 tile bigger
+flash,3,res_cost:-1,,Costs 1 less
+ward,1,res_cost:-1,,Costs 1 less
+ward,2,range_max:+1,,Reaches 1 tile further
+ward,3,,ward_hits:+1,The ward blocks 1 more hit
+far_aid,1,,aid_pct:+10,Brings them back with 10% more max HP
+far_aid,2,range_max:+1,,Reaches 1 tile further
+far_aid,3,,aid_pct:+10,Brings them back with 10% more max HP
+renew,1,power:+1,,Heals 1 more HP
+renew,2,status_turns:+1,,Heals for 1 more turn
+renew,3,res_cost:-1,,Costs 1 less
+rally,1,,rally_move:+1,The friend gets 1 more move
+rally,2,range_max:+1,,Reaches 1 tile further
+rally,3,,rally_damage:+1,The friend hits for 1 more damage this turn
+dissonance,1,status_turns:+1,,The scare lasts 1 turn longer
+dissonance,2,range_max:+1,,Reaches 1 tile further
+dissonance,3,,spook_damage:-1,The scared foe hits for 1 less damage
+last_stand,1,radius:+1,,The area is 1 tile bigger
+last_stand,2,status_turns:+1,,Allies stay downed 1 more turn
+last_stand,3,res_cost:-1,,Costs 1 less
+inspire,1,,inspire_damage:+1,Allies hit for 1 more damage
+inspire,2,radius:+1,,The area is 1 tile bigger
+inspire,3,status_turns:+1,,It lasts 1 turn longer
+bomb,1,power:+1,,Does 1 more damage
+bomb,2,radius:+1,,The area is 1 tile bigger
+bomb,3,res_cost:-1,,Costs 1 less
+caltrops,1,status_turns:+1,,The slow lasts 1 turn longer
+caltrops,2,range_max:+1,,Reaches 1 tile further
+caltrops,3,power:+1,,Does 1 more damage
+patch,1,power:+2,,Heals 2 more HP
+patch,2,range_max:+1,,Reaches 1 tile further
+patch,3,power:+2,,Heals 2 more HP
+smoke_bomb,1,status_turns:+1,,The smoke lasts 1 turn longer
+smoke_bomb,2,radius:+1,,The area is 1 tile bigger
+smoke_bomb,3,res_cost:-1,,Costs 1 less
+bark,1,res_cost:-1,,Costs 1 less (free)
+bark,2,status_turns:+1,,Its effect lasts 1 turn longer
+bark,3,range_max:+1,,Taunts foes 1 tile further
+shove,1,push:+1,,Pushes 1 tile further
+shove,2,power:+1,,Does 1 more damage
+shove,3,crit:+10,,+10% crit chance
+aimed_shot,1,crit:+10,,+10% crit chance
+aimed_shot,2,power:+1,,Does 1 more damage
+aimed_shot,3,crit:+10,,+10% crit chance
+snare,1,status_turns:+1,,Its effect lasts 1 turn longer
+snare,2,power:+1,,Does 1 more damage
+snare,3,range_max:+1,,Reaches 1 tile further
+moonbeam,1,power:+1,,Does 1 more damage
+moonbeam,2,range_max:+1,,Reaches 1 tile further
+moonbeam,3,res_cost:-1,,Costs 1 less
+moon_veil,1,status_turns:+1,,Its effect lasts 1 turn longer
+moon_veil,2,range_max:+1,,Reaches 1 tile further
+moon_veil,3,res_cost:-1,,Costs 1 less
+fireball,1,power:+1,,Does 1 more damage
+fireball,2,range_max:+1,,Reaches 1 tile further
+fireball,3,res_cost:-1,,Costs 1 less
+mend,1,power:+2,,Heals 2 more HP
+mend,2,range_max:+1,,Reaches 1 tile further
+mend,3,power:+2,,Heals 2 more HP
+pounce,1,power:+1,,Does 1 more damage
+pounce,2,crit:+10,,+10% crit chance
+pounce,3,bleed:+2,,Also makes the target bleed: 1 HP a turn for 2 turns
+kick,1,push:+1,,Pushes 1 tile further
+kick,2,power:+1,,Does 1 more damage
+kick,3,crit:+10,,+10% crit chance
+moon_sleep,1,range_max:+1,,Reaches 1 tile further
+moon_sleep,2,status_turns:+1,,Its effect lasts 1 turn longer
+moon_sleep,3,res_cost:-1,,Costs 1 less
+moon_tide,1,push:+1,,Pushes 1 tile further
+moon_tide,2,power:+1,,Does 1 more damage
+moon_tide,3,res_cost:-1,,Costs 1 less
+star_guide,1,range_max:+1,,Reaches 1 tile further
+star_guide,2,status_turns:+1,,Its effect lasts 1 turn longer
+star_guide,3,res_cost:-1,,Costs 1 less
+firebolt,1,power:+1,,Does 1 more damage
+firebolt,2,crit:+10,,+10% crit chance
+firebolt,3,power:+1,,Does 1 more damage
+frost_bind,1,status_turns:+1,,Its effect lasts 1 turn longer
+frost_bind,2,power:+1,,Does 1 more damage
+frost_bind,3,res_cost:-1,,Costs 1 less
+bite,1,status_turns:+1,,Its effect lasts 1 turn longer
+bite,2,bleed:+2,,Also makes the target bleed: 1 HP a turn for 2 turns
+bite,3,power:+1,,Does 1 more damage
