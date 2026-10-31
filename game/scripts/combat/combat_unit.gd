@@ -77,6 +77,13 @@ var summon_avoid := {}  ## cells its called pieces never take (the fight's way o
 var minions: Array = []  ## the pieces it called, standing or not
 var summoner: CombatUnit = null  ## who called this piece
 var hiding := false  ## an ambusher not seen yet (a map group's "hidden"): not drawn, not in the danger zone, until spotted or it strikes
+var upgrades := {}  ## number upgrades from the level-up picks (docs/design/level-up.md): "guard_armor" -> +2 ...
+var poison_dmg := 0  ## HP a poison on it takes each phase, when its poisoner's blades were upgraded
+var ward_hits := 0  ## hits a WARD on it still blocks
+var watch_left := 0  ## watch shots a readied OVERWATCH still has (an upgrade gives a second)
+var cmd_bonus := 0  ## damage a COMMAND adds to this piece's hits until its phase is over
+var free_hitting := false  ## true while it takes the free hit on a piece walking away from a guard
+var watching_shot := false  ## true while it fires a readied watch shot
 var keep_res := false  ## its mana or charges come from its member and carry on (Battle.setup leaves them be)
 var scaled := false  ## ScaleTest.standard has run on this piece
 var hp_phase := 0  ## the boss's health phase (ClassDef.hp_phases): 0 until its HP first falls under the first line
@@ -185,6 +192,19 @@ static func from_def(d: CharacterDef, mods: Dictionary = {}, spell_ids: Variant 
 	return u
 
 
+## The number upgrades the ranks give: every step up to the rank, its `param` ("guard_armor:+1") added up by name.
+static func upgrade_mods(ranks: Dictionary) -> Dictionary:
+	var out := {}
+	for skill in ranks:
+		var steps: Array = Db.upgrade_steps.get(String(skill), [])
+		for i in mini(int(ranks[skill]), steps.size()):
+			var param := String((steps[i] as Dictionary).get("param", ""))
+			var kv := param.split(":")
+			if kv.size() == 2:
+				out[kv[0].strip_edges()] = int(out.get(kv[0].strip_edges(), 0)) + int(kv[1])
+	return out
+
+
 static func from_member(m: Dictionary, mods: Dictionary = {}) -> CombatUnit:
 	var u := from_def(m.def, LevelRules.merge(mods, m.get("bonus", {})), m.get("spells"))
 	u.hp = clampi(m.hp, 1, u.max_hp)
@@ -204,6 +224,7 @@ static func from_member(m: Dictionary, mods: Dictionary = {}) -> CombatUnit:
 		elif not u.abilities.any(func(a: Ability) -> bool: return a.id == learned.id):
 			u.abilities.append(learned)
 	var ranks: Dictionary = m.get("ranks", {})
+	u.upgrades = upgrade_mods(ranks)
 	for i in u.abilities.size():  # skills ranked up in the Lodestone menu carry their effects
 		u.abilities[i] = LevelRules.ranked(u.abilities[i], int(ranks.get(u.abilities[i].id, 0)), Db.skill_ranks)
 	return u

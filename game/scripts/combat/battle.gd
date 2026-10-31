@@ -339,7 +339,7 @@ func _ai_turn(u: CombatUnit) -> void:
 	if plan.ability != null and plan.ability.kind == "swap":  # the rogue's move; then it acts from where it landed
 		await _use_clutch(u, plan.ability, plan.aim, plan.dest, plan.spot)
 		u.moved = true
-		u.move_spent = CombatRules.move_points(u)
+		u.move_spent = CombatRules.swap_spent(u)
 		var then := EnemyAi.plan(grid, u, units)
 		if then.ability != null and then.ability.kind not in ["carry", "command", "swap"] and u.alive():
 			await _use(u, then.ability, then.aim)

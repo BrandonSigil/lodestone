@@ -907,3 +907,14 @@ UI_SUM_ROUNDS,Rounds %d. Foes down %d.
 UI_SUM_HP,%s: HP %d of %d
 UI_LOOT_TITLE,LOOT
 UI_LOOT_COINS,%d coins taken
+MOD_QUICK,QUICK HANDS
+MOD_BLOODIED,BLOODIED
+MOD_GUARD_HIT,GUARD HIT
+MOD_COMMANDED,COMMANDED
+MOD_WATCH,WATCH
+MOD_TAUNT,TAUNT
+DESC_GUARD,Guard: until your next turn you take 2 less damage from every hit, and a foe that walks away from you takes a free hit.
+TRAIT_BLOODIED,BLOODIED
+TRAIT_BLOODIED_DESC,"The more hurt you are, the harder you hit: under half HP +1 damage, under a quarter +2, and +10% crit chance."
+TRAIT_QUICK_HANDS,QUICK HANDS
+TRAIT_QUICK_HANDS_DESC,Your regular attack is two hits, each 1 weaker than one full hit.

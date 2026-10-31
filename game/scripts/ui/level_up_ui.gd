@@ -57,6 +57,17 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
 		var nxt := LevelRules.next_useful_rank(a.id, have, Db.skill_ranks)
 		if nxt > 0:
 			options.append({"id": a.id, "ability": Db.ability(a.id), "learn": false, "have": have, "next": nxt, "locked": false})
+	# a kit's traits and its GUARD, once the piece has them, grow too (their steps are number upgrades the rules read)
+	var kit := Game.kit_of(id)
+	for r in Db.kits:
+		if r.archetype != kit or r.alt != "0" or r.built != "1":
+			continue
+		var sid := String(r.ability)
+		var known: bool = (r.source == "trait" and u.traits.has(StringName(sid))) or (r.source == "action" and sid == "guard")
+		var have2 := int(ranks.get(sid, 0))
+		var nxt2 := LevelRules.next_useful_rank(sid, have2, Db.skill_ranks)
+		if known and nxt2 > 0:
+			options.append({"id": sid, "ability": null, "learn": false, "have": have2, "next": nxt2, "locked": false})
 	# always four to look at when the kit has them: what is left of the kit whose effect is not built yet shows locked
 	for aid in Game.learnable(id, false):
 		if options.size() >= MIN_CHOICES:
@@ -139,31 +150,31 @@ static func _detail(detail: VBoxContainer, u: CombatUnit, o: Dictionary, ranks: 
 	var a: Ability = o.ability
 	var have: int = o.have
 	var title := Label.new()
-	title.text = _name(o) + "   " + (Txt.t("UI_LV_NEW") if o.learn else Txt.f("UI_LV_RANK_OF", [have, LevelRules.max_rank(a.id, Db.skill_ranks)]))
+	title.text = _name(o) + "   " + (Txt.t("UI_LV_NEW") if o.learn else Txt.f("UI_LV_RANK_OF", [have, LevelRules.max_rank(String(o.id), Db.skill_ranks)]))
 	title.add_theme_font_size_override("font_size", 22)
 	detail.add_child(title)
 	_line(detail, _desc(o), 16)
 	if o.locked:
 		_line(detail, Txt.t("UI_LV_LOCKED"), 16, Color(1.0, 0.8, 0.6))
 		return
-	if a == null:  # a trait: what it does, nothing to grow
+	if a == null and o.learn:  # a trait to learn: what it does
 		return
-	var cur := LevelRules.ranked(a, have, Db.skill_ranks)
-	_line(detail, Txt.f("UI_LV_NOW", _numbers(u, cur)), 16)
-	var steps: Array = Db.upgrade_steps.get(a.id, [])
+	if a != null:
+		_line(detail, Txt.f("UI_LV_NOW", _numbers(u, LevelRules.ranked(a, have, Db.skill_ranks))), 16)
+	var steps: Array = Db.upgrade_steps.get(String(o.id), [])
 	if o.learn:
-		var first := LevelRules.next_useful_rank(a.id, 0, Db.skill_ranks)
+		var first := LevelRules.next_useful_rank(String(o.id), 0, Db.skill_ranks)
 		if first > 0:
 			_line(detail, Txt.f("UI_LV_THEN", String((steps[first - 1] as Dictionary).text)), 15, Color(0.75, 0.9, 0.8))
 		return
 	var nxt: int = o.next
 	var step: Dictionary = steps[nxt - 1]
-	var change := _change(u, a, have, nxt, String(step.effect))
+	var change := _change(u, a, have, nxt, String(step.effect)) if a != null else ""
 	_line(detail, Txt.f("UI_LV_THIS", String(step.text)) + ("  (" + change + ")" if change != "" else ""), 16, Color(1.0, 0.92, 0.6))
-	var after := LevelRules.next_useful_rank(a.id, nxt, Db.skill_ranks)
+	var after := LevelRules.next_useful_rank(String(o.id), nxt, Db.skill_ranks)
 	if after > 0:
 		var s2: Dictionary = steps[after - 1]
-		var c2 := _change(u, a, nxt, after, String(s2.effect))
+		var c2 := _change(u, a, nxt, after, String(s2.effect)) if a != null else ""
 		_line(detail, Txt.f("UI_LV_NEXT", String(s2.text)) + ("  (" + c2 + ")" if c2 != "" else ""), 15, Color(0.75, 0.9, 0.8))
 	else:
 		_line(detail, Txt.t("UI_LV_LAST"), 15, Color(0.75, 0.9, 0.8))
@@ -183,6 +194,8 @@ static func _line(box: VBoxContainer, text: String, size: int, color := Color(0.
 static func _name(o: Dictionary) -> String:
 	if o.ability != null:
 		return Txt.t((o.ability as Ability).name_key)
+	if String(o.id) == "guard":
+		return Txt.t("ACT_GUARD")
 	var key := "TRAIT_" + String(o.id).to_upper()
 	return Txt.t(key) if Txt.has(key) else String(o.id).replace("_", " ").to_upper()
 
@@ -190,7 +203,7 @@ static func _name(o: Dictionary) -> String:
 static func _desc(o: Dictionary) -> String:
 	if o.ability != null:
 		return _describe(o.ability, false)
-	var key := "TRAIT_" + String(o.id).to_upper() + "_DESC"
+	var key := "TRAIT_" + String(o.id).to_upper() + "_DESC" if String(o.id) != "guard" else "DESC_GUARD"
 	return Txt.t(key) if Txt.has(key) else ""
 
 

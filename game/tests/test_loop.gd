@@ -1307,7 +1307,8 @@ func test_level_up_picks() -> void:
 	ok(LevelRules.learn(s, "goad"), "a waiting pick learns an ability")
 	eq(int(s.pending), 0)
 	ok(not LevelRules.learn(s, "cleave"), "no pick waiting: no")
-	eq(LevelRules.next_useful_rank("guard", 0, Db.skill_ranks), 0, "a step that only has a param waits on its wiring")
+	ok(not LevelRules.step_useful("rally", 0, Db.skill_ranks), "a step nothing reads yet waits on its wiring")
+	ok(LevelRules.step_useful("guard", 0, Db.skill_ranks), "GUARD's extra armor is wired")
 	eq(LevelRules.next_useful_rank("bite", 0, Db.skill_ranks), 1, "an effect step is offered")
 	# the hero (sword job): the kit's goad is learnable, learning spends the job's pick and arms the piece
 	var saved := _fresh_game()
@@ -1347,7 +1348,7 @@ func test_level_up_offers_four() -> void:
 		return box.find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return (b as Button).toggle_mode)
 	var box := VBoxContainer.new()
 	LevelUpUi.picks(box, "lead", func() -> void: pass)
-	eq(icons.call(box).size(), 4, "the sword: goad, shield wall, two upgrades")
+	eq(icons.call(box).size(), 5, "the sword: goad, shield wall, two upgrades and GUARD's")
 	box.free()
 	ok(Game.learnable("lead").has("shield_wall"), "a kit trait is learnable")
 	ok(Game.learn_skill("lead", "shield_wall"), "learned")

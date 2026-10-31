@@ -36,6 +36,8 @@ const TRAIT_SCHOLAR := &"scholar"  ## Wizard: spells deal +1 damage and heal +1
 const TRAIT_DEEP_ROOTS := &"deep_roots"  ## Bushberry: can't be pushed, regrows 1 HP at the start of its phase
 const TRAIT_BONES := &"bones"  ## Skeleton: makes the piece undead (arrows -2, fire +2: data/tags.csv)
 const TRAIT_DOUBLE_STRIKE := &"double_strike"  ## Lewith & Flark: the basic hit swings twice at -1 damage each
+const TRAIT_QUICK_HANDS := &"quick_hands"  ## Shade: the basic hit swings twice at -1 damage each (like double_strike), upgradable
+const TRAIT_BLOODIED := &"bloodied"  ## Reaver: more damage and crit the lower its HP (combat.csv bloodied_*)
 const TRAIT_KEEPS_BACK := &"keeps_back"  ## Mender foe: stays 2 or more tiles from heroes, attacks only when cornered
 const TRAIT_CHARGE := &"charge"  ## Rusher and bull: a straight run of 3 or more tiles this phase adds charge_bonus to its hits
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
@@ -350,6 +352,17 @@ static func damage_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, fro
 		parts.append(["MOD_STARLIT", 1])
 	if swings(att, a) > 1:
 		parts.append(["MOD_TWICE", -1])
+		if att.has_trait(TRAIT_QUICK_HANDS) and upg(att, "quick_damage") > 0:
+			parts.append(["MOD_QUICK", upg(att, "quick_damage")])
+	var blood := bloodied_level(att)
+	if blood > 0:
+		parts.append(["MOD_BLOODIED", blood + upg(att, "bloodied_damage")])
+	if att.free_hitting and upg(att, "guard_hit") > 0:
+		parts.append(["MOD_GUARD_HIT", upg(att, "guard_hit")])
+	if att.cmd_bonus > 0:
+		parts.append(["MOD_COMMANDED", att.cmd_bonus])
+	if att.watching_shot and upg(att, "watch_damage") > 0:
+		parts.append(["MOD_WATCH", upg(att, "watch_damage")])
 	if att.has_trait(TRAIT_PACK) and flanked(att, tgt, units, from):
 		parts.append(["MOD_PACK", 1])
 	if a != null and a.element == "fire" and tgt.has_trait(PERK_FLAMMABLE):
@@ -397,13 +410,16 @@ static func armor_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from
 	if tgt.armor != 0:
 		parts.append(["MOD_ARMOR", tgt.armor])
 	if tgt.has_status(STATUS_GUARD):
-		parts.append(["MOD_GUARD", int(num("guard_armor"))])
+		parts.append(["MOD_GUARD", int(num("guard_armor")) + upg(tgt, "guard_armor")])
+	if tgt.has_status(STATUS_TAUNT) and upg(tgt, "taunt_armor") > 0:
+		parts.append(["MOD_TAUNT", upg(tgt, "taunt_armor")])
 	if tgt.has_status(STATUS_VEIL):
 		parts.append(["MOD_VEIL", int(num("veil_armor"))])
 	if tgt.has_status(STATUS_FOE_WARD):
 		parts.append(["MOD_FOE_WARD", int(num("foe_ward_armor"))])
-	if shielded(tgt, units):
-		parts.append(["MOD_SHIELD", int(num("shield_wall_armor"))])
+	var wall := shield_armor(tgt, units)
+	if wall > 0:
+		parts.append(["MOD_SHIELD", wall])
 	if dist(from, tgt.cell) > 1 and grid.cover(tgt.cell) > 0:
 		parts.append(["MOD_COVER", int(num("cover_ranged"))])  # [USER] c14: half cover, ranged hits only
 	return parts
@@ -423,6 +439,12 @@ static func crit_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units
 		parts.append(["MOD_STEADY", int(num("crit_steady"))])
 	if att.has_status(STATUS_GUIDED):
 		parts.append(["MOD_GUIDED", int(num("crit_guided"))])
+	if att.has_trait(TRAIT_QUICK_HANDS) and a != null and a.id == "strike" and upg(att, "quick_crit") > 0:
+		parts.append(["MOD_QUICK", upg(att, "quick_crit")])
+	if bloodied_level(att) > 0:
+		parts.append(["MOD_BLOODIED", int(num("bloodied_crit")) + upg(att, "bloodied_crit")])
+	if att.watching_shot and upg(att, "watch_crit") > 0:
+		parts.append(["MOD_WATCH", upg(att, "watch_crit")])
 	return parts
 
 
@@ -438,19 +460,46 @@ static func shielded(tgt: CombatUnit, units: Array) -> bool:
 	return false
 
 
+## The armor a shield wall next to tgt gives it: the best of the wall-bearers close enough (1 tile, 2 with the upgrade), 0 if none.
+static func shield_armor(tgt: CombatUnit, units: Array) -> int:
+	var best := 0
+	for o: CombatUnit in units:
+		if o == tgt or not o.alive() or o.team != tgt.team or not o.has_trait(TRAIT_SHIELD_WALL):
+			continue
+		if dist(o.cell, tgt.cell) <= 1 + upg(o, "shield_wall_radius"):
+			best = maxi(best, int(num("shield_wall_armor")) + upg(o, "shield_wall_armor"))
+	return best
+
+
 static func _starlit(grid: CombatGrid, u: CombatUnit, from: Vector2i, a: Ability) -> bool:
 	return a != null and a.is_spell() and u.has_trait(TRAIT_STARLIT) and grid.height_at(from) >= STARLIT_HEIGHT
 
 
-## How many times this ability rolls against each target (Lewith & Flark's basic hit swings twice).
+## How many times this ability rolls against each target (Lewith & Flark's basic hit swings twice, so do the shade's quick hands).
 static func swings(u: CombatUnit, a: Ability) -> int:
-	return 2 if a != null and a.id == "strike" and u.has_trait(TRAIT_DOUBLE_STRIKE) else 1
+	return 2 if a != null and a.id == "strike" and (u.has_trait(TRAIT_DOUBLE_STRIKE) or u.has_trait(TRAIT_QUICK_HANDS)) else 1
+
+
+## A number upgrade the piece took at a level-up ("guard_armor", "quick_damage"...): 0 without it.
+static func upg(u: CombatUnit, key: String) -> int:
+	return int(u.upgrades.get(key, 0))
+
+
+## HP under which a bloodied piece is hurt enough for its bonus: half its max, plus the upgrade's % of max.
+static func bloodied_level(u: CombatUnit) -> int:
+	if not u.has_trait(TRAIT_BLOODIED):
+		return 0
+	var line := int(num("bloodied_half")) + upg(u, "bloodied_threshold")
+	if u.hp * 100 <= u.max_hp * (line / 2):
+		return 2
+	return 1 if u.hp * 100 <= u.max_hp * line else 0
 
 
 ## What a heal restores, before capping at max HP.
 ## Spells heal more as the caster's magic grows ([USER] pc-8: skills grow with the character on their own).
 static func heal_amount(u: CombatUnit, a: Ability) -> int:
-	return a.power + (1 if a.is_spell() and u.has_trait(TRAIT_SCHOLAR) else 0) + (u.magic_power if a.is_spell() else 0)
+	var rage := u.res if a.id == "second_wind" else 0  # the reaver's SECOND WIND adds all the rage it has left, and spends it
+	return a.power + rage + (1 if a.is_spell() and u.has_trait(TRAIT_SCHOLAR) else 0) + (u.magic_power if a.is_spell() else 0)
 
 
 static func _sum(parts: Array) -> int:
@@ -556,6 +605,8 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 			"heal":
 				var before := t.hp
 				t.hp = mini(t.max_hp, t.hp + heal_amount(u, a))
+				if a.id == "second_wind":
+					u.res = 0
 				events.append({"type": "heal", "src": u, "unit": t, "amount": t.hp - before})
 			"revive":
 				if t.downed():
@@ -569,6 +620,8 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 			"buff":
 				if a.status != "":
 					t.statuses[a.status] = a.status_turns
+					if a.status == STATUS_WARD:
+						t.ward_hits = 1 + upg(u, "ward_hits")
 					events.append({"type": "status", "src": u, "unit": t, "status": a.status})
 	if u.hiding and a.hostile():
 		u.hiding = false
@@ -584,7 +637,9 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, a: Ability, t: CombatUnit, units: Array) -> Array:
 	var events := []
 	if t.has_status(STATUS_WARD) and t.team != u.team:  # WARD takes the whole blow: no damage, no status
-		t.statuses.erase(STATUS_WARD)
+		t.ward_hits -= 1
+		if t.ward_hits <= 0:  # an upgraded ward blocks more than one hit
+			t.statuses.erase(STATUS_WARD)
 		events.append({"type": "hit", "src": u, "unit": t, "amount": 0, "crit": false})
 		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_WARD})
 		return events
@@ -605,12 +660,15 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 		events.append({"type": "hit", "src": u, "unit": t, "amount": dmg, "crit": crit})
 	if t.alive() and a.status != "":
 		t.statuses[a.status] = a.status_turns
+		if a.status == STATUS_WARD:
+			t.ward_hits = 1 + upg(u, "ward_hits")
 		events.append({"type": "status", "src": u, "unit": t, "status": a.status, "struck": a.kind == "hex"})
 	if t.alive() and a.bleed > 0:
 		t.statuses[STATUS_BLEED] = a.bleed
 		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_BLEED})
 	if t.alive() and a.kind == "attack" and u.has_trait(TRAIT_POISON_BLADES):  # renews, doesn't stack
-		t.statuses[STATUS_POISON] = int(num("poison_turns"))
+		t.statuses[STATUS_POISON] = int(num("poison_turns")) + upg(u, "poison_turns")
+		t.poison_dmg = maxi(t.poison_dmg, int(num("poison_damage")) + upg(u, "poison_damage"))
 		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_POISON})
 	if t.alive() and a.push > 0:
 		events.append_array(push(grid, units, u.cell, t, a.push))
@@ -686,7 +744,7 @@ static func begin_phase(units: Array, team: int) -> Array:
 			u.phase_no += 1
 		for s: String in [STATUS_BLEED, STATUS_POISON]:  # through armor
 			if u.alive() and u.has_status(s):
-				var n := mini(int(num(s + "_damage")), u.hp)
+				var n := mini(maxi(int(num(s + "_damage")), u.poison_dmg if s == STATUS_POISON else 0), u.hp)
 				u.hp -= n
 				events.append({"type": "bleed", "unit": u, "amount": n, "status": s})
 		if u.downed():
@@ -718,6 +776,7 @@ static func end_phase(units: Array, team: int) -> void:
 		if u.team != team:
 			continue
 		var stood := u.cell == u.move_origin
+		u.cmd_bonus = 0
 		u.move_spent = 0  # out of its own phase a piece's reach is its whole move (the other side's threat maps)
 		for s in u.statuses.keys():
 			if s in STATUS_UNTIL_OWN_PHASE:
@@ -968,6 +1027,11 @@ static func shadow_swap(grid: CombatGrid, u: CombatUnit, a: Ability, friend: Com
 	return [{"type": "swap", "src": u, "unit": friend, "to": friend.cell}]
 
 
+## What the swap's move spending is: the whole move, less what the upgrade leaves to walk after it.
+static func swap_spent(u: CombatUnit) -> int:
+	return maxi(0, move_points(u) - upg(u, "swap_move"))
+
+
 ## OVERWATCH: the first cell on mover's path in reach of a foe on watch: {"watcher", "cell"}, or {} when none.
 static func watch_stop(grid: CombatGrid, mover: CombatUnit, path: Array, units: Array) -> Dictionary:
 	for i in range(1, path.size()):
@@ -980,9 +1044,14 @@ static func watch_stop(grid: CombatGrid, mover: CombatUnit, path: Array, units: 
 
 ## The watcher's readied shot: a plain hit on mover, no counter; the watch is spent.
 static func watch_shot(rng: RandomNumberGenerator, grid: CombatGrid, w: CombatUnit, mover: CombatUnit, units: Array) -> Array:
-	w.statuses.erase(STATUS_OVERWATCH)
+	var left := (w.watch_left if w.watch_left > 0 else 1 + upg(w, "watch_stops")) - 1
+	w.watch_left = left
+	if left <= 0:
+		w.statuses.erase(STATUS_OVERWATCH)  # an upgraded watch has a second shot for the next foe that walks in
 	var events := [{"type": "overwatch", "src": w, "unit": mover}]
+	w.watching_shot = true
 	events.append_array(resolve(rng, grid, w, w.abilities[0], mover.cell, units, false))
+	w.watching_shot = false
 	return events
 
 
@@ -993,6 +1062,7 @@ static func command(u: CombatUnit, a: Ability, friend: CombatUnit) -> Array:
 	friend.acted = false
 	friend.move_spent = 0
 	friend.move_origin = friend.cell
+	friend.cmd_bonus = upg(u, "command_bonus")  # until the end of that phase
 	return [{"type": "command", "src": u, "unit": friend}]
 
 
@@ -1080,7 +1150,9 @@ static func leave_hits(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUn
 			break
 		u.left_guard = true
 		events.append({"type": "free_hit", "src": g, "unit": u})
+		g.free_hitting = true
 		events.append_array(_swing(rng, grid, g, g.abilities[0], u, units))
+		g.free_hitting = false
 	return events
 
 

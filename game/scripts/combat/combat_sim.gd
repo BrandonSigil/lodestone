@@ -44,7 +44,7 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 	elif plan.ability != null and plan.ability.kind == "swap":  # the rogue's move; then it acts from where it landed
 		events.append_array(CombatRules.shadow_swap(grid, u, plan.ability, CombatRules.occupant(units, plan.aim)))
 		u.uses[plan.ability.id] = int(u.uses.get(plan.ability.id, 0)) + 1
-		u.move_spent = CombatRules.move_points(u)
+		u.move_spent = CombatRules.swap_spent(u)
 		var then := EnemyAi.plan(grid, u, units)
 		if then.ability != null and then.ability.kind not in ["carry", "command", "swap"]:
 			events.append_array(CombatRules.resolve(rng, grid, u, then.ability, then.aim, units))

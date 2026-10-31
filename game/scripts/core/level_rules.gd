@@ -133,11 +133,26 @@ static func learn(s: Dictionary, ability_id: String) -> bool:
 	return true
 
 
-## The next rank of a skill that does something: a step with only a `param` is not wired yet and is skipped. 0 if none.
-static func next_useful_rank(skill: String, have: int, rows: Dictionary) -> int:
+## The number upgrades whose rule reads them (CombatRules.upg and friends): a step with only a `param` is offered once its
+## key is here. Wire one, add it here.
+const WIRED_PARAMS := ["guard_armor", "guard_hit", "taunt_armor", "command_bonus", "shield_wall_armor", "shield_wall_radius",
+	"bloodied_damage", "bloodied_crit", "bloodied_threshold", "poison_damage", "poison_turns", "swap_move",
+	"quick_damage", "quick_crit", "watch_damage", "watch_crit", "watch_stops", "ward_hits"]
+
+
+## Does step `i` (0-based) of a skill do something: an effect on the ability, or a param the rules read?
+static func step_useful(skill: String, i: int, rows: Dictionary) -> bool:
 	var effects: Array = rows.get(skill, [])
-	for i in range(have, effects.size()):
-		if String(effects[i]) != "":
+	if i < effects.size() and String(effects[i]) != "":
+		return true
+	var info: Array = Db.upgrade_steps.get(skill, [])
+	return i < info.size() and String((info[i] as Dictionary).get("param", "")).split(":")[0] in WIRED_PARAMS
+
+
+## The next rank of a skill that does something: a step nothing reads yet is skipped. 0 if none.
+static func next_useful_rank(skill: String, have: int, rows: Dictionary) -> int:
+	for i in range((rows.get(skill, []) as Array).size()):
+		if i >= have and step_useful(skill, i, rows):
 			return i + 1
 	return 0
 

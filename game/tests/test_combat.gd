@@ -1373,3 +1373,63 @@ func test_boss_phases_by_health() -> void:
 	eq(one.hp_phase, 1, "a burst does not skip a phase: one a phase")
 	CombatRules.boss_start(rng, g, [one], 1)
 	eq(one.hp_phase, 2)
+
+
+## The wired kit passives and number upgrades: quick hands, bloodied, guard, shield wall, ward hits, poison, command.
+func test_wired_kit_passives() -> void:
+	var g := CombatGrid.flat(8, 4)
+	var shade := _unit("knight", 0, Vector2i(1, 1), g)
+	var foe := _unit("bandit", 1, Vector2i(2, 1), g)
+	var dmg := func(u: CombatUnit, t: CombatUnit) -> int: return CombatRules.damage_range(g, u, t, u.cell, null, [u, t]).y
+	# quick hands: two hits, each a point lighter, and an upgrade adds to each
+	var plain := CombatRules.swings(shade, null)
+	shade.traits.append(CombatRules.TRAIT_QUICK_HANDS)
+	var quick := Db.ability("strike")
+	eq(CombatRules.swings(shade, quick), 2, "quick hands swing twice")
+	eq(plain, 1)
+	shade.upgrades = {"quick_damage": 1, "quick_crit": 5}
+	ok(CombatRules.damage_parts(g, shade, foe, shade.cell, quick, [shade, foe]).any(func(p: Array) -> bool: return p[0] == "MOD_QUICK" and p[1] == 1), "the upgrade adds to each hit")
+	ok(CombatRules.crit_parts(g, shade, foe, [shade, foe], shade.cell, quick).any(func(p: Array) -> bool: return p[0] == "MOD_QUICK" and p[1] == 5), "and its crit")
+	# bloodied: +1 under half, +2 under a quarter, and crit
+	var reaver := _unit("knight", 0, Vector2i(1, 2), g)
+	reaver.traits.append(CombatRules.TRAIT_BLOODIED)
+	eq(CombatRules.bloodied_level(reaver), 0, "healthy: nothing")
+	reaver.hp = reaver.max_hp / 2
+	eq(CombatRules.bloodied_level(reaver), 1, "under half: +1")
+	reaver.hp = maxi(1, reaver.max_hp / 4)
+	eq(CombatRules.bloodied_level(reaver), 2, "under a quarter: +2")
+	ok(CombatRules.crit_parts(g, reaver, foe, [reaver, foe], reaver.cell).any(func(p: Array) -> bool: return p[0] == "MOD_BLOODIED"), "and more crit")
+	# guard armor and taunt armor upgrades, shield wall radius
+	var def := _unit("knight", 0, Vector2i(3, 1), g)
+	def.statuses[CombatRules.STATUS_GUARD] = 1
+	var base := CombatRules.armor_parts(g, foe, def, foe.cell, null, [def, foe]).filter(func(p: Array) -> bool: return p[0] == "MOD_GUARD")[0][1] as int
+	def.upgrades = {"guard_armor": 2}
+	eq(CombatRules.armor_parts(g, foe, def, foe.cell, null, [def, foe]).filter(func(p: Array) -> bool: return p[0] == "MOD_GUARD")[0][1], base + 2, "GUARD gives its upgrade's armor")
+	var wall := _unit("knight", 0, Vector2i(4, 2), g)
+	wall.traits.append(CombatRules.TRAIT_SHIELD_WALL)
+	var friend := _unit("knight", 0, Vector2i(4, 0), g)
+	eq(CombatRules.shield_armor(friend, [wall, friend]), 0, "two tiles away: not covered")
+	wall.upgrades = {"shield_wall_radius": 1, "shield_wall_armor": 1}
+	eq(CombatRules.shield_armor(friend, [wall, friend]), int(CombatRules.num("shield_wall_armor")) + 1, "the upgrade covers two tiles and adds armor")
+	# ward hits and poison
+	var mage := _unit("mage", 0, Vector2i(5, 1), g)
+	mage.upgrades = {"ward_hits": 1}
+	var tgt := _unit("knight", 0, Vector2i(5, 2), g)
+	CombatRules.resolve(RandomNumberGenerator.new(), g, mage, Db.ability("ward"), tgt.cell, [mage, tgt])
+	eq(tgt.ward_hits, 2, "an upgraded ward blocks two hits")
+	var rogue := _unit("knight", 0, Vector2i(6, 1), g)
+	rogue.traits.append(CombatRules.TRAIT_POISON_BLADES)
+	rogue.upgrades = {"poison_damage": 1, "poison_turns": 1}
+	var victim := _unit("bandit", 1, Vector2i(6, 2), g)
+	CombatRules.resolve(RandomNumberGenerator.new(), g, rogue, Db.ability("strike"), victim.cell, [rogue, victim])
+	eq(int(victim.statuses.get(CombatRules.STATUS_POISON, 0)), int(CombatRules.num("poison_turns")) + 1, "poison lasts longer")
+	eq(victim.poison_dmg, int(CombatRules.num("poison_damage")) + 1, "and bites harder")
+	# second wind: heals and spends all the rage
+	var sw := _unit("knight", 0, Vector2i(7, 1), g)
+	sw.hp = 2
+	sw.res_kind = "rage"
+	sw.res_max = 5
+	sw.res = 4
+	CombatRules.resolve(RandomNumberGenerator.new(), g, sw, Db.ability("second_wind"), sw.cell, [sw])
+	eq(sw.res, 0, "SECOND WIND spends all the rage")
+	ok(sw.hp > 2 + 3, "and heals the power plus the rage left")
