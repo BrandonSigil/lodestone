@@ -790,3 +790,43 @@ func test_ground_materials_are_per_cell() -> void:
 	tree.root.remove_child(maker)
 	maker.free()
 	tree.root.get_node("Game").set("maker_map", keep)
+
+
+## The Area tool moves a whole swathe up or down a level with its ground, set, stairs, decks and props, and undo undoes it
+## ([USER] 2026-10-30: "a level up or down button that honors whatever terrain its on").
+func test_map_maker_area_raise_and_lower() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	var keep: String = tree.root.get_node("Game").get("maker_map")
+	var maker: Node = load("res://scenes/map_maker.tscn").instantiate()
+	tree.root.add_child(maker)
+	var g0 := _island(10, 2)
+	g0.set_terrain(Vector2i(3, 3), CombatGrid.T.STONE)
+	g0.set_zone(Vector2i(3, 3), "dungeon")
+	g0.set_terrain(Vector2i(4, 3), CombatGrid.T.STAIRS)
+	g0.add_deck(Vector2i(5, 3), 5, CombatGrid.T.STONE)
+	maker.call("_open", MapDoc.create("battle", "test_tmp", g0, "village_in"))
+	maker.call("_set_tool", "region")
+	maker.set("_box", {"start": Vector2i(2, 2), "last": Vector2i(6, 4)})
+	maker.call("_preview_box")
+	eq((maker.get("region") as Dictionary).size(), 15, "a box selects its cells")
+	maker.call("region_shift", 1)
+	var g: CombatGrid = maker.get("doc").grid
+	eq(g.height_at(Vector2i(3, 3)), 3, "raised one level")
+	eq(g.terrain_at(Vector2i(3, 3)), CombatGrid.T.STONE, "keeps its ground")
+	eq(g.zone_at(Vector2i(3, 3)), "dungeon", "keeps its tile set")
+	eq(g.terrain_at(Vector2i(4, 3)), CombatGrid.T.STAIRS, "keeps its stairs")
+	eq(int(g.decks[Vector2i(5, 3)].h), 6, "the deck over it moves with it")
+	eq(g.height_at(Vector2i(8, 8)), 2, "cells outside stay")
+	maker.call("region_shift", -1)
+	maker.call("region_shift", -1)
+	eq(g.height_at(Vector2i(3, 3)), 1, "lowered two levels")
+	maker.call("undo")
+	eq((maker.get("doc").grid as CombatGrid).height_at(Vector2i(3, 3)), 2, "undo takes one move back")
+	# a click picks the connected flat area
+	maker.set("region", {})
+	maker.set("_box", {"start": Vector2i(8, 8), "last": Vector2i(8, 8)})
+	maker.call("_end_box")
+	ok((maker.get("region") as Dictionary).has(Vector2i(0, 0)) and (maker.get("region") as Dictionary).size() > 60, "a click picks the connected area")
+	tree.root.remove_child(maker)
+	maker.free()
+	tree.root.get_node("Game").set("maker_map", keep)

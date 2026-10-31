@@ -65,6 +65,13 @@ func run(m: Node, script: String) -> void:
 						m.set("paint_t", int(mat[1]))
 						m.set("paint_set", String(mat[2]))
 						m.set("paint_mat", String(mat[0]))
+			"region":  # region:<x1>:<y1>:<x2>:<y2>: select a box with the Area tool
+				m.call("_set_tool", "region")
+				m.set("_box", {"start": Vector2i(int(a[1]), int(a[2])), "last": Vector2i(int(a[3]), int(a[4]))})
+				m.call("_preview_box")
+				m.set("_box", {})
+			"shift":  # shift:<dz>: raise or lower the selected area
+				m.call("region_shift", int(a[1]))
 			"phase":  # phase:<shape|decor|play>
 				m.call("_set_phase", a[1])
 			"level":  # level:<n>: the level height (and the Level tool)

@@ -46,6 +46,7 @@ const TOOLS := [
 	["stairs", "stairs", "T", "Stairs", "click a cell at a cliff: stairs that join both sides. Drag from the bottom to the top of a cliff: a flight. Right drag: clear stairs."],
 	["deck", "deck", "J", "Deck", "drag: a bridge floor at the level height over the cells, with the lane under it still open (it stands at least two levels over the ground). Right drag: take decks away."],
 	["|"],
+	["region", "select", "A", "Area", "drag a box (or click a flat area) to select cells; then Raise or Lower moves every cell in it one level, keeping its ground, walls, stairs, decks and props. Right click clears the selection. PageUp and PageDown do the same."],
 	["cut", "cut", "C", "Cut", "cut cells out of the map: the outline, chasms, pits. Right: fill them back."],
 	["fill", "fill", "F", "Fill", "give holes ground again at the height around them. Right: cut."],
 	["zone", "zone", "Z", "Zone", "paint another tile set onto cells (blend forest into ruins). Right: back to the map's set."],
@@ -92,6 +93,8 @@ var zoom := 1.0
 var focus := Vector2.ZERO
 var hide_ui := false
 var phase := "shape"
+var region := {}  ## the Area tool's selected cells (Vector2i -> true)
+var _box := {}  ## {"start", "last"} while the Area tool drags a box
 ## The stamp: a catalog entry and how it's turned.
 var item := {}
 var item_face := 0
@@ -207,6 +210,7 @@ func _ready() -> void:
 
 func _open(d: MapDoc) -> void:
 	doc = d
+	region = {}
 	_undo.clear()
 	_redo.clear()
 	_dirty = false
@@ -560,10 +564,73 @@ func _mouse_button(mb: InputEventMouseButton) -> void:
 		_eyedrop(_cell_under_mouse())
 	elif mb.pressed and _stroke.is_empty() and _move.is_empty() and not _pan:
 		_press(mb.button_index)
+	elif not mb.pressed and not _box.is_empty() and mb.button_index == MOUSE_BUTTON_LEFT:
+		_end_box()
 	elif not mb.pressed and not _move.is_empty() and mb.button_index == MOUSE_BUTTON_LEFT:
 		_end_move()
 	elif not mb.pressed and not _stroke.is_empty() and _stroke.button == mb.button_index:
 		_end_stroke()
+
+
+## The Area tool: the box being dragged shows as the selection.
+func _preview_box() -> void:
+	var a: Vector2i = _box.start
+	var b: Vector2i = _box.last
+	region = {}
+	for y in range(mini(a.y, b.y), maxi(a.y, b.y) + 1):
+		for x in range(mini(a.x, b.x), maxi(a.x, b.x) + 1):
+			if doc.grid.solid(Vector2i(x, y)):
+				region[Vector2i(x, y)] = true
+
+
+## Let go: a click without a drag picks the connected flat area under it (same height, same ground).
+func _end_box() -> void:
+	var a: Vector2i = _box.start
+	var b: Vector2i = _box.last
+	_box = {}
+	if a != b:
+		return
+	var g := doc.grid
+	if not g.solid(a):
+		region = {}
+		return
+	var h := g.height_at(a)
+	var t := g.terrain_at(a)
+	region = {a: true}
+	var queue: Array[Vector2i] = [a]
+	var i := 0
+	while i < queue.size():
+		var c: Vector2i = queue[i]
+		i += 1
+		for d: Vector2i in CombatRules.DIRS:
+			var n := c + d
+			if not region.has(n) and g.solid(n) and g.height_at(n) == h and g.terrain_at(n) == t:
+				region[n] = true
+				queue.append(n)
+	_say("%d cells selected: Raise or Lower moves them, drag a box to pick differently" % region.size())
+
+
+## Move every selected cell up or down `dz` levels ([USER] 2026-10-30: "a level up or down button that honors whatever
+## terrain its on"). Heights shift together, so each cell keeps its ground, tile set, walls, stairs and props, and a
+## deck over it moves with it. Undoable.
+func region_shift(dz: int) -> void:
+	if region.is_empty():
+		_say("select an area first: drag a box or click a flat area with the Area tool")
+		return
+	var g := doc.grid
+	for c: Vector2i in region:
+		var h := g.height_at(c) + dz
+		if h < 0 or h > CombatGrid.MAX_HEIGHT:
+			_say("can't go %s: a selected cell would leave the map's %d to %d levels" % ["up" if dz > 0 else "down", 0, CombatGrid.MAX_HEIGHT])
+			return
+	_push_undo()
+	for c: Vector2i in region:
+		g.set_height(c, g.height_at(c) + dz)
+		if g.has_deck(c):
+			var dk: Dictionary = g.decks[c]
+			g.add_deck(c, int(dk.h) + dz, int(dk.t))
+	_refresh_marks()
+	_say("%d cells %s one level" % [region.size(), "raised" if dz > 0 else "lowered"])
 
 
 ## The level height (number keys in the flat view): and the Level tool, which paints it.
@@ -630,6 +697,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_TAB:
 			set_flat(not flat.visible)
 			get_viewport().set_input_as_handled()
+		KEY_PAGEUP:
+			if tool == "region":
+				region_shift(1)
+		KEY_PAGEDOWN:
+			if tool == "region":
+				region_shift(-1)
 		KEY_H:
 			hide_ui = not hide_ui
 			_root.visible = not hide_ui
@@ -673,6 +746,9 @@ func _hover() -> void:
 	var c := CombatBoard.NONE if over else _cell_under_mouse()
 	if not _stroke.is_empty():
 		_stroke_to(c)
+	if not _box.is_empty() and c != CombatBoard.NONE and c != _box.last:
+		_box.last = c
+		_preview_box()
 	if not _move.is_empty() and c != CombatBoard.NONE:
 		_move.to = c
 	overlay.brush = []
@@ -709,7 +785,7 @@ func _path_tool() -> bool:
 func _brush_cells(c: Vector2i) -> Array[Vector2i]:
 	if c == CombatBoard.NONE:
 		return []
-	if tool == "stairs" or tool == "party" or tool == "enemy":
+	if tool == "stairs" or tool == "party" or tool == "enemy" or tool == "region":
 		return [c]
 	return MapOps.brush(doc.grid, c, radius, square)
 
@@ -731,6 +807,13 @@ func _press(button: int) -> void:
 		return
 	if tool == "stamp" and button == MOUSE_BUTTON_RIGHT:
 		_set_tool("select")
+		return
+	if tool == "region":
+		if button == MOUSE_BUTTON_RIGHT:
+			region = {}
+		else:
+			_box = {"start": c, "last": c}
+			_preview_box()
 		return
 	_push_undo()
 	_stroke = {"button": button, "start": c, "last": c, "done": {}, "path": [c] as Array[Vector2i]}
@@ -1886,6 +1969,27 @@ func _build_options() -> void:
 	zone.add_child(_zone_pick)
 	row.add_child(zone)
 	_opt_groups["zone"] = zone
+	var area := HBoxContainer.new()
+	area.add_theme_constant_override("separation", 6)
+	area.add_child(MakerUI.separator(true))
+	var up := Button.new()
+	up.text = "Raise ▲"
+	up.tooltip_text = "Raise every selected cell one level (PageUp)"
+	up.pressed.connect(func() -> void: region_shift(1))
+	area.add_child(up)
+	var down := Button.new()
+	down.text = "Lower ▼"
+	down.tooltip_text = "Lower every selected cell one level (PageDown)"
+	down.pressed.connect(func() -> void: region_shift(-1))
+	area.add_child(down)
+	var clr := Button.new()
+	clr.text = "Clear"
+	clr.pressed.connect(func() -> void: region = {})
+	area.add_child(clr)
+	for b in [up, down, clr]:
+		b.focus_mode = Control.FOCUS_NONE
+	row.add_child(area)
+	_opt_groups["region"] = area
 	var stamp := HBoxContainer.new()
 	stamp.add_theme_constant_override("separation", 6)
 	stamp.add_child(MakerUI.separator(true))
@@ -1968,6 +2072,7 @@ func _sync_options() -> void:
 	_opt_groups.paint.visible = tool == "paint"
 	_opt_groups.path.visible = tool == "path"
 	_opt_groups.zone.visible = tool == "zone"
+	_opt_groups.region.visible = tool == "region"
 	_opt_groups.stamp.visible = tool == "stamp"
 	_opt_groups.party.visible = tool == "party"
 	_opt_groups.enemy.visible = tool == "enemy"

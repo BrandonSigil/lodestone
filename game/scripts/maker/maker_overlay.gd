@@ -49,6 +49,10 @@ func _draw() -> void:
 			var top := _foot_center(b, a, p.foot) + Vector2(0, -float(p.tall) * 2.0 * CombatBoard.HS - 10.0)
 			var text := String(p.get("name", "")) if p.get("blob", false) else String(p.id)
 			_tag(font, top, text, CombatBoard.blob_color(text) if p.get("blob", false) else MakerUI.INK)
+	if maker != null:
+		for c: Vector2i in maker.region:
+			_fill(b, c, Color(0.3, 0.8, 1.0, 0.28))
+			_outline(b, c, Color(0.3, 0.8, 1.0, 0.9), 1.5)
 	for c in hover_cells:
 		_outline(b, c, Color(1, 1, 1, 0.7), 1.5)
 	var pulse := 0.65 + 0.35 * sin(_t * 5.0)

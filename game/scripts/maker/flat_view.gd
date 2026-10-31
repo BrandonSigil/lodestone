@@ -183,6 +183,9 @@ func _draw_marks() -> void:
 			dot.call(Vector2i(int(e.x), int(e.y)), Color(0.45, 0.72, 1.0) if list == "party" else Color(1.0, 0.48, 0.42))
 	for a: Vector2i in g.props:
 		o.draw_rect(Rect2(origin + (Vector2(a) + Vector2(0.35, 0.35)) * cs, Vector2(cs, cs) * 0.3), Color(0.25, 0.25, 0.28, 0.9))
+	for c: Vector2i in maker.region:  # the Area tool's selection
+		o.draw_rect(_cell_rect(c), Color(0.3, 0.8, 1.0, 0.3))
+		o.draw_rect(_cell_rect(c), Color(0.3, 0.8, 1.0, 0.9), false, 1.0)
 	# the maker's own marks for the current tool
 	for c: Vector2i in ov.hover_cells:
 		o.draw_rect(_cell_rect(c), Color(1, 1, 1, 0.8), false, 1.5)
