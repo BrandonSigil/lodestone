@@ -1241,7 +1241,8 @@ $("chat-in").addEventListener("input", (e) => { const t = e.target; t.style.heig
 /* ---------- data ---------- */
 function watch(coll, key) {
   S.db.collection(coll).onSnapshot((snap) => {
-    S[key] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    // A role sometimes writes a record wrapped in an extra `data` field; read through it so no card shows up empty.
+    S[key] = snap.docs.map((d) => { const v = d.data() || {}; const w = v.data && typeof v.data === "object" && !Array.isArray(v.data) ? { ...v, ...v.data } : v; delete w.data; return { id: d.id, ...w }; });
     if (key === "chat") { renderChat(); return; }
     // a live update shouldn't wipe what you were typing in a card
     const active = document.activeElement;
