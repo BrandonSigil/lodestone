@@ -1228,9 +1228,6 @@ func _begin_battle() -> void:
 	battle.goals = FightGoals.parse(String(def.get("goals", "")), def.get("exit", []), def.get("talk", {}))
 	battle.talk_open = battle.goals.talk_open(Game.meta.flags)
 	battle.log_line.connect(_log)
-	battle.info.connect(func(text: String) -> void: _info.text = text)
-	battle.phase_changed.connect(func(team: int) -> void:
-		_phase.text = Txt.t("UI_PLAYER_PHASE") if team == 0 else Txt.t("UI_ENEMY_PHASE"))
 	battle.changed.connect(_on_fight_changed)
 	battle.finished.connect(_on_fight_over.bind(_pending.foes))
 	_fight_side()
@@ -1529,17 +1526,12 @@ func _deploy_side() -> void:
 	_log_label = hud.add_side_label("", 12)
 
 
-func _fight_side() -> void:
-	hud.clear_side()
+func _fight_side() -> void:  # shared with the road fights (FrameHud.fight_side)
 	hud.top_label.text = Txt.t("UI_EX_FIGHT")
-	_phase = hud.add_side_label("", 20)
-	_info = hud.add_side_label("", 14)
-	hud.add_button(Txt.t("UI_END_PHASE"), func() -> void: battle.end_player_phase())
-	hud.add_button(Txt.t("UI_DANGER"), func() -> void:
-		battle.show_danger = not battle.show_danger
-		battle._refresh_danger())
-	hud.add_help(Txt.t("UI_HELP_COMBAT"))
-	_log_label = hud.add_side_label("", 12)
+	var labels := hud.fight_side(battle)
+	_phase = labels.phase
+	_info = labels.info
+	_log_label = null  # the fight's log is the Battle's panel, bottom right
 
 
 func _log(line: String) -> void:

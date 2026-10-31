@@ -9,7 +9,6 @@ var loot := ""
 
 var phase_label: Label
 var info_label: Label
-var log_label: Label
 
 
 func _ready() -> void:
@@ -47,20 +46,13 @@ func _ready() -> void:
 		battle.board.art_set = art_set
 		battle.board.show_grid = false
 
-	hud = FrameHud.new()
+	hud = FrameHud.new()  # the same fight UI as the explore maps: the leaf frame, the dock, the log (Battle's own)
 	add_child(hud)
-	phase_label = hud.add_side_label("", 20)
-	info_label = hud.add_side_label("")
-	hud.add_button(Txt.t("UI_END_PHASE"), battle.end_player_phase)
-	hud.add_button(Txt.t("UI_DANGER"), _toggle_danger)
-	hud.add_side_label(Txt.t("UI_HELP_COMBAT"), 11)
-	log_label = hud.add_side_label("", 12)
-	hud.top_label.text = Txt.t("GAME_TITLE")
-
-	battle.log_line.connect(_log)
-	battle.info.connect(func(t: String) -> void: info_label.text = t)
-	battle.phase_changed.connect(func(team: int) -> void:
-		phase_label.text = Txt.t("UI_PLAYER_PHASE") if team == 0 else Txt.t("UI_ENEMY_PHASE"))
+	hud.use_leaf_frame()
+	var labels := hud.fight_side(battle)
+	phase_label = labels.phase
+	info_label = labels.info
+	hud.set_tools([{"id": "pack", "text": Txt.t("UI_PACK"), "cb": func() -> void: pass}])
 	battle.changed.connect(_refresh_hud)
 	battle.finished.connect(_on_finished)
 	_layout()
@@ -68,28 +60,12 @@ func _ready() -> void:
 	battle.start()
 
 
-func _toggle_danger() -> void:
-	battle.show_danger = not battle.show_danger
-	battle._refresh_danger()
-
-
 func _layout() -> void:
 	battle.layout(hud.center_rect())
 
 
-func _log(line: String) -> void:
-	var lines := log_label.text.split("\n", false)
-	lines.append(line)
-	log_label.text = "\n".join(lines.slice(-10))
-
-
 func _refresh_hud() -> void:
-	var entries := []
-	for u: CombatUnit in battle.units:
-		if u.team == 0:
-			entries.append({"name": Txt.t(u.name_key), "figure": u.figure, "hp": u.hp, "max_hp": u.max_hp, "tint": u.tint,
-				"note": Txt.t("TAG_SPOOKED") if u.spooked else "", "res_kind": u.res_kind, "res": u.res, "res_max": u.res_max})
-	hud.set_party(entries)
+	hud.fight_party(battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 0))
 	hud.set_pack(Game.run.pack)
 
 

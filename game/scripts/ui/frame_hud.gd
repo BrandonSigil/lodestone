@@ -456,6 +456,38 @@ func add_side_label(text: String, font_size := 14) -> Label:
 	return l
 
 
+# --- the fight's HUD, one for every scene that hosts a Battle ([USER] 2026-10-31: the road fights still had the old UI) ---
+# The scene makes the FrameHud, switches on the leaf frame (the backpack, the party's portraits, HP and job bars), then
+# calls fight_side(battle) for the side box (phase, info, END TURN, DANGER) and fight_party(units) to fill the party panel.
+# The painted dock, its pop-up columns and the combat log are the Battle's own, so every scene shows the same fight UI.
+
+func fight_side(battle: Battle) -> Dictionary:
+	clear_side()
+	var phase := add_side_label("", 20)
+	var info := add_side_label("", 14)
+	add_button(Txt.t("UI_END_PHASE"), func() -> void: battle.end_player_phase())
+	add_button(Txt.t("UI_DANGER"), func() -> void:
+		battle.show_danger = not battle.show_danger
+		battle._refresh_danger())
+	add_help(Txt.t("UI_HELP_COMBAT"))
+	battle.info.connect(func(text: String) -> void: info.text = text)
+	battle.phase_changed.connect(func(team: int) -> void:
+		phase.text = Txt.t("UI_PLAYER_PHASE") if team == 0 else Txt.t("UI_ENEMY_PHASE"))
+	return {"phase": phase, "info": info}
+
+
+## The party panel from a fight's party pieces; `member_id` (optional) names the member a click opens.
+func fight_party(units: Array, member_id := Callable()) -> void:
+	var entries := []
+	for u: CombatUnit in units:
+		var e := {"name": Txt.t(u.name_key), "figure": u.figure, "hp": u.hp, "max_hp": u.max_hp, "tint": u.tint,
+			"note": Txt.t("TAG_SPOOKED") if u.spooked else "", "res_kind": u.res_kind, "res": u.res, "res_max": u.res_max}
+		if member_id.is_valid():
+			e["id"] = member_id.call(u)
+		entries.append(e)
+	set_party(entries)
+
+
 static func party_entries_from_run(run: RunState) -> Array:
 	var out := []
 	for m in run.members:
