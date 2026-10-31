@@ -57,6 +57,7 @@ var _rect := Rect2()
 var _fit_board := true  ## false when the host owns the board's camera (exploration maps)
 var _moving := false  ## MOVE picked: the menu is hidden and the reachable tiles are lit
 var _cancel: Button
+var side_below := Callable()  ## (y): the host moves its side box under the test buttons
 var _auto: Button
 var _hud: ActionHud  ## the action bar, ring or hand of cards (the "list" layout is _menu)
 var _layout_btn: Button
@@ -169,8 +170,14 @@ func layout(r: Rect2) -> void:
 	_forecast.position = r.position + Vector2(8, 8)
 	_banner.position = r.position + Vector2(r.size.x * 0.5 - 90, r.size.y - 84)
 	_cancel.position = r.position + Vector2(r.size.x * 0.5 - CANCEL_SIZE.x * 0.5, r.size.y - 44)
-	_auto.position = Vector2(r.end.x - AUTO_SIZE.x - 8, r.position.y + 8)
+	# the two test buttons: as wide as their text needs, right-aligned with a margin, never past the screen's edge
+	var bw := maxf(maxf(_auto.get_combined_minimum_size().x, _layout_btn.get_combined_minimum_size().x), AUTO_SIZE.x)
+	_auto.custom_minimum_size.x = bw
+	_layout_btn.custom_minimum_size.x = bw
+	_auto.position = Vector2(r.end.x - bw - 8, r.position.y + 8)
 	_layout_btn.position = _auto.position + Vector2(0, AUTO_SIZE.y + 4)
+	if side_below.is_valid():  # the host's side box starts under them
+		side_below.call(_layout_btn.position.y + AUTO_SIZE.y + 6.0)
 	_log_view.place(r, _hud.dock_rect() if _hud != null else Rect2())
 	if not _fit_board:
 		return

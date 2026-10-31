@@ -225,7 +225,7 @@ func _layout_leaf() -> void:
 		(c as Control).custom_minimum_size = _member_size()
 	var clear := (art.y - LEAF_DECOR_TOP) * s + 6.0
 	_pin(tools_box, 1, 1, 1, 1, -RIGHT_W + 14, -clear - 52, -14, -clear)
-	_pin(side_panel, 1, 0, 1, 0, -RIGHT_W + 4, 46, -10, 46)  # under a fight's AUTO FIGHT button
+	_pin(side_panel, 1, 0, 1, 0, -RIGHT_W + 4, side_top, -10, side_top)  # under a fight's test buttons
 	side_panel.grow_vertical = Control.GROW_DIRECTION_END
 
 
@@ -425,6 +425,18 @@ func flash_saved() -> void:
 	tw.tween_callback(l.queue_free)
 
 
+## Where the floating side box starts, from the top of the screen: a fight's test buttons sit above it.
+var side_top := 46.0
+
+
+func set_side_top(y: float) -> void:
+	if is_equal_approx(side_top, y):
+		return
+	side_top = y
+	if leaf != null:
+		_layout_leaf()
+
+
 func clear_side() -> void:
 	for c in side.get_children():
 		c.queue_free()
@@ -470,6 +482,8 @@ func fight_side(battle: Battle) -> Dictionary:
 		battle.show_danger = not battle.show_danger
 		battle._refresh_danger())
 	add_help(Txt.t("UI_HELP_COMBAT"))
+	battle.side_below = set_side_top  # the box under the AUTO FIGHT and UI buttons, whatever their size
+	battle.layout(center_rect())
 	battle.info.connect(func(text: String) -> void: info.text = text)
 	battle.phase_changed.connect(func(team: int) -> void:
 		phase.text = Txt.t("UI_PLAYER_PHASE") if team == 0 else Txt.t("UI_ENEMY_PHASE"))
