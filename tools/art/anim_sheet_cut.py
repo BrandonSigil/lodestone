@@ -105,6 +105,28 @@ def pieces(band, k=6):
     return out
 
 
+def drop_template_boxes(rgba):
+    """Picsart sometimes draws the template's white crossed-out boxes into the picture. Find the near-white pixels,
+    group them into pieces, and clear every big one (a box outline with its cross, at least 100 px each way) with its
+    soft edge, so the cutter never counts it as a figure. Small white things (a spark's core) stay."""
+    px = np.array(rgba)
+    white = (px[..., 3] > 128) & (px[..., :3].min(axis=-1) >= 195)
+    kill = np.zeros_like(white)
+    for x0, y0, x1, y1, _ in pieces(white):
+        if x1 - x0 < 100 or y1 - y0 < 100:
+            continue
+        kill[y0:y1, x0:x1] |= white[y0:y1, x0:x1]
+    for _ in range(4):  # take the anti-aliased edge of the lines too
+        g = kill.copy()
+        g[1:] |= kill[:-1]
+        g[:-1] |= kill[1:]
+        g[:, 1:] |= kill[:, :-1]
+        g[:, :-1] |= kill[:, 1:]
+        kill = g
+    px[kill & (px[..., :3].min(axis=-1) >= 150), 3] = 0
+    return Image.fromarray(px, "RGBA")
+
+
 def figures(alpha, y0, y1, want):
     """Bounding boxes of the figures in one row band, left to right. When swords or cloaks bridge two
     figures, split at the midpoints between heads instead (found in the top part of the band)."""
@@ -222,6 +244,8 @@ def main():
         rgba = Image.fromarray(key_magenta(np.asarray(Image.open(args.sheet).convert("RGB")).astype(float)), "RGBA")
     else:
         rgba = key_background(Image.open(args.sheet).convert("RGB"))
+    if args.bg == "magenta":
+        rgba = drop_template_boxes(rgba)
     alpha = np.asarray(rgba.getchannel("A"))
     profile = (alpha > 128).sum(axis=1)
     rows = runs(profile > 8, 40, min_gap=10)
