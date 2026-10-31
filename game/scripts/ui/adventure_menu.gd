@@ -209,6 +209,12 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 			Game.save_adventure()
 			close.call())
 		return
+	if bag != null and not bag.items.is_empty():  # he can take what he carries home at any time, and rejoins when the party is home
+		_button(box, Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
+			run.send_home(courier)
+			Game.refresh_party()
+			Game.save_adventure()
+			changed.call())
 	_label(box, Txt.f("UI_PACK_GOLD", run.gold), 14)
 	var store: PackedStringArray = []
 	for id: String in Game.meta.materials:
