@@ -286,6 +286,23 @@ func run(s: Node, f: int, step: String) -> bool:
 					if b.text == Txt.t("UI_EAT"):
 						b.pressed.emit()
 			return f == 30
+		"pack_dog":
+			# The PACK box with the dog along: his saddlebag, with something in it, beside his portrait.
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false  # a shot never writes the real save
+				game.meta.flags.append("met_dog")
+				game.refresh_party()
+				var run: RunState = game.run
+				run.food = 34
+				run.medicine = 4
+				var bag: InventoryGrid = run.open_courier_bag()
+				bag.put("potion", RunState.shape_of("potion"), 2, 3)
+				bag.put("rope", RunState.shape_of("rope"), 1, 1)
+				s.call("_rebuild_party")
+				s._refresh_hud()
+				s._open_menu("pack")
+			return f == 30
 		"pack":
 			# The PACK box with a few stacks and a find in it, to judge the grid.
 			if f == 5:

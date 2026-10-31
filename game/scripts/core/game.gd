@@ -517,6 +517,11 @@ func refresh_party() -> void:
 		if id != "lead" and not wanted.any(func(d: CharacterDef) -> bool: return String(d.id) == id):
 			for it in (m.belt as InventoryGrid).items:
 				run.add_item(String(it.id), int(it.get("n", 1)))
+			if (m.def as CharacterDef).saddlebag != Vector2i.ZERO and run.courier_bag != null:  # the saddlebag leaves with him
+				var bag: InventoryGrid = run.courier_bag
+				run.courier_bag = null
+				for it in bag.items:
+					run.add_item(String(it.id), int(it.get("n", 1)))
 			run.members.erase(m)
 	for m in run.members:
 		var id := String((m.def as CharacterDef).id)

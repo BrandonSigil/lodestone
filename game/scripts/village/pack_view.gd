@@ -65,9 +65,15 @@ func place_bin(r: Rect2, key: String, refused: String) -> void:
 	_fit_size()
 
 
-## Another grid in the same view, its top-left at `at` (a label takes LABEL_H above it).
-func add_area(grid: InventoryGrid, at: Vector2, label := "") -> void:
-	areas.append({"bag": grid, "at": at + Vector2(0, LABEL_H if label != "" else 0.0), "label": label})
+## Another grid in the same view, its top-left at `at` (a label takes LABEL_H above it). With a `portrait`, a square
+## picture as tall as the grid stands to its left (the dog's face by his saddlebag): the same helper holds a
+## container's or a loot grid, with or without a face.
+func add_area(grid: InventoryGrid, at: Vector2, label := "", portrait: Texture2D = null) -> void:
+	var top := LABEL_H if label != "" else 0.0
+	var side := grid.rows * cell
+	var shift := side + 10.0 if portrait != null else 0.0
+	areas.append({"bag": grid, "at": at + Vector2(shift, top), "label": label, "portrait": portrait,
+		"face_at": at + Vector2(0, top), "face": side})
 	_fit_size()
 
 
@@ -262,8 +268,13 @@ func _draw() -> void:
 	for k in areas.size():
 		var a := areas[k]
 		draw_bag(self, a.bag, db, a.at, cell, true, held if k == held_area else -1)
+		if a.get("portrait") != null:
+			var face := Rect2(a.face_at, Vector2(a.face, a.face))
+			draw_texture_rect(a.portrait, face, false)
+			draw_rect(face, Riso.INK, false, 2.0)
 		if a.label != "":
-			Riso.draw_label(self, a.label, a.at - Vector2(0, LABEL_H * 0.55), 13, label_color)
+			var label_at: Vector2 = a.get("face_at", a.at)
+			Riso.draw_label(self, a.label, label_at - Vector2(0, LABEL_H * 0.55), 13, label_color)
 		bottom = maxf(bottom, _rect_of(a).end.y)
 	var sr := _bin_rect()
 	if bin.is_valid():

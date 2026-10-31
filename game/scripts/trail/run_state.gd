@@ -120,12 +120,15 @@ static func stack_of(id: String) -> int:
 	return maxi(1, int(Db.items[id].get("stack", 1)))
 
 
-## The pack, then each member's belt.
+## The pack, then each member's belt, then the dog's saddlebag when he carries one ([USER] 2026-10-31, the inventory
+## screen shows it): what is in it counts as carried, and is spent after the pack and the belts.
 func grids() -> Array[InventoryGrid]:
 	var out: Array[InventoryGrid] = [pack]
 	for m in members:
 		if m.get("belt") != null:
 			out.append(m.belt)
+	if courier_bag != null:
+		out.append(courier_bag)
 	return out
 
 
@@ -155,9 +158,10 @@ func add_item(id: String, n: int) -> int:
 	return lost
 
 
-## True while found things wait on the player's call (the courier's half-filled bag counts too).
+## True while found things wait on the player's call. (The saddlebag is carried all the time now: its contents are
+## inventory, not waiting.)
 func overfull() -> bool:
-	return not found.items.is_empty() or (courier_bag != null and not courier_bag.items.is_empty())
+	return not found.items.is_empty()
 
 
 ## The member who can carry a saddlebag home (the dog), or {} if none is in the party.
@@ -187,15 +191,12 @@ func send_home(m: Dictionary) -> void:
 	note(Txt.f("LOG_SENT_HOME", Txt.t((m.def as CharacterDef).name_key)))
 
 
-## Anything still in FOUND or a bag that wasn't sent stays where the party stands, for good.
+## Anything still in FOUND stays where the party stands, for good. (The saddlebag is part of the inventory: it stays.)
 func leave_found() -> void:
 	var n := 0
-	for g in [found, courier_bag]:
-		if g == null:
-			continue
-		for it in g.items:
-			n += int(it.get("n", 1))
-		g.items.clear()
+	for it in found.items:
+		n += int(it.get("n", 1))
+	found.items.clear()
 	if n > 0:
 		note(Txt.f("LOG_LEFT_BEHIND", n))
 

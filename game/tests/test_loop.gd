@@ -1359,3 +1359,28 @@ func test_level_up_offers_four() -> void:
 	ok(icons.call(rogue).size() >= 4, "the daggers' kit fills up to four, the unbuilt ones locked")
 	rogue.free()
 	_restore(saved)
+
+
+## The dog's 2 x 2 saddlebag is carried all the time ([USER] 2026-10-31, design-inv-12-dog): it is part of the inventory
+## (what is in it counts, and is spent after the pack and the belts), it is not "waiting", and it goes into the pack when he leaves.
+func test_dog_saddlebag_is_carried() -> void:
+	var saved := _fresh_game()
+	Game.meta.flags.append("met_dog")
+	Game.refresh_party()
+	var run: RunState = Game.run
+	var bag := run.open_courier_bag()
+	ok(bag != null and bag.cols == 2 and bag.rows == 2, "a 2 x 2 saddlebag while the dog is along")
+	var before := run.item_count("potion")
+	bag.put("potion", RunState.shape_of("potion"), 2, 3)
+	eq(run.item_count("potion"), before + 2, "what is in it counts as carried")
+	ok(not run.overfull(), "a bag with things in it is not found things waiting")
+	var in_pack := run.pack.count("potion")
+	run.pack.take("potion", in_pack)  # nothing in the pack or belts: spending reaches the saddlebag
+	for m in run.members:
+		(m.belt as InventoryGrid).take("potion", 99)
+	run.add_item("potion", -1)
+	eq(bag.count("potion"), 1, "spending reaches into it after the pack and the belts")
+	Game.dismiss("dog")
+	ok(run.courier_bag == null, "the saddlebag leaves with the dog")
+	eq(run.item_count("potion"), 1, "and its things go into the pack")
+	_restore(saved)
