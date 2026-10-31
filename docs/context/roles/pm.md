@@ -39,4 +39,4 @@ Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the
 "As the pm, are you able to decide during handoff which model suits the task best? Simple research uses a more efficient model, a key feature that we need to get right and is complicated, uses a different model?" Yes: set `model` when starting or handing off a session (or `set_session_model` on a running one).
 - Haiku: lookups, screenshots, art cutting, data edits, quick checks.
 - Sonnet (default): most building and design.
-- Opus: only a key system that is complicated or keeps breaking (a new combat rule, a save-format change, a hard bug), only for that piece, then back to Sonnet.
+- Opus: the systems developer's build work and in-game graphics work (shaders, drawing, UI that renders in game), plus any key system that is complicated or keeps breaking. Brandon (2026-10-31): "let's lean more towards bumping up to Opus for Dev work and in-game graphics stuff too."
