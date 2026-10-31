@@ -5,6 +5,7 @@ extends Control
 ## F7 returns here from anywhere. Button labels are developer labels, not player text.
 
 const BUTTON_SIZE := Vector2(250, 58)
+const NEW_FOE_GROUPS := ["den_pack", "bear_cave", "goo_bog", "ogre_camp", "crawlers", "casters", "chargers"]
 
 
 func _ready() -> void:
@@ -76,6 +77,8 @@ func _sections_row() -> HBoxContainer:
 		["FIGHT", [
 			["Trail fight", "debug encounter", _trail_fight],
 			["Scale C test", "knight, fast rogue, slow ranged mage vs 5 foes on a 21 x 18 arena", _scale_c],
+			["New foes", "a random group of the placeholder foes", _new_foes],
+			["Foe zoo", "eight placeholder foes at once (big ones too)", _foe_fight.bind("foe_zoo")],
 		]],
 		["+MAKE", [
 			["Map maker", "build or edit any map", _go.bind(Game.MAKER)],
@@ -140,6 +143,15 @@ func _trail() -> void:
 func _trail_fight() -> void:
 	Game.ensure_run()
 	Game.go(Game.COMBAT)
+
+
+## A road fight against one of the placeholder foe groups (data/encounters.csv), on a forest valley.
+func _new_foes() -> void:
+	_foe_fight(NEW_FOE_GROUPS[randi() % NEW_FOE_GROUPS.size()])
+
+
+func _foe_fight(encounter: String) -> void:
+	Game.start_combat(encounter, "forest", Game.LAUNCH)
 
 
 ## The scale C test fight ([USER] 2026-10-30 design-scale): the arena, the test party and scale C's numbers, straight in.

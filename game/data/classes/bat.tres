@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bat"
+name_key = "ENEMY_BAT"
+max_hp = 6
+move = 6
+jump = 4
+attack = 3
+defense = 10
+armor = 0
+resource = "bat0"
+resource_max = 2
+resource_every = 3
+damage = 2
+range_min = 1
+range_max = 1
+magic = false
+skills = {}
+abilities = Array[StringName]([&"bite"])
+traits = Array[StringName]([])
+tags = Array[StringName]([&"flying", &"beast"])

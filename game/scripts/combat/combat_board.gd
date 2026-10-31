@@ -3700,7 +3700,12 @@ func _draw_unit(u: CombatUnit) -> void:
 	if u == selected:
 		ring = Color(1.0, 0.9, 0.4)
 	var top := 48.0
-	if CharacterArt.has_art(u.sprite):
+	if u.team == 1 and u.sprite == CharacterArt.FALLBACK and FoeFigure.has_look(u.figure):
+		# a foe with no art of its own: its code-drawn board-game piece (data/foe_looks.csv), turned to its facing
+		var d := Vector2(u.facing)
+		top = FoeFigure.draw(_ci, base, u.figure, iso(1.0 + d.x, 1.0 + d.y, 0.0) - iso(1.0, 1.0, 0.0), u.anim,
+			_time - u.anim_start, ring, false)
+	elif CharacterArt.has_art(u.sprite):
 		top = _draw_sprite(u, base, col, ring)
 	else:
 		top = PlaceholderFigure.draw(_ci, base, 26.0, u.figure, u.team, u.anim, _time - u.anim_start,

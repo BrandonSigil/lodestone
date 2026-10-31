@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bear"
+name_key = "ENEMY_BEAR"
+max_hp = 20
+move = 3
+jump = 1
+attack = 3
+defense = 10
+armor = 2
+resource = "bear0"
+resource_max = 1
+resource_every = 3
+damage = 4
+range_min = 1
+range_max = 1
+magic = false
+skills = {}
+abilities = Array[StringName]([&"gore"])
+traits = Array[StringName]([])
+tags = Array[StringName]([&"beast"])
