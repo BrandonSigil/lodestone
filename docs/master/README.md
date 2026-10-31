@@ -6,3 +6,4 @@ The zoomed-out view of the game for Brandon: what is built (premise from his dec
 - Source: `index.html`, images in `img/` (webp, plain git, no LFS).
 - Screenshots were taken 2026-10-31 from main with the game's shot tools (`game/tools/explore_shot.gd`, `battle_shot.gd`, `maker_shot.gd`, `overworld_shot.gd`, `road_fight_shot.gd`, `char_shot.gd`) under `xvfb-run` with Godot 4.7.2.
 - To republish from another session, pass the URL above as `url` with the `img/` files. Refresh it at milestones (the PM's project report ritual).
+- 2026-10-31: every "Your call" in the document (pitches A-J, the map pipeline, the first tool, the dog breed) is on the Studio desk as a choice card with id `master-*`. When Brandon answers one, record it in `docs/decisions.md` as [USER] and update this document.
