@@ -1,0 +1,9 @@
+{
+  "job": "Keeps your desk, the status report and the docs. The pinned main conversation.",
+  "name": "Project manager",
+  "next": "Desk watch every hour; role rows updated each time I hand out work",
+  "now": "All your answers routed; nothing waiting on me",
+  "order": 1,
+  "status": "idle",
+  "updated": "2026-10-31T06:13:48Z"
+}

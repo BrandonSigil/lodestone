@@ -7,6 +7,34 @@
 				"b": true,
 				"h": 1,
 				"t": "s",
+				"x": 7,
+				"y": 21
+			},
+			{
+				"b": true,
+				"h": 1,
+				"t": "s",
+				"x": 8,
+				"y": 21
+			},
+			{
+				"b": true,
+				"h": 1,
+				"t": "s",
+				"x": 7,
+				"y": 22
+			},
+			{
+				"b": true,
+				"h": 1,
+				"t": "s",
+				"x": 8,
+				"y": 22
+			},
+			{
+				"b": true,
+				"h": 1,
+				"t": "s",
 				"x": 21,
 				"y": 33
 			},
@@ -21,33 +49,33 @@
 				"b": true,
 				"h": 1,
 				"t": "s",
-				"x": 7,
-				"y": 21
+				"x": 20,
+				"y": 33
 			},
 			{
 				"b": true,
 				"h": 1,
 				"t": "s",
-				"x": 8,
-				"y": 21
+				"x": 20,
+				"y": 32
 			}
 		],
 		"h": 38,
 		"heights": [
 			"0005554555550000000333333000055555550000",
 			"0055554555555000003333333300155555555000",
-			"0555554555555533333333333311155555555500",
-			"5555554555555533333333333311155555555550",
-			"5555544555555533333333333311155555555555",
-			"5555544555555533333333333311155555555555",
-			"5555544555555533333333333311155555555555",
-			"5555545555555533333333333311155555555555",
-			"5555003333544533333333333311155555555555",
-			"0111003333333333333333333311155445555555",
-			"0111003333333333333333333111333333331111",
-			"0111013333333333333333333111333333331110",
-			"0110013333333331133333333111333333331100",
-			"0110013333333331133322333111333333331000",
+			"0555555555555533333333333311155555555500",
+			"5555555555555533333333333311155555555550",
+			"5555555555555533333333333311155555555555",
+			"5555555555555533333333333311155555555555",
+			"5555555555555533333333333311155555555555",
+			"5555555555555533333333333311155555555555",
+			"5555553333544533333333333311155555555555",
+			"0110003333333333333333333311155445555555",
+			"0110003333333333333333333111333333331111",
+			"0110003333333333333333333111333333331110",
+			"0110003333333331133333333111333333331100",
+			"0110003333333331133322333111333333331000",
 			"0111003333332211111111111111333333331000",
 			"1111001111111111111111111111322333311100",
 			"1111100111111111111111111111111111111110",
@@ -58,10 +86,10 @@
 			"1111111001111111123333211111111111111110",
 			"1111111001111111122222211111111111111100",
 			"1111111001111111111111111111111111111100",
-			"1112211001111111111111111111111111111100",
-			"1222221100111111111111111111111111111110",
+			"1112211000111111111111111111111111111100",
+			"1222221000111111111111111111111111111110",
 			"1222222100111111111111111111111111111111",
-			"1222222110011111111111111111111111111111",
+			"1222222100011111111111111111111111111111",
 			"1222222110001111111111111111111111111111",
 			"1222221111000111111111111111111111111111",
 			"1222221111100001111111111111111111111111",
@@ -199,20 +227,6 @@
 				"sight": 3.0,
 				"sprite": "b_home_a",
 				"tall": 0.0,
-				"walk": false
-			},
-			{
-				"cell": [
-					24,
-					15
-				],
-				"foot": [
-					2,
-					2
-				],
-				"sight": 1.0,
-				"sprite": "prop_stall",
-				"tall": 1.8,
 				"walk": false
 			},
 			{
@@ -1521,20 +1535,20 @@
 			}
 		],
 		"terrain": [
-			"...fffwfffff.......ffffff....fffffff....",
-			"..ffffwffffff.....ffffffff..fffffffff...",
-			".fffffwfggggfffffffffffffffffggggggfff..",
-			"ffffffwfgggggfffggggggggggfgggggggfffff.",
-			"fffffwwggggggfgfggggggggggddgggggggggfff",
-			"fffffwwgggggggggggggggggggddgggddgggggff",
-			"fffffwwfgggggfggggggggggggddgggddggggfff",
-			"fffffwfffffttfggggggggggggddgggdddddggff",
-			"ffffwwggggfttfgggsssdssssgddgggttggggfff",
-			".fffwwgggggssssggssssssssgdggggttgggggff",
-			".fffwwgggggssssggssssssssgdggdddddggffff",
-			".fffwfggggdssssggssssssssgdggdddddggfff.",
-			".ffwwfgggggssssgggggttggggdggdddddggff..",
-			".ffwwfgggdddttggggggttgggddggdddddggf...",
+			"...fffffffff.......ffffff....fffffff....",
+			"..fffffffffff.....ffffffff..fffffffff...",
+			".ffgggggggggfffffffffffffffffggggggfff..",
+			"fffggggggggggfffggggggggggfgggggggfffff.",
+			"ffgggggggggggfgfggggggggggddgggggggggfff",
+			"ffggggggggggggggggggggggggddgggddgggggff",
+			"wwwwwggggggggfggggggggggggddgggddggggfff",
+			"wwwwwwfffffttfggggggggggggddgggdddddggff",
+			"ffgwwwggggfttfgggsssdssssgddgggttggggfff",
+			".ffwwwgggggssssggssssssssgdggggttgggggff",
+			".ffwwwgggggssssggssssssssgdggdddddggffff",
+			".ffwwwggggdssssggssssssssgdggdddddggfff.",
+			".ffwwwgggggssssgggggttggggdggdddddggff..",
+			".ffwwwgggdddttggggggttgggddggdddddggf...",
 			".fffwwgggdddttggsssssssssdgggttggggff...",
 			"ffffwwggggggddgssssssssssssggttggggggf..",
 			"fffffwwggggggddsssssssssssssdddddddddff.",
@@ -1545,10 +1559,10 @@
 			"ffgddddwwdddddssssssssssssssgggggggggff.",
 			"fgggggdwwdggggssssssssssssssgggdgggggf..",
 			"ffgggggwwgggggssssssssssssssgggggggggf..",
-			"ffgggggwwggggggssssssssssssggggggggggf..",
+			"ffgggggwwwgggggssssssssssssggggggggggf..",
 			"ffggggggwwggggggsssssssssdgggggggggguff.",
 			"ffggggggwwggggggggggddgggddgggggggggguff",
-			"ffgggggggwwgggggggggddggugdgggggggggggff",
+			"ffggggggwwwgggggggggddggugdgggggggggggff",
 			"ffgggggggwwwdddggdddddggggddddggggggggff",
 			"fffgggggggwwwdddddggddggggggdddddggggfff",
 			"ffgggggggggwwwwgggggddgggggggggdddggggff",
@@ -1734,8 +1748,8 @@
 		},
 		{
 			"cell": [
-				14.0,
-				15.0
+				9,
+				14
 			],
 			"event": "settler_smith",
 			"id": "smith",

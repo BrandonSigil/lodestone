@@ -1,0 +1,17 @@
+{
+  "job": "Combat, the loop, water, saves, tools and tests.",
+  "log": [
+    "2026-10-31 65ec815: level-up screen; even-level picks learn or upgrade; 342 tests, E2E clean",
+    "2026-10-31 80334db: level-up pick as ability icons, a detail panel with a next-rank preview and Pick Skill; built in a worktree, 343 tests, E2E clean",
+    "2026-10-31 cecb726: the pick always shows four when the kit has them; 344 tests, E2E clean",
+    "2026-10-31 2aadcbe, 13954c4, 0c8344a: the dog's saddlebag on the pack screen, a small face and a DOG PACK label",
+    "2026-10-31 38c2a9c: containers (barrel, chest, crate, body, pile) with lock and trap, the after-fight summary and shared loot grid; 346 tests, E2E clean",
+    "2026-10-31 5de67b0: kit wiring batch 1 (quick_hands, bloodied, cleave, second_wind, 13 number upgrades, trait and GUARD upgrades offered on level-up); 347 tests, E2E clean"
+  ],
+  "name": "Systems developer",
+  "next": "Batch 2: tracker, ember, chanter, tinker abilities and the remaining params (companion_bonus, line_length, aid_pct, rally_*, spook_damage, inspire_damage). Mage and Doggo kits left alone until his cards are answered.",
+  "now": "Kit wiring batch 1 landed (5de67b0): quick_hands, bloodied, cleave, second_wind plus 13 number upgrades; kit traits and GUARD now grow on level-up",
+  "order": 4,
+  "status": "working",
+  "updated": "2026-10-31T16:58:00Z"
+}

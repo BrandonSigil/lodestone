@@ -1,0 +1,9 @@
+{
+  "job": "On call only: tightens difficulty to your targets when you say so. Say \"balance officer, ...\" in the chat.",
+  "name": "Balance officer",
+  "next": "Your call",
+  "now": "Off until you call",
+  "order": 7,
+  "status": "idle",
+  "updated": "2026-10-31T05:08:27Z"
+}

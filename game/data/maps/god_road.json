@@ -1,0 +1,136 @@
+{
+	"art_set": "village",
+	"counters": true,
+	"enemies": [
+		{
+			"id": "bandit",
+			"x": 20,
+			"y": 2
+		},
+		{
+			"id": "bandit",
+			"x": 20,
+			"y": 3
+		},
+		{
+			"id": "bandit_archer",
+			"x": 19,
+			"y": 2
+		},
+		{
+			"id": "wolf",
+			"x": 19,
+			"y": 3
+		}
+	],
+	"enemy_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"extra_enemies": 0,
+	"map": {
+		"decks": [
+			{
+				"b": true,
+				"h": 3,
+				"t": "s",
+				"x": 19,
+				"y": 14
+			},
+			{
+				"b": true,
+				"h": 3,
+				"t": "s",
+				"x": 19,
+				"y": 13
+			},
+			{
+				"b": true,
+				"h": 3,
+				"t": "s",
+				"x": 19,
+				"y": 12
+			}
+		],
+		"h": 18,
+		"heights": [
+			"889866666663333333333",
+			"889886666653333333333",
+			"888886666643333333333",
+			"888666666333333333333",
+			"887556654333333333333",
+			"886556663333333333333",
+			"886556663333333336643",
+			"866556666334433666653",
+			"666556666334433666663",
+			"686556666663333336633",
+			"666555566663333333333",
+			"666665566663323333334",
+			"666665566663313000000",
+			"666665555533300000000",
+			"666666652433300000000",
+			"666666662422200000033",
+			"666665433322200003333",
+			"666666633333333333335"
+		],
+		"look": {
+			"id": "village"
+		},
+		"terrain": [
+			"...g..ggg.ggr........",
+			"..ggggggf.tggfffg....",
+			".fgggggggftgggffgggdd",
+			".gfgggggffggffgggggdf",
+			".gwwwggttdddddddddddf",
+			".fgwwfgdggggggggggggg",
+			"gfgwwggdggggggggggrtg",
+			"gggwwggdgggggggggggt.",
+			"gggwwggdgggggggggggg.",
+			".rfwwggdgggggggggggg.",
+			".gfwwwwdgggggggggggg.",
+			"rgggdwwdgggggtggggrg.",
+			"ggggdwwggggggtffggggg",
+			"ggggdwwwwwfgggfgfggg.",
+			".gggdgfwrwgggggggggg.",
+			".gdddggfrwwwwwwgggfff",
+			".fdrgttg.fwwwwwgggggf",
+			".dd.......gg......ggr"
+		],
+		"w": 21
+	},
+	"name": "god_road",
+	"party": [
+		{
+			"id": "lead",
+			"x": 1,
+			"y": 17
+		},
+		{
+			"id": "stardrop",
+			"x": 1,
+			"y": 16
+		},
+		{
+			"id": "hunter",
+			"x": 2,
+			"y": 17
+		}
+	],
+	"party_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"seed": 1,
+	"strangeness": 0.0,
+	"supplies": {
+		"food": 10,
+		"medicine": 3
+	},
+	"view": 0
+}

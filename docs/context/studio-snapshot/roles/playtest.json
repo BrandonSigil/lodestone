@@ -1,0 +1,9 @@
+{
+  "job": "Plays the loop with the test robot, files bugs with screenshots.",
+  "name": "Playtester",
+  "next": "waiting for a milestone",
+  "now": "outing measured: Lich 3% first try, 21% second; desk card posted",
+  "order": 5,
+  "status": "idle",
+  "updated": "2026-10-30T23:06:30Z"
+}

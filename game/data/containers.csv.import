@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://tq7250euvne8"
+
+[deps]
+
+files=["res://data/containers.cols.translation", "res://data/containers.rows.translation", "res://data/containers.note.translation"]
+
+source_file="res://data/containers.csv"
+dest_files=["res://data/containers.cols.translation", "res://data/containers.rows.translation", "res://data/containers.note.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

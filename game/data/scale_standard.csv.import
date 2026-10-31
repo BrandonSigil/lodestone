@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://6eihkod7tsit"
+
+[deps]
+
+files=["res://data/scale_standard.id.translation", "res://data/scale_standard.move.translation", "res://data/scale_standard.range.translation", "res://data/scale_standard.range.translation", "res://data/scale_standard.note.translation"]
+
+source_file="res://data/scale_standard.csv"
+dest_files=["res://data/scale_standard.id.translation", "res://data/scale_standard.move.translation", "res://data/scale_standard.range.translation", "res://data/scale_standard.range.translation", "res://data/scale_standard.note.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

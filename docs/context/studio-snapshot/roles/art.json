@@ -1,0 +1,9 @@
+{
+  "job": "Runs Picsart after your go-ahead, scores results against the references, brings drafts for your stamp.",
+  "name": "Art runner",
+  "next": "Open: go card bush-ne-go. Cut NE with anim_sheet_cut.py --bg magenta --dir ne --height 79.4-ish to match 88 px (check stand heights).",
+  "now": "bush SE in the game; waiting on your Go for bush-ne-go",
+  "order": 2,
+  "status": "waiting",
+  "updated": "2026-10-31T14:40:00Z"
+}

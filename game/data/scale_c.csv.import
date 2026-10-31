@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://2xi3lgairtcm"
+
+[deps]
+
+files=["res://data/scale_c.id.translation", "res://data/scale_c.move.translation", "res://data/scale_c.range.translation", "res://data/scale_c.range.translation", "res://data/scale_c.note.translation"]
+
+source_file="res://data/scale_c.csv"
+dest_files=["res://data/scale_c.id.translation", "res://data/scale_c.move.translation", "res://data/scale_c.range.translation", "res://data/scale_c.range.translation", "res://data/scale_c.note.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

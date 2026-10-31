@@ -1,4 +1,8 @@
-# Current state (2026-10-28, refreshed after the E2E loop)
+# Current state
+
+> **Handoff 2026-10-31 (read first):** Brandon paused system work so another Claude account can continue. What is open on the Studio desk, the notes between roles, and where each role stands are in `docs/context/studio-snapshot/README.md`. Each role restarts from `docs/context/roles/<role>.md`. The rest of this file is older background.
+
+# Background (2026-10-28, refreshed after the E2E loop)
 
 ## Where things live
 - Repo: github.com/BrandonSigil/lodestone, branch `main`. Godot project in `game/`. The repo is the single source of truth: pull before work, push after.
