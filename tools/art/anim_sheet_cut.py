@@ -3,6 +3,9 @@
 
     python3 tools/art/anim_sheet_cut.py art/picsart/out/anim-lead-se_v1.png --id lead --dir se
     python3 tools/art/anim_sheet_cut.py art/picsart/out/anim-lead-ne_v1.png --id lead --dir ne
+    # Picsart workflow sheets (flat magenta, idle 4 with the blink inside it, staged outside the game folder):
+    ~/.lodestone/venv/bin/python tools/art/anim_sheet_cut.py SHEET.png --id fire_mage --dir se --bg magenta --blink 2 \\
+        --rows idle:4,walk:6,attack:6,cast:6,hurt_down:4 --out art/picsart/out/hand/chars
 
 The sheet is five rows of separate figures on cream: idle 4 + blink 1, walk 6, swing 6, cast 6, hurt 2 + down 2
 (older sheets have no blink frame; their idle row is just 4).
@@ -68,11 +71,60 @@ def runs(mask, min_len, min_gap=1):
     return out
 
 
+def pieces(band, k=6):
+    """Connected pieces of a boolean band, found on a k-times smaller grid with one cell of dilation:
+    (x0, y0, x1, y1, area) in band pixels."""
+    h, w = band.shape
+    hh, ww = (h + k - 1) // k, (w + k - 1) // k
+    pad = np.zeros((hh * k, ww * k), bool)
+    pad[:h, :w] = band
+    small = pad.reshape(hh, k, ww, k).any(axis=(1, 3))
+    grown = small.copy()
+    grown[1:] |= small[:-1]
+    grown[:-1] |= small[1:]
+    grown[:, 1:] |= small[:, :-1]
+    grown[:, :-1] |= small[:, 1:]
+    seen = np.zeros_like(grown)
+    out = []
+    for sy, sx in zip(*np.nonzero(grown)):
+        if seen[sy, sx]:
+            continue
+        stack, cells = [(sy, sx)], []
+        seen[sy, sx] = True
+        while stack:
+            y, x = stack.pop()
+            cells.append((y, x))
+            for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1), (y + 1, x + 1), (y - 1, x - 1), (y + 1, x - 1), (y - 1, x + 1)):
+                if 0 <= ny < hh and 0 <= nx < ww and grown[ny, nx] and not seen[ny, nx]:
+                    seen[ny, nx] = True
+                    stack.append((ny, nx))
+        ys, xs = zip(*cells)
+        x0, x1, y0_, y1_ = min(xs) * k, (max(xs) + 1) * k, min(ys) * k, (max(ys) + 1) * k
+        area = int(band[y0_:y1_, x0:x1].sum())
+        out.append((x0, y0_, min(x1, w), min(y1_, h), area))
+    return out
+
+
 def figures(alpha, y0, y1, want):
     """Bounding boxes of the figures in one row band, left to right. When swords or cloaks bridge two
     figures, split at the midpoints between heads instead (found in the top part of the band)."""
     band = alpha[y0:y1] > 128
     cols = runs(band.any(axis=0), 12, min_gap=6)
+    if len(cols) < want:
+        # A long staff or sword reaches into the next figure's column: group by connected pieces instead, so
+        # nothing is cut at a midpoint. Needs exactly `want` big pieces; sparks and sweat drops join the nearest.
+        comps = pieces(band)
+        big = [c for c in comps if c[4] >= 0.25 * max(c2[4] for c2 in comps)]
+        if len(big) == want:
+            big.sort(key=lambda c: c[0])
+            boxes = [list(c[:4]) for c in big]
+            for c in comps:
+                if c in big:
+                    continue
+                k = min(range(want), key=lambda i: max(boxes[i][0] - c[2], c[0] - boxes[i][2], 0))
+                b = boxes[k]
+                b[0], b[1], b[2], b[3] = min(b[0], c[0]), min(b[1], c[1]), max(b[2], c[2]), max(b[3], c[3])
+            return [(b[0], y0 + b[1], b[2], y0 + b[3]) for b in boxes if (band[b[1]:b[3], b[0]:b[2]]).sum() > 400]
     if len(cols) < want:
         for k in (0.25, 0.35, 0.45, 0.55):
             heads = runs(band[: int(band.shape[0] * k)].any(axis=0), 12, min_gap=6)
@@ -125,6 +177,16 @@ def place(rgba, alpha, box, scale, pin=feet_x):
     x0, y0, x1, y1 = box
     fx = pin(alpha, box)
     crop = rgba.crop(box)
+    # A neighbour's staff tip can poke into this box: drop small pieces that touch the left or right edge.
+    ca = np.asarray(crop.getchannel("A")) > 128
+    comps = pieces(ca)
+    if len(comps) > 1:
+        top = max(c[4] for c in comps)
+        px = np.array(crop)
+        for cx0, cy0, cx1, cy1, area in comps:
+            if area < 0.05 * top and (cx0 <= 0 or cx1 >= crop.width):
+                px[cy0:cy1, cx0:cx1, 3] = 0
+        crop = Image.fromarray(px, "RGBA")
     w, h = max(1, round(crop.width * scale)), max(1, round(crop.height * scale))
     crop = crop.resize((w, h), Image.LANCZOS)
     frame = Image.new("RGBA", (FRAME, FRAME))
@@ -148,10 +210,18 @@ def main():
     ap.add_argument("--height", type=float, default=0.0, help="idle body height in art px (default HERO_H; the small size class, head at about 1.5 levels as in docs/art/characters/01-sizes.png, is about 56)")
     ap.add_argument("--rows", help="rows of this sheet as anim:frames,... (default: the full animation sheet);"
                     " e.g. ready:4,advance:6 for sheet-character-stance.txt")
+    ap.add_argument("--bg", choices=["cream", "magenta"], default="cream",
+                    help="background of the sheet: cream paper (default) or flat magenta from the Picsart workflow (art/templates/characters/sprite_grid.png)")
+    ap.add_argument("--blink", type=int, default=0,
+                    help="1-based idle frame that is the blink, for sheets with idle 4 and no fifth frame: it becomes the blink strip and idle runs on the other three, played 1 2 3 2 so it still has 4 frames")
     args = ap.parse_args()
     rows_spec = ROWS if not args.rows else [(a, int(n)) for a, n in (r.split(":") for r in args.rows.split(","))]
 
-    rgba = key_background(Image.open(args.sheet).convert("RGB"))
+    if args.bg == "magenta":
+        from magenta_cut import key as key_magenta
+        rgba = Image.fromarray(key_magenta(np.asarray(Image.open(args.sheet).convert("RGB")).astype(float)), "RGBA")
+    else:
+        rgba = key_background(Image.open(args.sheet).convert("RGB"))
     alpha = np.asarray(rgba.getchannel("A"))
     profile = (alpha > 128).sum(axis=1)
     rows = runs(profile > 8, 40, min_gap=10)
@@ -193,7 +263,12 @@ def main():
         frames = [place(rgba, alpha, b, scale, pin) for b in bx]
         flag = "" if len(frames) == want else "  (expected %d)" % want
         print("  %s: %d frames%s" % (anim, len(frames), flag))
-        if anim == "idle" and len(frames) >= 5:
+        if anim == "idle" and args.blink and len(frames) >= args.blink:
+            write("blink", frames[args.blink - 1:args.blink])
+            rest = [f for i, f in enumerate(frames) if i != args.blink - 1]
+            frames = rest + rest[-2:-1] if len(rest) >= 3 else rest
+            stand = rest[0]
+        elif anim == "idle" and len(frames) >= 5:
             write("blink", frames[4:5])
             frames = frames[:4]
         if anim == "hurt_down":
@@ -203,7 +278,7 @@ def main():
         else:
             write(anim, frames)
         if anim == "idle":
-            frames[0].save(out / ("%s_stand_%s.png" % (args.id, args.dir)))
+            (stand if args.blink else frames[0]).save(out / ("%s_stand_%s.png" % (args.id, args.dir)))
     if args.dir not in meta["dirs"]:
         meta["dirs"].append(args.dir)
     meta_path.write_text(json.dumps(meta, indent=1) + "\n")
