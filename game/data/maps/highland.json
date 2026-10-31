@@ -40,11 +40,11 @@
 			"00088888888886688777788888",
 			"00866668888886688887788888",
 			"08886668888776667887788888",
-			"08888668888766667887777888",
-			"08888668866666667668877886",
-			"88886686666666666668877776",
-			"88884666666666666666686773",
-			"88884466666666666666833223",
+			"08888668888786667887777888",
+			"08888668868998667668877886",
+			"8888668666abb8766668877776",
+			"8888466666abb8766666686773",
+			"88884466669997766666833223",
 			"88864466666666666666633223",
 			"88864466666666555666666222",
 			"88664466666666665666666332",
@@ -64,20 +64,78 @@
 		"look": {
 			"id": "snow"
 		},
+		"props": [
+			{
+				"cell": [
+					7,
+					14
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_pine_1",
+				"tall": 1.25,
+				"walk": false
+			},
+			{
+				"cell": [
+					6,
+					16
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_pine_1",
+				"tall": 1.25,
+				"walk": false
+			},
+			{
+				"cell": [
+					6,
+					15
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_pine_1",
+				"tall": 1.25,
+				"walk": false
+			},
+			{
+				"cell": [
+					12,
+					14
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_stump",
+				"tall": 0.5,
+				"walk": false
+			}
+		],
 		"terrain": [
-			".....ggggggffggrwfdgggr...",
-			".....gfggggfgggwwfdgffffg.",
-			".....rggggfggggwwwwwwffgfg",
-			"...ffffffggggggggwwwwffggg",
-			"...wwwwfgggggggggddwwggggg",
-			".rggwwwfffgttgggttfwwggggg",
-			".ggggwwfffgttgggtdgwwwwggg",
-			".rffgwwffgggggggtggggwwggg",
-			"ggffwwggggggggggtggggwwwwg",
-			"ggffwttgggggggggdgggtfgwwg",
-			"ffggwwttggggggggdggggfgwwf",
-			"fffgwwgttggggddddggggfgwwg",
-			"ffggwwggtggggdwwwggttttwww",
+			".....ggggggfdddrwfdgggr...",
+			".....gfggggfdddwwfdgffffg.",
+			".....rggggfddddwwwwwwffgfg",
+			"...ffffffggdddgggwwwwffggg",
+			"...wwwwfgggdddgggddwwggggg",
+			".rggwwwfffgttdggttfwwggggg",
+			".ggggwwfffgttdggtdgwwwwggg",
+			".rffgwwffdgddddgtggggwwggg",
+			"ggffwwggdddgdddgtggggwwwwg",
+			"ggffwttgdddgdddgdgggtfgwwg",
+			"ffggwwttdddgdddgdggggfgwwf",
+			"fffgwwgttddddddddggggfgwwg",
+			"ffggwwggtdddddwwwggttttwww",
 			"ffggwwggddddddggwggggggggw",
 			"gttgwwggdggggdggwggggggggg",
 			"ggggwwggdggggdggwwwwwggggg",
@@ -94,7 +152,6 @@
 		],
 		"w": 26
 	},
-	"mercy": true,
 	"name": "highland",
 	"party": [
 		{

@@ -1,1757 +1,1815 @@
 {
- "name": "village",
- "art_set": "village",
- "strangeness": 0.0,
- "view": 0,
- "turn": false,
- "fog": false,
- "grid": {
-  "w": 40,
-  "h": 38,
-  "terrain": [
-   "...fffwfffff.......ffffff....fffffff....",
-   "..ffffwffffff.....ffffffff..fffffffff...",
-   ".fffffwfggggfffffffffffffffffggggggfff..",
-   "ffffffwfgggggfffggggggggggfgggggggfffff.",
-   "fffffwwggggggfgfggggggggggddgggggggggfff",
-   "fffffwwgggggggggggggggggggddgggddgggggff",
-   "fffffwwfgggggfggggggggggggddgggddggggfff",
-   "fffffwfffffttfggggggggggggddgggdddddggff",
-   "ffffwwggggfttfgggsssdssssgddgggttggggfff",
-   ".fffwwgggggssssggssssssssgdggggttgggggff",
-   ".fffwwgggggssssggssssssssgdggdddddggffff",
-   ".fffwfggggdssssggssssssssgdggdddddggfff.",
-   ".ffwwfgggggssssgggggttggggdggdddddggff..",
-   ".ffwwfgggdddttggggggttgggddggdddddggf...",
-   ".fffwwgggdddttggsssssssssdgggttggggff...",
-   "ffffwwggggggddgssssssssssssggttggggggf..",
-   "fffffwwggggggddsssssssssssssdddddddddff.",
-   "fffffwwwggggggssssssssssssssdddddddddgff",
-   "ffggggwwggggggssssssssssssssggggggggggff",
-   "ffgggggwwgggggssssssssssssssggggggggggff",
-   "fggggggwwgggggssssssssssssssggggggggggff",
-   "ffgddddssdddddssssssssssssssgggggggggff.",
-   "fgggggdssdggggssssssssssssssgggdgggggf..",
-   "ffgggggwwgggggssssssssssssssgggggggggf..",
-   "ffgggggwwggggggssssssssssssggggggggggf..",
-   "ffggggggwwggggggsssssssssdgggggggggguff.",
-   "ffggggggwwggggggggggddgggddgggggggggguff",
-   "ffgggggggwwgggggggggddggugdgggggggggggff",
-   "ffgggggggwwwdddggdddddggggddddggggggggff",
-   "fffgggggggwwwdddddggddggggggdddddggggfff",
-   "ffgggggggggwwwwgggggddgggggggggdddggggff",
-   ".ffggggggggggwwwwwggddggggggggggggddggff",
-   "..fgggggggggggwwwwwssssggggggggggggggff.",
-   "...ffgggggfgggggggwsssswwwwggggggggggf..",
-   "....ffgggggfggfgggggddggwwwwwggggggff...",
-   ".....fgffffffffgggggddggggfwwwwgggff....",
-   "......fff......fffgfddfgf...fwwwfff.....",
-   ".......f........ffffddff.....fwwff......"
-  ],
-  "heights": [
-   "0005554555550000000333333000055555550000",
-   "0055554555555000003333333300155555555000",
-   "0555554555555533333333333311155555555500",
-   "5555554555555533333333333311155555555550",
-   "5555544555555533333333333311155555555555",
-   "5555544555555533333333333311155555555555",
-   "5555544555555533333333333311155555555555",
-   "5555545555555533333333333311155555555555",
-   "5555003333544533333333333311155555555555",
-   "0111003333333333333333333311155445555555",
-   "0111003333333333333333333111333333331111",
-   "0111013333333333333333333111333333331110",
-   "0110013333333331133333333111333333331100",
-   "0110013333333331133322333111333333331000",
-   "0111003333332211111111111111333333331000",
-   "1111001111111111111111111111322333311100",
-   "1111100111111111111111111111111111111110",
-   "1111100011111111111111111111111111111111",
-   "1111110011111111111111111111111111111111",
-   "1111111001111111111111111111111111111111",
-   "1111111001111111111111111111111111111111",
-   "1111111111111111111111111111111111111110",
-   "1111111111111111111111111111111111111100",
-   "1111111001111111111111111111111111111100",
-   "1112211001111111111111111111111111111100",
-   "1222221100111111111111111111111111111110",
-   "1222222100111111111111111111111111111111",
-   "1222222110011111111111111111111111111111",
-   "1222222110001111111111111111111111111111",
-   "1222221111000111111111111111111111111111",
-   "1222221111100001111111111111111111111111",
-   "0221111111111000001111111111111111111111",
-   "0011122222222200000111111111111111111110",
-   "0002222222222222210111100001111111111100",
-   "0000222222222222221111110000011111111000",
-   "0000022222222222221111111110000111110000",
-   "0000002220000002221111111000100011100000",
-   "0000000100000000111111110000010011000000"
-  ],
-  "props": [
-   {
-    "sprite": "b_townhall",
-    "cell": [
-     17,
-     3
-    ],
-    "foot": [
-     7,
-     5
-    ],
-    "tall": 0.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "b_smithy",
-    "cell": [
-     8,
-     9
-    ],
-    "foot": [
-     3,
-     4
-    ],
-    "tall": 0.0,
-    "sight": 3.0,
-    "walk": false,
-    "open": "2,2"
-   },
-   {
-    "sprite": "b_home_c",
-    "cell": [
-     30,
-     2
-    ],
-    "foot": [
-     4,
-     3
-    ],
-    "tall": 0.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "b_home_a",
-    "cell": [
-     34,
-     4
-    ],
-    "foot": [
-     3,
-     3
-    ],
-    "tall": 0.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "b_tavern",
-    "cell": [
-     29,
-     18
-    ],
-    "foot": [
-     6,
-     4
-    ],
-    "tall": 0.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "b_home_a",
-    "cell": [
-     2,
-     18
-    ],
-    "foot": [
-     3,
-     3
-    ],
-    "tall": 0.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "b_home_hero",
-    "cell": [
-     11,
-     25
-    ],
-    "foot": [
-     3,
-     3
-    ],
-    "tall": 0.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "b_home_b",
-    "cell": [
-     28,
-     25
-    ],
-    "foot": [
-     4,
-     3
-    ],
-    "tall": 0.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "b_home_a",
-    "cell": [
-     34,
-     28
-    ],
-    "foot": [
-     3,
-     3
-    ],
-    "tall": 0.0,
-    "sight": 3.0,
-    "walk": false
-   },
-   {
-    "sprite": "ph_statue",
-    "cell": [
-     20,
-     21
-    ],
-    "foot": [
-     2,
-     2
-    ],
-    "tall": 2.2,
-    "sight": 2.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_well",
-    "cell": [
-     16,
-     18
-    ],
-    "foot": [
-     2,
-     2
-    ],
-    "tall": 1.8,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stall",
-    "cell": [
-     24,
-     15
-    ],
-    "foot": [
-     2,
-     2
-    ],
-    "tall": 1.8,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crates",
-    "cell": [
-     26,
-     16
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stall",
-    "cell": [
-     16,
-     23
-    ],
-    "foot": [
-     2,
-     2
-    ],
-    "tall": 1.8,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_barrel",
-    "cell": [
-     15,
-     23
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_lamp",
-    "cell": [
-     15,
-     21
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_lamp",
-    "cell": [
-     26,
-     23
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bench",
-    "cell": [
-     18,
-     19
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bench",
-    "cell": [
-     24,
-     21
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_planter",
-    "cell": [
-     18,
-     24
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_planter",
-    "cell": [
-     23,
-     24
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_planter",
-    "cell": [
-     19,
-     15
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_planter",
-    "cell": [
-     22,
-     15
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_board",
-    "cell": [
-     23,
-     9
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.0,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_planter",
-    "cell": [
-     18,
-     10
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_planter",
-    "cell": [
-     23,
-     11
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_3",
-    "cell": [
-     16,
-     3
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_4",
-    "cell": [
-     24,
-     3
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree",
-    "cell": [
-     25,
-     6
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_2",
-    "cell": [
-     16,
-     8
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bush_2",
-    "cell": [
-     15,
-     10
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.55,
-    "sight": 0.5,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bush_3",
-    "cell": [
-     24,
-     12
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.55,
-    "sight": 0.5,
-    "walk": false
-   },
-   {
-    "sprite": "prop_arch_timber",
-    "cell": [
-     19,
-     11
-    ],
-    "foot": [
-     4,
-     1
-    ],
-    "tall": 1.8,
-    "sight": 2.0,
-    "walk": false,
-    "arch": true
-   },
-   {
-    "sprite": "prop_rack",
-    "cell": [
-     11,
-     12
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.0,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_grindstone",
-    "cell": [
-     8,
-     13
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.85,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_barrel",
-    "cell": [
-     14,
-     9
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crates",
-    "cell": [
-     14,
-     12
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_hay",
-    "cell": [
-     7,
-     13
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.65,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bench",
-    "cell": [
-     9,
-     4
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_boulder",
-    "cell": [
-     8,
-     6
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stump",
-    "cell": [
-     12,
-     3
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_pine_2",
-    "cell": [
-     13,
-     5
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.25,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_fence",
-    "cell": [
-     2,
-     22
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_hay",
-    "cell": [
-     1,
-     20
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.65,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_planter",
-    "cell": [
-     5,
-     23
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bush_2",
-    "cell": [
-     1,
-     22
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.55,
-    "sight": 0.5,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_5",
-    "cell": [
-     2,
-     26
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_3",
-    "cell": [
-     3,
-     29
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_bare",
-    "cell": [
-     5,
-     30
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bench",
-    "cell": [
-     5,
-     27
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stump",
-    "cell": [
-     2,
-     28
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_boulder_2",
-    "cell": [
-     6,
-     25
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_fence",
-    "cell": [
-     14,
-     27
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_hay",
-    "cell": [
-     14,
-     25
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.65,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stump",
-    "cell": [
-     10,
-     25
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bush_3",
-    "cell": [
-     10,
-     26
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.55,
-    "sight": 0.5,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_2",
-    "cell": [
-     16,
-     26
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bench",
-    "cell": [
-     29,
-     6
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_hay",
-    "cell": [
-     37,
-     5
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.65,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_fence",
-    "cell": [
-     37,
-     7
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_4",
-    "cell": [
-     36,
-     8
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_2",
-    "cell": [
-     33,
-     9
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bush_2",
-    "cell": [
-     34,
-     2
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.55,
-    "sight": 0.5,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bench",
-    "cell": [
-     28,
-     12
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_lamp",
-    "cell": [
-     28,
-     14
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_barrel",
-    "cell": [
-     34,
-     11
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_5",
-    "cell": [
-     35,
-     13
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_bare",
-    "cell": [
-     28,
-     6
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_boulder",
-    "cell": [
-     28,
-     4
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stump",
-    "cell": [
-     28,
-     9
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bush",
-    "cell": [
-     27,
-     14
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.55,
-    "sight": 0.5,
-    "walk": false
-   },
-   {
-    "sprite": "prop_barrel",
-    "cell": [
-     35,
-     19
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_barrel",
-    "cell": [
-     35,
-     20
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crates",
-    "cell": [
-     35,
-     21
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bench",
-    "cell": [
-     33,
-     23
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bench",
-    "cell": [
-     29,
-     23
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_lamp",
-    "cell": [
-     30,
-     22
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_3",
-    "cell": [
-     36,
-     22
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_cart",
-    "cell": [
-     25,
-     29
-    ],
-    "foot": [
-     2,
-     2
-    ],
-    "tall": 1.3,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stump",
-    "cell": [
-     33,
-     27
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_2",
-    "cell": [
-     32,
-     32
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_4",
-    "cell": [
-     34,
-     33
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_3",
-    "cell": [
-     31,
-     34
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree",
-    "cell": [
-     36,
-     32
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_5",
-    "cell": [
-     33,
-     35
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bush_2",
-    "cell": [
-     37,
-     30
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.55,
-    "sight": 0.5,
-    "walk": false
-   },
-   {
-    "sprite": "prop_boulder",
-    "cell": [
-     16,
-     30
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_boulder_2",
-    "cell": [
-     24,
-     32
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_boulder",
-    "cell": [
-     9,
-     30
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_pine_3",
-    "cell": [
-     13,
-     34
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.25,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_4",
-    "cell": [
-     7,
-     33
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_2",
-    "cell": [
-     10,
-     34
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_boulder",
-    "cell": [
-     5,
-     33
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stump",
-    "cell": [
-     9,
-     33
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_pine_1",
-    "cell": [
-     15,
-     35
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.25,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_bare",
-    "cell": [
-     16,
-     33
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_arch",
-    "cell": [
-     19,
-     30
-    ],
-    "foot": [
-     4,
-     1
-    ],
-    "tall": 1.8,
-    "sight": 2.0,
-    "walk": false,
-    "arch": true
-   },
-   {
-    "sprite": "prop_fence",
-    "cell": [
-     18,
-     36
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_fence",
-    "cell": [
-     23,
-     36
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_4",
-    "cell": [
-     24,
-     30
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bush_3",
-    "cell": [
-     25,
-     35
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.55,
-    "sight": 0.5,
-    "walk": false
-   }
-  ]
- },
- "start": [
-  [
-   12,
-   28
-  ]
- ],
- "groups": [],
- "things": [
-  {
-   "id": "gate",
-   "kind": "exit",
-   "event": "village_gate",
-   "cell": [
-    20,
-    37
-   ]
-  },
-  {
-   "id": "hero_home",
-   "kind": "enter",
-   "event": "",
-   "cell": [
-    12,
-    28
-   ],
-   "to": "home",
-   "at": [
-    3,
-    5
-   ]
-  },
-  {
-   "id": "quiet_house",
-   "kind": "enter",
-   "event": "",
-   "cell": [
-    31,
-    5
-   ],
-   "to": "house_ne",
-   "at": [
-    3,
-    7
-   ]
-  },
-  {
-   "id": "tavern_door",
-   "kind": "enter",
-   "event": "",
-   "cell": [
-    31,
-    22
-   ],
-   "to": "tavern",
-   "at": [
-    3,
-    9
-   ]
-  },
-  {
-   "id": "hall_door",
-   "kind": "enter",
-   "event": "door_stuck",
-   "cell": [
-    20,
-    8
-   ]
-  },
-  {
-   "id": "smithy_door",
-   "kind": "enter",
-   "event": "door_stuck",
-   "cell": [
-    10,
-    11
-   ]
-  },
-  {
-   "id": "west_door",
-   "kind": "enter",
-   "event": "door_dog",
-   "cell": [
-    3,
-    21
-   ],
-   "to": "house_dog",
-   "at": [
-    3,
-    5
-   ],
-   "once": "met_dog"
-  },
-  {
-   "id": "west_door_open",
-   "kind": "enter",
-   "event": "",
-   "cell": [
-    3,
-    21
-   ],
-   "to": "house_dog",
-   "at": [
-    3,
-    5
-   ],
-   "when": "met_dog"
-  },
-  {
-   "id": "dog_window",
-   "kind": "window",
-   "event": "dog_window",
-   "cell": [
-    5,
-    19
-   ],
-   "to": "house_dog",
-   "at": [
-    5,
-    3
-   ],
-   "once": "met_dog"
-  },
-  {
-   "id": "dog_home",
-   "kind": "companion",
-   "event": "companion_dog",
-   "cell": [
-    3,
-    23
-   ],
-   "when": "met_dog"
-  },
-  {
-   "id": "se_door",
-   "kind": "enter",
-   "event": "door_stuck",
-   "cell": [
-    29,
-    28
-   ]
-  },
-  {
-   "id": "far_door",
-   "kind": "enter",
-   "event": "door_stuck",
-   "cell": [
-    35,
-    31
-   ]
-  },
-  {
-   "id": "bluff_door",
-   "kind": "enter",
-   "event": "door_stuck",
-   "cell": [
-    35,
-    7
-   ]
-  },
-  {
-   "id": "smithy_restore",
-   "kind": "restore",
-   "event": "smithy",
-   "cell": [
-    9,
-    13
-   ]
-  },
-  {
-   "id": "smith",
-   "kind": "settler",
-   "event": "settler_smith",
-   "cell": [
-    14,
-    15
-   ],
-   "once": "settler_smith"
-  },
-  {
-   "id": "inn_restore",
-   "kind": "restore",
-   "event": "inn",
-   "cell": [
-    33,
-    22
-   ]
-  },
-  {
-   "id": "weapon_rack",
-   "kind": "rack",
-   "event": "smithy_rack",
-   "cell": [
-    11,
-    12
-   ],
-   "once": "weapon_sword|weapon_daggers|weapon_bow"
-  },
-  {
-   "id": "statue",
-   "kind": "statue",
-   "event": "statue_lodestone",
-   "cell": [
-    21,
-    22
-   ],
-   "once": "has_lodestone"
-  },
-  {
-   "id": "food_barrel",
-   "kind": "cache",
-   "event": "cache_food",
-   "cell": [
-    35,
-    19
-   ],
-   "once": "got_food_barrel"
-  },
-  {
-   "id": "smithy_rope",
-   "kind": "cache",
-   "event": "cache_rope",
-   "cell": [
-    14,
-    9
-   ],
-   "once": "got_rope"
-  },
-  {
-   "id": "stream_rod",
-   "kind": "find",
-   "event": "rod:+1",
-   "cell": [
-    9,
-    29
-   ]
-  },
-  {
-   "id": "stream_fish",
-   "kind": "fish",
-   "event": "fish_dock",
-   "cell": [
-    11,
-    30
-   ]
-  }
- ]
+	"art_set": "village",
+	"fog": false,
+	"grid": {
+		"decks": [
+			{
+				"b": true,
+				"h": 1,
+				"t": "s",
+				"x": 21,
+				"y": 33
+			},
+			{
+				"b": true,
+				"h": 1,
+				"t": "s",
+				"x": 21,
+				"y": 32
+			},
+			{
+				"b": true,
+				"h": 1,
+				"t": "s",
+				"x": 7,
+				"y": 21
+			},
+			{
+				"b": true,
+				"h": 1,
+				"t": "s",
+				"x": 8,
+				"y": 21
+			}
+		],
+		"h": 38,
+		"heights": [
+			"0005554555550000000333333000055555550000",
+			"0055554555555000003333333300155555555000",
+			"0555554555555533333333333311155555555500",
+			"5555554555555533333333333311155555555550",
+			"5555544555555533333333333311155555555555",
+			"5555544555555533333333333311155555555555",
+			"5555544555555533333333333311155555555555",
+			"5555545555555533333333333311155555555555",
+			"5555003333544533333333333311155555555555",
+			"0111003333333333333333333311155445555555",
+			"0111003333333333333333333111333333331111",
+			"0111013333333333333333333111333333331110",
+			"0110013333333331133333333111333333331100",
+			"0110013333333331133322333111333333331000",
+			"0111003333332211111111111111333333331000",
+			"1111001111111111111111111111322333311100",
+			"1111100111111111111111111111111111111110",
+			"1111100011111111122222211111111111111111",
+			"1111110011111111123333211111111111111111",
+			"1111111001111111123333211111111111111111",
+			"1111111001111111123333211111111111111111",
+			"1111111001111111123333211111111111111110",
+			"1111111001111111122222211111111111111100",
+			"1111111001111111111111111111111111111100",
+			"1112211001111111111111111111111111111100",
+			"1222221100111111111111111111111111111110",
+			"1222222100111111111111111111111111111111",
+			"1222222110011111111111111111111111111111",
+			"1222222110001111111111111111111111111111",
+			"1222221111000111111111111111111111111111",
+			"1222221111100001111111111111111111111111",
+			"0221111111111000001111111111111111111111",
+			"0011122222222200000000011111111111111110",
+			"0002222222222222210000000001111111111100",
+			"0000222222222222221111100000011111111000",
+			"0000022222222222221111111110000111110000",
+			"0000002220000002221111111000100011100000",
+			"0000000100000000111111110000010011000000"
+		],
+		"props": [
+			{
+				"cell": [
+					17,
+					3
+				],
+				"foot": [
+					7,
+					5
+				],
+				"sight": 3.0,
+				"sprite": "b_townhall",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					9
+				],
+				"foot": [
+					3,
+					4
+				],
+				"open": "2,2",
+				"sight": 3.0,
+				"sprite": "b_smithy",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					30,
+					2
+				],
+				"foot": [
+					4,
+					3
+				],
+				"sight": 3.0,
+				"sprite": "b_home_c",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					34,
+					4
+				],
+				"foot": [
+					3,
+					3
+				],
+				"sight": 3.0,
+				"sprite": "b_home_a",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					29,
+					18
+				],
+				"foot": [
+					6,
+					4
+				],
+				"sight": 3.0,
+				"sprite": "b_tavern",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					2,
+					18
+				],
+				"foot": [
+					3,
+					3
+				],
+				"sight": 3.0,
+				"sprite": "b_home_a",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					11,
+					25
+				],
+				"foot": [
+					3,
+					3
+				],
+				"sight": 3.0,
+				"sprite": "b_home_hero",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					28,
+					25
+				],
+				"foot": [
+					4,
+					3
+				],
+				"sight": 3.0,
+				"sprite": "b_home_b",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					34,
+					28
+				],
+				"foot": [
+					3,
+					3
+				],
+				"sight": 3.0,
+				"sprite": "b_home_a",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					24,
+					15
+				],
+				"foot": [
+					2,
+					2
+				],
+				"sight": 1.0,
+				"sprite": "prop_stall",
+				"tall": 1.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					26,
+					16
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_crates",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					15,
+					23
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_barrel",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					26,
+					23
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_lamp",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					23,
+					24
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_planter",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					19,
+					15
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_planter",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					22,
+					15
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_planter",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					23,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_board",
+				"tall": 1.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					18,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_planter",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					23,
+					11
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_planter",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_3",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					24,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_4",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					25,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					8
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_2",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					15,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush_2",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					24,
+					12
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush_3",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"arch": true,
+				"cell": [
+					19,
+					11
+				],
+				"foot": [
+					4,
+					1
+				],
+				"sight": 2.0,
+				"sprite": "prop_arch_timber",
+				"tall": 1.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					11,
+					12
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_rack",
+				"tall": 1.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					13
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_grindstone",
+				"tall": 0.85,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_barrel",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					12
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_crates",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					13
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					9,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_bench",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					12,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					13,
+					5
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_pine_2",
+				"tall": 1.25,
+				"walk": false
+			},
+			{
+				"cell": [
+					2,
+					22
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					1,
+					20
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					5,
+					23
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_planter",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					1,
+					22
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush_2",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					2,
+					26
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_5",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					29
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_3",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					5,
+					30
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_bare",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					5,
+					27
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_bench",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					2,
+					28
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					6,
+					25
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder_2",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					27
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					25
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					10,
+					25
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					10,
+					26
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush_3",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					26
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_2",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					29,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_bench",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					37,
+					5
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					37,
+					7
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					36,
+					8
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_4",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					33,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_2",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					34,
+					2
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush_2",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					28,
+					12
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_bench",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					28,
+					14
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_lamp",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					34,
+					11
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_barrel",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					35,
+					13
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_5",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					28,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_bare",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					28,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					28,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					27,
+					14
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					35,
+					19
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_barrel",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					35,
+					20
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_barrel",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					35,
+					21
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_crates",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					29,
+					23
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_bench",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					30,
+					22
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_lamp",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					36,
+					22
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_3",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					25,
+					29
+				],
+				"foot": [
+					2,
+					2
+				],
+				"sight": 1.0,
+				"sprite": "prop_cart",
+				"tall": 1.3,
+				"walk": false
+			},
+			{
+				"cell": [
+					33,
+					27
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					32,
+					32
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_2",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					34,
+					33
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_4",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					31,
+					34
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_3",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					36,
+					32
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					33,
+					35
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_5",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					37,
+					30
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush_2",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					30
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					24,
+					32
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder_2",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					9,
+					30
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					13,
+					34
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_pine_3",
+				"tall": 1.25,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					33
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_4",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					10,
+					34
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_2",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					5,
+					33
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					9,
+					33
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					15,
+					35
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_pine_1",
+				"tall": 1.25,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					33
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_bare",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"arch": true,
+				"cell": [
+					19,
+					30
+				],
+				"foot": [
+					4,
+					1
+				],
+				"sight": 2.0,
+				"sprite": "prop_arch",
+				"tall": 1.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					18,
+					36
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					23,
+					36
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					24,
+					30
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_tree_4",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					25,
+					35
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush_3",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					13,
+					18
+				],
+				"foot": [
+					2,
+					2
+				],
+				"sight": 1.0,
+				"sprite": "prop_stall",
+				"tall": 1.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					13,
+					22
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_lamp",
+				"tall": 1.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					9,
+					16
+				],
+				"foot": [
+					2,
+					2
+				],
+				"sight": 1.0,
+				"sprite": "prop_well",
+				"tall": 1.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					17,
+					24
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_planter",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					15,
+					22
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_bench",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					19,
+					19
+				],
+				"foot": [
+					2,
+					2
+				],
+				"sight": 2.0,
+				"sprite": "ph_statue",
+				"tall": 2.2,
+				"walk": false
+			},
+			{
+				"cell": [
+					17,
+					22
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "dungeon/prop_brazier",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					22,
+					22
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "dungeon/prop_brazier",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					22,
+					17
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "dungeon/prop_brazier",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					17,
+					17
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "dungeon/prop_brazier",
+				"tall": 0.8,
+				"walk": false
+			}
+		],
+		"terrain": [
+			"...fffwfffff.......ffffff....fffffff....",
+			"..ffffwffffff.....ffffffff..fffffffff...",
+			".fffffwfggggfffffffffffffffffggggggfff..",
+			"ffffffwfgggggfffggggggggggfgggggggfffff.",
+			"fffffwwggggggfgfggggggggggddgggggggggfff",
+			"fffffwwgggggggggggggggggggddgggddgggggff",
+			"fffffwwfgggggfggggggggggggddgggddggggfff",
+			"fffffwfffffttfggggggggggggddgggdddddggff",
+			"ffffwwggggfttfgggsssdssssgddgggttggggfff",
+			".fffwwgggggssssggssssssssgdggggttgggggff",
+			".fffwwgggggssssggssssssssgdggdddddggffff",
+			".fffwfggggdssssggssssssssgdggdddddggfff.",
+			".ffwwfgggggssssgggggttggggdggdddddggff..",
+			".ffwwfgggdddttggggggttgggddggdddddggf...",
+			".fffwwgggdddttggsssssssssdgggttggggff...",
+			"ffffwwggggggddgssssssssssssggttggggggf..",
+			"fffffwwggggggddsssssssssssssdddddddddff.",
+			"fffffwwwggggggssssssssssssssdddddddddgff",
+			"ffggggwwggggggssssssssssssssggggggggggff",
+			"ffgggggwwgggggssssssssssssssggggggggggff",
+			"fggggggwwgggggssssssssssssssggggggggggff",
+			"ffgddddwwdddddssssssssssssssgggggggggff.",
+			"fgggggdwwdggggssssssssssssssgggdgggggf..",
+			"ffgggggwwgggggssssssssssssssgggggggggf..",
+			"ffgggggwwggggggssssssssssssggggggggggf..",
+			"ffggggggwwggggggsssssssssdgggggggggguff.",
+			"ffggggggwwggggggggggddgggddgggggggggguff",
+			"ffgggggggwwgggggggggddggugdgggggggggggff",
+			"ffgggggggwwwdddggdddddggggddddggggggggff",
+			"fffgggggggwwwdddddggddggggggdddddggggfff",
+			"ffgggggggggwwwwgggggddgggggggggdddggggff",
+			".ffggggggggggwwwwwggddggggggggggggddggff",
+			"..fgggggggggggwwwwwwwwwggggggggggggggff.",
+			"...ffgggggfgggggggwwwwwwwwwggggggggggf..",
+			"....ffgggggfggfgggggddgwwwwwwggggggff...",
+			".....fgffffffffgggggddggggfwwwwgggff....",
+			"......fff......fffgfddfgf...fwwwfff.....",
+			".......f........ffffddff.....fwwff......"
+		],
+		"w": 40
+	},
+	"groups": [],
+	"name": "village",
+	"start": [
+		[
+			12.0,
+			28.0
+		]
+	],
+	"strangeness": 0.0,
+	"things": [
+		{
+			"cell": [
+				20.0,
+				37.0
+			],
+			"event": "village_gate",
+			"id": "gate",
+			"kind": "exit"
+		},
+		{
+			"at": [
+				3.0,
+				5.0
+			],
+			"cell": [
+				12.0,
+				28.0
+			],
+			"event": "",
+			"id": "hero_home",
+			"kind": "enter",
+			"to": "home"
+		},
+		{
+			"at": [
+				3.0,
+				7.0
+			],
+			"cell": [
+				31.0,
+				5.0
+			],
+			"event": "",
+			"id": "quiet_house",
+			"kind": "enter",
+			"to": "house_ne"
+		},
+		{
+			"at": [
+				3.0,
+				9.0
+			],
+			"cell": [
+				31.0,
+				22.0
+			],
+			"event": "",
+			"id": "tavern_door",
+			"kind": "enter",
+			"to": "tavern"
+		},
+		{
+			"cell": [
+				20.0,
+				8.0
+			],
+			"event": "door_stuck",
+			"id": "hall_door",
+			"kind": "enter"
+		},
+		{
+			"cell": [
+				10.0,
+				11.0
+			],
+			"event": "door_stuck",
+			"id": "smithy_door",
+			"kind": "enter"
+		},
+		{
+			"at": [
+				3.0,
+				5.0
+			],
+			"cell": [
+				3.0,
+				21.0
+			],
+			"event": "door_dog",
+			"id": "west_door",
+			"kind": "enter",
+			"once": "met_dog",
+			"to": "house_dog"
+		},
+		{
+			"at": [
+				3.0,
+				5.0
+			],
+			"cell": [
+				3.0,
+				21.0
+			],
+			"event": "",
+			"id": "west_door_open",
+			"kind": "enter",
+			"to": "house_dog",
+			"when": "met_dog"
+		},
+		{
+			"at": [
+				5.0,
+				3.0
+			],
+			"cell": [
+				5.0,
+				19.0
+			],
+			"event": "dog_window",
+			"id": "dog_window",
+			"kind": "window",
+			"once": "met_dog",
+			"to": "house_dog"
+		},
+		{
+			"cell": [
+				3.0,
+				23.0
+			],
+			"event": "companion_dog",
+			"id": "dog_home",
+			"kind": "companion",
+			"when": "met_dog"
+		},
+		{
+			"cell": [
+				29.0,
+				28.0
+			],
+			"event": "door_stuck",
+			"id": "se_door",
+			"kind": "enter"
+		},
+		{
+			"cell": [
+				35.0,
+				31.0
+			],
+			"event": "door_stuck",
+			"id": "far_door",
+			"kind": "enter"
+		},
+		{
+			"cell": [
+				35.0,
+				7.0
+			],
+			"event": "door_stuck",
+			"id": "bluff_door",
+			"kind": "enter"
+		},
+		{
+			"cell": [
+				9.0,
+				13.0
+			],
+			"event": "smithy",
+			"id": "smithy_restore",
+			"kind": "restore"
+		},
+		{
+			"cell": [
+				14.0,
+				15.0
+			],
+			"event": "settler_smith",
+			"id": "smith",
+			"kind": "settler",
+			"once": "settler_smith"
+		},
+		{
+			"cell": [
+				33.0,
+				22.0
+			],
+			"event": "inn",
+			"id": "inn_restore",
+			"kind": "restore"
+		},
+		{
+			"cell": [
+				11.0,
+				12.0
+			],
+			"event": "smithy_rack",
+			"id": "weapon_rack",
+			"kind": "rack",
+			"once": "weapon_sword|weapon_daggers|weapon_bow"
+		},
+		{
+			"cell": [
+				21.0,
+				22.0
+			],
+			"event": "statue_lodestone",
+			"id": "statue",
+			"kind": "statue",
+			"once": "has_lodestone"
+		},
+		{
+			"cell": [
+				35.0,
+				19.0
+			],
+			"event": "cache_food",
+			"id": "food_barrel",
+			"kind": "cache",
+			"once": "got_food_barrel"
+		},
+		{
+			"cell": [
+				14.0,
+				9.0
+			],
+			"event": "cache_rope",
+			"id": "smithy_rope",
+			"kind": "cache",
+			"once": "got_rope"
+		},
+		{
+			"cell": [
+				9.0,
+				29.0
+			],
+			"event": "rod:+1",
+			"id": "stream_rod",
+			"kind": "find"
+		},
+		{
+			"cell": [
+				11.0,
+				30.0
+			],
+			"event": "fish_dock",
+			"id": "stream_fish",
+			"kind": "fish"
+		}
+	],
+	"turn": false,
+	"view": 0
 }

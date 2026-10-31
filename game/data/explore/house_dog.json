@@ -1,165 +1,165 @@
 {
- "name": "house_dog",
- "art_set": "village_in",
- "strangeness": 0.0,
- "view": 0,
- "walls": true,
- "wall_kit": "village_in",
- "turn": false,
- "fog": true,
- "grid": {
-  "w": 8,
-  "h": 7,
-  "terrain": [
-   "rrrrrrrr",
-   "rsssssss",
-   "rsssssss",
-   "rsssssss",
-   "rsssssss",
-   "rsssssss",
-   "rsssssss"
-  ],
-  "heights": [
-   "33333333",
-   "31111111",
-   "31111111",
-   "31111111",
-   "31111111",
-   "31111111",
-   "31111111"
-  ],
-  "props": [
-   {
-    "sprite": "wall_window",
-    "cell": [
-     5,
-     0
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.0,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "wall_window",
-    "cell": [
-     0,
-     3
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.0,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bed",
-    "cell": [
-     1,
-     1
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.75,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_cupboard",
-    "cell": [
-     3,
-     1
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.3,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_table",
-    "cell": [
-     2,
-     3
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_broken_chair",
-    "cell": [
-     1,
-     4
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.75,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_pots",
-    "cell": [
-     6,
-     1
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   }
-  ]
- },
- "start": [
-  [
-   5,
-   3
-  ]
- ],
- "groups": [],
- "things": [
-  {
-   "id": "out",
-   "kind": "enter",
-   "event": "",
-   "cell": [
-    3,
-    6
-   ],
-   "to": "village",
-   "at": [
-    3,
-    21
-   ]
-  },
-  {
-   "id": "dog",
-   "kind": "dog",
-   "event": "dog_free",
-   "cell": [
-    5,
-    2
-   ],
-   "once": "met_dog"
-  }
- ]
+	"art_set": "village_in",
+	"fog": true,
+	"grid": {
+		"h": 7,
+		"heights": [
+			"33333333",
+			"31111111",
+			"31111111",
+			"31111111",
+			"31111111",
+			"31111111",
+			"31111111"
+		],
+		"props": [
+			{
+				"cell": [
+					5,
+					0
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "wall_window",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					0,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "wall_window",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					1,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_bed",
+				"tall": 0.75,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_cupboard",
+				"tall": 1.3,
+				"walk": false
+			},
+			{
+				"cell": [
+					2,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_table",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					1,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_broken_chair",
+				"tall": 0.75,
+				"walk": false
+			},
+			{
+				"cell": [
+					6,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_pots",
+				"tall": 0.6,
+				"walk": false
+			}
+		],
+		"terrain": [
+			"rrrrrrrr",
+			"rsssssss",
+			"rsssssss",
+			"rsssssss",
+			"rsssssss",
+			"rsssssss",
+			"rsssssss"
+		],
+		"w": 8
+	},
+	"groups": [],
+	"name": "house_dog",
+	"start": [
+		[
+			5.0,
+			3.0
+		]
+	],
+	"strangeness": 0.0,
+	"things": [
+		{
+			"at": [
+				3.0,
+				21.0
+			],
+			"cell": [
+				3.0,
+				6.0
+			],
+			"event": "",
+			"id": "out",
+			"kind": "enter",
+			"to": "village"
+		},
+		{
+			"cell": [
+				5.0,
+				2.0
+			],
+			"event": "dog_free",
+			"id": "dog",
+			"kind": "dog",
+			"once": "met_dog"
+		}
+	],
+	"turn": false,
+	"view": 0,
+	"wall_kit": "village_in",
+	"walls": true
 }
