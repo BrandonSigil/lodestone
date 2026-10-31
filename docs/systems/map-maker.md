@@ -164,3 +164,6 @@ stair flights, road ribbons). `test_maps.gd` also covers steps, tidy, pillars an
 
 Performance: an edit only reworks the painted look near the cells it touched (about 1 ms on a 48 x 48 map);
 editing water also redoes that river's flow strokes.
+
+## God mode (the "!" button)
+A round "!" at the top left of every map screen (explore, road fights) opens the maker on the map you are on, centred on the party. The maker then shows "Back to play": it saves and lands you on the same map and cell (explore), or starts the saved map as a fight (road fights, saved as `maps/god_road`; the fight's foes are the maker's default band). On in debug builds or when `~/.lodestone/dev` exists, never in an export (`GodMode.enabled()`, `scripts/ui/god_mode.gd`). A screen opts in with `god_jump() -> {key, cell, back}`. The overworld has no editable map yet, so it has no button. Walk-through shots: `game/tools/god_shot.gd`.

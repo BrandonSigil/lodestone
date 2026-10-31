@@ -34,6 +34,8 @@ var explore_entry := Vector2i(-1, -1)  ## where the leader arrives through a doo
 ## Explore maps the party walked out of and may walk back into: map -> {"seen": cells, "done": thing ids}.
 var explore_memory := {}
 var maker_map := ""  ## the map file the map maker reopens (it comes back here after a play test)
+var god_return := {}  ## God mode: where "Back to play" goes from the maker ({"kind": "explore", "map", "cell"} or {"kind": "battle"})
+var maker_focus := Vector2i(-1, -1)  ## the cell the maker centres on when it opens (God mode: where the party stood)
 var sandbox_map := ""  ## a map file the combat sandbox opens instead of default.json (map maker play test)
 var sandbox_play := false  ## ...and starts the fight straight away
 var scale_test := false  ## ...as the scale C test: a knight, a fast rogue and a slow ranged mage, with scale C's numbers (ScaleTest)
@@ -51,6 +53,7 @@ func _ready() -> void:
 	ThemeDB.get_default_theme().merge_with(UiTheme.make())
 	load_meta()
 	_apply_settings()
+	add_child(GodMode.new())
 	get_tree().auto_accept_quit = false  # closing the window bookmarks first (_notification)
 
 

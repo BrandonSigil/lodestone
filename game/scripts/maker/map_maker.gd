@@ -19,7 +19,7 @@ const ZOOM_MIN := 0.3
 const ZOOM_MAX := 2.5
 const PAN_SPEED := 800.0
 const UNDO_DEPTH := 80
-const MAX_SIZE := 48
+const MAX_SIZE := 128
 const RECENT_MAX := 10
 const FIRST_MAP := "maps/highland"  ## what the maker opens the first time
 const PREFS := "user://map_maker.cfg"
@@ -113,6 +113,8 @@ var _move := {}  ## {"from": cell, "to": cell} while the select tool drags somet
 var _drag_item := false  ## a catalog tile is being dragged onto the map
 var _pan := false
 var _dirty := false
+var _god := {}  ## God mode: where Back to play goes (Game.god_return, taken when the maker opens)
+var _back_btn: Button
 var _closed := {}  ## drawer keys folded shut
 var _syncing := false
 var _hover_cell := CombatBoard.NONE
@@ -205,6 +207,15 @@ func _ready() -> void:
 		opened = MapDoc.create("battle", "valley_%d" % gen_seed, MapGen.valley(gen_seed), "snow")
 	_open(opened)
 	get_viewport().size_changed.connect(_fit_view)
+	_god = Game.god_return
+	Game.god_return = {}
+	_back_btn.visible = not _god.is_empty()
+	if Game.maker_focus != Vector2i(-1, -1) and doc.grid.in_bounds(Game.maker_focus):
+		zoom = clampf(1.2, ZOOM_MIN, ZOOM_MAX)  # the party's spot, close enough to work
+		_look_at(Game.maker_focus)
+		if flat != null:
+			flat.fit()
+	Game.maker_focus = Vector2i(-1, -1)
 
 
 # --- document -------------------------------------------------------------------------
@@ -336,6 +347,22 @@ func _on_save_name(t: String) -> void:
 	else:
 		_save_warn.text = "new map: %s%s.json" % [MapDoc.DIRS[doc.kind].trim_prefix("res://"), n]
 	_save_warn.add_theme_color_override("font_color", MakerUI.BAD if other else MakerUI.DIM)
+
+
+## God mode: save, then land on the map you jumped from, on the same cell (a battle map starts as a fight).
+func back_to_play() -> void:
+	if _god.is_empty():
+		return
+	save()
+	var back := _god
+	_god = {}
+	if String(back.get("kind", "")) == "explore":
+		Game.ensure_run()
+		Game.explore_map = String(back.map)
+		Game.explore_entry = back.get("cell", Vector2i(-1, -1))
+		Game.go(Game.EXPLORE)
+	else:
+		play_test()
 
 
 ## Play the map: save it, then a battle map opens in the combat sandbox with its fight started, an
@@ -1777,6 +1804,13 @@ func _build_top() -> void:
 	bar.add_child(MakerUI.spacer(8))
 	var play := _icon(bar, "play", "Save and play this map", play_test, 34.0, "Play test")
 	play.add_theme_color_override("font_color", MakerUI.ACCENT)
+	_back_btn = Button.new()
+	_back_btn.text = "Back to play"
+	_back_btn.tooltip_text = "Save this map and go back to where you were playing"
+	_back_btn.add_theme_color_override("font_color", MakerUI.ACCENT)
+	_back_btn.pressed.connect(back_to_play)
+	_back_btn.visible = false
+	bar.add_child(_back_btn)
 
 
 ## Switch between the isometric board and the flat sketch grid (both edit doc.grid).

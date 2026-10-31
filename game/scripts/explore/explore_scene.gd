@@ -1491,6 +1491,15 @@ func _remember() -> void:
 	Game.explore_memory[map.map_name] = {"seen": seen.duplicate(), "done": done, "groups": settled}
 
 
+## God mode: the map maker on this map, centred on the leader. Back to play lands on the same cell.
+func god_jump() -> Dictionary:
+	var lead := leader()
+	if lead == null:
+		return {}
+	_remember()
+	return {"key": "explore/" + map.map_name, "cell": lead.cell, "back": {"kind": "explore", "map": map.map_name, "cell": lead.cell}}
+
+
 ## The bookmark ([USER] omr-11): this map and where the hero stands. Not in a fight: the one taken when it
 ## began stands, so a quit fight restarts from its first turn. fight: {"group": id, "how": ...} or {}.
 func bookmark(fight := {}) -> void:

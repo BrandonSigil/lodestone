@@ -11,11 +11,29 @@ var phase_label: Label
 var info_label: Label
 
 
+var _art_set := ""
+
+
+## God mode: this fight's map saved as maps/god_road and opened in the maker, centred on the first party piece. Back to
+## play starts that map as a fight (the maker's Play test).
+func god_jump() -> Dictionary:
+	var doc := MapDoc.create("battle", "god_road", battle.grid, _art_set)
+	if doc.save() == "":
+		return {}
+	var at := Vector2i(-1, -1)
+	for u: CombatUnit in battle.units:
+		if u.team == 0:
+			at = u.cell
+			break
+	return {"key": doc.key(), "cell": at, "back": {"kind": "battle"}}
+
+
 func _ready() -> void:
 	var setup := Game.take_combat_setup()
 	# A tile set means a road fight from the overworld: a valley from the map generator, built to the painted
 	# look's rules (V9 to V11). Without one (the shelved trail), the old generated island.
 	var art_set := String(setup.get("art_set", ""))
+	_art_set = art_set
 	var grid := MapGen.valley(setup.seed, MapGen.FIGHT_W, MapGen.FIGHT_H, art_set) if art_set != "" else CombatGrid.generate(setup.seed, 10, 8, setup.strangeness)
 	var enc: Dictionary = Db.encounters.get(setup.encounter, Db.encounters["debug"])
 	loot = enc.loot
