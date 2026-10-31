@@ -1,0 +1,18 @@
+ONE GAME PIECE for a cosy fantasy tactics game, painted to be cut out and placed on a map tile.
+
+THE ASSET (write this part yourself, then leave the rest as it is):
+[DESCRIBE THE ASSET HERE: what it is, its materials and colours, and its size in tiles, for example "a 2 x 3 tile stone smithy with a red-tile roof".]
+
+CAMERA AND FOOTPRINT (essential): 2:1 dimetric. The ground is a square grid turned 45 degrees and looked at from about 30 degrees above, so one tile is a diamond 2 across and 1 down; every ground edge of the piece runs exactly 2 across to 1 down. Orthographic: no perspective, no vanishing point, no true-isometric 30 degree edges, no top-down plan view, no flat-on front view. Uprights are perfectly vertical. The piece sits on a footprint of whole tiles (as written above): its base is that diamond-grid rectangle, drawn square to the grid, with the base touching the bottom centre of the picture. Nothing the piece stands on is drawn beyond its footprint.
+
+SCALE: one tile is 128 across; one floor level is 32 tall. The hero is a small figure about 96 tall, so any door or gate is at least that tall (three levels) and about 40 wide; windows start above hero waist height. Big simple parts, no tiny detail.
+
+LIGHT: one soft sun from the upper left. Tops are the lightest, left faces mid-tone, right faces the darkest. Only those two side faces ever show; never draw backs or undersides.
+
+BACKGROUND: one flat solid magenta (#ff00ff) everywhere around the piece, perfectly even, no texture, no gradient, no shading, so it can be cut out. The piece is alone, centred, with wide empty magenta all round it.
+
+STYLE: flat soft watercolour and ink, like a children's picture book. Soft flat painted fills with a little soft mottle and a faint paper grain, one lighter and one darker tone per surface. One soft, slightly wobbly dark warm charcoal outline (#373335, never pure black) round the whole piece only, like a felt marker; no inner outlines, no wood grain, no stone-by-stone lines. Muted warm cosy colours; the darkest tone is a deep tint of the piece's own colours, never black. Keep the colours of the place it will sit in (set in the asset line if it matters).
+
+NO: text, letters, numbers, labels, signs with writing, a ground disc, grass patch, cast shadow or drop shadow, glow, water, people, animals, a second piece, a border or frame, magenta inside the piece.
+
+Avoid: tilted or rotated views, perspective, plan view, flat-on view, true isometric, pixel art, photo, 3d render, glossy, fine detail, outlines beyond the piece, shadows past the footprint.
