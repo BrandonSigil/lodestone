@@ -34,3 +34,9 @@ Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the
 - On his desk: `dock-pieces-review` (art), `builder-cliff-wash-review` (builder), `dev-ui-size` (dev), and possibly a belt-tweak card.
 - Asked of Brandon and not yet answered: whether to add the mem-guard rule to CLAUDE.md's Godot line ("every Godot run, headless too, goes through tools/godot.sh or tools/mem_guard.sh").
 - Usage: weekly 77% at 17:05 UTC, reset 2026-11-01 10:00 UTC.
+
+## Pick the model per task (Brandon, 2026-10-31)
+"As the pm, are you able to decide during handoff which model suits the task best? Simple research uses a more efficient model, a key feature that we need to get right and is complicated, uses a different model?" Yes: set `model` when starting or handing off a session (or `set_session_model` on a running one).
+- Haiku: lookups, screenshots, art cutting, data edits, quick checks.
+- Sonnet (default): most building and design.
+- Opus: only a key system that is complicated or keeps breaking (a new combat rule, a save-format change, a hard bug), only for that piece, then back to Sonnet.
