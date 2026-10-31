@@ -41,10 +41,10 @@ const TOOLS := [
 	["pillar", "pillar", "6", "Pillar", "click a cell: it rises two levels over its neighbours into a lone rock pillar, snow-capped in the painted look (rule V10). Right click: back down."],
 	["|"],
 	["paint", "paint", "P", "Ground", "pick a ground type above, then drag to paint it. Painting a hole fills it first. Right: grass."],
-	["path", "path", "L", "Path", "drag a path's course; stairs are cut where it climbs. With 'follow ground' it finds the easiest walk from where you press to where you let go."],
+	["path", "path", "L", "Path", "drag a path's course (size 1 to 4: [ and ] set how wide); stairs are cut where it climbs. With 'follow ground' it finds the easiest walk from where you press to where you let go."],
 	["river", "river", "W", "River", "drag along the river's course from high ground down: it digs a channel that never runs uphill; every drop becomes a waterfall."],
-	["stairs", "stairs", "T", "Stairs", "click a cell at a cliff: stairs that join both sides. Drag from the bottom to the top of a cliff: a flight. Right drag: clear stairs."],
-	["bridge", "deck", "N", "Bridge", "drag from one landing to another across water, a gap or lower ground: a bridge is built between them at the landings' height (a step if they differ by one), with rails and piers, and the ground under it is not touched. Right drag: take a bridge away along the line."],
+	["stairs", "stairs", "T", "Stairs", "click a cell at a cliff: stairs that join both sides. Drag from the bottom to the top of a cliff: a flight. Size 1 to 4 ([ and ]) makes it that wide: one stair, even steps across, flush at the top. Right drag: clear stairs."],
+	["bridge", "deck", "N", "Bridge", "drag from one landing to another across water, a gap or lower ground: a bridge is built between them at the landings' height (a step if they differ by one), with rails and piers, and the ground under it is not touched. Right drag: take a bridge away along the line. Size 1 to 4 ([ and ]) makes it that many cells wide, rails on its outer edges only."],
 	["deck", "deck", "J", "Deck", "drag: a bridge floor at the level height over the cells, with the lane under it still open (it stands at least two levels over the ground). Right drag: take decks away."],
 	["|"],
 	["region", "square", "A", "Area", "drag a box (or click a flat area) to select cells; then Raise or Lower moves every cell in it one level, keeping its ground, walls, stairs, decks and props. Right click clears the selection. PageUp and PageDown do the same."],
@@ -81,7 +81,7 @@ var board: CombatBoard
 var overlay: MakerOverlay
 var flat: FlatView  ## the flat sketch mode (Tab): a top-down grid of the same map
 var tool := "select"
-var radius := 0  ## brush size: 0 = one cell
+var width := 1  ## brush size and line width, 1 to 4 cells: the paint brushes, paths, rivers, bridges and stairs
 var square := false
 var level_h := 3  ## LEVEL tool height
 var paint_t: int = T.GRASS
@@ -740,9 +740,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_K:
 			_toggle_view("soft")
 		KEY_BRACKETLEFT:
-			_set_radius(radius - 1)
+			_set_width(width - 1)
 		KEY_BRACKETRIGHT:
-			_set_radius(radius + 1)
+			_set_width(width + 1)
 		KEY_SPACE:
 			_fit_view()
 		KEY_R:
@@ -813,9 +813,9 @@ func _path_tool() -> bool:
 func _brush_cells(c: Vector2i) -> Array[Vector2i]:
 	if c == CombatBoard.NONE:
 		return []
-	if tool == "stairs" or tool == "party" or tool == "enemy" or tool == "region":
+	if tool == "stairs" or tool == "bridge" or tool == "party" or tool == "enemy" or tool == "region":
 		return [c]
-	return MapOps.brush(doc.grid, c, radius, square)
+	return MapOps.sized(doc.grid, c, width, square)
 
 
 func _press(button: int) -> void:
@@ -873,14 +873,14 @@ func _end_stroke() -> void:
 	var right: bool = _stroke.button == MOUSE_BUTTON_RIGHT
 	var g := doc.grid
 	if tool == "river" and not right:
-		MapOps.river(g, _stroke.path, 1, radius + 1)
+		MapOps.river(g, _stroke.path, 1, width)
 	elif tool == "path" and not right:
 		var course: Array[Vector2i] = _stroke.path
 		if follow_ground:
 			course = MapOps.road(g, _stroke.start, _stroke.last)
 			if course.is_empty():
 				_say("no walkable way between those cells")
-		MapOps.path(g, course, path_t, radius + 1)
+		MapOps.path(g, course, path_t, width)
 	elif tool == "bridge":
 		var a: Vector2i = _stroke.start
 		var b: Vector2i = _stroke.last
@@ -888,7 +888,7 @@ func _end_stroke() -> void:
 			var n := MapOps.bridge_clear(g, a, b)
 			_say("took away %d bridge cells" % n if n > 0 else "no bridge along that line")
 		else:
-			var res := MapOps.bridge_span(g, a, b)
+			var res := MapOps.bridge_span(g, a, b, width)
 			if String(res.error) != "":
 				_say(String(res.error))
 				_undo.pop_back()
@@ -902,10 +902,10 @@ func _end_stroke() -> void:
 				if g.terrain_at(c) == T.STAIRS:
 					g.set_terrain(c, T.GRASS)
 		elif a == b:
-			if not MapOps.stairs(g, a):
+			if not MapOps.stairs_wide(g, a, width):
 				_say("no cliff next to that cell to cut stairs into")
 		else:
-			MapOps.flight(g, a, b)
+			MapOps.flight(g, a, b, width)
 	_stroke = {}
 	overlay.path = []
 	_refresh_marks()
@@ -1595,11 +1595,11 @@ func _tool_row(id: String) -> Array:
 	return []
 
 
-func _set_radius(r: int) -> void:
-	radius = clampi(r, 0, 4)
+func _set_width(w: int) -> void:
+	width = clampi(w, 1, 4)
 	if _radius_slider != null:
-		_radius_slider.set_value_no_signal(radius)
-		_radius_label.text = "%d" % (radius * 2 + 1)
+		_radius_slider.set_value_no_signal(width)
+		_radius_label.text = "%d" % width
 
 
 func _say(text: String) -> void:
@@ -1939,16 +1939,16 @@ func _build_options() -> void:
 	var brush := HBoxContainer.new()
 	brush.add_theme_constant_override("separation", 6)
 	brush.add_child(MakerUI.separator(true))
-	brush.add_child(MakerUI.label("brush", 12, MakerUI.DIM))
+	brush.add_child(MakerUI.label("size", 12, MakerUI.DIM))
 	_radius_slider = HSlider.new()
-	_radius_slider.min_value = 0
+	_radius_slider.min_value = 1
 	_radius_slider.max_value = 4
 	_radius_slider.step = 1
 	_radius_slider.custom_minimum_size = Vector2(90, 20)
 	_radius_slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_radius_slider.tooltip_text = "Brush size  ([ and ])"
+	_radius_slider.tooltip_text = "Size: how many cells wide a brush, path, river, bridge or stair is (1 to 4).  [ and ] change it."
 	_radius_slider.focus_mode = Control.FOCUS_NONE
-	_radius_slider.value_changed.connect(func(v: float) -> void: _set_radius(int(v)))
+	_radius_slider.value_changed.connect(func(v: float) -> void: _set_width(int(v)))
 	brush.add_child(_radius_slider)
 	_radius_label = MakerUI.label("1", 12, MakerUI.INK)
 	_radius_label.custom_minimum_size.x = 14
@@ -2078,7 +2078,7 @@ func _build_options() -> void:
 	_icon(sel, "trash", "Delete the selection  (Del)", _delete_selected, 30.0)
 	row.add_child(sel)
 	_opt_groups["select"] = sel
-	_set_radius(radius)
+	_set_width(width)
 
 
 ## A ground swatch: a little tile of the set's own ground texture.
@@ -2115,7 +2115,9 @@ func _sync_options() -> void:
 	var row := _tool_row(tool)
 	(_opts.get_child(0).get_node("ToolName") as Label).text = String(row[3]) if not row.is_empty() else ""
 	_help.text = String(row[4]) if not row.is_empty() else ""
-	_opt_groups.brush.visible = BRUSH_TOOLS.has(tool)
+	_opt_groups.brush.visible = BRUSH_TOOLS.has(tool) or tool == "bridge" or tool == "stairs"
+	for o in _shape_buttons:  # the brush shape only matters to the brushes
+		o.visible = BRUSH_TOOLS.has(tool)
 	_opt_groups.level.visible = tool == "level" or tool == "deck"
 	_opt_groups.paint.visible = tool == "paint"
 	_opt_groups.path.visible = tool == "path"
@@ -2786,7 +2788,7 @@ func _build_map_page(body: VBoxContainer) -> void:
 	var keys := MakerUI.Drawer.new("map/keys", "Keys", -1, not _closed.has("map/keys"), 14)
 	keys.toggled_open.connect(_on_drawer)
 	body.add_child(keys)
-	var k := MakerUI.label("Drag paints, right drag does the opposite.\nShift drag, middle drag or two fingers: pan. Arrows pan too.\nWheel or pinch: zoom. Space: fit.\nV select, B place, X erase, 1-4 sculpt, P ground, L path, W river, T stairs, C cut, F fill, Z zone.\nR turn, M mirror, Del delete, Esc deselect, ctrl D copy to the stamp, alt click pick up.\n[ ] brush size, Q turn the view, G grid, H hide panels.\nctrl Z undo, ctrl shift Z redo, ctrl S save, ctrl shift S save as. F8 comes back here after a play test.", 12, MakerUI.DIM)
+	var k := MakerUI.label("Drag paints, right drag does the opposite.\nShift drag, middle drag or two fingers: pan. Arrows pan too.\nWheel or pinch: zoom. Space: fit.\nV select, B place, X erase, 1-4 sculpt, P ground, L path, W river, T stairs, C cut, F fill, Z zone.\nR turn, M mirror, Del delete, Esc deselect, ctrl D copy to the stamp, alt click pick up.\n[ ] size (brush, path, bridge, stairs: 1 to 4), Q turn the view, G grid, H hide panels.\nctrl Z undo, ctrl shift Z redo, ctrl S save, ctrl shift S save as. F8 comes back here after a play test.", 12, MakerUI.DIM)
 	k.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	keys.body.add_child(k)
 

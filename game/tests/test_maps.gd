@@ -832,6 +832,42 @@ func test_map_maker_area_raise_and_lower() -> void:
 	tree.root.get_node("Game").set("maker_map", keep)
 
 
+## Width 1 to 4 ([USER] 2026-10-30, "how do I make a bridge 2 wide or 3 wide or 4 wide"): brushes, bridges and stairs.
+func test_line_width() -> void:
+	var g := _island(12, 2)
+	for w in [1, 2, 3, 4]:
+		var cells := MapOps.sized(g, Vector2i(6, 6), w, true)
+		eq(cells.size(), w * w, "a square brush of size %d" % w)
+	eq(MapOps.sized(g, Vector2i(6, 6), 3).size(), 5, "round size 3 is a diamond")
+	eq(MapOps.sized(g, Vector2i(6, 6), 4).size(), 12, "round size 4 loses its corners")
+	for y in 12:
+		for x in range(5, 8):
+			g.set_terrain(Vector2i(x, y), CombatGrid.T.WATER)
+			g.set_height(Vector2i(x, y), 0)
+	for w in [2, 3, 4]:
+		var res := MapOps.bridge_span(g, Vector2i(4, 5), Vector2i(8, 5), w)
+		eq(String(res.error), "", "a %d wide bridge is built" % w)
+		eq((res.cells as Array).size(), 3 * w, "three cells long, %d across" % w)
+		for off in MapOps.lanes(w):
+			ok(g.has_deck(Vector2i(6, 5 + off)), "lane %d of %d" % [off, w])
+		ok(not g.has_deck(Vector2i(6, 5 + MapOps.lanes(w)[w - 1] + 1)), "and no wider")
+		MapOps.bridge_clear(g, Vector2i(4, 5), Vector2i(8, 5))
+		for off in MapOps.lanes(w):
+			MapOps.bridge_clear(g, Vector2i(4, 5 + off), Vector2i(8, 5 + off))
+	# a wide flight climbs as one stair: every lane steps by the same heights, flush at both ends
+	var f := _island(12, 0)
+	for y in 12:
+		for x in range(6, 12):
+			f.set_height(Vector2i(x, y), 4)
+	MapOps.flight(f, Vector2i(2, 5), Vector2i(10, 5), 3)
+	for off in [-1, 0, 1]:
+		for x in range(3, 10):
+			eq(f.terrain_at(Vector2i(x, 5 + off)), CombatGrid.T.STAIRS, "stair at %d,%d" % [x, 5 + off])
+		eq(f.height_at(Vector2i(6, 5 + off)), f.height_at(Vector2i(6, 5)), "even steps across")
+		eq(f.height_at(Vector2i(10, 5 + off)), 4, "flush with the top")
+		eq(f.height_at(Vector2i(2, 5 + off)), 0, "and the bottom")
+
+
 ## The bridge kit ([USER] 2026-10-30): drag between two landings across water and a deck is built over it, at the landings'
 ## height, without touching the terrain under it, and it survives saving; the generator uses the same bridge.
 func test_bridge_span_and_kit() -> void:

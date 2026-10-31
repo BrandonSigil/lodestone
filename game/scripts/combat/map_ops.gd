@@ -19,6 +19,34 @@ static func brush(grid: CombatGrid, c: Vector2i, radius: int, square := false) -
 	return out
 
 
+## The cells a brush of `size` 1 to 4 covers around c: 1 a cell, 2 a 2 x 2 block (c and the cells right and below),
+## 3 a diamond one step out (a 3 x 3 block when square), 4 a 4 x 4 block (its corners off when round).
+static func sized(grid: CombatGrid, c: Vector2i, size: int, square := false) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	var lo := -((size - 1) / 2)
+	var hi := size / 2
+	for dy in range(lo, hi + 1):
+		for dx in range(lo, hi + 1):
+			if not square and size >= 3:
+				var far := maxi(absi(dx), absi(dy)) if size == 4 else absi(dx) + absi(dy)
+				if size == 3 and far > 1:
+					continue
+				if size == 4 and (dx == lo or dx == hi) and (dy == lo or dy == hi):
+					continue
+			var n := c + Vector2i(dx, dy)
+			if grid.in_bounds(n):
+				out.append(n)
+	return out
+
+
+## The offsets across a line `width` cells wide: 1 -> [0], 2 -> [0, 1], 3 -> [-1, 0, 1], 4 -> [-1, 0, 1, 2].
+static func lanes(width: int) -> Array[int]:
+	var out: Array[int] = []
+	for k in range(-((width - 1) / 2), width / 2 + 1):
+		out.append(k)
+	return out
+
+
 ## Every cell on the straight line from a to b (4-connected, so a drag never skips a cell).
 static func line(a: Vector2i, b: Vector2i) -> Array[Vector2i]:
 	var out: Array[Vector2i] = [a]
@@ -165,7 +193,10 @@ static func _walk_h(grid: CombatGrid, c: Vector2i, fallback: int) -> int:
 
 ## A flight of stairs from a (bottom) to b (top) in a straight line: the cells between take heights stepping
 ## evenly from a's height to b's, so a cliff of any height becomes climbable.
-static func flight(grid: CombatGrid, a: Vector2i, b: Vector2i) -> void:
+static func flight(grid: CombatGrid, a: Vector2i, b: Vector2i, width := 1) -> void:
+	if width > 1:  # one stair, `width` cells across: every lane takes the middle lane's even steps, landing flush at both ends
+		flight_wide(grid, a, b, width)
+		return
 	var cells := line(a, b)
 	if cells.size() < 3:
 		stairs(grid, cells[cells.size() - 1] if cells.size() > 1 else a)
@@ -178,6 +209,61 @@ static func flight(grid: CombatGrid, a: Vector2i, b: Vector2i) -> void:
 			grid.set_terrain(c, T.GRASS)
 		grid.set_terrain(c, T.STAIRS)
 		grid.set_height(c, roundi(lerpf(ha, hb, float(i) / (cells.size() - 1))))
+
+
+## A wide flight: b snaps onto a's row or column; each lane across steps by the middle lane's heights, and the cells at
+## its two ends (the landings) take the bottom and top heights so the stair meets the ground flush across its width.
+static func flight_wide(grid: CombatGrid, a: Vector2i, b: Vector2i, width: int) -> void:
+	if absi(b.x - a.x) >= absi(b.y - a.y):
+		b = Vector2i(b.x, a.y)
+	else:
+		b = Vector2i(a.x, b.y)
+	if a == b:
+		return
+	var step := Vector2i(signi(b.x - a.x), signi(b.y - a.y))
+	var across := Vector2i(step.y, step.x)
+	var n := maxi(absi(b.x - a.x), absi(b.y - a.y))
+	var ha := grid.height_at(a)
+	var hb := grid.height_at(b)
+	for off in lanes(width):
+		for i in range(n + 1):
+			var c := a + step * i + across * off
+			if not grid.in_bounds(c):
+				continue
+			if i == 0 or i == n:  # the landings: ground at the end heights
+				if grid.solid(c) and grid.terrain_at(c) != T.WATER and grid.terrain_at(c) != T.STAIRS:
+					if grid.terrain_at(c) in [T.FOREST, T.ROCK, T.RUIN]:
+						grid.set_terrain(c, T.GRASS)
+					grid.set_height(c, ha if i == 0 else hb)
+				continue
+			if not grid.solid(c):
+				grid.set_terrain(c, T.GRASS)
+			var a2 := grid.prop_anchor(c)
+			if a2 != CombatGrid.NONE_CELL:
+				remove_prop(grid, a2)
+			grid.set_terrain(c, T.STAIRS)
+			grid.set_height(c, roundi(lerpf(ha, hb, float(i) / n)))
+
+
+## A wide stair at a cliff: the cell's stairs, and the cells across the slope take the same height.
+static func stairs_wide(grid: CombatGrid, c: Vector2i, width: int) -> bool:
+	if not stairs(grid, c):
+		return false
+	if width <= 1:
+		return true
+	var h := grid.height_at(c)
+	var axis := Vector2i(1, 0)  # across the slope: the axis whose neighbours are level with each other
+	var d := Vector2i(1, 0)
+	var dh := absi(_walk_h(grid, c + d, h) - _walk_h(grid, c - d, h))
+	var dv := absi(_walk_h(grid, c + Vector2i(0, 1), h) - _walk_h(grid, c - Vector2i(0, 1), h))
+	axis = Vector2i(0, 1) if dh >= dv else Vector2i(1, 0)
+	for off in lanes(width):
+		var n := c + axis * off
+		if off == 0 or not grid.in_bounds(n) or not grid.solid(n) or grid.terrain_at(n) == T.WATER:
+			continue
+		grid.set_terrain(n, T.STAIRS)
+		grid.set_height(n, h)
+	return true
 
 
 ## Place a prop (a sprite stem from the tile set) with its footprint, replacing any it overlaps.
@@ -596,7 +682,7 @@ static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
 ## A bridge from landing a to landing b ([USER] 2026-10-30): a straight run of bridge deck over whatever is between (water,
 ## a gap, lower ground), at the landings' height, with one step where they differ by one. It never changes the terrain
 ## under it. b is snapped onto a's row or column. Returns {"cells": placed cells, "error": why not}.
-static func bridge_span(grid: CombatGrid, a: Vector2i, b: Vector2i) -> Dictionary:
+static func bridge_span(grid: CombatGrid, a: Vector2i, b: Vector2i, width := 1) -> Dictionary:
 	var out := {"cells": [] as Array[Vector2i], "error": ""}
 	if absi(b.x - a.x) >= absi(b.y - a.y):
 		b = Vector2i(b.x, a.y)
@@ -615,14 +701,19 @@ static func bridge_span(grid: CombatGrid, a: Vector2i, b: Vector2i) -> Dictionar
 		out.error = "the landings are %d levels apart; a bridge steps at most one" % absi(ha - hb)
 		return out
 	var step := Vector2i(signi(b.x - a.x), signi(b.y - a.y))
+	var across := Vector2i(step.y, step.x)  # a wide bridge is `width` lanes side by side, the dragged line in the middle
 	var plan: Array = []
-	for i in range(1, n):
-		var c := a + step * i
-		var dh := ha if i <= n / 2 else hb
-		if grid.solid(c) and grid.terrain_at(c) != T.WATER and grid.height_at(c) >= dh:
-			out.error = "the bridge would run into higher ground at (%d, %d)" % [c.x, c.y]
-			return out
-		plan.append([c, dh])
+	for off in lanes(width):
+		for i in range(1, n):
+			var c := a + step * i + across * off
+			if not grid.in_bounds(c):
+				out.error = "the bridge would run off the map"
+				return out
+			var dh := ha if i <= n / 2 else hb
+			if grid.solid(c) and grid.terrain_at(c) != T.WATER and grid.height_at(c) >= dh:
+				out.error = "the bridge would run into higher ground at (%d, %d)" % [c.x, c.y]
+				return out
+			plan.append([c, dh])
 	for pr: Array in plan:
 		grid.add_deck(pr[0], pr[1], T.STONE, true)
 		(out.cells as Array[Vector2i]).append(pr[0])

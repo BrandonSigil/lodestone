@@ -913,6 +913,15 @@ func _draw_bridge(c: Vector2i, col: Color) -> void:
 	if (parity and (c.x + c.y) % 4 == 0) or open_ends >= 3:  # one pier in four cells, and no longer than PIER_MAX
 		var below := maxf(float(grid.height_at(c)) if grid.solid(c) else 0.0, z0 - BRIDGE_PIER_MAX)
 		_box(lo + Vector2(0.36, 0.36), lo + Vector2(0.64, 0.64), minf(below, z0 - 1.0), z0, BRIDGE_PIER * col)
+	var bd := {}  # which sides have another bridge deck beside this one: a wide bridge is lanes side by side
+	for sd: String in ["w", "e", "n", "s"]:
+		var nb: Vector2i = c + BridgeKit.SIDES[sd]
+		bd[sd] = grid.has_deck(nb) and (grid.decks[CombatGrid.ground(nb)] as Dictionary).get("bridge", false) and absi(grid.height_at(CombatGrid.deck_of(nb)) - int(h)) <= 1
+	var wide_x: bool = k.w and k.e and (bd.n or bd.s)
+	var wide_y: bool = k.n and k.s and (bd.w or bd.e)
+	if wide_x or wide_y:
+		_draw_wide_bridge(lo, h, z0, bd, k, wide_x, col)
+		return
 	var arms := []  # [from, to] of each slab, in the cell's 0..1 coordinates
 	var ax: bool = k.w or k.e
 	var ay: bool = k.n or k.s
@@ -949,6 +958,29 @@ func _draw_bridge(c: Vector2i, col: Color) -> void:
 			_box(lo + Vector2(BRIDGE_ARM.y - w, BRIDGE_ARM.x), lo + Vector2(BRIDGE_ARM.y, BRIDGE_ARM.y), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
 		if not k.s:
 			_box(lo + Vector2(BRIDGE_ARM.x, BRIDGE_ARM.y - w), lo + Vector2(BRIDGE_ARM.y, BRIDGE_ARM.y), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+
+
+## A lane of a wide bridge: the slab runs the whole cell where another lane is beside it, rails only on the outer edge.
+func _draw_wide_bridge(lo: Vector2, h: float, z0: float, bd: Dictionary, k: Dictionary, run_x: bool, col: Color) -> void:
+	var f := {}  # which sides the slab reaches: along the run it follows what carries on, across it the lane beside
+	for sd: String in ["w", "e", "n", "s"]:
+		f[sd] = k[sd] if (run_x == (sd == "w" or sd == "e")) else bd[sd]
+	var x0 := 0.0 if f.w else BRIDGE_ARM.x
+	var x1 := 1.0 if f.e else BRIDGE_ARM.y
+	var y0 := 0.0 if f.n else BRIDGE_ARM.x
+	var y1 := 1.0 if f.s else BRIDGE_ARM.y
+	_box(lo + Vector2(x0, y0), lo + Vector2(x1, y1), z0, h, BRIDGE_DECK * col)
+	var w := 0.05
+	if run_x:  # rails on the outer edges only: the sides with no lane beside
+		if not bd.n:
+			_box(lo + Vector2(x0, y0), lo + Vector2(x1, y0 + w), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+		if not bd.s:
+			_box(lo + Vector2(x0, y1 - w), lo + Vector2(x1, y1), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+	else:
+		if not bd.w:
+			_box(lo + Vector2(x0, y0), lo + Vector2(x0 + w, y1), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
+		if not bd.e:
+			_box(lo + Vector2(x1 - w, y0), lo + Vector2(x1, y1), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
 
 
 func _paint_top() -> void:

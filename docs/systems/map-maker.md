@@ -167,3 +167,6 @@ editing water also redoes that river's flow strokes.
 
 ## God mode (the "!" button)
 A round "!" at the top left of every map screen (explore, road fights) opens the maker on the map you are on, centred on the party. The maker then shows "Back to play": it saves and lands you on the same map and cell (explore), or starts the saved map as a fight (road fights, saved as `maps/god_road`; the fight's foes are the maker's default band). On in debug builds or when `~/.lodestone/dev` exists, never in an export (`GodMode.enabled()`, `scripts/ui/god_mode.gd`). A screen opts in with `god_jump() -> {key, cell, back}`. The overworld has no editable map yet, so it has no button. Walk-through shots: `game/tools/god_shot.gd`.
+
+## Size (1 to 4)
+The brush drawer's Size (keys `[` and `]`) is how many cells wide a paint brush, Path, River, Bridge or Stairs is. 1 a cell, 2 a 2 x 2 block, 3 a diamond (3 x 3 when square), 4 a 4 x 4 block (corners off when round). Bridge: that many lanes side by side with the dragged line in the middle, rails only on the outer edges. Stairs: a drag from bottom to top is one wide flight with even steps across, flush at both ends; a click cuts a wide stair at a cliff. Tests: `test_line_width`.

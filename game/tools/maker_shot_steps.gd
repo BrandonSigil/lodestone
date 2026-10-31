@@ -57,8 +57,8 @@ func run(m: Node, script: String) -> void:
 				for c in MapOps.line(Vector2i(int(a[1]), int(a[2])), Vector2i(int(a[3]), int(a[4]))):
 					m.call("_apply", c, false)
 				m.set("_stroke", {})
-			"radius":  # radius:<n>, the brush radius
-				m.call("_set_radius", int(a[1]))
+			"width":  # width:<n>, the size of the brush or line: 1 to 4
+				m.call("_set_width", int(a[1]))
 			"mat":  # mat:<ground material label with _ for spaces>: pick a ground material for the Ground tool
 				for mat in m.get("MATERIALS"):
 					if String(mat[0]) == String(a[1]).replace("_", " "):
@@ -74,7 +74,7 @@ func run(m: Node, script: String) -> void:
 				m.call("region_shift", int(a[1]))
 			"bridge":  # bridge:<x1>:<y1>:<x2>:<y2>: the Bridge tool's drag from one landing to another
 				m.call("_push_undo")
-				var res: Dictionary = MapOps.bridge_span(m.get("doc").grid, Vector2i(int(a[1]), int(a[2])), Vector2i(int(a[3]), int(a[4])))
+				var res: Dictionary = MapOps.bridge_span(m.get("doc").grid, Vector2i(int(a[1]), int(a[2])), Vector2i(int(a[3]), int(a[4])), int(m.get("width")))
 				print("BRIDGE ", res.error, " ", (res.cells as Array).size())
 			"phase":  # phase:<shape|decor|play>
 				m.call("_set_phase", a[1])
