@@ -51,7 +51,7 @@ func test_saved_maps_load() -> void:
 	for p in SandboxSetup.list_maps():
 		var s := SandboxSetup.load_file(p)
 		ok(s != null and s.grid.w > 0, p)
-		if s:
+		if s and not p.get_file().begins_with("untitled"):  # an untitled map is a scratch pad in the maker: it may have no pieces yet
 			ok(not s.build_units().is_empty(), "units in " + p)
 
 

@@ -114,7 +114,11 @@ func test_village_art_is_its_own() -> void:
 	for s in stems:
 		if String(s).get_file().begins_with("ph_"):
 			continue  # a placeholder (statue, arch), drawn in code until its art exists
-		ok(not String(s).contains("/") or String(s).begins_with("village/"), "%s (%s) borrows another set" % [s, stems[s]])
+		if String(s).contains("/") and not String(s).begins_with("village/"):
+			# a prop from another set ("dungeon/prop_brazier", placed in the maker) draws from its own set: it only has to exist
+			var own := "res://art/source/battle/%s.png" % s
+			ok(ResourceLoader.exists(own), "%s (%s) names art that does not exist" % [own, stems[s]])
+			continue
 		var path := "res://art/source/battle/village/%s.png" % String(s).trim_prefix("village/")
 		ok(ResourceLoader.exists(path), "%s (%s) is missing from the village set" % [path, stems[s]])
 
@@ -228,3 +232,15 @@ func test_scale_standard_switch() -> void:
 	var ball: Ability = mage.abilities.filter(func(a: Ability) -> bool: return a.id == "fireball")[0]
 	eq(ball.range_max, 6, "on: the mage's fireball reaches 6")
 	eq(Db.ability("fireball").range_max, 4, "the shipped row is untouched")
+
+
+## An event's portrait (data/explore_events.csv `portrait`) names a file in art/source/portraits, and the dog's events have his.
+func test_event_portraits_exist() -> void:
+	if Db.explore_events.is_empty():
+		Db.reload()
+	for id: String in Db.explore_events:
+		var name := String(Db.explore_events[id].get("portrait", ""))
+		if name != "":
+			ok(ResourceLoader.exists("res://art/source/portraits/%s.png" % name), "event %s: portrait %s" % [id, name])
+	eq(Db.explore_events["dog_free"].portrait, "dog", "meeting the dog shows his face")
+	eq(Db.explore_events["companion_dog"].portrait, "dog", "and so does inviting him")
