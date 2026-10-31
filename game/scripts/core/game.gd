@@ -129,7 +129,8 @@ static func memory_to_save(mem: Dictionary) -> Dictionary:
 		var seen_cells := []
 		for c: Vector2i in m.get("seen", {}):
 			seen_cells.append([c.x, c.y])
-		out[name] = {"seen": seen_cells, "done": m.get("done", []).duplicate(), "groups": Dictionary(m.get("groups", {})).duplicate()}
+		out[name] = {"seen": seen_cells, "done": m.get("done", []).duplicate(), "groups": Dictionary(m.get("groups", {})).duplicate(),
+			"containers": Dictionary(m.get("containers", {})).duplicate(true), "piles": Array(m.get("piles", [])).duplicate(true)}
 	return out
 
 
@@ -140,7 +141,8 @@ static func memory_from_save(saved: Dictionary) -> Dictionary:
 		var seen_cells := {}
 		for c in m.get("seen", []):
 			seen_cells[Vector2i(int(c[0]), int(c[1]))] = true
-		out[String(name)] = {"seen": seen_cells, "done": Array(m.get("done", [])), "groups": Dictionary(m.get("groups", {}))}
+		out[String(name)] = {"seen": seen_cells, "done": Array(m.get("done", [])), "groups": Dictionary(m.get("groups", {})),
+			"containers": Dictionary(m.get("containers", {})), "piles": Array(m.get("piles", []))}
 	return out
 
 

@@ -93,9 +93,16 @@ func _on_finished(won: bool) -> void:
 			u.member.hp = u.hp
 			Game.store_res(u)
 	Game.fight_done()  # one fight less on a camp meal's buff
-	if won:
-		var fx := TrailRules.apply_effects(Game.run, loot)
+	var loot_items := ""
+	var coins := 0
+	if won:  # coins and unlocks at once; food, medicine and things into the shared loot grid
+		var split := ContainerUi.split_loot(loot)
+		var fx := TrailRules.apply_effects(Game.run, String(split.now))
 		Game.absorb(fx.unlocks)
+		loot_items = String(split.items)
+		for part in String(split.now).split(";", false):
+			if part.begins_with("gold:"):
+				coins += int(part.split(":")[1])
 	_refresh_hud()
 	var panel := PanelContainer.new()
 	var box := VBoxContainer.new()
@@ -117,8 +124,35 @@ func _on_finished(won: bool) -> void:
 	b.text = Txt.t("UI_CONTINUE")
 	b.pressed.connect(func() -> void:
 		panel.queue_free()
-		_level_ups(0, won))
+		_loot_panel(loot_items, coins, won))
 	box.add_child(b)
+	_place_panel(panel)
+
+
+## The loot as one shared grid, then the level-ups. What does not fit goes to the FOUND box, and past that is lost
+## (a road fight is left on CONTINUE: docs/design/loot-containers.md).
+func _loot_panel(items: String, coins: int, won: bool) -> void:
+	if not won or items == "":
+		_level_ups(0, won)
+		return
+	var size := ContainerUi.size_of("pile")
+	var grid := InventoryGrid.create(size.x, size.y)
+	ContainerUi.fill_grid(grid, items)
+	var panel := PanelContainer.new()
+	panel.theme_type_variation = &"DialogPanel"
+	var box := VBoxContainer.new()
+	panel.add_child(box)
+	var l := Label.new()
+	l.text = Txt.t("UI_LOOT_TITLE") + ("   " + Txt.f("UI_LOOT_COINS", coins) if coins > 0 else "")
+	l.add_theme_font_size_override("font_size", 22)
+	box.add_child(l)
+	ContainerUi.fill(box, grid, Txt.t("UI_LOOT_TITLE"), func() -> void:
+		Game.save_adventure()
+		_refresh_hud(), func() -> void:
+		for it in grid.items:
+			Game.run.add_item(String(it.id), int(it.get("n", 1)))  # the pack, then FOUND, then lost
+		panel.queue_free()
+		_level_ups(0, won), Txt.t("UI_CONTINUE"))
 	_place_panel(panel)
 
 

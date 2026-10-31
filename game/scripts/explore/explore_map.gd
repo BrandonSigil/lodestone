@@ -80,7 +80,11 @@ static func from_dict(d: Dictionary) -> ExploreMap:
 		m.things.append({"id": String(t.get("id", "thing%d" % m.things.size())), "kind": String(t.get("kind", "chest")),
 			"event": String(t.get("event", "")), "cell": _cell(t.cell), "floor": String(t.get("floor", "s")),
 			"to": String(t.get("to", "")), "at": _cell(t.get("at", [-1, -1])), "once": String(t.get("once", "")),
-			"when": String(t.get("when", ""))})
+			"when": String(t.get("when", "")),
+			# a container (kind "container"): its type picks the size (data/containers.csv), items "meat:4;potion:1;gold:10",
+			# the two flags are separate: locked (a key flag, or a rogue's pick) and trapped (a rogue's disarm, or it springs)
+			"type": String(t.get("type", "chest")), "items": String(t.get("items", "")), "locked": bool(t.get("locked", false)),
+			"trapped": bool(t.get("trapped", false)), "key": String(t.get("key", ""))})
 	return m
 
 

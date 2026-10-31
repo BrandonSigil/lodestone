@@ -25,6 +25,7 @@ var cell := CELL
 var held := -1  ## index of the item being dragged
 var held_area := -1  ## which grid it's from
 var held_rot := 0
+var press_at := Vector2.ZERO  ## where the drag began: a release this close is a click
 var grab := Vector2i.ZERO  ## which cell of the rotated shape the mouse holds
 var mouse := Vector2.ZERO
 var flash := ""  ## text key shown under the grids after a refused action
@@ -69,9 +70,9 @@ func place_bin(r: Rect2, key: String, refused: String) -> void:
 ## Another grid in the same view, its top-left at `at` (a label takes LABEL_H above it). With a `portrait`, a small face
 ## stands in front of the label (the dog's, on his saddlebag's name): the same helper holds a container's or a loot
 ## grid, with or without a face.
-func add_area(grid: InventoryGrid, at: Vector2, label := "", portrait: Texture2D = null) -> void:
+func add_area(grid: InventoryGrid, at: Vector2, label := "", portrait: Texture2D = null, click_to := -1) -> void:
 	var top := LABEL_H if label != "" else 0.0
-	areas.append({"bag": grid, "at": at + Vector2(0, top), "label": label, "portrait": portrait, "face_at": at})
+	areas.append({"bag": grid, "at": at + Vector2(0, top), "label": label, "portrait": portrait, "face_at": at, "click_to": click_to})
 	_fit_size()
 
 
@@ -180,6 +181,7 @@ func _pick(pos: Vector2) -> void:
 		grab_focus()
 	held = i
 	held_area = k
+	press_at = pos
 	held_rot = g.items[i].rot
 	grab = _cell_in(k, pos) - (g.items[i].pos as Vector2i)
 	flash = ""
@@ -214,6 +216,13 @@ func _drop(pos: Vector2) -> void:
 	var from := held_area
 	held = -1
 	held_area = -1
+	var to_area := int(areas[from].get("click_to", -1))
+	if to_area != -1 and pos.distance_to(press_at) < 6.0:  # a click, not a drag: send it to the first spot that fits over there
+		if not _send(from, i, to_area):
+			flash = "SHOP_NO_ROOM"
+		changed.emit()
+		queue_redraw()
+		return
 	var k := _area_at(pos)
 	var t := _target_at(pos)
 	if t != -1:  # a food or potion dropped on a party card: one of it goes to them; the stack stays put
@@ -229,6 +238,37 @@ func _drop(pos: Vector2) -> void:
 		flash = "SHOP_NO_ROOM"
 	changed.emit()
 	queue_redraw()
+
+
+## Moves a whole item (or what fits of its stack) to the first spot that takes it in grid `to`. False if none of it fit.
+func _send(from: int, i: int, to: int) -> bool:
+	var src: InventoryGrid = areas[from].bag
+	var dst: InventoryGrid = areas[to].bag
+	var it := src.items[i]
+	if it.bound != "":
+		return false
+	var n := int(it.get("n", 1))
+	var lost := dst.put(it.id, it.shape, n, maxi(1, int(db[it.id].get("stack", 1))))
+	if lost >= n:
+		return false
+	if lost == 0:
+		src.remove(i)
+	else:
+		it.n = lost
+	return true
+
+
+## Everything in grid `from` that fits goes to grid `to`, in order; stops at the first thing that does not. True if all went.
+func send_all(from: int, to: int) -> bool:
+	var src: InventoryGrid = areas[from].bag
+	var all := true
+	while not src.items.is_empty():
+		if not _send(from, 0, to):  # a stack that only half fit leaves its rest at the front: the next try fails here
+			all = false
+			break
+	changed.emit()
+	queue_redraw()
+	return all
 
 
 ## Moves item i of grid `from` to grid `to` with its held turn and grab, or tops up a stack of the same

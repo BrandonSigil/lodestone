@@ -286,6 +286,26 @@ func run(s: Node, f: int, step: String) -> bool:
 					if b.text == Txt.t("UI_EAT"):
 						b.pressed.emit()
 			return f == 30
+		"loot":
+			# the after-fight loot grid: food, potions and a rope in one shared grid, coins counted beside it
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false  # a shot never writes the real save
+				game.meta.flags.append("met_dog")
+				game.refresh_party()
+				s.call("_loot_flow", "food:+14;medicine:+2;rope:+1", 25)
+			return f == 40
+		"box", "box_locked", "box_trapped":
+			# the tavern's containers: a barrel opened (box), the locked and trapped chest (box_locked), the trapped one (box_trapped)
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false  # a shot never writes the real save
+				game.meta.flags.append("met_dog")
+				game.refresh_party()
+				game.run.food = 20
+				var which := {"box": "crate1", "box_locked": "chest1", "box_trapped": "chest2"}[step] as String
+				s.call("_open_container", _thing(s, which))
+			return f == 40
 		"pack_dog":
 			# The PACK box with the dog along: his saddlebag, with something in it, beside his portrait.
 			if f == 5:

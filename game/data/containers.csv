@@ -1,0 +1,6 @@
+type,cols,rows,note
+barrel,2,2,[USER] design-loot-size: barrels 2 x 2
+chest,2,4,[USER] design-loot-size: chests 2 x 4
+crate,3,2,[AI] starting size
+body,2,1,[AI] starting size; opens after a fight
+pile,4,4,[AI] the big default: an after-fight loot grid and what a fight leaves on the map

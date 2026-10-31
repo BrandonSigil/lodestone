@@ -135,6 +135,8 @@ func _ready() -> void:
 		elif ExploreRules.stays_beaten(map.map_name, g.def, Game.meta.flags):
 			g.state = "gone"
 	var done_before: Array = memory.get("done", [])
+	for p: Dictionary in memory.get("piles", []):  # what fights left on the floor of this map, while the party is still on it
+		things.append(_pile_thing(String(p.id), Vector2i(int(p.cell[0]), int(p.cell[1]))))
 	for t in map.things:
 		var copy := t.duplicate()
 		copy["done"] = done_before.has(t.id) or _once_done(t)
@@ -734,7 +736,136 @@ func _open_thing(t: Dictionary) -> void:
 	if String(t.kind) in ExploreRules.LASTING_KINDS:
 		_lasting(t)
 		return
+	if t.kind == "container":
+		_open_container(t)
+		return
 	open_event(String(t.event), {"thing": t})
+
+
+# --- containers ([USER] 2026-10-31, docs/design/loot-containers.md) ---------------------------------------------------
+## A chest, barrel, crate or body. Locked and trapped are two flags: a key (a flag) or the rogue's d20 pick opens the lock,
+## one try a visit; the trap springs on opening (a few HP to whoever opened it, through armor) unless the rogue's d20
+## disarms it first, and a failed disarm springs it; with both, the lock comes first. What is left inside stays while the
+## party is on this map (Game.explore_memory) and is gone, not refilled, once it has left: the first opening sets
+## `looted_<map>_<id>`, and with that flag set and nothing remembered the container is empty.
+
+var _boxes := {}  ## thing id -> {"grid": InventoryGrid, "unlocked", "disarmed", "tried"}
+
+
+func _looted_flag(t: Dictionary) -> String:
+	return "looted_%s_%s" % [map.map_name, String(t.id)]
+
+
+func _box_of(t: Dictionary) -> Dictionary:
+	var id := String(t.id)
+	if _boxes.has(id):
+		return _boxes[id]
+	var size := ContainerUi.size_of(String(t.type))
+	var grid := InventoryGrid.create(size.x, size.y)
+	var saved: Dictionary = Game.explore_memory.get(map.map_name, {}).get("containers", {}).get(id, {})
+	var state := {"grid": grid, "unlocked": false, "disarmed": false, "tried": false}
+	if not saved.is_empty():  # opened before on this visit to the map: what was left, and how far its lock and trap got
+		Game.run._load_into(grid, saved.get("grid", []))
+		state.unlocked = bool(saved.get("unlocked", false))
+		state.disarmed = bool(saved.get("disarmed", false))
+	elif not Game.has_flag(_looted_flag(t)):  # a first opening ever: its things, and coins straight to gold
+		state["coins"] = ContainerUi.fill_grid(grid, String(t.items))  # paid out when it is opened
+	else:
+		state["spent"] = true  # opened and left behind on an earlier visit: nothing is put back
+	_boxes[id] = state
+	return state
+
+
+func _open_container(t: Dictionary) -> void:
+	mode = M.DIALOG
+	walking_now = false
+	var state := _box_of(t)
+	if state.get("spent", false) and (state.grid as InventoryGrid).items.is_empty():
+		var box := _new_dialog(Txt.t("UI_BOX_EMPTY"))
+		_dialog_button(box, Txt.t("UI_BOX_CLOSE"), _close_box)
+		return
+	if bool(t.locked) and not state.unlocked:
+		_box_locked(t, state)
+	elif bool(t.trapped) and not state.disarmed:
+		_box_trapped(t, state)
+	else:
+		_box_open(t, state)
+
+
+func _close_box() -> void:
+	_close_dialog()
+	mode = M.WALK
+	_remember()
+
+
+func _box_locked(t: Dictionary, state: Dictionary) -> void:
+	var box := _new_dialog(Txt.t("UI_BOX_LOCKED"))
+	var key := String(t.key)
+	if key != "" and Game.has_flag(key):
+		_dialog_button(box, Txt.t("UI_BOX_USE_KEY"), func() -> void:
+			state.unlocked = true
+			_open_container(t))
+	if ExploreRules.need_met("skill:sneak", _defs(), _have()) and not state.tried:
+		_dialog_button(box, Txt.f("UI_EX_CHANCE_SHORT", [Txt.t("UI_BOX_PICK"), int(round(Dice.chance(TrailRules.party_bonus(Game.run, "sneak"), int(Db.levels.lock_dc)) * 100))]),
+			func() -> void:
+				state.tried = true
+				var r := TrailRules.roll(Game.run, "sneak", int(Db.levels.lock_dc))
+				_log("%s  %s" % [Txt.t("CHECK_SNEAK"), Dice.describe(r)])
+				if r.success:
+					state.unlocked = true
+					var ok := _new_dialog(Txt.t("UI_BOX_PICKED"))
+					_dialog_button(ok, Txt.t("UI_CONTINUE"), func() -> void: _open_container(t))
+				else:
+					var no := _new_dialog(Txt.t("UI_BOX_PICK_FAILED"))
+					_dialog_button(no, Txt.t("UI_BOX_CLOSE"), _close_box))
+	_dialog_button(box, Txt.t("UI_BOX_LEAVE"), _close_box)
+
+
+func _box_trapped(t: Dictionary, state: Dictionary) -> void:
+	var box := _new_dialog(Txt.t("UI_BOX_TRAPPED"))
+	if ExploreRules.need_met("skill:sneak", _defs(), _have()):
+		_dialog_button(box, Txt.f("UI_EX_CHANCE_SHORT", [Txt.t("UI_BOX_DISARM"), int(round(Dice.chance(TrailRules.party_bonus(Game.run, "sneak"), int(Db.levels.disarm_dc)) * 100))]),
+			func() -> void:
+				var r := TrailRules.roll(Game.run, "sneak", int(Db.levels.disarm_dc))
+				_log("%s  %s" % [Txt.t("CHECK_SNEAK"), Dice.describe(r)])
+				if r.success:
+					state.disarmed = true
+					var ok := _new_dialog(Txt.t("UI_BOX_DISARMED"))
+					_dialog_button(ok, Txt.t("UI_CONTINUE"), func() -> void: _open_container(t))
+				else:
+					_spring_trap(t, state))
+	_dialog_button(box, Txt.t("UI_BOX_OPEN_ANYWAY"), func() -> void: _spring_trap(t, state))
+	_dialog_button(box, Txt.t("UI_BOX_LEAVE"), _close_box)
+
+
+## The trap springs: the leader takes the damage through armor (at least 1). It is spent for this visit.
+func _spring_trap(t: Dictionary, state: Dictionary) -> void:
+	state.disarmed = true
+	var lead := leader()
+	var hurt := maxi(1, int(Db.levels.trap_damage) - lead.armor)
+	lead.member.hp = maxi(0, int(lead.member.hp) - hurt)
+	_sync_party_hp()
+	_refresh_hud()
+	var text := Txt.f("UI_BOX_SPRUNG", [Txt.t(lead.name_key), hurt])
+	if Game.run.wiped():
+		mode = M.OVER
+		_dialog_button(_new_dialog(text + "\n" + Txt.t("UI_DEFEAT")), Txt.t("UI_CONTINUE"), func() -> void: Game.recall())
+		return
+	_dialog_button(_new_dialog(text), Txt.t("UI_CONTINUE"), func() -> void: _open_container(t))
+
+
+func _box_open(t: Dictionary, state: Dictionary) -> void:
+	Game.set_flag(_looted_flag(t))  # opened for good: left things stay while the party is on this map, then they are gone
+	var text := Txt.t("CONTAINER_" + String(t.type).to_upper())
+	if int(state.get("coins", 0)) > 0:
+		text += "\n" + Txt.f("UI_BOX_COINS", int(state.coins))
+		Game.run.gold += int(state.coins)
+		state["coins"] = 0
+	var box := _new_dialog(text)
+	ContainerUi.fill(box, state.grid, Txt.t("CONTAINER_" + String(t.type).to_upper()), func() -> void:
+		Game.save_adventure()
+		_refresh_hud()
+		_remember(), _close_box)
 
 
 ## Lasting map rewards ([USER] omr-10; one-more-run step 6), taken for good. A thing's event says what it holds:
@@ -1277,6 +1408,8 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall())
 		mode = M.OVER
 		return
+	var loot_items := ""  # what the group's loot gives in food, medicine and things: the shared loot grid
+	var loot_coins := 0
 	var downed := 0
 	var standing := 0
 	var elite := false
@@ -1303,9 +1436,14 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		elite = elite or bool(f.def.get("elite", false))
 		boss = boss or bool(f.def.get("boss", false))
 		ends = ends or bool(f.def.get("end", false))
-		if f.def.loot != "":
-			var out := TrailRules.apply_effects(Game.run, f.def.loot)
+		if f.def.loot != "":  # coins and unlocks at once; food, medicine and things into the shared loot grid
+			var split := ContainerUi.split_loot(String(f.def.loot))
+			var out := TrailRules.apply_effects(Game.run, String(split.now))
 			Game.absorb(out.unlocks)
+			for part in String(split.now).split(";", false):
+				if part.begins_with("gold:"):
+					loot_coins += int(part.split(":")[1])
+			loot_items = (loot_items + ";" + String(split.items)).strip_edges().trim_prefix(";")
 	for u: CombatUnit in party:
 		u.member.hp = maxi(1, u.hp)  # downed members get back up after a win
 	var xp := LevelRules.fight_xp(downed, boss, Db.levels, standing if escaped else 0)
@@ -1320,6 +1458,10 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	lines.append_array(battle.award_bonds())
 	_sync_party_hp()
 	_refresh_hud()
+	if ends or loot_items == "":
+		if loot_items != "":  # the end of the E2E test: no grid, it all goes in the pack
+			Game.absorb(TrailRules.apply_effects(Game.run, loot_items).unlocks)
+	lines.append(_fight_summary(foes, downed))
 	if ends:
 		# The boss is down: the end of the E2E test.
 		Game.set_flag("e2e_done")
@@ -1329,7 +1471,51 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		mode = M.OVER
 		return
 	box = _new_dialog("%s\n%s" % [Txt.t("UI_ESCAPED" if escaped else "UI_VICTORY"), "\n".join(lines)])
-	_dialog_button(box, Txt.t("UI_CONTINUE"), _level_up_flow.bind(0))
+	_dialog_button(box, Txt.t("UI_CONTINUE"), _loot_flow.bind(loot_items, loot_coins))
+
+
+## The after-fight summary's last lines: the rounds and the foes down, and every party piece's HP.
+func _fight_summary(_foes: Array, downed: int) -> String:
+	var parts: PackedStringArray = [Txt.f("UI_SUM_ROUNDS", [battle.rounds_done, downed])]
+	for u: CombatUnit in party:
+		parts.append(Txt.f("UI_SUM_HP", [Txt.t(u.name_key), maxi(1, u.hp), u.max_hp]))
+	return "\n".join(parts)
+
+
+## The loot as one shared grid (a big default size) after the summary: TAKE ALL, drag or click; what is left stays on the
+## map as a pile where the party stands, gone when it leaves the map (docs/design/loot-containers.md).
+func _loot_flow(items: String, coins: int) -> void:
+	if items == "":
+		_level_up_flow(0)
+		return
+	var size := ContainerUi.size_of("pile")
+	var grid := InventoryGrid.create(size.x, size.y)
+	ContainerUi.fill_grid(grid, items)
+	var title := Txt.t("UI_LOOT_TITLE")
+	var box := _new_dialog(title + ("   " + Txt.f("UI_LOOT_COINS", coins) if coins > 0 else ""))
+	ContainerUi.fill(box, grid, title, func() -> void:
+		Game.save_adventure()
+		_refresh_hud(), func() -> void:
+		if not grid.items.is_empty():
+			_drop_pile(grid)
+		_level_up_flow(0), Txt.t("UI_CONTINUE"))
+
+
+var _pile_no := 0
+
+
+## What a fight's loot left behind: a pile container where the leader stands (kept in the map's memory while the party is here).
+func _drop_pile(grid: InventoryGrid) -> void:
+	_pile_no += 1
+	var t := _pile_thing("pile_%d_%d" % [Time.get_ticks_msec(), _pile_no], leader().cell)
+	things.append(t)
+	_boxes[String(t.id)] = {"grid": grid, "unlocked": true, "disarmed": true, "tried": false, "spent": false}
+	_remember()
+
+
+func _pile_thing(id: String, cell: Vector2i) -> Dictionary:
+	return {"id": id, "kind": "container", "type": "pile", "event": "", "cell": cell, "floor": "s", "to": "", "at": Vector2i(-1, -1),
+		"once": "", "when": "", "items": "", "locked": false, "trapped": false, "key": "", "done": false}
 
 
 ## The level-up screen ([USER] 2026-10-31): after the fight, one box for each member that levelled, its stat gains and,
@@ -1530,7 +1716,16 @@ func _remember() -> void:
 	for g in groups:
 		if g.state == "gone" or g.state == "calm":
 			settled[String(g.def.id)] = g.state
-	Game.explore_memory[map.map_name] = {"seen": seen.duplicate(), "done": done, "groups": settled}
+	var boxes := {}
+	for id: String in _boxes:
+		var b: Dictionary = _boxes[id]
+		if not b.get("spent", false) or not (b.grid as InventoryGrid).items.is_empty():
+			boxes[id] = {"grid": (b.grid as InventoryGrid).to_save(), "unlocked": b.unlocked, "disarmed": b.disarmed}
+	var piles := []
+	for t in things:
+		if String(t.id).begins_with("pile_"):
+			piles.append({"id": t.id, "cell": [t.cell.x, t.cell.y]})
+	Game.explore_memory[map.map_name] = {"seen": seen.duplicate(), "done": done, "groups": settled, "containers": boxes, "piles": piles}
 
 
 ## God mode: the map maker on this map, centred on the leader. Back to play lands on the same cell.

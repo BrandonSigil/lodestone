@@ -20,3 +20,6 @@ tonic_mana,3,mana a tonic gives (and one charge, `tonic_charges`)
 tonic_charges,1,
 rolls_odd,2,stat rolls on an odd level (3, 5, 7...): the growth table twice so total growth stays near the old one roll every level
 rolls_even,0,stat rolls on an even level: none, it is the pick's level
+trap_damage,2,HP a trap takes from whoever opens the container, through armor (at least 1)
+lock_dc,12,d20 check (the rogue's sneak) to pick a container's lock; one try a visit
+disarm_dc,12,d20 check (the rogue's sneak) to disarm a container's trap; a failed disarm springs it

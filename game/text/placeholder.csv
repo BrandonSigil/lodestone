@@ -881,3 +881,29 @@ UI_LV_LAST,This is its last rank.
 UI_LV_HEALING,Healing
 UI_LV_REACH_OF,reach %d to %d
 UI_LV_LOCKED,Not in the game yet: this ability is in the kit but its effect is still being built, so it cannot be picked.
+UI_BOX_LOCKED,It is locked.
+UI_BOX_USE_KEY,Use the key
+UI_BOX_PICK,Pick the lock
+UI_BOX_PICKED,The lock opens.
+UI_BOX_PICK_FAILED,The lock holds. No more tries on this visit.
+UI_BOX_TRAPPED,It looks trapped.
+UI_BOX_DISARM,Disarm the trap
+UI_BOX_DISARMED,The trap is disarmed.
+UI_BOX_OPEN_ANYWAY,Open it anyway
+UI_BOX_SPRUNG,The trap springs: %s takes %d.
+UI_BOX_EMPTY,It is empty. Nothing is put back once you have left the map.
+UI_BOX_COINS,%d coins go to your gold.
+UI_BOX_TAKE_ALL,Take all
+UI_BOX_CLOSE,Close
+UI_BOX_FULL,No room for the rest: it stays here.
+UI_BOX_LEAVE,Leave it
+CONTAINER_BARREL,BARREL
+CONTAINER_CHEST,CHEST
+CONTAINER_CRATE,CRATE
+CONTAINER_BODY,BODY
+CONTAINER_PILE,PILE
+UI_EX_CHANCE_SHORT,%s (%d%%)
+UI_SUM_ROUNDS,Rounds %d. Foes down %d.
+UI_SUM_HP,%s: HP %d of %d
+UI_LOOT_TITLE,LOOT
+UI_LOOT_COINS,%d coins taken

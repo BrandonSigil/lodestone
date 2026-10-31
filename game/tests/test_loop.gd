@@ -1384,3 +1384,42 @@ func test_dog_saddlebag_is_carried() -> void:
 	ok(run.courier_bag == null, "the saddlebag leaves with the dog")
 	eq(run.item_count("potion"), 1, "and its things go into the pack")
 	_restore(saved)
+
+
+## Containers ([USER] 2026-10-31, docs/design/loot-containers.md): sizes by type from data, items into a grid (coins as a
+## count), click to send, TAKE ALL stops at the first thing that does not fit, and a locked, trapped chest flags are separate.
+func test_containers() -> void:
+	var saved := _fresh_game()
+	eq(ContainerUi.size_of("barrel"), Vector2i(2, 2), "a barrel is 2 x 2")
+	eq(ContainerUi.size_of("chest"), Vector2i(2, 4), "a chest is 2 x 4")
+	var size := ContainerUi.size_of("chest")
+	var chest := InventoryGrid.create(size.x, size.y)
+	var gold := ContainerUi.fill_grid(chest, "meat:12;potion:2;gold:7;nothing_here:3")
+	eq(gold, 7, "coins come back as a count")
+	eq(chest.count("meat"), 12, "food becomes meat")
+	eq(chest.count("potion"), 2)
+	var m := ExploreMap.load_named("tavern")
+	var boxes := m.things.filter(func(t: Dictionary) -> bool: return t.kind == "container")
+	var locked_and_trapped := boxes.filter(func(t: Dictionary) -> bool: return t.locked and t.trapped)
+	ok(boxes.size() >= 3 and not locked_and_trapped.is_empty(), "the tavern holds containers, one both locked and trapped")
+	# a click sends an item to the first spot that fits; TAKE ALL stops where the pack is full
+	var view := PackView.new()
+	var pack := Game.run.pack
+	view.setup_bag(pack, Db.items, Callable(), 46.0)
+	view.add_area(chest, Vector2(300, 0), "CHEST", null, 0)
+	view.areas[0]["click_to"] = 1
+	var before := pack.count("meat")
+	ok(view._send(1, 0, 0), "a click sends it over")
+	ok(pack.count("meat") > before, "and it is in the pack")
+	var tiny := InventoryGrid.create(1, 1)
+	var full_view := PackView.new()
+	full_view.setup_bag(tiny, Db.items, Callable(), 46.0)
+	var heap := InventoryGrid.create(2, 2)
+	heap.put("rope", RunState.shape_of("rope"), 1, 1)
+	heap.put("potion", RunState.shape_of("potion"), 1, 3)
+	full_view.add_area(heap, Vector2(300, 0), "", null, 0)
+	ok(not full_view.send_all(1, 0), "TAKE ALL stops at the first thing that does not fit")
+	ok(heap.items.size() >= 1, "and what did not fit stays")
+	view.free()
+	full_view.free()
+	_restore(saved)

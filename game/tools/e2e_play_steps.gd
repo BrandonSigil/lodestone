@@ -260,9 +260,10 @@ func _kept(items: Dictionary) -> Dictionary:
 ## The level-up screens after a win (one box a member that levelled): the robot takes "decide later" on each (its picks
 ## are spent by _spend_picks), until the fight is over and the walk goes on.
 func _through_level_ups(s: Node) -> void:
-	for _i in 12:
+	for _i in 14:
 		if s.get("battle") == null or s.get("_dialog") == null:
 			return
+		await _press_text(s, Txt.t("UI_BOX_TAKE_ALL"))  # the loot grid: the robot takes it all, as a player would
 		var buttons := (s.get("_dialog") as Node).find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return not (b as Button).disabled)
 		if buttons.is_empty():
 			return
@@ -444,8 +445,13 @@ func _fight_on_generated_map() -> bool:
 		# Auto's stalemate guard ends the fight as a win, so OK goes back to the road, not to the square.
 		_check(false, "the road fight ended in a stalemate (the AI couldn't reach)")
 		won = true
-	for _i in 12:  # the result's CONTINUE, then a level-up box for each member that levelled ("decide later" or CONTINUE)
+	for _i in 14:  # the result's CONTINUE, the loot (take all), then a level-up box for each member that levelled
 		var pressed := false
+		for b in c.get("hud").root.find_children("*", "Button", true, false):
+			if (b as Button).text == Txt.t("UI_BOX_TAKE_ALL") and (b as Button).visible:
+				(b as Button).pressed.emit()
+				await _frames(1)
+				break
 		for b in c.get("hud").root.find_children("*", "Button", true, false):
 			if (b as Button).text in [Txt.t("UI_CONTINUE"), Txt.t("UI_LV_LATER")] and (b as Button).visible and not (b as Button).is_queued_for_deletion():
 				(b as Button).pressed.emit()

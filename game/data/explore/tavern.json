@@ -364,6 +364,54 @@
     3
    ],
    "once": "settler_chef"
+  },
+  {
+   "id": "barrel1",
+   "kind": "container",
+   "type": "barrel",
+   "event": "",
+   "cell": [
+    2,
+    3
+   ],
+   "items": "meat:6;potion:1;gold:8"
+  },
+  {
+   "id": "crate1",
+   "kind": "container",
+   "type": "crate",
+   "event": "",
+   "cell": [
+    3,
+    3
+   ],
+   "items": "meat:8;rope:1;tonic:1"
+  },
+  {
+   "id": "chest1",
+   "kind": "container",
+   "type": "chest",
+   "event": "",
+   "cell": [
+    5,
+    2
+   ],
+   "items": "potion:2;rope:1;tonic:2;gold:25",
+   "locked": true,
+   "trapped": true,
+   "key": "key_tavern"
+  },
+  {
+   "id": "chest2",
+   "kind": "container",
+   "type": "chest",
+   "event": "",
+   "cell": [
+    7,
+    2
+   ],
+   "items": "meat:10;potion:1;gold:12",
+   "trapped": true
   }
  ]
 }

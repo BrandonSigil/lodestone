@@ -68,7 +68,7 @@ func _draw() -> void:
 func _thing(kind: String, p: Vector2, dim: bool) -> void:
 	var k := 0.55 if dim else 1.0
 	match kind:
-		"chest":
+		"chest", "container":
 			_box(p + Vector2(0, 2), 11.0, 10.0, Color(0.62, 0.42, 0.24) * k)
 			draw_line(p + Vector2(-11, -11), p + Vector2(0, -6), Color(0.85, 0.7, 0.3) * k, 2.0)
 		"shrine":
