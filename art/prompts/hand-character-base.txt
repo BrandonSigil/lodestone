@@ -1,0 +1,24 @@
+ONE CHARACTER ANIMATION SHEET for a cosy fantasy tactics game: a single character, one facing per picture.
+
+THE CHARACTER (write this part yourself, then leave the rest as it is):
+[DESCRIBE THE CHARACTER HERE: who they are, hair, clothes and colours, what they carry, their weapon or spell, and their size class: person (hero size, 1 tile), small animal or child (1 tile, about half height), large (2 x 2 tiles) or boss (3 x 3 tiles).]
+
+FACING (change this line for each of the five pictures): [FACING: one of S (facing the camera), SE (three-quarter front, facing the lower right), E (side view, facing right), NE (three-quarter back, facing the upper right), N (back to the camera)]. Every frame on the sheet shows this same direction. The other three facings are mirrors made by the game, so only these five are drawn.
+
+CAMERA: 2:1 dimetric, a high game camera looking down about 30 degrees, orthographic, no perspective, the same in every frame. The ground is a diamond grid; the character stands on a one-tile footprint.
+
+PROPORTIONS AND SIZE: chibi, about 2.3 heads tall, a big round head and a small simple body. A person is 96 art px tall to the top of the head (three floor levels), with hair or a hat reaching up to about 108. Every frame in a row is the same size and stands on the same invisible baseline, feet in the same place, as if the frames will be played over each other.
+
+EYES: the eyes always show. The fringe or hood never covers them: two simple small dark oval eyes with a tiny light catch-light, set wide on the face and readable at small size. A small, soft cream eye white is allowed, never bright white. If the face cannot be seen from this facing, draw none.
+
+LAYOUT: a sprite sheet on plain flat cream paper (#eae8d6), five rows, frames evenly spaced left to right, each figure fully separate from its neighbours with clear empty cream between them, nothing touching:
+   row 1 IDLE and BLINK, 5 frames: frames 1 to 4 standing relaxed, breathing, eyes open, cloth or hair swaying a little. Frame 5 BLINK: exactly frame 1 with the eyes closed (two short soft curved lines); if the face cannot be seen, frame 5 repeats frame 1.
+   row 2 WALK, 6 frames: a walk cycle in place (contact, down, pass, up, then the other leg), arms and cloth swinging.
+   row 3 ATTACK, 6 frames: wind up, wind up, STRIKE (the weapon or limb fully out in the facing direction, this is the hit frame), follow through, recover, settle.
+   row 4 CAST, 6 frames: gather, gather, raise, RELEASE (a small round soft spark above the raised hand, the only effect in the sheet), hold, settle.
+   row 5 HURT and DOWN, 4 frames: flinch, recoil, then sitting down on the ground dazed, then the same sitting pose.
+
+LINE AND LOOK: a soft, imperfect paint-marker outline round the whole figure and its big parts, dark warm charcoal (#373335, not pure black), slightly wobbly and uneven in weight like a felt marker drawn by hand; not a thin even vector hairline. Flat soft watercolour fills, one flat colour per material plus one flat shadow tone, light from the upper left. Same colours and costume in every frame. Muted warm cosy colours; the darkest tone is a deep tint of the character's own colours, never black. Bigger shapes, not more detail.
+
+NO: text, letters, numbers, labels, frame borders, grid lines, floor, tiles, ground shadow, grass, scenery, extra characters, motion blur or speed lines. Nothing glows except the cast spark.
+Avoid: perspective, different camera angles or facings between frames, extra detail, texture, eyes hidden under hair, thin hairline outlines, pure black outlines, 3d render, photo, text.
