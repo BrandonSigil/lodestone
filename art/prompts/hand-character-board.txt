@@ -7,7 +7,7 @@ Draw the character facing like the FACING SE panel: three-quarter front, facing 
 
 Copy only the DRAWING STYLE of the STYLE panel: a soft, slightly wobbly dark warm charcoal marker outline, flat soft watercolour fills with one shadow tone, light from the upper left, muted warm colours, chunky simple shapes. Do NOT copy anything the STYLE panel's people wear or have: no cloak, no hood, no clothes, no boots, no backpack, no sword, no hair, no face shapes. Do not copy the SIZE panel's characters either; use that panel only for height.
 
-Size: the character is a little smaller than the hero in the SIZE panel, standing about 88 per cent of his height, feet on the same ground line, about 96 px tall in a 192 px box. Every frame in a row is the same size with the feet in the same place.
+Size: the character stands about 80 per cent of the hero's height in the SIZE panel (the percentage under the second figure; a different character may be given a different percentage), feet on the same ground line, about 87 px tall in a 192 px box. Every frame in a row is the same size with the feet in the same place.
 
 THE CHARACTER: [write the character here, one short paragraph]
 

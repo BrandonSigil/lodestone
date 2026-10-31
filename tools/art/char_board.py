@@ -69,6 +69,8 @@ def main():
     hero = Image.open("game/art/source/characters/lead/lead_stand_se.png").convert("RGBA")
     mage = Image.open("game/art/source/characters/fire_mage/fire_mage_stand_se.png").convert("RGBA")
     k = 2.0
+    hh, mh = (trim_alpha(i) for i in (hero, mage))
+    pct = round((mh[3] - mh[1]) / (hh[3] - hh[1]) * 100)  # measured on the frames the game draws, never a separate scale
     ground = y + area_h - 70
     for i, im in enumerate((hero, mage)):
         big = im.resize((round(im.width * k), round(im.height * k)), Image.LANCZOS)
@@ -76,7 +78,7 @@ def main():
         board.paste(big, (cx - big.width // 2, ground - round(160 * k)), big)  # feet at frame y 160
     d.line([x + 30, ground, x + PW - 30, ground], fill=INK, width=2)
     d.text((x + PW // 4 - 40, ground + 10), "HERO", fill=INK, font=font(28))
-    d.text((x + 3 * PW // 4 - 40, ground + 10), "SMALLER", fill=INK, font=font(28))
+    d.text((x + 3 * PW // 4 - 80, ground + 10), f"{pct} PER CENT", fill=INK, font=font(28))
     out = Path("art/templates/characters/char_board.png")
     board.save(out)
     print(out)
