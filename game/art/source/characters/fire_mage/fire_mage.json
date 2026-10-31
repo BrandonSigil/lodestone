@@ -13,7 +13,8 @@
   "nw": "ne"
  },
  "dirs": [
-  "se"
+  "se",
+  "ne"
  ],
  "anims": {
   "blink": {
