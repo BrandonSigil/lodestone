@@ -40,25 +40,7 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 						changed.call())
 					brow.add_child(bb)
 				box.add_child(brow)
-		var skills := u.abilities.filter(func(a: Ability) -> bool: return LevelRules.max_rank(a.id, Db.skill_ranks) > 0)
-		if int(rs.pending) <= 0 or skills.is_empty():
-			continue
-		_label(box, Txt.f("UI_LS_RANK", int(rs.pending)), 13)
-		var row := HFlowContainer.new()
-		row.add_theme_constant_override("h_separation", 6)
-		row.custom_minimum_size = Vector2(W, 0)
-		for a: Ability in skills:
-			var b := Button.new()
-			var have := int(rs.ranks.get(a.id, 0))
-			var top := LevelRules.max_rank(a.id, Db.skill_ranks)
-			b.text = Txt.f("UI_LS_SKILL_RANK", [Txt.t(a.name_key), have, top])
-			b.disabled = have >= top
-			b.custom_minimum_size = Vector2(140, 30)
-			b.pressed.connect(func() -> void:
-				Game.rank_skill(id, a.id)
-				changed.call())
-			row.add_child(b)
-		box.add_child(row)
+		LevelUpUi.picks(box, id, changed)  # the picks decided later: learn a kit ability or upgrade one
 	for id in Game.run.boons:
 		var b: Dictionary = Db.boons[id]
 		_label(box, Txt.f("UI_LS_BLESSING" if b.kind == "blessing" else "UI_LS_SETBACK", Txt.t(String(b.name_key))), 13)

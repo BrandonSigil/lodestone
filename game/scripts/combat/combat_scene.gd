@@ -115,9 +115,42 @@ func _on_finished(won: bool) -> void:
 		box.add_child(x)
 	var b := Button.new()
 	b.text = Txt.t("UI_CONTINUE")
-	b.pressed.connect(func() -> void: Game.end_combat(won))
+	b.pressed.connect(func() -> void:
+		panel.queue_free()
+		_level_ups(0, won))
 	box.add_child(b)
+	_place_panel(panel)
+
+
+func _place_panel(panel: PanelContainer) -> void:
 	hud.root.add_child(panel)
 	var r := hud.center_rect()
-	panel.position = r.get_center() - Vector2(160, 50)
-	panel.custom_minimum_size = Vector2(320, 100)
+	panel.position = r.get_center() - Vector2(240, 120)
+	panel.custom_minimum_size = Vector2(480, 100)
+
+
+## After a won road fight, the level-up screen for each member that levelled (see LevelUpUi); then back to the road.
+func _level_ups(i: int, won: bool) -> void:
+	if not won or i >= Game.level_ups.size():
+		Game.end_combat(won)
+		return
+	var entry: Dictionary = Game.level_ups[i]
+	var id := String(entry.id)
+	var panel := PanelContainer.new()
+	panel.theme_type_variation = &"DialogPanel"
+	var box := VBoxContainer.new()
+	panel.add_child(box)
+	var l := Label.new()
+	l.text = LevelUpUi.summary(id, entry)
+	l.add_theme_font_size_override("font_size", 20)
+	box.add_child(l)
+	LevelUpUi.picks(box, id, func() -> void:
+		panel.queue_free()
+		_level_ups(i, won))
+	var b := Button.new()
+	b.text = Txt.t("UI_LV_LATER") if int(Game.rank_state(id).pending) > 0 else Txt.t("UI_CONTINUE")
+	b.pressed.connect(func() -> void:
+		panel.queue_free()
+		_level_ups(i + 1, won))
+	box.add_child(b)
+	_place_panel(panel)

@@ -304,8 +304,11 @@ func test_loop_data_is_whole() -> void:
 		ok(Txt.has(Db.weapons[id].name_key))
 	for k in LevelRules.STATS:
 		ok(Txt.has("UI_STAT_" + k.to_upper()))
-	for id in Db.skill_ranks:
-		ok(Db.ability(String(id)) != null, "ranks for a real skill: " + String(id))
+	var kit_ids := {}
+	for r in CsvTable.load_rows("res://data/kits.csv"):
+		kit_ids[String(r.ability)] = true
+	for id in Db.skill_ranks:  # an ability, or a kit's trait or action (upgrades that wait on their effect to be wired)
+		ok(Db.ability(String(id)) != null or kit_ids.has(String(id)), "upgrades for a real skill: " + String(id))
 
 
 ## [USER] 2026-10-28: no fog of war for now. The pass is drawn whole from the first step, every group stands
@@ -588,7 +591,7 @@ func test_switching_jobs_keeps_the_level() -> void:
 	var gains: Dictionary = s.gains.duplicate()
 	var js: Dictionary = s.jobs.knight
 	eq(int(js.level), 10, "the job levels on the same XP")
-	eq(int(js.pending), 2, "ranks every 4 job levels")
+	eq(int(js.pending), 5, "a pick every 2 job levels (2, 4, 6, 8, 10)")
 	ok(Game.rank_skill("lead", "shove"))
 	ok(LevelRules.branch_ready(Game.rank_state("lead"), Db.levels), "job level 10: time to branch")
 	ok(Game.choose_branch("b"))
@@ -1285,3 +1288,35 @@ func test_road_mods() -> void:
 	var bandit := CombatUnit.enemy(Db.class_def("bandit"), ExploreRules.road_mods())
 	eq(bandit.max_hp, roundi(Db.class_def("bandit").max_hp * 0.8), "and the foe is built with it")
 	Db.combat["explore_foe_hp_pct"] = saved
+
+
+## The level-up picks ([USER] 2026-10-31, docs/design/level-up.md): an even level queues one pick, an odd level rolls
+## the stats twice, a kit ability can be learned, and a step that is not wired yet is skipped.
+func test_level_up_picks() -> void:
+	var cfg := {"xp_per_level": 100, "max_level": 40, "choice_every": 2, "rolls_odd": 2, "rolls_even": 0}
+	var s := LevelRules.fresh()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	LevelRules.gain(s, 100, cfg, {"hp": 100}, rng)
+	eq(int(s.level), 2)
+	eq(int(s.pending), 1, "an even level queues a pick")
+	eq(int(s.gains.hp), 0, "and rolls no stats")
+	LevelRules.gain(s, 100, cfg, {"hp": 100}, rng)
+	eq(int(s.gains.hp), 2, "an odd level rolls twice")
+	eq(int(s.pending), 1, "and queues no pick")
+	ok(LevelRules.learn(s, "goad"), "a waiting pick learns an ability")
+	eq(int(s.pending), 0)
+	ok(not LevelRules.learn(s, "cleave"), "no pick waiting: no")
+	eq(LevelRules.next_useful_rank("guard", 0, Db.skill_ranks), 0, "a step that only has a param waits on its wiring")
+	eq(LevelRules.next_useful_rank("bite", 0, Db.skill_ranks), 1, "an effect step is offered")
+	# the hero (sword job): the kit's goad is learnable, learning spends the job's pick and arms the piece
+	var saved := _fresh_game()
+	Game.take_weapon("sword")
+	Game.award_xp(100)  # level 2: the job's first pick
+	ok(Game.learnable("lead").has("goad"), "the bulwark kit offers goad")
+	ok(Game.learn_skill("lead", "goad"), "learned")
+	eq(int(Game.rank_state("lead").pending), 0, "the pick is spent")
+	var u := CombatUnit.from_member(Game.run.members[0])
+	ok(u.abilities.any(func(a: Ability) -> bool: return a.id == "goad"), "and the piece fights with it")
+	ok(not Game.learnable("lead").has("goad"), "it is not offered twice")
+	_restore(saved)

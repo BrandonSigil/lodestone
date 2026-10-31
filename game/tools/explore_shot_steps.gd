@@ -367,6 +367,18 @@ func run(s: Node, f: int, step: String) -> bool:
 				if int(parts[2]) < row.size():
 					row[int(parts[2])].grab_focus()
 			return f == 150  # past the hover delay at any frame rate
+		"levelup", "levelup_dog":
+			# the level-up screen: the hero (sword) or the dog gets XP for a level, then the screen opens
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false  # a shot never writes the real save
+				game.take_weapon("sword")
+				game.meta.flags.append("met_dog")
+				game.refresh_party()
+				game.award_xp(100 if step == "levelup" else 200)
+				s.call("_rebuild_party")
+				s.call("_level_up_flow", 0 if step == "levelup" else 1)
+			return f == 40
 		"deploy", "fight":
 			if f == 5:
 				s.grid.set_terrain(Vector2i(26, 18), CombatGrid.T.ROAD)

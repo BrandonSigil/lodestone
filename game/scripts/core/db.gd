@@ -23,6 +23,9 @@ var boons: Dictionary = {}  # id -> data/boons.csv row (kind blessing or setback
 var recipes: Dictionary = {}  # recipe id -> data/recipes.csv row (meal, needs, kitchen flag, buff)
 var restore: Array[Dictionary] = []  # village restore ladders, data/restore.csv rows (see RestoreRules)
 var jobs: Dictionary = {}  # job id -> data/jobs.csv row (name_key, class, branch_a, branch_b)
+var archetypes: Array[Dictionary] = []  # data/archetypes.csv
+var kits: Array[Dictionary] = []  # data/kits.csv: four slots per archetype
+var upgrade_steps: Dictionary = {}  # skill id -> [{effect, param, text} per step], from data/ability_upgrades.csv
 var skill_ranks: Dictionary = {}  # skill id -> [effect of rank 1, rank 2, ...], from data/skill_ranks.csv
 var weapons: Dictionary = {}  # id -> row of data/weapons.csv: the smithy weapons and what they add
 var travel_events: Array[Dictionary] = []  # overworld encounters, data/travel_events.csv (events.csv format)
@@ -79,13 +82,20 @@ func reload() -> void:
 	jobs.clear()
 	for row in CsvTable.load_rows("res://data/jobs.csv"):
 		jobs[row.id] = row
+	archetypes = CsvTable.load_rows("res://data/archetypes.csv")
+	kits = CsvTable.load_rows("res://data/kits.csv")
 	skill_ranks.clear()
-	for row in CsvTable.load_rows("res://data/skill_ranks.csv"):
+	upgrade_steps.clear()
+	for row in CsvTable.load_rows("res://data/ability_upgrades.csv"):  # the level-up picks (replaced skill_ranks.csv)
 		var list: Array = skill_ranks.get(row.skill, [])
-		while list.size() < int(row.rank):
+		var info: Array = upgrade_steps.get(row.skill, [])
+		while list.size() < int(row.step):
 			list.append("")
-		list[int(row.rank) - 1] = row.effect
+			info.append({})
+		list[int(row.step) - 1] = row.effect
+		info[int(row.step) - 1] = {"effect": row.effect, "param": row.param, "text": row.text}
 		skill_ranks[row.skill] = list
+		upgrade_steps[row.skill] = info
 	weapons.clear()
 	for row in CsvTable.load_rows("res://data/weapons.csv"):
 		weapons[row.id] = row

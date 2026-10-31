@@ -2,7 +2,7 @@ key,value,note
 xp_per_level,100,XP for each level; levels come on their own
 max_level,40,
 growth_hp,2,max HP a successful HP roll gives (data/growth.csv has each character's odds)
-choice_every,4,every this many levels a skill rank to spend in the Lodestone menu
+choice_every,2,every this many levels one pick to spend: learn a kit ability or upgrade a known one ([USER] 2026-10-31, docs/design/level-up.md)
 xp_win,10,every member who fought gets this for a won fight
 xp_foe,25,plus this per foe downed
 xp_minion,5,plus this per piece a boss called that the party downed (not the ones that fall with him)
@@ -18,3 +18,5 @@ camp_hp_pct,50,% of max HP a camp rest gives back
 camp_food,5,food a camp rest costs: a ration
 tonic_mana,3,mana a tonic gives (and one charge, `tonic_charges`)
 tonic_charges,1,
+rolls_odd,2,stat rolls on an odd level (3, 5, 7...): the growth table twice so total growth stays near the old one roll every level
+rolls_even,0,stat rolls on an even level: none, it is the pick's level

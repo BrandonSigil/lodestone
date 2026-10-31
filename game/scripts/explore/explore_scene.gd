@@ -1329,7 +1329,22 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		mode = M.OVER
 		return
 	box = _new_dialog("%s\n%s" % [Txt.t("UI_ESCAPED" if escaped else "UI_VICTORY"), "\n".join(lines)])
-	_dialog_button(box, Txt.t("UI_CONTINUE"), _end_fight)
+	_dialog_button(box, Txt.t("UI_CONTINUE"), _level_up_flow.bind(0))
+
+
+## The level-up screen ([USER] 2026-10-31): after the fight, one box for each member that levelled, its stat gains and,
+## on an even level, the pick (learn a kit ability or upgrade one). "Decide later" leaves a pick in the Lodestone menu.
+func _level_up_flow(i: int) -> void:
+	var list: Array = Game.level_ups
+	if i >= list.size():
+		_end_fight()
+		return
+	var entry: Dictionary = list[i]
+	var id := String(entry.id)
+	var box := _new_dialog(LevelUpUi.summary(id, entry), false, id)
+	LevelUpUi.picks(box, id, _level_up_flow.bind(i))  # a pick rebuilds this box
+	var waiting := int(Game.rank_state(id).pending) > 0
+	_dialog_button(box, Txt.t("UI_LV_LATER") if waiting else Txt.t("UI_CONTINUE"), _level_up_flow.bind(i + 1))
 
 
 func _end_fight() -> void:

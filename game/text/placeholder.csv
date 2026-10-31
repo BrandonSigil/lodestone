@@ -863,3 +863,10 @@ TAGDESC_BLEED,Loses 1 HP at the start of each of its turns.
 TAGDESC_POISON,"Loses 1 HP at the start of its next turn, through armor."
 TAGDESC_COLD,"Loses 1 HP at the end of its turn for each ice pillar next to it, at most 2."
 TAGDESC_ELITE,"Elite: 150% HP, 1 more damage, 1 more armor, and pays 150% XP."
+UI_LV_STAT,%s %d to %d
+UI_LV_PICK,Pick one (%d waiting):
+UI_LV_LEARN,Learn %s
+UI_LV_UPGRADE,Upgrade %s (step %d of %d)
+UI_LV_LATER,Decide later
+UI_LV_COST,costs %d
+UI_LV_REACH,reach %d to %d

@@ -16,12 +16,12 @@ const STATS := ["hp", "damage", "armor", "magic", "crit"]
 
 static func fresh() -> Dictionary:
 	return {"level": 1, "xp": 0, "gains": {"hp": 0, "damage": 0, "armor": 0, "magic": 0, "crit": 0}, "ranks": {}, "pending": 0,
-		"jobs": {}, "found": {}}
+		"jobs": {}, "found": {}, "learned": []}
 
 
 ## A job's own level, ranks and branch, from scratch: a new job starts at 0 ([USER] pc-12).
 static func fresh_job() -> Dictionary:
-	return {"level": 1, "xp": 0, "ranks": {}, "pending": 0, "branch": ""}
+	return {"level": 1, "xp": 0, "ranks": {}, "pending": 0, "branch": "", "learned": []}
 
 
 ## Old or partial saves get the missing keys. A save from before rolled growth keeps what its levels and
@@ -44,6 +44,8 @@ static func normalize(s: Variant) -> Dictionary:
 	var ranks: Dictionary = s.get("ranks", {})
 	for id in ranks:
 		out.ranks[String(id)] = int(ranks[id])
+	for id in s.get("learned", []):
+		out.learned.append(String(id))
 	var found: Dictionary = s.get("found", {})
 	for k in found:
 		out.found[String(k)] = int(found[k])
@@ -55,6 +57,8 @@ static func normalize(s: Variant) -> Dictionary:
 		js.xp = int(j.get("xp", 0))
 		js.pending = int(j.get("pending", 0))
 		js.branch = String(j.get("branch", ""))
+		for skill in j.get("learned", []):
+			js.learned.append(String(skill))
 		var jr: Dictionary = j.get("ranks", {})
 		for k in jr:
 			js.ranks[String(k)] = int(jr[k])
@@ -79,8 +83,10 @@ static func gain(s: Dictionary, xp: int, cfg: Dictionary, odds: Dictionary = {},
 		s.xp -= per
 		s.level = int(s.level) + 1
 		reached.append(s.level)
-		if rng != null and not odds.is_empty():
-			roll(s, odds, rng)
+		if rng != null and not odds.is_empty():  # an odd level rolls the stats twice, an even one not at all (its pick instead)
+			var rolls := int(cfg.get("rolls_odd", 1)) if int(s.level) % 2 == 1 else int(cfg.get("rolls_even", 1))
+			for _i in rolls:
+				roll(s, odds, rng)
 		if s.level % every == 0:
 			s.pending = int(s.pending) + 1
 	if int(s.level) >= cap:
@@ -110,14 +116,33 @@ static func roll(s: Dictionary, odds: Dictionary, rng: RandomNumberGenerator) ->
 ## or the skill is already at its top rank.
 static func rank_up(s: Dictionary, skill: String, rows: Dictionary) -> bool:
 	var have := int(s.ranks.get(skill, 0))
-	if int(s.pending) <= 0 or have >= max_rank(skill, rows):
+	var next := next_useful_rank(skill, have, rows)
+	if int(s.pending) <= 0 or next == 0:
 		return false
 	s.pending = int(s.pending) - 1
-	s.ranks[skill] = have + 1
+	s.ranks[skill] = next  # skipping any step that is not wired yet
 	return true
 
 
-## How many ranks a skill has in data/skill_ranks.csv (rows: Db.skill_ranks, skill id -> [effect per rank]).
+## Spend one queued pick on learning a kit ability (the caller checked it is learnable). False when none is waiting.
+static func learn(s: Dictionary, ability_id: String) -> bool:
+	if int(s.pending) <= 0 or (s.learned as Array).has(ability_id):
+		return false
+	s.pending = int(s.pending) - 1
+	s.learned.append(ability_id)
+	return true
+
+
+## The next rank of a skill that does something: a step with only a `param` is not wired yet and is skipped. 0 if none.
+static func next_useful_rank(skill: String, have: int, rows: Dictionary) -> int:
+	var effects: Array = rows.get(skill, [])
+	for i in range(have, effects.size()):
+		if String(effects[i]) != "":
+			return i + 1
+	return 0
+
+
+## How many ranks a skill has in data/ability_upgrades.csv (rows: Db.skill_ranks, skill id -> [effect per rank]).
 static func max_rank(skill: String, rows: Dictionary) -> int:
 	return (rows.get(skill, []) as Array).size()
 

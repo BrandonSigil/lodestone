@@ -526,6 +526,7 @@ func refresh_party() -> void:
 		var s := level_state(id)
 		m.bonus = LevelRules.merge(LevelRules.merge(LevelRules.merge(LevelRules.bonus(s, Db.levels), weapon_mods(id)), meal_mods()), boon_mods())
 		m.ranks = rank_state(id).ranks
+		m.learned = rank_state(id).learned
 		m.hp = clampi(int(m.hp) + maxi(0, run.max_hp(m) - before), 0, run.max_hp(m))
 
 
@@ -607,6 +608,7 @@ func level_state(id: String) -> Dictionary:
 ## (who reached which level and what went up, ranks waiting).
 func award_xp(amount: int) -> PackedStringArray:
 	var lines: PackedStringArray = []
+	level_ups = []
 	if run == null:
 		return lines
 	for m in run.members:
@@ -617,13 +619,19 @@ func award_xp(amount: int) -> PackedStringArray:
 		var odds: Dictionary = Db.growth.get(job if Db.growth.has(job) else id, {})
 		var had := int(s.pending)
 		var before: Dictionary = s.gains.duplicate()
-		for lv in LevelRules.gain(s, amount, Db.levels, odds, run.rng):
+		var reached := LevelRules.gain(s, amount, Db.levels, odds, run.rng)
+		for lv in reached:
 			lines.append(Txt.f("UI_LEVEL_UP", [Txt.t(d.name_key), lv]))
 		var up: PackedStringArray = []
+		var stats := {}
 		for k in LevelRules.STATS:
 			var n := int(s.gains[k]) - int(before.get(k, 0))
 			if n > 0:
-				up.append("%s +%d" % [Txt.t("UI_STAT_" + k.to_upper()), n * (int(Db.levels.get("growth_hp", 2)) if k == "hp" else 1)])
+				var gained := n * (int(Db.levels.get("growth_hp", 2)) if k == "hp" else 1)
+				stats[k] = gained
+				up.append("%s +%d" % [Txt.t("UI_STAT_" + k.to_upper()), gained])
+		if not reached.is_empty():
+			level_ups.append({"id": id, "levels": reached, "stats": stats})
 		if not up.is_empty():
 			lines.append("  " + "  ".join(up))
 		var waiting := int(s.pending) > had
@@ -646,6 +654,62 @@ func award_xp(amount: int) -> PackedStringArray:
 	refresh_party()
 	save_adventure()
 	return lines
+
+
+## The level-ups the last XP award caused, for the level-up screen: [{"id", "levels": [int], "stats": {stat: gained}}].
+var level_ups: Array = []
+
+
+## The kit (archetype id) whose abilities a member's class carries, or "": the hero's job class, or the character's class.
+func kit_of(id: String) -> String:
+	var cls := ""
+	if id == "lead":
+		cls = String(Db.jobs[job_id()].class) if job_id() != "" and Db.jobs.has(job_id()) else ""
+	else:
+		for m in run.members:
+			if String((m.def as CharacterDef).id) == id:
+				cls = String((m.def as CharacterDef).class_def.id)
+	for a in Db.archetypes:
+		if String(a["class"]) == cls:
+			return String(a.id)
+	return ""
+
+
+## Kit abilities a member could learn now: built ones in its kit that it does not know yet (its class's own, or already learned).
+func learnable(id: String) -> Array[String]:
+	var out: Array[String] = []
+	var kit := kit_of(id)
+	if kit == "" or run == null:
+		return out
+	var u: CombatUnit = null
+	for m in run.members:
+		if String((m.def as CharacterDef).id) == id:
+			u = CombatUnit.from_member(m)
+	if u == null:
+		return out
+	for r in Db.kits:
+		if r.archetype == kit and r.source == "ability" and r.built == "1" and r.alt == "0":
+			var aid := String(r.ability)
+			if Db.ability(aid) != null and not u.abilities.any(func(a: Ability) -> bool: return a.id == aid) and not out.has(aid):
+				out.append(aid)
+	return out
+
+
+## Spend a waiting pick on learning a kit ability ([USER] 2026-10-31). The hero's picks belong to his job.
+func learn_skill(id: String, ability_id: String) -> bool:
+	if not learnable(id).has(ability_id):
+		return false
+	var s := level_state(id)
+	var job := job_id() if id == "lead" else ""
+	var target: Dictionary = s.jobs.get(job, LevelRules.fresh_job()) if job != "" else s
+	if not LevelRules.learn(target, ability_id):
+		return false
+	if job != "":
+		s.jobs[job] = target
+	meta.levels[id] = s
+	refresh_party()
+	save_adventure()
+	return true
 
 
 ## Ranks waiting to be spent and branches waiting to be picked: what makes the Lodestone button glow.

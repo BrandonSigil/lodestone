@@ -257,6 +257,19 @@ func _kept(items: Dictionary) -> Dictionary:
 
 ## Press the open box's nth button a player could press (a disabled one can't be: playtest bug 04, the robot sent
 ## the dog home with an empty saddlebag through a greyed-out SEND HOME).
+## The level-up screens after a win (one box a member that levelled): the robot takes "decide later" on each (its picks
+## are spent by _spend_picks), until the fight is over and the walk goes on.
+func _through_level_ups(s: Node) -> void:
+	for _i in 12:
+		if s.get("battle") == null or s.get("_dialog") == null:
+			return
+		var buttons := (s.get("_dialog") as Node).find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return not (b as Button).disabled)
+		if buttons.is_empty():
+			return
+		(buttons[buttons.size() - 1] as Button).pressed.emit()
+		await _frames(2)
+
+
 func _press(s: Node, n: int) -> void:
 	var d: Node = s.get("_dialog")
 	if d == null:
@@ -342,6 +355,7 @@ func _fight(s: Node, group_id: String, must_defeat := false, grind: Array = []) 
 			_check(after > xp, "XP for the %s fight" % group_id)
 			if not game.has_flag("e2e_done"):
 				await _press(s, 0)
+				await _through_level_ups(s)
 			return s
 		s = await _fell("the fight with " + group_id)
 		game.explore_map = map_name
@@ -430,10 +444,16 @@ func _fight_on_generated_map() -> bool:
 		# Auto's stalemate guard ends the fight as a win, so OK goes back to the road, not to the square.
 		_check(false, "the road fight ended in a stalemate (the AI couldn't reach)")
 		won = true
-	for b in c.get("hud").root.find_children("*", "Button", true, false):
-		if (b as Button).text == Txt.t("UI_CONTINUE"):
-			(b as Button).pressed.emit()
-	await _frames(2)
+	for _i in 12:  # the result's CONTINUE, then a level-up box for each member that levelled ("decide later" or CONTINUE)
+		var pressed := false
+		for b in c.get("hud").root.find_children("*", "Button", true, false):
+			if (b as Button).text in [Txt.t("UI_CONTINUE"), Txt.t("UI_LV_LATER")] and (b as Button).visible and not (b as Button).is_queued_for_deletion():
+				(b as Button).pressed.emit()
+				pressed = true
+				break
+		await _frames(2)
+		if not pressed or not is_instance_valid(c) or c.get("hud") == null:
+			break
 	return won
 
 
