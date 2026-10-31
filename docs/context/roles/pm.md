@@ -11,6 +11,7 @@ Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the
   - Systems developer `local_74758f9a-5b72-45bb-939c-aa2c5b56f42d` (`dev`)
   - Playtester `local_66fc7727-3515-41ee-a2a8-5325771f6f5c` (`playtest`)
   - Game designer `local_b6eb2db1-8f39-4b4c-8da2-7f476a764d6a` (`design`)
+  - Balance officer (`balance`): on call only. No standing session; when Brandon says "balance officer, ...", start a fresh session from `docs/context/roles/balance.md` with his words, and archive it when the pass is done.
 
 ## Desk watch (hourly cron, session-only)
 - Cron "Studio desk watch, hourly and lean" at :07. If CronList doesn't show it after a restart, recreate it (prompt in the 2026-10-30 transcript; the gist is below).
