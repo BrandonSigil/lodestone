@@ -3789,7 +3789,9 @@ func _draw_frame(u: CombatUnit, base: Vector2, mod: Color) -> float:
 	var f := CharacterArt.frame(u.sprite, stance, dir, _time - u.anim_start)
 	var blink := _blink(u, stance)
 	if blink != "":  # a standing piece blinks now and then: the same pose with its eyes shut
-		f = CharacterArt.frame(u.sprite, blink, dir, _time - u.blink_at)
+		var shut := CharacterArt.frame(u.sprite, blink, dir, _time - u.blink_at)
+		if not shut.is_empty():  # no blink strip for a facing that hides the face (Amber's NE): keep the pose
+			f = shut
 	if f.is_empty():
 		return 48.0
 	var s: float = f.scale

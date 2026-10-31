@@ -57,17 +57,22 @@ func test_encounters_valid() -> void:
 
 
 ## Character sprites (docs/art/characters.md 5.10): every anim's strip exists in every drawn facing and is
-## exactly frames x frame wide, and combat's two facings are drawn.
+## exactly frames x frame wide, and the front facing (SE) is drawn. NE is drawn for most; a character still
+## waiting on its NE sheet (the blueberry bush, 2026-10-31) uses SE from behind too (CharacterArt.frame).
 func test_character_sprites_match_json() -> void:
-	for id in Db.ROSTER:
+	for cid in Db.ROSTER:
+		var id: StringName = (Db.character(cid) as CharacterDef).sprite_id()
 		var m: Variant = CharacterArt.meta(id)
 		if m == null:
 			continue
-		ok(m.dirs.has("se") and m.dirs.has("ne"), "%s draws se and ne" % id)
+		ok(m.dirs.has("se"), "%s draws se" % id)
+		ok(not CharacterArt.frame(id, "idle", "ne", 0.0).is_empty(), "%s draws something facing ne" % id)
 		for anim in m.anims:
 			for dir in m.dirs:
 				var path := "res://art/source/characters/%s/%s_%s_%s.png" % [id, id, anim, dir]
 				var tex: Texture2D = load(path) if ResourceLoader.exists(path) else null
+				if tex == null and String(anim).ends_with("blink") and dir != "se":
+					continue  # a facing that hides the face has no blink strip (Amber's NE); the board keeps the pose
 				ok(tex != null, "%s exists" % path)
 				if tex != null:
 					ok(tex.get_width() >= int(m.anims[anim].frames) * int(m.frame), "%s has %d frames" % [path, m.anims[anim].frames])
