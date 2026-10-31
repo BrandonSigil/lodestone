@@ -238,7 +238,10 @@ def main():
     # One scale per sheet: the first row's figures (idle or ready) come out HERO_H tall, measured on the
     # body only so a sword held over the head doesn't shrink the character.
     idle_h = float(np.median([body_height(alpha, b) for b in boxes[0]]))
-    scale = (args.height or HERO_H) / idle_h
+    base = (Path(args.out) if args.out else OUT) / args.id / (args.id + ".json")
+    saved = json.loads(base.read_text()).get("height", 0.0) if base.exists() else 0.0
+    height = args.height or saved or HERO_H  # a character's chosen size is kept in its json so every facing matches
+    scale = height / idle_h
 
     out = (Path(args.out) if args.out else OUT) / args.id
     out.mkdir(parents=True, exist_ok=True)
@@ -279,6 +282,8 @@ def main():
             write(anim, frames)
         if anim == "idle":
             (stand if args.blink else frames[0]).save(out / ("%s_stand_%s.png" % (args.id, args.dir)))
+    if height != HERO_H:
+        meta["height"] = height
     if args.dir not in meta["dirs"]:
         meta["dirs"].append(args.dir)
     meta_path.write_text(json.dumps(meta, indent=1) + "\n")
