@@ -1,0 +1,24 @@
+Image 1 = the look: a flat, soft hand-painted forest panel from a cosy fantasy tactics game. Copy its finish exactly: soft flat painted fills with a little soft mottle and a faint paper grain, one lighter and one darker tone per surface, a soft slightly wobbly dark warm charcoal outline (#373335, never pure black) like a felt marker, chunky simple readable shapes, gentle detail, muted warm colours. Take the finish, not its layout.
+
+Concept art of the WHOLE WORLD of a game as one giant hex map, a floating diorama on plain cream paper (#eae8d6), seen from far away: a world view, not a close-up. Every hexagon is one separate explorable map, shown as one chunky painted hex tile; the whole picture is a grid of about 8 hexes across by 6 down, hexes touching edge to edge. Nothing is written on the map.
+
+CAMERA (essential): 2:1 dimetric, pulled far back and high. A square-grid world turned 45 degrees and looked at from about 30 degrees above, so the flat hex tops sit on a tilted ground plane, each hex twice as wide as it is tall, every horizontal ground edge running 2 across to 1 down. Orthographic: no perspective, no vanishing point, parallel edges stay parallel across the whole picture, no lens blur, no tilt-shift, no fisheye. Uprights are perfectly vertical.
+
+HEIGHT AND EDGE: every hex tile is a stacked block with a visible side. Mountain hexes stand taller than lowland hexes, so you can read the heights. Only two side faces ever show: the left faces are mid-tone and the right faces are the darkest; the tops are the lightest and calmest. Never draw backs or undersides. The map ends at its outer edge with the tiles' cliff faces dropping away into the cream paper: no horizon, no sky, no skybox. A few small loose pieces may drift away from the edge.
+
+THE WORLD, from what the designer has said (and nothing more; do not invent places):
+   - In the south of the map, one hex that is a small VILLAGE in the fall look: golden grass, red-tile and thatch roofs, fall trees mixed with dark pines, a statue in a little square. This is where the journey starts.
+   - North of the village, a SNOWY MOUNTAIN PASS: snow-covered highland hexes with dark pines and tall rock cliffs, the road climbing through them. A WOLF DEN sits in a side hex off the pass, a plain dark cave mouth in a rock face.
+   - Past the pass, a forest hex, and in the forest a CRYPT: an old pale stone crypt with a tall gate, the first big place of the journey.
+   - To the NORTH-EAST of the village, a PRAIRIE: wide open grass hexes, a few lone trees.
+   - To the NORTH-WEST of the village, an unknown region: plain open land, left blank and unexplained, no landmark at all.
+   - Elsewhere, a few more plain biome hexes to fill the world: pine forest, a river marsh with reeds, a lake. Leave them plain, no buildings or landmarks.
+   - A great WALL runs across the far side of the map from edge to edge, a long stone wall with a gate. Beyond it the world slowly grows STRANGER: colours drift from earthy to unusual (soft pinks, teals and violets), pines become lollipop-shaped trees, mountains become flat-topped mesas and then floating rocks. The farther past the Wall, the stranger; the near side stays earthy and cosy.
+
+LINKS BETWEEN HEXES: show which hexes connect so the player can see the routes. Roads (pale sandy paths) run across hexes and meet at the edge shared by two hexes. Rivers run from hex to hex in a blue-teal channel. Mountain passes, fords and stone or wooden bridges join hexes that a river or cliff would otherwise split. Roads fork and rejoin, so a route can go north up the middle and branch east and west and rejoin. Some hexes have two or three links, some only one, and a few are linked only by a single narrow pass. Hexes with no road are not yet reachable. Keep every link crossing a shared hex edge; none runs through a hex corner.
+
+LIGHT: one soft sun from the upper left, flat and even, tops brightest, no hard cast shadows.
+
+STYLE AND PALETTE: flat soft watercolour and ink, like a children's picture book, soft flat painted fills with a faint paper grain, one lighter and one darker tone per surface. Gentle, muted and warm, cream paper around the map. The darkest tone is a deep tint of the hex's own colours, never black. Each hex's biome reads at a glance by its colour and a few big shapes; one hex, one idea.
+
+Avoid: perspective or a vanishing point, a fisheye or wide-angle look, a sky or horizon, photorealism, 3d render, glossy materials, neon, strong cast shadows, true isometric (30 degree grid lines), pixel art, text, letters, numbers, labels, map legends, compass roses, borders, a title, people, monsters, gore, tiny detail that cannot be read when the whole map is small.
