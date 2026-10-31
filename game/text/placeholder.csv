@@ -880,3 +880,4 @@ UI_LV_NEXT,Next rank: %s
 UI_LV_LAST,This is its last rank.
 UI_LV_HEALING,Healing
 UI_LV_REACH_OF,reach %d to %d
+UI_LV_LOCKED,Not in the game yet: this ability is in the kit but its effect is still being built, so it cannot be picked.

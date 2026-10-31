@@ -198,7 +198,10 @@ static func from_member(m: Dictionary, mods: Dictionary = {}) -> CombatUnit:
 	u.bonds = BondRules.levels_for(String(m.def.id), Game.meta.get("bonds", {}), Db.bonds)
 	for id in m.get("learned", []):  # kit abilities picked at an even level (docs/design/level-up.md)
 		var learned := Db.ability(String(id))
-		if learned != null and not u.abilities.any(func(a: Ability) -> bool: return a.id == learned.id):
+		if learned == null:  # a kit's trait (the shield wall, poison blades...)
+			if not u.traits.has(StringName(id)):
+				u.traits.append(StringName(id))
+		elif not u.abilities.any(func(a: Ability) -> bool: return a.id == learned.id):
 			u.abilities.append(learned)
 	var ranks: Dictionary = m.get("ranks", {})
 	for i in u.abilities.size():  # skills ranked up in the Lodestone menu carry their effects

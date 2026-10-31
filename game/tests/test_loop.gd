@@ -1335,3 +1335,27 @@ func test_level_up_pick_body() -> void:
 	ok(buttons.size() >= 4, "the options are icon buttons in a row, plus Pick Skill")
 	box.free()
 	_restore(saved)
+
+
+## The even-level pick shows at least four choices when the kit has them: what works today first, then the kit's
+## abilities that are not built yet, locked; a kit trait can be learned too.
+func test_level_up_offers_four() -> void:
+	var saved := _fresh_game()
+	Game.take_weapon("sword")
+	Game.award_xp(100)
+	var icons := func(box: VBoxContainer) -> Array:
+		return box.find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return (b as Button).toggle_mode)
+	var box := VBoxContainer.new()
+	LevelUpUi.picks(box, "lead", func() -> void: pass)
+	eq(icons.call(box).size(), 4, "the sword: goad, shield wall, two upgrades")
+	box.free()
+	ok(Game.learnable("lead").has("shield_wall"), "a kit trait is learnable")
+	ok(Game.learn_skill("lead", "shield_wall"), "learned")
+	ok(CombatUnit.from_member(Game.run.members[0]).has_trait(&"shield_wall"), "and the piece has the trait")
+	Game.take_weapon("daggers")
+	Game.award_xp(200)  # the new job levels on the same XP: a pick waits
+	var rogue := VBoxContainer.new()
+	LevelUpUi.picks(rogue, "lead", func() -> void: pass)
+	ok(icons.call(rogue).size() >= 4, "the daggers' kit fills up to four, the unbuilt ones locked")
+	rogue.free()
+	_restore(saved)

@@ -675,8 +675,9 @@ func kit_of(id: String) -> String:
 	return ""
 
 
-## Kit abilities a member could learn now: built ones in its kit that it does not know yet (its class's own, or already learned).
-func learnable(id: String) -> Array[String]:
+## Kit abilities (and traits) a member could learn now: the ones in its kit that work today and it does not have yet
+## (its class's own, or already learned). `built`: false gives the ones whose effect is not built yet instead.
+func learnable(id: String, built := true) -> Array[String]:
 	var out: Array[String] = []
 	var kit := kit_of(id)
 	if kit == "" or run == null:
@@ -688,16 +689,22 @@ func learnable(id: String) -> Array[String]:
 	if u == null:
 		return out
 	for r in Db.kits:
-		if r.archetype == kit and r.source == "ability" and r.built == "1" and r.alt == "0":
-			var aid := String(r.ability)
-			if Db.ability(aid) != null and not u.abilities.any(func(a: Ability) -> bool: return a.id == aid) and not out.has(aid):
+		if r.archetype != kit or r.alt != "0" or (r.built == "1") != built:
+			continue
+		var aid := String(r.ability)
+		if r.source == "ability":
+			var known := u.abilities.any(func(a: Ability) -> bool: return a.id == aid)
+			if (Db.ability(aid) != null or not built) and not known and not out.has(aid):
+				out.append(aid)
+		elif r.source == "trait":
+			if not u.traits.has(StringName(aid)) and not out.has(aid):
 				out.append(aid)
 	return out
 
 
 ## Spend a waiting pick on learning a kit ability ([USER] 2026-10-31). The hero's picks belong to his job.
 func learn_skill(id: String, ability_id: String) -> bool:
-	if not learnable(id).has(ability_id):
+	if not learnable(id).has(ability_id):  # only what works today can be picked
 		return false
 	var s := level_state(id)
 	var job := job_id() if id == "lead" else ""

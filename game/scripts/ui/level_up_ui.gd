@@ -4,6 +4,8 @@ extends RefCounted
 ## the character just improved (stats go up on odd levels), and on even levels one pick: learn a kit ability or give a
 ## known one its next step, with plain before and after numbers. A pick can wait ("decide later") in the Lodestone menu.
 
+const MIN_CHOICES := 4  ## the pick always shows this many when the kit has them
+
 ## ability field -> the word the card uses
 const LABELS := {"power": "Power", "range_max": "Reach", "range_min": "Closest reach", "res_cost": "Cost", "cooldown": "Wait",
 	"status_turns": "Lasts", "push": "Shove", "radius": "Area", "crit": "Crit chance", "bleed": "Bleed"}
@@ -47,14 +49,19 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
 		return
 	var u := CombatUnit.from_member(m)
 	var ranks: Dictionary = Game.rank_state(id).ranks
-	var options: Array[Dictionary] = []  # {"ability", "learn", "have", "next"}
+	var options: Array[Dictionary] = []  # {"id", "ability" (null for a trait), "learn", "have", "next", "locked"}
 	for aid in Game.learnable(id):
-		options.append({"ability": Db.ability(aid), "learn": true, "have": 0, "next": 0})
+		options.append({"id": aid, "ability": Db.ability(aid), "learn": true, "have": 0, "next": 0, "locked": false})
 	for a: Ability in u.abilities:
 		var have := int(ranks.get(a.id, 0))
 		var nxt := LevelRules.next_useful_rank(a.id, have, Db.skill_ranks)
 		if nxt > 0:
-			options.append({"ability": Db.ability(a.id), "learn": false, "have": have, "next": nxt})
+			options.append({"id": a.id, "ability": Db.ability(a.id), "learn": false, "have": have, "next": nxt, "locked": false})
+	# always four to look at when the kit has them: what is left of the kit whose effect is not built yet shows locked
+	for aid in Game.learnable(id, false):
+		if options.size() >= MIN_CHOICES:
+			break
+		options.append({"id": aid, "ability": Db.ability(aid), "learn": true, "have": 0, "next": 0, "locked": true})
 	var label := Label.new()
 	label.text = Txt.f("UI_LV_PICK", int(Game.rank_state(id).pending))
 	label.add_theme_font_size_override("font_size", 18)
@@ -76,38 +83,40 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
 	var buttons: Array[Button] = []
 	var confirm := func() -> void:
 		var i: int = state.chosen
-		if i < 0:
+		if i < 0 or options[i].locked:
 			return
 		var o: Dictionary = options[i]
 		if o.learn:
-			Game.learn_skill(id, (o.ability as Ability).id)
+			Game.learn_skill(id, String(o.id))
 		else:
-			Game.rank_skill(id, (o.ability as Ability).id)
+			Game.rank_skill(id, String(o.id))
 		refresh.call()
 	var choose := func(i: int) -> void:
 		state.chosen = i
 		for k in buttons.size():
 			buttons[k].set_pressed_no_signal(k == i)
 		_detail(detail, u, options[i], ranks)
-		pick.disabled = false
+		pick.disabled = bool(options[i].locked)
 	for i in options.size():
 		var o: Dictionary = options[i]
 		var b := Button.new()
 		b.toggle_mode = true
 		b.custom_minimum_size = Vector2(84, 84)
-		b.tooltip_text = Txt.t((o.ability as Ability).name_key)
+		b.tooltip_text = _name(o)
 		b.focus_mode = Control.FOCUS_ALL
-		var tex := ActionInfo.icon_for(o.ability)
+		var tex := ActionInfo.icon_for(o.ability) if o.ability != null else ActionInfo.icon(String(o.id))
 		if tex != null:
 			b.icon = tex
 			b.expand_icon = true
 			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			b.add_theme_constant_override("icon_max_width", 64)
 		else:
-			b.text = Txt.t((o.ability as Ability).name_key)
+			b.text = _name(o)
 			b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			b.add_theme_font_size_override("font_size", 12)
 		_slot_style(b)
+		if o.locked:
+			b.modulate = Color(0.55, 0.55, 0.6)  # in the kit, not in the game yet
 		b.pressed.connect(func() -> void:
 			if state.chosen == i and Input.is_action_just_pressed("ui_accept"):
 				confirm.call()  # a second press of the selected icon from the keyboard or a pad confirms
@@ -130,11 +139,16 @@ static func _detail(detail: VBoxContainer, u: CombatUnit, o: Dictionary, ranks: 
 	var a: Ability = o.ability
 	var have: int = o.have
 	var title := Label.new()
-	title.text = Txt.t(a.name_key) + "   " + (Txt.t("UI_LV_NEW") if o.learn else Txt.f("UI_LV_RANK_OF", [have, LevelRules.max_rank(a.id, Db.skill_ranks)]))
+	title.text = _name(o) + "   " + (Txt.t("UI_LV_NEW") if o.learn else Txt.f("UI_LV_RANK_OF", [have, LevelRules.max_rank(a.id, Db.skill_ranks)]))
 	title.add_theme_font_size_override("font_size", 22)
 	detail.add_child(title)
+	_line(detail, _desc(o), 16)
+	if o.locked:
+		_line(detail, Txt.t("UI_LV_LOCKED"), 16, Color(1.0, 0.8, 0.6))
+		return
+	if a == null:  # a trait: what it does, nothing to grow
+		return
 	var cur := LevelRules.ranked(a, have, Db.skill_ranks)
-	_line(detail, _describe(a, false), 16)
 	_line(detail, Txt.f("UI_LV_NOW", _numbers(u, cur)), 16)
 	var steps: Array = Db.upgrade_steps.get(a.id, [])
 	if o.learn:
@@ -163,6 +177,21 @@ static func _line(box: VBoxContainer, text: String, size: int, color := Color(0.
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	box.add_child(l)
+
+
+## The name and the plain description of an option: an ability's, or a kit trait's.
+static func _name(o: Dictionary) -> String:
+	if o.ability != null:
+		return Txt.t((o.ability as Ability).name_key)
+	var key := "TRAIT_" + String(o.id).to_upper()
+	return Txt.t(key) if Txt.has(key) else String(o.id).replace("_", " ").to_upper()
+
+
+static func _desc(o: Dictionary) -> String:
+	if o.ability != null:
+		return _describe(o.ability, false)
+	var key := "TRAIT_" + String(o.id).to_upper() + "_DESC"
+	return Txt.t(key) if Txt.has(key) else ""
 
 
 ## "Damage 5, reach 1 to 3, costs 2, shoves 1": the ability's numbers on this piece.
