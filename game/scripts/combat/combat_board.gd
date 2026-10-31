@@ -125,6 +125,8 @@ var show_grid := true  ## cell outlines; off, only real ledges keep their rim (e
 var soft := true
 ## The greybox view (the maker): no props, buildings, trees, backdrop or painted texture; plain grey blocks shaded by height.
 var greybox := false
+## Greybox view: cells in front of a door (the map's enter and exit things), so a building box can mark its door side.
+var door_cells: Array[Vector2i] = []
 ## Players never turn the view: every map is seen from its one approved angle ([USER] 2026-10-28, like Hades).
 ## Only editors (the map maker, the sandbox's map editing) switch this on; a map's "view" is its angle.
 var can_turn := false
@@ -816,8 +818,12 @@ func _paint_back() -> void:
 
 
 func _paint_props(d: int) -> void:
-	if greybox:
-		return  # no props, buildings, trees or skirt
+	if greybox:  # no art: every placed prop and building is a plain grey box at its real size
+		for a: Vector2i in grid.props:
+			var pr: Dictionary = grid.props[a]
+			if not CombatGrid.on_deck(a) and _depth_at(_prop_front(a, pr)) == d and not _unseen(a):
+				_grey_prop(a, pr)
+		return
 	for c: Vector2i in _prop_cells[d]:
 		if not _unseen(c):
 			_draw_props(c)
@@ -840,11 +846,14 @@ func _paint_deck(d: int) -> void:
 	for c: Vector2i in _deck_over.get(d, {}):
 		if not hidden(c):
 			_draw_over(c)
-	for a: Vector2i in ({} if greybox else grid.props):
+	for a: Vector2i in grid.props:
 		if CombatGrid.on_deck(a) and not _unseen(a):
 			var f := _prop_front(a, grid.props[a])
 			if _depth_at(f) == d:
-				_placed(f)
+				if greybox:
+					_grey_prop(a, grid.props[a])
+				else:
+					_placed(f)
 	for u: CombatUnit in _deck_units.get(d, []):
 		_draw_unit(u)
 
@@ -967,6 +976,56 @@ func _draw_bridge(c: Vector2i, col: Color) -> void:
 			_box(lo + Vector2(BRIDGE_ARM.x, BRIDGE_ARM.y - w), lo + Vector2(BRIDGE_ARM.y, BRIDGE_ARM.y), h, h + BRIDGE_RAIL_H, BRIDGE_RAIL * col)
 
 
+## How tall a placed prop stands, in levels: the height its art draws at less the top face's own span (so a box reads like the
+## picture), or its graybox height when it has no art. The greybox view and the flat view's height numbers use it.
+func prop_levels(a: Vector2i, p: Dictionary) -> float:
+	var tex := prop_texture(p, grid.zone_at(a))
+	var diamond := float(p.foot.x + p.foot.y) * TH * 0.5
+	var ph := 0.0
+	if tex != null:
+		ph = _prop_rect(a, p, tex).size.y
+	elif float(p.tall) > 0.0:
+		ph = float(p.tall) * TW
+	else:
+		return 3.0
+	return maxf(1.5, (ph - diamond) / HS)
+
+
+## The greybox shade of something standing at height z (levels): the same ramp as the ground, so heights read at a glance.
+static func grey_of(z: float) -> float:
+	return clampf(0.28 + 0.022 * z, 0.0, 0.95)
+
+
+## A prop as a plain grey box on its footprint, shaded by its top height, with a darker notch where a door faces the camera.
+func _grey_prop(a: Vector2i, p: Dictionary) -> void:
+	var g := Vector2(CombatGrid.ground(a))
+	var h := float(grid.height_at(a))
+	var z1 := h + prop_levels(a, p)
+	var v := grey_of(z1)
+	var lo := g
+	var hi := g + Vector2(p.foot)
+	for shade in [false, true]:
+		var e: Array = _side(lo, hi, front_dir(shade))
+		var q := PackedVector2Array([iso(e[0].x, e[0].y, z1), iso(e[1].x, e[1].y, z1), iso(e[1].x, e[1].y, h), iso(e[0].x, e[0].y, h)])
+		var f := v * (0.6 if shade else 0.8)
+		_ci.draw_colored_polygon(q, Color(f, f, f))
+		_ci.draw_polyline(PackedVector2Array([q[0], q[3], q[2], q[1]]), Color(0, 0, 0, 0.35), 1.0, true)
+	var top := PackedVector2Array([iso(lo.x, lo.y, z1), iso(hi.x, lo.y, z1), iso(hi.x, hi.y, z1), iso(lo.x, hi.y, z1)])
+	_ci.draw_colored_polygon(top, Color(v, v, v))
+	_ci.draw_polyline(PackedVector2Array([top[0], top[1], top[2], top[3], top[0]]), Color(0, 0, 0, 0.4), 1.0, true)
+	for dc: Vector2i in door_cells:  # a door: a dark notch on the face its cell is in front of
+		for shade in [false, true]:
+			var s := front_dir(shade)
+			var c := dc - s  # the footprint cell the door cell faces
+			if c.x < a.x or c.y < a.y or c.x >= a.x + p.foot.x or c.y >= a.y + p.foot.y:
+				continue
+			var e: Array = _side(Vector2(c), Vector2(c) + Vector2.ONE, s)
+			var p0: Vector2 = (e[0] as Vector2).lerp(e[1], 0.25)
+			var p1: Vector2 = (e[0] as Vector2).lerp(e[1], 0.75)
+			var dh := minf(2.5, z1 - h - 0.3)
+			_ci.draw_colored_polygon(PackedVector2Array([iso(p0.x, p0.y, h + dh), iso(p1.x, p1.y, h + dh), iso(p1.x, p1.y, h), iso(p0.x, p0.y, h)]), Color(v * 0.25, v * 0.25, v * 0.25))
+
+
 ## A lane of a wide bridge: the slab runs the whole cell where another lane is beside it, rails only on the outer edge.
 func _draw_wide_bridge(lo: Vector2, h: float, z0: float, bd: Dictionary, k: Dictionary, run_x: bool, col: Color) -> void:
 	var f := {}  # which sides the slab reaches: along the run it follows what carries on, across it the lane beside
@@ -1071,7 +1130,7 @@ func _draw_ground(c: Vector2i) -> void:
 	var wall := _wall(c)
 	var top_col := WALL_TOP if wall else _terrain_color(t).lightened(minf(h, 6.0) * 0.025)
 	if greybox and not wall and t != CombatGrid.T.WATER:  # shaded by height, up the whole range
-		var v := 0.28 + 0.022 * h + (0.12 if t == CombatGrid.T.STAIRS else 0.0)
+		var v := grey_of(h) + (0.12 if t == CombatGrid.T.STAIRS else 0.0)
 		top_col = Color(v, v, v)
 	var built := wall or t == CombatGrid.T.STONE or t == CombatGrid.T.STAIRS or t == CombatGrid.T.RUIN
 	var face := WALL_SIDE if wall else (MASONRY if built else CLIFF).lerp(ALIEN_CLIFF, strangeness)

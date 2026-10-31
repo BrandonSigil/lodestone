@@ -1456,7 +1456,19 @@ func _prop_title(p: Dictionary) -> String:
 
 
 ## Pieces, the party start, things and selection marks for the overlay.
+## The cells in front of the map's doors, for the greybox view's door notches.
+func _door_cells() -> void:
+	var cells: Array[Vector2i] = []
+	if doc != null:
+		for t in doc.data.get("things", []):
+			if String(t.get("kind", "")) in ["enter", "exit"]:
+				cells.append(Vector2i(int(t.cell[0]), int(t.cell[1])))
+	board.door_cells = cells
+
+
 func _refresh_marks() -> void:
+	if board.greybox:
+		_door_cells()
 	var marks: Array[Dictionary] = []
 	var d := doc.data
 	var sel_t := String(selection.get("type", ""))
@@ -1866,6 +1878,7 @@ func _on_view(on: bool, key: String) -> void:
 	match key:
 		"greybox":
 			board.greybox = on
+			_door_cells()
 			if flat != null:
 				flat.greybox = on
 				flat.queue_redraw()

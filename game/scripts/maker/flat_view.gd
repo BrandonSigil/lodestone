@@ -204,8 +204,25 @@ func _draw_marks() -> void:
 	for list in ["party", "enemies"]:
 		for e in d.get(list, []):
 			dot.call(Vector2i(int(e.x), int(e.y)), Color(0.45, 0.72, 1.0) if list == "party" else Color(1.0, 0.48, 0.42))
-	for a: Vector2i in (g.props if not greybox else {}):
-		o.draw_rect(Rect2(origin + (Vector2(a) + Vector2(0.35, 0.35)) * cs, Vector2(cs, cs) * 0.3), Color(0.25, 0.25, 0.28, 0.9))
+	for a: Vector2i in g.props:
+		if greybox:  # the footprint as a grey block shaded by its top height, its levels written on it when there is room
+			var pr: Dictionary = g.props[a]
+			var lv: float = maker.board.prop_levels(a, pr)
+			var v := CombatBoard.grey_of(float(g.height_at(a)) + lv)
+			var fr := Rect2(origin + Vector2(a) * cs, Vector2(pr.foot) * cs)
+			o.draw_rect(fr, Color(v, v, v))
+			o.draw_rect(fr, Color(0, 0, 0, 0.6), false, 1.0)
+			if cs >= 12.0 and fr.size.x >= cs * 2.0:
+				o.draw_string(ThemeDB.fallback_font, fr.position + Vector2(2, 12), "%d" % roundi(lv), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color(1, 1, 1, 0.85))
+			for t in maker.doc.data.get("things", []):
+				if String(t.get("kind", "")) in ["enter", "exit"]:
+					var dc := Vector2i(int(t.cell[0]), int(t.cell[1]))
+					for off in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
+						var inside: Vector2i = dc + off
+						if inside.x >= a.x and inside.y >= a.y and inside.x < a.x + pr.foot.x and inside.y < a.y + pr.foot.y:
+							o.draw_rect(Rect2(origin + (Vector2(dc) + Vector2(0.25, 0.25) - Vector2(off) * 0.5) * cs, Vector2(cs, cs) * 0.5), Color(0, 0, 0, 0.75))
+		else:
+			o.draw_rect(Rect2(origin + (Vector2(a) + Vector2(0.35, 0.35)) * cs, Vector2(cs, cs) * 0.3), Color(0.25, 0.25, 0.28, 0.9))
 	for c: Vector2i in maker.region:  # the Area tool's selection
 		o.draw_rect(_cell_rect(c), Color(0.3, 0.8, 1.0, 0.3))
 		o.draw_rect(_cell_rect(c), Color(0.3, 0.8, 1.0, 0.9), false, 1.0)
