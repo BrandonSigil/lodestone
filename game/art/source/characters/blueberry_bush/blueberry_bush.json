@@ -1,0 +1,58 @@
+{
+ "id": "blueberry_bush",
+ "class": "hero",
+ "frame": 192,
+ "anchor": [
+  96,
+  160
+ ],
+ "scale": 0.5,
+ "mirror": {
+  "sw": "se",
+  "w": "e",
+  "nw": "ne"
+ },
+ "dirs": [
+  "se"
+ ],
+ "anims": {
+  "blink": {
+   "fps": 6,
+   "loop": false,
+   "frames": 1
+  },
+  "idle": {
+   "fps": 6,
+   "loop": true,
+   "frames": 4
+  },
+  "walk": {
+   "fps": 10,
+   "loop": true,
+   "frames": 6
+  },
+  "attack": {
+   "fps": 12,
+   "loop": false,
+   "hit": 2,
+   "frames": 6
+  },
+  "cast": {
+   "fps": 10,
+   "loop": false,
+   "hit": 3,
+   "frames": 6
+  },
+  "hurt": {
+   "fps": 8,
+   "loop": false,
+   "frames": 2
+  },
+  "down": {
+   "fps": 6,
+   "loop": false,
+   "frames": 2
+  }
+ },
+ "height": 79.4
+}
