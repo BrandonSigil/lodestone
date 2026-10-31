@@ -4,7 +4,7 @@
 Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the roles, relay results to him in plain words, keep `docs/context/` true. No story or copy from Claude; no secrets; CLAUDE.md hard rules apply.
 
 ## Studio
-- Page: https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 (source `tools/studio-page/index.html`, rules `docs/systems/studio.md`). DB collections: desk, roles, log, notes, refs, library, roadmap, requests. Read with ArtifactData (use `out_dir` for big reads).
+- Page: https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5 (source `tools/studio-page/index.html`, rules `docs/systems/studio.md`). DB collections: desk, roles, log, notes, refs, library, roadmap, requests. Read with ArtifactData (use `out_dir` for big reads).
 - Roles (pinned CCD sessions, all on Sonnet since 2026-10-30, each restarted from `docs/context/roles/<role>.md`):
   - Art runner `local_b246bd54-2634-46e9-bf9f-96d6beb2f6c3` (role id `art`)
   - Map builder `local_89c8a5eb-2aef-46ae-9114-913d23206ce8` (`builder`)

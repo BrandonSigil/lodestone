@@ -1,7 +1,7 @@
 # Game designer: handoff (2026-10-30)
 
 ## Job
-Grill Brandon with choice cards on his Studio desk (https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7, `docs/systems/studio.md`). Record answers. Hand approved work to the systems developer (notes, role `dev`) or the map builder (role `builder`). Keep the `combat` roadmap track current. I change no game code; tuning goes to the developer.
+Grill Brandon with choice cards on his Studio desk (https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5, `docs/systems/studio.md`). Record answers. Hand approved work to the systems developer (notes, role `dev`) or the map builder (role `builder`). Keep the `combat` roadmap track current. I change no game code; tuning goes to the developer.
 
 ## Standing rules
 - No story, dialogue, names, lore or flavor text. Nameable content stays blank, and player text is caveman placeholders in `game/text/placeholder.csv`.

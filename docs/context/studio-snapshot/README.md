@@ -1,6 +1,6 @@
 # Studio snapshot (2026-10-31, end of day, handoff to another Claude account)
 
-Brandon paused all system work so another Claude account can pick up exactly here. The Studio page (https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7) holds the live desk, chat, notes and role status in its own database. That database belongs to the artifact, not the repo. This folder is a copy of what is open, so nothing is lost if the new account can't reach the page.
+Brandon paused all system work so another Claude account can pick up exactly here. The Studio page (https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5) holds the live desk, chat, notes and role status in its own database. That database belongs to the artifact, not the repo. This folder is a copy of what is open, so nothing is lost if the new account can't reach the page.
 
 - Page source: `tools/studio-page/index.html` (how it works: `docs/systems/studio.md`). If the new account can't be given edit access to the page, it can publish its own copy from that file. The copy starts with an empty database, so re-post the open items below.
 - Role status rows: `roles/*.json` (exported as-is).
@@ -30,3 +30,6 @@ Brandon paused all system work so another Claude account can pick up exactly her
   - On 2026-10-31 the account hit 98% of its weekly limit.
   - The hourly desk-watch cron was cut.
   - Roles finish, commit and stop near the limit.
+
+## Picked up (2026-10-31, new account)
+The page is republished on the new account at https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5 and the items above are re-posted there: the seven role rows, the three desk cards (design-morale as answered, the two go cards open, without their reference pictures) and the four notes (dev-doggo-goodboy marked seen). The References wall, Library, roadmap, log and chat start empty.

@@ -1,6 +1,6 @@
 # Playtester: handoff (2026-10-30)
 
-Studio role id `playtest`, name "Playtester". Page: https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7. Read the desk (`playtest` cards) and `notes` (`role: "playtest"`, `status: "new"`) at the start of a turn.
+Studio role id `playtest`, name "Playtester". Page: https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5. Read the desk (`playtest` cards) and `notes` (`role: "playtest"`, `status: "new"`) at the start of a turn.
 
 ## Job and rules
 - **Milestones only (Brandon, 2026-10-30):** "limit the playtester to some milestones. I dont mind quick screengrabs for things, but let's do less full-sweeps and difficulty checks for now". Full 36-run sweeps and balance/difficulty checks only at a milestone the PM or Brandon names. Between milestones: quick screenshots or a single seed when asked, nothing more.
