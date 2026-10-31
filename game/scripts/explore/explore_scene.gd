@@ -902,7 +902,7 @@ func open_event(id: String, ctx: Dictionary) -> void:
 	var text := Txt.t(ev.text_key)
 	if ctx.get("group", {}).get("def", {}).get("elite", false):
 		text = Txt.t("UI_ELITE_WARN") + "\n" + text  # [USER] pc-15: a badge to warn
-	var box := _new_dialog(text)
+	var box := _new_dialog(text, false, String(ev.get("portrait", "")))
 	for o: Dictionary in ExploreRules.options_for(ev, _defs(), _have()):
 		var label := Txt.t(o.key)
 		if o.check != "none":
@@ -1057,27 +1057,48 @@ func _sync_party_hp() -> void:
 		u.shown_hp = u.hp
 
 
-func _new_dialog(text: String, top := false) -> VBoxContainer:
+## The event and dialogue box ([USER] 2026-10-31: "a lot larger", with a portrait beside the text when it helps): wide,
+## big text, buttons to match, a square portrait (art/source/portraits/<name>.png) on the left when one is named.
+## The page scales with the window like the rest of the HUD, so it fits at any size.
+const DIALOG_TEXT_W := 460.0
+const DIALOG_PORTRAIT := 200.0
+
+
+func _new_dialog(text: String, top := false, portrait := "") -> VBoxContainer:
 	var fresh := _dialog == null  # a menu opening animates; one rebuilt in place does not
 	if _dialog:
 		_dialog.queue_free()
 	_dialog = PanelContainer.new()
 	_dialog.theme_type_variation = &"DialogPanel"
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	_dialog.add_child(row)
+	var path := "res://art/source/portraits/%s.png" % portrait
+	if portrait != "" and ResourceLoader.exists(path):
+		var face := TextureRect.new()
+		face.texture = load(path)
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		face.custom_minimum_size = Vector2(DIALOG_PORTRAIT, DIALOG_PORTRAIT)
+		face.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(face)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
-	_dialog.add_child(box)
+	box.add_theme_constant_override("separation", 8)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(box)
 	var l := Label.new()
 	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.custom_minimum_size = Vector2(420, 0)
-	l.add_theme_font_size_override("font_size", 16)
+	l.custom_minimum_size = Vector2(DIALOG_TEXT_W, 0)
+	l.add_theme_font_size_override("font_size", 22)
 	box.add_child(l)
 	_ui.add_child(_dialog)
 	var r := hud.center_rect()
-	# [USER] 2026-10-30: event dialogues about half size; the Lodestone menu, the pack and options stay full
-	var k := 1.0 if _menu_open else UiTheme.small()
+	var k := 1.0
 	_dialog.scale = Vector2(k, k)
-	_dialog.position = Vector2(r.get_center().x - 220 * k, r.position.y + 16 if top else r.end.y - 230 * k)
+	var wide := DIALOG_TEXT_W + (DIALOG_PORTRAIT + 14.0 if portrait != "" else 0.0) + 40.0
+	_dialog.position = Vector2(r.get_center().x - wide * 0.5 * k, r.position.y + 16 if top else r.end.y - 330 * k)
 	if not top:
 		_sit_on_frame(_dialog, k)
 	if text == "":
@@ -1101,8 +1122,8 @@ func _dialog_button(box: VBoxContainer, text: String, cb: Callable) -> void:
 	var b := Button.new()
 	b.text = text
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.custom_minimum_size = Vector2(420, 30)
-	b.add_theme_font_size_override("font_size", 14)
+	b.custom_minimum_size = Vector2(DIALOG_TEXT_W, 44)
+	b.add_theme_font_size_override("font_size", 19)
 	b.pressed.connect(cb)
 	box.add_child(b)
 

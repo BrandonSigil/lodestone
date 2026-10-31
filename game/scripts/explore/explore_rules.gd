@@ -641,7 +641,7 @@ static func auto_deploy(grid: CombatGrid, party: Array, how: String, blocked := 
 static func parse_events(rows: Array[Dictionary]) -> Dictionary:
 	var out := {}
 	for row in rows:
-		var ev := {"id": row.id, "text_key": row.text_key, "options": []}
+		var ev := {"id": row.id, "text_key": row.text_key, "options": [], "portrait": row.get("portrait", "")}
 		for n in range(1, 6):
 			var key: String = row.get("opt%d_key" % n, "")
 			if key == "":
