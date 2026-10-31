@@ -1822,6 +1822,33 @@
 			"event": "fish_dock",
 			"id": "stream_fish",
 			"kind": "fish"
+		},
+		{
+			"cell": [
+				18.0,
+				24.0
+			],
+			"event": "recruit_dog",
+			"id": "sq_dog",
+			"kind": "companion"
+		},
+		{
+			"cell": [
+				22.0,
+				24.0
+			],
+			"event": "recruit_fire_mage",
+			"id": "sq_fire_mage",
+			"kind": "companion"
+		},
+		{
+			"cell": [
+				20.0,
+				25.0
+			],
+			"event": "recruit_bushberry",
+			"id": "sq_bushberry",
+			"kind": "companion"
 		}
 	],
 	"turn": false,

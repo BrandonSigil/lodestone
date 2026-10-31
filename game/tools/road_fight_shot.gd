@@ -1,6 +1,7 @@
 extends SceneTree
 ## A road fight (the overworld's random encounter, combat.tscn) as a PNG, to check its fight UI.
-## Args after "--": <png path> [encounter id, default pair_bandits] [select: 1 selects the first piece]. Windowed: tools/godot.sh.
+## Args after "--": <png path> [encounter id, default pair_bandits] [select: 1 selects the first piece] [flags, comma list:
+## met_dog,met_fire_mage,found_bushberry brings everyone with art]. Windowed: tools/godot.sh.
 
 var _frames := 0
 var _out := ""
@@ -12,6 +13,8 @@ func _initialize() -> void:
 	var game := root.get_node("Game")
 	game.set("save_enabled", false)  # a shot never writes the real save
 	root.get_node("Db").call("reload")
+	if args.size() > 3:
+		(game.get("meta").flags as Array).append_array(args[3].split(",", false))
 	change_scene_to_file("res://scenes/overworld.tscn")  # the road fight starts from the overworld, as in play
 
 

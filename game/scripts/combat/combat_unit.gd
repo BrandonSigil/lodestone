@@ -182,7 +182,7 @@ static func from_def(d: CharacterDef, mods: Dictionary = {}, spell_ids: Variant 
 	u.shown_hp = u.hp
 	u.tint = d.tint
 	u.figure = d.id
-	u.sprite = CharacterArt.sprite_for(d.id)
+	u.sprite = CharacterArt.sprite_for(d.sprite_id())
 	u.deficiency = d.deficiency
 	for k in d.class_def.skills:
 		u.skills[k] = d.skill(k)

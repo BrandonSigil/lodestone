@@ -4,7 +4,7 @@ extends Node
 const CHAR_DIR := "res://data/characters/"
 const CLASS_DIR := "res://data/classes/"
 ## Roster display order. Every id needs a .tres in data/characters.
-const ROSTER := [&"lead", &"stardrop", &"hunter", &"wizard", &"bushberry", &"skeleton_archer", &"lewith_flark", &"dog"]
+const ROSTER := [&"lead", &"stardrop", &"hunter", &"wizard", &"bushberry", &"skeleton_archer", &"lewith_flark", &"dog", &"fire_mage"]
 
 var characters: Dictionary = {}  # id -> CharacterDef
 var events: Array[Dictionary] = []

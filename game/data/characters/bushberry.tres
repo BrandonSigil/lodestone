@@ -17,3 +17,4 @@ party_slots = 1
 inventory_slots = 0
 unlock = "found_bushberry"
 tint = Color(0.35, 0.55, 0.3, 1)
+art = &"blueberry_bush"

@@ -918,3 +918,6 @@ TRAIT_BLOODIED,BLOODIED
 TRAIT_BLOODIED_DESC,"The more hurt you are, the harder you hit: under half HP +1 damage, under a quarter +2, and +10% crit chance."
 TRAIT_QUICK_HANDS,QUICK HANDS
 TRAIT_QUICK_HANDS_DESC,Your regular attack is two hits, each 1 weaker than one full hit.
+CHAR_FIRE_MAGE,AMBER
+UNLOCK_MET_FIRE_MAGE,MEET AMBER IN SQUARE
+EX_RECRUIT,FRIEND WAIT IN SQUARE. lorem ipsum. COME?

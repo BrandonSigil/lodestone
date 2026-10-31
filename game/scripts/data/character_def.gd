@@ -16,6 +16,12 @@ extends Resource
 @export var saddlebag := Vector2i.ZERO  ## a courier's bag (cols x rows): when the pack is full they can carry it home
 @export var unlock: String = ""  ## "" = unlocked from the start, else a meta flag id
 @export var tint: Color = Color(0.6, 0.6, 0.6)  ## graybox piece color
+@export var art: StringName = &""  ## sprite folder in art/source/characters when it isn't the id (the bushberry draws as blueberry_bush)
+
+
+## The sprite id this character draws with (CharacterArt).
+func sprite_id() -> StringName:
+	return art if art != &"" else id
 
 
 func skill(check: String) -> int:

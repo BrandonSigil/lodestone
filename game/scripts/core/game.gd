@@ -19,7 +19,7 @@ const LAUNCH := "res://scenes/launch.tscn"  ## the fast-travel menu the game ope
 const OVERWORLD := "res://scenes/overworld.tscn"  ## the map between places: town, the snowy pass, and paths still shut
 const SQUARE := Vector2i(20, 23)  ## where the party wakes in the village: the square, by the statue
 ## Who can be in the adventure party: the hero first, then companions once their unlock flag is set.
-const ADVENTURE_ROSTER := [&"lead", &"dog"]
+const ADVENTURE_ROSTER := [&"lead", &"dog", &"fire_mage", &"bushberry"]  ## everyone with art (playtest: met in the square)
 
 var meta := _fresh_meta()
 var run: RunState = null
@@ -381,6 +381,7 @@ func in_party(id: String) -> bool:
 ## prompt and the companions' homes in the village call these.
 func invite(id: String) -> bool:
 	if in_party(id):
+		refresh_party()  # just unlocked (the square's recruit events set the flag first): bring them into the run
 		return true
 	if adventure_defs().size() >= party_max():
 		return false
