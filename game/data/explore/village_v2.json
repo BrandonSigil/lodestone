@@ -43,13 +43,13 @@
    "fggggggttgggggggwwgggggggggggggttggggggggggdgggggggggggf",
    "fggggggttgggggggwwgggggggggggggttggggggggggdgggggggggggg",
    "gggggdgttgggggggwwgggggggggggggttgggggddddddggggdggggggf",
-   "fggggggggggggfggwwgggggggggggggttgggggggggdttttddgggggfg",
-   "gggggggggggggggtwwgggggggggggggddggggggggggttttgddgggggg",
-   "gggggggggggggggtwgggggggggggggggdggggggggggggggggdgggggf",
+   "fgggggggggggggggwwgggggggggggggttgggggggggdttttddgggggfg",
+   "gggggggggggggggtwwtggggggggggggddggggggggggttttgddgggggg",
+   "gggggggggggggggtwgtgggggggggggggdggggggggggggggggdgggggf",
    "ffggggggggddgfggwggggggggggdtttddgggggggggggggggggggggg.",
    ".fggggggggggggggggggggggggggtttdttggggggggggggggggggggg.",
-   ".ffgggggggggggggwggggggggggggggdttggggggggggggggggggggg.",
-   ".ffggggggggggggwwggggggggggggggdttdgggggggggggggggggg...",
+   ".ffggggggfggggggwttggggggggggggdttggggggggggggggggggggg.",
+   ".ffggggggggggggwwttggggggggggggdttdgggggggggggggggggg...",
    "..fggggggggggggwwgggggggggggggggggddgggggggggggggdggg...",
    "..fggggggggggggwwggggggggggggggggggdgggggggggggggggg....",
    "..fggggggggggggwgggggggggggggggggggddggggggggggggggg....",
@@ -101,13 +101,13 @@
    "fddddddggddddd55555fffffffffcddhhdddddddddddddd999999999",
    "dddddddffddddd55555ccccffccccddggdddddddddddddd999999999",
    "dddddddeeddddd55555ccccccccccddffddddddddddddd9999999999",
-   "dddddddddddddf55555999999cccccdeedddddddddddcba999999999",
+   "dddddddddddddd55555999999cccccdeedddddddddddcba999999999",
    "dddddddddddddd555556699999999ccdddddddddddddcba999999999",
-   "dddddddddddddd54555666666669999cddddddddddddddd999999999",
+   "dddddddddddddd54554666666669999cddddddddddddddd999999999",
    "3dddddddddddd63353333333366ccba9ccddddddddddddd999999990",
-   "03ddddddddd2222111111333366ccba9cc9cddccddddd99999999990",
-   "036dddddddd222210111111336699999bb99cc99cc99999999999990",
-   "033dddddd22222100112222229999999aa9999999999999999999000",
+   "03ddddddddd2222113313333366ccba9cc9cddccddddd99999999990",
+   "036ddddddfd222210331111336699999bb99cc99cc99999999999990",
+   "033dddddd22222100222222229999999aa9999999999999999999000",
    "0022222dd22222100112222229999999999999999999999999999000",
    "00222222222221100122222299999999999999999999999999990000",
    "00222222222221101122222299999999999999999999999999990000",
@@ -957,15 +957,15 @@
    {
     "sprite": "prop_crypt_gate",
     "cell": [
-     5,
+     4,
      19
     ],
     "foot": [
-     2,
-     1
+     4,
+     2
     ],
-    "tall": 1.6,
-    "sight": 2.0,
+    "tall": 3.0,
+    "sight": 3.0,
     "walk": false
    },
    {
@@ -1178,11 +1178,11 @@
      32
     ],
     "foot": [
-     2,
-     2
+     4,
+     4
     ],
-    "tall": 3.0,
-    "sight": 3.0,
+    "tall": 7.0,
+    "sight": 6.0,
     "walk": false
    },
    {
@@ -1230,14 +1230,14 @@
    {
     "sprite": "prop_boathouse",
     "cell": [
-     16,
-     43
+     19,
+     40
     ],
     "foot": [
-     2,
-     2
+     5,
+     5
     ],
-    "tall": 1.8,
+    "tall": 5.0,
     "sight": 2.0,
     "walk": false
    },
@@ -1970,80 +1970,10 @@
     "walk": false
    },
    {
-    "sprite": "prop_tree_5",
-    "cell": [
-     20,
-     39
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_pine_3",
-    "cell": [
-     22,
-     39
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.25,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
     "sprite": "prop_boulder",
     "cell": [
      44,
      39
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_2",
-    "cell": [
-     20,
-     40
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_tree_4",
-    "cell": [
-     22,
-     40
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.5,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_boulder_2",
-    "cell": [
-     24,
-     40
     ],
     "foot": [
      1,
@@ -2099,20 +2029,6 @@
     "sprite": "prop_boulder",
     "cell": [
      12,
-     41
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_boulder",
-    "cell": [
-     22,
      41
     ],
     "foot": [

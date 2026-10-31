@@ -403,7 +403,7 @@ V.arch("prop_arch", 5, 8, (4, 1))
 for x in (4, 6, 8):
     for y in (12, 14, 16):
         V.prop("prop_headstone" if (x + y) % 4 == 0 else "prop_grave_mound", x, y, (1, 1), tall=0.75, sight=0.3)
-V.prop("prop_crypt_gate", 5, 19, (2, 1), tall=1.6, sight=2.0)
+V.prop("prop_crypt_gate", 4, 19, (4, 2), tall=3.0, sight=3.0)  # its opening is taller than the hero, with room above
 for x, y in [(x, 11) for x in range(3, 10)] + [(2, y) for y in range(12, 18)]:  # an iron fence round the graves' north and west
     V.prop("prop_iron_fence", x, y, (1, 1), tall=0.8, sight=0.0)
     if y == 11:
@@ -412,17 +412,36 @@ p("prop_tree_bare", 10, 17, 1.5, 1.0)
 KEEP_OPEN.update((x, y) for x in range(2, 13) for y in range(4, 21))
 
 # The farm (windmill and fields).
-V.prop("prop_windmill", 9, 32, (2, 2), tall=3.0, sight=3.0)
+V.prop("prop_windmill", 9, 32, (4, 4), tall=7.0, sight=6.0)  # its door is the hero's height
 for x in (3, 5):  # the beds' long side runs along the grid's y axis (down-left on screen), so the footprint is 1 x 3
     V.prop("prop_crops", x, 35, (1, 3), tall=0.7, sight=0.0)
 p("prop_hay", 8, 36, 0.65, 0.5)
 KEEP_OPEN.update((x, y) for x in range(2, 13) for y in range(29, 39))
 
 # The lake.
-bx, by = next((x, y) for y in range(DOCK[0][1] - 2, 36, -1) for x in range(12, 20)
-              if len({V.height[y + dy][x + dx] for dx in (0, 1) for dy in (0, 1)}) == 1
-              and all(V.terrain[y + dy][x + dx] == "g" for dx in (0, 1) for dy in (0, 1)))
-V.prop("prop_boathouse", bx, by, (2, 2), tall=1.8, sight=2.0)  # on flat shore beside the dock's root
+def _free_block(fx, fy, x_range, y_range):
+    """The first flat block of dry grass fx x fy in the ranges, clear of placed props and the dock."""
+    taken = set(DOCK)
+    for pr in V.props:
+        for dx in range(pr["foot"][0]):
+            for dy in range(pr["foot"][1]):
+                taken.add((pr["cell"][0] + dx, pr["cell"][1] + dy))
+    for y, x in sorted(((y, x) for y in y_range for x in x_range), key=lambda q: abs(q[1] - 10) + abs(q[0] - 46)):  # nearest the dock first
+        if True:
+            cells = [(x + dx, y + dy) for dx in range(fx) for dy in range(fy)]
+            if all(0 <= cx < W and 0 <= cy < H and V.terrain[cy][cx] == "g" and (cx, cy) not in taken for cx, cy in cells) \
+                    and len({V.height[cy][cx] for cx, cy in cells}) == 1 and V.height[cells[0][1]][cells[0][0]] <= 3:
+                return x, y
+    return None
+
+
+# The boathouse at real scale ([USER] 2026-10-30: "a boat house the size of our character, nah ... 3-4 times bigger"):
+# its door has to be taller than the hero, so it is a 5 x 5 building on flat shore.
+BH = _free_block(5, 5, range(4, 22), range(38, 47)) or _free_block(4, 4, range(4, 22), range(38, 47))
+bx, by = BH
+bsz = 5 if _free_block(5, 5, [bx], [by]) else 4
+V.prop("prop_boathouse", bx, by, (bsz, bsz), tall=1.0 * bsz, sight=2.0)  # on flat shore beside the dock
+KEEP_OPEN.update((bx + dx, by + dy) for dx in range(bsz) for dy in range(bsz))
 V.prop("prop_rowboat", 8, DOCK[0][1] - 2, (1, 2), tall=0.7, sight=0.0)  # pulled up on the shore by the dock
 KEEP_OPEN.update((x, y) for x in range(8, 15) for y in range(DOCK[0][1] - 4, DOCK[0][1] + 6))
 reeds = [(x, y) for y in range(40, H) for x in range(0, 24) if V.terrain[y][x] == "g" and V.height[y][x] == 1

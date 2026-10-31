@@ -37,9 +37,17 @@ for scene in launch village trail combat world_map battle_view explore map_maker
 done
 
 # The shape gate ([USER] 2026-10-30: never show him a box): the crypt redesign prototype must not read as one.
-if command -v python3 >/dev/null 2>&1 && [ -f game/data/explore/crypt.json ]; then
-	if ! shape=$(python3 tools/map_shape.py game/data/explore/crypt.json); then
+if command -v python3 >/dev/null 2>&1 && [ -f data/explore/crypt.json ]; then
+	if ! shape=$(python3 ../tools/map_shape.py data/explore/crypt.json); then
 		echo "FAIL map shape: $shape"
+		fail=1
+	fi
+fi
+
+# The scale gate: props must make spatial sense against the hero (doors taller than he is).
+if command -v python3 >/dev/null 2>&1; then
+	if ! scale=$(python3 ../tools/art/prop_scale_check.py data/explore/village_v2.json); then
+		echo "FAIL prop scale: $scale"
 		fail=1
 	fi
 fi
