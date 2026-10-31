@@ -13,7 +13,7 @@ Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the
   - Game designer `local_b6eb2db1-8f39-4b4c-8da2-7f476a764d6a` (`design`)
   - Balance officer (`balance`): on call only. No standing session; when Brandon says "balance officer, ...", start a fresh session from `docs/context/roles/balance.md` with his words, and archive it when the pass is done.
 
-## Desk watch (hourly cron, session-only)
+## Desk watch (cut 2026-10-31: weekly usage hit 98%; Studio answers and chats wake the PM, so no cron)
 - Cron "Studio desk watch, hourly and lean" at :07. If CronList doesn't show it after a restart, recreate it (prompt in the 2026-10-30 transcript; the gist is below).
 - Gist: in ONE parallel batch, run list_sessions linked, a desk query (answered), a notes query (new), a requests query (new), and `rm -rf tickN; date -u`. Then run `python3 <scratchpad>/tick_filter.py` (filters against `<scratchpad>/nudged.json`, card/note id -> answer time). Say "Nothing new." if nothing is new. Otherwise wake each idle role once with the ids and Brandon's words verbatim, fix wrong role statuses, and record the ids in nudged.json.
 - Scratchpad: `/private/tmp/claude-501/-Users-brandonwirth-lodestone/4056efc5-591c-407a-8bc2-aae3d3c5685f/scratchpad/`.
@@ -23,7 +23,7 @@ Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the
 ## Working rules learned
 - Keep usage low (`docs/systems/studio.md`): no idle turns; batch; reset a role past ~300k tokens. A role is reset by writing its handoff note, then unpin, `clear_session`, `set_session_model` claude-sonnet-5-5, re-pin and a kickoff message. New sessions can't be started while Brandon is on Remote Control, and clearing fails while a session has a background task running.
 - Playtester at milestones only (Brandon, 2026-10-30): name the milestone before asking for a full sweep or difficulty check; quick screengrabs any time.
-- Desk watch cron dies with this session; after any restart run CronList and recreate it.
+- Do not recreate the desk watch cron; the Studio wakes the PM. Check usage (get_usage) before starting big work; near the weekly limit, roles finish, commit and stop.
 - Keep every role moving (Brandon, 2026-10-30: "it looks like nothing is moving right now... everything is IDLE but there's plenty to do"). When a role finishes and nothing of Brandon's waits for it, hand it the next roadmap item for its track (one message, a few steps), and keep going while he's away. Only the playtester waits, for a named milestone.
 - Each time you hand a role work, set its `roles` row in the same step (status working, `now` = the job in plain words, `updated` from the clock); roles forget to. On every desk watch, compare rows with list_sessions (isRunning) and fix any that disagree (Brandon, 2026-10-31: "I'm seeing 'has your answers' but not 'working'").
 - Brandon runs Picsart by hand from prompt cards (memory `picsart-by-hand`). Godot runs go through `tools/godot.sh` / `tools/mem_guard.sh` (6 GB cap).
