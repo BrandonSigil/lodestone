@@ -13,11 +13,10 @@
   `origin/main`, run `--import`, then `E2E=1 tools/check.sh`, then remove the worktree.
 
 ## Now
-- Cliff wash approved; repeat-break pass (hashed width/stretch per window) in 8f5eafb, no review card yet.
-- Maker: boost/key/rare things with icon art and fight goals in the group inspector (24308ac, 7bb95c1). Waiting on cards `builder-maker-goals-review` and `builder-crypt-redesign-present` (options A finish / B loop / C climb).
-- Next if he asks for more: tune the `WASH_*` constants in `combat_board.gd`, the strip colour (`strip_tone` column in
-  `game/data/battle_art_village.csv`), or window sizes (`_strip_cut`). Then village v2 art.
-- Uncommitted work of mine: none. The six strip PNGs are the art runner's to commit on stamp.
+- Kept by Brandon: god mode (`!` button, `GodMode`), Size 1 to 4 (brush, path, river, bridge, stairs), Greybox view (K), cliff wash, crypt, snow pass.
+- Village v2 hillside rework is committed (a0725b7, `hillside_village_v2.py`) but parked: Brandon is editing the village in the maker himself. Never overwrite or revert his uncommitted village and map edits.
+- Tests: props from another art set only have to exist; untitled scratch maps may have no pieces.
+- Next only if asked: the live `village` rework, shaping the one-room interiors.
 
 ## Standing rule: never show Brandon a box
 [USER] 2026-10-30, said several times: "is the entire map basically just a big box? if yes, dont show it to me and work on it.
