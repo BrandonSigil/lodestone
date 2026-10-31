@@ -24,6 +24,7 @@ Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the
 - Playtester at milestones only (Brandon, 2026-10-30): name the milestone before asking for a full sweep or difficulty check; quick screengrabs any time.
 - Desk watch cron dies with this session; after any restart run CronList and recreate it.
 - Keep every role moving (Brandon, 2026-10-30: "it looks like nothing is moving right now... everything is IDLE but there's plenty to do"). When a role finishes and nothing of Brandon's waits for it, hand it the next roadmap item for its track (one message, a few steps), and keep going while he's away. Only the playtester waits, for a named milestone.
+- Each time you hand a role work, set its `roles` row in the same step (status working, `now` = the job in plain words, `updated` from the clock); roles forget to. On every desk watch, compare rows with list_sessions (isRunning) and fix any that disagree (Brandon, 2026-10-31: "I'm seeing 'has your answers' but not 'working'").
 - Brandon runs Picsart by hand from prompt cards (memory `picsart-by-hand`). Godot runs go through `tools/godot.sh` / `tools/mem_guard.sh` (6 GB cap).
 - Shared checkout: commit only your own files; `git pull --rebase --autostash` before pushing.
 - Talk to Brandon in plain words: what changed, what's on his desk. Commit hashes in backticks.
