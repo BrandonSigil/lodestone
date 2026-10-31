@@ -112,8 +112,19 @@ func _process(_delta: float) -> void:
 
 
 ## A cell's colour: its ground, tinted by its tile set (snow, dungeon...), shaded a little by its height.
+var greybox := false  ## the greybox view: plain grey by height, no props
+
+
 func ground_color(g: CombatGrid, c: Vector2i) -> Color:
 	var t := g.terrain_at(c)
+	if greybox and t != T.VOID:
+		var v := 0.3 + 0.022 * float(g.height_at(c))
+		match t:
+			T.WATER:
+				return Color(0.3, 0.5, 0.72).lerp(Color(0.5, 0.65, 0.85), 0.0)
+			T.STAIRS:
+				return Color(minf(v + 0.14, 1.0), minf(v + 0.14, 1.0), minf(v + 0.12, 1.0))
+		return Color(v, v, v)
 	var col: Color = COLORS.get(t, Color.MAGENTA)
 	if t == T.VOID:
 		return col
@@ -202,7 +213,7 @@ func _draw_marks() -> void:
 	for list in ["party", "enemies"]:
 		for e in d.get(list, []):
 			dot.call(Vector2i(int(e.x), int(e.y)), Color(0.45, 0.72, 1.0) if list == "party" else Color(1.0, 0.48, 0.42))
-	for a: Vector2i in g.props:
+	for a: Vector2i in (g.props if not greybox else {}):
 		o.draw_rect(Rect2(origin + (Vector2(a) + Vector2(0.35, 0.35)) * cs, Vector2(cs, cs) * 0.3), Color(0.25, 0.25, 0.28, 0.9))
 	for c: Vector2i in maker.region:  # the Area tool's selection
 		o.draw_rect(_cell_rect(c), Color(0.3, 0.8, 1.0, 0.3))

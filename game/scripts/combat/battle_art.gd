@@ -119,7 +119,12 @@ static func _row(t: int, from_set: String) -> Dictionary:
 	return _set_rows.get(table, {}).get(t, _rows.get(t, {}))
 
 
+static var greybox := false  ## the maker's greybox view: no painted texture at all
+
+
 static func top(t: int, from_set := "") -> Texture2D:
+	if greybox:
+		return null
 	var row := _row(t, from_set)
 	var tex := texture(String(row.get("top", "")), true, from_set)
 	var tone := String(row.get("tone", ""))
@@ -152,6 +157,8 @@ static func toned(tex: Texture2D, col: Color) -> Texture2D:
 
 
 static func side(t: int, from_set := "") -> Texture2D:
+	if greybox:
+		return null
 	return texture(String(_row(t, from_set).get("side", "")), true, from_set)
 
 

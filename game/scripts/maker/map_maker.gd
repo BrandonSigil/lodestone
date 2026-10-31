@@ -738,7 +738,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_G:
 			_toggle_view("grid")
 		KEY_K:
-			_toggle_view("soft")
+			_toggle_view("greybox")
 		KEY_BRACKETLEFT:
 			_set_width(width - 1)
 		KEY_BRACKETRIGHT:
@@ -1785,7 +1785,7 @@ func _build_top() -> void:
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bar.add_child(_title)
-	for v in [["soft", "soft", "Painted terrain  (K): the look players see. Off shows plain blocks, to check every cell", true],
+	for v in [["greybox", "greybox", "Greybox view  (K): hides every prop, building, tree and painted texture and shows the map as plain grey blocks shaded by height, to see its structure. A view only: nothing in the map changes.", false],
 			["grid", "grid", "Grid lines  (G)", true], ["heights", "heights", "Height numbers", false], ["labels", "note", "Names over things and blobs", true],
 			["flat", "flat", "Flat sketch mode  (Tab): a top-down grid of this map to paint ground, height, walls, water and stairs quickly. Toggle back to see it isometric.", false]]:
 		var b := MakerUI.IconButton.new(v[1], v[2], 34.0)
@@ -1833,8 +1833,11 @@ func set_flat(on: bool) -> void:
 
 func _on_view(on: bool, key: String) -> void:
 	match key:
-		"soft":
-			board.soft = on
+		"greybox":
+			board.greybox = on
+			if flat != null:
+				flat.greybox = on
+				flat.queue_redraw()
 		"grid":
 			board.show_grid = on
 		"heights":

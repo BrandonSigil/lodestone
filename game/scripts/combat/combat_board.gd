@@ -123,6 +123,8 @@ var show_grid := true  ## cell outlines; off, only real ledges keep their rim (e
 ## on unbroken from cell to cell, flow strokes down the water, stairs cut into the rock. Off = the old blocks.
 ## Interiors ("plain" looks) always keep the blocks.
 var soft := true
+## The greybox view (the maker): no props, buildings, trees, backdrop or painted texture; plain grey blocks shaded by height.
+var greybox := false
 ## Players never turn the view: every map is seen from its one approved angle ([USER] 2026-10-28, like Hades).
 ## Only editors (the map maker, the sandbox's map editing) switch this on; a map's "view" is its angle.
 var can_turn := false
@@ -214,7 +216,7 @@ func _draw() -> void:
 
 
 func _wall_tex() -> Texture2D:
-	return BattleArt.texture("skyline") if wallpaper else null
+	return BattleArt.texture("skyline") if wallpaper and not greybox else null
 
 
 static var _wall_colours := {}  ## the average of each wallpaper's bottom rows, read once per texture
@@ -528,13 +530,14 @@ func _sync_slabs() -> void:
 	if wallpaper:  # the wallpaper follows the view, so it repaints each frame
 		queue_redraw()
 	BattleArt.use_set(art_set)
+	BattleArt.greybox = greybox
 	_resolve_look()
 	_sway_mat.set_shader_parameter("wind", look.wind)
 	var valley := _valley()
 	if valley:
 		_refresh_skirt()
-	var gkey := "%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [grid.get_instance_id(), grid.w, grid.h, rot, art_set, look.key(),
-		strangeness, show_grid, backdrop, island, fog_on, wallpaper, soft, walls]
+	var gkey := "%d|%d|%d|%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [grid.get_instance_id(), grid.w, grid.h, rot, art_set, look.key(),
+		strangeness, show_grid, backdrop, island, fog_on, wallpaper, soft, walls, greybox]
 	var lkey := "%s|%s" % [gkey, _skirt_key if valley else ""]
 	if lkey != _layers_key:
 		_layers_key = lkey
@@ -768,15 +771,15 @@ func _paint(sl: Slab) -> void:
 						if rims.has(c) and not _unseen(c):
 							_rim_walls(c)
 		Slab.K.FALLS:
-			for c: Vector2i in _fall_cells[sl.depth]:
+			for c: Vector2i in ([] if greybox else _fall_cells[sl.depth]):
 				if not _unseen(c):
 					_draw_fall_sheets(c)
 					_draw_fall_caps(c)
 		Slab.K.OVER:
-			for c: Vector2i in _fall_cells[sl.depth]:
+			for c: Vector2i in ([] if greybox else _fall_cells[sl.depth]):
 				if not hidden(c):
 					_draw_falls(c)
-			for c: Vector2i in _over_by_depth.get(sl.depth, {}):
+			for c: Vector2i in ({} if greybox else _over_by_depth.get(sl.depth, {})):
 				if not hidden(c):
 					_draw_over(c)
 		Slab.K.PROPS:
@@ -796,6 +799,8 @@ func _paint(sl: Slab) -> void:
 
 
 func _paint_back() -> void:
+	if greybox:
+		return
 	if not backdrop or _wall_tex() != null:
 		return
 	var plate := BattleArt.texture("backdrop")
@@ -811,6 +816,8 @@ func _paint_back() -> void:
 
 
 func _paint_props(d: int) -> void:
+	if greybox:
+		return  # no props, buildings, trees or skirt
 	for c: Vector2i in _prop_cells[d]:
 		if not _unseen(c):
 			_draw_props(c)
@@ -833,7 +840,7 @@ func _paint_deck(d: int) -> void:
 	for c: Vector2i in _deck_over.get(d, {}):
 		if not hidden(c):
 			_draw_over(c)
-	for a: Vector2i in grid.props:
+	for a: Vector2i in ({} if greybox else grid.props):
 		if CombatGrid.on_deck(a) and not _unseen(a):
 			var f := _prop_front(a, grid.props[a])
 			if _depth_at(f) == d:
@@ -1039,6 +1046,8 @@ func _veil(c: Vector2i) -> void:
 
 
 func _terrain_color(t: int) -> Color:
+	if greybox:
+		return Color(0.36, 0.5, 0.7) if t == CombatGrid.T.WATER else Color(0.5, 0.5, 0.5)
 	return (TOP_COLORS[t] as Color).lerp(ALIEN_COLORS[t], strangeness)
 
 
@@ -1061,8 +1070,13 @@ func _draw_ground(c: Vector2i) -> void:
 	var h := _surf(c)
 	var wall := _wall(c)
 	var top_col := WALL_TOP if wall else _terrain_color(t).lightened(minf(h, 6.0) * 0.025)
+	if greybox and not wall and t != CombatGrid.T.WATER:  # shaded by height, up the whole range
+		var v := 0.28 + 0.022 * h + (0.12 if t == CombatGrid.T.STAIRS else 0.0)
+		top_col = Color(v, v, v)
 	var built := wall or t == CombatGrid.T.STONE or t == CombatGrid.T.STAIRS or t == CombatGrid.T.RUIN
 	var face := WALL_SIDE if wall else (MASONRY if built else CLIFF).lerp(ALIEN_CLIFF, strangeness)
+	if greybox and not wall:
+		face = top_col.darkened(0.35)
 	var seed_v := _hash(c)
 	var zone := grid.zone_at(c)  # "" = the map's set
 	var top_tex: Texture2D = null if wall else BattleArt.top(t, zone)
@@ -1163,7 +1177,7 @@ const DRIFT_SHADE := Color(0.8, 0.86, 0.97)  ## and shade side
 
 
 func _soft() -> bool:
-	return soft and look.staging != "plain"
+	return soft and look.staging != "plain" and not greybox
 
 
 ## Soft pass caches: every cell's corner radii, where every outline line starts and stops (so a line that just
