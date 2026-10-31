@@ -124,9 +124,14 @@ func _on_finished(won: bool) -> void:
 
 func _place_panel(panel: PanelContainer) -> void:
 	hud.root.add_child(panel)
-	var r := hud.center_rect()
-	panel.position = r.get_center() - Vector2(240, 120)
 	panel.custom_minimum_size = Vector2(480, 100)
+	for _i in 3:  # the level-up box fills in over a frame or two: keep it centred in the play area as it grows
+		var r := hud.center_rect()
+		panel.reset_size()
+		panel.position = r.get_center() - panel.size * 0.5
+		await get_tree().process_frame
+		if not is_instance_valid(panel):
+			return
 
 
 ## After a won road fight, the level-up screen for each member that levelled (see LevelUpUi); then back to the road.

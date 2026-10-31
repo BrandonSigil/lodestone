@@ -28,42 +28,180 @@ static func summary(id: String, entry: Dictionary) -> String:
 	var u := CombatUnit.from_member(m)
 	var now := {"hp": u.max_hp, "damage": u.damage, "armor": u.armor, "magic": u.magic_power, "crit": u.crit}
 	var stats: Dictionary = entry.get("stats", {})
+	var gains: PackedStringArray = []
 	for k in LevelRules.STATS:
 		if stats.has(k):
-			lines.append(Txt.f("UI_LV_STAT", [Txt.t("UI_STAT_" + k.to_upper()), int(now[k]) - int(stats[k]), int(now[k])]))
+			gains.append(Txt.f("UI_LV_STAT", [Txt.t("UI_STAT_" + k.to_upper()), int(now[k]) - int(stats[k]), int(now[k])]))
+	if not gains.is_empty():
+		lines.append("   ".join(gains))  # one line: "HP 15 to 19   CRIT 8 to 10"
 	return "\n".join(lines)
 
 
-## Picks waiting for a member, as cards in `box`; a click spends the pick and calls `refresh` (the screen rebuilds).
+## The pick ([USER] 2026-10-31, a mix of BG3 and a MOBA's skill screen): the choices as big ability icons in a row; the one
+## selected (a click, or the arrows or a stick moving the focus onto it) shows what it does, its numbers now and a preview
+## of the next rank, and the Pick Skill button confirms. Pressing a selected icon again with the keyboard or a pad confirms
+## too. A click spends the pick and calls `refresh` (the screen rebuilds); `box` is where it goes.
 static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
 	var m := _member(id)
 	if m.is_empty() or int(Game.rank_state(id).pending) <= 0:
 		return
 	var u := CombatUnit.from_member(m)
+	var ranks: Dictionary = Game.rank_state(id).ranks
+	var options: Array[Dictionary] = []  # {"ability", "learn", "have", "next"}
+	for aid in Game.learnable(id):
+		options.append({"ability": Db.ability(aid), "learn": true, "have": 0, "next": 0})
+	for a: Ability in u.abilities:
+		var have := int(ranks.get(a.id, 0))
+		var nxt := LevelRules.next_useful_rank(a.id, have, Db.skill_ranks)
+		if nxt > 0:
+			options.append({"ability": Db.ability(a.id), "learn": false, "have": have, "next": nxt})
 	var label := Label.new()
 	label.text = Txt.f("UI_LV_PICK", int(Game.rank_state(id).pending))
 	label.add_theme_font_size_override("font_size", 18)
 	box.add_child(label)
-	for aid in Game.learnable(id):
-		var a := Db.ability(aid)
-		_card(box, a.id, Txt.f("UI_LV_LEARN", Txt.t(a.name_key)) + "\n" + _describe(a), func() -> void:
-			Game.learn_skill(id, aid)
-			refresh.call())
-	var ranks: Dictionary = Game.rank_state(id).ranks
-	for a: Ability in u.abilities:
-		var have := int(ranks.get(a.id, 0))
-		var nxt := LevelRules.next_useful_rank(a.id, have, Db.skill_ranks)
-		if nxt == 0:
-			continue
-		var base := Db.ability(a.id)
-		var step: Dictionary = (Db.upgrade_steps.get(a.id, []) as Array)[nxt - 1]
-		var line := Txt.f("UI_LV_UPGRADE", [Txt.t(a.name_key), nxt, LevelRules.max_rank(a.id, Db.skill_ranks)]) + "\n" + String(step.text)
-		var change := _change(u, base, have, nxt, String(step.effect))
-		if change != "":
-			line += "\n" + change
-		_card(box, a.id, line, func() -> void:
-			Game.rank_skill(id, a.id)
-			refresh.call())
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", 10)
+	row.add_theme_constant_override("v_separation", 10)
+	box.add_child(row)
+	var detail := VBoxContainer.new()
+	detail.add_theme_constant_override("separation", 4)
+	detail.custom_minimum_size = Vector2(460, 150)
+	box.add_child(detail)
+	var pick := Button.new()
+	pick.text = Txt.t("UI_LV_PICK_SKILL")
+	pick.disabled = true
+	pick.custom_minimum_size = Vector2(460, 48)
+	pick.add_theme_font_size_override("font_size", 20)
+	var state := {"chosen": -1}
+	var buttons: Array[Button] = []
+	var confirm := func() -> void:
+		var i: int = state.chosen
+		if i < 0:
+			return
+		var o: Dictionary = options[i]
+		if o.learn:
+			Game.learn_skill(id, (o.ability as Ability).id)
+		else:
+			Game.rank_skill(id, (o.ability as Ability).id)
+		refresh.call()
+	var choose := func(i: int) -> void:
+		state.chosen = i
+		for k in buttons.size():
+			buttons[k].set_pressed_no_signal(k == i)
+		_detail(detail, u, options[i], ranks)
+		pick.disabled = false
+	for i in options.size():
+		var o: Dictionary = options[i]
+		var b := Button.new()
+		b.toggle_mode = true
+		b.custom_minimum_size = Vector2(84, 84)
+		b.tooltip_text = Txt.t((o.ability as Ability).name_key)
+		b.focus_mode = Control.FOCUS_ALL
+		var tex := ActionInfo.icon_for(o.ability)
+		if tex != null:
+			b.icon = tex
+			b.expand_icon = true
+			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			b.add_theme_constant_override("icon_max_width", 64)
+		else:
+			b.text = Txt.t((o.ability as Ability).name_key)
+			b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			b.add_theme_font_size_override("font_size", 12)
+		_slot_style(b)
+		b.pressed.connect(func() -> void:
+			if state.chosen == i and Input.is_action_just_pressed("ui_accept"):
+				confirm.call()  # a second press of the selected icon from the keyboard or a pad confirms
+			else:
+				choose.call(i))
+		b.focus_entered.connect(func() -> void: choose.call(i))  # moving along the row previews each
+		row.add_child(b)
+		buttons.append(b)
+	pick.pressed.connect(confirm)
+	box.add_child(pick)
+	if not buttons.is_empty():
+		buttons[0].call_deferred("grab_focus")
+
+
+## The detail panel of the selected option: what it is, what it does, its numbers now, what this pick adds, and the next rank.
+static func _detail(detail: VBoxContainer, u: CombatUnit, o: Dictionary, ranks: Dictionary) -> void:
+	for c in detail.get_children():
+		detail.remove_child(c)
+		c.queue_free()
+	var a: Ability = o.ability
+	var have: int = o.have
+	var title := Label.new()
+	title.text = Txt.t(a.name_key) + "   " + (Txt.t("UI_LV_NEW") if o.learn else Txt.f("UI_LV_RANK_OF", [have, LevelRules.max_rank(a.id, Db.skill_ranks)]))
+	title.add_theme_font_size_override("font_size", 22)
+	detail.add_child(title)
+	var cur := LevelRules.ranked(a, have, Db.skill_ranks)
+	_line(detail, _describe(a, false), 16)
+	_line(detail, Txt.f("UI_LV_NOW", _numbers(u, cur)), 16)
+	var steps: Array = Db.upgrade_steps.get(a.id, [])
+	if o.learn:
+		var first := LevelRules.next_useful_rank(a.id, 0, Db.skill_ranks)
+		if first > 0:
+			_line(detail, Txt.f("UI_LV_THEN", String((steps[first - 1] as Dictionary).text)), 15, Color(0.75, 0.9, 0.8))
+		return
+	var nxt: int = o.next
+	var step: Dictionary = steps[nxt - 1]
+	var change := _change(u, a, have, nxt, String(step.effect))
+	_line(detail, Txt.f("UI_LV_THIS", String(step.text)) + ("  (" + change + ")" if change != "" else ""), 16, Color(1.0, 0.92, 0.6))
+	var after := LevelRules.next_useful_rank(a.id, nxt, Db.skill_ranks)
+	if after > 0:
+		var s2: Dictionary = steps[after - 1]
+		var c2 := _change(u, a, nxt, after, String(s2.effect))
+		_line(detail, Txt.f("UI_LV_NEXT", String(s2.text)) + ("  (" + c2 + ")" if c2 != "" else ""), 15, Color(0.75, 0.9, 0.8))
+	else:
+		_line(detail, Txt.t("UI_LV_LAST"), 15, Color(0.75, 0.9, 0.8))
+
+
+static func _line(box: VBoxContainer, text: String, size: int, color := Color(0.93, 0.9, 0.82)) -> void:
+	var l := Label.new()
+	l.text = text
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size = Vector2(460, 0)
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", color)
+	box.add_child(l)
+
+
+## "Damage 5, reach 1 to 3, costs 2, shoves 1": the ability's numbers on this piece.
+static func _numbers(u: CombatUnit, a: Ability) -> String:
+	var parts: PackedStringArray = []
+	if a.kind == "attack":
+		parts.append("%s %d" % [Txt.t("UI_STAT_DAMAGE"), u.damage + a.power])
+	elif a.kind == "heal":
+		parts.append("%s %d" % [Txt.t("UI_LV_HEALING"), a.power])
+	if a.range_max > 0:
+		parts.append(Txt.f("UI_LV_REACH_OF", [a.range_min, a.range_max]))
+	if a.res_cost > 0:
+		parts.append(Txt.f("UI_LV_COST", a.res_cost))
+	if a.radius > 0:
+		parts.append("%s %d" % [LABELS["radius"], a.radius])
+	if a.push > 0:
+		parts.append("%s %d" % [LABELS["push"], a.push])
+	if a.status_turns > 0:
+		parts.append("%s %d" % [LABELS["status_turns"], a.status_turns])
+	if a.cooldown > 0:
+		parts.append("%s %d" % [LABELS["cooldown"], a.cooldown])
+	return ", ".join(parts)
+
+
+## The icon slot's frame: a dark square with a cream rim, lit blue when selected (the dock's boxes, as StyleBoxes).
+static func _slot_style(b: Button) -> void:
+	for n in ["normal", "hover", "pressed", "focus", "hover_pressed"]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0.05, 0.1, 0.1) if n != "hover" else Color(0.1, 0.18, 0.18)
+		sb.border_color = Color(0.9, 0.82, 0.7)
+		sb.set_border_width_all(3)
+		if n in ["pressed", "hover_pressed"]:
+			sb.border_color = Color(0.55, 0.78, 1.0)
+			sb.bg_color = Color(0.1, 0.2, 0.28)
+		if n == "focus":
+			sb.border_color = Color(0.55, 0.78, 1.0)
+			sb.draw_center = false
+		sb.set_corner_radius_all(4)
+		b.add_theme_stylebox_override(n, sb)
 
 
 ## "Power 3 to 4  Reach 2 to 3": every field this step's effect touches, before and after.
@@ -84,31 +222,8 @@ static func _change(u: CombatUnit, base: Ability, have: int, nxt: int, effect: S
 	return "   ".join(parts)
 
 
-static func _describe(a: Ability) -> String:
+static func _describe(a: Ability, with_facts := true) -> String:
 	var parts: PackedStringArray = []
 	if Txt.has("DESC_" + a.id.to_upper()):
 		parts.append(Txt.t("DESC_" + a.id.to_upper()))
-	var facts: PackedStringArray = []
-	if a.res_cost > 0:
-		facts.append(Txt.f("UI_LV_COST", a.res_cost))
-	if a.range_max > 0:
-		facts.append(Txt.f("UI_LV_REACH", [a.range_min, a.range_max]))
-	if not facts.is_empty():
-		parts.append(", ".join(facts))
 	return "\n".join(parts)
-
-
-static func _card(box: VBoxContainer, icon_id: String, text: String, on_pick: Callable) -> void:
-	var b := Button.new()
-	b.text = text
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	b.custom_minimum_size = Vector2(460, 92)
-	b.add_theme_font_size_override("font_size", 17)
-	var tex := ActionInfo.icon(icon_id)
-	if tex != null:
-		b.icon = tex
-		b.expand_icon = true
-		b.add_theme_constant_override("icon_max_width", 48)
-	b.pressed.connect(on_pick)
-	box.add_child(b)

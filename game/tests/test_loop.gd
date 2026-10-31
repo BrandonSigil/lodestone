@@ -1320,3 +1320,18 @@ func test_level_up_picks() -> void:
 	ok(u.abilities.any(func(a: Ability) -> bool: return a.id == "goad"), "and the piece fights with it")
 	ok(not Game.learnable("lead").has("goad"), "it is not offered twice")
 	_restore(saved)
+
+
+## The pick screen's body: ability icons in a row, a detail panel and a Pick Skill button that waits for a choice.
+func test_level_up_pick_body() -> void:
+	var saved := _fresh_game()
+	Game.take_weapon("sword")
+	Game.award_xp(100)
+	var box := VBoxContainer.new()
+	LevelUpUi.picks(box, "lead", func() -> void: pass)
+	var buttons := box.find_children("*", "Button", true, false)
+	var pick: Button = buttons.filter(func(b: Node) -> bool: return (b as Button).text == Txt.t("UI_LV_PICK_SKILL"))[0]
+	ok(pick.disabled, "Pick Skill waits for a choice")
+	ok(buttons.size() >= 4, "the options are icon buttons in a row, plus Pick Skill")
+	box.free()
+	_restore(saved)

@@ -1345,6 +1345,10 @@ func _level_up_flow(i: int) -> void:
 	LevelUpUi.picks(box, id, _level_up_flow.bind(i))  # a pick rebuilds this box
 	var waiting := int(Game.rank_state(id).pending) > 0
 	_dialog_button(box, Txt.t("UI_LV_LATER") if waiting else Txt.t("UI_CONTINUE"), _level_up_flow.bind(i + 1))
+	await get_tree().process_frame  # the detail panel fills in on the first frame: stand the taller box on the frame again
+	await get_tree().process_frame
+	if _dialog != null and is_instance_valid(_dialog):
+		_sit_on_frame(_dialog, 1.0)
 
 
 func _end_fight() -> void:

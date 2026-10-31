@@ -870,3 +870,13 @@ UI_LV_UPGRADE,Upgrade %s (step %d of %d)
 UI_LV_LATER,Decide later
 UI_LV_COST,costs %d
 UI_LV_REACH,reach %d to %d
+UI_LV_PICK_SKILL,Pick Skill
+UI_LV_NEW,New ability
+UI_LV_RANK_OF,Rank %d of %d
+UI_LV_NOW,Now: %s
+UI_LV_THEN,Then it can grow: %s
+UI_LV_THIS,This pick: %s
+UI_LV_NEXT,Next rank: %s
+UI_LV_LAST,This is its last rank.
+UI_LV_HEALING,Healing
+UI_LV_REACH_OF,reach %d to %d
