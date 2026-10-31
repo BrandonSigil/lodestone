@@ -57,6 +57,8 @@ func run(m: Node, script: String) -> void:
 				for c in MapOps.line(Vector2i(int(a[1]), int(a[2])), Vector2i(int(a[3]), int(a[4]))):
 					m.call("_apply", c, false)
 				m.set("_stroke", {})
+			"phase":  # phase:<shape|decor|play>
+				m.call("_set_phase", a[1])
 			"level":  # level:<n>: the level height (and the Level tool)
 				m.call("set_level_height", int(a[1]))
 			"ground":  # ground:<terrain int>: the Ground tool's ground

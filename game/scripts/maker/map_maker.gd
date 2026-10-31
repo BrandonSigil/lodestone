@@ -54,6 +54,15 @@ const FIGHT_LABELS := {"hp_pct": "hp %", "attack": "crit (5% a point)", "defense
 const GROUNDS := [["grass", T.GRASS], ["forest", T.FOREST], ["road", T.ROAD], ["stone", T.STONE], ["rock", T.ROCK], ["ruin", T.RUIN], ["water", T.WATER]]
 const PATH_GROUNDS := [["road", T.ROAD], ["stone", T.STONE], ["grass", T.GRASS]]
 const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "tidy", "paint", "path", "river", "cut", "fill", "zone", "deck"]
+## Map creation phases ([USER] 2026-10-30: "break this out into map creation phases"): 1 shape the ground, 2 dress it,
+## 3 set up where players go. Only the current phase's tools and assets show; the view (flat or isometric) and the
+## current tool stay as they are when either changes.
+const PHASES := [["shape", "1  Shape", "The map itself: size, name, environment, ground, height, walls, water, stairs"],
+		["decor", "2  Decor", "What shows on the map: props, foliage, buildings, dressing"],
+		["play", "3  Play", "Where players go: spawns, enemy groups, goals, doors, chests, events and triggers"]]
+const TOOL_PHASE := {"select": ["decor", "play"], "stamp": ["decor", "play"], "erase": ["decor", "play"], "party": ["play"], "enemy": ["play"]}
+const PLAY_DRAWERS := ["Interactables", "Markers"]  ## the catalog drawers that are Play-phase things; the rest is Decor
+const PHASE_PAGES := {"shape": ["map"], "decor": ["assets", "inspect"], "play": ["assets", "inspect"]}
 const THING_COLOR := Color(0.98, 0.84, 0.48)
 const START_COLOR := Color(0.45, 0.72, 1.0)
 const FOE_COLOR := Color(1.0, 0.48, 0.42)
@@ -73,6 +82,7 @@ var gen_seed := 1
 var zoom := 1.0
 var focus := Vector2.ZERO
 var hide_ui := false
+var phase := "shape"
 ## The stamp: a catalog entry and how it's turned.
 var item := {}
 var item_face := 0
@@ -103,6 +113,9 @@ var _opts: PanelContainer
 var _dock: PanelContainer
 var _bottom: PanelContainer
 var _tool_buttons := {}
+var _phase_buttons := {}
+var _rail_col: VBoxContainer
+var _rail_seps: Array[VBoxContainer] = []
 var _title: Label
 var _status: Label
 var _help: Label
@@ -1418,6 +1431,8 @@ func _sync_ui() -> void:
 
 func _set_tool(t: String) -> void:
 	tool = t
+	if not _tool_in_phase(t, phase) and _phase_buttons.size() > 0:
+		_set_phase((TOOL_PHASE.get(t, ["shape"]) as Array)[0], true)  # a shortcut into another phase's tool goes there
 	for k in _tool_buttons:
 		_tool_buttons[k].set_pressed_no_signal(k == t)
 		_tool_buttons[k].queue_redraw()
@@ -1515,8 +1530,8 @@ func _build_ui() -> void:
 	_help.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	sb.add_child(_help)
 	_build_save_as()
-	_set_tool(tool)
 	_show_page("assets")
+	_set_phase("shape")
 
 
 ## The save as card, centred over a dimmed screen: a name, the maps of this kind to pick one to overwrite.
@@ -1610,6 +1625,15 @@ func _build_top() -> void:
 	_icon(bar, "undo", "Undo  (ctrl Z)", undo)
 	_icon(bar, "redo", "Redo  (ctrl shift Z)", redo)
 	bar.add_child(MakerUI.spacer(14))
+	for ph in PHASES:
+		var pb := MakerUI.IconButton.new("", ph[2], 34.0, ph[1])
+		pb.toggle_mode = true
+		pb.button_pressed = ph[0] == phase
+		var pid: String = ph[0]
+		pb.pressed.connect(func() -> void: _set_phase(pid))
+		bar.add_child(pb)
+		_phase_buttons[ph[0]] = pb
+	bar.add_child(MakerUI.spacer(14))
 	_title = MakerUI.label("", 14, MakerUI.INK)
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1673,22 +1697,73 @@ func _build_rail() -> void:
 	_rail.custom_minimum_size.x = RAIL_W
 	var sb: StyleBoxFlat = _rail.get_theme_stylebox("panel")
 	sb.set_content_margin_all(5)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 3)
-	_rail.add_child(col)
+	_rail_col = VBoxContainer.new()
+	_rail_col.add_theme_constant_override("separation", 3)
+	_rail.add_child(_rail_col)
 	for r in TOOLS:
 		if r.size() == 1:
-			var s := MakerUI.separator()
-			s.custom_minimum_size = Vector2(36, 1)
-			col.add_child(MakerUI.spacer(0, 2))
-			col.add_child(s)
-			col.add_child(MakerUI.spacer(0, 2))
+			var sep := VBoxContainer.new()  # a separator with its spacing, shown only between two visible groups
+			sep.add_theme_constant_override("separation", 3)
+			sep.add_child(MakerUI.spacer(0, 2))
+			var line := MakerUI.separator()
+			line.custom_minimum_size = Vector2(36, 1)
+			sep.add_child(line)
+			sep.add_child(MakerUI.spacer(0, 2))
+			_rail_col.add_child(sep)
+			_rail_seps.append(sep)
 			continue
 		var b := MakerUI.IconButton.new(r[1], "%s  (%s)\n%s" % [r[3], r[2], r[4]], 42.0)
 		b.toggle_mode = true
 		b.pressed.connect(_set_tool.bind(String(r[0])))
-		col.add_child(b)
+		_rail_col.add_child(b)
 		_tool_buttons[r[0]] = b
+	_fill_rail()
+
+
+func _tool_in_phase(id: String, ph: String) -> bool:
+	return (TOOL_PHASE.get(id, ["shape"]) as Array).has(ph)
+
+
+## The rail shows only this phase's tools (grouped by the separators between them).
+func _fill_rail() -> void:
+	var pending: VBoxContainer = null
+	var any := false
+	var si := 0
+	for sep in _rail_seps:
+		sep.visible = false
+	for r in TOOLS:
+		if r.size() == 1:
+			pending = _rail_seps[si]
+			si += 1
+			continue
+		var vis := _tool_in_phase(String(r[0]), phase)
+		_tool_buttons[r[0]].visible = vis
+		if vis:
+			if pending != null and any:
+				pending.visible = true
+			pending = null
+			any = true
+
+
+## Move to a phase: its tools, its assets, its tabs. The current tool stays when the phase has it; otherwise the phase's
+## first tool takes over.
+func _set_phase(ph: String, keep_tool := false) -> void:
+	phase = ph
+	for k in _phase_buttons:
+		_phase_buttons[k].set_pressed_no_signal(k == ph)
+		_phase_buttons[k].queue_redraw()
+	_fill_rail()
+	if not keep_tool and not _tool_in_phase(tool, ph):
+		_set_tool({"shape": "raise", "decor": "stamp", "play": "select"}[ph])
+	for k in _tabs:
+		_tabs[k].visible = (PHASE_PAGES[ph] as Array).has(k)
+	var cur := ""
+	for k in _pages:
+		if _pages[k].visible:
+			cur = k
+	if cur == "" or not (PHASE_PAGES[ph] as Array).has(cur):
+		_show_page(PHASE_PAGES[ph][0])
+	_build_catalog()
 
 
 func _build_options() -> void:
@@ -1986,7 +2061,7 @@ func _build_catalog() -> void:
 	_build_recent()
 	var q := _search.text.strip_edges()
 	if q != "":
-		var hits := MakerCatalog.search(q)
+		var hits := MakerCatalog.search(q).filter(func(e: Dictionary) -> bool: return _entry_in_phase(e))
 		_cat_box.add_child(MakerUI.label("%d found" % hits.size(), 11, MakerUI.DIM))
 		var flow := _flow()
 		for e in hits:
@@ -1994,6 +2069,8 @@ func _build_catalog() -> void:
 		_cat_box.add_child(flow)
 		return
 	for dname in MakerCatalog.drawers():
+		if not _drawer_in_phase(dname):
+			continue
 		var groups: Array[String] = []
 		var count := 0
 		for e in MakerCatalog.entries():
@@ -2014,6 +2091,14 @@ func _build_catalog() -> void:
 				if e.drawer == dname and e.group == gname:
 					flow.add_child(_tile_for(e))
 			sub.body.add_child(flow)
+
+
+func _drawer_in_phase(dname: String) -> bool:
+	return PLAY_DRAWERS.has(dname) == (phase == "play")
+
+
+func _entry_in_phase(e: Dictionary) -> bool:
+	return _drawer_in_phase(String(e.drawer))
 
 
 func _flow() -> HFlowContainer:
