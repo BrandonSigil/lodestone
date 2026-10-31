@@ -52,6 +52,13 @@ static func stays_beaten(map_name: String, group: Dictionary, flags: Array) -> b
 
 
 ## The stat mods an elite group's foes fight with (data/combat.csv: tougher; [USER] pc-6, pc-15).
+## The road's cost ([USER] 2026-10-30, "Fights must cost"; docs/design/outing-tuning.md): the ordinary groups on an
+## explore map come with combat.csv `explore_foe_hp_pct` % of their HP. Elite groups and bosses are tuned by hand.
+static func road_mods() -> Dictionary:
+	var pct := int(CombatRules.num("explore_foe_hp_pct"))
+	return {} if pct <= 0 or pct == 100 else {"hp_pct": pct}
+
+
 static func elite_mods() -> Dictionary:
 	return {"hp_pct": int(CombatRules.num("elite_hp_pct")), "damage": int(CombatRules.num("elite_damage")),
 		"defense": int(CombatRules.num("elite_armor"))}

@@ -1271,3 +1271,17 @@ func test_village_v2_every_home_has_a_landing() -> void:
 					found = true
 		ok(found, "%s has a 2 x 2 landing outside it" % t.id)
 	ok(homes >= 8, "the homes' doors are there (%d)" % homes)
+
+
+## The road's cost (combat.csv `explore_foe_hp_pct`): off at 100, and a percent of HP for the ordinary explore groups when set.
+func test_road_mods() -> void:
+	if Db.explore_events.is_empty():
+		Db.reload()
+	var saved: float = Db.combat.get("explore_foe_hp_pct", 100.0)
+	Db.combat["explore_foe_hp_pct"] = 100.0
+	eq(ExploreRules.road_mods(), {}, "100: as written")
+	Db.combat["explore_foe_hp_pct"] = 80.0
+	eq(ExploreRules.road_mods(), {"hp_pct": 80}, "80: four fifths of the HP")
+	var bandit := CombatUnit.enemy(Db.class_def("bandit"), ExploreRules.road_mods())
+	eq(bandit.max_hp, roundi(Db.class_def("bandit").max_hp * 0.8), "and the foe is built with it")
+	Db.combat["explore_foe_hp_pct"] = saved

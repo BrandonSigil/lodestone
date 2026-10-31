@@ -52,3 +52,19 @@ Keep the usual guards: 120 fights a row, no stalls, a non-boss fight losing its 
 ## Hand-offs
 - **Systems developer:** build the carry-over and the three ways back (note `dev-outing-carry`).
 - **Playtester:** measure arrival state and the targets (note `play-outing-targets`).
+
+## First tuning of the road (systems developer, 2026-10-31)
+The playtester measured the outing at Lich wins of 3% on the first try and 21% on the second, against 5 to 10% and 25 to 50%. The road is tuned first, as planned; the Lich is untouched.
+
+**What matters on arrival.** `tools/outing_sim.gd -- -40 5` plays the Lich from set arrival states at level 5 (win % by HP, party first, 40 fights a cell). HP is nearly everything; mana and charges move the win rate by under 5 points for any weapon, because the sword's rage starts at 0 and the dog's and rogue's charges do little against him. Sword: 3% at 50% HP, 5% at 60%, 23% at 75%, 43% at full. Daggers: 5% at 40 to 50%, 15% at 60%, 25% at 75%, 58% at full. Bow: 8% at 50%, 23% at 60%, 33% at 75%, 53% at full. The outing robot arrives at about 30 to 40% HP, which is why the first try is near 3%. The trickle (`trickle_steps`), the camp and the tonic therefore tune how the road feels, not whether the Lich is beatable; they stay as built.
+
+**Variants** (`tools/outing_sim.gd -- 120 8 foe_hp=N`, 120 outings a weapon, a fall sends the party home with its levels): the ordinary foes of the explore maps at a percent of their HP. The sim is harder than the robot on the road (it falls before the throne), so its foes at 70% play like the robot's at 100%, and its numbers are scaled to the robot's baseline (about half the sim's Lich win rate on both tries). Average of sword, daggers and bow:
+
+| foes' HP (shipped, % of written) | arrival HP | Lich try 1 (robot-scaled) | try 2 (robot-scaled) |
+| --- | --- | --- | --- |
+| 100 (before) | 34% | 3% | 21% |
+| 90 | 39% | 3% | 25% |
+| 80 | 43% | 3 to 4% | 30% |
+| 70 | 54% | 5 to 6% | 30% |
+
+**Landed:** `explore_foe_hp_pct` 70 in `combat.csv`: the ordinary groups on the explore maps (not elites, not bosses) come with 70% of their HP (`ExploreRules.road_mods`). Predicted: arrival at about 50% HP, the first try at about 5 to 6%, the second at about 30%. That is a prediction from a sim that does not match the robot's flow, so it needs the playtester's robot at the next milestone to confirm. If the first try is still under 5%, 60 is the next step; if it is over 10%, 80.

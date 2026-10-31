@@ -111,6 +111,8 @@ func _ready() -> void:
 			var depth := ExploreRules.group_depth(map.level, g)  # a boss is tuned by hand: no depth rolls
 			var mods := LevelRules.merge(ExploreRules.elite_mods() if elite else {},
 				ExploreRules.depth_mods(map.map_name, depth, String(g.get("id", "")), g.units.find(e), cls))
+			if not elite and not bool(g.get("boss", false)):
+				mods = LevelRules.merge(mods, ExploreRules.road_mods())
 			var u := CombatUnit.enemy(cls, mods)
 			u.elite = elite
 			u.place(e.cell, grid.height_at(e.cell))

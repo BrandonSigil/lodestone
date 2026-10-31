@@ -94,7 +94,10 @@ func _fight(m: ExploreMap, g: Dictionary, how: String, level: int, weapon: Strin
 	for e: Dictionary in g.units:
 		var cls := Db.class_def(e.id)
 		var depth := ExploreRules.group_depth(m.level, g)  # the place's depth; a boss is tuned by hand
-		var u := CombatUnit.enemy(cls, ExploreRules.depth_mods(m.map_name, depth, String(g.id), g.units.find(e), cls))
+		var mods := ExploreRules.depth_mods(m.map_name, depth, String(g.id), g.units.find(e), cls)
+		if not bool(g.get("boss", false)) and not bool(g.get("elite", false)):
+			mods = LevelRules.merge(mods, ExploreRules.road_mods())  # the road's cost, as in the game
+		var u := CombatUnit.enemy(cls, mods)
 		u.place(e.cell, grid.height_at(e.cell))
 		u.summon_cells = g.get("summon", [] as Array[Vector2i])
 		for c in g.get("exit", []):  # as the explore scene: nothing raised on the way out
