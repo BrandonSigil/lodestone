@@ -7,7 +7,7 @@ Brandon paused all system work so another Claude account can pick up exactly her
 - Role handoff notes: `docs/context/roles/<role>.md`. Start each role from its note, on Sonnet (Opus only for hard problems).
 
 ## Open on Brandon's desk
-- **design-morale** (game designer, present): morale becomes per character, kept between runs, with no hunger. Bands from Heartened to Broken with penalties. Falls cost -5, -15 if nobody helps the character up. Wins, camping, good food, a night in the village and resting at home restore it. Doggo's Good Boy makes morale losses 20% smaller. Proposal in `docs/design/morale.md`. Waiting on his pick: build, softer, or harsher.
+- **design-morale**: ANSWERED 2026-10-31T20:00Z, pick "build". Brandon: "All of this is great. Let's also have days tied to the journey, so that for every day gone, a char acter at home gets X morale." Not routed yet (held for the usage reset). Next: the game designer records it as [USER], replaces "+10 per run left home" with +X per journey day for characters at home, proposes X, and sends the build note to the systems developer.
 - **bush-ne-go** (art runner, go): the blueberry bush NE turn. Brandon runs it by hand in Picsart, with the character board as Image 1 and the bush SE sheet as Image 2. Prompt in `art/prompts/hand-character-board.txt`.
 - **hand-character-board** (art runner, go): the one-picture character board and its prompt. The blueberry bush SE was made with it and approved. It can stay open as the template for new characters, or be closed.
 
