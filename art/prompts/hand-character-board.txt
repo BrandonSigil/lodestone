@@ -1,0 +1,17 @@
+=== PROMPT: SE SHEET (attach the board as Image 1) ===
+Image 1 is a reference board with four labelled panels. It is only a guide: never draw the board, its panels, its borders or its labels.
+
+Draw ONLY a new character animation sprite sheet, filling the whole picture, in the layout of the LAYOUT panel: flat solid magenta background, five rows of boxes, one figure in each numbered box, standing on its diamond, nothing in the crossed-out boxes. Rows from top to bottom: IDLE 4 frames (one of them a blink, eyes closed), WALK 6, ATTACK 6, CAST 6 (one small round soft spark on the fourth), HURT 2 then DOWN 2. The box lines, diamonds, numbers and words of the panel must NOT appear in the picture. No text anywhere.
+
+Draw the character facing like the FACING SE panel: three-quarter front, facing the lower right, seen from a high game camera looking down about 30 degrees, the same in every frame.
+
+Copy only the DRAWING STYLE of the STYLE panel: a soft, slightly wobbly dark warm charcoal marker outline, flat soft watercolour fills with one shadow tone, light from the upper left, muted warm colours, chunky simple shapes. Do NOT copy anything the STYLE panel's people wear or have: no cloak, no hood, no clothes, no boots, no backpack, no sword, no hair, no face shapes. Do not copy the SIZE panel's characters either; use that panel only for height.
+
+Size: the character is a little smaller than the hero in the SIZE panel, standing about 88 per cent of his height, feet on the same ground line, about 96 px tall in a 192 px box. Every frame in a row is the same size with the feet in the same place.
+
+THE CHARACTER: [write the character here, one short paragraph]
+
+=== PROMPT: NE TURN (attach the board as Image 1 and the finished SE sheet as Image 2) ===
+Image 1 is the reference board (never draw it, its panels or its labels). Image 2 is this character's finished SE sheet.
+
+Draw ONLY a new sheet, filling the whole picture, in the layout of the LAYOUT panel, exactly as for the SE sheet, but every frame shows the SAME character from Image 2 turned to face the upper right, three-quarter back view, same design, same colours, same size, same drawing style as Image 2. Same rows and frames: IDLE 4, WALK 6, ATTACK 6, CAST 6 (one small round soft spark on the fourth), HURT 2, DOWN 2. Flat magenta background, nothing in the crossed-out boxes, no box lines, diamonds, numbers, words or labels in the picture.
