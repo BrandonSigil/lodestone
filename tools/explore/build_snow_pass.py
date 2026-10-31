@@ -402,6 +402,81 @@ for y in range(N):
         if P.t(x, y) in "gsd" and (x, y) not in _walk and (x, y) not in LEDGE:
             P.put(x, y, "f")
 
+# Shelves ([USER] 2026-10-30: never a box, "jut outs, dynamics, verticality"; tools/map_shape.py): small pads that jut out
+# of the terraces into the empty rock, each reached by a short stair run (a level a cell) up or down, so the pass has a
+# ragged outline and more climbs. Each sits clear of every thing and foe and of the other shelves.
+import random
+_rng = random.Random(11)
+_walk = P.reach(tuple(P.start[0]))
+_keep = {tuple(t["cell"]) for t in P.things} | {tuple(u["cell"]) for g in P.groups for u in g["units"]}
+_taken = []
+_added = 0
+_cands = [c for c in sorted(_walk) if P.t(*c) in "gds" and all(abs(c[0] - k[0]) + abs(c[1] - k[1]) > 3 for k in _keep)]
+_rng.shuffle(_cands)
+for c in _cands:
+    if _added >= 15:
+        break
+    if any(abs(c[0] - q[0]) + abs(c[1] - q[1]) < 5 for q in _taken):
+        continue
+    for d in _rng.sample([(1, 0), (-1, 0), (0, 1), (0, -1)], 4):
+        ph = P.ht(*c)
+        L = _rng.choice((2, 3))
+        sign = _rng.choice((1, -1))
+        if ph + sign * L < 0 or ph + sign * L > 10:
+            sign = -sign
+            if ph + sign * L < 0 or ph + sign * L > 10:
+                continue
+        side = (-d[1], d[0])
+        run = [(c[0] + d[0] * i, c[1] + d[1] * i) for i in range(1, L + 1)]
+        pad = [(c[0] + d[0] * (L + 1 + i) + side[0] * j, c[1] + d[1] * (L + 1 + i) + side[1] * j) for i in range(3) for j in (-1, 0, 1)]
+        cells = run + pad
+        if not all(P.inb(*q) and P.t(*q) == "." for q in cells):
+            continue
+        # keep a ring of void round it so shelves don't fuse with the terraces
+        ring = [(q[0] + dx, q[1] + dy) for q in cells[1:] for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
+        if any(P.inb(*r) and r not in cells and r != c and P.t(*r) != "." for r in ring):
+            continue
+        for i, q in enumerate(run, 1):
+            P.put(*q, "d", ph + sign * i)
+        for i in range(1, len(run)):  # the lower cell of each rise is a stair
+            lo = run[i - 1] if sign > 0 else run[i]
+            P.put(*lo, "t")
+        for q in pad:
+            P.put(*q, "g", ph + sign * L)
+        _taken.append(c)
+        _added += 1
+        break
+print("shelves added:", _added)
+# Rock outcrops standing in the terraces (cover for fights, and a broken-up edge inside the map): short columns of rock,
+# kept off the roads, stairs, things and foes, never cutting the walk.
+_walk = P.reach(tuple(P.start[0]))
+_outs = []
+_cands = [c for c in sorted(_walk) if P.t(*c) in "gf" and all(abs(c[0] - k[0]) + abs(c[1] - k[1]) > 3 for k in _keep)]
+_rng.shuffle(_cands)
+for c in _cands:
+    if len(_outs) >= 40:
+        break
+    if any(abs(c[0] - q[0]) + abs(c[1] - q[1]) < 3 for q in _outs):
+        continue
+    d = _rng.choice(((1, 0), (0, 1)))
+    cells = [c, (c[0] + d[0], c[1] + d[1])]
+    if not all(P.inb(*q) and P.t(*q) in "gf" and P.ht(*q) == P.ht(*c) for q in cells):
+        continue
+    ring = [(q[0] + dx, q[1] + dy) for q in cells for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
+    if any(P.inb(*r) and P.t(*r) in "t" for r in ring):
+        continue
+    saved = [(q, P.t(*q), P.ht(*q)) for q in cells]
+    _before = len(P.reach(tuple(P.start[0])))
+    for q in cells:
+        P.put(*q, "r", P.ht(*q) + 2)
+    after = P.reach(tuple(P.start[0]))
+    if len(after) < _before - len(cells):  # it would cut the walk
+        for q, t0, h0 in saved:
+            P.put(*q, t0, h0)
+        continue
+    _outs.append(c)
+print("outcrops:", len(_outs))
+
 # --- checks ---
 things = {t["id"]: tuple(t["cell"]) for t in P.things}
 thing_cells = set(things.values())
@@ -572,7 +647,11 @@ def hide_ambusher(path, cell=(7, 15)):
     with open(path) as f:
         data = json.load(f)
     g = data["grid"]
-    assert g["terrain"][cell[1]][cell[0]] == "f" and g["heights"][cell[1]][cell[0]] == "6", "the ambusher's pines moved"
+    if not (g["terrain"][cell[1]][cell[0]] == "f" and g["heights"][cell[1]][cell[0]] == "6"):  # the pines moved: the nearest ones
+        near = sorted(((abs(x - cell[0]) + abs(y - cell[1]), (x, y)) for y in range(g["h"]) for x in range(g["w"])
+                       if g["terrain"][y][x] == "f" and g["heights"][y][x] == "6" and abs(x - cell[0]) + abs(y - cell[1]) <= 3))
+        assert near, "no pines near the ambusher's spot"
+        cell = near[0][1]
     for grp in data["groups"]:
         if grp["id"] == "pass_bandits":
             grp["units"].append({"id": "ambusher", "cell": list(cell), "hidden": True})
