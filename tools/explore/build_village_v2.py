@@ -670,9 +670,10 @@ if CUT_OFF:
 check_village(V, DECKS)
 save_all()
 
-# The town is unfolded into a winding one ([USER] 2026-10-30, redesign): districts moved apart onto terraced islands,
-# joined by bridges where the roads ran, rims bitten, each home given a landing (unfold_village_v2.py).
+# The town is eased into a quaint hillside village ([USER] 2026-10-30, "fewer bigger districts and more quaint ... built in
+# the side of a mountain"): low terraces, no bridges, lanes between everything, rock rising behind, a landing outside
+# every home (hillside_village_v2.py; unfold_village_v2.py holds the shared helpers).
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import unfold_village_v2  # noqa: E402
-if not unfold_village_v2.main(path, path):
-    raise SystemExit("village_v2: could not unfold the town (no cuts reach every thing)")
+import hillside_village_v2  # noqa: E402
+if not hillside_village_v2.main(path, path):
+    raise SystemExit("village_v2: could not ease the town onto its hillside")
