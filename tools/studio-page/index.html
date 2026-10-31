@@ -345,7 +345,11 @@ html.locked { overflow: hidden; }
 .chat-row textarea.dropping { border-color: var(--chat); }
 .chat-row textarea:focus-visible { outline-color: var(--chat); }
 .chat .btn.primary { background: var(--chat); border-color: var(--chat); color: var(--chat-ink); }
-@media (max-width: 560px) { .chat { left: 16px; right: 16px; width: auto; height: calc(100vh - 110px); } }
+/* Phones: the window follows the visible area (above the on-screen keyboard), set from visualViewport in the script */
+@media (max-width: 560px) {
+  .chat { left: 12px; right: 12px; width: auto; top: calc(var(--vv-top, 0px) + max(12px, env(safe-area-inset-top, 0px))); bottom: auto; height: calc(var(--vv-h, 100dvh) - 24px - env(safe-area-inset-top, 0px)); }
+  body.chat-on .chat-fab { display: none; }
+}
 
 /* Pictures attached to an answer or a note */
 .attach { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -1196,7 +1200,7 @@ async function checkWake() {
   renderChatHead();
 }
 function toggleChat(open) {
-  $("chat").hidden = !open; $("chat-fab").setAttribute("aria-expanded", String(open));
+  $("chat").hidden = !open; $("chat-fab").setAttribute("aria-expanded", String(open)); document.body.classList.toggle("chat-on", open);
   if (open) { S.chatJump = true; $("chat-plus").hidden = !S.assets; if (!$("att-chat")) $("chat-att").innerHTML = attachHtml("chat"); renderChat(); checkWake(); $("chat-in").focus(); }
   else renderChat();
 }
@@ -1237,6 +1241,19 @@ $("chat-x").addEventListener("click", () => toggleChat(false));
 $("chat-form").addEventListener("submit", (e) => { e.preventDefault(); sendChat(); });
 $("chat-in").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendChat(); } });
 $("chat-in").addEventListener("input", (e) => { const t = e.target; t.style.height = ""; t.style.height = Math.min(t.scrollHeight, 140) + "px"; });
+// Keep the chat inside the part of the screen the phone keyboard leaves visible.
+function fitChat() {
+  const vv = window.visualViewport, r = document.documentElement.style;
+  r.setProperty("--vv-h", (vv ? vv.height : window.innerHeight) + "px");
+  r.setProperty("--vv-top", (vv ? vv.offsetTop : 0) + "px");
+  const log = $("chat-log");
+  if (chatOpen() && document.activeElement === $("chat-in")) log.scrollTop = log.scrollHeight;
+}
+window.visualViewport?.addEventListener("resize", fitChat);
+window.visualViewport?.addEventListener("scroll", fitChat);
+window.addEventListener("resize", fitChat);
+$("chat-in").addEventListener("focus", () => setTimeout(fitChat, 300));
+fitChat();
 
 /* ---------- data ---------- */
 function watch(coll, key) {
