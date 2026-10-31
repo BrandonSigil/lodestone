@@ -1,12 +1,12 @@
 # Loot: container grids and the after-fight summary
 
-Game designer, 2026-10-31. Approved by Brandon on `design-loot-present` (`[USER]` line in `docs/decisions.md`, with his leftovers rule). Shapes kept, TAKE ALL plus drag, and one shared summary grid are `[USER]` (answered on `design-loot-shapes`, `design-loot-takeall`, `design-loot-summary`). Size by type and locks are still open choice cards and use my picks as defaults, marked `[AI]`. Plain-English text, placeholders only for names.
+Game designer, 2026-10-31. Approved by Brandon on `design-loot-present` (`[USER]` line in `docs/decisions.md`, with his leftovers rule). Shapes kept, TAKE ALL plus drag, and one shared summary grid are `[USER]` (answered on `design-loot-shapes`, `design-loot-takeall`, `design-loot-summary`). Locked and trapped containers are `[USER]` too (`design-loot-locks`). Size by type is the one open choice card and uses my pick as the default, marked `[AI]`. Plain-English text, placeholders only for names.
 
 ## Container grid
 - Open a chest, barrel, crate or body next to you with F or a click. A small grid opens beside the pack and belt, in the game's frames. The pack grid code (`InventoryGrid`, `PackView`) should be reusable for it: a container is a smaller `InventoryGrid` with the same item shapes, stacks and turning.
 - Take items by dragging, or click to send the item to the first spot in the pack that fits (the pack's auto-place). `R` turns an item. TAKE ALL sends everything that fits, stops at the first thing that does not and says so. Items can be put back into the container to swap.
 - Sizes by type, in map data per container: body 2 x 1, barrel 2 x 2, crate 3 x 2, chest 3 x 3. `[AI]` (`design-loot-size`).
-- Locks now, traps later `[AI]` (`design-loot-locks`): a locked container needs a key or a d20 lockpick check by a rogue; a failed check only costs the try, once per visit. No traps yet.
+- Locked and trapped containers (`[USER]` `design-loot-locks`: a chest can be locked, trapped, or both). Two flags in map data. Locked: a key, or a d20 lockpick check by a rogue, one try a visit; a failed try costs only the try. Trapped: opening it springs the trap, damage to whoever opened it (starting at 2 HP through armor, a number in data), unless a rogue's d20 check disarms it first; a failed disarm springs it. With both, the lock opens first, then the trap is sprung or disarmed. `[AI]` numbers and checks.
 - Coins and keys do not take cells: coins go to gold, a key to the key ring.
 - Containers are closed during a fight; bodies open after it.
 
