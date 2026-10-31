@@ -11,7 +11,7 @@ Combat, the loop, water, saves, the UI code, tools and tests in the Godot 4.7.2 
 - Shared checkout ~/lodestone, main only. Never stash, reset or switch branches. Commit only your own files, with one commit per step, ending in "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>". Push after each commit.
 - Never commit Godot 4.7's rewrites: `game/project.godot`, the `*.import` of existing files, `game/tools/overworld_shot.gd.uid`. `game/tests/test_explore.gd` shows as modified by another session; it isn't mine.
 - Tools and tests never write the real save.
-- Studio (https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7, `docs/systems/studio.md`) is written with ArtifactData:
+- Studio (https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5, `docs/systems/studio.md`) is written with ArtifactData:
   - pin every write to an existing doc with `if_version`;
   - `roles/dev` keeps `status`, `now`, `next` and `updated` (from `date -u`);
   - add a `log` line per landed step;

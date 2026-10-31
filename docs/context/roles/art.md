@@ -1,6 +1,6 @@
 # Art runner: handoff (2026-10-30)
 
-Role `art` on the studio page https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7. You report to the main session.
+Role `art` on the studio page https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5. You report to the main session.
 Each turn: read the answered `art` cards and new `notes` for art, read every attached picture, act, then mark the card done.
 
 ## Hard rules

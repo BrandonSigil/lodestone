@@ -1,8 +1,10 @@
 # Lodestone Studio (the home base page)
 
-Brandon's home base: https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 (private to his account). Page source: `tools/studio-page/index.html`. Republish it from the main project conversation, or from any session by passing that URL to the Artifact tool.
+Brandon's home base: https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5 (private to his account; republished from this repo on the new Claude account 2026-10-31). The old page on the first account, https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7, is retired; this account can't open it. Page source: `tools/studio-page/index.html`. Republish it from the main project conversation, or from any session by passing that URL to the Artifact tool.
 
 **Starting your own copy (another Claude account; the page can't be shared outside Brandon's organization):** publish `tools/studio-page/index.html` with the Artifact tool as a new artifact (no `url`), with capabilities `{"db": {}, "assets": {}, "sample": {}, "comments": {}, "downloads": true, "mcp": {"servers": [{"server": "host:lodestone", "tools": ["launch_game"]}]}}`. The `mcp` entry only works once `tools/launcher/install_mcp.py` has registered the launcher on that Mac; drop it if that isn't set up. The repo copy matches the live page as of 2026-10-31. The new page starts with an empty database: re-post the open cards, notes and role rows from `docs/context/studio-snapshot/`. Then put the new URL in this file and in CLAUDE.md.
+
+The page's own pictures (logo, Wren's face, the character-sheet frames) are uploaded assets of the artifact, so a new copy must re-upload them and swap the `/_blob/` ids in the page. Sources: `art/brand/lodestone-logo.webp`, `game/art/source/portraits/dog.png`, `game/art/source/ui/dock/portrait_frame.png`, `game/art/source/ui/menu/look_panel.png`, `look_title_plate.png`, `look_tooltip.png`. The References wall, Library shelves, roadmap, log, chat and the `ui/art` icon map did not carry over to the 2026-10-31 copy; refill them as roles touch them.
 
 Three rooms:
 - **Office**: Brandon's desk (cards that need his answer) and the team panel (each role's status, log and the notes he leaves them).

@@ -2,7 +2,7 @@
 
 ## Job and standing rules
 - Village and explore maps, the map maker, placing art in the world. Studio role id `builder`.
-- Studio: https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 (ArtifactData: `desk`, `notes`, `roles`, `roadmap`, `log`).
+- Studio: https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5 (ArtifactData: `desk`, `notes`, `roles`, `roadmap`, `log`).
   Each turn: read desk cards (`role == builder`, `status == answered`) and notes (`role == builder`, `status == new`),
   act, then mark them done or seen with a `result`. Keep `roles/builder` and the World track (roadmap doc `world`,
   with commit refs) current. Post `log` lines with screenshots. Upload pictures with Artifact `asset: true`.

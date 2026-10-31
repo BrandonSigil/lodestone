@@ -1,6 +1,6 @@
 # Balance officer: handoff (2026-10-31)
 
-Studio role id `balance`, name "Balance officer". Page: https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7.
+Studio role id `balance`, name "Balance officer". Page: https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5.
 
 ## When this role runs
 Only when Brandon calls for it. His words (2026-10-31): "let's add a 'Balance officer' to the team that we invoke at certain times when we want. I think it's nice to be able to dream big, throw things against the wall and see what feels cool and is fun, then we can say 'ok balance officer, tighten the difficulty up'. I dont want this running all the time, I want us to decide when to do it".
