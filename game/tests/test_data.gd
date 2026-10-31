@@ -249,3 +249,23 @@ func test_event_portraits_exist() -> void:
 			ok(ResourceLoader.exists("res://art/source/portraits/%s.png" % name), "event %s: portrait %s" % [id, name])
 	eq(Db.explore_events["dog_free"].portrait, "dog", "meeting the dog shows his face")
 	eq(Db.explore_events["companion_dog"].portrait, "dog", "and so does inviting him")
+
+
+## Every foe in an encounter has a placeholder look (data/foe_looks.csv), every look names a real class with a
+## placeholder name, and every look's ability ids exist, so no foe falls back to the bare dummy.
+func test_foe_looks() -> void:
+	if Db.encounters.is_empty():
+		Db.reload()
+	for enc: String in Db.encounters:
+		for id: String in Db.encounters[enc].units:
+			ok(FoeFigure.has_look(StringName(id)), "encounter %s: %s has a look" % [enc, id])
+	for id: StringName in FoeFigure.ids():
+		var path := "res://data/classes/%s.tres" % id
+		ok(ResourceLoader.exists(path), "look %s: a class" % id)
+		if not ResourceLoader.exists(path):
+			continue
+		var c := Db.class_def(String(id))
+		ok(Txt.t(c.name_key) != c.name_key, "look %s: a placeholder name" % id)
+		for a: StringName in c.abilities:
+			ok(Db.ability(String(a)) != null, "look %s: ability %s exists" % [id, a])
+	ok(FoeFigure.ids().size() >= 10, "10 or more placeholder foes")

@@ -1,0 +1,20 @@
+id,body,size,color,accent,weapon,hat,extra,note
+bandit,biped,1.0,8a5a44,5c3a2c,sword,hood,,placeholder look: hooded sword
+bandit_archer,biped,1.0,6f7a45,4c5530,bow,hood,quiver,placeholder look: hooded bow
+ambusher,biped,0.95,4a4458,2e2a38,dagger,mask,,placeholder look: dark cloak and mask dagger
+foe_mender,biped,1.0,d8d0b4,6aa39a,staff,cowl,,placeholder look: pale robe staff
+foe_hexer,biped,1.0,7a5a8e,4a3460,staff,witch,,placeholder look: pointed hat staff
+foe_warder,biped,1.05,7d8a98,4c5664,sword,helm,shield,placeholder look: helm and round shield
+ogre,biped,1.55,8a9a62,5e6a40,club,bald,belly,big brute
+lich_minion,skeleton,1.0,e4dfcc,6a6458,sword,,,bones
+lich,boss,1.8,4a3a62,b8a0e0,staff,crown,robe,the big baddie
+wolf,quad,1.2,8c8e90,5e6064,,ears,tail,grey wolf
+alpha_wolf,quad,1.5,4c4a50,2e2c32,,ears,mane,big dark wolf
+bear,quad,1.5,7a5636,4e3420,,round_ears,stub,big brown bear
+foe_rusher,quad,1.1,6a4a3a,e8dcc0,,tusks,stub,boar
+foe_bull,quad,1.3,a07a50,e8dcc0,,horns,tail,bull
+slime,blob,0.9,7cb06a,4e7a44,,,,goo blob
+strange_thing,blob,1.05,8a5aa8,e0a050,,stalks,,odd thing from past the Wall
+bat,flyer,0.9,5a4a5e,3a2e40,,ears,,flying
+spider,spider,1.0,4a3e3a,c04838,,,,eight legs
+ice_pillar,crystal,1.1,a8d4e8,e8f6ff,,,,summoned pillar

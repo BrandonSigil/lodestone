@@ -921,3 +921,9 @@ TRAIT_QUICK_HANDS_DESC,Your regular attack is two hits, each 1 weaker than one f
 CHAR_FIRE_MAGE,AMBER
 UNLOCK_MET_FIRE_MAGE,MEET AMBER IN SQUARE
 EX_RECRUIT,FRIEND WAIT IN SQUARE. lorem ipsum. COME?
+ENEMY_ALPHA_WOLF,BIG WOLF. lorem ipsum
+ENEMY_BEAR,BIG BEAR. lorem ipsum
+ENEMY_SLIME,GOO BLOB. lorem ipsum
+ENEMY_BAT,FLAP BAT. lorem ipsum
+ENEMY_SPIDER,LEG BUG. lorem ipsum
+ENEMY_OGRE,BIG OGRE. lorem ipsum
