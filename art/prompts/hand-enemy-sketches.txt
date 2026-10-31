@@ -1,0 +1,44 @@
+ENEMY SKETCHES, the easy way (placeholder foes; nothing here is final)
+Two prompts. Run either in Picsart by hand: GPT image, 2K, aspect 3:2, 2 pictures.
+Image 1 for both: docs/art/characters/dog-reference-sheet.png (the approved dog sheet: it shows the look and how
+one animal turns to face every way). Change any numbered line freely, or leave them as they are.
+
+=== PROMPT A: LINEUP (8 foes, each from the front and from the back) ===
+Image 1 is a style reference only. Copy its DRAWING STYLE: chunky cute board-game-piece creatures, a bold soft dark
+charcoal outline, flat soft colour fills with one shadow tone, light from the upper left, cream paper. Do NOT copy the
+dog, its cloak or its bags.
+
+Draw ONLY a lineup sheet of 8 different enemy creatures for a cosy fantasy tactics game, on plain flat cream paper.
+Four columns by four rows. Each creature fills two cells in its column, one above the other: on top it faces the
+lower right (three-quarter front, face and eyes showing); below it faces the upper right (three-quarter back, the
+back of the head and the tail or back showing, no face). Same creature, same size, same colours in both views.
+Seen from a high game camera looking down about 30 degrees, no perspective.
+
+1: a grey wolf, lean, pointed ears, long muzzle, bushy tail
+2: a big brown bear, round ears, heavy and slow, twice the wolf's size
+3: a wild boar, dark brown, small tusks
+4: a green goo blob with two dot eyes
+5: a small dark bat with big ears and wings
+6: a round dark spider with red eye dots and eight bent legs
+7: a big green ogre with a club and a round belly, twice a person's height
+8: the big baddie: a tall hooded figure in a long dark purple robe, a small gold crown, glowing eyes in a dark hood, a staff
+
+Every creature stands alone with clear empty cream around it. Big simple shapes, about four colours each, nothing
+scary or gory, cute rather than detailed. No text, letters, numbers, labels, grid lines, borders, floor, tiles,
+ground shadows or scenery.
+Avoid: detail, texture, realistic fur, black outlines, gradients, perspective, 3d render, photo.
+
+=== PROMPT B: TURNAROUND (one foe in all five facings, like the dog's top row) ===
+Image 1 is a style and layout reference: copy its DRAWING STYLE and the way its top row turns one animal through five
+facings. Do NOT copy the dog, its cloak or its bags.
+
+Draw ONLY one row of five views of the SAME enemy creature, on plain flat cream paper, evenly spaced left to right,
+same size and baseline in every view: 1 three-quarter front facing the lower right, 2 straight at the camera,
+3 side view facing right, 4 three-quarter back facing the upper right, 5 straight away from the camera.
+Seen from a high game camera looking down about 30 degrees, no perspective.
+
+THE CREATURE: [a grey wolf, lean, pointed ears, long muzzle, bushy tail]
+
+Big simple shapes, about four colours, cute rather than detailed. No text, letters, numbers, labels, floor,
+ground shadow or scenery.
+Avoid: detail, texture, realistic fur, black outlines, gradients, perspective, 3d render, photo.

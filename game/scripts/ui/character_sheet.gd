@@ -202,7 +202,9 @@ func _portrait(s: Dictionary) -> void:
 	elif ResourceLoader.exists(path):
 		_fit(_art(path), true)
 	else:
-		var f := CharacterArt.frame(id, "idle", "se", _time) if CharacterArt.has_art(id) else {}  # its own art, not the dummy
+		var d: CharacterDef = Db.character(id)
+		var art_id: StringName = d.sprite_id() if d != null else id
+		var f := CharacterArt.frame(art_id, "idle", "se", _time) if CharacterArt.has_art(art_id) else {}  # its own art, not the dummy
 		if not f.is_empty():
 			var reg: Rect2 = f.region
 			var crop := Rect2(reg.position + reg.size * Vector2(0.18, 0.08), reg.size * Vector2(0.64, 0.62))  # head and chest

@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cvgr3lbjm85fl"
+
+[deps]
+
+files=["res://data/foe_looks.body.translation", "res://data/foe_looks.size.translation", "res://data/foe_looks.color.translation", "res://data/foe_looks.accent.translation", "res://data/foe_looks.weapon.translation", "res://data/foe_looks.hat.translation", "res://data/foe_looks.extra.translation", "res://data/foe_looks.note.translation"]
+
+source_file="res://data/foe_looks.csv"
+dest_files=["res://data/foe_looks.body.translation", "res://data/foe_looks.size.translation", "res://data/foe_looks.color.translation", "res://data/foe_looks.accent.translation", "res://data/foe_looks.weapon.translation", "res://data/foe_looks.hat.translation", "res://data/foe_looks.extra.translation", "res://data/foe_looks.note.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

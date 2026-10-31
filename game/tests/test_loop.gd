@@ -644,6 +644,34 @@ func test_who_comes_along() -> void:
 	_restore(saved)
 
 
+## The playtest line-up (2026-10-31): everyone with art waits in the square; COME WITH ME unlocks and invites them,
+## STAY HOME benches them, and each fights with their own sprite.
+func test_the_square_recruits_everyone_with_art() -> void:
+	var saved := _fresh_game()
+	Game.meta.flags = []
+	Game.start_adventure()
+	eq(Game.run.members.size(), 1, "the hero alone")
+	for who in ["dog", "fire_mage", "bushberry"]:
+		var ev: Dictionary = Db.explore_events["recruit_" + who]
+		var come: Dictionary = ev.options[0]
+		ok(ExploreRules.need_met(come.need, [], {"party": ["lead"]}), "%s can be asked along" % who)
+		var out := TrailRules.apply_effects(Game.run, ExploreRules.split_effects(come.win).run)
+		Game.absorb(out.unlocks)
+		ok(Game.invite(out.invite), "%s joins" % who)
+		ok(Game.in_party(who))
+	eq(Game.run.members.size(), 4, "a full party of four")
+	var sprites := {}
+	for m in Game.run.members:
+		var u := CombatUnit.from_member(m)
+		sprites[String((m.def as CharacterDef).id)] = String(u.sprite)
+	eq(sprites, {"lead": "lead", "dog": "dog", "fire_mage": "fire_mage", "bushberry": "blueberry_bush"}, "each draws with its own art")
+	var home: Dictionary = Db.explore_events["recruit_fire_mage"].options[1]
+	Game.dismiss(TrailRules.apply_effects(Game.run, home.win).dismiss)
+	ok(not Game.in_party("fire_mage"), "sent home")
+	eq(Game.run.members.size(), 3)
+	_restore(saved)
+
+
 func test_the_gate_asks_go_or_edit() -> void:
 	var saved := _fresh_game()
 	Game.take_weapon("sword")  # nobody leaves unarmed (test_no_leaving_town_unarmed)
