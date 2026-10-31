@@ -287,6 +287,7 @@ func zone_at(c: Vector2i) -> String:
 
 func set_zone(c: Vector2i, z: String) -> void:
 	zones[idx(c)] = z
+	version += 1
 
 
 ## Optional prop keys, saved only when set: "face" (0-3, which drawn angle: `<sprite>_r1`.. `_r3`), "flip"

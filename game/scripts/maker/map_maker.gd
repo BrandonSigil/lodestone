@@ -61,7 +61,6 @@ const FOE_COLOR := Color(1.0, 0.48, 0.42)
 var doc: MapDoc
 var board: CombatBoard
 var overlay: MakerOverlay
-var _flat_drawer: MakerUI.Drawer
 var flat: FlatView  ## the flat sketch mode (Tab): a top-down grid of the same map
 var tool := "select"
 var radius := 0  ## brush size: 0 = one cell
@@ -421,6 +420,8 @@ func _fit_view() -> void:
 	focus = board.board_origin() + bs * 0.5
 	focus += (Vector2(vs.x * 0.5, vs.y * 0.5) - area.get_center()) / zoom
 	_apply_camera()
+	if flat != null and flat.visible:
+		flat.fit()
 
 
 ## Centre the map area on a cell (the outline list's click).
@@ -531,6 +532,27 @@ func _over_ui(p: Vector2) -> bool:
 
 # --- input ------------------------------------------------------------------------------
 
+## A left or right button press or release: the tool code, whichever view it came from.
+func _mouse_button(mb: InputEventMouseButton) -> void:
+	if mb.pressed and mb.alt_pressed:
+		_eyedrop(_cell_under_mouse())
+	elif mb.pressed and _stroke.is_empty() and _move.is_empty() and not _pan:
+		_press(mb.button_index)
+	elif not mb.pressed and not _move.is_empty() and mb.button_index == MOUSE_BUTTON_LEFT:
+		_end_move()
+	elif not mb.pressed and not _stroke.is_empty() and _stroke.button == mb.button_index:
+		_end_stroke()
+
+
+## The level height (number keys in the flat view): and the Level tool, which paints it.
+func set_level_height(h: int) -> void:
+	level_h = clampi(h, 0, 24)
+	if _level_spin != null:
+		_level_spin.set_value_no_signal(level_h)
+	_set_tool("level")
+	_say("level height %d  (Level tool: drag to flatten a terrace at that height)" % level_h)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
@@ -541,14 +563,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif mb.button_index == MOUSE_BUTTON_MIDDLE or (mb.button_index == MOUSE_BUTTON_LEFT and mb.shift_pressed and _stroke.is_empty()):
 			_pan = mb.pressed
 		elif mb.button_index == MOUSE_BUTTON_LEFT or mb.button_index == MOUSE_BUTTON_RIGHT:
-			if mb.pressed and mb.alt_pressed:
-				_eyedrop(_cell_under_mouse())
-			elif mb.pressed and _stroke.is_empty() and _move.is_empty() and not _pan:
-				_press(mb.button_index)
-			elif not mb.pressed and not _move.is_empty() and mb.button_index == MOUSE_BUTTON_LEFT:
-				_end_move()
-			elif not mb.pressed and not _stroke.is_empty() and _stroke.button == mb.button_index:
-				_end_stroke()
+			_mouse_button(mb)
 	elif event is InputEventMouseMotion:
 		var mm := event as InputEventMouseMotion
 		if _pan:
@@ -625,6 +640,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func _cell_under_mouse() -> Vector2i:
+	if flat != null and flat.visible:
+		return flat.cell_under_mouse()  # the flat view is only another view: same tools, its own cell grid
 	return board.pick(board.get_local_mouse_position())
 
 
@@ -1623,8 +1640,6 @@ func set_flat(on: bool) -> void:
 	if flat == null:
 		return
 	flat.visible = on
-	if _flat_drawer != null:
-		_flat_drawer.visible = on
 	board.visible = not on
 	if _view_buttons.has("flat"):
 		(_view_buttons["flat"] as Button).set_pressed_no_signal(on)
@@ -1633,7 +1648,7 @@ func set_flat(on: bool) -> void:
 		flat.position = a.position
 		flat.size = a.size
 		flat.fit()
-		_say("flat sketch mode: drag to paint, right click picks up, 0-9 sets the height")
+		_say("flat view: the same tools. Tab goes back to isometric; 0-9 sets the level height")
 	else:
 		_refresh_marks()
 
@@ -1899,11 +1914,6 @@ func _build_dock() -> void:
 		body.add_theme_constant_override("separation", 6)
 		page.add_child(body)
 		_pages[t[0]] = page
-	_flat_drawer = flat.build_drawer()
-	_flat_drawer.visible = false
-	_flat_drawer.toggled_open.connect(func(_k: String, _o: bool) -> void: flat.set_ground(flat.ground))
-	col.add_child(_flat_drawer)
-	col.move_child(_flat_drawer, 0)  # above the page tabs
 	_build_assets_page(_pages.assets.get_child(0))
 	_insp_box = _pages.inspect.get_child(0)
 	_build_map_page(_pages.map.get_child(0))

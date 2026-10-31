@@ -51,15 +51,15 @@ func run(m: Node, script: String) -> void:
 				m.call("new_blank")
 			"flat":  # flat:on|off, the flat sketch mode
 				m.call("set_flat", a[1] == "on")
-			"fdrawer":  # fdrawer:open, the flat brush drawer on the right panel
-				var fdr: Object = m.get("_flat_drawer")
-				if not fdr.get("open"):
-					fdr.call("_flip")
-			"fpaint":  # fpaint:<x1>:<y1>:<x2>:<y2>:<ground>:<height>: paint a line in the flat view
-				var fv: FlatView = m.get("flat")
-				fv.set_ground(int(a[5]))
-				fv.set_height(int(a[6]))
+			"pline":  # pline:<x1>:<y1>:<x2>:<y2>: apply the current tool along a line (a drag), as a stroke
 				m.call("_push_undo")
-				fv.paint_line(Vector2i(int(a[1]), int(a[2])), Vector2i(int(a[3]), int(a[4])))
+				m.set("_stroke", {"button": MOUSE_BUTTON_LEFT, "done": {}})
+				for c in MapOps.line(Vector2i(int(a[1]), int(a[2])), Vector2i(int(a[3]), int(a[4]))):
+					m.call("_apply", c, false)
+				m.set("_stroke", {})
+			"level":  # level:<n>: the level height (and the Level tool)
+				m.call("set_level_height", int(a[1]))
+			"ground":  # ground:<terrain int>: the Ground tool's ground
+				m.set("paint_t", int(a[1]))
 			"view":  # flip a top-bar view toggle: soft, grid, heights, labels
 				m.call("_toggle_view", a[1])
