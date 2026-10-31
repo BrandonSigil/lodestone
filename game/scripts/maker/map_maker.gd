@@ -33,12 +33,10 @@ const TOOLS := [
 	["party", "party", "U", "Party", "click a walkable cell to stand the party member picked below there (replaces what stands there). Right click: remove what stands there. Battle maps only."],
 	["enemy", "enemy", "E", "Enemy", "click a walkable cell to place the enemy picked below there (replaces what stands there). Right click: remove what stands there. Battle maps only."],
 	["|"],
-	["raise", "raise", "1", "Raise", "click or drag: up one level (each cell once per stroke). Right: down."],
-	["lower", "lower", "2", "Lower", "click or drag: down one level. Right: up."],
-	["level", "level", "3", "Level", "drag: flatten into a terrace at the level height. Right click: take a cell's height."],
-	["smooth", "smooth", "4", "Smooth", "drag: soften bumps toward the ground around them."],
-	["tidy", "tidy", "5", "Tidy", "drag: square off ragged edges under the brush, so edges step two cells at a time and lone spurs and notches go (rule V9). The Map tab's Tidy edges does the whole map."],
-	["pillar", "pillar", "6", "Pillar", "click a cell: it rises two levels over its neighbours into a lone rock pillar, snow-capped in the painted look (rule V10). Right click: back down."],
+	["raise", "height", "1", "Height", "one tool, three modes (the arrows in the options bar; press 1 again to cycle): up raises a level, flat flattens into a terrace at the height box (right click takes a cell's height; - and = change it), down lowers a level. Right click does the opposite."],
+	["smooth", "smooth", "2", "Smooth", "drag: soften bumps toward the ground around them."],
+	["tidy", "tidy", "3", "Tidy", "drag: square off ragged edges under the brush, so edges step two cells at a time and lone spurs and notches go (rule V9). The Map tab's Tidy edges does the whole map."],
+	["pillar", "pillar", "4", "Pillar", "click a cell: it rises two levels over its neighbours into a lone rock pillar, snow-capped in the painted look (rule V10). Right click: back down."],
 	["|"],
 	["paint", "paint", "P", "Ground", "pick a ground type above, then drag to paint it. Painting a hole fills it first. Right: grass."],
 	["path", "path", "L", "Path", "drag a path's course (size 1 to 4: [ and ] set how wide); stairs are cut where it climbs. With 'follow ground' it finds the easiest walk from where you press to where you let go."],
@@ -47,7 +45,7 @@ const TOOLS := [
 	["bridge", "deck", "N", "Bridge", "drag from one landing to another across water, a gap or lower ground: a bridge is built between them at the landings' height (a step if they differ by one), with rails and piers, and the ground under it is not touched. Right drag: take a bridge away along the line. Size 1 to 4 ([ and ]) makes it that many cells wide, rails on its outer edges only."],
 	["deck", "deck", "J", "Deck", "drag: a bridge floor at the level height over the cells, with the lane under it still open (it stands at least two levels over the ground). Right drag: take decks away."],
 	["|"],
-	["region", "square", "A", "Area", "drag a box (or click a flat area) to select cells; then Raise or Lower moves every cell in it one level, keeping its ground, walls, stairs, decks and props. Right click clears the selection. PageUp and PageDown do the same."],
+	["region", "square", "A", "Area", "drag a box (or click a flat area) to select cells; then Height (or PageUp and PageDown) moves every cell in it one level, keeping its ground, walls, stairs, decks and props. Right click clears the selection."],
 	["cut", "cut", "C", "Cut", "cut cells out of the map: the outline, chasms, pits. Right: fill them back."],
 	["fill", "fill", "F", "Fill", "give holes ground again at the height around them. Right: cut."],
 	["zone", "zone", "Z", "Zone", "paint another tile set onto cells (blend forest into ruins). Right: back to the map's set."],
@@ -83,7 +81,9 @@ var flat: FlatView  ## the flat sketch mode (Tab): a top-down grid of the same m
 var tool := "select"
 var width := 1  ## brush size and line width, 1 to 4 cells: the paint brushes, paths, rivers, bridges and stairs
 var square := false
-var level_h := 3  ## LEVEL tool height
+var level_h := 3  ## the height tool's flat mode: the height it flattens to
+const HEIGHT_MODES := ["raise", "level", "lower"]  ## the height tool's modes (tool ids): up, flat, down
+var height_last := "raise"  ## the mode the Height button and the 1 key return to
 var paint_t: int = T.GRASS
 var paint_set := ""  ## the tile set the Ground tool paints with (the material picked)
 var paint_mat := "grass"
@@ -145,6 +145,8 @@ var _save_ok: Button
 var _view_buttons := {}
 # options bar
 var _opt_groups := {}
+var _height_buttons := {}
+var _keys_panel: PanelContainer
 var _radius_slider: HSlider
 var _radius_label: Label
 var _shape_buttons: Array[MakerUI.IconButton] = []
@@ -635,7 +637,7 @@ func _end_box() -> void:
 			if not region.has(n) and g.solid(n) and g.height_at(n) == h and g.terrain_at(n) == t:
 				region[n] = true
 				queue.append(n)
-	_say("%d cells selected: Raise or Lower moves them, drag a box to pick differently" % region.size())
+	_say("%d cells selected: PageUp and PageDown move them, drag a box to pick differently" % region.size())
 
 
 ## Move every selected cell up or down `dz` levels ([USER] 2026-10-30: "a level up or down button that honors whatever
@@ -752,14 +754,32 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_DELETE, KEY_BACKSPACE:
 			_delete_selected()
 		KEY_ESCAPE:
+			if _keys_panel != null and _keys_panel.visible:
+				_keys_panel.visible = false
+				return
 			selection = {}
 			_set_tool("select")
 			_refresh_marks()
 			_build_inspector()
+		KEY_MINUS:
+			if HEIGHT_MODES.has(tool):
+				set_level_height(level_h - 1)
+		KEY_EQUAL:
+			if HEIGHT_MODES.has(tool):
+				set_level_height(level_h + 1)
+		KEY_SLASH:
+			if k.shift_pressed:
+				_toggle_keys()
+		KEY_QUESTION:
+			_toggle_keys()
 		_:
 			for t in TOOLS:
 				if t.size() > 1 and OS.find_keycode_from_string(String(t[2])) == k.keycode:
-					_set_tool(String(t[0]))
+					if t[0] == "raise":  # 1: the Height tool, and pressed again the next mode (up, flat, down)
+						var i := HEIGHT_MODES.find(tool)
+						_set_tool(HEIGHT_MODES[(i + 1) % 3] if i >= 0 else height_last)
+					else:
+						_set_tool(String(t[0]))
 
 
 func _cell_under_mouse() -> Vector2i:
@@ -1578,10 +1598,12 @@ func _sync_ui() -> void:
 
 func _set_tool(t: String) -> void:
 	tool = t
+	if HEIGHT_MODES.has(t):
+		height_last = t
 	if not _tool_in_phase(t, phase) and _phase_buttons.size() > 0:
 		_set_phase((TOOL_PHASE.get(t, ["shape"]) as Array)[0], true)  # a shortcut into another phase's tool goes there
 	for k in _tool_buttons:
-		_tool_buttons[k].set_pressed_no_signal(k == t)
+		_tool_buttons[k].set_pressed_no_signal(k == t or (k == "raise" and HEIGHT_MODES.has(t)))
 		_tool_buttons[k].queue_redraw()
 	if t != "stamp":
 		_mark_tiles()
@@ -1589,6 +1611,8 @@ func _set_tool(t: String) -> void:
 
 
 func _tool_row(id: String) -> Array:
+	if HEIGHT_MODES.has(id):
+		id = "raise"  # the three height modes are one tool on the rail
 	for r in TOOLS:
 		if r.size() > 1 and r[0] == id:
 			return r
@@ -1795,6 +1819,13 @@ func _build_top() -> void:
 		b.toggled.connect(_on_view.bind(key))
 		bar.add_child(b)
 		_view_buttons[key] = b
+	var qb := Button.new()
+	qb.text = "?"
+	qb.tooltip_text = "Keys  (?)"
+	qb.custom_minimum_size = Vector2(30, 30)
+	qb.focus_mode = Control.FOCUS_NONE
+	qb.pressed.connect(_toggle_keys)
+	bar.add_child(qb)
 	_icon(bar, "turn", "Turn the view while editing  (Q). Players only ever see the map's own angle (MAP tab).", func() -> void: board.turn())
 	_icon(bar, "fit", "Fit the map  (space)", _fit_view)
 	_icon(bar, "eye", "Hide the panels  (H)", func() -> void:
@@ -1871,7 +1902,7 @@ func _build_rail() -> void:
 			continue
 		var b := MakerUI.IconButton.new(r[1], "%s  (%s)\n%s" % [r[3], r[2], r[4]], 42.0)
 		b.toggle_mode = true
-		b.pressed.connect(_set_tool.bind(String(r[0])))
+		b.pressed.connect(func() -> void: _set_tool(height_last if r[0] == "raise" else String(r[0])))
 		_rail_col.add_child(b)
 		_tool_buttons[r[0]] = b
 	_fill_rail()
@@ -1970,6 +2001,20 @@ func _build_options() -> void:
 		_shape_buttons.append(b)
 	row.add_child(brush)
 	_opt_groups["brush"] = brush
+	# the height tool's three modes: up, flat, down
+	var hm := HBoxContainer.new()
+	hm.add_theme_constant_override("separation", 3)
+	hm.add_child(MakerUI.separator(true))
+	for m in [["raise", "h_up", "Raise: up one level  (right click: down)"], ["level", "h_flat", "Flatten: into a terrace at the height box  (right click takes a cell's height)"],
+			["lower", "h_down", "Lower: down one level  (right click: up)"]]:
+		var hb := MakerUI.IconButton.new(m[1], m[2], 30.0)
+		hb.toggle_mode = true
+		var mode: String = m[0]
+		hb.pressed.connect(func() -> void: _set_tool(mode))
+		hm.add_child(hb)
+		_height_buttons[mode] = hb
+	row.add_child(hm)
+	_opt_groups["heightmode"] = hm
 	# level height
 	var lvl := HBoxContainer.new()
 	lvl.add_child(MakerUI.separator(true))
@@ -2122,6 +2167,9 @@ func _sync_options() -> void:
 	for o in _shape_buttons:  # the brush shape only matters to the brushes
 		o.visible = BRUSH_TOOLS.has(tool)
 	_opt_groups.level.visible = tool == "level" or tool == "deck"
+	_opt_groups.heightmode.visible = HEIGHT_MODES.has(tool)
+	for m in _height_buttons:
+		(_height_buttons[m] as MakerUI.IconButton).set_pressed_no_signal(m == tool)
 	_opt_groups.paint.visible = tool == "paint"
 	_opt_groups.path.visible = tool == "path"
 	_opt_groups.zone.visible = tool == "zone"
@@ -2791,7 +2839,7 @@ func _build_map_page(body: VBoxContainer) -> void:
 	var keys := MakerUI.Drawer.new("map/keys", "Keys", -1, not _closed.has("map/keys"), 14)
 	keys.toggled_open.connect(_on_drawer)
 	body.add_child(keys)
-	var k := MakerUI.label("Drag paints, right drag does the opposite.\nShift drag, middle drag or two fingers: pan. Arrows pan too.\nWheel or pinch: zoom. Space: fit.\nV select, B place, X erase, 1-4 sculpt, P ground, L path, W river, T stairs, C cut, F fill, Z zone.\nR turn, M mirror, Del delete, Esc deselect, ctrl D copy to the stamp, alt click pick up.\n[ ] size (brush, path, bridge, stairs: 1 to 4), Q turn the view, G grid, H hide panels.\nctrl Z undo, ctrl shift Z redo, ctrl S save, ctrl shift S save as. F8 comes back here after a play test.", 12, MakerUI.DIM)
+	var k := MakerUI.label("Drag paints, right drag does the opposite. Shift drag, middle drag or two fingers: pan.\n\n" + keys_text(), 12, MakerUI.DIM)
 	k.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	keys.body.add_child(k)
 
@@ -2819,6 +2867,40 @@ func _on_open_menu(id: int) -> void:
 		return
 	_open(d)
 	_say("opened " + d.key())
+
+
+## The one key map, built from the tool list so it can't drift: a number key only ever picks a tool (and types nowhere
+## unless a box has focus); the height value is the - and = keys.
+func keys_text() -> String:
+	var names := {}
+	for r in TOOLS:
+		if r.size() > 1:
+			names[r[0]] = "%s %s" % [r[2], r[3]]
+	var groups := []
+	var cur := []
+	for r in TOOLS:
+		if r.size() == 1:
+			groups.append(", ".join(cur))
+			cur = []
+		else:
+			cur.append(names[r[0]])
+	groups.append(", ".join(cur))
+	return "TOOLS\n%s\n\nHEIGHT TOOL  1 again cycles up, flat, down;  - and = change the flat height\nSIZE  [ and ] (brush, path, river, bridge, stairs: 1 to 4)\n\nVIEW  Tab flat or iso, K greybox, G grid, Q turn, Space fit, H hide panels, arrows or shift-drag pan, wheel zoom\nITEMS  R turn, M mirror, Del delete, ctrl D copy to the stamp, alt click pick up, Esc deselect\nAREA  PageUp and PageDown raise or lower the selection\nFILE  ctrl Z undo, ctrl shift Z redo, ctrl S save, ctrl shift S save as, F8 back here after a play test\n\nNumber keys never type into a box unless you clicked in it; Enter or Esc lets go of it." % "\n".join(groups)
+
+
+func _toggle_keys() -> void:
+	if _keys_panel == null:
+		_keys_panel = _card(12)
+		_keys_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+		var l := MakerUI.label(keys_text(), 13, MakerUI.INK)
+		l.custom_minimum_size.x = 520
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_keys_panel.add_child(l)
+		_keys_panel.visible = false
+	_keys_panel.visible = not _keys_panel.visible
+	if _keys_panel.visible:
+		_keys_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		_keys_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 
 
 func _text_button(parent: Control, text: String, cb: Callable) -> Button:

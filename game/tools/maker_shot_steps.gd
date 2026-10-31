@@ -57,6 +57,8 @@ func run(m: Node, script: String) -> void:
 				for c in MapOps.line(Vector2i(int(a[1]), int(a[2])), Vector2i(int(a[3]), int(a[4]))):
 					m.call("_apply", c, false)
 				m.set("_stroke", {})
+			"keys":  # keys: open the ? key map
+				m.call("_toggle_keys")
 			"width":  # width:<n>, the size of the brush or line: 1 to 4
 				m.call("_set_width", int(a[1]))
 			"mat":  # mat:<ground material label with _ for spaces>: pick a ground material for the Ground tool

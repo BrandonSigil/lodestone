@@ -4,7 +4,7 @@ extends Control
 ## cell in the plan look (flat colours on cream paper, the height as a gentle shade). It is only a second view: the
 ## maker's current tool, brush and options stay exactly as they are when Tab switches between the two, and every tool
 ## works here, because mouse presses go to the maker's own tool code with the cell under the mouse from this grid.
-## It adds only its camera: wheel zooms, middle or shift drag pans, digit keys set the level height.
+## It adds only its camera: wheel zooms, middle or shift drag pans, the maker keeps every key.
 
 const T := CombatGrid.T
 ## The plan look's palette (the top-down plan Brandon liked in the crypt presentations).
@@ -80,15 +80,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if k.ctrl_pressed or k.meta_pressed:
 		return
-	if k.keycode >= KEY_0 and k.keycode <= KEY_9:
-		maker.call("set_level_height", k.keycode - KEY_0 + (10 if k.shift_pressed else 0))
-		get_viewport().set_input_as_handled()
-	elif k.keycode == KEY_MINUS:
-		maker.call("set_level_height", int(maker.get("level_h")) - 1)
-		get_viewport().set_input_as_handled()
-	elif k.keycode == KEY_EQUAL:
-		maker.call("set_level_height", int(maker.get("level_h")) + 1)
-		get_viewport().set_input_as_handled()
 
 
 func _zoom(at: Vector2, f: float) -> void:

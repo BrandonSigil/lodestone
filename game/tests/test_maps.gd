@@ -868,6 +868,22 @@ func test_line_width() -> void:
 		eq(f.height_at(Vector2i(2, 5 + off)), 0, "and the bottom")
 
 
+## One key map ([USER] 2026-10-30: "the hotkeys are a bit of a mess"): number keys only pick tools, Height is one tool with
+## three modes, and no two tools share a key.
+func test_maker_key_map() -> void:
+	var mm: GDScript = load("res://scripts/maker/map_maker.gd")
+	var tools: Array = mm.TOOLS
+	var keys := {}
+	for r in tools:
+		if r.size() > 1:
+			ok(not keys.has(r[2]), "key %s is used once" % r[2])
+			keys[r[2]] = r[0]
+	for t in ["lower", "level"]:
+		ok(not tools.any(func(r: Array) -> bool: return r.size() > 1 and r[0] == t), "%s is a mode of Height, not a tool of its own" % t)
+	eq(keys["1"], "raise", "1 is the Height tool")
+	eq(mm.HEIGHT_MODES, ["raise", "level", "lower"], "up, flat, down")
+
+
 ## The bridge kit ([USER] 2026-10-30): drag between two landings across water and a deck is built over it, at the landings'
 ## height, without touching the terrain under it, and it survives saving; the generator uses the same bridge.
 func test_bridge_span_and_kit() -> void:

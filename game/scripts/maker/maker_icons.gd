@@ -113,6 +113,16 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 		"level":
 			_block(0.5, 0.5, 0.36, 0.2)
 			_line([Vector2(0.06, 0.32), Vector2(0.94, 0.32)])
+		"height":  # up arrow, a flat line, down arrow: the three height modes in one
+			_arrow(Vector2(0.24, 0.42), Vector2(0.24, 0.1), 0.12)
+			_arrow(Vector2(0.76, 0.58), Vector2(0.76, 0.9), 0.12)
+			_line([Vector2(0.1, 0.5), Vector2(0.9, 0.5)])
+		"h_up":
+			_arrow(Vector2(0.5, 0.86), Vector2(0.5, 0.14), 0.22)
+		"h_flat":
+			_line([Vector2(0.1, 0.5), Vector2(0.9, 0.5)])
+		"h_down":
+			_arrow(Vector2(0.5, 0.14), Vector2(0.5, 0.86), 0.22)
 		"smooth":
 			_line([Vector2(0.08, 0.7), Vector2(0.24, 0.52), Vector2(0.4, 0.62), Vector2(0.56, 0.42), Vector2(0.72, 0.5), Vector2(0.92, 0.36)])
 			_line([Vector2(0.08, 0.86), Vector2(0.92, 0.86)])
