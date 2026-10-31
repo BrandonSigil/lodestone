@@ -213,7 +213,7 @@ RES_MEDICINE,MED
 RES_FOOD,FOOD
 RES_MANA,MANA
 RES_RAGE,RAGE
-RES_CHARGES,GO
+RES_CHARGES,CHARGES
 TAG_TAUNT,LOOK AT ME
 TAG_SLOW,SLOW
 SKILL_BITE,BITE
@@ -295,27 +295,27 @@ UI_SPELLS,SPELLS lorem
 UI_SPELL_SLOT,SPELL %d
 UI_NO_SPELL,-
 TRAIT_SHIELD_WALL,SHIELD FRIEND
-TRAIT_SHIELD_WALL_DESC,friend next to me ARMOR +1
+TRAIT_SHIELD_WALL_DESC,Friends standing next to you get +1 armor.
 TRAIT_STARLIT,HIGH STAR
-TRAIT_STARLIT_DESC,stand high: spell DMG +1
+TRAIT_STARLIT_DESC,Standing on higher ground than your target: spell damage +1.
 TRAIT_STEADY_AIM,STILL EYE
-TRAIT_STEADY_AIM_DESC,no walk: CRIT +15%
+TRAIT_STEADY_AIM_DESC,"If you did not move this turn, +15% crit chance."
 TRAIT_SCHOLAR,BIG BOOK
-TRAIT_SCHOLAR_DESC,spell DMG +1 FIX +1
+TRAIT_SCHOLAR_DESC,Your spells do 1 more damage and heal 1 more.
 TRAIT_DEEP_ROOTS,DEEP ROOT
-TRAIT_DEEP_ROOTS_DESC,no push. grow HP +1 each turn
+TRAIT_DEEP_ROOTS_DESC,Cannot be pushed. Gains 1 HP at the start of each of its turns.
 TRAIT_BONES,ALL BONE
-TRAIT_BONES_DESC,arrow go through. DMG -2 from far hit
+TRAIT_BONES_DESC,Arrows pass through: ranged hits do 2 less damage.
 TRAIT_DOUBLE_STRIKE,TWO OF US
-TRAIT_DOUBLE_STRIKE_DESC,HIT two time. DMG -1 each
+TRAIT_DOUBLE_STRIKE_DESC,"Attacks twice, each hit doing 1 less damage."
 TRAIT_PACK,PACK
-TRAIT_PACK_DESC,friend next to prey: DMG +1
+TRAIT_PACK_DESC,+1 damage on a foe that a friend is also next to.
 TRAIT_FLAMMABLE,BURNY
-TRAIT_FLAMMABLE_DESC,fire DMG +2 on me
+TRAIT_FLAMMABLE_DESC,Takes 2 more fire damage.
 TRAIT_POISON_BLADES,SICK KNIFE
-TRAIT_POISON_BLADES_DESC,knife hit make SICK. lose HP each turn
+TRAIT_POISON_BLADES_DESC,"Dagger hits poison the target: it loses 1 HP at the start of its next turn, through armor. A new hit renews it and does not stack."
 TRAIT_HIT_AND_RUN,HIT RUN
-TRAIT_HIT_AND_RUN_DESC,hit. then walk rest of walk
+TRAIT_HIT_AND_RUN_DESC,"After attacking, you may walk the rest of your move."
 UI_EX_TITLE,WALK lorem ipsum
 UI_EX_HELP,WASD or click ground = walk. click thing = use. F = use near thing. arrows or right drag = look. wheel = zoom
 UI_EX_WIN,IT WORK. lorem.
@@ -602,25 +602,25 @@ TALK_DOG_3,DOG BRING STICK. lorem ipsum.
 UI_STAY_MAP,STAY ON BIG MAP
 UNLOCK_MET_DOG,FIND DOG IN TOWN
 UI_NEED_WEAPON,You should probably find something to protect yourself with before heading out!
-DESC_STRIKE,HIT DO THING. lorem ipsum
-DESC_SHOVE,PUSH HIT DO THING. lorem ipsum
-DESC_AIMED_SHOT,GOOD SHOT DO THING. lorem ipsum
-DESC_SNARE,TRAP DO THING. lorem ipsum
-DESC_MOONBEAM,MOON BOOM DO THING. lorem ipsum
-DESC_MOON_VEIL,MOON SKIN DO THING. lorem ipsum
-DESC_FIREBALL,FIRE BOOM DO THING. lorem ipsum
-DESC_MEND,FIX DO THING. lorem ipsum
-DESC_POUNCE,JUMP BITE DO THING. lorem ipsum
-DESC_KICK,DIRTY KICK DO THING. lorem ipsum
-DESC_MOON_SLEEP,MOON NAP DO THING. lorem ipsum
-DESC_MOON_TIDE,MOON WAVE DO THING. lorem ipsum
-DESC_STAR_GUIDE,STAR POINT DO THING. lorem ipsum
-DESC_FIREBOLT,FIRE ZAP DO THING. lorem ipsum
-DESC_FROST_BIND,COLD STUCK DO THING. lorem ipsum
-DESC_AID,AID DO THING. lorem ipsum
-DESC_KNOCK_OUT,KNOCK OUT DO THING. lorem ipsum
-DESC_BITE,BITE DO THING. lorem ipsum
-DESC_BARK,BARK DO THING. lorem ipsum
+DESC_STRIKE,"Attack with your weapon. Damage is your weapon damage, plus or minus 1. Free."
+DESC_SHOVE,Hit an adjacent foe for 2 less damage and push it 1 tile away. 10% extra crit chance.
+DESC_AIMED_SHOT,A careful shot: 1 more damage than a normal attack and 15% extra crit chance.
+DESC_SNARE,"Hit a foe for 2 less damage and root it for 1 turn, so it cannot move. 5% extra crit chance."
+DESC_MOONBEAM,"Moon magic on the target tile and the 4 tiles next to it. Everything there takes 1 less than your spell damage, plus or minus 1. It hurts friends too."
+DESC_MOON_VEIL,Cover a friend in moonlight: they take 1 less damage from every hit until your next turn.
+DESC_FIREBALL,"Fire on the target tile and the 4 tiles next to it. Everything there takes your spell damage, plus or minus 1. It hurts friends too."
+DESC_MEND,"Heal a friend, or yourself, for 4 HP plus your magic bonus."
+DESC_POUNCE,Leap on an adjacent foe for 1 more damage than a normal attack and 10% extra crit chance.
+DESC_KICK,Kick an adjacent foe for 1 less damage and push it 1 tile away. 5% extra crit chance.
+DESC_MOON_SLEEP,Put a foe to sleep. It skips its next turn and cannot fight back. Any damage wakes it at once. Always lands.
+DESC_MOON_TIDE,A moon wave hits a foe for 3 less than your spell damage and pushes it 2 tiles away. 5% extra crit chance.
+DESC_STAR_GUIDE,Mark a friend: they get 15% extra crit chance until your next turn.
+DESC_FIREBOLT,"A bolt of fire at one foe for 2 more than your spell damage, plus or minus 1."
+DESC_FROST_BIND,"Cold hits a foe for 2 less than your spell damage and roots it for 1 turn, so it cannot move. 5% extra crit chance."
+DESC_AID,Help up a downed friend next to you. They come back with 25% of their max HP.
+DESC_KNOCK_OUT,Knock out a downed party piece next to you. It is out for the rest of this fight.
+DESC_BITE,Bite an adjacent foe for normal damage and slow it: 2 less move for 1 turn.
+DESC_BARK,"Taunt: foes that can reach you must attack you, until your next turn."
 UI_SHEET_LV,LV
 UI_SHEET_EXP,EXP
 UI_SHEET_HP,HP
@@ -656,15 +656,15 @@ LOG_MARK,%s point. %s come soon
 LOG_SUMMON,%s call bone guy
 UI_CRUMBLE,FALL APART
 UI_SUMMONED,BONE UP
-DESC_LICH_DOOM,BIG BOOM FROM SKY. lorem. RUN OFF GLOW
-DESC_RAISE_DEAD,BONE GUYS GET UP. lorem
+DESC_LICH_DOOM,"Marks a plus-shaped area, then strikes it at the start of his next turn for 4 spell damage. It hits his own minions too. Step out of the marked tiles."
+DESC_RAISE_DEAD,"Raises 2 minions with 6 HP each next to the Lich, up to 4 at once. Used every 3 turns."
 FOE_UNDEAD,DEAD THING
 FOE_BEAST,ANIMAL
 FOE_ARMORED,HARD SHELL
 FOE_FLYING,FLY THING
 ENEMY_AMBUSHER,SNEAKY GUY
 TRAIT_AMBUSH,HIDE HIT
-TRAIT_AMBUSH_DESC,hide. no see. first hit like flank. lorem
+TRAIT_AMBUSH_DESC,Stays hidden until a hero comes within 3 tiles. Its first strike from hiding counts as a flank.
 UI_AMBUSH,THERE!
 LOG_AMBUSH,%s jump out
 UI_BOND_UP,%s + %s CLOSE NOW. BOND %d. lorem
@@ -673,24 +673,24 @@ UI_LS_BOND,%s + %s  BOND %d  (%d/%d)
 UI_LS_TALK,TALK %d
 UI_LS_TALK_AWAY,TALK AT HOME
 BOND_TALK_EMPTY,TWO FRIEND TALK HERE. lorem ipsum. BRANDON WRITE
-TIP_RANGE,REACH %s
-TIP_SELF,ONLY ME
-TIP_AREA,BOOM +%d ROUND
-TIP_HIT,HURT %s
-TIP_CRIT,BIG HIT +%d%%
-TIP_PUSH,SHOVE %d
-TIP_HEAL,FIX %d HP
-TIP_REVIVE,FRIEND GET UP
-TIP_KNOCKOUT,FOE STAY DOWN
-TIP_STATUS,%s %d TURN
-TIP_MAGIC,MAGIC
-TIP_ITEM,USE %s x%d (HAVE %d)
-TIP_COST,COST %d %s (HAVE %d/%d)
-TIP_FREE,FREE
-TIP_COOLDOWN,WAIT %d TURN AFTER
-TIP_CHARGE_BACK,1 CHARGE BACK EVERY %d TURN
-TIP_MANA_BACK,MANA BACK %d%% EVERY TURN
-TIP_NO_WAIT,NO WAIT
+TIP_RANGE,Range %s
+TIP_SELF,Self only
+TIP_AREA,Area radius %d
+TIP_HIT,Damage %s
+TIP_CRIT,+%d%% crit chance
+TIP_PUSH,Pushes %d
+TIP_HEAL,Heals %d HP
+TIP_REVIVE,Helps a downed friend up
+TIP_KNOCKOUT,Knocks a downed piece out for this fight
+TIP_STATUS,%s for %d turn
+TIP_MAGIC,Magic
+TIP_ITEM,Uses %s x%d (you have %d)
+TIP_COST,Cost %d %s (you have %d of %d)
+TIP_FREE,Free
+TIP_COOLDOWN,Can't be used again for %d turns
+TIP_CHARGE_BACK,1 charge comes back every %d turns
+TIP_MANA_BACK,Mana refills %d%% each turn
+TIP_NO_WAIT,Can be used every turn
 UI_ACTION_UI,UI: %s
 UI_LAYOUT_LIST,LIST
 UI_LAYOUT_DOCK,DOCK
@@ -699,7 +699,7 @@ ELEM_MOON,MOON
 ELEM_FROST,COLD
 ENEMY_ICE_PILLAR,ICE STICK
 SKILL_RAISE_ICE,ICE STICK UP
-DESC_RAISE_ICE,COLD STICK GROW BY YOU. STAND NEXT. GET COLD. lorem
+DESC_RAISE_ICE,"Grows 1 ice pillar next to your party, up to 8. A party piece loses 1 HP at the end of its turn for each pillar next to it, at most 2. A pillar has 6 HP and can be broken."
 TAG_COLD,COLD
 FOE_ICE,ICE
 UI_OPTIONS,OPTIONS
@@ -713,24 +713,24 @@ ACT_ABILITIES,TRICKS
 ACT_ITEMS,STUFF
 SKILL_CARRY,CARRY
 SKILL_COMMAND,GO DOG
-DESC_CARRY,DOG GRAB FRIEND. RUN 3. lorem
-DESC_COMMAND,YOU GIVE UP YOU HIT. DOG GO AGAIN NOW. lorem
+DESC_CARRY,"After you move, pick up an adjacent friend, standing or downed, and set them down up to 3 tiles further on."
+DESC_COMMAND,"Give up your action. A friend takes a full extra turn right away, move and action. Once every 3 turns."
 LOG_COMMAND,%s go again
-TIP_CARRY,CARRY FRIEND %d MORE
-TIP_COMMAND,COST YOU HIT. FRIEND GO AGAIN
+TIP_CARRY,Carries a friend %d more tiles
+TIP_COMMAND,Costs your action; a friend takes a full extra turn
 UI_SWAP,NEXT GUY
 SKILL_SHADOW_SWAP,SNEAK SWAP
 SKILL_OVERWATCH,WAIT SHOOT
 SKILL_WARD,NO HURT SPELL
-DESC_SHADOW_SWAP,TRADE SPOT WITH FRIEND. 3 AWAY. IS YOU WALK. STILL HIT AFTER. lorem
-DESC_OVERWATCH,BOW WAIT. FIRST FOE COME CLOSE GET SHOT. STOP. lorem
-DESC_WARD,FRIEND NEXT HURT IS NOTHING. ONLY TILL YOU NEXT TURN. lorem
+DESC_SHADOW_SWAP,"Trade places with a friend up to 3 tiles away, even through foes, with no free hits. It uses your move, so you can still act after. Once every 3 turns."
+DESC_OVERWATCH,"Stay ready: until your next turn, the first foe to move into your bow's reach is stopped and shot once."
+DESC_WARD,Protect a friend: the next hit on them does no damage and has no side effects. Lasts until it is used or your next turn.
 TAG_WARD,NO HURT
 TAG_OVERWATCH,WATCHING
-TIP_SWAP,TRADE SPOT. IS YOU WALK. NO FREE HIT
+TIP_SWAP,"Trades places. Uses your move, no free hits"
 TRAIT_STAND_WATCH,STAND WATCH
-TRAIT_STAND_WATCH_DESC,NO WALK. BOW WAIT FOR FIRST FOE COME CLOSE. lorem
-TIP_WARD_TIME,ONLY TILL YOU NEXT TURN
+TRAIT_STAND_WATCH_DESC,"If you do not move, you end your turn on watch: the first foe to walk into your bow's reach is stopped and shot once, until your next turn."
+TIP_WARD_TIME,until your next turn
 ACT_BELT,BELT
 UI_OPT_UI_SIZE,SMALL STUFF SIZE
 SKILL_GOAD,GOAD
@@ -754,27 +754,27 @@ SKILL_BOMB,BOMB
 SKILL_CALTROPS,CALTROPS
 SKILL_PATCH,PATCH
 SKILL_SMOKE_BOMB,SMOKE BOMB
-DESC_GOAD,MAKE FOE HIT YOU. STOP. lorem
-DESC_CLEAVE,HIT BIG ARC. lorem
-DESC_SECOND_WIND,HEAL SELF. lorem
-DESC_LEAP,JUMP FAR. lorem
-DESC_BACKSTAB,HIT FROM SIDE. BIG CRIT. lorem
-DESC_VOLLEY,MANY ARROW. lorem
-DESC_TRAP,HIDE FLOOR HURT. lorem
-DESC_LURE,PULL FOE CLOSE. lorem
-DESC_CALL_COMPANION,PET GO AGAIN. lorem
-DESC_IGNITE,FIRE ON FLOOR IN LINE. lorem
-DESC_FLASH,BRIGHT. FOE CANT SEE. lorem
-DESC_FAR_AID,PICK UP FRIEND FAR. lorem
-DESC_RENEW,HEAL SLOW. lorem
-DESC_RALLY,FRIEND MOVE AGAIN. lorem
-DESC_DISSONANCE,BAD NOISE. FOE SCARED. lorem
-DESC_LAST_STAND,FRIENDS STAY UP LONGER. lorem
-DESC_INSPIRE,FRIENDS HIT HARDER. lorem
-DESC_BOMB,BIG BOOM. lorem
-DESC_CALTROPS,SPIKE ON FLOOR. FOE SLOW. lorem
-DESC_PATCH,FIX FRIEND. lorem
-DESC_SMOKE_BOMB,SMOKE. NO SEE. lorem
+DESC_GOAD,"Taunt: foes that can reach you must attack you, until your next turn."
+DESC_CLEAVE,"Sweep the target tile and the 4 tiles next to it with your weapon. Every foe there takes your damage, plus or minus 1."
+DESC_SECOND_WIND,Heal yourself for 4 HP.
+DESC_LEAP,"Jump up to 3 tiles in one move, ignoring height."
+DESC_BACKSTAB,Hit an adjacent foe for 1 more damage than a normal attack and 20% extra crit chance.
+DESC_VOLLEY,Fire at an area: everything on the target tile and the 4 tiles next to it takes 1 less than your normal damage. It hurts friends too.
+DESC_TRAP,Hide a trap on a tile. A foe that steps on it takes 2 damage.
+DESC_LURE,Pull a foe 2 tiles toward you and hit it for 3 less than your normal damage.
+DESC_CALL_COMPANION,Your companion takes another turn right away.
+DESC_IGNITE,Set a line of 2 to 3 tiles on fire. Whoever stands in it takes 1 fire damage plus your spell bonus and burns for 3 turns. The fire also blocks the way.
+DESC_FLASH,Blind the foes in a small area for 1 turn. They cannot attack from a distance.
+DESC_FAR_AID,Help up a downed friend from up to 3 tiles away. They come back with 25% of their max HP.
+DESC_RENEW,"Heal a friend for 1 HP plus your magic bonus now, then the same at the start of each of their next 3 turns."
+DESC_RALLY,"A friend within range moves again this turn, with 1 extra move."
+DESC_DISSONANCE,Scare a foe: it hits for 1 less damage for 1 turn.
+DESC_LAST_STAND,Allies within 3 tiles stay downed one turn longer before they bleed out.
+DESC_INSPIRE,Allies within 2 tiles hit for 1 more damage until your next turn.
+DESC_BOMB,Throw a bomb at the target tile and the 4 tiles next to it. Everything there takes 1 more than your normal damage. It hurts friends too.
+DESC_CALTROPS,Scatter spikes on a tile. A foe crossing it takes 2 less than your normal damage and is slowed: 2 less move for 1 turn.
+DESC_PATCH,Heal an adjacent friend for 3 HP using supplies from your pack.
+DESC_SMOKE_BOMB,"Throw smoke over a small area. For 1 turn nobody can see into or through it, so ranged attacks across it are blocked."
 JOB_REAVER,AXE GUY
 JOB_TRACKER,TRAP GUY
 JOB_EMBER,FIRE GUY
@@ -815,11 +815,11 @@ SKILL_FOE_SPOOK,SCARE
 SKILL_FOE_SLOW,SLOW
 SKILL_FOE_WARD,FOE SHIELD
 SKILL_GORE,GORE
-DESC_FOE_MEND,HEAL FOE FRIEND. lorem
-DESC_FOE_SPOOK,SCARE HERO. HIT SOFT. lorem
-DESC_FOE_SLOW,SLOW HERO. lorem
-DESC_FOE_WARD,FOE FRIEND TOUGH TILL NEXT TURN. lorem
-DESC_GORE,HIT AND SHOVE. lorem
+DESC_FOE_MEND,Heal a foe friend for 3 HP plus magic.
+DESC_FOE_SPOOK,Scare a hero: it hits for 1 less damage until the end of this phase.
+DESC_FOE_SLOW,Slow a hero: 2 less move for 1 turn.
+DESC_FOE_WARD,A foe friend within range gets 2 extra armor until this foe's side next moves.
+DESC_GORE,Hit an adjacent hero and push it 1 tile away.
 MOD_FOE_WARD,FOE SHIELD
 MOD_CHARGE,RUSH
 UI_PHASE,CHANGE
@@ -827,7 +827,7 @@ LOG_PHASE,%s CHANGE. lorem
 TAG_SPOOK,SCARED
 TAG_FOE_WARD,FOE SHIELD
 SKILL_THROW_DAGGER,THROW KNIFE
-DESC_THROW_DAGGER,THROW KNIFE FAR. FINISH FOE. lorem
+DESC_THROW_DAGGER,Throw a dagger for 1 less than your normal damage and 10% extra crit chance. A short ranged attack to finish a foe.
 LOG_ROUND,ROUND %d. YOUR TURN.
 LOG_FOES_MOVE,FOES GO.
 LOG_MOVE,%s WALK %d.
@@ -847,3 +847,19 @@ UI_CAMP_NO_FOOD,NOT ENOUGH FOOD TO REST.
 UI_CAMP_TONIC,DRINK TONIC
 UI_CAMP_TONIC_DONE,TONIC. POWER BACK.
 UI_PACK_TONIC,TONIC %d
+TAGDESC_GUARD,+2 armor until its next turn. Foes next to it must attack it or take a free hit when they walk away.
+TAGDESC_VEIL,+1 armor until the caster's next turn.
+TAGDESC_ROOTED,Cannot move.
+TAGDESC_SPOOKED,Hits for 1 less damage.
+TAGDESC_SPOOK,Hits for 1 less damage until the end of this phase.
+TAGDESC_TAUNT,"Foes that can reach it must attack it, until its next turn."
+TAGDESC_SLOW,2 less move for 1 turn.
+TAGDESC_SLEEP,Skips its next turn and cannot fight back. Any damage wakes it.
+TAGDESC_GUIDED,15% extra crit chance until its next turn.
+TAGDESC_WARD,The next hit does no damage and has no side effects.
+TAGDESC_OVERWATCH,The first foe to move into its reach is stopped and shot once.
+TAGDESC_FOE_WARD,2 extra armor until the warder's side next moves.
+TAGDESC_BLEED,Loses 1 HP at the start of each of its turns.
+TAGDESC_POISON,"Loses 1 HP at the start of its next turn, through armor."
+TAGDESC_COLD,"Loses 1 HP at the end of its turn for each ice pillar next to it, at most 2."
+TAGDESC_ELITE,"Elite: 150% HP, 1 more damage, 1 more armor, and pays 150% XP."

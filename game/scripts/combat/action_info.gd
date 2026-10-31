@@ -49,6 +49,9 @@ static func lines(u: CombatUnit, a: Ability) -> PackedStringArray:
 	var desc := "DESC_" + a.id.to_upper()
 	if Txt.has(desc):
 		out.append(Txt.t(desc))
+	var st := "TAGDESC_" + a.status.to_upper()
+	if a.status != "" and Txt.has(st):  # what the status it gives does, in plain words
+		out.append(Txt.t("TAG_" + a.status.to_upper()) + ": " + Txt.t(st))
 	return out
 
 
