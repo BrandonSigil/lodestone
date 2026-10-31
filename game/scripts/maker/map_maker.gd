@@ -51,6 +51,13 @@ const TOOLS := [
 	["zone", "zone", "Z", "Zone", "paint another tile set onto cells (blend forest into ruins). Right: back to the map's set."],
 ]
 const FIGHT_LABELS := {"hp_pct": "hp %", "attack": "crit (5% a point)", "defense": "armor", "damage": "damage", "move": "move"}
+## Ground materials ([USER] 2026-10-30: "we call everything grass right now": one map should go from snow into a castle):
+## [label, ground, tile set]. The ground sets what a cell is (walkable, cover, cost), the tile set what it looks like, per
+## cell, so a map can start snowy and move into a castle. Saved maps keep their per-cell sets (grid zones), so old maps load.
+const MATERIALS := [["grass", T.GRASS, ""], ["forest", T.FOREST, ""], ["snow", T.GRASS, "snow"], ["snow pines", T.FOREST, "snow"],
+		["dirt", T.ROAD, ""], ["stone floor", T.STONE, "ruins"], ["castle tiles", T.STONE, "dungeon"], ["cobbles", T.STONE, "village"],
+		["marsh", T.GRASS, "marsh"], ["farmland", T.GRASS, "farmland"], ["canyon rock", T.ROCK, "canyon"], ["rock", T.ROCK, ""],
+		["ruin", T.RUIN, ""], ["water", T.WATER, ""]]
 const GROUNDS := [["grass", T.GRASS], ["forest", T.FOREST], ["road", T.ROAD], ["stone", T.STONE], ["rock", T.ROCK], ["ruin", T.RUIN], ["water", T.WATER]]
 const PATH_GROUNDS := [["road", T.ROAD], ["stone", T.STONE], ["grass", T.GRASS]]
 const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "tidy", "paint", "path", "river", "cut", "fill", "zone", "deck"]
@@ -76,6 +83,8 @@ var radius := 0  ## brush size: 0 = one cell
 var square := false
 var level_h := 3  ## LEVEL tool height
 var paint_t: int = T.GRASS
+var paint_set := ""  ## the tile set the Ground tool paints with (the material picked)
+var paint_mat := "grass"
 var path_t: int = T.ROAD
 var follow_ground := false
 var gen_seed := 1
@@ -849,6 +858,9 @@ func _apply(c: Vector2i, right: bool) -> void:
 		"paint":
 			MapOps.fill(g, cells)
 			MapOps.paint(g, cells, T.GRASS if right else paint_t)
+			for p in cells:
+				if g.solid(p):
+					g.set_zone(p, "" if right else paint_set)  # the material's look, per cell
 		"erase":
 			for p in cells:
 				var i := _thing_at(p)
@@ -1066,6 +1078,17 @@ func _readd(a: Vector2i, p: Dictionary) -> void:
 ## Alt click: take what's under the cursor as the stamp (with its angle).
 func _eyedrop(c: Vector2i) -> void:
 	if c == CombatBoard.NONE:
+		return
+	if tool == "paint":  # alt click with the Ground tool picks up the ground material under the cursor
+		var g := doc.grid
+		for mat in MATERIALS:
+			if mat[1] == g.terrain_at(c) and mat[2] == g.zone_at(c) and _ground_buttons.has(mat[0]):
+				paint_t = mat[1]
+				paint_set = mat[2]
+				paint_mat = mat[0]
+				for k in _ground_buttons:
+					_ground_buttons[k].set_pressed_no_signal(k == paint_mat)
+				return
 		return
 	var a := doc.grid.prop_anchor(c)
 	if a == CombatGrid.NONE_CELL:
@@ -1825,8 +1848,16 @@ func _build_options() -> void:
 	var ground := HBoxContainer.new()
 	ground.add_theme_constant_override("separation", 3)
 	ground.add_child(MakerUI.separator(true))
-	for gnd in GROUNDS:
-		ground.add_child(_swatch(gnd[0], gnd[1], _ground_buttons, func(t: int) -> void: paint_t = t))
+	for mat in MATERIALS:
+		if mat[2] != "" and not BattleArt.sets().has(mat[2]):
+			continue  # no art for that set in this build
+		var label: String = mat[0]
+		var mset: String = mat[2]
+		var pick := func(t: int) -> void:
+			paint_t = t
+			paint_set = mset
+			paint_mat = label
+		ground.add_child(_swatch(label, mat[1], _ground_buttons, pick, mset))
 	row.add_child(ground)
 	_opt_groups["paint"] = ground
 	var path := HBoxContainer.new()
@@ -1899,14 +1930,14 @@ func _build_options() -> void:
 
 
 ## A ground swatch: a little tile of the set's own ground texture.
-func _swatch(id: String, t: int, group: Dictionary, cb: Callable) -> Button:
+func _swatch(id: String, t: int, group: Dictionary, cb: Callable, tile_set := "") -> Button:
 	var b := Button.new()
 	b.toggle_mode = true
 	b.focus_mode = Control.FOCUS_NONE
 	b.custom_minimum_size = Vector2(36, 34)
 	b.tooltip_text = id
 	b.draw.connect(func() -> void:
-		var tex := BattleArt.top(t, doc.art_set if doc != null else "")
+		var tex := BattleArt.top(t, tile_set if tile_set != "" else (doc.art_set if doc != null else ""))
 		var c := b.size * 0.5 + Vector2(0, -1)
 		var hw := 13.0
 		var pts := PackedVector2Array([c + Vector2(0, -hw * 0.55), c + Vector2(hw, 0), c + Vector2(0, hw * 0.55), c + Vector2(-hw, 0)])
@@ -1922,7 +1953,7 @@ func _swatch(id: String, t: int, group: Dictionary, cb: Callable) -> Button:
 		for k in group:
 			group[k].set_pressed_no_signal(k == id))
 	group[id] = b
-	b.button_pressed = (t == paint_t) if group == _ground_buttons else (t == path_t)
+	b.button_pressed = (id == paint_mat) if group == _ground_buttons else (t == path_t)
 	return b
 
 

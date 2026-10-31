@@ -760,3 +760,33 @@ func test_wall_kit_back_walls_face_the_room() -> void:
 	var blocks := ExploreRules.shape_walls(plain, [Vector2i(0, 1), Vector2i(1, 0)])
 	ok((blocks.backs as Dictionary).is_empty(), "no kit, no pieces")
 	eq(plain.height_at(Vector2i(2, 0)), 1 + ExploreRules.WALL_TALL, "and the block walls stand as before")
+
+
+## A map can have more than one ground look ([USER] 2026-10-30): the Ground tool paints a material, ground and tile set
+## per cell, so one map can run from snow into a castle, and it saves and loads.
+func test_ground_materials_are_per_cell() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	var keep: String = tree.root.get_node("Game").get("maker_map")
+	var maker: Node = load("res://scenes/map_maker.tscn").instantiate()
+	tree.root.add_child(maker)
+	maker.call("_open", MapDoc.create("battle", "test_tmp", _island(10, 1), "village_in"))
+	maker.call("_set_tool", "paint")
+	maker.set("paint_t", CombatGrid.T.GRASS)
+	maker.set("paint_set", "snow")
+	maker.set("_stroke", {"button": MOUSE_BUTTON_LEFT, "done": {}})
+	maker.call("_apply", Vector2i(2, 2), false)
+	maker.set("paint_t", CombatGrid.T.STONE)
+	maker.set("paint_set", "dungeon")
+	maker.call("_apply", Vector2i(7, 7), false)
+	maker.set("_stroke", {})
+	var g: CombatGrid = maker.get("doc").grid
+	eq(g.zone_at(Vector2i(2, 2)), "snow", "a snowy cell")
+	eq(g.zone_at(Vector2i(7, 7)), "dungeon", "and a castle cell on the same map")
+	eq(g.terrain_at(Vector2i(7, 7)), CombatGrid.T.STONE, "the ground is stone")
+	var back := CombatGrid.from_dict(g.to_dict())
+	eq(back.zone_at(Vector2i(2, 2)), "snow", "the sets survive saving")
+	eq(back.zone_at(Vector2i(7, 7)), "dungeon", "both of them")
+	eq(back.zone_at(Vector2i(0, 0)), "", "other cells keep the map's own set")
+	tree.root.remove_child(maker)
+	maker.free()
+	tree.root.get_node("Game").set("maker_map", keep)

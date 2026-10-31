@@ -57,6 +57,14 @@ func run(m: Node, script: String) -> void:
 				for c in MapOps.line(Vector2i(int(a[1]), int(a[2])), Vector2i(int(a[3]), int(a[4]))):
 					m.call("_apply", c, false)
 				m.set("_stroke", {})
+			"radius":  # radius:<n>, the brush radius
+				m.call("_set_radius", int(a[1]))
+			"mat":  # mat:<ground material label with _ for spaces>: pick a ground material for the Ground tool
+				for mat in m.get("MATERIALS"):
+					if String(mat[0]) == String(a[1]).replace("_", " "):
+						m.set("paint_t", int(mat[1]))
+						m.set("paint_set", String(mat[2]))
+						m.set("paint_mat", String(mat[0]))
 			"phase":  # phase:<shape|decor|play>
 				m.call("_set_phase", a[1])
 			"level":  # level:<n>: the level height (and the Level tool)
