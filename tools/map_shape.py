@@ -3,7 +3,7 @@
 ([USER] 2026-10-30: "is the entire map basically just a big box? if yes, don't show it to me and work on it. Unique
 shapes, jut outs, dynamics, verticality!").
 
-    python3 tools/map_shape.py game/data/explore/crypt.json [more maps...]
+    python3 tools/map_shape.py game/data/explore/crypt.json [more maps...] [--strict]   (strict: the higher bar for a map pushed further)
 
 Measures the walkable footprint (cells a piece can stand on: not rock, void or deep water) and prints:
   fill       share of the bounding box the footprint covers          (a box is near 1; winding is low)
@@ -97,7 +97,13 @@ def measure(path):
             "corners": round(corners_100, 1), "bays": round(bays_avg, 2), "levels": levels, "climbs": runs, "drop": drop}
 
 
-def verdict(m):
+STRICT = {"MAX_FILL": 0.42, "MIN_EDGE": 2.0, "MIN_CORNERS": 25.0, "MIN_BAYS": 0.6, "MIN_LEVELS": 11, "MIN_CLIMBS": 12}  # the standard bar is 0.45 / 1.8 / 14 / 0.3 / 8 / 8
+
+
+def verdict(m, strict=False):
+    global MAX_FILL, MIN_EDGE, MIN_CORNERS, MIN_BAYS, MIN_LEVELS, MIN_CLIMBS
+    if strict:  # the higher bar: a map Brandon asked to push further
+        MAX_FILL, MIN_EDGE, MIN_CORNERS, MIN_BAYS, MIN_LEVELS, MIN_CLIMBS = [STRICT[k] for k in ("MAX_FILL", "MIN_EDGE", "MIN_CORNERS", "MIN_BAYS", "MIN_LEVELS", "MIN_CLIMBS")]
     why = []
     if m["fill"] > MAX_FILL:
         why.append(f"fills {m['fill']:.0%} of its box (max {MAX_FILL:.0%})")
@@ -116,9 +122,10 @@ def verdict(m):
 
 if __name__ == "__main__":
     bad = False
-    for f in sys.argv[1:]:
+    strict = "--strict" in sys.argv
+    for f in [a for a in sys.argv[1:] if not a.startswith("--")]:
         m = measure(f)
-        why = verdict(m)
+        why = verdict(m, strict)
         bad |= bool(why)
         print(("ok   " if not why else "BOX  ") + json.dumps(m) + ("" if not why else "  <- " + "; ".join(why)))
     sys.exit(1 if bad else 0)

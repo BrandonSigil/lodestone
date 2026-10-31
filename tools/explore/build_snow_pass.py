@@ -414,21 +414,23 @@ _added = 0
 _cands = [c for c in sorted(_walk) if P.t(*c) in "gds" and all(abs(c[0] - k[0]) + abs(c[1] - k[1]) > 3 for k in _keep)]
 _rng.shuffle(_cands)
 for c in _cands:
-    if _added >= 15:
+    if _added >= 14:
         break
     if any(abs(c[0] - q[0]) + abs(c[1] - q[1]) < 5 for q in _taken):
         continue
     for d in _rng.sample([(1, 0), (-1, 0), (0, 1), (0, -1)], 4):
         ph = P.ht(*c)
-        L = _rng.choice((2, 3))
+        L = _rng.choice((3, 4, 5))
         sign = _rng.choice((1, -1))
-        if ph + sign * L < 0 or ph + sign * L > 10:
+        if ph + sign * L < 0 or ph + sign * L > 12:
             sign = -sign
-            if ph + sign * L < 0 or ph + sign * L > 10:
+            if ph + sign * L < 0 or ph + sign * L > 12:
                 continue
         side = (-d[1], d[0])
         run = [(c[0] + d[0] * i, c[1] + d[1] * i) for i in range(1, L + 1)]
-        pad = [(c[0] + d[0] * (L + 1 + i) + side[0] * j, c[1] + d[1] * (L + 1 + i) + side[1] * j) for i in range(3) for j in (-1, 0, 1)]
+        FL = _rng.choice((0, 3, 5))  # a finger of 2-wide ground before the pad, so some shelves reach out
+        pad = [(c[0] + d[0] * (L + 1 + i) + side[0] * j, c[1] + d[1] * (L + 1 + i) + side[1] * j) for i in range(FL) for j in (0, 1)]
+        pad += [(c[0] + d[0] * (L + 1 + FL + i) + side[0] * j, c[1] + d[1] * (L + 1 + FL + i) + side[1] * j) for i in range(3) for j in (-1, 0, 1)]
         cells = run + pad
         if not all(P.inb(*q) and P.t(*q) == "." for q in cells):
             continue
@@ -454,12 +456,12 @@ _outs = []
 _cands = [c for c in sorted(_walk) if P.t(*c) in "gf" and all(abs(c[0] - k[0]) + abs(c[1] - k[1]) > 3 for k in _keep)]
 _rng.shuffle(_cands)
 for c in _cands:
-    if len(_outs) >= 40:
+    if len(_outs) >= 13:
         break
-    if any(abs(c[0] - q[0]) + abs(c[1] - q[1]) < 3 for q in _outs):
+    if any(abs(c[0] - q[0]) + abs(c[1] - q[1]) < 4 for q in _outs):
         continue
     d = _rng.choice(((1, 0), (0, 1)))
-    cells = [c, (c[0] + d[0], c[1] + d[1])]
+    cells = [(c[0] + i * d[0] + j * d[1], c[1] + i * d[1] + j * d[0]) for i in range(3) for j in range(2)]  # a bigger mass, fewer of them
     if not all(P.inb(*q) and P.t(*q) in "gf" and P.ht(*q) == P.ht(*c) for q in cells):
         continue
     ring = [(q[0] + dx, q[1] + dy) for q in cells for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
@@ -476,6 +478,32 @@ for c in _cands:
         continue
     _outs.append(c)
 print("outcrops:", len(_outs))
+# Inlets: bites out of the terrace rims, so the outline winds in as well as out ([USER] 2026-10-30: "push the shape").
+_bites = 0
+_rim = [c for c in sorted(P.reach(tuple(P.start[0]))) if P.t(*c) in "gf" and any(P.inb(c[0] + dx, c[1] + dy) and P.t(c[0] + dx, c[1] + dy) == "." for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+        and all(abs(c[0] - k[0]) + abs(c[1] - k[1]) > 4 for k in _keep)]
+_rng.shuffle(_rim)
+for c in _rim:
+    if _bites >= 0:
+        break
+    for sx, sy in ((1, 1), (1, -1), (-1, 1), (-1, -1)):
+        cells = [(c[0] + i * sx, c[1] + j * sy) for i in range(3) for j in range(2)]
+        if not all(P.inb(*q) and P.t(*q) in "gf" for q in cells):
+            continue
+        ring = [(q[0] + dx, q[1] + dy) for q in cells for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
+        if any(P.inb(*r) and P.t(*r) in "dt" for r in ring):
+            continue
+        saved = [(q, P.t(*q), P.ht(*q)) for q in cells]
+        _before = len(P.reach(tuple(P.start[0])))
+        for q in cells:
+            P.put(*q, ".", 0)
+        if len(P.reach(tuple(P.start[0]))) < _before - len(cells):
+            for q, t0, h0 in saved:
+                P.put(*q, t0, h0)
+            continue
+        _bites += 1
+        break
+print("inlets:", _bites)
 
 # --- checks ---
 things = {t["id"]: tuple(t["cell"]) for t in P.things}
@@ -660,6 +688,70 @@ def hide_ambusher(path, cell=(7, 15)):
         f.write("\n")
 
 
+def inlets(path, count=60, seed=5):
+    """Bites out of the terrace rims after the dressing (which would round them away), so the outline winds in as well as
+    out ([USER] 2026-10-30: "push the shape"). 2 x 3 bites of open ground, never within 4 cells of a thing or foe,
+    never touching a road or stair, and never cutting the walk (the game's walking, as in wood_strays)."""
+    with open(path) as f:
+        data = json.load(f)
+    g = data["grid"]
+    ter = [list(r) for r in g["terrain"]]
+    hts = [[HEIGHT_DIGITS.index(c) for c in r] for r in g["heights"]]
+    w, h = g["w"], g["h"]
+    blocked = {(p["cell"][0] + dx, p["cell"][1] + dy) for p in g["props"] if not p.get("walk")
+               for dy in range(p.get("foot", [1, 1])[1]) for dx in range(p.get("foot", [1, 1])[0])}
+    opened = {tuple(t["cell"]) for t in data["things"] if t["kind"] in ("door", "rubble", "hidden")}
+    keep = {tuple(t["cell"]) for t in data["things"]} | {tuple(u["cell"]) for gr in data["groups"] for u in gr["units"]}
+    ok = lambda c: (0 <= c[0] < w and 0 <= c[1] < h and (ter[c[1]][c[0]] not in "ru.wf" or c in opened) and c not in blocked)
+    start = tuple(int(v) for v in data["start"][0])
+
+    def walk():
+        seen, todo = {start}, [start]
+        while todo:
+            x, y = todo.pop()
+            for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                if n not in seen and ok(n) and abs(hts[n[1]][n[0]] - hts[y][x]) <= JUMP + (
+                        STAIRS_CLIMB if "t" in (ter[y][x], ter[n[1]][n[0]]) else 0):
+                    seen.add(n)
+                    todo.append(n)
+        return seen
+    rng = random.Random(seed)
+    rim = [(x, y) for y in range(h) for x in range(w) if ter[y][x] in "gf"
+           and any(0 <= x + dx < w and 0 <= y + dy < h and ter[y + dy][x + dx] == "." for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+           and all(abs(x - k[0]) + abs(y - k[1]) > 3 for k in keep)]
+    rng.shuffle(rim)
+    done = 0
+    for c in rim:
+        if done >= count:
+            break
+        for sx, sy in ((1, 1), (1, -1), (-1, 1), (-1, -1)):
+            cells = [(c[0] + i * sx, c[1] + j * sy) for i in range(2 + rng.randrange(2)) for j in range(2)]
+            if not all(0 <= q[0] < w and 0 <= q[1] < h and ter[q[1]][q[0]] in "gf" for q in cells):
+                continue
+            if any(0 <= r[0] < w and 0 <= r[1] < h and ter[r[1]][r[0]] in "dt" for q in cells for r in
+                   [(q[0] + dx, q[1] + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)]):
+                continue
+            before = len(walk())
+            saved = [(q, ter[q[1]][q[0]], hts[q[1]][q[0]]) for q in cells]
+            for q in cells:
+                ter[q[1]][q[0]] = "."
+                hts[q[1]][q[0]] = 0
+            if len(walk()) < before - len(cells):
+                for q, t0, h0 in saved:
+                    ter[q[1]][q[0]] = t0
+                    hts[q[1]][q[0]] = h0
+                continue
+            done += 1
+            break
+    g["terrain"] = ["".join(r) for r in ter]
+    g["heights"] = ["".join(HEIGHT_DIGITS[v] for v in r) for r in hts]
+    with open(path, "w") as f:
+        json.dump(data, f, indent=1)
+        f.write("\n")
+    print("inlets after the dressing:", done)
+
+
+inlets(os.path.normpath(os.path.join(OUT_DIR, "snow_pass.json")))
 hide_ambusher(os.path.normpath(os.path.join(OUT_DIR, "snow_pass.json")))
 if __name__ == "__main__":
     P.dump()
