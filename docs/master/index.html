@@ -1,0 +1,975 @@
+<title>Lodestone Master Document</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Commissioner:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a field journal bound in the game's leaf frame. Long reading column, a sticky contents rail on wide screens,
+   full-bleed screenshot plates, chapter bands in the frame's deep green. */
+:root{
+  --paper:#f3efe2; --paper-2:#e9e3cf; --ink:#1d2a33; --ink-soft:#4d5a5f; --rule:#cfc6ab;
+  --leaf:#0f4a43; --leaf-2:#16615a; --gold:#d79a1c; --gold-soft:#f2d27a; --sky:#3d86c6; --ember:#c0492f;
+  --user:#1f7a4d; --user-bg:#dcefe2; --ai:#a8650a; --ai-bg:#f7e6c6; --gap:#9a3b2c; --gap-bg:#f4dcd5;
+  --plate:#1b2547; --on-band:#eef3ea;
+  --f-display:"Young Serif",Georgia,"Times New Roman",serif;
+  --f-body:"Commissioner",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#121a2b; --paper-2:#1a2438; --ink:#e6e8df; --ink-soft:#a8b0ad; --rule:#2e3a52;
+  --leaf:#0d3f3a; --leaf-2:#1d7067; --gold:#e7b23b; --gold-soft:#5e4a17; --sky:#6fb0e6; --ember:#e2694d;
+  --user:#7fd3a0; --user-bg:#163527; --ai:#f0b65a; --ai-bg:#3a2a10; --gap:#f09a86; --gap-bg:#3b1d17;
+  --plate:#0b1122; --on-band:#eef3ea; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121a2b; --paper-2:#1a2438; --ink:#e6e8df; --ink-soft:#a8b0ad; --rule:#2e3a52;
+  --leaf:#0d3f3a; --leaf-2:#1d7067; --gold:#e7b23b; --gold-soft:#5e4a17; --sky:#6fb0e6; --ember:#e2694d;
+  --user:#7fd3a0; --user-bg:#163527; --ai:#f0b65a; --ai-bg:#3a2a10; --gap:#f09a86; --gap-bg:#3b1d17;
+  --plate:#0b1122; --on-band:#eef3ea; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.62}
+a{color:var(--leaf-2)}
+:root[data-theme="dark"] a{color:var(--gold)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) a{color:var(--gold)}}
+h1,h2,h3,h4{font-family:var(--f-display);font-weight:400;text-wrap:balance;line-height:1.15;margin:0}
+p{margin:0}
+img{display:block;max-width:100%;height:auto}
+code,.mono{font-family:var(--f-mono);font-size:.86em}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* cover */
+.cover{background:var(--plate);color:var(--on-band);position:relative;overflow:hidden}
+.cover .inner{max-width:1240px;margin:0 auto;padding-block:40px 0;display:grid;gap:28px}
+.cover-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:32px;align-items:center}
+.cover-logo{max-width:420px;width:100%;mix-blend-mode:screen}
+.cover h1{font-size:clamp(2.1rem,5vw,3.6rem);color:#fff}
+.cover .kicker{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:#f2d27a}
+.cover .lede{font-size:1.15rem;color:#d6dde0;max-width:58ch;margin-top:14px}
+.cover-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:18px;font-family:var(--f-mono);font-size:.78rem;color:#aab6c4}
+.cover-plate{border-radius:10px 10px 0 0;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}
+.frame-band{height:14px;background:repeating-linear-gradient(90deg,#0f4a43 0 28px,#16615a 28px 30px);border-top:2px solid #6fa8d8;border-bottom:2px solid #6fa8d8}
+
+/* layout */
+.layout{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px;padding-block:40px 80px}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;font-size:.86rem;max-height:calc(100vh - 40px);overflow:auto}
+.toc .part{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin:18px 0 6px}
+.toc a{display:block;color:var(--ink);text-decoration:none;padding:3px 0 3px 10px;border-left:2px solid var(--rule)}
+.toc a:hover,.toc a:focus-visible{border-left-color:var(--gold);color:var(--leaf-2)}
+main{min-width:0}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}.toc{display:none}.cover-top{grid-template-columns:minmax(0,1fr)}}
+
+/* chapters */
+.part-band{background:var(--leaf);color:var(--on-band);border-radius:12px;padding:30px 28px;margin:56px 0 28px;position:relative;overflow:hidden}
+.part-band::after{content:"";position:absolute;right:-30px;top:-30px;width:150px;height:150px;transform:rotate(45deg);border:3px solid rgba(111,168,216,.5);outline:3px solid rgba(111,168,216,.22);outline-offset:10px}
+.part-band .num{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:#f2d27a}
+.part-band h2{font-size:clamp(1.8rem,4vw,2.6rem);margin-top:6px;color:#fff}
+.part-band p{margin-top:10px;max-width:62ch;color:#d4e3dd}
+section.chap{margin-top:56px;scroll-margin-top:20px}
+section.chap>h3{font-size:clamp(1.45rem,3vw,1.9rem)}
+.eyebrow{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+.prose{max-width:68ch;display:grid;gap:14px;margin-top:14px}
+.prose ul{margin:0;padding-left:1.2em;display:grid;gap:6px}
+h4{font-size:1.15rem;margin-top:8px}
+
+/* tags */
+.tag{display:inline-block;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.06em;font-weight:500;padding:1px 7px;border-radius:4px;vertical-align:2px;white-space:nowrap}
+.t-user{background:var(--user-bg);color:var(--user)}
+.t-ai{background:var(--ai-bg);color:var(--ai)}
+.t-gap{background:var(--gap-bg);color:var(--gap)}
+.t-built{background:var(--user-bg);color:var(--user)}
+.cave{font-family:var(--f-mono);font-size:.84em;background:var(--paper-2);padding:1px 6px;border-radius:4px;letter-spacing:.02em}
+
+/* figures */
+figure{margin:22px 0 0}
+figure img{border-radius:8px;border:1px solid var(--rule);cursor:zoom-in;background:var(--plate)}
+figcaption{font-size:.84rem;color:var(--ink-soft);margin-top:8px;max-width:72ch}
+.plates{display:grid;gap:14px;margin-top:22px}
+.plates.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.plates.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.plates figure{margin:0}
+@media (max-width:640px){.plates.two,.plates.three{grid-template-columns:minmax(0,1fr)}}
+.lineup{background:#ebe7d6;border-radius:8px;border:1px solid var(--rule)}
+.lineup img{border:0;background:transparent}
+
+/* pillars & cards */
+.grid{display:grid;gap:14px;margin-top:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:860px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.g2,.g3,.g4{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--paper-2);border-radius:10px;padding:16px 18px;min-width:0;display:grid;gap:8px;align-content:start}
+.card h4{margin:0;font-size:1.08rem}
+.card p,.card li{font-size:.94rem}
+.card ul{margin:0;padding-left:1.1em;display:grid;gap:4px}
+.pillar{border-top:4px solid var(--gold)}
+.sys{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:22px;align-items:start;margin-top:30px;padding-top:26px;border-top:1px solid var(--rule)}
+.sys:first-of-type{border-top:0}
+.sys h4{font-size:1.3rem;margin:0}
+.sys .body{display:grid;gap:10px;min-width:0}
+.sys ul{margin:0;padding-left:1.15em;display:grid;gap:5px;font-size:.95rem}
+.sys figure{margin:0}
+@media (max-width:760px){.sys{grid-template-columns:minmax(0,1fr)}}
+
+/* tables */
+.tbl{overflow-x:auto;margin-top:18px;border:1px solid var(--rule);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:560px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);background:var(--paper-2);font-weight:500}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* status board */
+.status{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:20px}
+@media (max-width:760px){.status{grid-template-columns:minmax(0,1fr)}}
+.col{border-radius:10px;padding:16px;min-width:0}
+.col h4{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;margin:0 0 10px}
+.col ul{list-style:none;margin:0;padding:0;display:grid;gap:7px;font-size:.9rem}
+.col li{padding-left:14px;position:relative}
+.col li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:7px;transform:rotate(45deg)}
+.c-done{background:var(--user-bg)} .c-done h4{color:var(--user)} .c-done li::before{background:var(--user)}
+.c-part{background:var(--ai-bg)} .c-part h4{color:var(--ai)} .c-part li::before{background:var(--ai)}
+.c-miss{background:var(--gap-bg)} .c-miss h4{color:var(--gap)} .c-miss li::before{background:var(--gap)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:20px}
+.stat{border-left:3px solid var(--gold);padding:4px 0 4px 12px}
+.stat b{display:block;font-family:var(--f-display);font-weight:400;font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:.82rem;color:var(--ink-soft)}
+
+/* pitch */
+.pitch{margin-top:34px;padding:22px 22px 20px;border-radius:12px;border:1px solid var(--rule);background:var(--paper);display:grid;gap:12px;position:relative}
+.pitch .letter{font-family:var(--f-display);font-size:2.4rem;line-height:1;color:var(--gold)}
+.pitch header{display:flex;gap:16px;align-items:flex-start}
+.pitch h4{font-size:1.35rem;margin:2px 0 4px}
+.pitch .hook{font-size:1.02rem;color:var(--ink-soft)}
+.pitch .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:700px){.pitch .cols{grid-template-columns:minmax(0,1fr)}}
+.pitch .cols>div{min-width:0}
+.pitch h5{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px;font-weight:500}
+.pitch ul{margin:0;padding-left:1.1em;display:grid;gap:5px;font-size:.94rem}
+.ask{background:var(--ai-bg);border-radius:8px;padding:10px 14px;font-size:.92rem}
+.ask b{color:var(--ai)}
+
+/* quote */
+.quote{border-left:4px solid var(--leaf-2);padding:6px 0 6px 16px;font-family:var(--f-display);font-size:1.1rem;max-width:64ch;margin-top:16px}
+.quote small{display:block;font-family:var(--f-body);font-size:.8rem;color:var(--ink-soft);margin-top:6px}
+
+/* diagrams */
+.diagram{margin-top:22px;background:var(--paper-2);border-radius:12px;padding:16px;overflow-x:auto}
+.diagram svg{display:block;width:100%;min-width:640px;height:auto}
+.d-text{fill:var(--ink);font-family:var(--f-body)}
+.d-soft{fill:var(--ink-soft);font-family:var(--f-body)}
+.d-mono{fill:var(--ink-soft);font-family:var(--f-mono)}
+
+/* timeline / steps */
+.steps{display:grid;gap:0;margin-top:22px;counter-reset:s}
+.step{display:grid;grid-template-columns:54px minmax(0,1fr);gap:16px;padding:16px 0;border-top:1px solid var(--rule)}
+.step:first-child{border-top:0}
+.step .n{font-family:var(--f-display);font-size:1.7rem;color:var(--leaf-2);line-height:1}
+:root[data-theme="dark"] .step .n{color:var(--gold)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .step .n{color:var(--gold)}}
+.step h4{margin:0;font-size:1.12rem}
+.step p,.step li{font-size:.95rem}
+.step ul{margin:6px 0 0;padding-left:1.1em;display:grid;gap:4px}
+.step .tools{font-family:var(--f-mono);font-size:.76rem;color:var(--ink-soft);margin-top:6px}
+
+.loop{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:22px}
+@media (max-width:900px){.loop{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){.loop{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.loop figure{margin:0}
+.loop figure img{aspect-ratio:16/10;object-fit:cover}
+.loop figcaption{font-size:.8rem}
+.loop b{display:block;font-family:var(--f-display);font-weight:400;font-size:1rem;color:var(--ink)}
+
+.note{font-size:.88rem;color:var(--ink-soft);background:var(--paper-2);border-radius:8px;padding:10px 14px;margin-top:16px;max-width:72ch}
+footer{border-top:1px solid var(--rule);margin-top:70px;padding-top:24px;font-size:.85rem;color:var(--ink-soft);display:grid;gap:8px}
+
+/* lightbox */
+.lb{position:fixed;inset:0;background:rgba(5,8,18,.92);display:flex;align-items:center;justify-content:center;z-index:50;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));cursor:zoom-out}
+.lb img{max-height:100%;max-width:100%;border-radius:6px}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){figure img{transition:transform .25s ease}figure img:hover{transform:translateY(-2px)}}
+</style>
+
+<header class="cover">
+  <div class="inner wrap">
+    <div class="cover-top">
+      <div>
+        <img class="cover-logo" src="img/logo.webp" alt="Lodestone logo">
+      </div>
+      <div>
+        <div class="kicker">Master document · 31 October 2026</div>
+        <h1>What Lodestone is, and what it can be</h1>
+        <p class="lede">Grid tactics with Fire Emblem bones and Oregon Trail lungs. A hero who wakes in an empty village, a dog, a stone that brings you home, and a long road toward the Wall. This document is the zoomed-out view: the game as built today, the systems pitch that ties it together, and how we build the maps that make people stop and take a screenshot.</p>
+        <div class="cover-meta"><span>Built from the repo, decisions.md and 30 fresh screenshots of main</span><span>Brandon: story, writing, art direction</span><span>Claude team: systems, code, tools</span></div>
+      </div>
+    </div>
+    <div class="cover-plate"><img src="img/village-square.webp" alt="The starting village in its fall look: a square with the statue, a winding stream, stone cottages with mossy roofs" loading="eager"></div>
+  </div>
+  <div class="frame-band" aria-hidden="true"></div>
+</header>
+
+<div class="layout wrap">
+<nav class="toc" aria-label="Contents">
+  <div class="part">Read me</div>
+  <a href="#how">How to read this</a>
+  <div class="part">I · What is</div>
+  <a href="#pitch">The game in one breath</a>
+  <a href="#premise">World and premise</a>
+  <a href="#loop">A run, start to finish</a>
+  <a href="#systems">Systems today</a>
+  <a href="#cast">The cast</a>
+  <a href="#look">Look and feel</a>
+  <a href="#status">Status board</a>
+  <a href="#missing">Missing core features</a>
+  <div class="part">II · What can be</div>
+  <a href="#thesis">There and Back Again</a>
+  <a href="#engine">The engine</a>
+  <a href="#pitches">Ten pitches</a>
+  <a href="#week">A player's first week</a>
+  <a href="#hooks">Hook audit</a>
+  <div class="part">III · How we build it</div>
+  <a href="#mapphil">Map rules</a>
+  <a href="#toolkit">The tool kit today</a>
+  <a href="#pipeline">The map pipeline</a>
+  <a href="#showcase">Showcase moments</a>
+  <a href="#toolgaps">Tools still to build</a>
+  <div class="part">Close</div>
+  <a href="#desk">Calls for Brandon</a>
+</nav>
+
+<main>
+
+<section class="chap" id="how" style="margin-top:0">
+  <div class="eyebrow">Read me first</div>
+  <h3>How to read this document</h3>
+  <div class="prose">
+    <p>Part I describes what exists on <code>main</code> today. Part II is the systems designer's pitch for where the game goes. Part III is the dev and art team on how we make maps and set pieces. Every claim about the game is tagged so you can tell your calls from ours at a glance.</p>
+  </div>
+  <div class="grid g4">
+    <div class="card"><span class="tag t-user">[USER]</span><p>You decided it. It's in <code>docs/decisions.md</code> and it wins.</p></div>
+    <div class="card"><span class="tag t-ai">[AI]</span><p>Our proposal. It stays a proposal until you retag it or strike it.</p></div>
+    <div class="card"><span class="tag t-built">BUILT</span><p>Running in the game on main, checked with fresh screenshots on 31 Oct.</p></div>
+    <div class="card"><span class="tag t-gap">MISSING</span><p>A core piece that doesn't exist yet in code or design.</p></div>
+  </div>
+  <p class="note">Story stays yours. The story section only restates decisions you made. Where a story beat is needed, it shows as a caveman placeholder like <span class="cave">VILLAGE EMPTY. lorem ipsum. WHY?</span> Rules text (what a skill does) is plain English, per your 30 Oct call.</p>
+</section>
+
+<!-- ================= PART I ================= -->
+<div class="part-band" id="part1">
+  <div class="num">Part I</div>
+  <h2>What Lodestone is</h2>
+  <p>Six days of building. A playable loop from an empty cottage to a boss fight, a full map maker inside the game, and roughly 270 design calls you've made along the way.</p>
+</div>
+
+<section class="chap" id="pitch">
+  <div class="eyebrow">The game in one breath</div>
+  <h3>A tactics RPG where the road wears you down and home builds you back up</h3>
+  <div class="prose">
+    <p>You wake up alone in a village that looks fifty years abandoned. You take one weapon from the smithy, rescue a dog, and lift a glowing stone from a statue in the square. Then you walk out the gate. Every outing is a push into hand-made maps full of height, cliffs and water, with Fire Emblem-style fights where position is everything. When you fall, the Lodestone carries the whole party home with everything they earned. Home is where you rest, cook, rebuild the town and pick who goes next. Then you go again, a little further.</p>
+  </div>
+  <div class="grid g4">
+    <div class="card pillar"><h4>Tactics first</h4><p>Grid fights with height, flanks, guard zones and team-ups. Melee focused, readable from one fixed camera. <span class="tag t-user">[USER]</span></p></div>
+    <div class="card pillar"><h4>The road costs</h4><p>HP, abilities and items carry between fights. You arrive at the boss battered. <span class="tag t-user">[USER]</span></p></div>
+    <div class="card pillar"><h4>Home heals</h4><p>Falling is free. The village restores, the party rests, and the next run starts stronger. <span class="tag t-user">[USER]</span></p></div>
+    <div class="card pillar"><h4>Earth to Alien</h4><p>Familiar fantasy first. Past the Wall, things grow stranger until nothing is known. <span class="tag t-user">[USER]</span></p></div>
+  </div>
+  <div class="quote">"I want you getting to the Lich King a bit battered, maybe you needed to use most of your abilities and skills up before you even got here and now you come to the throneroom limping."<small>Brandon, 30 Oct, card playtest-scale-c-difficulty</small></div>
+</section>
+
+<section class="chap" id="premise">
+  <div class="eyebrow">World and premise · your decisions only</div>
+  <h3>An empty village, a dog, and a stone</h3>
+  <div class="sys" style="border-top:0;padding-top:0">
+    <div class="body">
+      <ul>
+        <li><b>The village is empty</b> and decayed as if about 50 years passed; everyone vanished overnight. That is the mystery. <span class="tag t-user">27–28 Oct</span></li>
+        <li><b>The hero starts as a nobody.</b> Character customization comes later. <span class="tag t-user">25–27 Oct</span></li>
+        <li><b>The dog is rescued in the village</b>, locked in a house; you climb in through a window. There is no corgi at the start. <span class="tag t-user">28 Oct</span></li>
+        <li><b>The Lodestone</b> sits in a new statue in the square, held out by an elf woman. The hero unearths it early and learns its power on the first death. <span class="tag t-user">27–28 Oct</span></li>
+        <li><b>Survivors</b> are met out in the world at fixed places. Settlers become village NPCs between runs; companions join the party. No switching between the two. <span class="tag t-user">27 Oct</span></li>
+        <li><b>Gold and a shop</b> only arrive once a blacksmith or a travelling merchant settles. <span class="tag t-user">27 Oct</span></li>
+        <li><b>The Wall stays.</b> Elves past it may have survived, or an elvish prophecy foretold this event, which is why the hero pushes all the way over. <span class="tag t-user">27 Oct</span></li>
+        <li><b>The first boss is the Lich King</b> on a crypt throne, the first real skill check, like a first boss in Hades. <span class="tag t-user">28–29 Oct</span></li>
+      </ul>
+    </div>
+    <figure><img src="img/village-cottage.webp" alt="The hero outside his cottage by the stream" loading="lazy"><figcaption>The hero's cottage, out the door on a new game. The stream winds past it to the gate bridge.</figcaption></figure>
+  </div>
+  <div class="note"><b>Memory conflict, resolved.</b> Project memory still says "just the hero and their corgi". The repo is newer: your 28 Oct line replaces the corgi with a rescued dog. The dog's draft art still reads as a corgi (see the cast below), so the breed on screen is your call, not settled by the design. Your 31 Oct names for him are Doggo, with the moves Fetch and Good Boy.</div>
+  <h4 style="margin-top:28px">Story slots waiting for your pen</h4>
+  <div class="grid g3">
+    <div class="card"><span class="cave">VILLAGE EMPTY. lorem ipsum. WHY?</span><p>The cause of the vanishing, and how much the player learns per region.</p></div>
+    <div class="card"><span class="cave">STONE GLOW. HERO WAKE. lorem.</span><p>The first-death reveal of the Lodestone. Today the fall just wakes you in the square.</p></div>
+    <div class="card"><span class="cave">WALL FAR. ELF? lorem ipsum.</span><p>What lies past the Wall, and which of the two elf options you keep.</p></div>
+    <div class="card"><span class="cave">SURVIVOR FOUND. JOIN / STAY.</span><p>Who survived, where, and whether each is a settler or a companion.</p></div>
+    <div class="card"><span class="cave">BOND TALK. lorem ipsum ipsum.</span><p>Pair talks that open at bond levels C, B and A. Empty slots exist in data.</p></div>
+    <div class="card"><span class="cave">NORTH-EAST. NORTH-WEST. ???</span><p>What the prairie and the north-west road hold. Only the pass is open.</p></div>
+  </div>
+  <p class="note">On file but superseded: the original framing with a scout who brings the stone home from dead elves and a King who sends you out (25 Oct). Kept in decisions.md, not used.</p>
+</section>
+
+<section class="chap" id="loop">
+  <div class="eyebrow">The first loop, as built</div>
+  <h3>A run, start to finish</h3>
+  <div class="prose"><p>New Game on the launch menu plays this whole chain. A headless robot plays it too, every check run, so we know it holds together.</p></div>
+  <div class="loop">
+    <figure><img src="img/home.webp" alt="Cottage interior" loading="lazy"><figcaption><b>1 · Wake</b>Alone in the cottage.</figcaption></figure>
+    <figure><img src="img/rack-sword.webp" alt="Smithy weapon rack sheet" loading="lazy"><figcaption><b>2 · Arm</b>One smithy weapon is your job.</figcaption></figure>
+    <figure><img src="img/overworld-camp.webp" alt="Overworld with a camp menu" loading="lazy"><figcaption><b>3 · Walk</b>Console-style overworld, encounters on the way.</figcaption></figure>
+    <figure><img src="img/snow-pass.webp" alt="Snow pass explore map" loading="lazy"><figcaption><b>4 · Explore</b>Hand-made maps; fights start where you meet foes.</figcaption></figure>
+    <figure><img src="img/crypt.webp" alt="The crypt" loading="lazy"><figcaption><b>5 · Boss</b>The Lich King's throne room.</figcaption></figure>
+    <figure><img src="img/village-work.webp" alt="Village work panel" loading="lazy"><figcaption><b>6 · Home</b>Fall or GO HOME. Bank, rebuild, rest, go again.</figcaption></figure>
+  </div>
+</section>
+
+<section class="chap" id="systems">
+  <div class="eyebrow">Systems today</div>
+  <h3>What every system does right now</h3>
+  <div class="prose"><p>Each block is a system that runs on main, its rules in short, and a screenshot from this afternoon's build. Numbers live in <code>game/data/</code> and are tunable without code.</p></div>
+
+  <div class="sys">
+    <div class="body">
+      <h4>Combat <span class="tag t-built">BUILT</span></h4>
+      <ul>
+        <li>Fire Emblem phases: you move every piece, then every foe moves. <span class="tag t-user">[USER]</span></li>
+        <li>Hits always land. Damage wobbles by ±1, armor (0 to 3) comes off, crits are 10% and double; a flank adds 20% crit. High ground adds up to +2 damage.</li>
+        <li>Cover blocks sight and is half cover against ranged (−1). The danger zone is the only warning, except a boss's big move, which marks its tiles a phase ahead.</li>
+        <li>Guard zones: foes next to a guard must hit it or take a free hit to leave.</li>
+        <li>Two teammates next to the same foe team up: a helping strike adds damage.</li>
+        <li>Downed pieces bleed out over 3 phases; AID brings them back; a foe can spend its action to knock one out. Nobody dies for good.</li>
+        <li>Each job pays its own way: mana (mages), rage (knights), charges (dog, rogue, archer).</li>
+        <li>Fights win by goals: defeat, beat the leader, hold for N rounds, reach the exit, protect. TALK appears when you know something.</li>
+        <li>Clutch tools: Fetch (the dog carries a friend), COMMAND (sword), SHADOW SWAP (daggers), OVERWATCH (bow), WARD (book).</li>
+        <li>Scale C: fight areas of 21 × 18 with move and reach ×1.25 (×1.5 for fast or long-range pieces). <span class="tag t-user">30 Oct</span></li>
+      </ul>
+    </div>
+    <figure><img src="img/fight-highland-close.webp" alt="Close view of a fight on the snowy highland map" loading="lazy"><figcaption>The highland map at play zoom: the hero, two pawns and a waterfall on the terrace edge.</figcaption></figure>
+  </div>
+
+  <div class="plates three">
+    <figure><img src="img/fight-arena-c.webp" alt="Scale C arena" loading="lazy"><figcaption>Scale C arena, the size every fight map now plans for.</figcaption></figure>
+    <figure><img src="img/fight-temple.webp" alt="Temple fight map" loading="lazy"><figcaption>Temple map: height, pools, pillars.</figcaption></figure>
+    <figure><img src="img/road-fight.webp" alt="A road fight" loading="lazy"><figcaption>A road fight from an overworld encounter.</figcaption></figure>
+  </div>
+
+  <div class="sys">
+    <div class="body">
+      <h4>Jobs and growth <span class="tag t-built">BUILT</span> <span class="tag t-ai">level-up rework designed</span></h4>
+      <ul>
+        <li>The weapon is the job: sword (knight), daggers (rogue), bow (archer), and a hidden book on a shelf for the mage. Swap at the smithy rack at home; each job keeps its own level. <span class="tag t-user">[USER]</span></li>
+        <li>Stats roll from each character's growth odds. A tank mostly gains HP or armor, never magic.</li>
+        <li>New on 31 Oct: odd levels give a stat bump; even levels let you learn a new ability or upgrade one. Leveling pops up as an event after the fight. <span class="tag t-user">[USER]</span></li>
+        <li>Ten class archetypes approved with full kits: bulwark, reaver, shade, sharpshooter, tracker, ember, moon, mender, chanter, tinker. Evolved classes upgrade a single skill. <span class="tag t-user">[USER]</span></li>
+        <li>Party of four. The party only changes at home, at the gate's EDIT PARTY.</li>
+      </ul>
+    </div>
+    <figure><img src="img/levelup.webp" alt="Level-up screen offering ability picks" loading="lazy"><figcaption>The new level-up pop-up: learn or upgrade, each card in plain rules text.</figcaption></figure>
+  </div>
+
+  <div class="sys">
+    <div class="body">
+      <h4>The pack and loot <span class="tag t-built">BUILT</span></h4>
+      <ul>
+        <li>One 4 × 3 party pack of shaped items you can rotate, Diablo style. Meat stacks 10 a cell, potions 3. <span class="tag t-user">[USER]</span></li>
+        <li>Each member has a 2 × 1 belt; in a fight a piece uses only its own belt, and using it is its action.</li>
+        <li>Pack full on the map: throw something away, or fill the dog's 2 × 2 saddlebag and send him home.</li>
+        <li>Containers keep their shapes (barrel 2 × 2, chest 2 × 4). Chests can be locked, trapped, or both. After a fight, loot lands in one 4 × 4 grid.</li>
+        <li>Coming home, materials bank themselves; gear stays packed.</li>
+      </ul>
+    </div>
+    <div class="plates two" style="margin:0"><figure><img src="img/pack.webp" alt="The pack screen" loading="lazy"><figcaption>PACK: drag, turn, eat, drink, throw away.</figcaption></figure><figure><img src="img/loot.webp" alt="Loot grid" loading="lazy"><figcaption>After-fight loot with the dog's saddlebag.</figcaption></figure></div>
+  </div>
+
+  <div class="sys">
+    <div class="body">
+      <h4>Morale, food and rest <span class="tag t-user">31 Oct</span> <span class="tag t-ai">rules drafted, not built</span></h4>
+      <ul>
+        <li>Morale is per character, 0 to 100, and it persists after a run. Falls cost it; a fall nobody picks up costs more. Low morale weakens a character, Banner Saga style.</li>
+        <li>No hunger. Food is healing. Simple food heals; camping restores some morale; good food does both.</li>
+        <li>The village is the main way back: sleep there, or leave low-morale characters home to rest. Your newest note: each journey day away gives characters at home some morale.</li>
+        <li>Drafted bands: Heartened 80+ (+1 on checks), Steady, Shaken (−1 damage), Low (−1 move too), Broken 0–19 (−2 damage, −1 move, −1 armor).</li>
+        <li>Camping happens only on the world map; potions and food carry you between fights on explore maps. <span class="tag t-user">30 Oct</span></li>
+      </ul>
+    </div>
+    <figure><img src="img/overworld-camp.webp" alt="MAKE CAMP on the overworld" loading="lazy"><figcaption>MAKE CAMP on the walk to the snow pass, with a cooked stew in the pack.</figcaption></figure>
+  </div>
+
+  <div class="sys">
+    <div class="body">
+      <h4>The village and one more run <span class="tag t-built">BUILT</span></h4>
+      <ul>
+        <li>Trips bring home materials. The village restores the buildings already standing, step by step. Each step asks for specific items and finishes when you come back from your next trip. <span class="tag t-user">[USER]</span></li>
+        <li>Ladders today: smithy, inn kitchen, and weapon upgrades for sword, daggers, bow and book. Settlers move in by placeholder events.</li>
+        <li>Goals stay in view three ways, like Stardew's community center: at the spot, in a global list, and pinned in the frame.</li>
+        <li>Meals are prepared at home from the chef's recipes (stew, roast, feast) and cooked at camp on the road.</li>
+        <li>Road encounters give random blessings and setbacks for the trip; hand-made maps give lasting rewards: rare materials, keys and shortcuts, stat items.</li>
+        <li>A trip runs 30 to 45 minutes; save and quit anywhere outside a fight.</li>
+      </ul>
+    </div>
+    <div class="plates two" style="margin:0"><figure><img src="img/village-work.webp" alt="Village work list" loading="lazy"><figcaption>VILLAGE WORK: restore steps and what each needs.</figcaption></figure><figure><img src="img/boons.webp" alt="Lodestone menu with blessings" loading="lazy"><figcaption>Blessings and setbacks on the Lodestone page.</figcaption></figure></div>
+  </div>
+
+  <div class="sys">
+    <div class="body">
+      <h4>The dog and bonds <span class="tag t-built">BUILT</span></h4>
+      <ul>
+        <li>Doggo fights on the grid: BITE slows, BARK taunts, Fetch carries a friend to safety. Good Boy: the friend next to him heals 1 HP each turn, and party morale losses shrink while he's along. <span class="tag t-user">31 Oct</span></li>
+        <li>He's a weak fighter but a strong explorer: sniffing out treasure and rare food is his real value (sniff not built yet).</li>
+        <li>Every pair in the party has a bond. Finishing fights together, helping each other up and teaming up raise it. Levels C, B, A give +1 team-up damage each and open a talk at home.</li>
+      </ul>
+    </div>
+    <figure><img src="img/sheet-dog.webp" alt="The dog's character sheet" loading="lazy"><figcaption>Click the dog: a Fire Emblem-style sheet with his moves.</figcaption></figure>
+  </div>
+
+  <div class="sys">
+    <div class="body">
+      <h4>Exploration, overworld and bosses <span class="tag t-built">BUILT</span></h4>
+      <ul>
+        <li>Only the leader walks the map. When a fight starts, the others deploy in a ring around the leader; faster pieces start further out. <span class="tag t-user">[USER]</span></li>
+        <li>"!" interactables open choices gated by who's in the party, with d20 checks for talking, sneaking and smashing.</li>
+        <li>The overworld is a console-style node map. Cleared places show as done and reveal the next. Encounters: fights, choice events, items, abandoned homes. Hunt, fish (needs a rod) and forage are dice rolls for now.</li>
+        <li>Elite groups are badged, avoidable and stay beaten. Foes are set by depth.</li>
+        <li>The Lich King: undead (fire +2, arrows −2), raises ice pillars that chill anyone nearby, and his card shows his HP and moves after your first try. Sneaking past him still completes the region.</li>
+      </ul>
+    </div>
+    <figure><img src="img/wolf-den.webp" alt="The wolf den" loading="lazy"><figcaption>The wolf den, a hold-out fight, with the lone elite wolf in a side room.</figcaption></figure>
+  </div>
+</section>
+
+<section class="chap" id="cast">
+  <div class="eyebrow">The cast</div>
+  <h3>Who's on the board</h3>
+  <figure class="lineup"><img src="img/lineup.webp" alt="In-game sprites: the hero, the dog, a fire mage, a blueberry bush, the stand-in dummy" loading="lazy"><figcaption style="padding:0 12px 10px">In-game sprites at real scale: the hero (front and back facings), the dog, the fire mage and the blueberry bush (both drawn at 80% of the hero), and the tinted dummy every unit without art uses.</figcaption></figure>
+  <div class="tbl"><table>
+    <thead><tr><th>Character</th><th>Your idea</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td>The hero</td><td>A nobody; job set by the weapon taken.</td><td><span class="tag t-built">BUILT</span> animated, four builds</td></tr>
+      <tr><td>Doggo</td><td>Rescued in the village; fights weakly, explores brilliantly.</td><td><span class="tag t-built">BUILT</span> art, sheet, kit</td></tr>
+      <tr><td>Stardrop Skygazer</td><td>Moonshadow elf, moon magic, wayfinds by the stars, frail and spooks easily.</td><td>Week-1 data only; the moon archetype is his kit</td></tr>
+      <tr><td>The Wizard</td><td>His books come too and fill pack slots.</td><td>Week-1 data only</td></tr>
+      <tr><td>The Hunter</td><td>Ranged in fights, great at hunting and trapping food.</td><td>Week-1 data only</td></tr>
+      <tr><td>Skeleton Archer</td><td>Needs no food, warmth or shelter, but harshes the vibe.</td><td>Week-1 data only</td></tr>
+      <tr><td>Bushberry</td><td>A flammable bush that makes a ration a day.</td><td>Blueberry bush art in game (SE)</td></tr>
+      <tr><td>Lewith &amp; Flark</td><td>A duo: two slots, act as one.</td><td>Week-1 data only</td></tr>
+      <tr><td>Fire mage</td><td>Approved art in game.</td><td>Art only, no companion row yet</td></tr>
+    </tbody>
+  </table></div>
+  <div class="plates two">
+    <figure><img src="img/key-hero-sheet.webp" alt="Hero key art sheet" loading="lazy"><figcaption>The hero key art sheet: idle, walk, attack, cast, hurt. The template for every character. <span class="tag t-user">[USER]</span></figcaption></figure>
+    <figure><img src="img/key-dog-sheet.webp" alt="Dog reference sheet" loading="lazy"><figcaption>The dog's reference sheet. Note it still reads as a corgi.</figcaption></figure>
+  </div>
+</section>
+
+<section class="chap" id="look">
+  <div class="eyebrow">Look and feel</div>
+  <h3>Flat, simple, rooted in the land</h3>
+  <div class="prose">
+    <p>Your approved flat forest panel is the one style reference: near-solid grass, two-tone blob trees, three flat values, plain cliffs, and a soft, imperfect marker outline on every piece. "Too detailed" is the recurring note. Every map sits in the mountain valley setup: sky, snow peaks, a dark pine forest around it, tall cliffs and big trees framing the front. One camera angle per map, no rotation for players, like Hades.</p>
+  </div>
+  <div class="plates three">
+    <figure><img src="img/key-flat-forest.webp" alt="The approved flat forest panel" loading="lazy"><figcaption>The approved flat forest panel. The only image attached to art prompts.</figcaption></figure>
+    <figure><img src="img/fall-style-sheet.webp" alt="Fall village style sheet" loading="lazy"><figcaption>The fall village look: golden grass, mossy stone, rooted homes. <span class="tag t-user">29 Oct</span></figcaption></figure>
+    <figure><img src="img/ui-leaf-frame.webp" alt="Leaf frame reference" loading="lazy"><figcaption>Your leaf frame, now the bottom bar of every screen.</figcaption></figure>
+  </div>
+  <div class="plates two">
+    <figure><img src="img/water-falls.webp" alt="Shader-drawn waterfalls" loading="lazy"><figcaption>Moving water, drawn by shader: "looking amazing". The one way water is drawn everywhere.</figcaption></figure>
+    <figure><img src="img/tile-sets.webp" alt="Eight zone tile sets" loading="lazy"><figcaption>Eight zone tile sets on one temple map: forest, snow, ruins, dungeon, farmland, marsh, canyon, crystal.</figcaption></figure>
+  </div>
+</section>
+
+<section class="chap" id="status">
+  <div class="eyebrow">Status board · 31 October</div>
+  <h3>Where everything stands</h3>
+  <div class="stats">
+    <div class="stat"><b>~270</b><span>design calls you've made</span></div>
+    <div class="stat"><b>10</b><span>explore maps in data</span></div>
+    <div class="stat"><b>10</b><span>class kits approved</span></div>
+    <div class="stat"><b>1</b><span>region open (the pass)</span></div>
+    <div class="stat"><b>1</b><span>boss built</span></div>
+    <div class="stat"><b>2</b><span>playable companions (hero, dog)</span></div>
+    <div class="stat"><b>0</b><span>sound files</span></div>
+  </div>
+  <div class="status">
+    <div class="col c-done"><h4>Built and playing</h4><ul>
+      <li>The full first loop, cottage to Lich King, with a robot that plays it</li>
+      <li>Combat: phases, damage model, guard, bleed-out, team-ups, resources, goals, TALK, clutch tools, boss marks, foe tags</li>
+      <li>Jobs by weapon, rolled growth, elites, party at home</li>
+      <li>Shaped pack, belts, saddlebag, loot containers</li>
+      <li>Restore ladders, meals, MAKE CAMP, blessings, bookmark save</li>
+      <li>Bonds with talk slots</li>
+      <li>Map maker with phases, flat sketch, bridges, area move, god mode</li>
+      <li>Fall village, water, ambience, leaf frame, fight dock</li>
+    </div>
+    <div class="col c-part"><h4>Designed or half way</h4><ul>
+      <li>Per-character morale (drafted, card answered "build")</li>
+      <li>Level-up rework, kit wiring batch 2 (tracker, ember, chanter, tinker)</li>
+      <li>Starting mage kit and Good Boy wiring</li>
+      <li>Mana and charges carrying between fights; Lich odds re-measure</li>
+      <li>Village v2 and the city prototype (layout tests)</li>
+      <li>Second boss (phases at 2/3 and 1/3) and the caster and charger foes</li>
+      <li>Character sheets for the roster (two facings each by hand in Picsart)</li>
+    </div>
+    <div class="col c-miss"><h4>Not started</h4><ul>
+      <li>Companions to find and recruit beyond the dog</li>
+      <li>Regions past the pass; the Wall; anything alien</li>
+      <li>Fishing, hunting, herb minigames</li>
+      <li>Settlers living in town; garden and pen plots</li>
+      <li>Story plumbing: dialogue, beats, journal</li>
+      <li>Sound and music</li>
+      <li>Title screen, options depth, onboarding</li>
+    </div>
+  </div>
+</section>
+
+<section class="chap" id="missing">
+  <div class="eyebrow">Missing core features · ranked by what they unlock</div>
+  <h3>The eight pieces between a prototype and a game</h3>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><div><h4>A roster you can find <span class="tag t-gap">MISSING</span></h4><p>The brief's heart is a set roster unlocked through play, each with a class, off-class skills, perks and a deficiency. Today only the hero and the dog play. Needs: survivor placements on maps, a recruit flow (including the hostile-then-talked-round recruit you described), companion homes on village landings, and sheets for each.</p></div></div>
+    <div class="step"><div class="n">2</div><div><h4>A second and third region <span class="tag t-gap">MISSING</span></h4><p>The prairie and the north-west are named on the overworld but closed. The loop needs at least two regions to prove "the next boss flips which build is strong".</p></div></div>
+    <div class="step"><div class="n">3</div><div><h4>The morale loop, built <span class="tag t-ai">designed</span></h4><p>The system that turns "falling is free" into "falling still matters". Rules are drafted; nothing in code yet.</p></div></div>
+    <div class="step"><div class="n">4</div><div><h4>Minigames for fish, hunt and herbs <span class="tag t-gap">MISSING</span></h4><p>Promised in the brief as "fun, addicting". Now dice rolls. They're the bridge between the road and the kitchen.</p></div></div>
+    <div class="step"><div class="n">5</div><div><h4>A living village <span class="tag t-gap">MISSING</span></h4><p>Settlers standing on their landings, services you visit, a garden plot and an animal pen. Restores exist; people don't.</p></div></div>
+    <div class="step"><div class="n">6</div><div><h4>Story plumbing <span class="tag t-gap">MISSING</span></h4><p>A dialogue box with portraits, scripted beats on maps, a journal for what you've learned. Built for your text to drop into.</p></div></div>
+    <div class="step"><div class="n">7</div><div><h4>Sound <span class="tag t-gap">MISSING</span></h4><p>No audio at all yet. Hits, footsteps, water and the frame's clicks would add more feel per hour than anything else on this list.</p></div></div>
+    <div class="step"><div class="n">8</div><div><h4>Earth to Alien <span class="tag t-gap">MISSING</span></h4><p>The visual plot twist past the Wall. The look's "strangeness" dial exists in the map maker; no alien biome, foe or food does.</p></div></div>
+  </div>
+</section>
+
+<!-- ================= PART II ================= -->
+<div class="part-band" id="part2">
+  <div class="num">Part II · from the systems and gameplay designer</div>
+  <h2>What Lodestone can be</h2>
+  <p>Everything below is a proposal <span class="tag t-ai" style="vertical-align:1px">[AI]</span>. It is built only from systems you've already chosen, wired so each one feeds another. Nothing here writes story; it builds the machine your story rides on.</p>
+</div>
+
+<section class="chap" id="thesis">
+  <div class="eyebrow">The thesis</div>
+  <h3>There and Back Again: three clocks</h3>
+  <div class="prose">
+    <p>You named the loop yourself: There and Back Again. The road takes, home gives back. The trick that makes it addictive is that the road takes three different things, and home refills each one at a different speed. That gap is where every decision lives.</p>
+  </div>
+  <div class="grid g3">
+    <div class="card" style="border-top:4px solid var(--ember)"><h4>The body clock</h4><p><b>HP, mana, charges, belt items.</b> Spent fast, every fight. Refilled by potions, food, one camp a trip, and fully by going home.</p><p class="mono" style="color:var(--ink-soft)">resets: every trip</p></div>
+    <div class="card" style="border-top:4px solid var(--sky)"><h4>The spirit clock</h4><p><b>Morale, per character.</b> Spent slowly, by falls and hard events. Refilled only slowly: good food, a camp, nights at home, time on the bench.</p><p class="mono" style="color:var(--ink-soft)">resets: never by itself</p></div>
+    <div class="card" style="border-top:4px solid var(--gold)"><h4>The world clock</h4><p><b>Levels, bonds, the village, what you know.</b> Only ever grows. Falling never takes it away.</p><p class="mono" style="color:var(--ink-soft)">resets: never</p></div>
+  </div>
+  <div class="prose" style="margin-top:18px">
+    <p><b>Why this works.</b> Falling is free for the body and the world, as you decided. But it dents the spirit of whoever fell. So a reckless run doesn't cost loot, it costs the next run's best fighter. That pushes you to rotate the roster, which makes every companion matter, which makes recruiting them exciting, which makes the next region worth the risk. One rule, five systems pulled taut.</p>
+  </div>
+</section>
+
+<section class="chap" id="engine">
+  <div class="eyebrow">The engine</div>
+  <h3>How the systems feed each other</h3>
+  <div class="diagram" role="img" aria-label="Loop diagram: Prepare at home, go out on the road, fight, and return home by falling or by choice; each arrow names what flows">
+    <svg viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--leaf-2)"/></marker></defs>
+      <!-- nodes -->
+      <g>
+        <rect x="370" y="20" width="220" height="92" rx="12" fill="var(--paper)" stroke="var(--gold)" stroke-width="2"/>
+        <text x="480" y="52" text-anchor="middle" class="d-text" font-size="20" font-family="Young Serif, Georgia, serif">Home</text>
+        <text x="480" y="76" text-anchor="middle" class="d-soft" font-size="13">sleep · bench · cook · build</text>
+        <text x="480" y="96" text-anchor="middle" class="d-soft" font-size="13">bond talks · pick four · pack</text>
+
+        <rect x="710" y="210" width="220" height="92" rx="12" fill="var(--paper)" stroke="var(--sky)" stroke-width="2"/>
+        <text x="820" y="242" text-anchor="middle" class="d-text" font-size="20" font-family="Young Serif, Georgia, serif">The road</text>
+        <text x="820" y="266" text-anchor="middle" class="d-soft" font-size="13">overworld · camp · forage</text>
+        <text x="820" y="286" text-anchor="middle" class="d-soft" font-size="13">blessings · setbacks</text>
+
+        <rect x="370" y="408" width="220" height="92" rx="12" fill="var(--paper)" stroke="var(--ember)" stroke-width="2"/>
+        <text x="480" y="440" text-anchor="middle" class="d-text" font-size="20" font-family="Young Serif, Georgia, serif">The map</text>
+        <text x="480" y="464" text-anchor="middle" class="d-soft" font-size="13">explore · fights · elites</text>
+        <text x="480" y="484" text-anchor="middle" class="d-soft" font-size="13">loot · lasting rewards · boss</text>
+
+        <rect x="30" y="210" width="220" height="92" rx="12" fill="var(--paper)" stroke="var(--leaf-2)" stroke-width="2"/>
+        <text x="140" y="242" text-anchor="middle" class="d-text" font-size="20" font-family="Young Serif, Georgia, serif">The Lodestone</text>
+        <text x="140" y="266" text-anchor="middle" class="d-soft" font-size="13">fall or GO HOME</text>
+        <text x="140" y="286" text-anchor="middle" class="d-soft" font-size="13">keeps levels, flags, knowledge</text>
+      </g>
+      <!-- arrows -->
+      <path d="M592,80 C700,100 790,140 812,206" fill="none" stroke="var(--leaf-2)" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M812,304 C790,380 700,430 594,450" fill="none" stroke="var(--leaf-2)" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M366,450 C260,430 170,380 146,306" fill="none" stroke="var(--leaf-2)" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M146,206 C170,140 260,100 366,80" fill="none" stroke="var(--leaf-2)" stroke-width="2" marker-end="url(#ar)"/>
+      <!-- labels -->
+      <text x="720" y="118" class="d-mono" font-size="12">meals · rested party · upgrades</text>
+      <text x="740" y="136" class="d-mono" font-size="12">pack space is the bet</text>
+      <text x="660" y="398" class="d-mono" font-size="12">HP · kit · morale arrive worn</text>
+      <text x="660" y="416" class="d-mono" font-size="12">ingredients · intel</text>
+      <text x="110" y="398" class="d-mono" font-size="12">materials · XP · bond points</text>
+      <text x="110" y="416" class="d-mono" font-size="12">boss card · morale dents</text>
+      <text x="96" y="118" class="d-mono" font-size="12">everything banked</text>
+      <text x="96" y="136" class="d-mono" font-size="12">knowledge kept for good</text>
+      <!-- center -->
+      <circle cx="480" cy="260" r="88" fill="none" stroke="var(--rule)" stroke-dasharray="4 6"/>
+      <text x="480" y="250" text-anchor="middle" class="d-text" font-size="16" font-family="Young Serif, Georgia, serif">one more run</text>
+      <text x="480" y="274" text-anchor="middle" class="d-soft" font-size="12">"X builds Y, Y unlocks Z"</text>
+    </svg>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>Spends</th><th>Refills</th><th>The decision it forces</th></tr></thead>
+    <tbody>
+      <tr><td><b>A turn</b></td><td>Mana, charges, belt items, position</td><td>Rage builds as you hit and get hit</td><td>Spend now, or hold the ability for the boss</td></tr>
+      <tr><td><b>A fight</b></td><td>HP, downed allies' morale</td><td>Loot, XP, bond points</td><td>Win fast and hurt, or win slow and safe</td></tr>
+      <tr><td><b>An outing</b></td><td>Pack space, one camp, food</td><td>Blessings, lasting map rewards</td><td>Push to the next place, or GO HOME and bank</td></tr>
+      <tr><td><b>Home</b></td><td>Materials, days</td><td>Morale, restores, meals, upgrades</td><td>Who rests, who goes, what gets built first</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="chap" id="pitches">
+  <div class="eyebrow">Ten pitches · all [AI]</div>
+  <h3>Ways to make every system pull on another</h3>
+  <div class="prose"><p>Each pitch names the systems it ties together, why it hooks a player, and the one call it needs from you. They're ordered by how much they lift the whole game for the work they cost.</p></div>
+
+  <article class="pitch">
+    <header><div class="letter">A</div><div><h4>The bench is a bed</h4><p class="hook">Roster rotation as the main strategy between runs.</p></div></header>
+    <div class="cols">
+      <div><h5>How it works</h5><ul>
+        <li>Characters left home gain morale per journey day (your 31 Oct note). A long outing heals the bench.</li>
+        <li>While resting, a benched character also works their settler-style trade for the village: the hunter stocks the larder, the tinker trims a restore step's cost, the chanter runs the inn's talk slot.</li>
+        <li>The gate's EDIT PARTY shows each character's morale band beside their portrait, so the choice reads at a glance.</li>
+      </ul></div>
+      <div><h5>Why it hooks</h5><ul>
+        <li>Every run starts with a real puzzle: your best four are not always your freshest four.</li>
+        <li>Recruiting a new companion is suddenly valuable even if they're weaker; they're fresh legs.</li>
+        <li>Darkest Dungeon's hamlet tension, without its cruelty: nobody dies, they just need a rest.</li>
+      </ul></div>
+    </div>
+    <div class="ask"><b>Your call:</b> should a resting companion work a trade at home, or only rest?</div>
+  </article>
+
+  <article class="pitch">
+    <header><div class="letter">B</div><div><h4>Morale you can spend</h4><p class="hook">Make the top of the bar a resource, not just the bottom a penalty.</p></div></header>
+    <div class="cols">
+      <div><h5>How it works</h5><ul>
+        <li>A Heartened character (80+) may spend 10 morale once a fight for a surge: +1 move, or a crit that can't miss, or standing up from bleeding out on their own.</li>
+        <li>The Banner Saga did this with willpower; here it comes out of the same bar that falls drain.</li>
+        <li>Spending drops them toward Steady, so a surge today is a slower recovery tomorrow.</li>
+      </ul></div>
+      <div><h5>Why it hooks</h5><ul>
+        <li>High morale feels like a gift you earned, not a number you protect.</li>
+        <li>It creates clutch moments in boss fights, the stories players retell.</li>
+        <li>It makes good food and nights at home exciting: they buy surges.</li>
+      </ul></div>
+    </div>
+    <div class="ask"><b>Your call:</b> spendable morale, or keep morale as a pure penalty for now?</div>
+  </article>
+
+  <article class="pitch">
+    <header><div class="letter">C</div><div><h4>Knowledge is the loot that never drops</h4><p class="hook">The Lodestone remembers what you learned, and what you know opens new options.</p></div></header>
+    <div class="cols">
+      <div><h5>How it works</h5><ul>
+        <li>Today a boss's card stays after your first try. Extend it: foe tags seen, a chest's trap spotted, a shortcut found, a hostile survivor's weak spot overheard all go into the stone for good.</li>
+        <li>That knowledge is what unlocks TALK in fights ("only when you know something", your rule), new event options on "!" things, and recruit paths.</li>
+        <li>A Lodestone page lists it, grouped by region, with blanks where something is still unknown.</li>
+      </ul></div>
+      <div><h5>Why it hooks</h5><ul>
+        <li>A failed run still pays. "I didn't win, but now I know about the ladder behind him."</li>
+        <li>Outer Wilds and Hades both live on this: the player gets stronger, not just the character.</li>
+        <li>It's the natural home for your writing: every entry is a slot for your text.</li>
+      </ul></div>
+    </div>
+    <div class="ask"><b>Your call:</b> does the Lodestone keep a visible list of what you've learned?</div>
+  </article>
+
+  <article class="pitch">
+    <header><div class="letter">D</div><div><h4>Every skill has two lives</h4><p class="hook">Your goal that skills work on the road too, made into a matrix the player reads.</p></div></header>
+    <div class="tbl"><table>
+      <thead><tr><th>Kit</th><th>In a fight (approved)</th><th>On the road (proposal)</th><th>At home (proposal)</th></tr></thead>
+      <tbody>
+        <tr><td>Doggo</td><td>BITE slows, BARK taunts, Fetch</td><td>Sniff: reveals hidden things and rare food; ears perk before danger, sometimes a squirrel</td><td>Good Boy: morale bonus for whoever he stays with</td></tr>
+        <tr><td>Moon</td><td>Sleep, moonbeam heal or burn</td><td>Wayfinding: shows the next node and which fork is shorter</td><td>Reads which blessing is coming</td></tr>
+        <tr><td>Ember</td><td>Burns a line of 2–3 tiles</td><td>Lights a camp without fuel; melts an ice gate</td><td>Cheaper forge steps</td></tr>
+        <tr><td>Sharpshooter</td><td>Volley, snare, overwatch</td><td>Hunts when food is low; scouts a node ahead</td><td>A hunting stand adds food each trip</td></tr>
+        <tr><td>Shade</td><td>Poison blades, shadow swap</td><td>Picks locks, disarms traps (the d20 checks already built)</td><td>Sells finds for a bit more</td></tr>
+        <tr><td>Bulwark</td><td>Guard zone, goad, COMMAND</td><td>Smashes doors, holds a gate</td><td>Lifts wood and metal steps</td></tr>
+        <tr><td>Mender</td><td>Mend, ward, AID at range</td><td>Cures sickness events; food heals more</td><td>An infirmary: morale recovers faster</td></tr>
+        <tr><td>Chanter</td><td>Rally, dissonance, last stand</td><td>+ on persuade checks; calms one hostile group a trip</td><td>Bonds grow faster</td></tr>
+      </tbody>
+    </table></div>
+    <div class="cols" style="margin-top:12px">
+      <div><h5>Why it hooks</h5><ul><li>Party picking stops being only a combat question. "I'm weaker in fights, but the moon kit will find the short way to the boss."</li></ul></div>
+      <div><h5>Ties together</h5><ul><li>Classes, d20 checks, overworld, the village ladders, and your "weak fighter, strong explorer" note.</li></ul></div>
+    </div>
+    <div class="ask"><b>Your call:</b> one road effect per kit as a rule, or only where it fits?</div>
+  </article>
+
+  <article class="pitch">
+    <header><div class="letter">E</div><div><h4>The kitchen chain</h4><p class="hook">Minigames feed meals, meals feed morale, morale feeds fights.</p></div></header>
+    <div class="cols">
+      <div><h5>How it works</h5><ul>
+        <li>Fishing, hunting and herb gathering become short skill games on the overworld (each a minute or less). A good catch gives a better ingredient, not just more of it.</li>
+        <li>Ingredients go home in the pack and become the chef's meals: stew, roast, feast, each a full pack slot you chose to carry.</li>
+        <li>Cooked at camp, a meal heals, lifts morale and gives a fight buff for a few fights. Better ingredients make better meals.</li>
+      </ul></div>
+      <div><h5>Why it hooks</h5><ul>
+        <li>The minigame always matters because its output lands in the next fight.</li>
+        <li>The pack becomes a real bet, the Stardew mine trip you described: carry a feast out, or leave room for loot.</li>
+        <li>It gives quiet travel time a purpose, the way pack-sorting does.</li>
+      </ul></div>
+    </div>
+    <div class="ask"><b>Your call:</b> which minigame first? Fishing is the smallest to build and the rod already exists.</div>
+  </article>
+
+  <article class="pitch">
+    <header><div class="letter">F</div><div><h4>Push or bank</h4><p class="hook">Each cleared place on an outing is a fork: go deeper for more, or go home with what you have.</p></div></header>
+    <div class="cols">
+      <div><h5>How it works</h5><ul>
+        <li>After clearing a place, the overworld shows what the next one offers (a material, an elite, a lasting reward) and what you'll arrive with (HP, kit, morale bars).</li>
+        <li>GO HOME banks everything. Pushing on risks a fall, which also banks everything but dents morale for whoever goes down.</li>
+        <li>A few places only reward a party that arrives deep in an outing: an elite that only shows up on your third stop, say.</li>
+      </ul></div>
+      <div><h5>Why it hooks</h5><ul>
+        <li>Classic push-your-luck, the engine of Slay the Spire's elites and Hades's chamber doors.</li>
+        <li>Falling stays free in goods (your rule) but the cost is the people, so the choice is real.</li>
+      </ul></div>
+    </div>
+    <div class="ask"><b>Your call:</b> are some rewards only reachable deep in an outing?</div>
+  </article>
+
+  <article class="pitch">
+    <header><div class="letter">G</div><div><h4>Your characters were made for these systems</h4><p class="hook">Your roster ideas each bend a rule in a way only the new systems make interesting.</p></div></header>
+    <div class="tbl"><table>
+      <thead><tr><th>Your idea</th><th>The rule it bends</th><th>Why it's fun now</th></tr></thead>
+      <tbody>
+        <tr><td>Stardrop, frail, spooks easily</td><td>Loses extra morale in night and fright events; wayfinds on the road</td><td>Brilliant on the map, needs a calm party and Doggo nearby</td></tr>
+        <tr><td>The Wizard and his books</td><td>His books take pack cells; each book carried unlocks a spell for the trip</td><td>A pack puzzle you solve before every outing</td></tr>
+        <tr><td>Skeleton Archer</td><td>Food doesn't heal him, and he lowers the morale of whoever stands next to him</td><td>Free to feed, costly to place; positioning on the road as well as the grid</td></tr>
+        <tr><td>Bushberry</td><td>Makes food every day; takes double damage from fire</td><td>A walking pantry, and the reason ember foes become scary</td></tr>
+        <tr><td>Lewith &amp; Flark</td><td>Two pieces, one party slot, one shared morale</td><td>When one falls, both feel it</td></tr>
+      </tbody>
+    </table></div>
+    <div class="ask"><b>Your call:</b> which of these goes first? It would be the first companion you find after Doggo.</div>
+  </article>
+
+  <article class="pitch">
+    <header><div class="letter">H</div><div><h4>Earth to Alien, as a system</h4><p class="hook">Past the Wall you don't know what anything is, so knowing becomes the game.</p></div></header>
+    <div class="cols">
+      <div><h5>How it works</h5><ul>
+        <li>Alien finds arrive unidentified, as plain shapes in the pack. Eating one unknown is a gamble: a heal, a blessing, or a setback.</li>
+        <li>A character with the right kit (moon, tracker, mender) can name it on the road; a settler at home names it for good.</li>
+        <li>Once named, it's in the Lodestone's knowledge (pitch C) forever, and its recipe opens in the kitchen (pitch E).</li>
+        <li>The look's strangeness dial already in the map maker turns up region by region; foe tags gain new ones nobody has seen.</li>
+      </ul></div>
+      <div><h5>Why it hooks</h5><ul>
+        <li>It turns your visual twist into a mechanical one: the player feels as lost as the hero.</li>
+        <li>It rewards curiosity, and every unknown is a reason to go one more time.</li>
+      </ul></div>
+    </div>
+    <div class="ask"><b>Your call:</b> should unknown food past the Wall be a gamble you can eat blind?</div>
+  </article>
+
+  <article class="pitch">
+    <header><div class="letter">I</div><div><h4>Bonds you can see on the board</h4><p class="hook">Bonds already add team-up damage. Let them shape morale and movement too.</p></div></header>
+    <div class="cols">
+      <div><h5>How it works</h5><ul>
+        <li>At bond B, a bonded partner next to a downed friend halves their morale loss.</li>
+        <li>At bond A, the pair gets one shared move per fight (a duo move like Unicorn Overlord's), designed per pair.</li>
+        <li>The party panel draws a thin line between bonded pieces that stand next to each other.</li>
+      </ul></div>
+      <div><h5>Why it hooks</h5><ul>
+        <li>Fire Emblem players come for the pairs. It makes "who stands next to whom" an emotional choice as well as a tactical one.</li>
+        <li>It's the payoff for your bond talks: the talk opens, the move unlocks.</li>
+      </ul></div>
+    </div>
+    <div class="ask"><b>Your call:</b> duo moves at bond A, yes or not yet?</div>
+  </article>
+
+  <article class="pitch">
+    <header><div class="letter">J</div><div><h4>The homecoming screen</h4><p class="hook">Every return ends on one page that shows everything you gained, then the next goal.</p></div></header>
+    <div class="cols">
+      <div><h5>How it works</h5><ul>
+        <li>After a fall or GO HOME: materials banked, XP and levels, bond points, morale changes, new knowledge, and which restore step just finished.</li>
+        <li>It closes on the next watched goal and how close you are ("2 of 3 metal").</li>
+        <li>On a fall it also shows the boss card you just learned.</li>
+      </ul></div>
+      <div><h5>Why it hooks</h5><ul>
+        <li>Hades and Rogue Legacy make losing feel like progress with exactly this beat.</li>
+        <li>It's the moment a player decides "one more run". Showing the next goal makes that decision for them.</li>
+      </ul></div>
+    </div>
+    <div class="ask"><b>Your call:</b> a homecoming summary after every return?</div>
+  </article>
+</section>
+
+<section class="chap" id="week">
+  <div class="eyebrow">How it plays · a mechanical story, no plot</div>
+  <h3>A player's first week</h3>
+  <div class="prose"><p>Here is how the pitches feel together, run by run. Every step uses mechanics only; the story moments are your placeholders.</p></div>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><div><h4>Run one: the shock</h4><p>Takes the bow, finds Doggo, lifts the stone. Clears the pass, wins the den. Arrives at the Lich with two potions and one charge left. Falls. Wakes in the square. <span class="cave">STONE GLOW. lorem ipsum.</span> The homecoming screen shows 3 materials, the Lich's card, and that the hero is now Shaken.</p></div></div>
+    <div class="step"><div class="n">2</div><div><h4>Home: the first puzzle</h4><p>Sleeps a night: back to Steady. Gives the smithy its first step. Learns from the card that arrows hit the Lich for −2 and fire for +2. Goes back to the shelf and finds the hidden book.</p></div></div>
+    <div class="step"><div class="n">3</div><div><h4>Run two: the pivot</h4><p>Takes the book this time, a fresh job at level 0 but the hero keeps their level. Fishes on the walk, cooks a stew at camp. Skips the elite to save the kit. Beats the Lich on the second try, which is the 25–50% target.</p></div></div>
+    <div class="step"><div class="n">4</div><div><h4>Run three: someone new</h4><p>The prairie opens. A hostile survivor; TALK appears because of something heard in the crypt. <span class="cave">STRANGER ANGRY. TALK / FIGHT</span> Two talks later they join. Now there's a bench.</p></div></div>
+    <div class="step"><div class="n">5</div><div><h4>Runs four to six: the rhythm</h4><p>Rotating two companions. The dog stays home once to heal a Broken friend's morale. A bond reaches B. The inn kitchen finishes; feasts unlock. A deep-outing elite drops a rare material that lets the forge make the next upgrade.</p></div></div>
+    <div class="step"><div class="n">6</div><div><h4>The pull</h4><p>The watched goal says "1 of 2 rare metal". The next region's node glows on the overworld. "One more."</p></div></div>
+  </div>
+</section>
+
+<section class="chap" id="hooks">
+  <div class="eyebrow">Hook audit</div>
+  <h3>A reason to keep going at every timescale</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Scale</th><th>The itch</th><th>What scratches it today</th><th>What the pitches add</th></tr></thead>
+    <tbody>
+      <tr><td class="num">10 seconds</td><td>A good move</td><td>Team-ups, height, crits that pop, shoves off ledges</td><td>Morale surges (B), duo moves (I)</td></tr>
+      <tr><td class="num">5 minutes</td><td>A won fight</td><td>Loot grid, XP, level-up picks</td><td>Bond lines on the board (I)</td></tr>
+      <tr><td class="num">30–45 minutes</td><td>A good outing</td><td>Blessings, lasting rewards, elites</td><td>Push or bank (F), the kitchen chain (E)</td></tr>
+      <tr><td class="num">An evening</td><td>A boss beaten</td><td>The boss card, region complete</td><td>Knowledge kept (C), homecoming screen (J)</td></tr>
+      <tr><td class="num">A week</td><td>A village reborn, a full roster</td><td>Restore ladders, watched goals</td><td>The bench (A), your roster (G), the Wall (H)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= PART III ================= -->
+<div class="part-band" id="part3">
+  <div class="num">Part III · from the dev and art team</div>
+  <h2>How we build maps worth a screenshot</h2>
+  <p>The map builder, the systems developer and the art runner on the process: what we use today, the flow we propose for every map from now on, and the tools we still need to build. Proposals are <span class="tag t-ai" style="vertical-align:1px">[AI]</span>.</p>
+</div>
+
+<section class="chap" id="mapphil">
+  <div class="eyebrow">Your standing rules for maps</div>
+  <h3>Never a box</h3>
+  <div class="quote">"Do a check and go 'hmm is the entire map basically just a big box?' if yes, dont show it to me and work on it. Unique shapes, jut outs, dynamics, verticality!"<small>Brandon, 30 Oct, crypt redesign</small></div>
+  <div class="grid g3">
+    <div class="card"><h4>Shape</h4><ul><li>Big height differences, cliffs and falls</li><li>Roads that wind and climb</li><li>Irregular outlines, never flat squares</li></ul></div>
+    <div class="card"><h4>Scale</h4><ul><li>Things make spatial sense: a boathouse 3–4× the hero</li><li>Doors fit the hero</li><li>The village is quaint, built into a mountain side</li></ul></div>
+    <div class="card"><h4>Readability</h4><ul><li>One approved angle per map</li><li>Every shelf reachable, stairs that read as the path</li><li>Tall things go see-through round a piece; low props stay solid</li></ul></div>
+  </div>
+  <div class="plates two">
+    <figure><img src="img/ref-village-layout.webp" alt="Brandon's village layout reference" loading="lazy"><figcaption>Your village v2 layout reference (layout only): districts, a lake, ruins on high ground.</figcaption></figure>
+    <figure><img src="img/village-v2.webp" alt="Village v2 in game" loading="lazy"><figcaption>Village v2 in the game today: terraces, a windmill, stairs that climb, a lake with a boathouse.</figcaption></figure>
+  </div>
+</section>
+
+<section class="chap" id="toolkit">
+  <div class="eyebrow">The tool kit today</div>
+  <h3>What we build with now</h3>
+  <div class="sys" style="border-top:0;padding-top:0">
+    <div class="body">
+      <h4>The map maker (F8)</h4>
+      <ul>
+        <li>Three phases on a step bar: <b>Shape</b> (size, look, generator, raise and lower, tidy, pillars, ground materials, path, river, stairs, bridges, decks, area move), <b>Decor</b> (the asset drawers), <b>Play</b> (party start, foes, interactables).</li>
+        <li>Flat sketch mode (Tab): a top-down pixel plan to block shapes fast, then flip back to the painted view.</li>
+        <li>Greybox view with buildings as boxes, to judge height and space.</li>
+        <li>Bridges drawn between two landings; brush size 1–4 for paths, rivers, bridges and stairs.</li>
+        <li>Named placeholder blobs that turn into art the moment <code>ph_&lt;name&gt;.png</code> lands.</li>
+        <li>Notes on any thing: "make this door smashable" becomes a ticket for us.</li>
+      </ul>
+    </div>
+    <figure><img src="img/maker-village.webp" alt="Map maker with village v2 open" loading="lazy"><figcaption>The map maker on village v2: tool rail left, phases on top, the Map tab right.</figcaption></figure>
+  </div>
+  <div class="plates two">
+    <figure><img src="img/maker-greybox.webp" alt="Greybox view" loading="lazy"><figcaption>Greybox view: the whole village as plain blocks.</figcaption></figure>
+    <figure><img src="img/maker-crypt.webp" alt="Map maker on the crypt with the assets drawer" loading="lazy"><figcaption>The crypt with the asset drawers open.</figcaption></figure>
+  </div>
+  <div class="grid g3">
+    <div class="card"><h4>God mode</h4><p>The "!" on any map jumps into the maker centred on the party, and Back to play returns to the same cell.</p></div>
+    <div class="card"><h4>Map checks</h4><p>Build scripts check every walkable cell is reachable, every thing is usable, buildings sit flat and stairs read along their flight.</p></div>
+    <div class="card"><h4>Fight sims</h4><p>AI-vs-AI balance runs, the outing sim, and the E2E robot that plays the loop and fails on any engine error.</p></div>
+    <div class="card"><h4>Shot tools</h4><p>Scripts that drive any map, menu or fight into a state and save a picture. Every image in this document came from them.</p></div>
+    <div class="card"><h4>Picsart pipeline</h4><p>GPT image through the API, your flat forest panel as the only reference. A go card before each batch, a review card after.</p></div>
+    <div class="card"><h4>The Studio desk</h4><p>Your decisions as cards with screenshots. Every map review in this project went through it.</p></div>
+  </div>
+</section>
+
+<section class="chap" id="pipeline">
+  <div class="eyebrow">The proposed flow · [AI]</div>
+  <h3>The map pipeline: eight stages from brief to postcard</h3>
+  <div class="prose"><p>Today maps are built and then reviewed as a whole, and your notes often come back at the shape stage ("so flat and square") after the dressing work is done. This flow puts your eye on the shape first, and checks the things you keep repeating by machine before you ever see a picture.</p></div>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><div><h4>The brief</h4><p>One card per map: what it's for (road fight, explore map, showcase, hub), its fight goals, target length, the elite and lasting reward it holds, and its <b>postcard</b>: the one view a player should screenshot. You approve the brief, not a picture.</p><div class="tools">Studio card · brief template (to build)</div></div></div>
+    <div class="step"><div class="n">2</div><div><h4>Flat sketch</h4><p>Block the shape top-down in flat mode: districts, heights as shades, the route, choke points, where the postcard is seen from. Fast to change, cheap to throw away.</p><div class="tools">Flat sketch mode (built)</div></div></div>
+    <div class="step"><div class="n">3</div><div><h4>Greybox</h4><p>Flip to 3D greybox. Sculpt the cliffs, stairs, bridges and decks. Buildings as boxes at their real footprints.</p><div class="tools">Shape phase, greybox view, area move, bridge tool (built)</div></div></div>
+    <div class="step"><div class="n">4</div><div><h4>Machine QA</h4><p>Before anyone looks: every cell reachable, no stair to nowhere, a "box score" that fails a map whose outline is too square or its heights too flat, scale checks against the hero, enough deploy room at each fight.</p><div class="tools">Reachability (built in scripts) · box score, scale and deploy checks in the maker (to build)</div></div></div>
+    <div class="step"><div class="n">5</div><div><h4>Shape review</h4><p>You see the greybox from the play angle and the postcard angle. Approve the shape, or send it back while it's cheap.</p><div class="tools">Studio card with greybox shots</div></div></div>
+    <div class="step"><div class="n">6</div><div><h4>Play pass</h4><p>Place the party start, foe groups, "!" things, containers, elites, TALK fights. The robot walks it; the sim fights every group; the outing sim checks what the party arrives at the boss with.</p><div class="tools">Play phase, god mode, sims, E2E robot (built)</div></div></div>
+    <div class="step"><div class="n">7</div><div><h4>Dress</h4><p>Tile sets, props, transitions, water, ambience. Every missing piece is a named blob, and the blobs roll up into one Picsart go card per map.</p><div class="tools">Decor phase, blobs (built) · blob-to-go-card queue (to build)</div></div></div>
+    <div class="step"><div class="n">8</div><div><h4>Postcard pass</h4><p>Frame the reveal: the camera move as you arrive, ambience, a set piece in view. Shoot the postcard and the before and after. You stamp it and it ships.</p><div class="tools">Shot tools (built) · camera marks and reveal moves (to build)</div></div></div>
+  </div>
+</section>
+
+<section class="chap" id="showcase">
+  <div class="eyebrow">Showcase moments</div>
+  <h3>What makes a player stop and take a screenshot</h3>
+  <div class="prose"><p>Your brief asked for "frequent moments where a player pauses and takes a screenshot". From the maps you've approved and the games in the research deck, these are the ingredients. A showcase map should have at least three.</p></div>
+  <div class="grid g3">
+    <div class="card"><h4>The reveal</h4><p>You climb a stair, the camera eases back, and the whole place opens below you. The crypt's courtyard-bridge-doors approach is built for this.</p></div>
+    <div class="card"><h4>Vertical drama</h4><p>A waterfall beside a stair, a bridge you walk under and later over, a ledge that overlooks the square.</p></div>
+    <div class="card"><h4>A living frame</h4><p>Swaying trees, falling snow and leaves, moving water. All approved, all built.</p></div>
+    <div class="card"><h4>The arena changes</h4><p>The Lich's ice pillars rising. A boss whose phases at 2/3 and 1/3 could flood a terrace or drop a bridge.</p></div>
+    <div class="card"><h4>The choice in view</h4><p>Your lava monster with a ladder behind him: two ways to win, both visible from the start.</p></div>
+    <div class="card"><h4>Quiet places</h4><p>The nooks in the village: the clearing at the head of the falls, the glade behind the hall. Rewards for looking.</p></div>
+  </div>
+  <figure><img src="img/snow-pass-start.webp" alt="Snow pass with falling snow" loading="lazy"><figcaption>The snow pass with ambient snow: a quiet showcase moment already in the game.</figcaption></figure>
+  <h4 style="margin-top:26px">Set pieces worth building <span class="tag t-ai">[AI]</span></h4>
+  <div class="tbl"><table>
+    <thead><tr><th>Set piece</th><th>Fight goal</th><th>Map trick it needs</th></tr></thead>
+    <tbody>
+      <tr><td>Hold the bridge</td><td>Hold for N rounds</td><td>A deck bridge as the only way across; foes come from both banks</td></tr>
+      <tr><td>The climb out</td><td>Reach the exit, everyone</td><td>A boss below, a ladder or stair up a cliff behind him (your lava monster idea)</td></tr>
+      <tr><td>The flooding hall</td><td>Defeat, boss phases</td><td>Water that rises one level per phase and turns cells unwalkable</td></tr>
+      <tr><td>The talk-down</td><td>Beat the leader or TALK</td><td>A raised stage where the leader stands, reachable in two ways</td></tr>
+      <tr><td>The escort</td><td>Protect</td><td>A cart on a road ribbon through a gorge with ledges above</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="chap" id="toolgaps">
+  <div class="eyebrow">Tools still to build · ranked</div>
+  <h3>What would make building fast and good</h3>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><div><h4>The QA panel in the maker</h4><p>One button that runs reachability, the box score, stairs to nowhere, scale against the hero and deploy room, and paints the problems on the map. It catches what you keep repeating before a picture reaches you.</p></div></div>
+    <div class="step"><div class="n">2</div><div><h4>Fight and encounter editor</h4><p>Set a group's goal (hold, exit, protect, leader), its TALK unlock, its elite badge and reward in the Play phase, then run the sim on that one fight from the maker.</p></div></div>
+    <div class="step"><div class="n">3</div><div><h4>Map triggers</h4><p>Zones and things that fire when a piece steps in: a camera move, a door opening, water rising, a placeholder line for your text. The backbone of set pieces and story beats alike.</p></div></div>
+    <div class="step"><div class="n">4</div><div><h4>Camera marks and the postcard view</h4><p>Mark a reveal point and a framing on the map; the game eases the camera there on arrival, and the shot tool saves the postcard on demand.</p></div></div>
+    <div class="step"><div class="n">5</div><div><h4>Prefabs and district kits</h4><p>Save a built piece (a home with its landing, a stair-and-terrace, a bridge with railings) and stamp it elsewhere, so a new village or ruin starts from proven pieces.</p></div></div>
+    <div class="step"><div class="n">6</div><div><h4>Overworld editor</h4><p>Nodes, forks that rejoin, encounters per leg, and which place a cleared place reveals. Today the overworld is in code.</p></div></div>
+    <div class="step"><div class="n">7</div><div><h4>The blob-to-art queue</h4><p>Every named blob across all maps listed with its footprint, scale and note, grouped into a ready Picsart go card with the right references.</p></div></div>
+    <div class="step"><div class="n">8</div><div><h4>New biome kits</h4><p>The prairie and the north-west need tile sets, props and a look; past the Wall needs the first alien kit and a strangeness ramp.</p></div></div>
+    <div class="step"><div class="n">9</div><div><h4>Light and sound per map</h4><p>Time of day tint, a fog or glow layer, and ambient sound zones (water, wind, a forge) painted like a zone.</p></div></div>
+  </div>
+</section>
+
+<section class="chap" id="desk">
+  <div class="eyebrow">Close</div>
+  <h3>Calls this document puts on your desk</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>From</th><th>The question</th><th>Our pick</th></tr></thead>
+    <tbody>
+      <tr><td>Pitch A</td><td>Do resting companions work a trade at home?</td><td>Yes, one small bonus each</td></tr>
+      <tr><td>Pitch B</td><td>Spendable morale at the top of the bar?</td><td>Yes, once a fight</td></tr>
+      <tr><td>Pitch C</td><td>A visible list of what you've learned?</td><td>Yes, on the Lodestone</td></tr>
+      <tr><td>Pitch E</td><td>Which minigame first?</td><td>Fishing</td></tr>
+      <tr><td>Pitch G</td><td>Which roster idea is the first companion after Doggo?</td><td>Your call; Stardrop shows off the most systems</td></tr>
+      <tr><td>Pitch J</td><td>A homecoming summary after every return?</td><td>Yes</td></tr>
+      <tr><td>Part III</td><td>Adopt the eight-stage map pipeline, with shape review before dressing?</td><td>Yes</td></tr>
+      <tr><td>Part III</td><td>First tool to build?</td><td>The QA panel</td></tr>
+      <tr><td>Story</td><td>The dog's breed on screen (the art is a corgi; the design is "a rescued dog")</td><td>Yours</td></tr>
+    </tbody>
+  </table></div>
+  <footer>
+    <p>Sources: <code>docs/decisions.md</code>, <code>docs/context/current-state.md</code>, <code>docs/context/studio-snapshot/</code>, <code>docs/design/</code> (core-loop, empty-village, archetypes, morale, level-up, outing-tuning, loot-containers), <code>docs/systems/</code>, <code>docs/research/tactics-combat-deck.html</code>, and screenshots taken from main on 31 Oct 2026 with the game's own shot tools. Art shown is placeholder until you approve it.</p>
+    <p>Repo copy: <code>docs/master/index.html</code>. Keep it current at milestones.</p>
+  </footer>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  document.addEventListener('click',function(e){
+    var img=e.target.closest('figure img');
+    if(!img)return;
+    var lb=document.createElement('div');lb.className='lb';lb.setAttribute('role','dialog');lb.setAttribute('aria-label','Enlarged image');lb.tabIndex=-1;
+    var big=document.createElement('img');big.src=img.src;big.alt=img.alt;lb.appendChild(big);
+    function close(){lb.remove();document.removeEventListener('keydown',key)}
+    function key(ev){if(ev.key==='Escape')close()}
+    lb.addEventListener('click',close);document.addEventListener('keydown',key);
+    document.body.appendChild(lb);lb.focus();
+  });
+})();
+</script>

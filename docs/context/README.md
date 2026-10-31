@@ -32,6 +32,7 @@ Open the HTML files in a browser. They are self-contained except for Google Font
 
 Published originals (Brandon's account only):
 - Lodestone Studio (home base: desk, team, references, library; source `tools/studio-page/index.html`): https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5
+- Master Document (what the game is, the systems pitch, the map pipeline; source `docs/master/index.html`, refreshed at milestones): https://claude.ai/artifact/BDGfifcKtxqWKVJWT1XHFi
 - Studio Playbook: https://claude.ai/artifact/YLjyZGiFGzjF819zwAyJTy
 - Style Lab: https://claude.ai/artifact/Q3D7yYdUAeS9eEs7cS5XsK
 - Battle Map Guide: https://claude.ai/artifact/JjxHePXisJfFFTxoddXjYB
