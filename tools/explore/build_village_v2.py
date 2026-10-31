@@ -669,3 +669,10 @@ if CUT_OFF:
     raise SystemExit("village_v2: %d walkable cells no route reaches: %s" % (len(CUT_OFF), CUT_OFF[:12]))
 check_village(V, DECKS)
 save_all()
+
+# The town is unfolded into a winding one ([USER] 2026-10-30, redesign): districts moved apart onto terraced islands,
+# joined by bridges where the roads ran, rims bitten, each home given a landing (unfold_village_v2.py).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import unfold_village_v2  # noqa: E402
+if not unfold_village_v2.main(path, path):
+    raise SystemExit("village_v2: could not unfold the town (no cuts reach every thing)")

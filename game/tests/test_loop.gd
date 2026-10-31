@@ -1236,3 +1236,38 @@ func test_bosses_skip_the_depth_rolls() -> void:
 	Game.explore_memory.clear()
 	Game.explore_map = "home"
 	_restore(saved)
+
+
+## [USER] 2026-10-30 (village v2 redesign): "make sure each home has a landing outside it so that NPCs can be outside it".
+## Every home door has an open, flat, reachable 2 x 2 landing within three cells of it.
+func test_village_v2_every_home_has_a_landing() -> void:
+	var m := ExploreMap.load_named("village_v2")
+	var g := m.grid
+	var seen := {m.start[0]: true}
+	var todo: Array[Vector2i] = [m.start[0]]
+	while not todo.is_empty():
+		var p: Vector2i = todo.pop_back()
+		for d in CombatRules.DIRS:
+			for q in g.places_next(p, d):
+				if not seen.has(q) and g.walkable(q) and g.can_step(p, q, 1):
+					seen[q] = true
+					todo.append(q)
+	var homes := 0
+	for t in m.things:
+		if t.kind != "enter" or not String(t.id).begins_with("door_"):
+			continue
+		homes += 1
+		var found := false
+		for ox in range(-4, 4):
+			for oy in range(-4, 4):
+				var ok_block := true
+				var h0 := g.height_at(t.cell)
+				for i in 2:
+					for j in 2:
+						var c: Vector2i = t.cell + Vector2i(ox + i, oy + j)
+						if not seen.has(c) or absi(g.height_at(c) - h0) > 1:
+							ok_block = false
+				if ok_block:
+					found = true
+		ok(found, "%s has a 2 x 2 landing outside it" % t.id)
+	ok(homes >= 8, "the homes' doors are there (%d)" % homes)

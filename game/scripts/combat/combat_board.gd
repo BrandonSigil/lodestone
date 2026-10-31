@@ -742,7 +742,7 @@ func _has_props(c: Vector2i) -> bool:
 
 ## Never drawn: no ground, or never seen under fog of war.
 func _unseen(c: Vector2i) -> bool:
-	return not grid.in_bounds(c) or grid.terrain_at(c) == CombatGrid.T.VOID or (fog_on and not fog.has(CombatGrid.ground(c)))
+	return not grid.in_bounds(c) or (grid.terrain_at(c) == CombatGrid.T.VOID and not grid.has_deck(c)) or (fog_on and not fog.has(CombatGrid.ground(c)))
 
 
 func _paint(sl: Slab) -> void:
@@ -890,6 +890,7 @@ func _draw_deck(c: Vector2i) -> void:
 ## A bridge cell as the kit's grey boxes: a deck slab with rails along its open sides, arms to each side it carries on, a
 ## pier under it down to whatever is below (water, lower ground, nothing). One piece per shape (BridgeKit.PIECES): a
 ## piece with art in res://art/source/battle/bridge/ is drawn from that instead.
+const BRIDGE_PIER_MAX := 5.0  ## levels a pier hangs below the deck over a void
 const BRIDGE_DECK := Color(0.66, 0.66, 0.7)
 const BRIDGE_RAIL := Color(0.48, 0.48, 0.52)
 const BRIDGE_PIER := Color(0.36, 0.36, 0.4)
@@ -909,8 +910,8 @@ func _draw_bridge(c: Vector2i, col: Color) -> void:
 	for s: String in ["w", "e", "n", "s"]:
 		if not k[s]:
 			open_ends += 1
-	if parity or open_ends >= 3:
-		var below := float(grid.height_at(c)) if grid.solid(c) else 0.0
+	if (parity and (c.x + c.y) % 4 == 0) or open_ends >= 3:  # one pier in four cells, and no longer than PIER_MAX
+		var below := maxf(float(grid.height_at(c)) if grid.solid(c) else 0.0, z0 - BRIDGE_PIER_MAX)
 		_box(lo + Vector2(0.36, 0.36), lo + Vector2(0.64, 0.64), minf(below, z0 - 1.0), z0, BRIDGE_PIER * col)
 	var arms := []  # [from, to] of each slab, in the cell's 0..1 coordinates
 	var ax: bool = k.w or k.e
@@ -980,7 +981,7 @@ static func _ring(pts: PackedVector2Array) -> PackedVector2Array:
 
 
 func hidden(c: Vector2i) -> bool:
-	if grid.terrain_at(c) == CombatGrid.T.VOID:
+	if grid.terrain_at(c) == CombatGrid.T.VOID and not grid.has_deck(c):  # a bridge over the void still shows
 		return true
 	if fog_on and not fog.has(CombatGrid.ground(c)):
 		return true
