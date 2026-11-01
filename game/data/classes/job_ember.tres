@@ -21,4 +21,6 @@ range_min = 2
 range_max = 3
 magic = true
 skills = {"forage": 1, "wayfind": 1}
-abilities = Array[StringName]([&"firebolt", &"fireball", &"ignite", &"flash"])
+strike = &"fire_zap"
+abilities = Array[StringName]([])
+traits = Array[StringName]([&"heart_burns"])

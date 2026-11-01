@@ -215,6 +215,8 @@ RES_MANA,MANA
 RES_RAGE,RAGE
 RES_CHARGES,CHARGES
 TAG_TAUNT,LOOK AT ME
+UI_TAUNT_PULLED,!
+LOG_TAUNT_PULLS,"  %s: %d foes in reach must attack it"
 TAG_SLOW,SLOW
 SKILL_BITE,BITE
 SKILL_BARK,BARK
@@ -283,6 +285,7 @@ SKILL_SLEEP,MOON NAP
 SKILL_TIDE,MOON WAVE
 SKILL_GUIDE,STAR POINT
 SKILL_FIREBOLT,FIRE ZAP
+SKILL_FIRE_ZAP,FIRE ZAP
 SKILL_FROST,COLD STUCK
 TAG_SLEEP,NAP
 TAG_GUIDED,STAR
@@ -313,6 +316,10 @@ TRAIT_PACK_DESC,+1 damage on a foe that a friend is also next to.
 TRAIT_FLAMMABLE,BURNY
 TRAIT_FLAMMABLE_DESC,Takes 2 more fire damage.
 TRAIT_POISON_BLADES,SICK KNIFE
+TRAIT_HEART_BURNS,HOT HEART lorem
+TRAIT_GOOD_BOY,GOOD BOY
+TRAIT_GOOD_BOY_DESC,"A friend standing next to him heals 1 HP at the start of its turn."
+TRAIT_HEART_BURNS_DESC,"Your plain attacks have a 30% chance to burn the target: it loses 1 HP at the start of each of its next 2 turns, through armor. A new burn renews it and does not stack."
 TRAIT_POISON_BLADES_DESC,"Dagger hits poison the target: it loses 1 HP at the start of its next turn, through armor. A new hit renews it and does not stack."
 TRAIT_HIT_AND_RUN,HIT RUN
 TRAIT_HIT_AND_RUN_DESC,"After attacking, you may walk the rest of your move."
@@ -400,6 +407,7 @@ UI_STAT_MAGIC,MAGIC
 UI_STAT_CRIT,CRIT
 TAG_BLEED,BLEED
 TAG_POISON,SICK
+TAG_BURN,HOT
 UI_LS_PICK_WAITING,%s CAN MAKE SKILL STRONG. OPEN STONE.
 UI_LS_JOB,JOB: %s  LV %d  %s
 UI_LS_BRANCH,JOB GROW. PICK WAY. lorem.
@@ -605,6 +613,7 @@ TALK_DOG_3,DOG BRING STICK. lorem ipsum.
 UI_STAY_MAP,STAY ON BIG MAP
 UNLOCK_MET_DOG,FIND DOG IN TOWN
 UI_NEED_WEAPON,You should probably find something to protect yourself with before heading out!
+DESC_FIRE_ZAP,"A plain fire attack at one foe in your attack range (2 to 3 tiles to start). Damage is your attack damage, plus or minus 1. Ignores cover. Does 2 more to foes that burn easily. Free."
 DESC_STRIKE,"Attack with your weapon. Damage is your weapon damage, plus or minus 1. Free."
 DESC_SHOVE,Hit an adjacent foe for 2 less damage and push it 1 tile away. 10% extra crit chance.
 DESC_AIMED_SHOT,A careful shot: 1 more damage than a normal attack and 15% extra crit chance.
@@ -864,6 +873,7 @@ TAGDESC_OVERWATCH,The first foe to move into its reach is stopped and shot once.
 TAGDESC_FOE_WARD,2 extra armor until the warder's side next moves.
 TAGDESC_BLEED,Loses 1 HP at the start of each of its turns.
 TAGDESC_POISON,"Loses 1 HP at the start of its next turn, through armor."
+TAGDESC_BURN,"Loses 1 HP at the start of each of its turns while it burns, through armor."
 TAGDESC_COLD,"Loses 1 HP at the end of its turn for each ice pillar next to it, at most 2."
 TAGDESC_ELITE,"Elite: 150% HP, 1 more damage, 1 more armor, and pays 150% XP."
 UI_LV_STAT,%s %d to %d

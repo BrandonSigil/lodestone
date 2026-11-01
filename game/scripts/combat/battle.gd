@@ -518,6 +518,23 @@ func _use(u: CombatUnit, a: Ability, aim: Vector2i) -> void:
 		state = prev
 
 
+## BARK / GOAD landed ([USER] 2026-11-01 playtest: "used it right next to the elite wolf and nothing happens"): the
+## shout rolls out, LOOK AT ME pops over the taunter, and every foe it pulls (CombatRules.taunt_pulls) turns to face
+## it with a "!" over its head, so it reads which foes now have to come for it.
+func _show_taunt(t: CombatUnit) -> void:
+	if CharacterArt.has_anim(t.sprite, "attack"):
+		board.play_anim(t, "attack")
+	board.shout(t)
+	board.float_text(t.cell, Txt.t("TAG_TAUNT"), board.TAUNT_COLOR, 22)
+	await get_tree().create_timer(0.35).timeout
+	var pulled := CombatRules.taunt_pulls(grid, t, units)
+	for o in pulled:
+		board.face(o, t.cell)
+		board.float_text(o.cell, Txt.t("UI_TAUNT_PULLED"), board.TAUNT_COLOR, 26)
+	log_line.emit(Txt.f("LOG_TAUNT_PULLS", [Txt.t(t.name_key), pulled.size()]))
+	await get_tree().create_timer(0.5).timeout
+
+
 func _play(ev: Dictionary) -> void:
 	var t: CombatUnit = ev.get("unit")  # a big move's mark and landing have none
 	match ev.type:
@@ -549,8 +566,11 @@ func _play(ev: Dictionary) -> void:
 			if ev.get("struck", false):
 				await board.animate_attack(ev.src, t, true)
 			log_line.emit(Txt.f("LOG_STATUS", [Txt.t(t.name_key), Txt.t("TAG_" + String(ev.status).to_upper())]))
-			board.float_text(t.cell, Txt.t("TAG_" + String(ev.status).to_upper()), Color(0.75, 0.85, 1.0))
-			await get_tree().create_timer(0.2).timeout
+			if ev.status == CombatRules.STATUS_TAUNT:
+				await _show_taunt(t)
+			else:
+				board.float_text(t.cell, Txt.t("TAG_" + String(ev.status).to_upper()), Color(0.75, 0.85, 1.0))
+				await get_tree().create_timer(0.2).timeout
 		"push":
 			log_line.emit(Txt.f("LOG_PUSH", Txt.t(t.name_key)))
 			await board.animate_push(t, ev.path)

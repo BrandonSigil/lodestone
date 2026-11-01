@@ -21,3 +21,4 @@ range_max = 1
 magic = false
 skills = {"hunt": 2, "forage": 2, "tame": 1}
 abilities = Array[StringName]([&"bite", &"bark", &"carry"])
+traits = Array[StringName]([&"good_boy"])

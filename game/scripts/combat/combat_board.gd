@@ -110,6 +110,10 @@ var _paint_button := 0
 var hover := NONE
 var selected: CombatUnit = null
 var _floaters: Array[Dictionary] = []  # {"text", "pos", "t", "color", "size"}
+var _shouts: Array[Dictionary] = []  # BARK's shout rings: {"unit", "t"} (SHOUT_TIME down to 0)
+const SHOUT_TIME := 1.1
+const SHOUT_REACH := 6.0  ## how many tiles across the outer shout ring grows
+const TAUNT_COLOR := Color(1.0, 0.62, 0.2)
 var _time := 0.0
 var rot := 0  ## camera quarter turns, 0-3 (Q turns it)
 ## Fog of war for exploration maps: cell -> 1 (seen before, drawn dim) or 2 (in sight now).
@@ -205,6 +209,9 @@ func _process(delta: float) -> void:
 		f.t -= delta
 		f.pos.y -= 30.0 * delta
 	_floaters = _floaters.filter(func(f: Dictionary) -> bool: return f.t > 0.0)
+	for s in _shouts:
+		s.t -= delta
+	_shouts = _shouts.filter(func(s: Dictionary) -> bool: return s.t > 0.0)
 	_sync_slabs()
 
 
@@ -1111,11 +1118,22 @@ func _paint_top() -> void:
 				_draw_frame(u, base, Color(ring.lightened(0.3), 0.55))
 			else:
 				_ci.draw_arc(base + Vector2(0, -26.0 * 1.22), 26.0 * 0.3, 0, TAU, 20, Color(ring, 0.7), 2.0, true)
+	for s in _shouts:  # BARK: three rings rolling out from the dog's feet across the board
+		var base := _unit_base(s.unit)
+		var k := 1.0 - float(s.t) / SHOUT_TIME
+		for i in 3:
+			var p := clampf(k * 1.6 - i * 0.3, 0.0, 1.0)
+			if p <= 0.0 or p >= 1.0:
+				continue
+			var rx := lerpf(16.0, TW * SHOUT_REACH * 0.5, p)
+			Pawn.ellipse(_ci, base, rx, rx * 0.5, Color(TAUNT_COLOR, (1.0 - p) * 0.9), false, 4.0 - i)
 	for f in _floaters:
 		var a := clampf(f.t, 0.0, 1.0)
 		var fs := int(f.get("size", 16))
-		_ci.draw_string_outline(font, f.pos, f.text, HORIZONTAL_ALIGNMENT_CENTER, 120, fs, maxi(4, fs / 4), Color(0, 0, 0, a))
-		_ci.draw_string(font, f.pos, f.text, HORIZONTAL_ALIGNMENT_CENTER, 120, fs, Color(f.color, a))
+		var w := maxf(120.0, font.get_string_size(f.text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x + 8.0)  # long words don't clip
+		var at: Vector2 = f.pos - Vector2((w - 120.0) * 0.5, 0)
+		_ci.draw_string_outline(font, at, f.text, HORIZONTAL_ALIGNMENT_CENTER, w, fs, maxi(4, fs / 4), Color(0, 0, 0, a))
+		_ci.draw_string(font, at, f.text, HORIZONTAL_ALIGNMENT_CENTER, w, fs, Color(f.color, a))
 
 
 ## Not drawn: never seen under fog of war, or off screen on a big map.
@@ -3949,6 +3967,9 @@ func _draw_unit(u: CombatUnit) -> void:
 	if u == selected:
 		ring = Color(1.0, 0.9, 0.4)
 	var top := 48.0
+	if u.has_status(CombatRules.STATUS_TAUNT):  # LOOK AT ME: a pulsing orange ring under the taunter while it lasts
+		var pulse := 0.5 + 0.5 * sin(_time * 5.0)
+		Pawn.ellipse(_ci, base, 22.0 + pulse * 4.0, (22.0 + pulse * 4.0) * 0.45, Color(TAUNT_COLOR, 0.55 + pulse * 0.4), false, 3.0)
 	if u.team == 1 and u.sprite == CharacterArt.FALLBACK and FoeFigure.has_look(u.figure):
 		# a foe with no art of its own: its code-drawn board-game piece (data/foe_looks.csv), turned to its facing
 		var d := Vector2(u.facing)
@@ -4072,6 +4093,11 @@ func face(u: CombatUnit, toward: Vector2i) -> void:
 	if v == Vector2i.ZERO:
 		return
 	u.facing = Vector2i(signi(v.x), 0) if absi(v.x) >= absi(v.y) else Vector2i(0, signi(v.y))
+
+
+## BARK's shout: rings rolling out from u (drawn over the board, see _paint_top).
+func shout(u: CombatUnit) -> void:
+	_shouts.append({"unit": u, "t": SHOUT_TIME})
 
 
 ## A number or word that rises off a cell and fades. size: font size (a crit's number is bigger).

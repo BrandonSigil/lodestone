@@ -35,7 +35,7 @@ func _process(_delta: float) -> bool:
 		s.call("_sync_controls")
 		s.call("_enter_edit")
 	_steps.call("run", current_scene, _frames, _step)
-	if _frames == (90 if _step == "restart_mid" else 24):
+	if _frames == (90 if _step == "restart_mid" else (int(OS.get_environment("SHOT_FRAME")) if OS.get_environment("SHOT_FRAME") != "" else 24)):
 		root.get_viewport().get_texture().get_image().save_png(_out)
 		quit()
 	return false

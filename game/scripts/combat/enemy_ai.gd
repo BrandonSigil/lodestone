@@ -46,8 +46,16 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 			best_ability = c.ability
 			best_aim = c.aim
 			extra = c
+	# A barking dog (TAUNT): if u can walk somewhere and hit him this phase, it must ([USER] 2026-10-29). The best
+	# such strike wins over anything else, even a better hit on someone softer.
+	var taunt_cells := {}
+	for o: CombatUnit in units:
+		if o.alive() and o.team != u.team and o.has_status(CombatRules.STATUS_TAUNT):
+			taunt_cells[o.cell] = true
+	var taunt_best := -INF
+	var taunt_pick := {}
 	for cell: Vector2i in cost:
-		if not safe.is_empty() and not safe.has(cell):
+		if not safe.is_empty() and not safe.has(cell) and taunt_cells.is_empty():
 			continue
 		for a in actions:
 			if not CombatRules.usable(u, a) or a.boss_move() or a.kind in ["carry", "command", "swap"]:
@@ -57,12 +65,25 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 				if s <= -INF:
 					continue
 				s += grid.height_at(cell) * HEIGHT_PULL - int(cost[cell]) * 0.2 - float(leave[cell])
+				if a.hostile() and taunt_cells.has(aim):
+					if s > taunt_best:
+						taunt_best = s
+						taunt_pick = {"cell": cell, "ability": a, "aim": aim}
+					continue
+				if not safe.is_empty() and not safe.has(cell):
+					continue
 				if s > best_score:
 					best_score = s
 					best_cell = cell
 					best_ability = a
 					best_aim = aim
 					extra = {}
+	if not taunt_pick.is_empty():
+		best_score = maxf(taunt_best, 0.0)
+		best_cell = taunt_pick.cell
+		best_ability = taunt_pick.ability
+		best_aim = taunt_pick.aim
+		extra = {}
 	var guard := false
 	if best_ability == null and u.hiding:
 		best_cell = u.cell  # an ambusher waits where it hides until something comes in reach

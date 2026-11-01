@@ -307,7 +307,11 @@ func test_loop_data_is_whole() -> void:
 	var kit_ids := {}
 	for r in CsvTable.load_rows("res://data/kits.csv"):
 		kit_ids[String(r.ability)] = true
-	for id in Db.skill_ranks:  # an ability, or a kit's trait or action (upgrades that wait on their effect to be wired)
+	for f in DirAccess.get_files_at("res://data/classes"):  # a class's own passives (Good Boy, A Heart that Burns)
+		if f.ends_with(".tres"):
+			for t in (load("res://data/classes/" + f) as ClassDef).traits:
+				kit_ids[String(t)] = true
+	for id in Db.skill_ranks:  # an ability, or a kit's or class's trait or action (upgrades that wait on their effect to be wired)
 		ok(Db.ability(String(id)) != null or kit_ids.has(String(id)), "upgrades for a real skill: " + String(id))
 
 

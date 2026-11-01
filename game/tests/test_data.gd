@@ -160,6 +160,8 @@ func test_archetypes_load() -> void:
 						ok([CombatRules.TRAIT_SHIELD_WALL, CombatRules.TRAIT_POISON_BLADES, CombatRules.TRAIT_BLOODIED, CombatRules.TRAIT_QUICK_HANDS].has(StringName(r.ability)), "%s: %s is a combat trait" % [id, r.ability])
 					else:
 						ok(String(r.needs) != "", "%s: the unbuilt trait %s says what it needs" % [id, r.ability])
+				"basic":  # the class's own plain attack (ClassDef.strike), known from the start
+					eq(String(cls.strike), String(r.ability), "%s: %s is the class's plain attack" % [id, r.ability])
 				"action":
 					ok(BASIC_ACTIONS.has(String(r.ability)), "%s: %s is a basic action" % [id, r.ability])
 				_:
@@ -176,7 +178,10 @@ func test_archetypes_load() -> void:
 		var cls: ClassDef = load("res://data/classes/%s.tres" % a["class"])
 		if not String(a["class"]) in ["job_knight", "job_rogue", "job_archer"]:
 			var want := kits.filter(func(r: Dictionary) -> bool: return r.archetype == a.id and r.source == "ability" and r.alt == "0").map(func(r: Dictionary) -> String: return String(r.ability))
-			eq(cls.abilities.map(func(s: StringName) -> String: return String(s)), want, "%s's class holds its kit" % a.id)
+			if a["class"] == "job_ember":  # [USER] 2026-11-01: Amber starts with her plain fire attack only; spells are learned
+				eq(cls.abilities.size(), 0, "ember starts with no spells")
+			else:
+				eq(cls.abilities.map(func(s: StringName) -> String: return String(s)), want, "%s's class holds its kit" % a.id)
 	eq(evolved.size(), 20, "two evolved classes each")
 
 
