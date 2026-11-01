@@ -4,8 +4,11 @@ extends Control
 ## fast-travel menu instead of a developer shortcut. Start game = the hero's cottage, the first walk.
 ## F7 returns here from anywhere. Button labels are developer labels, not player text.
 
-const BUTTON_SIZE := Vector2(250, 58)
+const BUTTON_SIZE := Vector2(270, 58)
+const EDGE := Vector2(40, 28)  # space kept clear around the menu
 const NEW_FOE_GROUPS := ["den_pack", "bear_cave", "goo_bog", "ogre_camp", "crawlers", "casters", "chargers"]
+
+var _column: VBoxContainer
 
 
 func _ready() -> void:
@@ -13,18 +16,14 @@ func _ready() -> void:
 	theme = RisoTheme.make()
 	resized.connect(queue_redraw)
 
-	var margin := MarginContainer.new()
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	for side in ["margin_left", "margin_right"]:
-		margin.add_theme_constant_override(side, 40)
-	margin.add_theme_constant_override("margin_top", 28)
-	margin.add_theme_constant_override("margin_bottom", 28)
-	add_child(margin)
-
-	var column := VBoxContainer.new()
-	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 14)
-	margin.add_child(column)
+	# The menu is laid out at its natural size, then scaled down (never up) so it always fits the window.
+	_column = VBoxContainer.new()
+	_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	_column.add_theme_constant_override("separation", 14)
+	add_child(_column)
+	var column := _column
+	resized.connect(_fit)
+	_column.minimum_size_changed.connect(_fit)
 
 	var title := Label.new()
 	title.text = "LODESTONE"
@@ -45,6 +44,21 @@ func _ready() -> void:
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 13)
 	column.add_child(hint)
+	_fit.call_deferred()
+
+
+## Shrinks the whole menu to fit the window (keeping its shape) and centres it.
+func _fit() -> void:
+	if _column == null:
+		return
+	var need := _column.get_combined_minimum_size()
+	var room := size - EDGE * 2.0
+	if need.x <= 0.0 or need.y <= 0.0 or room.x <= 0.0 or room.y <= 0.0:
+		return
+	var s := minf(1.0, minf(room.x / need.x, room.y / need.y))
+	_column.size = need
+	_column.scale = Vector2(s, s)
+	_column.position = ((size - need * s) * 0.5).floor()
 
 
 ## Three columns of places: where the party starts, the walkable maps, and the fights with the map maker under them.
@@ -111,6 +125,7 @@ func _button(label: String, desc: String, cb: Callable) -> Button:
 	b.text = "%s\n%s" % [label, desc]
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.custom_minimum_size = BUTTON_SIZE
+	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART  # long notes wrap instead of widening the column
 	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	b.pressed.connect(cb)
 	return b
