@@ -17,6 +17,10 @@ door_dog,EX_DOOR_DOG,OPT_BASH,,nerve,15,travel,hp_one:-1,OPT_LEAVE,,none,0,,,,,,
 dog_window,EX_DOG_WINDOW,OPT_CLIMB_IN,,none,0,travel,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,dog
 dog_free,EX_DOG,OPT_LET_OUT,,none,0,unlock:met_dog;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,dog
 cache_food,EX_CACHE_FOOD,OPT_TAKE,,none,0,food:+8;unlock:got_food_barrel;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,
+forest_cache,EX_CACHE_FOOD,OPT_TAKE,,none,0,food:+6;unlock:got_forest_cache;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,
+forest_stash,EX_CACHE_FOOD,OPT_TAKE,,none,0,medicine:+2;unlock:got_forest_stash;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,
+farm_cache,EX_CACHE_FOOD,OPT_TAKE,,none,0,food:+8;unlock:got_farm_cache;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,
+farm_stash,EX_CACHE_FOOD,OPT_TAKE,,none,0,gold:+12;unlock:got_farm_stash;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,
 cache_rope,EX_CACHE_ROPE,OPT_TAKE,,none,0,rope:+1;unlock:got_rope;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,
 cache_potion,EX_CACHE_POTION,OPT_TAKE,,none,0,medicine:+2;unlock:got_potion;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,
 pass_cache,EX_CHEST,OPT_OPEN,,none,0,food:+5;medicine:+1;herb:+2;wood:+1;unlock:got_pass_cache;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,
