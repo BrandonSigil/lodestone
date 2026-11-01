@@ -26,9 +26,9 @@ fish_pond_size,3,"fishing ([USER] 2026-11-01 FI2): the fish a new pond holds; a 
 fish_wait_min,2.4,Strike: seconds from the cast to the real bite (least)
 fish_wait_max,5.0,Strike: seconds from the cast to the real bite (most)
 fish_nibbles,2,Strike: at most this many false nibbles before the bite; striking on one scares the fish off
-fish_window,0.8,Strike: seconds the real dip lasts (times the fish's strike column)
+fish_window,0.6,Strike: seconds the real dip lasts (times the fish's strike column)
 fish_half,0.11,Reel: half the marker's width (the bar is 1 wide)
-fish_marker_speed,1.3,Reel: the marker's top speed in bar widths a second (held keys, stick and pointer)
+fish_marker_speed,1.6,Reel: the marker's top speed in bar widths a second (held keys, stick and pointer)
 fish_marker_accel,7.0,Reel: how fast keys and stick bring the marker up to speed
 fish_catch_start,0.3,Reel: the catch meter starts here; full lands the fish and empty loses it
 fish_skill_slow,0.07,Reel: each point of the party's best fishing skill slows the fish this much
