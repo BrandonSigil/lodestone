@@ -88,13 +88,16 @@ func hand_entries() -> Array:
 		first = _entries.filter(func(e: Dictionary) -> bool: return e.kind == "move")
 	out.append_array(first)
 	var strike := _entries.filter(func(e: Dictionary) -> bool: return e.kind == "skill" and e.ability.id == "strike")
-	var under_hit := _entries.filter(func(e: Dictionary) -> bool: return e.kind in ["guard", "aid", "talk"])
+	var under_hit := _entries.filter(func(e: Dictionary) -> bool: return e.kind in ["guard", "talk"])
 	if not strike.is_empty():
 		var hit: Dictionary = strike[0].duplicate()
 		hit["pop"] = under_hit
 		out.append(hit)
 	elif not under_hit.is_empty():
 		out.append(under_hit[0])
+	# AID gets its own box on the bar while a downed friend lies next to this piece ([USER] 2026-11-01: "If youre
+	# next to a downed friend you should see an aid button on your actions bar"), not tucked up HIT's column.
+	out.append_array(_entries.filter(func(e: Dictionary) -> bool: return e.kind == "aid"))
 	var skills := _skills()
 	if not skills.is_empty():
 		out.append({"text": Txt.t("ACT_ABILITIES"), "enabled": skills.any(func(e: Dictionary) -> bool: return e.enabled),
