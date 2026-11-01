@@ -60,12 +60,16 @@ static func split_loot(loot: String) -> Dictionary:
 static func fill(box: VBoxContainer, container: InventoryGrid, title: String, changed: Callable, close: Callable, close_text := "", coins := 0) -> PackView:
 	var view := PackView.new()
 	view.setup_bag(Game.run.pack, Db.items, Callable(), CELL)
+	# ([USER] 2026-11-01: "I want X's at the top right and take all should be over the bottom center of the frame, like half
+	# way in the menu and half way out"): an X on each window closes, TAKE ALL straddles the container window's bottom edge.
+	# After a fight the window keeps its labelled CONTINUE button: there it moves the game on, not just shuts a box.
 	var buttons := [[Txt.t("UI_BOX_TAKE_ALL"), func() -> void:
 		if not view.send_all(1, 0):
 			view.flash = "UI_BOX_FULL"
-			view.queue_redraw()],
-		[close_text if close_text != "" else Txt.t("UI_BOX_CLOSE"), close]]
-	windows(view, container, title, buttons, true, "+%d" % coins if coins > 0 else "", ActionInfo.icon("gold"))
+			view.queue_redraw()]]
+	if close_text != "":
+		buttons.append([close_text, close])
+	windows(view, container, title, buttons, true, "+%d" % coins if coins > 0 else "", ActionInfo.icon("gold"), close if close_text == "" else Callable())
 	view.changed.connect(changed)
 	box.add_child(view)
 	bare(box, view)
@@ -75,13 +79,16 @@ static func fill(box: VBoxContainer, container: InventoryGrid, title: String, ch
 const CELL := 46.0
 const GAP := 18.0  ## between the two windows
 const BUTTON_H := 40.0
+const X_SIZE := 34.0  ## the close X at a window's top right
 
 
 ## Lays out a PackView set up on the pack as two windows: the inventory (pack, the courier's saddlebag beside it, the bin
 ## under them if the view has one) and `other` (a container, the loot, or FOUND) in its own window to the right, its
 ## buttons ([text, callable] pairs) under its grid. `other` becomes area 1 (a click there sends to the pack), the saddlebag
 ## area 2. pack_to_other: a click on something in the pack sends it over.
-static func windows(view: PackView, other: InventoryGrid, other_title: String, buttons: Array, pack_to_other: bool, note := "", note_icon: Texture2D = null) -> Array[Button]:
+## x_close: when set, each window gets a small X at its top right that calls it, and a single button sits centred across
+## the bottom edge of the other window, half in and half out.
+static func windows(view: PackView, other: InventoryGrid, other_title: String, buttons: Array, pack_to_other: bool, note := "", note_icon: Texture2D = null, x_close := Callable()) -> Array[Button]:
 	var run := Game.run
 	var cell := view.cell
 	var pad := PackView.WINDOW_PAD
@@ -114,12 +121,24 @@ static func windows(view: PackView, other: InventoryGrid, other_title: String, b
 		var lines := view.add_note(note, Vector2(ox + pad, y), ow, note_icon)
 		y += PackView.NOTE_LINE * lines + 8.0
 	var made: Array[Button] = []
-	for b in buttons:
-		made.append(view.add_button(String(b[0]), Rect2(Vector2(ox + pad, y), Vector2(ow, BUTTON_H)), b[1]))
-		y += BUTTON_H + 8.0
+	var straddle := x_close.is_valid() and buttons.size() == 1
+	if straddle:
+		y += 8.0  # room above the button's top half
+	else:
+		for b in buttons:
+			made.append(view.add_button(String(b[0]), Rect2(Vector2(ox + pad, y), Vector2(ow, BUTTON_H)), b[1]))
+			y += BUTTON_H + 8.0
 	var h := maxf(bottom, y - 8.0) + pad
+	var other_w := ow + pad * 2.0
 	view.add_window(Rect2(Vector2.ZERO, Vector2(left_w, h)), Txt.t("UI_PACK"))
-	view.add_window(Rect2(Vector2(ox, 0), Vector2(ow + pad * 2.0, h)), other_title)
+	view.add_window(Rect2(Vector2(ox, 0), Vector2(other_w, h)), other_title)
+	if straddle:
+		var bw := minf(ow, 200.0)
+		made.append(view.add_button(String(buttons[0][0]), Rect2(Vector2(ox + (other_w - bw) * 0.5, h - BUTTON_H * 0.5), Vector2(bw, BUTTON_H)), buttons[0][1]))
+		view.custom_minimum_size.y = maxf(view.custom_minimum_size.y, h + BUTTON_H * 0.5)
+	if x_close.is_valid():
+		for wx in [left_w, ox + other_w]:
+			view.add_button("X", Rect2(Vector2(wx - X_SIZE - 10.0, 10.0), Vector2(X_SIZE, X_SIZE)), x_close)
 	return made
 
 
