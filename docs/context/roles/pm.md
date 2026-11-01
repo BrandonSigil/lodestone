@@ -40,3 +40,6 @@ Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the
 - Haiku: lookups, screenshots, art cutting, data edits, quick checks.
 - Sonnet (default): most building and design.
 - Opus: the systems developer's build work and in-game graphics work (shaders, drawing, UI that renders in game), plus any key system that is complicated or keeps breaking. Brandon (2026-10-31): "let's lean more towards bumping up to Opus for Dev work and in-game graphics stuff too."
+
+## Project Report (milestone ritual)
+At every milestone, make a Project Report as a Slides deck: the loop, the numbers, each built system with a screenshot, what is half done, what is missing, and next-milestone choices with a desk card. The first one (2026-11-01, first account) is https://claude.ai/artifact/4Z9FPm2nnpsUGECd9bsKSU, with the desk card pm-next-milestone. Gather the inventory with a Sonnet helper from docs/context, docs/systems and the backlog.
