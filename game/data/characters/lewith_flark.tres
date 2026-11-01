@@ -12,6 +12,7 @@ off_skills = {"masonry": 3, "tame": 3}
 perks = Array[StringName]([])
 traits = Array[StringName]([&"double_strike"])
 deficiency = &""
+food_per_day = 2
 party_slots = 2
 inventory_slots = 0
 unlock = "runs_2"

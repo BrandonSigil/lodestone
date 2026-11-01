@@ -112,12 +112,48 @@ func test_travel_plan_and_fast_forward() -> void:
 	eq(TravelRules.days_between(29.0, 31.0), 1)
 
 
-## [USER] 2026-10-31 "I don't think we'd have a hunger metric. Food would be healing.": nothing on the road clock eats.
-func test_no_hunger() -> void:
+## [USER] 2026-11-01 "The party must eat every day at camp, no food= journeys over".
+func test_daily_meal_at_camp() -> void:
 	_db()
-	ok(not TravelRules.new().has_method("eat"), "no daily meal")
-	ok(not RunState.new().has_method("food_need"), "nobody needs food a day")
-	eq(TravelRules.food_heal(RunState.new()), int(Db.items.meat.heal), "one food heals the meat's heal column")
+	var r := RunState.create([Db.character(&"lead"), Db.character(&"dog")], 1)
+	eq(r.food_need(), 2, "one portion each")
+	r.food = 3
+	r.add_item("fish_good", 1)
+	eq(r.portions(), 5, "3 meat and a good fish (2 portions)")
+	r.members[0].hp = 1
+	ok(TravelRules.eat(r), "the night's meal")
+	eq(r.food, 1, "meat goes first")
+	eq(r.item_count("fish_good"), 1, "the fish is kept")
+	eq(int(r.members[0].hp), 1, "the daily meal heals nobody")
+	ok(TravelRules.eat(r), "the next night: the last meat and then the fish")
+	eq(r.portions(), 0)
+	ok(not TravelRules.eat(r), "an empty larder: no meal")
+	eq(TravelRules.food_heal(r), int(Db.items.meat.heal), "meat eaten on purpose still heals its heal column")
+
+
+## An empty larder ends the journey: home like a fall, nobody hurt, everyone loses morale, not a death.
+func test_larder_empty_ends_the_journey() -> void:
+	var saved := _fresh_game()
+	var kept := {"travel": Game.travel.duplicate(true), "map": Game.explore_map, "entry": Game.explore_entry,
+		"memory": Game.explore_memory.duplicate(true), "back": Game.combat_return}
+	Game.run.adventure = true
+	Game.run.members[0].hp = 3
+	var deaths := int(Game.meta.runs)
+	var heart := Game.morale_of("lead")
+	Game.larder_empty()
+	eq(String(Game.travel.get("at", "")), "town", "carried home")
+	eq(int(Game.meta.runs), deaths, "not counted as a death")
+	eq(Game.morale_of("lead"), maxi(0, heart + int(Db.morale.no_food)), "everyone loses morale")
+	var said := "\n".join(Game.pending_lines) + String(Game.homecoming.get("headline", ""))
+	ok(said.contains(Txt.t("UI_LARDER_EMPTY")), "the wake-up says why")
+	Game.pending_lines = []  # the wake-up's leftovers would open a dialog in the next test's scene
+	Game.homecoming = {}
+	Game.travel = kept.travel
+	Game.explore_map = kept.map
+	Game.explore_entry = kept.entry
+	Game.explore_memory = kept.memory
+	Game.combat_return = kept.back
+	_restore(saved)
 
 
 func test_eat_and_activities() -> void:
@@ -931,8 +967,7 @@ func test_blessings_and_setbacks_last_till_home() -> void:
 	Game.run.boons.assign(["strong_arms", "spoiled_food"])
 	Game.refresh_party()
 	var hero := CombatUnit.from_member(Game.run.members[0])
-	eq(Game.run.food_heal_extra, -1, "spoiled food: each food heals one less")
-	eq(TravelRules.food_heal(Game.run), maxi(1, int(Db.items.meat.heal) - 1))
+	ok(Game.run.food_need() > 0 and Game.run.food_extra == 1, "spoiled food: each meal costs one more")
 	Game.run.boons.clear()
 	Game.refresh_party()
 	eq(hero.damage, CombatUnit.from_member(Game.run.members[0]).damage + 1, "strong arms: +1 damage")

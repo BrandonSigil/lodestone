@@ -104,8 +104,8 @@ func _advance_to(t1: float) -> void:
 	var stop := TravelRules.next_stop(float(tr.t), tr.stops, seconds)
 	t1 = minf(t1, stop)
 	var rest := float(tr.get("rest", 0.0))  # time spent at camp still counts toward journey days
-	var days := TravelRules.days_between(float(tr.t) + rest, t1 + rest)
-	Game.pass_days(days)  # morale for whoever stayed home; nobody eats on the clock (no hunger)
+	if not _nights(TravelRules.days_between(float(tr.t) + rest, t1 + rest)):
+		return  # the larder ran out: the journey is over
 	if Game.trickle(maxf(0.0, t1 - float(tr.t)), "trickle_seconds"):
 		_refresh_hud()
 	tr.t = t1
@@ -257,15 +257,29 @@ func _go_fish() -> void:
 		_refresh_hud())
 
 
-## MAKE CAMP ([USER] omr-9): once a leg. The party stands still a while (journey days still count on the road clock),
-## can cook a meal it carries (buff, heal and morale) and can rest for free (mana, some HP, morale).
+## Each journey day on the road ends at camp with a meal ([USER] 2026-11-01: "The party must eat every day at camp, no
+## food= journeys over"): everyone's portions come out of the pack, then the day counts for morale. With too little food
+## the journey ends (Game.larder_empty) and this returns false.
+func _nights(days: int) -> bool:
+	for i in days:
+		if not TravelRules.eat(Game.run):
+			Game.larder_empty()
+			return false
+		Game.pass_days(1)
+		_refresh_hud()
+	return true
+
+
+## MAKE CAMP ([USER] omr-9): once a leg. The party stands still a while (the road clock runs on, meals included), can
+## cook a meal it carries (buff, heal and morale) and can rest for free (mana, some HP, morale).
 func make_camp() -> void:
 	if not walking() or _busy or Game.travel.get("camped", false):
 		return
 	var tr := Game.travel
 	var rest := float(tr.get("rest", 0.0))
 	var camp := float(Db.levels.get("camp_seconds", 20))
-	Game.pass_days(TravelRules.days_between(float(tr.t) + rest, float(tr.t) + rest + camp))
+	if not _nights(TravelRules.days_between(float(tr.t) + rest, float(tr.t) + rest + camp)):
+		return
 	tr["rest"] = rest + camp
 	tr["camped"] = true
 	_busy = true

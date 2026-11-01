@@ -1,12 +1,12 @@
 class_name TravelRules
 extends RefCounted
 ## Overworld travel ([USER] 2026-10-28): a leg between two places takes about a minute of real time, with
-## a random encounter or two on the way. No hunger ([USER] 2026-10-31: "I don't think we'd have a hunger metric. Food
-## would be healing."): food heals whoever eats it (the item's heal column), and the road clock only counts journey days.
-## Hunt, fish and forage are dice rolls (placeholders for minigames). Pure functions so tests run headless; the scene
-## owns the clock.
+## a random encounter or two on the way. The party eats every day at camp and an empty larder ends the journey ([USER]
+## 2026-11-01: "The party must eat every day at camp, no food= journeys over"); food eaten on purpose also heals (the
+## item's heal column). Hunt, fish and forage are dice rolls (placeholders for minigames). Pure functions so tests run
+## headless; the scene owns the clock.
 
-const DAY_SECONDS := 30.0  ## one journey day per this many seconds walked (morale for whoever stayed home)
+const DAY_SECONDS := 30.0  ## one journey day per this many seconds walked: the night's camp, a meal, a day for morale
 const ACT_COOLDOWN := 15.0  ## seconds walked before the same activity can be tried again
 ## Activity id -> {"check", "dc", "food", "medicine", "item"}: what a win gives (plus the margin for food), and
 ## the gear it needs in the pack, if any.
@@ -45,10 +45,28 @@ static func days_between(t0: float, t1: float) -> int:
 	return maxi(0, int(floor(t1 / DAY_SECONDS)) - int(floor(t0 / DAY_SECONDS)))
 
 
-## What one piece of this food heals (meat by default): its heal column, plus or minus a blessing or setback, never
-## below 1. Caught fish are food too, a bigger grade healing more (data/items.csv).
-static func food_heal(run: RunState, item := RunState.FOOD_ITEM) -> int:
-	return maxi(1, int(Db.items.get(item, {}).get("heal", 0)) + run.food_heal_extra)
+## The night's meal at camp: everyone's portions (RunState.food_need) from the larder, meat first, then the fish grades.
+## The daily meal only feeds; it heals nobody. False, and nothing eaten, when the pack can't feed everyone: the journey
+## is over (Game.larder_empty).
+static func eat(run: RunState) -> bool:
+	var need := run.food_need()
+	if run.portions() < need:
+		run.note(Txt.t("LOG_STARVE"))
+		return false
+	var left := need
+	for id in run.larder():
+		var per := int(Db.items[id].food)
+		while left > 0 and run.item_count(id) > 0:
+			run.add_item(id, -1)
+			left -= per
+	run.note(Txt.f("LOG_ATE", need))
+	return true
+
+
+## What one piece of this food heals when eaten on purpose (meat by default): its heal column, never below 1. Caught
+## fish are food too, a bigger grade healing more (data/items.csv).
+static func food_heal(_run: RunState, item := RunState.FOOD_ITEM) -> int:
+	return maxi(1, int(Db.items.get(item, {}).get("heal", 0)))
 
 
 ## Food that heals when eaten: kind food with a heal value (meat, the fish grades). Shop food turns into meat at the gate.

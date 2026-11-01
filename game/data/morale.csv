@@ -8,6 +8,7 @@ win,2,a won fight: each piece that never went down
 big_win,5,"an elite or boss win, in place of win"
 camp,10,MAKE CAMP's rest on the road: everyone in the party
 gloomy_camp,-2,a gloomy character gains this much less from a camp
+no_food,-10,the pack could not feed the party at camp: the journey is over and everyone loses this much
 bed,20,"a night in the hero's bed at home: everyone, in the party and at home; once a trip"
 home_day,3,"[USER] 2026-10-31 (design-morale): every journey day gone, each character left at home gains this (the number is [AI])"
 day_steps,150,tiles walked on explore maps away from the village that make one journey day (the road's day is TravelRules.DAY_SECONDS)

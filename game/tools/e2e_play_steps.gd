@@ -393,7 +393,7 @@ func _road(to: String) -> Node:
 	for attempt in TRIES:
 		s.call("_click_node", to)
 		_check(s.call("walking"), "on the road to " + to)
-		var eaten := 0  ## food lost while walking: none, nobody hungers ([USER] 2026-10-31)
+		var eaten := 0  ## food the nightly camp meals took (finds and foraging add some back)
 		var foraged := false
 		var fell := false
 		_heal_up()
@@ -416,7 +416,7 @@ func _road(to: String) -> Node:
 				eaten += maxi(0, food - game.run.food)
 		if not fell:
 			_check(game.travel.get("at", "") == to, "arrived at " + to)
-			_check(eaten == 0, "no food drained on the walk (food only heals)")
+			_check(eaten > 0, "the party ate at camp on the walk")
 			return s
 		var v := await _fell("a road fight")
 		await _use(v, "gate", "OPT_GO_ON")

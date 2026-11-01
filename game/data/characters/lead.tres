@@ -12,6 +12,7 @@ off_skills = {"persuade": 1}
 perks = Array[StringName]([])
 traits = Array[StringName]([&"shield_wall"])
 deficiency = &""
+food_per_day = 1
 party_slots = 1
 inventory_slots = 0
 unlock = ""

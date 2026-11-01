@@ -12,6 +12,7 @@ off_skills = {"fish": 3}
 perks = Array[StringName]([])
 traits = Array[StringName]([&"steady_aim"])
 deficiency = &"fear_rodents"
+food_per_day = 1
 party_slots = 1
 inventory_slots = 0
 unlock = ""

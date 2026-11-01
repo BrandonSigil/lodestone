@@ -23,7 +23,7 @@ var pack: InventoryGrid = InventoryGrid.create(PACK_COLS, PACK_ROWS)
 var found: InventoryGrid = InventoryGrid.create(FOUND_COLS, FOUND_ROWS)
 var courier_bag: InventoryGrid = null  ## the courier's saddlebag while it's being filled
 var boons: Array[String] = []  ## blessings and setbacks held until home ([USER] omr-7, omr-8)
-var food_heal_extra := 0  ## HP each food eaten heals on top (a small belly) or less (spoiled food), from boons
+var food_extra := 0  ## food each day's meal costs on top (spoiling food) or less (a small belly), from boons
 var meal := {}  ## a camp meal's buff: {"recipe": id, "fights": fights left} ([USER] omr-9); {} when none
 var on_pickup := Callable()  ## (id, n) after something is added to the pack: Game says when it counts toward a goal
 var away: Array[Dictionary] = []  ## members sent home with a bag: {"member": Dictionary, "bag": InventoryGrid}
@@ -333,4 +333,29 @@ func _load_into(g: InventoryGrid, saved: Array) -> Array:
 			note(Txt.f("LOG_OVERFLOW", [lost, Txt.t(String(Db.items[id].name_key))]))
 	return []
 
+
+## The portions a day's meal costs: everyone's food_per_day, plus or minus a blessing or setback.
+func food_need() -> int:
+	var n := 0
+	for m in alive():
+		n += (m.def as CharacterDef).food_per_day
+	return maxi(0, n + food_extra)
+
+
+## Food kinds that feed, cheapest first (meat, then the fish grades): id -> portions one gives (data/items.csv food).
+func larder() -> Array[String]:
+	var out: Array[String] = []
+	for id: String in Db.items:
+		if String(Db.items[id].kind) == "food" and int(Db.items[id].food) > 0 and item_count(id) > 0:
+			out.append(id)
+	out.sort_custom(func(a: String, b: String) -> bool: return int(Db.items[a].food) < int(Db.items[b].food))
+	return out
+
+
+## Every portion the pack holds.
+func portions() -> int:
+	var n := 0
+	for id in larder():
+		n += item_count(id) * int(Db.items[id].food)
+	return n
 

@@ -787,9 +787,19 @@ func save_adventure() -> void:
 	save_meta()
 
 
+## The pack can't feed the party at camp: the journey is over ([USER] 2026-11-01 "no food= journeys over"). As in a fall
+## the party is carried home, nobody hurt and the loot kept, but everyone loses morale (morale.csv no_food) and it is
+## not counted as a death.
+func larder_empty() -> void:
+	for m in run.members:
+		MoraleRules.change(meta.morale, String((m.def as CharacterDef).id), int(Db.morale.get("no_food", -10)), Db.morale)
+	wake_in_town(false, "UI_LARDER_EMPTY")
+
+
 ## Wake in the village square, everyone at full HP ([USER] 2026-10-28: a wipe costs nothing; the
 ## Lodestone's GO HOME lands the same way). The first wake-up is when the hero learns what the stone does.
-func wake_in_town(fell: bool) -> void:
+## line: the wake-up line's text key when it is neither a fall nor GO HOME (an empty larder).
+func wake_in_town(fell: bool, line := "") -> void:
 	ensure_run()
 	home_again(true)
 	for m in run.members:
@@ -799,7 +809,7 @@ func wake_in_town(fell: bool) -> void:
 		meta.runs = int(meta.runs) + 1
 		pending_lines = [Txt.t("UI_WAKE_FIRST") if set_flag("lodestone_revealed") else Txt.t("UI_WAKE")]
 	else:
-		pending_lines = [Txt.t("UI_WENT_HOME")]
+		pending_lines = [Txt.t(line if line != "" else "UI_WENT_HOME")]
 	if not homecoming.is_empty():
 		homecoming.fell = fell
 		homecoming.headline = "\n".join(pending_lines)  # the page carries the wake-up line
@@ -1164,8 +1174,8 @@ func boon_mods() -> Dictionary:
 		return out
 	for id in run.boons:
 		out = LevelRules.merge(out, RestoreRules.parse_needs(String(Db.boons[id].effect)))
-	run.food_heal_extra = int(out.get("food_heal", 0))
-	out.erase("food_heal")
+	run.food_extra = int(out.get("food", 0))
+	out.erase("food")
 	return out
 
 

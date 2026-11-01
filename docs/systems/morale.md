@@ -31,7 +31,7 @@ character at home gets X morale". Built 2026-11-01 from the proposal in `docs/de
   of `data/recipes.csv`); a night in the hero's bed at home +20 for everyone met, once a trip (the `home_bed` thing in
   `data/explore/home.json`, event `home_bed`, effect `sleep:1`; it also heals the party and refills mana and charges);
   and **journey days**.
-- **Journey days.** The road counts a day every `TravelRules.DAY_SECONDS` walked (camp time included; nobody eats on it);
+- **Journey days.** The road counts a day every `TravelRules.DAY_SECONDS` walked (camp time included; each day ends with the camp meal);
   explore maps out of town count one every `day_steps` (150) tiles. Every day, each companion not with the party (left
   home at the gate, or the courier sent home) gains `home_day` (3). `meta.days` keeps the count.
 - **Doggo's Good Boy:** while he's in the party, every member's morale losses are 20% smaller, rounded toward zero
@@ -53,10 +53,10 @@ character at home gets X morale". Built 2026-11-01 from the proposal in `docs/de
 - X, the morale per journey day at home, is 3. A trip to the pass and back is about 6 to 8 days, so about +20.
 - Heartened's fight bonus (+10% crit) is new; the design draft had none. Blessing statues ([USER] Pitch B) can grant
   morale through an event's `morale:+n` once one is placed.
-- Food as healing with no hunger ([USER] 2026-10-31) is built (2026-11-01): nothing eats on the road clock. One meat
-  heals the meat's `heal` column in `data/items.csv` (2 HP) when someone eats it (EAT, or a stack dropped on a party
-  card). A camp REST is free and gives the camp morale, mana and charges, and `camp_hp_pct` of max HP. A cooked meal
-  (good food) heals its recipe's `heal` column and gives its `morale` column, on top of its buff for the next fights.
-  Small Belly and Bad Food now make each food heal 1 more or 1 less. Caught fish are food too, by grade: 3, 6 or 12 HP
-  (`docs/systems/fishing.md`). The numbers are [AI] proposals on the desk.
+- Daily eating is back ([USER] 2026-11-01, replacing "no hunger"): each journey day on the road ends at camp, where
+  everyone eats their `food_per_day` portions from the pack (meat first, then caught fish by the `food` column). The
+  daily meal only feeds. If the pack can't feed everyone, the journey is over (`Game.larder_empty`): the party goes home
+  as in a fall, nobody hurt, loot kept, not a death, and everyone loses `no_food` morale (-10). Food eaten on purpose
+  still heals its `heal` column, and camp REST stays free. The rest of the healing model (`docs/design/healing-model.md`,
+  the camp meal picker) waits for its build.
 - How the tavern restores morale ([USER] Pitch G) is open.

@@ -52,7 +52,7 @@ static func roll(run: RunState, check_id: String, dc: int) -> Dictionary:
 	return r
 
 
-## Upkeep at the end of every day: bush rations, gloom. Nobody eats on the clock ([USER] 2026-10-31: no hunger).
+## Upkeep at the end of every day: eat, bush rations, gloom.
 static func end_day(run: RunState) -> void:
 	for m in run.alive():
 		var d: CharacterDef = m.def
@@ -62,6 +62,16 @@ static func end_day(run: RunState) -> void:
 		if d.deficiency == &"gloomy":
 			run.morale -= 2
 			run.note(Txt.f("LOG_GLOOMY", 2))
+	var need := run.food_need()
+	if run.food >= need:
+		run.food -= need
+		run.note(Txt.f("LOG_ATE", need))
+	else:
+		run.food = 0
+		run.morale -= 10
+		run.note(Txt.t("LOG_STARVE"))
+		for m in run.alive():
+			run.hurt(m, 2)
 	run.morale = clampi(run.morale, 0, 100)
 	run.day += 1
 	run.note(Txt.f("LOG_DAY", run.day))
