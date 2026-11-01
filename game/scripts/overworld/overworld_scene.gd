@@ -1,25 +1,27 @@
 extends Node2D
-## The overworld ([USER] 2026-10-28): the town and the places around it on one map, joined by paths, like
-## the early Mario world maps, in our flat look. Click a place to walk there: the party's mini pieces walk
-## the path in real time (about a minute a leg), with an encounter or two on the way. Meanwhile the player
-## can hunt, fish, forage, talk to the party or open the pack; >> jumps to the next encounter, or to the end
-## of the leg. Food drains as they walk. Only the snowy pass is open for the E2E test.
+## The overworld is the hex world map ([USER] 2026-11-01, card pm-world-paths): Brandon's twelve explorable tiles as
+## raised hex blocks on the 2:1 camera, and the route through them is free: any tile leads on to the tiles that share an
+## edge with it. Click a tile to walk there: the party's mini pieces walk the leg in real time (about a minute), with an
+## encounter or two on the way. Meanwhile the player can hunt, fish, forage, talk, camp or open the pack; >> jumps to
+## the next encounter, or to the end of the leg. The party eats at camp each journey day.
 ##
-## Code-drawn placeholders until art. Data: data/overworld_nodes.csv (places), data/overworld_paths.csv
-## (legs, their length in seconds, encounter counts, the fight tile set), data/travel_events.csv
-## (encounters, events.csv format). Rules: TravelRules. State: Game.travel.
+## Drawn in code in the flat graybox look until art. Data: data/overworld_nodes.csv (tiles: col, row, height, open,
+## map), data/overworld_paths.csv (the shared edges: seconds, encounter counts, the fight tile set),
+## data/travel_events.csv (encounters, events.csv format). Rules and hex geometry: TravelRules. State: Game.travel.
 
-const SIZE := Vector2(1000, 700)  ## map units the places and paths are laid out in
-const PICK_R := 40.0  ## map units around a place that count as clicking it
-const MEADOW := Color(0.55, 0.68, 0.42)
-const MEADOW_DARK := Color(0.45, 0.58, 0.36)
+const SIZE := Vector2(1000, 700)  ## map units the tiles are laid out in (TravelRules.HEX_ORIGIN); the view fits their bounds
+const BACK := Color(0.86, 0.85, 0.79)  ## the cream round the tiles (the guide's paper)
+const GREY := Color(0.8, 0.8, 0.77)  ## a tile's top before its land's tint
 const SNOW := Color(0.93, 0.95, 0.97)
 const ROCK := Color(0.47, 0.5, 0.58)
-const ROCK_DARK := Color(0.36, 0.38, 0.46)
 const PINE := Color(0.2, 0.34, 0.3)
-const PRAIRIE := Color(0.82, 0.78, 0.48)
 const ROAD := Color(0.93, 0.86, 0.66)
 const INK := Color(0.2, 0.22, 0.3)
+## A light wash of each land's colour over the grey top, so the tiles read apart before the painted art lands.
+const KIND_TINT := {"town": Color(0.62, 0.74, 0.5), "wood": Color(0.36, 0.55, 0.4), "coast": Color(0.9, 0.84, 0.62),
+	"ice": Color(0.72, 0.84, 0.92), "peak": Color(0.6, 0.62, 0.68), "mine": Color(0.5, 0.46, 0.44),
+	"snow": Color(0.95, 0.96, 0.98), "plain": Color(0.86, 0.8, 0.5), "grass": Color(0.66, 0.78, 0.6),
+	"city": Color(0.76, 0.7, 0.66)}
 
 var hud: FrameHud
 var _ui: CanvasLayer
@@ -48,6 +50,10 @@ func _ready() -> void:
 	_rng.randomize()  # talk lines only; encounters roll on the run's dice
 	if not Game.travel.has("at") and not Game.travel.has("to"):
 		Game.travel = {"at": "town"}
+	for k in ["at", "from", "to"]:  # a save from before the hex map may stand on a place that is gone
+		if Game.travel.has(k) and not Db.world_nodes.has(String(Game.travel[k])):
+			Game.travel = {"at": "town"}
+			break
 	_weather = MapWeather.new()  # snow round the snowy places ([USER] 2026-10-30, ambience)
 	add_child(_weather)
 	_weather.setup("snow" if Db.world_nodes.values().any(func(n: Dictionary) -> bool: return String(n.get("weather", "")) == "snow") else "",
@@ -87,7 +93,7 @@ func _process(delta: float) -> void:
 	for id in Db.world_nodes:
 		var n: Dictionary = Db.world_nodes[id]
 		if String(n.get("weather", "")) == "snow":
-			var c := _to_screen(Vector2(float(n.x), float(n.y)))
+			var c := _to_screen(_node_pos(id))
 			_weather.mask.append(Vector3(c.x, c.y, SNOW_REACH * float(_view().k)))
 	_note_time = maxf(0.0, _note_time - delta)
 	if not _busy and _dialog == null and Game.run.overfull():
@@ -147,18 +153,31 @@ func _arrive() -> void:
 		return
 	_side()
 	_busy = true
-	var has_map := String(_node(to).get("map", "")) != ""
+	var has_map := map_ready(to)
 	var text := Txt.f("UI_OW_ARRIVED", Txt.t(_node(to).name_key))
-	var box := _new_dialog(text if has_map else text + "\n" + Txt.t("UI_OW_NOTHING"))
+	if not has_map and String(_node(to).get("map", "")) != "":  # named in data, not built yet (the map builder's)
+		text = Txt.f("UI_OW_NO_MAP_YET", Txt.t(_node(to).name_key))
+	elif not has_map:
+		text += "\n" + Txt.t("UI_OW_NOTHING")
+	var box := _new_dialog(text)
 	if has_map:
 		_button(box, Txt.f("UI_OW_ENTER", Txt.t(_node(to).name_key)), _enter)
 	_button(box, Txt.t("UI_STAY_MAP"), _close_dialog)
 
 
-## Into the place's explore map (the town at its gate, the pass at its foot).
+## The tile's explore map exists (data/explore/<map>.json): forest roads and farmland wait for the map builder's.
+func map_ready(id: String) -> bool:
+	var m := String(_node(id).get("map", ""))
+	return m != "" and FileAccess.file_exists("res://data/explore/%s.json" % m)
+
+
+## Into the tile's explore map (the town at its gate, the highlands at the pass's foot).
 func _enter() -> void:
-	var n := _node(String(Game.travel.get("at", "town")))
-	if String(n.get("map", "")) == "":
+	var at := String(Game.travel.get("at", "town"))
+	var n := _node(at)
+	if not map_ready(at):
+		if String(n.get("map", "")) != "":
+			_say(Txt.f("UI_OW_NO_MAP_YET", Txt.t(n.name_key)))
 		return
 	Game.explore_map = n.map
 	Game.explore_memory = {}
@@ -377,7 +396,7 @@ func _click_node(id: String) -> void:
 		return
 	if id == String(Game.travel.get("at", "")):
 		_enter()
-	elif String(_node(id).open) != "1":
+	elif not TravelRules.open_now(Db.world_nodes, id, Game.meta.flags):
 		_say(Txt.t("UI_OW_CLOSED"))
 	else:
 		_start_leg(id)
@@ -387,16 +406,27 @@ func _node(id: String) -> Dictionary:
 	return Db.world_nodes.get(id, {})
 
 
+## The tile under a map point: its top face, nearest first (a front tile covers the one behind it).
 func _node_at(p: Vector2) -> String:
-	for id in Db.world_nodes:
-		if TravelRules.visible(Db.world_nodes, id, Game.meta.flags) and p.distance_to(_node_pos(id)) <= PICK_R:
+	var order := _back_to_front()
+	order.reverse()
+	for id in order:
+		if Geometry2D.is_point_in_polygon(p, TravelRules.tile_top(_node(id), 0.0)):
 			return id
 	return ""
 
 
 func _node_pos(id: String) -> Vector2:
-	var n := _node(id)
-	return Vector2(float(n.x), float(n.y))
+	return TravelRules.tile_pos(_node(id))
+
+
+## Tile ids from the back row to the front, so nearer blocks draw over the ones behind.
+func _back_to_front() -> Array[String]:
+	var ids: Array[String] = []
+	ids.assign(Db.world_nodes.keys())
+	ids.sort_custom(func(a: String, b: String) -> bool:
+		return TravelRules.hex_ground(int(_node(a).col), int(_node(a).row)).y < TravelRules.hex_ground(int(_node(b).col), int(_node(b).row)).y)
+	return ids
 
 
 ## Where the party stands, in map units.
@@ -409,10 +439,32 @@ func party_pos() -> Vector2:
 
 # --- drawing --------------------------------------------------------------------------------------
 
+## Map units to the screen: the tiles' bounds fitted into the room above the frame, left of the side box.
 func _view() -> Dictionary:
-	var r := hud.clear_rect()
-	var k := minf(r.size.x / SIZE.x, r.size.y / SIZE.y)
-	return {"k": k, "o": r.get_center() - SIZE * k * 0.5}
+	var r := hud.clear_rect().grow(-24.0)
+	r.size.x -= FrameHud.RIGHT_W
+	var b := _bounds()
+	var k := minf(r.size.x / b.size.x, r.size.y / b.size.y)
+	return {"k": k, "o": r.get_center() - (b.position + b.size * 0.5) * k}
+
+
+var _bounds_cache := Rect2()
+
+
+## Every tile's top and base, map units, with room under the front row for its name.
+func _bounds() -> Rect2:
+	if _bounds_cache.has_area():
+		return _bounds_cache
+	var b := Rect2()
+	var first := true
+	for id in Db.world_nodes:
+		var n := _node(id)
+		for c in TravelRules.tile_top(n, 0.0):
+			for p in [c, c + Vector2(0, TravelRules.HEX_LEVEL * int(n.height) + 20.0)]:
+				b = Rect2(p, Vector2.ZERO) if first else b.expand(p)
+				first = false
+	_bounds_cache = b.grow_individual(0, 0, 0, 10)
+	return _bounds_cache
 
 
 func _to_screen(p: Vector2) -> Vector2:
@@ -428,65 +480,92 @@ func _to_map(s: Vector2) -> Vector2:
 func _draw() -> void:
 	var v := _view()
 	var k := float(v.k)
-	# [USER] 2026-10-29: the game fills the window, so the meadow and the mountain row run on past the map's
-	# own edges to the window's (the places stay where they are).
-	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), MEADOW)
-	_draw_land(k)
-	for p: Dictionary in Db.world_paths:
-		if not (TravelRules.visible(Db.world_nodes, p.from, Game.meta.flags) and TravelRules.visible(Db.world_nodes, p.to, Game.meta.flags)):
-			continue
-		var open := String(_node(p.to).open) == "1" and String(_node(p.from).open) == "1"
-		_draw_path(TravelRules.parse_points(p.points), k, open)
+	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), BACK)  # [USER] 2026-10-29: the game fills the window
+	for id in _back_to_front():
+		_draw_tile(id, k)
+	for p: Dictionary in Db.world_paths:  # a road on every shared edge whose two tiles are both open now
+		if TravelRules.open_now(Db.world_nodes, p.from, Game.meta.flags) and TravelRules.open_now(Db.world_nodes, p.to, Game.meta.flags):
+			_draw_path(PackedVector2Array([_node_pos(p.from), _node_pos(p.to)]), k)
 	if walking():
 		var lp := leg()
 		var pts: PackedVector2Array = lp.points
-		for s: float in Game.travel.stops:
-			_draw_stop(_to_screen(TravelRules.point_at(pts, s / float(lp.seconds))), k)
+		for st: float in Game.travel.stops:
+			_draw_stop(_to_screen(TravelRules.point_at(pts, st / float(lp.seconds))), k)
 	for id in Db.world_nodes:
-		if TravelRules.visible(Db.world_nodes, id, Game.meta.flags):
-			_draw_node(id, k)
+		_draw_marks(id, k)
 	_draw_party(k)
 	if _note_time > 0.0:
 		var at := _to_screen(party_pos()) + Vector2(0, -46 * k)
 		_label(at, _note, 13, Color(1, 1, 1, minf(1.0, _note_time)))
 
 
-## The ground around the places: the snow range north, the prairie north-east, the dark woods north-west.
-func _draw_land(k: float) -> void:
-	for i in 9:  # meadow patches
-		var c := Vector2(90 + i * 107, 470 + 60 * sin(i * 1.7))
-		draw_colored_polygon(_blob(_to_screen(c), 70 * k, 26 * k, i), MEADOW_DARK)
-	# Prairie: flat stripes.
-	for i in 6:
-		var y := 250.0 + i * 30.0
-		var a := _to_screen(Vector2(700 + i * 10, y))
-		var b := _to_screen(Vector2(1000, y + 10))
-		draw_rect(Rect2(a, Vector2(b.x - a.x, 16 * k)), PRAIRIE if i % 2 == 0 else PRAIRIE.darkened(0.06))
-	# Mountains: a row of flat peaks with snow caps across the north, as wide as the window.
-	var first := floori((_to_map(Vector2.ZERO).x - 40.0) / 92.0) - 1
-	var last := ceili((_to_map(Vector2(get_viewport_rect().size.x, 0)).x - 40.0) / 92.0) + 1
-	for i in range(first, last + 1):
-		var x := 40.0 + i * 92.0
-		var h := 150.0 + 70.0 * absf(sin(i * 1.3)) + (90.0 if absf(x - 500) < 140 else 0.0)
-		var base := 175.0 + 20.0 * sin(i * 2.1)
-		_peak(Vector2(x, base), 85.0, h, k)
-	# Woods to the north-west.
-	for i in 22:
-		var c := Vector2(60 + (i % 6) * 42 + (i / 6) * 18, 230 + (i / 6) * 38 + 8 * sin(i * 1.9))
-		_pine(_to_screen(c), k * (0.8 + 0.3 * absf(sin(i * 2.7))))
+## One tile as a raised hex block: the three faces toward the viewer, then the top, washed with its land's colour.
+## A shut tile is darker and plain grey.
+func _draw_tile(id: String, k: float) -> void:
+	var n := _node(id)
+	var open := TravelRules.open_now(Db.world_nodes, id, Game.meta.flags)
+	var top := PackedVector2Array()
+	for c in TravelRules.tile_top(n):
+		top.append(_to_screen(c))
+	var drop := (TravelRules.HEX_LEVEL * int(n.height) + 20.0) * k
+	var ring := PackedVector2Array()
+	for c in top:
+		ring.append(c + Vector2(0, drop))
+	var tint: Color = KIND_TINT.get(String(n.kind), GREY)
+	var face := GREY.lerp(tint, 0.55) if open else GREY.darkened(0.28)
+	var hot := _hover == id or (id == String(Game.travel.get("at", "")) and not walking())
+	for side in [[0, 1, 0.3], [1, 2, 0.22], [2, 3, 0.14]]:  # corners 0..3 run clockwise from the right: the near half
+		var a: int = side[0]
+		var b: int = side[1]
+		var quad := PackedVector2Array([top[a], top[b], ring[b], ring[a]])
+		draw_colored_polygon(quad, face.darkened(float(side[2])))
+		draw_polyline(PackedVector2Array([top[a], ring[a], ring[b], top[b]]), INK, 1.5, true)
+	draw_colored_polygon(top, face.lightened(0.12 if hot and open else 0.0))
+	var outline := top.duplicate()
+	outline.append(top[0])
+	draw_polyline(outline, INK, 3.0 if hot else 2.0, true)
 
 
-func _peak(base: Vector2, half: float, h: float, k: float) -> void:
-	var l := _to_screen(base + Vector2(-half, 0))
-	var r := _to_screen(base + Vector2(half, 0))
-	var top := _to_screen(base + Vector2(0, -h))
-	draw_colored_polygon(PackedVector2Array([l, top, _to_screen(base)]), ROCK)
-	draw_colored_polygon(PackedVector2Array([_to_screen(base), top, r]), ROCK_DARK)
-	var cap := 0.32
-	var cl := top.lerp(l, cap)
-	var cr := top.lerp(r, cap)
-	var mid := top.lerp(_to_screen(base), cap * 0.8)
-	draw_colored_polygon(PackedVector2Array([cl, top, cr, mid + Vector2(6 * k, 4 * k), mid, mid + Vector2(-8 * k, 6 * k)]), SNOW)
+## A tile's glyph, its badges and its name, on its top face.
+func _draw_marks(id: String, k: float) -> void:
+	var n := _node(id)
+	var p := _to_screen(_node_pos(id))
+	var open := TravelRules.open_now(Db.world_nodes, id, Game.meta.flags)
+	var ink := INK if open else Color(INK, 0.5)
+	match String(n.kind) if open else "shut":  # a shut tile shows only its "?"
+		"town":
+			for o: Vector2 in [Vector2(-9, 4), Vector2(6, 2)]:
+				var b := p + o * k
+				draw_rect(Rect2(b + Vector2(-6, -8) * k, Vector2(12, 10) * k), Color(0.8, 0.55, 0.4))
+				draw_colored_polygon(PackedVector2Array([b + Vector2(-8, -8) * k, b + Vector2(0, -16) * k, b + Vector2(8, -8) * k]), Color(0.55, 0.3, 0.3))
+		"peak", "mine", "snow":
+			draw_colored_polygon(PackedVector2Array([p + Vector2(-15, 10) * k, p + Vector2(0, -14) * k, p + Vector2(15, 10) * k]), ROCK)
+			draw_colored_polygon(PackedVector2Array([p + Vector2(-6, -4) * k, p + Vector2(0, -14) * k, p + Vector2(6, -4) * k]), SNOW)
+		"plain", "grass":
+			for i in 3:
+				draw_line(p + Vector2(-10 + i * 10, 8) * k, p + Vector2(-12 + i * 10, -6) * k, Color(0.6, 0.55, 0.25), 2.0)
+		"wood":
+			for o: Vector2 in [Vector2(-10, 8), Vector2(8, 10)]:
+				_pine(p + o * k, k * 0.7)
+		"coast", "ice":
+			for i in 2:
+				draw_arc(p + Vector2(-6 + i * 12, 2) * k, 6 * k, PI, TAU, 8, Color(0.3, 0.45, 0.6), 2.0, true)
+		"city":
+			for i in 3:
+				draw_rect(Rect2(p + Vector2(-13 + i * 9, -10 + (i % 2) * 4) * k, Vector2(7, 16 - (i % 2) * 4) * k), Color(0.55, 0.5, 0.48))
+	if _elites.get(id, 0) > 0:  # [USER] pc-15: an elite fight waits here
+		var e := p + Vector2(-34, -18) * k
+		draw_circle(e, 9.0 * k + 2.0, Color(0.8, 0.22, 0.2))
+		draw_arc(e, 9.0 * k + 2.0, 0, TAU, 20, INK, 1.5, true)
+		_label(e + Vector2(0, 4), "!", 12, Color(1, 1, 1))
+	if TravelRules.cleared(n, Game.meta.flags):  # done: a gold seal, like a cleared level on an old console map
+		var b := p + Vector2(34, -18) * k
+		draw_circle(b, 9.0 * k + 2.0, Color(0.95, 0.75, 0.25))
+		draw_arc(b, 9.0 * k + 2.0, 0, TAU, 20, INK, 1.5, true)
+		draw_polyline(PackedVector2Array([b + Vector2(-4, 0) * k, b + Vector2(-1, 3.5) * k, b + Vector2(4.5, -4) * k]), INK, 2.0, true)
+	if not open:
+		_label(p + Vector2(0, 8), "?", 22, Color(INK, 0.6))
+	_label(p + Vector2(0, 40 * k), Txt.t(n.name_key), 13, ink)
 
 
 func _pine(p: Vector2, k: float) -> void:
@@ -494,66 +573,18 @@ func _pine(p: Vector2, k: float) -> void:
 	draw_rect(Rect2(p + Vector2(-2, 0) * k, Vector2(4, 6) * k), PINE.darkened(0.3))
 
 
-func _draw_path(pts: PackedVector2Array, k: float, open: bool) -> void:
+func _draw_path(pts: PackedVector2Array, k: float) -> void:
 	var total := 0.0
 	for i in pts.size() - 1:
 		total += pts[i].distance_to(pts[i + 1])
-	var step := 18.0
-	var n := int(total / step)
+	var n := int(total / 18.0)
 	for i in n + 1:
-		var p := _to_screen(TravelRules.point_at(pts, float(i) / maxf(1.0, n)))
-		if open:
-			draw_circle(p, 5.0 * k + 1.0, ROAD)
-		elif i % 2 == 0:
-			draw_circle(p, 3.0 * k + 1.0, Color(ROAD, 0.45))
+		draw_circle(_to_screen(TravelRules.point_at(pts, float(i) / maxf(1.0, n))), 4.0 * k + 1.0, ROAD)
 
 
 func _draw_stop(p: Vector2, k: float) -> void:
 	draw_circle(p, 9 * k + 2, Color(0.95, 0.75, 0.3))
 	_label(p + Vector2(0, 5 * k), "?", 14, INK)
-
-
-func _draw_node(id: String, k: float) -> void:
-	var n := _node(id)
-	var p := _to_screen(_node_pos(id))
-	var open := String(n.open) == "1"
-	var here := id == String(Game.travel.get("at", "")) and not walking()
-	var r := 22.0 * k + 4.0
-	draw_circle(p + Vector2(2, 3), r, Color(0, 0, 0, 0.18))
-	draw_circle(p, r, Color(0.98, 0.94, 0.82) if open else Color(0.75, 0.73, 0.68))
-	draw_arc(p, r, 0, TAU, 32, INK if open else Color(INK, 0.4), 3.0 if (here or _hover == id) else 2.0, true)
-	match String(n.kind):
-		"town":
-			for o: Vector2 in [Vector2(-9, 4), Vector2(6, 2)]:
-				var b := p + o * k
-				draw_rect(Rect2(b + Vector2(-6, -8) * k, Vector2(12, 10) * k), Color(0.8, 0.55, 0.4))
-				draw_colored_polygon(PackedVector2Array([b + Vector2(-8, -8) * k, b + Vector2(0, -16) * k, b + Vector2(8, -8) * k]), Color(0.55, 0.3, 0.3))
-		"peak":
-			draw_colored_polygon(PackedVector2Array([p + Vector2(-15, 10) * k, p + Vector2(0, -14) * k, p + Vector2(15, 10) * k]), ROCK)
-			draw_colored_polygon(PackedVector2Array([p + Vector2(-6, -4) * k, p + Vector2(0, -14) * k, p + Vector2(6, -4) * k]), SNOW)
-		"plain":
-			for i in 3:
-				draw_line(p + Vector2(-10 + i * 10, 8) * k, p + Vector2(-12 + i * 10, -6) * k, Color(0.6, 0.55, 0.25), 2.0)
-		"wood":
-			_pine(p + Vector2(0, 10) * k, k * 0.7)
-		"far":
-			for i in 3:
-				draw_circle(p + Vector2(-8 + i * 8, 2) * k, 2.5 * k + 1.0, Color(INK, 0.6))
-	if _elites.get(id, 0) > 0:
-		# [USER] pc-15: an elite fight waits here; a red badge on the other rim, so the party can choose
-		var e := p + Vector2(-r * 0.72, -r * 0.72)
-		draw_circle(e, 9.0 * k + 2.0, Color(0.8, 0.22, 0.2))
-		draw_arc(e, 9.0 * k + 2.0, 0, TAU, 20, INK, 1.5, true)
-		_label(e + Vector2(0, 4), "!", 12, Color(1, 1, 1))
-	if TravelRules.cleared(n, Game.meta.flags):
-		# Done: a gold seal on the rim, like a cleared level on an old console map.
-		var b := p + Vector2(r * 0.72, -r * 0.72)
-		draw_circle(b, 9.0 * k + 2.0, Color(0.95, 0.75, 0.25))
-		draw_arc(b, 9.0 * k + 2.0, 0, TAU, 20, INK, 1.5, true)
-		draw_polyline(PackedVector2Array([b + Vector2(-4, 0) * k, b + Vector2(-1, 3.5) * k, b + Vector2(4.5, -4) * k]), INK, 2.0, true)
-	if not open:
-		_label(p + Vector2(0, 6), "?", 22, Color(INK, 0.7))
-	_label(p + Vector2(0, r + 18), Txt.t(n.name_key), 13, INK if open else Color(INK, 0.55))
 
 
 ## The party in miniature: the leader in front, the others a step behind on the path.
@@ -585,15 +616,6 @@ func _label(p: Vector2, text: String, size: int, col: Color) -> void:
 	draw_string(font, p - Vector2(w * 0.5, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, col)
 
 
-static func _blob(c: Vector2, rx: float, ry: float, seed_v: int) -> PackedVector2Array:
-	var pts := PackedVector2Array()
-	for i in 18:
-		var a := TAU * i / 18.0
-		var w := 1.0 + 0.12 * sin(a * 3.0 + seed_v)
-		pts.append(c + Vector2(cos(a) * rx * w, sin(a) * ry * w))
-	return pts
-
-
 # --- hud --------------------------------------------------------------------------------------------
 
 func _side() -> void:
@@ -612,7 +634,7 @@ func _side() -> void:
 			hud.add_button(Txt.t("UI_OW_CAMP"), make_camp)
 	else:
 		var n := _node(String(Game.travel.get("at", "town")))
-		if String(n.get("map", "")) != "":
+		if map_ready(String(Game.travel.get("at", "town"))):  # no GO IN until the tile's map is built
 			hud.add_button(Txt.f("UI_OW_ENTER", Txt.t(n.name_key)), _enter)
 	hud.add_help(Txt.t("UI_OW_HELP"))
 	_log_label = hud.add_side_label("", 12)

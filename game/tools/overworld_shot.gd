@@ -2,7 +2,8 @@ extends SceneTree
 ## Drives the overworld into a state and saves a PNG. Args after "--": <png path> <step>.
 ## Steps: camp (walking to the pass with a stew in the pack, MAKE CAMP open), carry (the party panel after fights:
 ## the book hero's mana and the dog's charges half spent), carry_camp (the same with MAKE CAMP open: rest and tonic),
-## pack (I pressed: the inventory page, the dog along).
+## pack (I pressed: the inventory page, the dog along), map (the hex world map at home, nothing open), walk (halfway
+## along the leg to forest roads), arrive (at forest roads: its map not built yet).
 
 var _frames := 0
 var _out := ""
@@ -44,6 +45,15 @@ func _process(_delta: float) -> bool:
 		s.call("_side")
 		if _step == "carry_camp":
 			s.call("make_camp")
+	if _frames == 5 and _step == "arrive":
+		root.get_node("Game").get("run").set("food", 20)  # the camp meals on the way
+		s.call("_start_leg", "forest_roads")
+		root.get_node("Game").get("travel")["stops"] = []
+		s.call("fast_forward")
+	if _frames == 5 and _step == "walk":
+		s.call("_start_leg", "forest_roads")
+		root.get_node("Game").get("travel")["t"] = 30.0
+		s.call("_side")
 	if _frames == 5 and _step == "pack":
 		var game: Node = root.get_node("Game")
 		game.get("meta")["flags"].append("met_dog")

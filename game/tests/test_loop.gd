@@ -531,23 +531,58 @@ func test_one_fight_at_a_time() -> void:
 	Game.explore_map = "home"
 
 
-## [USER] 2026-10-29 (the boss-skip card): once the Lich King is beaten the pass shows as done, the place past
-## it comes into view, and the party can walk past the pass to it without going in.
+## [USER] 2026-10-29 (the boss-skip card): once the Lich King is beaten the highlands (the pass) show as done, the
+## tile past them opens, and the party can walk past the pass to it without going in. On the hex map every tile
+## shows; the one past waits shut.
 func test_a_cleared_place_opens_the_road_past_it() -> void:
 	_db()
 	var nodes := Db.world_nodes
 	var paths := Db.world_paths
 	ok(not TravelRules.cleared(nodes.pass, []), "the pass isn't done before the boss")
-	ok(not TravelRules.visible(nodes, "beyond", []), "the place past it is hidden")
-	eq(TravelRules.route(paths, nodes, "town", "beyond", []), [] as Array[String], "no way there yet")
+	ok(TravelRules.visible(nodes, "dwarven_mines", []) and not TravelRules.open_now(nodes, "dwarven_mines", []), "the tile past it shows, shut")
+	eq(TravelRules.route(paths, nodes, "town", "dwarven_mines", []), [] as Array[String], "no way there yet")
 	var flags := [String(nodes.pass.clear_flag).split("|")[0]]
 	ok(TravelRules.cleared(nodes.pass, flags), "the boss flag clears the pass")
-	ok(TravelRules.visible(nodes, "beyond", flags), "and shows the place past it")
-	eq(TravelRules.route(paths, nodes, "town", "beyond", flags), ["town", "pass", "beyond"] as Array[String], "the road runs past the pass")
-	eq(TravelRules.route(paths, nodes, "beyond", "town", flags), ["beyond", "pass", "town"] as Array[String], "and back")
+	ok(TravelRules.open_now(nodes, "dwarven_mines", flags), "and opens the tile past it")
+	eq(TravelRules.route(paths, nodes, "town", "dwarven_mines", flags), ["town", "pass", "dwarven_mines"] as Array[String], "the road runs past the pass")
+	eq(TravelRules.route(paths, nodes, "dwarven_mines", "town", flags), ["dwarven_mines", "pass", "town"] as Array[String], "and back")
 	eq(TravelRules.route(paths, nodes, "town", "pass", flags), ["town", "pass"] as Array[String], "the pass can still be gone into")
-	eq(TravelRules.route(paths, nodes, "town", "prairie", flags), [] as Array[String], "shut places stay shut")
-	ok(TravelRules.visible(nodes, "town", []) and not TravelRules.cleared(nodes.town, flags), "the town has nothing to clear")
+	eq(TravelRules.route(paths, nodes, "town", "coastal_beach", flags), [] as Array[String], "shut tiles stay shut")
+
+
+## [USER] 2026-11-01 (card pm-world-paths): the overworld is Brandon's twelve-tile hex map, any tile leads on to the
+## tiles that share an edge with it, and the first build opens Home and its three neighbours.
+func test_hex_world_map() -> void:
+	_db()
+	var nodes := Db.world_nodes
+	var paths := Db.world_paths
+	eq(nodes.size(), 12, "twelve tiles")
+	var nums := nodes.keys().map(func(id: String) -> int: return int(nodes[id].num))
+	nums.sort()
+	eq(nums, range(1, 13), "numbered 1 to 12 as on the card")
+	var home := TravelRules.neighbours(nodes, "town")
+	home.sort()
+	eq(home, ["farmland", "forest_roads", "pass"] as Array[String], "home's three neighbours: left, straight, right")
+	var edge := func(x: String, y: String) -> String: return "%s|%s" % ([x, y] if x < y else [y, x])
+	var want := {}
+	for id: String in nodes:
+		for o in TravelRules.neighbours(nodes, id):
+			want[edge.call(id, o)] = true
+	var have := {}
+	for p: Dictionary in paths:
+		var key: String = edge.call(String(p.from), String(p.to))
+		ok(want.has(key), "a leg joins tiles that share an edge: " + key)
+		have[key] = true
+	eq(have.size(), want.size(), "every shared edge is a leg")
+	var open := nodes.keys().filter(func(id: String) -> bool: return TravelRules.open_now(nodes, id, []))
+	open.sort()
+	eq(open, ["farmland", "forest_roads", "pass", "town"], "Home, forest roads, highlands and farmland open first")
+	eq(TravelRules.route(paths, nodes, "forest_roads", "farmland", []).size(), 3, "across by a tile in between (free routes)")
+	var a := TravelRules.tile_pos(nodes.town)
+	var b := TravelRules.tile_pos(nodes.pass)
+	ok(b.y < a.y, "the highlands lie straight up from home")
+	ok(Geometry2D.is_point_in_polygon(a, TravelRules.tile_top(nodes.town)), "a tile's middle is on its top face")
+	ok(TravelRules.visible(nodes, "town", []) and not TravelRules.cleared(nodes.town, ["beat_lich"]), "the town has nothing to clear")
 
 
 func test_a_place_still_to_clear_blocks_the_road() -> void:

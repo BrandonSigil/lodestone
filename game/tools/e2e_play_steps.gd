@@ -146,7 +146,7 @@ func play(t: SceneTree) -> void:
 	game.wake_in_town(false)
 	s = await _explore("village")
 	await _use(s, "gate", "OPT_GO_ON")
-	s = await _road("beyond")
+	s = await _road("dwarven_mines")  # the hex tile past the highlands, open once the Lich King is beaten
 	_check(tree.current_scene == s and s.get("_dialog") != null, "arrived past the pass, on the big map")
 	await _press(s, 0)
 

@@ -170,18 +170,66 @@ static func parse_points(text: String) -> PackedVector2Array:
 	return out
 
 
-## The path row joining two places (either way), with its points running from a to b. {} when none.
-static func path_between(paths: Array, a: String, b: String) -> Dictionary:
+# --- the hex world map ([USER] 2026-11-01, card pm-world-paths) -----------------------------------------------
+# Brandon's twelve tiles (data/overworld_nodes.csv: col, row, height), flat-top hexes on the 2:1 camera like
+# tools/art/hex_world_guide.py: even columns sit half a row lower, depth is squashed to half, a tile's top rises with
+# its height. Any tile leads on to the tiles it shares an edge with; each shared edge is a leg in
+# data/overworld_paths.csv.
+
+const HEX_R := 140.0  ## a tile's radius, map units
+const HEX_SQ := 0.5  ## the 2:1 camera: depth squashed to half
+const HEX_LEVEL := 12.0  ## map units a height level lifts the tile's top
+const HEX_ORIGIN := Vector2(185, 215)  ## where column 0, row 0's centre sits (lays the 12 tiles out in 1000 x 700)
+
+
+## A tile's centre on the ground, map units.
+static func hex_ground(col: int, row: int) -> Vector2:
+	var y := (row + (0.5 if col % 2 == 0 else 0.0)) * sqrt(3.0) * HEX_R
+	return HEX_ORIGIN + Vector2(col * 1.5 * HEX_R, y * HEX_SQ)
+
+
+## The middle of a tile's top face, where its glyph sits and the party stands.
+static func tile_pos(node: Dictionary) -> Vector2:
+	return hex_ground(int(node.col), int(node.row)) - Vector2(0, HEX_LEVEL * int(node.height) + 20.0)
+
+
+## A tile's top face (six corners, clockwise from the right), shrunk by gap so neighbours stay apart.
+static func tile_top(node: Dictionary, gap := 9.0) -> PackedVector2Array:
+	var c := tile_pos(node)
+	var out := PackedVector2Array()
+	for i in 6:
+		var a := deg_to_rad(60.0 * i)
+		out.append(c + Vector2(cos(a), sin(a) * HEX_SQ) * (HEX_R - gap))
+	return out
+
+
+## The tiles that share an edge with this one (any of the six sides), by column and row.
+static func neighbours(nodes: Dictionary, id: String) -> Array[String]:
+	var n: Dictionary = nodes.get(id, {})
+	var out: Array[String] = []
+	if n.is_empty():
+		return out
+	var c := int(n.col)
+	var r := int(n.row)
+	var rows := [r, r + 1] if c % 2 == 0 else [r - 1, r]
+	var want := [Vector2i(c, r - 1), Vector2i(c, r + 1)]
+	for dc in [-1, 1]:
+		for rr in rows:
+			want.append(Vector2i(c + dc, rr))
+	for o: String in nodes:
+		if Vector2i(int(nodes[o].col), int(nodes[o].row)) in want:
+			out.append(o)
+	return out
+
+
+## The leg joining two tiles (either way), its points running from a's top to b's. {} when they share no edge.
+static func path_between(paths: Array, a: String, b: String, nodes: Dictionary = {}) -> Dictionary:
+	if nodes.is_empty():
+		nodes = Db.world_nodes
 	for p: Dictionary in paths:
-		if p.from == a and p.to == b:
+		if (p.from == a and p.to == b) or (p.from == b and p.to == a):
 			var out := p.duplicate()
-			out["points"] = parse_points(p.points)
-			return out
-		if p.from == b and p.to == a:
-			var out := p.duplicate()
-			var pts := parse_points(p.points)
-			pts.reverse()
-			out["points"] = pts
+			out["points"] = PackedVector2Array([tile_pos(nodes[a]), tile_pos(nodes[b])])
 			return out
 	return {}
 
@@ -204,10 +252,17 @@ static func cleared(node: Dictionary, flags: Array) -> bool:
 	return false
 
 
-## A place shows on the map unless it waits behind another one (after) that isn't cleared yet.
-static func visible(nodes: Dictionary, id: String, flags: Array) -> bool:
-	var after := String(nodes.get(id, {}).get("after", ""))
-	return nodes.has(id) and (after == "" or cleared(nodes.get(after, {}), flags))
+## Every tile shows on the hex map ([USER] 2026-11-01: the other tiles show, shut).
+static func visible(nodes: Dictionary, id: String, _flags: Array) -> bool:
+	return nodes.has(id)
+
+
+## Can the party go to this tile now? Open in data, and a tile `after` another one only once that one is cleared
+## (the mines past the highlands open after the Lich King).
+static func open_now(nodes: Dictionary, id: String, flags: Array) -> bool:
+	var n: Dictionary = nodes.get(id, {})
+	var after := String(n.get("after", ""))
+	return String(n.get("open", "0")) == "1" and (after == "" or cleared(nodes.get(after, {}), flags))
 
 
 ## The places to walk through, from a to b, both included ([] when there is no way). The party walks past
@@ -224,7 +279,7 @@ static func route(paths: Array, nodes: Dictionary, a: String, b: String, flags: 
 			continue  # can't walk past a place still to clear
 		for p: Dictionary in paths:
 			var n := String(p.to) if p.from == c else (String(p.from) if p.to == c else "")
-			if n == "" or prev.has(n) or not visible(nodes, n, flags) or String(nodes[n].open) != "1":
+			if n == "" or prev.has(n) or not open_now(nodes, n, flags):
 				continue
 			prev[n] = c
 			queue.append(n)

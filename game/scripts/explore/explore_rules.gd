@@ -89,8 +89,8 @@ static func group_depth(level: int, group: Dictionary) -> int:
 static func elites_left(maps: Array, flags: Array) -> int:
 	var n := 0
 	for name: String in maps:
-		if name == "":
-			continue
+		if name == "" or not FileAccess.file_exists(ExploreMap.DIR + name + ".json"):
+			continue  # a tile whose map isn't built yet
 		for g: Dictionary in ExploreMap.load_named(name).groups:
 			if g.get("elite", false) and not flags.has(beaten_flag(name, String(g.id))):
 				n += 1
