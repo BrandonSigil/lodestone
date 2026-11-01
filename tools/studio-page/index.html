@@ -323,7 +323,7 @@ html.locked { overflow: hidden; }
 .card.flash { outline: 3px solid var(--gem); outline-offset: 3px; transition: outline-color 1.2s; }
 .you { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 12px; }
 
-/* Phones: answers wait here and go to the team in one send (sending to Claude makes the Claude app leave the page) */
+/* Answers wait here and go to the team in one send (fewer wake-ups; on phones the Claude app leaves the page on every send) */
 .wake-bar { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 37; display: flex; align-items: center; gap: 10px; background: var(--sheet); border: 1.5px solid var(--chat); border-radius: 999px; padding: 6px 6px 6px 14px; box-shadow: var(--shadow), 0 6px 18px rgba(20,30,24,.2); font-size: 13.5px; max-width: calc(100vw - 104px); }
 .wake-bar .btn.primary { background: var(--chat); border-color: var(--chat); color: var(--chat-ink); border-radius: 999px; white-space: nowrap; }
 body.chat-on .wake-bar { display: none; }
@@ -1287,12 +1287,11 @@ function toggleChat(open) {
 function wakePm(text, pics) {
   wake("Studio chat from Brandon: " + (text || "(a picture)") + (pics ? ` [+${pics} picture${pics > 1 ? "s" : ""} in the chat]` : ""), true);
 }
-// On a phone the Claude app leaves this page every time something is sent to Claude ([USER] 2026-11-01:
-// "Everytime I answer a question in Studio this artifact closes and takes me to the Claude agents screen").
-// So on a touch screen, card answers and notes wait in the "Send to the team" bar and go in one send; a chat
-// message takes any waiting ones along. On a computer they still go at once. The answers themselves are
-// saved the moment he sends them; only the wake-up waits.
-const holdWakes = () => matchMedia("(pointer: coarse)").matches;
+// Card answers and notes wait in the "Send to the team" bar and go in one send, on every device: each send
+// wakes the team, so one send per sitting saves usage ([USER] 2026-11-01 "Make all cuts"), and on a phone the
+// Claude app leaves this page on every send. A chat message takes any waiting ones along. The answers themselves
+// are saved the moment he sends them; only the wake-up waits.
+const holdWakes = () => true;
 S.wakeQueue = (() => { try { return JSON.parse(localStorage.getItem("studio-wake-queue") || "[]"); } catch { return []; } })();
 function saveWakeQueue() { try { localStorage.setItem("studio-wake-queue", JSON.stringify(S.wakeQueue)); } catch {} }
 function renderWakeBar() {
