@@ -68,7 +68,12 @@ func test_strike_false_nibbles_then_the_dip() -> void:
 	ok(float(king.window) < float(minnow.window), "the prize gives a shorter window")
 
 
-## A perfect follower lands the fish; a marker left still loses it.
+## The player's "hand" for tests: pulls toward the fish (an axis between -1 and 1), the way a good player holds and lets go.
+func _follow(s: Dictionary) -> Dictionary:
+	return {"axis": clampf((float(s.fish) - float(s.marker)) * 10.0, -1.0, 1.0)}
+
+
+## A follower lands the fish; a marker pinned to one side loses it.
 func test_reel_bar_rewards_following_the_fish() -> void:
 	_db()
 	for id in Db.fish:
@@ -77,33 +82,141 @@ func test_reel_bar_rewards_following_the_fish() -> void:
 		var s := FishingRules.reel_start(row)
 		var t := 0.0
 		while s.done == "" and t < 60.0:
-			FishingRules.reel_step(s, r, 1.0 / 60.0, {"mouse": float(s.fish)})
+			FishingRules.reel_step(s, r, 1.0 / 60.0, _follow(s))
 			t += 1.0 / 60.0
-		eq(s.done, "caught", "%s: staying on it lands it" % id)
-		ok(t < 20.0, "%s: in under 20 seconds (%.1f)" % [id, t])
+		eq(s.done, "caught", "%s: following it lands it" % id)
+		ok(t < 25.0, "%s: in under 25 seconds (%.1f)" % [id, t])
 	var lazy := FishingRules.reel_start(Db.fish["pike"])
 	var r2 := _rng(3)
 	var t2 := 0.0
-	lazy.marker = 0.11
-	while lazy.done == "" and t2 < 60.0:
-		FishingRules.reel_step(lazy, r2, 1.0 / 60.0, {"axis": 0.0})
+	while lazy.done == "" and t2 < 90.0:
+		FishingRules.reel_step(lazy, r2, 1.0 / 60.0, {"axis": 1.0})
 		t2 += 1.0 / 60.0
-	eq(lazy.done, "lost", "a marker parked at the edge loses the fish")
+	eq(lazy.done, "lost", "a marker held to the right edge loses the fish")
+
+
+## FI3 ([USER] 2026-11-01): the fish and the marker start in the middle and the fish eases in.
+func test_reel_starts_centred_and_eases_in() -> void:
+	_db()
+	var s := FishingRules.reel_start(Db.fish["pike"])
+	eq(float(s.fish), 0.5, "the fish starts in the middle")
+	eq(float(s.marker), 0.5, "so does the marker")
+	for i in 30:  # half a second, hands off: nothing has happened yet
+		FishingRules.reel_step(s, _rng(1), 1.0 / 60.0, {})
+	eq(float(s.fish), 0.5, "the fish hovers before its first dart")
+	ok(bool(s.on) and s.done == "", "and the marker is still on it")
+	ok(FishingRules.ramp(s) < 0.2, "the ramp has barely started")
+	# early on the meter drains slower than at full difficulty
+	var early := FishingRules.reel_start(Db.fish["pike"])
+	var late := FishingRules.reel_start(Db.fish["pike"])
+	late.t = FishingRules.tune("fish_ease", 4.0)
+	early.marker = 0.11
+	late.marker = 0.11
+	early.fish = 0.9
+	late.fish = 0.9
+	early.wait = 9.0
+	late.wait = 9.0
+	var early_catch := float(early.catch)
+	FishingRules.reel_step(early, _rng(1), 0.5, {"axis": -1.0})
+	FishingRules.reel_step(late, _rng(1), 0.5, {"axis": -1.0})
+	ok(early_catch > float(early.catch) and float(early.catch) > float(late.catch), "the meter drains less in the ease-in")
+	eq(FishingRules.ramp(late), 1.0, "after fish_ease seconds it is full difficulty")
+
+
+## FI4 ([USER] 2026-11-01): holding left or right pulls the marker that way; let go and it springs back to the centre.
+func test_reel_hold_pulls_and_release_springs_back() -> void:
+	_db()
+	for dir in [-1.0, 1.0]:
+		var s := FishingRules.reel_start(Db.fish["minnow"])
+		s.wait = 99.0  # the fish stays put: this is only the marker
+		for i in 40:
+			FishingRules.reel_step(s, _rng(1), 1.0 / 60.0, {"axis": dir})
+		ok((float(s.marker) - 0.5) * dir > 0.05, "held %s: the marker is pulled that way" % ("left" if dir < 0 else "right"))
+		for i in 120:
+			FishingRules.reel_step(s, _rng(1), 1.0 / 60.0, {})
+		ok(absf(float(s.marker) - 0.5) < 0.03, "let go: it is back at the centre")
+		ok(absf(float(s.vel)) < 0.2, "and settled")
+	ok(is_equal_approx(FishingRules.axis_from_pointer(500.0, 500.0, 100.0), 0.0), "a pointer in the middle pulls nothing")
+	ok(FishingRules.axis_from_pointer(900.0, 500.0, 100.0) == 1.0 and FishingRules.axis_from_pointer(0.0, 500.0, 100.0) == -1.0, "a pointer far left or right pulls fully")
 
 
 func test_reel_marker_has_a_top_speed() -> void:
 	_db()
-	var s := FishingRules.reel_start(Db.fish["minnow"])
-	FishingRules.reel_step(s, _rng(1), 0.1, {"mouse": 1.0})
-	ok(absf(float(s.marker) - 0.5) <= FishingRules.tune("fish_marker_speed", 0) * 0.1 + 0.0001, "the mouse can't snap the marker across")
 	var k := FishingRules.reel_start(Db.fish["minnow"])
+	k.wait = 99.0
 	for i in 30:
 		FishingRules.reel_step(k, _rng(1), 1.0 / 60.0, {"axis": 1.0})
 	ok(float(k.marker) > 0.5, "keys and stick push it right")
+	ok(float(k.vel) <= FishingRules.tune("fish_marker_speed", 0) + 0.0001, "never faster than the top speed")
 	for i in 600:
 		FishingRules.reel_step(k, _rng(1), 1.0 / 60.0, {"axis": 1.0})
 	ok(float(k.marker) <= 1.0 - float(k.half) + 0.0001, "never off the bar")
 	ok(absf(float(k.pull)) <= 1.0, "the rod's pull stays in range")
+
+
+## FI2 ([USER] 2026-11-01): a pond holds a few fish and a catch or a lost fish is gone for good.
+func test_pond_runs_out() -> void:
+	_db()
+	var lake := FishingRules.pool(Db.fish, "lake")
+	var pond := FishingRules.new_pond(_rng(5), lake, 3)
+	eq(pond.size(), 3, "a pond holds the pond size")
+	for id in pond:
+		ok(Db.fish.has(String(id)), "%s is a real fish" % id)
+	var rows: Array[Dictionary] = []
+	for id in pond:
+		rows.append(Db.fish[String(id)])
+	var sh := FishingRules.shadows_of(_rng(2), rows)
+	eq(sh.size(), 3, "a shadow for each fish")
+	eq(sh.map(func(x: Dictionary) -> int: return int(x.pond_i)), [0, 1, 2], "each knows its place in the pond")
+	for outcome in ["caught", "lost", "early", "late"]:
+		ok(FishingRules.GONE.has(outcome), "%s takes the fish out of the pond" % outcome)
+	ok(not FishingRules.GONE.has("left"), "leaving takes nothing")
+	# through the overlay: a lost fish comes out of the stored pond, and the pond is kept in the save
+	var saved: Dictionary = Game.meta.get("ponds", {}).duplicate(true)
+	var was := Game.save_enabled
+	Game.save_enabled = false
+	var kept := Game.pond("test/pond", "lake")
+	eq(kept.size(), 3, "Game.pond makes the pond once")
+	var again := Game.pond("test/pond", "lake")
+	ok(again == kept, "and gives the same one back")
+	var g := FishingGame.open(Game, "lake", {}, 1, kept)
+	eq(g._shadows.size(), 3, "the overlay draws the pond's fish")
+	g._hook = 1
+	g._end("lost")
+	eq(kept.size(), 2, "a lost fish is gone from the pond")
+	eq(g._shadows.size(), 3, "(the picture keeps this cast's shadows)")
+	g._finish()
+	var empty := FishingGame.open(Game, "lake", {}, 1, [])
+	g = empty
+	eq(empty._shadows.size(), 0, "an empty pond shows no shadows")
+	empty._aim = Vector2(0.5, 0.5)
+	empty._cast_aimed()
+	ok(empty.state == FishingGame.S.LOOK, "and takes no cast")
+	empty._finish()
+	Game.meta["ponds"] = saved
+	Game.save_enabled = was
+
+
+## FI1 ([USER] 2026-11-01): the cast is aimed, and a fish near where the bobber lands may notice it.
+func test_a_fish_near_the_bobber_notices() -> void:
+	_db()
+	var sh := FishingRules.shadows(_rng(4), FishingRules.pool(Db.fish, "lake"), 3)
+	var spot := FishingRules.shadow_pos(sh[0], 2.0)
+	var hits := 0
+	for i in 200:
+		if FishingRules.noticed(_rng(i), sh, spot, 2.0) == 0:
+			hits += 1
+	ok(hits > 150, "right beside a fish it nearly always notices (%d of 200)" % hits)
+	var edge := spot + Vector2(FishingRules.tune("fish_notice", 0.18) * 0.95, 0.0)
+	var maybe := 0
+	for i in 400:
+		if FishingRules.noticed(_rng(i), sh, edge, 2.0) == 0:
+			maybe += 1
+	ok(maybe > 0 and maybe < 200, "at the edge of its reach only sometimes (%d of 400)" % maybe)
+	var far := Vector2(-5, -5)
+	eq(FishingRules.noticed(_rng(1), sh, far, 2.0), -1, "a bobber far from every fish is not noticed")
+	# up and down count for less than sideways (the pool is wider than tall)
+	ok(FishingRules.POOL_ASPECT < 1.0, "the pool is wider than tall")
 
 
 func test_party_skill_slows_the_fish() -> void:
@@ -164,13 +277,25 @@ func test_minigame_opens_and_reports_once() -> void:
 	ok(g._shadows.size() > 0, "with shadows")
 	var got: Array = []
 	g.finished.connect(func(res: Dictionary) -> void: got.append(res))
-	g._cast(0)
-	eq(g.state, FishingGame.S.CAST, "casting")
+	eq(g._pond.size(), int(FishingRules.tune("fish_pond_size", 3)), "a fresh pond")
+	g._aim = Vector2(0.01, 0.01)
+	g._cast_aimed()
+	eq(g.state, FishingGame.S.LOOK, "dry land takes no cast")
+	g._aim = FishingRules.shadow_pos(g._shadows[0], g._t)
+	g._cast_aimed()
+	eq(g.state, FishingGame.S.CAST, "casting at the aim")
 	g._process(FishingGame.CAST_TIME + 0.01)
-	eq(g.state, FishingGame.S.STRIKE, "the bobber lands")
+	ok(g.state == FishingGame.S.COME or g.state == FishingGame.S.WAIT, "the bobber lands: a fish notices or none does")
+	for i in 40:  # beside a shadow: sooner or later one swims over
+		if g.state == FishingGame.S.WAIT:
+			g._notice()
+	eq(g.state, FishingGame.S.COME, "a fish comes to it")
+	g._process(FishingRules.tune("fish_approach", 0.9) + 0.01)
+	eq(g.state, FishingGame.S.STRIKE, "and the nibbling starts")
 	g._strike_now()
 	eq(g.state, FishingGame.S.RESULT, "striking at once is too soon")
 	eq(String(g.result.outcome), "early", "and scares the fish")
+	eq(g._pond.size(), int(FishingRules.tune("fish_pond_size", 3)) - 1, "which is gone from the pond for good")
 	g._phase_t = 1.0
 	g._press(false)
 	g._press(false)

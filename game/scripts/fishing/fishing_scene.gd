@@ -4,6 +4,7 @@ extends Control
 
 var game: FishingGame
 var casts := 0
+var pond: Array = []  ## practice fish: a pond that runs out and fills again, never saved
 
 
 func _ready() -> void:
@@ -15,7 +16,11 @@ func _ready() -> void:
 
 func _again() -> void:
 	casts += 1
-	game = FishingGame.open(self, "lake", FishingRules.mods_for(Game.run))
+	if pond.is_empty():
+		var rng := RandomNumberGenerator.new()
+		rng.randomize()
+		pond = FishingRules.new_pond(rng, FishingRules.pool(Db.fish, "lake"), int(FishingRules.tune("fish_pond_size", 3)))
+	game = FishingGame.open(self, "lake", FishingRules.mods_for(Game.run), 0, pond)
 	game.finished.connect(func(res: Dictionary) -> void:
 		if String(res.outcome) == "left":
 			Game.go(Game.LAUNCH)

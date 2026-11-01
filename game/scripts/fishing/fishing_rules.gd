@@ -1,17 +1,21 @@
 class_name FishingRules
 extends RefCounted
 ## Fishing ([USER] 2026-11-01, card design-fishing-research): one cast in three beats.
-##   Look: the pool shows drifting fish shadows; their size hints at the grade. Pick one and cast to it.
+##   Look: the pool shows the pond's drifting fish shadows (a pond holds a few fish and they run out: a catch, a
+##   scared or missed fish and a lost one are gone for good, [USER] 2026-11-01 FI2). The player aims the cast at
+##   a spot; a fish near where the bobber lands may notice it (FI1), turn and come to it.
 ##   Strike: the bobber nibbles a few times, then truly dips. Strike on the real dip; too soon scares the
 ##   fish off, too late and it's gone.
-##   Reel: a horizontal bar. The fish darts left and right; the player steers a marker (mouse, keys or a
-##   controller) to stay on it. On the fish the catch meter fills, off it drains. Full lands the fish,
-##   empty loses it. The rod bends toward the fish.
+##   Reel: a horizontal bar. Fish and marker start in the middle and the fish eases in (FI3). Holding left or
+##   right pulls the marker that way; let go and it springs back to the centre (FI4). On the fish the catch
+##   meter fills, off it drains. Full lands the fish, empty loses it. The rod bends toward the fish.
 ## Pure functions of their inputs and an rng, so tests run them headless. Fish kinds are data/fish.csv,
 ## tuning is the fish_* rows of data/levels.csv. The scene (FishingGame) owns the clock and the drawing.
 
 const GRADES := ["small", "good", "prize"]
 const OUTCOMES := ["caught", "lost", "early", "late", "left"]
+const GONE := ["caught", "lost", "early", "late"]  ## outcomes that take the fish out of the pond for good
+const POOL_ASPECT := 0.45  ## the pool is wider than tall: a pool-coords y step counts this much against a notice distance
 
 
 static func tune(key: String, fallback: float) -> float:
@@ -46,20 +50,39 @@ static func pick(rng: RandomNumberGenerator, rows: Array[Dictionary]) -> Diction
 	return rows[-1]
 
 
-## The shadows in the pool: n fish drawn by weight, each with a home spot (pool coords, 0 to 1 each way,
-## kept off the shore) and a drift phase. Spread so no two homes sit on top of each other.
-static func shadows(rng: RandomNumberGenerator, rows: Array[Dictionary], n: int) -> Array[Dictionary]:
-	var out: Array[Dictionary] = []
-	var tries := 0
-	while out.size() < n and tries < 200:
-		tries += 1
-		var home := Vector2(rng.randf_range(0.18, 0.82), rng.randf_range(0.22, 0.72))
-		if out.any(func(s: Dictionary) -> bool: return (s.home as Vector2).distance_to(home) < 0.2):
-			continue
+## A fresh pond: n fish drawn by weight from the spot's rows, as a list of fish ids. It only ever shrinks.
+static func new_pond(rng: RandomNumberGenerator, rows: Array[Dictionary], n: int) -> Array:
+	var out := []
+	for i in n:
 		var row := pick(rng, rows)
 		if row.is_empty():
 			break
-		out.append({"fish": row, "home": home, "phase": rng.randf() * TAU, "rate": rng.randf_range(0.25, 0.5)})
+		out.append(String(row.id))
+	return out
+
+
+## The shadows in the pool: n fish drawn by weight (a practice pool without a pond).
+static func shadows(rng: RandomNumberGenerator, rows: Array[Dictionary], n: int) -> Array[Dictionary]:
+	var picked: Array[Dictionary] = []
+	for i in n:
+		var row := pick(rng, rows)
+		if not row.is_empty():
+			picked.append(row)
+	return shadows_of(rng, picked)
+
+
+## One shadow for each fish row (a pond's fish): each with a home spot (pool coords, 0 to 1 each way, kept off
+## the shore), a drift phase and `pond_i`, the fish's place in the list. Spread so no two homes sit on top
+## of each other.
+static func shadows_of(rng: RandomNumberGenerator, rows: Array[Dictionary]) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for i in rows.size():
+		for tries in 200:
+			var home := Vector2(rng.randf_range(0.18, 0.82), rng.randf_range(0.22, 0.72))
+			if out.any(func(s: Dictionary) -> bool: return (s.home as Vector2).distance_to(home) < 0.2):
+				continue
+			out.append({"fish": rows[i], "home": home, "phase": rng.randf() * TAU, "rate": rng.randf_range(0.25, 0.5), "pond_i": i})
+			break
 	return out
 
 
@@ -85,6 +108,24 @@ static func nearest(list: Array[Dictionary], p: Vector2, t: float, reach := 0.12
 			best = i
 			best_d = d
 	return best
+
+
+## Does a fish notice a bobber that landed at `at` (pool coords)? The shadows within `fish_notice` of it each get a
+## chance, nearest first: sure-ish right beside it, `fish_notice_min` at the edge of its reach. Returns the shadow
+## index of the fish that turns toward it, or -1. Called when the bobber lands and again while it sits.
+static func noticed(rng: RandomNumberGenerator, list: Array[Dictionary], at: Vector2, t: float) -> int:
+	var reach := tune("fish_notice", 0.18)
+	var floor_p := tune("fish_notice_min", 0.3)
+	var order: Array[Array] = []
+	for i in list.size():
+		var d := (shadow_pos(list[i], t) - at) * Vector2(1.0, POOL_ASPECT)
+		if d.length() <= reach:
+			order.append([d.length(), i])
+	order.sort_custom(func(a: Array, b: Array) -> bool: return float(a[0]) < float(b[0]))
+	for o in order:
+		if rng.randf() <= lerpf(1.0, floor_p, float(o[0]) / reach):
+			return int(o[1])
+	return -1
 
 
 # --- Strike ---------------------------------------------------------------------------------------
@@ -140,11 +181,12 @@ static func mods_for(run: RunState) -> Dictionary:
 	return {"slow": slow, "half_bonus": 0.0, "window_bonus": 0.0, "skill": best}
 
 
-## A fresh reel against one fish. Bar positions run 0 (left) to 1 (right).
+## A fresh reel against one fish. Bar positions run 0 (left) to 1 (right). The fish and the marker both start in
+## the middle and the fish hovers a moment before its first dart ([USER] 2026-11-01 FI3).
 static func reel_start(row: Dictionary, mods := {}) -> Dictionary:
 	var half := tune("fish_half", 0.11) + float(mods.get("half_bonus", 0.0))
 	return {
-		"fish": 0.5, "target": 0.5, "wait": 0.6, "marker": 0.5, "vel": 0.0,
+		"fish": 0.5, "target": 0.5, "wait": tune("fish_first_wait", 1.2), "marker": 0.5, "vel": 0.0, "t": 0.0,
 		"catch": tune("fish_catch_start", 0.3), "half": half, "on": true, "pull": 0.0, "done": "",
 		"speed": float(row.get("speed", 0.8)) * (1.0 - float(mods.get("slow", 0.0))),
 		"dart_min": float(row.get("dart_min", 0.4)), "dart_max": float(row.get("dart_max", 1.0)),
@@ -152,44 +194,61 @@ static func reel_start(row: Dictionary, mods := {}) -> Dictionary:
 	}
 
 
-## Advance the reel by dt. input: "mouse" = where the pointer is on the bar (0 to 1, or absent), "axis" =
-## keys or stick (-1 to 1). The marker never moves faster than fish_marker_speed, so a mouse can't just
-## snap onto the fish: following it takes finesse. Sets s.done to "caught" or "lost" when it ends.
+## How far into its full difficulty a reel is: 0 at the start, 1 once `fish_ease` seconds have passed. Until then the
+## fish is slower, darts shorter and the meter drains less (the quick ease-in).
+static func ramp(s: Dictionary) -> float:
+	return clampf(float(s.t) / maxf(0.01, tune("fish_ease", 4.0)), 0.0, 1.0)
+
+
+## A pointer's pull on the bar as an axis (-1 to 1): the pointer left or right of the bar's centre by `span` pulls
+## fully that way (the mouse and a finger work like holding an arrow).
+static func axis_from_pointer(x: float, centre: float, span: float) -> float:
+	return clampf((x - centre) / maxf(1.0, span), -1.0, 1.0)
+
+
+## Advance the reel by dt. input: "axis" = left or right held, from keys, stick or pointer (-1 to 1). Holding pulls
+## the marker that way (up to fish_marker_speed); letting go springs it back to the centre ([USER] 2026-11-01 FI4:
+## "the second you release it pulls back to the center"), so it feels like the fish pulling on the line. Sets
+## s.done to "caught" or "lost" when it ends.
 static func reel_step(s: Dictionary, rng: RandomNumberGenerator, dt: float, input := {}) -> Dictionary:
 	if s.done != "":
 		return s
+	s.t = float(s.t) + dt
+	var k := ramp(s)
+	var easy := lerpf(tune("fish_ease_speed", 0.4), 1.0, k)
 	# the fish: hover a moment, then dart to a new spot
 	if float(s.wait) > 0.0:
 		s.wait = float(s.wait) - dt
 	else:
-		s.fish = move_toward(float(s.fish), float(s.target), float(s.speed) * dt)
+		s.fish = move_toward(float(s.fish), float(s.target), float(s.speed) * easy * dt)
 		if is_equal_approx(float(s.fish), float(s.target)):
-			var span := rng.randf_range(float(s.reach) * 0.4, float(s.reach))
+			var reach := float(s.reach) * lerpf(tune("fish_ease_reach", 0.5), 1.0, k)
+			var span := rng.randf_range(reach * 0.4, reach)
 			var dir := -1.0 if rng.randf() < 0.5 else 1.0
 			if float(s.fish) + dir * span > 0.95 or float(s.fish) + dir * span < 0.05:
 				dir = -dir  # off the end of the bar: dart the other way
 			s.target = clampf(float(s.fish) + dir * span, 0.05, 0.95)
-			s.wait = rng.randf_range(float(s.dart_min), float(s.dart_max))
-	# the marker
+			s.wait = rng.randf_range(float(s.dart_min), float(s.dart_max)) / easy  # longer pauses while it eases in
+	# the marker: held = pulled that way, released = springs back to the centre
 	var top := tune("fish_marker_speed", 1.6)
 	var half := float(s.half)
-	if input.has("mouse"):
-		var before := float(s.marker)
-		s.marker = move_toward(before, clampf(float(input.mouse), half, 1.0 - half), top * dt)
-		s.vel = (float(s.marker) - before) / maxf(dt, 0.0001)
+	var axis := clampf(float(input.get("axis", 0.0)), -1.0, 1.0)
+	var accel := tune("fish_marker_accel", 7.0)
+	if absf(axis) < 0.05:
+		var back := clampf((0.5 - float(s.marker)) * tune("fish_spring", 6.0), -top, top)
+		s.vel = move_toward(float(s.vel), back, accel * 2.0 * dt)
 	else:
-		var axis := clampf(float(input.get("axis", 0.0)), -1.0, 1.0)
-		var accel := tune("fish_marker_accel", 7.0) * (2.0 if absf(axis) < 0.05 else 1.0)  # stops quicker than it starts
 		s.vel = move_toward(float(s.vel), axis * top, accel * dt)
-		s.marker = float(s.marker) + float(s.vel) * dt
-		if float(s.marker) < half or float(s.marker) > 1.0 - half:
-			s.marker = clampf(float(s.marker), half, 1.0 - half)
-			s.vel = 0.0
+	s.marker = float(s.marker) + float(s.vel) * dt
+	if float(s.marker) < half or float(s.marker) > 1.0 - half:
+		s.marker = clampf(float(s.marker), half, 1.0 - half)
+		s.vel = 0.0
 	# the catch meter
 	var gap := float(s.fish) - float(s.marker)
 	s.on = absf(gap) <= half
 	s.pull = clampf(gap / 0.35, -1.0, 1.0)
-	s.catch = clampf(float(s.catch) + (float(s.fill) if s.on else -float(s.drain)) * dt, 0.0, 1.0)
+	var drain := float(s.drain) * lerpf(tune("fish_ease_drain", 0.2), 1.0, k)
+	s.catch = clampf(float(s.catch) + (float(s.fill) if s.on else -drain) * dt, 0.0, 1.0)
 	if float(s.catch) >= 1.0:
 		s.done = "caught"
 	elif float(s.catch) <= 0.0:

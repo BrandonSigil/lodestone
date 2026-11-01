@@ -1622,9 +1622,9 @@ func _have() -> Dictionary:
 
 
 ## Fishing off a dock or shore (a thing whose event's option has the `fish` effect): the fishing minigame
-## ([USER] 2026-11-01: Look, Strike, Reel; FishingGame). A catch goes in the pack. The spot rests until the
-## next trip out of town once a line is cast ([AI] 2026-10-30; desk card dev-fishing-rules); leaving before
-## the cast costs nothing. The thing's `pool` (default lake) picks the fish (data/fish.csv spots).
+## ([USER] 2026-11-01: Look, Strike, Reel; FishingGame). A catch goes in the pack. The spot no longer rests for the
+## trip (it did, [AI] 2026-10-30): its pond runs out instead (Game.pond, FI2). Leaving costs nothing. The thing's `pool`
+## (default lake) picks the fish (data/fish.csv spots).
 var fishing: FishingGame  ## the minigame while it's up
 
 
@@ -1634,7 +1634,8 @@ func _fish(t: Dictionary) -> void:
 		return
 	_close_dialog()
 	mode = M.BUSY
-	fishing = FishingGame.open(self, String(t.get("pool", "lake")), FishingRules.mods_for(Game.run))
+	var pool := String(t.get("pool", "lake"))  # each spot is its own pond: a few fish that run out (FI2), kept in the save
+	fishing = FishingGame.open(self, pool, FishingRules.mods_for(Game.run), 0, Game.pond(map.map_name + "/" + String(t.get("id", pool)), pool))
 	fishing.finished.connect(_fish_done.bind(t))
 
 
@@ -1643,9 +1644,6 @@ func _fish_done(res: Dictionary, t: Dictionary) -> void:
 	mode = M.WALK
 	if String(res.outcome) == "left":
 		return
-	if not t.is_empty():
-		Game.use_for_trip(map.map_name + "/" + String(t.id))
-		t.done = true
 	if String(res.outcome) == "caught":
 		var got := Game.land_fish(res.fish)
 		var line := Txt.f("UI_FISH_GOT_KIND", Txt.t(String(res.fish.name_key)))

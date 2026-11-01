@@ -1255,10 +1255,8 @@ func test_fishing_from_any_dock_spot() -> void:
 	eq(Game.run.item_count("fish_good"), fish_before + 1, "the catch goes in the pack: a good fish (rations until it is cooked at home)")
 	eq(Game.run.item_count("ingredient"), ing_before + 1, "a good fish brings an ingredient too")
 	ok(Game.has_flag("caught_fish_trout"), "the kind is marked caught")
-	ok(spot.done, "the spot rests")
-	ok(Game.used_this_trip("village_v2/" + String(spot.id)), "for the rest of this trip")
-	Game.start_trip()
-	ok(not Game.used_this_trip("village_v2/" + String(spot.id)), "and is back on the next one")
+	ok(not spot.done, "the spot doesn't rest: its pond runs out instead (FI2)")
+	ok(Game.meta.ponds.has("village_v2/" + String(spot.id)), "the pond is kept in the save")
 	s._close_dialog()
 	s.free()
 	Game.explore_map = "home"

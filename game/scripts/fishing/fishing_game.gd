@@ -3,11 +3,12 @@ extends Control
 ## The fishing minigame on screen ([USER] 2026-11-01): Look, Strike, Reel (rules in FishingRules).
 ## Opened over any scene with FishingGame.open(); it takes every input while up and emits `finished` once,
 ## then frees itself. Graybox: the pool, shadows, rod and bar are flat shapes drawn in code.
-## Controls: mouse or touch, arrows / A D, or a controller (stick, d-pad, A to act, B to leave).
+## Controls: mouse or touch, arrows / A D, or a controller (stick, d-pad, A to act, B to leave). At Look the mouse, the
+## arrows or the stick aim the cast; at Reel left and right pull the marker and let go springs it back to the centre.
 
 signal finished(result: Dictionary)  ## {"outcome": one of FishingRules.OUTCOMES, "fish": the fish row or {}}
 
-enum S { LOOK, CAST, STRIKE, REEL, RESULT }
+enum S { LOOK, CAST, STRIKE, REEL, RESULT, WAIT, COME }  ## WAIT: the bobber sits, nothing noticed it yet. COME: a fish noticed and swims over
 
 const CAST_TIME := 0.45  ## seconds the bobber flies
 const WATER := Color("#4a7fb5")
@@ -27,9 +28,13 @@ var _rng := RandomNumberGenerator.new()
 var _shadows: Array[Dictionary] = []
 var _t := 0.0  ## seconds since the minigame opened (shadows drift on it)
 var _phase_t := 0.0  ## seconds since the current beat began
-var _sel := 0
-var _hook := -1  ## the shadow cast to
+var _aim := Vector2(0.5, 0.5)  ## pool coords the cast is aimed at (Look)
+var _hook := -1  ## the shadow that noticed the bobber
 var _cast_at := Vector2.ZERO  ## pool coords of the bobber
+var _pond: Array = []  ## the fish ids left in this pond; shadows are built from it and a fish gone for good comes out
+var _pond_in: Variant = null  ## the caller's pond (Game.pond), or null for a fresh one
+var _come_from := Vector2.ZERO  ## where the fish that noticed the bobber was when it turned
+var _check_t := 0.0  ## seconds since the idle bobber last gave the shadows a chance to notice it
 var _plan := {}
 var _reel := {}
 var _mouse := Vector2.ZERO
@@ -41,14 +46,16 @@ var _pads: Array[Vector3] = []  ## lily pads: x, y (pool coords), radius (pool w
 var _done := false
 
 
-## Open the minigame over `parent` on its own canvas layer. spot picks the fish pool (data/fish.csv spots).
-static func open(parent: Node, spot_id := "lake", party_mods := {}, seed_value := 0) -> FishingGame:
+## Open the minigame over `parent` on its own canvas layer. spot picks the fish pool (data/fish.csv spots). `pond` is the
+## list of fish ids left in it (Game.pond; this takes fish out of it): null gives a fresh pond that is not kept.
+static func open(parent: Node, spot_id := "lake", party_mods := {}, seed_value := 0, pond: Variant = null) -> FishingGame:
 	var layer := CanvasLayer.new()
 	layer.layer = 20
 	parent.add_child(layer)
 	var g := FishingGame.new()
 	g.spot = spot_id
 	g.mods = party_mods
+	g._pond_in = pond
 	if seed_value != 0:
 		g._rng.seed = seed_value
 	else:
@@ -60,7 +67,15 @@ static func open(parent: Node, spot_id := "lake", party_mods := {}, seed_value :
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	_shadows = FishingRules.shadows(_rng, FishingRules.pool(Db.fish, spot), int(FishingRules.tune("fish_shadows", 4)))
+	if _pond_in is Array:
+		_pond = _pond_in
+	else:
+		_pond = FishingRules.new_pond(_rng, FishingRules.pool(Db.fish, spot), int(FishingRules.tune("fish_pond_size", 3)))
+	var rows: Array[Dictionary] = []
+	for id in _pond:
+		if Db.fish.has(String(id)):
+			rows.append(Db.fish[String(id)])
+	_shadows = FishingRules.shadows_of(_rng, rows)
 	var r := Riso.rng(int(_rng.seed % 100000))
 	for i in 28:
 		var a := TAU * i / 28.0
@@ -114,12 +129,39 @@ func _hand() -> Vector2:
 
 # --- the beats ----------------------------------------------------------------------------------
 
-func _cast(i: int) -> void:
-	if i < 0 or i >= _shadows.size():
+## Cast at the aimed spot: the bobber flies there. Only water takes a cast, and an empty pond takes none.
+func _cast_aimed() -> void:
+	if _shadows.is_empty() or not Geometry2D.is_point_in_polygon(_aim, _blob):
+		return
+	_hook = -1
+	_cast_at = _aim
+	state = S.CAST
+	_phase_t = 0.0
+
+
+## The bobber has landed: a fish near it may notice (it turns and comes), else it sits and waits for one.
+func _landed() -> void:
+	_check_t = 0.0
+	_notice()
+	if state == S.CAST:
+		state = S.WAIT
+		_phase_t = 0.0
+
+
+func _notice() -> void:
+	var i := FishingRules.noticed(_rng, _shadows, _cast_at, _t)
+	if i < 0:
 		return
 	_hook = i
-	_cast_at = FishingRules.shadow_pos(_shadows[i], _t) + Vector2(0.0, 0.04)
-	state = S.CAST
+	_come_from = FishingRules.shadow_pos(_shadows[i], _t)
+	state = S.COME
+	_phase_t = 0.0
+
+
+## Back to Look with the line in: nothing noticed the bobber, nothing is lost.
+func _reel_in() -> void:
+	_hook = -1
+	state = S.LOOK
 	_phase_t = 0.0
 
 
@@ -129,6 +171,7 @@ func _strike_now() -> void:
 		state = S.REEL
 		_phase_t = 0.0
 		_reel = FishingRules.reel_start(_shadows[_hook].fish, mods)
+		_use_mouse = false  # the pointer pulls only once it moves: where it sat for the strike isn't a pull
 		_burst(_to_screen(_cast_at), 10)
 	else:
 		_end(verdict)
@@ -136,6 +179,11 @@ func _strike_now() -> void:
 
 func _end(outcome: String) -> void:
 	result = {"outcome": outcome, "fish": _shadows[_hook].fish if _hook >= 0 and outcome == "caught" else {}}
+	if _hook >= 0 and FishingRules.GONE.has(outcome):  # a catch, a scared, missed or lost fish: gone from the pond for good
+		var pi := int(_shadows[_hook].pond_i)
+		if pi < _pond.size():
+			_pond.remove_at(pi)
+		Game.pond_changed()
 	state = S.RESULT
 	_phase_t = 0.0
 	if outcome == "caught":
@@ -168,8 +216,20 @@ func _process(delta: float) -> void:
 	_t += delta
 	_phase_t += delta
 	match state:
+		S.LOOK:
+			_move_aim(delta)
 		S.CAST:
 			if _phase_t >= CAST_TIME:
+				_landed()
+		S.WAIT:
+			_check_t += delta
+			if _check_t >= 0.5:  # the shadows drift: another chance for one to find the bobber
+				_check_t = 0.0
+				_notice()
+			if state == S.WAIT and _phase_t >= FishingRules.tune("fish_idle", 4.0):
+				_reel_in()
+		S.COME:
+			if _phase_t >= FishingRules.tune("fish_approach", 0.9):
 				state = S.STRIKE
 				_phase_t = 0.0
 				_plan = FishingRules.strike_plan(_rng, _shadows[_hook].fish, float(mods.get("window_bonus", 0.0)))
@@ -188,9 +248,9 @@ func _process(delta: float) -> void:
 				axis += stick
 			if absf(axis) > 0.05:
 				_use_mouse = false
-			if _use_mouse:
+			if _use_mouse:  # the pointer left or right of the bar's middle pulls like an arrow held
 				var bar := _bar()
-				input["mouse"] = (_mouse.x - bar.position.x) / bar.size.x
+				input["axis"] = FishingRules.axis_from_pointer(_mouse.x, bar.get_center().x, bar.size.x * 0.3)
 			else:
 				input["axis"] = axis
 			FishingRules.reel_step(_reel, _rng, delta, input)
@@ -204,6 +264,17 @@ func _process(delta: float) -> void:
 		s.life = float(s.life) - delta
 	_splash = _splash.filter(func(s: Dictionary) -> bool: return float(s.life) > 0.0)
 	queue_redraw()
+
+
+## Keys and the stick walk the aim across the pool; the mouse sets it where it points (see _input).
+func _move_aim(delta: float) -> void:
+	var v := Vector2(Input.get_axis("ui_left", "ui_right"), Input.get_axis("ui_up", "ui_down"))
+	var stick := Vector2(Input.get_joy_axis(0, JOY_AXIS_LEFT_X), Input.get_joy_axis(0, JOY_AXIS_LEFT_Y))
+	if stick.length() > 0.2:
+		v += stick
+	if v.length() > 0.05:
+		_use_mouse = false
+		_aim = (_aim + v.limit_length(1.0) * delta * 0.55).clamp(Vector2(0.04, 0.06), Vector2(0.96, 0.94))
 
 
 func _burst(at: Vector2, n: int) -> void:
@@ -223,9 +294,7 @@ func _input(event: InputEvent) -> void:
 		_mouse = (event as InputEventMouseMotion).position
 		_use_mouse = true
 		if state == S.LOOK:
-			var i := FishingRules.nearest(_shadows, _to_pool(_mouse), _t)
-			if i >= 0:
-				_sel = i
+			_aim = _to_pool(_mouse).clamp(Vector2.ZERO, Vector2.ONE)
 	elif event is InputEventMouseButton and (event as InputEventMouseButton).pressed \
 			and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
 		_mouse = (event as InputEventMouseButton).position
@@ -239,12 +308,6 @@ func _input(event: InputEvent) -> void:
 			_finish()
 	elif event.is_action_pressed("ui_accept"):
 		_press(false)
-	elif state == S.LOOK and event.is_action_pressed("ui_left"):
-		_sel = posmod(_sel - 1, maxi(1, _shadows.size()))
-		_use_mouse = false
-	elif state == S.LOOK and event.is_action_pressed("ui_right"):
-		_sel = posmod(_sel + 1, maxi(1, _shadows.size()))
-		_use_mouse = false
 	get_viewport().set_input_as_handled()
 
 
@@ -256,11 +319,10 @@ func _press(by_mouse: bool) -> void:
 				_finish()
 				return
 			if by_mouse:
-				var i := FishingRules.nearest(_shadows, _to_pool(_mouse), _t)
-				if i >= 0:
-					_cast(i)
-			else:
-				_cast(_sel)
+				_aim = _to_pool(_mouse)
+			_cast_aimed()
+		S.WAIT:
+			_reel_in()
 		S.STRIKE:
 			_strike_now()
 		S.RESULT:
@@ -296,8 +358,10 @@ func _draw() -> void:
 	if state == S.REEL or (state == S.RESULT and not _reel.is_empty()):
 		_draw_bar()
 	var keys := "UI_FISH_KEYS_LOOK"
-	if state == S.STRIKE or state == S.CAST:
+	if state == S.STRIKE or state == S.CAST or state == S.COME:
 		keys = "UI_FISH_KEYS_STRIKE"
+	elif state == S.WAIT:
+		keys = "UI_FISH_KEYS_WAIT"
 	elif state == S.REEL:
 		keys = "UI_FISH_KEYS_REEL"
 	elif state == S.RESULT:
@@ -312,9 +376,13 @@ func _draw() -> void:
 func _headline() -> String:
 	match state:
 		S.LOOK:
-			return Txt.t("UI_FISH_LOOK")
+			return Txt.t("UI_FISH_LOOK") if not _shadows.is_empty() else Txt.t("UI_FISH_EMPTY")
 		S.CAST:
 			return Txt.t("UI_FISH_WAIT")
+		S.WAIT:
+			return Txt.t("UI_FISH_NOTHING")
+		S.COME:
+			return Txt.t("UI_FISH_NOTICED")
 		S.STRIKE:
 			var b := FishingRules.bobber_at(_plan, _phase_t)
 			return Txt.t("UI_FISH_BITE") if b == "bite" else (Txt.t("UI_FISH_NIBBLE") if b == "nibble" else Txt.t("UI_FISH_WAIT"))
@@ -351,12 +419,16 @@ func _draw_pool() -> void:
 			continue
 		var s := _shadows[i]
 		var at := _to_screen(FishingRules.shadow_pos(s, _t))
+		var heading := FishingRules.shadow_heading(s, _t)
 		if state == S.STRIKE and i == _hook:
-			at = _to_screen(_cast_at + Vector2(-0.04, 0.0))  # the cast-to fish noses the bobber
+			at = _to_screen(_cast_at + Vector2(-0.04, 0.0))  # the fish that noticed it noses the bobber
+		elif state == S.COME and i == _hook:  # it turns and swims over
+			var k := clampf(_phase_t / maxf(0.01, FishingRules.tune("fish_approach", 0.9)), 0.0, 1.0)
+			var goal := _cast_at + Vector2(-0.04, 0.0)
+			at = _to_screen(_come_from.lerp(goal, k * k * (3.0 - 2.0 * k)))
+			heading = (goal - _come_from).normalized()
 		var len := float(s.fish.get("size", 1.0)) * pool.size.x * 0.07
-		_draw_fish(at, FishingRules.shadow_heading(s, _t), len, SHADOW)
-		if state == S.LOOK and i == _sel:
-			draw_arc(at, len * 0.95, 0.0, TAU, 32, Riso.CREAM, 3.0)
+		_draw_fish(at, heading, len, SHADOW)
 	# lily pads ride on top
 	for pd in _pads:
 		var c := _to_screen(Vector2(pd.x, pd.y))
@@ -369,7 +441,9 @@ func _draw_pool() -> void:
 		var sway := sin(_t * 1.4 + i) * 3.0
 		draw_line(Vector2(x, y + 22), Vector2(x + sway, y), GRASS_DARK, 3.0)
 		draw_circle(Vector2(x + sway, y), 3.2, Riso.OCHRE)
-	if state == S.CAST or state == S.STRIKE:
+	if state == S.LOOK:
+		_draw_aim()
+	if state == S.CAST or state == S.STRIKE or state == S.WAIT or state == S.COME:
 		_draw_bobber()
 	if state == S.REEL:
 		var hs := _shadows[_hook]
@@ -377,6 +451,25 @@ func _draw_pool() -> void:
 		var dir := Vector2.RIGHT if float(_reel.target) >= float(_reel.fish) else Vector2.LEFT
 		_draw_fish(_hooked_screen(), dir.rotated(sin(_t * 18.0) * 0.25), len, Riso.alpha(SHADOW, 0.7))
 		draw_arc(_hooked_screen(), len * 0.8 + sin(_t * 9.0) * 4.0, 0, TAU, 24, Riso.alpha(Riso.CREAM, 0.6), 2.0)
+
+
+## The aim: a cross where the bobber will land, inside a faint ring that shows how close a fish must be to notice it.
+func _draw_aim() -> void:
+	if _shadows.is_empty():
+		return
+	var pool := _pool()
+	var at := _to_screen(_aim)
+	var reach := FishingRules.tune("fish_notice", 0.18)
+	var ring := PackedVector2Array()
+	for i in 41:
+		var a := TAU * i / 40.0
+		ring.append(at + Vector2(cos(a) * reach * pool.size.x, sin(a) * reach / FishingRules.POOL_ASPECT * pool.size.y))
+	var wet := Geometry2D.is_point_in_polygon(_aim, _blob)
+	draw_polyline(ring, Riso.alpha(Riso.CREAM, 0.45 if wet else 0.2), 2.0)
+	var col := Riso.CREAM if wet else Riso.alpha(Riso.RED, 0.8)
+	draw_line(at + Vector2(-12, 0), at + Vector2(12, 0), col, 3.0)
+	draw_line(at + Vector2(0, -12), at + Vector2(0, 12), col, 3.0)
+	draw_arc(at, 7.0, 0.0, TAU, 16, col, 2.0)
 
 
 ## The hooked fish in the pool follows its spot on the bar.
@@ -422,10 +515,10 @@ func _rod_tip() -> Vector2:
 	var lean := 0.0
 	if state == S.REEL:
 		lean = float(_reel.pull)
-	elif state == S.STRIKE or state == S.CAST:
+	elif state == S.STRIKE or state == S.CAST or state == S.WAIT or state == S.COME:
 		lean = clampf((_cast_at.x - 0.5) * 1.4, -0.7, 0.7)
-	elif state == S.LOOK and _sel < _shadows.size():
-		lean = clampf((FishingRules.shadow_pos(_shadows[_sel], _t).x - 0.5) * 0.8, -0.5, 0.5)
+	elif state == S.LOOK:
+		lean = clampf((_aim.x - 0.5) * 0.8, -0.5, 0.5)
 	var tug := 0.0
 	if state == S.REEL and not bool(_reel.on):
 		tug = sin(_t * 30.0) * 4.0
@@ -444,7 +537,7 @@ func _draw_angler() -> void:
 	var rod := Riso.quad(hand, ctrl, tip, 10)
 	# the line: to the bobber, or to the hooked fish
 	var end := Vector2.ZERO
-	if state == S.CAST or state == S.STRIKE:
+	if state == S.CAST or state == S.STRIKE or state == S.WAIT or state == S.COME:
 		end = _bobber_screen()
 	elif state == S.REEL:
 		end = _hooked_screen()

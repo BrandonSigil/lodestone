@@ -225,7 +225,7 @@ func save_meta() -> void:
 static func _fresh_meta() -> Dictionary:
 	return {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": [],
 		"levels": {}, "pack": {}, "materials": {}, "benched": [], "bookmark": {}, "restore": {}, "tracked": [], "trips": 0,
-		"bonds": {}, "talks_heard": [], "settings": {}, "ledger": {}, "morale": {}, "days": 0}
+		"bonds": {}, "talks_heard": [], "settings": {}, "ledger": {}, "morale": {}, "days": 0, "ponds": {}}
 
 
 ## Saves one option (the options screen) and applies it.
@@ -998,6 +998,25 @@ func land_fish(row: Dictionary) -> Dictionary:
 	var first := set_flag("caught_fish_" + String(row.get("id", "")))
 	save_adventure()
 	return {"items": got, "new": first}
+
+
+## The fish left in a pond ([USER] 2026-11-01 FI2): fish ids, drawn once from the spot's fish when the pond is first
+## fished and then only ever fewer (a catch, a scared, missed or lost fish is gone for good). `key` names the pond
+## ("<map>/<thing id>" on an explore map, "road/<place>" on the road); `spot` picks its fish (data/fish.csv spots). It
+## is saved with the meta. The array is the stored one: FishingGame takes fish out of it, then `pond_changed` saves.
+func pond(key: String, spot: String) -> Array:
+	var ponds: Dictionary = meta.get("ponds", {})
+	if not ponds.has(key):
+		var rng := RandomNumberGenerator.new()
+		rng.randomize()
+		ponds[key] = FishingRules.new_pond(rng, FishingRules.pool(Db.fish, spot), int(FishingRules.tune("fish_pond_size", 3)))
+		meta["ponds"] = ponds
+		save_meta()
+	return ponds[key]
+
+
+func pond_changed() -> void:
+	save_meta()
 
 
 ## A thing that rests for the rest of this trip once used (a fishing spot): `key` is "<map>/<thing id>".
