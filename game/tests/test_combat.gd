@@ -1499,6 +1499,7 @@ func test_wired_kit_passives() -> void:
 func test_kit_batch_two() -> void:
 	var g := CombatGrid.flat(10, 6)
 	var rng := RandomNumberGenerator.new()
+	rng.seed = 11  # the hits roll: a fixed seed so a miss can't flake the burn check
 	var hero := _unit("knight", 0, Vector2i(1, 1), g)
 	var wolf := _unit("wolf", 1, Vector2i(6, 1), g)
 	var units := [hero, wolf]
