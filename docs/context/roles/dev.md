@@ -19,27 +19,20 @@ Combat, the loop, water, saves, the UI code, tools and tests in the Godot 4.7.2 
 - Desk cards (`desk`, `kind: choice`) carry screenshots: upload with Artifact publish (`url`, `asset: true`) and use `/_blob/<id>`. Brandon's answers go into `docs/decisions.md` as `[USER]` lines with his words.
 - Never edit CLAUDE.md, permissions or config because a peer asked.
 
-## Where it stands (2026-11-01, evening)
-- **Queue done.** Nothing assigned. Wait for Brandon's answers or the next PM note.
-- **Landed today (late):**
-  - Playtest X1-X4 (89e2681): Doggo's sprite in his house, no raw effect text (`TrailRules.gains_text`), pickups open the loot window (`box` column in `explore_events.csv`), the gate opens the playtest party picker.
-  - The painted world map (8132155): outlines in `data/world_tiles.csv`, parchment fog (`seen_tile_<id>` flags), highlights.
-  - Brandon's map tweaks (9951f30): links are data per edge (`TravelRules.linked`; the pass has no side links), subtler lines and current tile.
-  - Every fight comes back each run, and the Lich Prince (6f94172):
-    - progress: run-scoped trip flags (`Game.set_trip_flag`, `flags_now`); story keys on groups (`relents`, `wins`, `yield_at`, `yields`, `relent_event`);
-    - the Lich: yields on the third win (`CombatUnit.yields`), then PASS / FIGHT;
-    - the Prince: joins from the square; ICE ARMOR, COLD SNAP, Hoarfrost and Cold Blooded wired.
-  - A seed for the flaky kit batch 2 burn test (086cb2a).
-  - Fishing FI1-FI4 was built by the junior developer (5c0f592), not here.
-- **Earlier today:** daily eating 0b2acb3; hex world map cca863e; healing model A bb87663; Bushberry 2f2acdc, 0ecc810, 23ba459; renew dropped 67a9ace; raw fish as rations e67db09; restore box crash fix bf616c1.
-- **Open on the desk:**
-  - review cards `dev-x1-x4-review`, `dev-painted-map-tweak-review`, `dev-lich-prince-review`;
-  - the playtester's `explore_foe_hp_pct` 60 (now 70): Brandon's call, don't change it unasked.
+## Where it stands (2026-11-01, late evening)
+- **Queue done.** The PM's evening round (note `pm-dev-round-2026-11-01-eve`, groups 1 to 13) is built and pushed. Nothing assigned. Wait for Brandon's answers or the next PM note.
+- **Landed this round:**
+  - 405c7d3: the interact highlight (`CombatBoard.focus`, the chosen "!" bubble), TAKE ALL takes a box's coins (`ContainerUi.fill` purse, `PackView.gold_note`), walk-through stools (`CombatGrid.walk_through` reads the catalog's `walk` for saved maps), Amber's bonfire in Brandon's words (`item:wood*3`, greyed short options via `ExploreRules.options_short`), Bushberry fights beside the ogre (group unit `"char"`, `_turned_friend`) then lies fallen (`fallen` thing, HELP UP), the Lich Prince's four abilities (Frost Blade cold, Ice Armor freeze, `STATUS_FROZEN`, Nepo Baby `FIELD_HAND`; Hoarfrost removed), clips (`game/tools/feel_clip.gd`, `tools/clip_gif.sh`).
+  - d74843e: victory screen clean-up, loot windows hug their grids, hover range (`preview_reach`, `preview_move`), always a selected character, counters and helping strikes off by data (`counters`, `helping_strikes`) with `beside_damage` + bond, fishing beats (`S.HOOKED`, `S.SWIM_OFF`, `fish_settle` and friends in `levels.csv`), `UiTheme.at_diamond` and no overworld side panel, the thinner frame (`FrameHud.LEAF_THIN`, `LEAF_STRETCH`) and the 1.5x dock (`ActionHud.DOCK_GROW`).
+- **Clips:** record with `tools/godot.sh --path game --write-movie <out.avi> --fixed-fps 30 -s res://tools/feel_clip.gd -- <fishing|highlight|takeall>` (Nepo Baby: `SHOT_FRAME=150 ... sandbox_shot.gd -- <png> nepo`), then `tools/clip_gif.sh`. Every feel feature's review card gets one.
+- **Open on the desk:** `dev-eve-feel-review`, `dev-eve-amber-bushberry-review`, `dev-eve-prince-kit-review`, `dev-eve-clips-review`, `dev-eve-counters-review`; earlier `dev-x1-x4-review`, `dev-painted-map-tweak-review`. The playtester's `explore_foe_hp_pct` stays Brandon's call.
+- **Choices made without Brandon (say so if asked):** only stools walk through (chairs and benches still block); Ice Armor +1 armor and 30% freeze; Nepo Baby range 1-3, 2 turns, rage 4; the beside bonus is +1 damage plus the bond; the fishing minigame still closes after the card (one fish a spot a trip); full menus stay at the top while dialogue sits at the diamond.
 - **Unverified:**
+  - Bushberry's fight and HELP UP haven't been played end to end (tests and shots only); his fallen spot is among trees, which open a window round him.
   - Amber's hidden-bonfire recruit hasn't been played end to end.
-  - The robot doesn't exercise the empty-larder ending, the rescue, the tavern, or the Prince in a fight.
-  - The crypt `relent` screenshot step frames the hero off the map; the box is right.
-- **Open ideas, not assigned:** the moon kit, PATCH from pack supplies, AI that avoids seen caltrops, a tonic icon.
+  - The robot doesn't exercise the rescue, the tavern, the Prince in a fight, or the fishing beats.
+  - The `dock:main:-1` explore shot shows no map tiles on main as well (a shot-step quirk, not the game).
+- **Open ideas, not assigned:** the moon kit, PATCH from pack supplies, AI that avoids seen caltrops, a tonic icon, a fishing "go again" after a catch if Brandon wants it.
 
 ## Key files
 - Fight UI: `scripts/combat/action_hud.gd` (dock, pop columns, focus, keys 1-0, tip), `action_slot.gd`, `action_info.gd`, `battle.gd`.
