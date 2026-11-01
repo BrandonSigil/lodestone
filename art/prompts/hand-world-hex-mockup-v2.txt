@@ -1,0 +1,20 @@
+World map mockup, second pass: keep the closest try, fix the hexagons, flatten to our style, add the fogged land behind the Wall (Brandon, 2026-11-01)
+Attach exactly three pictures, in this order:
+  Image 1 = Brandon's closest try (the hex island in the sea with the wall across the top; desk card pm-world-hex-prompt-v2)
+  Image 2 = art/templates/world/hex_world_guide.png (grey hex block-out, the structure)
+  Image 3 = Brandon's style reference (the chunky grass-block diorama with pines, a grey rock and a dirt path on cream paper)
+Settings: GPT image, 2K, 3:2, High, 4 tries.
+
+----- PROMPT -----
+
+Redraw Image 1, the world map of a cosy fantasy tactics game. Keep everything Image 1 gets right: the same twelve lands in the same places, the sea around them, the long stone wall with square towers and a gate across the back, the road from the village at the bottom, the river past the farmland, the beach and jetty on the left, the walled town on the right. Change three things:
+
+1. STRICT HEXAGONS. Use Image 2 for the structure. Every land is its own raised hexagon tile, exactly as in Image 2: the same twelve hexagons, the same size, the same shape and the same places, each with its own earth-and-rock cliff sides, and a thin dark gap between neighbouring tiles. The outer edge of the island follows the hexagon edges, with straight sides and sharp corners; it is never a rounded or blobby coastline. Do not merge tiles, do not blur the borders, do not draw extra land between or around the hexagons. Where a road or the river crosses from one tile to the next, it crosses the gap on a small wooden bridge in the middle of the shared edge.
+
+2. OUR LOOK. Use Image 3 for the finish. Flat, soft watercolour fills with one lighter and one darker tone per surface, chunky simple shapes (trees as plain cones and round blobs, rocks as a few big faces, houses as simple blocks with plain roofs), a soft slightly wobbly dark warm charcoal outline (#373335, never pure black) around each shape, muted warm colours. Much less detail than Image 1: no ink hatching, no cross-hatching, no tiny stones, no texture lines on the cliffs, no fine grass strokes. Each tile reads at a glance from its colour and two or three big shapes. The sea is a calm flat muted teal-blue with a few soft white foam lines where it meets the cliffs.
+
+3. THE LAND BEYOND THE WALL. Behind the wall, past the back row of tiles, the world goes on: more land, darker and stranger, almost hidden in thick soft cloud and fog that rolls up against the wall. Show only a few faint silhouettes through the fog (distant peaks, odd tall shapes), pale and low in contrast, so it reads as unknown and far away. The fog is flat, soft and pale, not glowing. The wall's gate faces into it.
+
+CAMERA: the same high 2:1 orthographic view as Image 2, no perspective, uprights perfectly vertical. Light from the upper left: tops lightest, left faces mid-tone, right faces darkest.
+
+Avoid: text, letters, numbers, labels, a compass rose, map borders or frames, ink hatching, cross-hatching, parchment texture, glossy or shiny surfaces, saturated colours, glow effects, photorealism, 3d render look, pixel art, perspective, a rounded island coastline, merged hexagons, hexagons drawn only as lines on one flat plateau, tiny detail that can't be read when small.
