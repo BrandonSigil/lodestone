@@ -4,10 +4,10 @@
     ~/.lodestone/venv/bin/python tools/art/world_board.py   # writes art/templates/world/world_board.png
 
 1536 x 1024 (3:2), cream paper, built only from pictures we already have, nothing painted:
-  CONTENT        Brandon's closest Picsart try (art/templates/world/hex_closest_try.png), big on the left
-  HEX STRUCTURE  the grey hex block-out (art/templates/world/hex_world_guide.png, from hex_world_guide.py)
+  CONTENT        Brandon's latest Picsart try (art/templates/world/hex_closest_try_2.png), big on the left
+  HEX OVERLAY    one continuous island with the hex grid as thin lines (hex_overlay_guide.png, from hex_overlay_guide.py)
   STYLE          the approved look (docs/art/references/style-flat-forest.png)
-The prompt (art/prompts/hand-world-hex-mockup-v2.txt) refers to the panels by these labels.
+The prompt (art/prompts/hand-world-hex-mockup-v3.txt) refers to the panels by these labels.
 Brandon (2026-11-01): "append all references images into one image with labels. That way I just send 1 image and 1 prompt".
 """
 from PIL import Image, ImageDraw, ImageFont
@@ -18,8 +18,8 @@ FONT = "/System/Library/Fonts/Helvetica.ttc"
 W, H, M, LAB = 1536, 1024, 24, 52
 OUT = "art/templates/world/world_board.png"
 PANELS = [  # label, source, box (x, y, w, h) including the label strip
-    ("CONTENT", "art/templates/world/hex_closest_try.png", (M, M, 980, H - 2 * M)),
-    ("HEX STRUCTURE", "art/templates/world/hex_world_guide.png", (980 + 2 * M, M, W - 980 - 3 * M, (H - 3 * M) // 2)),
+    ("CONTENT", "art/templates/world/hex_closest_try_2.png", (M, M, 980, H - 2 * M)),
+    ("HEX OVERLAY", "art/templates/world/hex_overlay_guide.png", (980 + 2 * M, M, W - 980 - 3 * M, (H - 3 * M) // 2)),
     ("STYLE", "docs/art/references/style-flat-forest.png", (980 + 2 * M, M * 2 + (H - 3 * M) // 2, W - 980 - 3 * M, (H - 3 * M) // 2)),
 ]
 
