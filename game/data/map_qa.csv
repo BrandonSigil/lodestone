@@ -1,0 +1,16 @@
+key,value,note
+box_min_cells,200,maps with less walkable ground than this are rooms (house interiors): no box score
+box_max_fill,0.45,share of the bounding box the walkable footprint may cover (a box is near 1)
+box_min_edge,1.8,footprint edge cells over the bounding box perimeter (a box is about 1)
+box_min_corners,14,jut-outs and inlets per 100 footprint cells
+box_min_bays,0.30,share of the bounding box's four corner quarters left empty
+box_min_levels,8,distinct heights under the footprint
+box_min_climbs,8,separate stair runs
+jump,1,the Jump the reachability and stair checks walk with (a plain party member)
+deploy_radius,1,steps from the leader a slow member may start a fight (ExploreRules.deploy_radius for move 4)
+deploy_room,3,free cells the party needs next to the leader (party of 4 minus the leader)
+deploy_cramped_share,0.5,a fight fails when more than this share of the cells it can start from are cramped
+hero_tall,1.25,the hero's height in prop height units (tools/art/prop_scale_check.py)
+building_min,2.0,buildings are at least this many hero heights tall
+width_min,0.5,a sprite's drawn width over its footprint's screen width: at least
+width_max,1.6,and at most

@@ -685,7 +685,8 @@ func test_the_gate_asks_go_or_edit() -> void:
 	ok(texts.has(Txt.t("UI_GATE_GO")) and texts.has(Txt.t("UI_GATE_PARTY")), "GO (F) and EDIT PARTY (P)")
 	s._party_editor()
 	texts = s._dialog.find_children("*", "Button", true, false).map(func(b: Button) -> String: return b.text)
-	ok(texts.has(Txt.f("UI_PARTY_IN", Txt.t("CHAR_DOG"))), "the dog is listed, coming")
+	ok(texts.any(func(t: String) -> bool: return t.begins_with(Txt.f("UI_PARTY_IN", Txt.t("CHAR_DOG")))), "the dog is listed, coming")
+	ok(texts.any(func(t: String) -> bool: return t.contains(Txt.t(String(Game.morale_band("dog").name_key)))), "with his morale band")
 	s.free()
 	Game.explore_memory.clear()
 	Game.explore_map = "home"
@@ -1064,10 +1065,21 @@ func test_fishing_from_any_dock_spot() -> void:
 	ok(TravelRules.can_try(Game.run, "fish"), "a rod in the pack")
 	var fish: Array = ExploreRules.options_for(ev, s._defs(), s._have()).filter(func(o: Dictionary) -> bool: return o.key == "OPT_FISH")
 	eq(fish.size(), 1, "FISH is on offer with the rod")
-	var food_before: int = Game.run.food
 	s.mode = 2
 	s.choose(fish[0], {"thing": spot})
-	ok(Game.run.food >= food_before, "the catch (if any) goes in the pack")
+	ok(s.fishing != null, "FISH opens the fishing minigame ([USER] 2026-11-01)")
+	ok(not spot.done, "nothing used until a line is cast")
+	s.fishing.resolve("left")
+	ok(not spot.done and s.mode == 0, "leaving before the cast: the spot still works")
+	s.mode = 2
+	s.choose(fish[0], {"thing": spot})
+	var row: Dictionary = Db.fish["trout"]
+	var meat_before: int = Game.run.item_count("meat")
+	var ing_before: int = Game.run.item_count("ingredient")
+	s.fishing.resolve("caught", row)
+	eq(Game.run.item_count("meat"), meat_before + 2, "the catch goes in the pack")
+	eq(Game.run.item_count("ingredient"), ing_before + 1, "a good fish brings an ingredient too")
+	ok(Game.has_flag("caught_fish_trout"), "the kind is marked caught")
 	ok(spot.done, "the spot rests")
 	ok(Game.used_this_trip("village_v2/" + String(spot.id)), "for the rest of this trip")
 	Game.start_trip()

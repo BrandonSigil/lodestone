@@ -93,6 +93,7 @@ func _on_finished(won: bool) -> void:
 			u.member.hp = u.hp
 			Game.store_res(u)
 	Game.fight_done()  # one fight less on a camp meal's buff
+	var heart_lines := Game.fight_morale(battle.units, ("escaped" if battle.outcome.how == "exit" else "won") if won else "lost", false)
 	var loot_items := ""
 	var coins := 0
 	if won:  # coins and unlocks at once; food, medicine and things into the shared loot grid
@@ -117,6 +118,7 @@ func _on_finished(won: bool) -> void:
 		var lines := Game.award_xp(xp)
 		lines.insert(0, Txt.f("UI_XP_GAIN", xp))
 		lines.append_array(battle.award_bonds())
+		lines.append_array(heart_lines)
 		var x := Label.new()
 		x.text = "\n".join(lines)
 		box.add_child(x)

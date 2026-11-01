@@ -102,9 +102,11 @@ func _advance_to(t1: float) -> void:
 	var stop := TravelRules.next_stop(float(tr.t), tr.stops, seconds)
 	t1 = minf(t1, stop)
 	var rest := float(tr.get("rest", 0.0))  # time spent at camp still counts toward meals
-	for i in TravelRules.meals_between(float(tr.t) + rest, t1 + rest):
+	var days := TravelRules.meals_between(float(tr.t) + rest, t1 + rest)
+	for i in days:
 		TravelRules.eat(Game.run)
 		_refresh_hud()
+	Game.pass_days(days)  # a journey day each meal: morale for whoever stayed home
 	if Game.trickle(maxf(0.0, t1 - float(tr.t)), "trickle_seconds"):
 		_refresh_hud()
 	tr.t = t1
@@ -221,10 +223,39 @@ func act(kind: String) -> void:
 	if not TravelRules.can_act(acts, kind, t):
 		_say(Txt.t("UI_OW_WAIT"))
 		return
+	if kind == "fish":
+		_go_fish()
+		return
 	acts[kind] = t
 	var r := TravelRules.activity(Game.run, kind)
 	_say(Txt.t("UI_EX_WIN") if r.success else Txt.t("UI_EX_LOSE"))
 	_refresh_hud()
+
+
+## FISH on the road ([USER] 2026-11-01): the fishing minigame; the road clock stops while it's up. Leaving
+## before the cast doesn't start the cooldown.
+var fishing: FishingGame
+
+
+func _go_fish() -> void:
+	if not TravelRules.can_try(Game.run, "fish"):
+		_say(Txt.t("UI_OW_NO_ROD"))
+		return
+	_busy = true
+	fishing = FishingGame.open(self, "road", FishingRules.mods_for(Game.run))
+	fishing.finished.connect(func(res: Dictionary) -> void:
+		fishing = null
+		_busy = false
+		if String(res.outcome) == "left":
+			_refresh_hud()
+			return
+		Game.travel.acts["fish"] = float(Game.travel.t)
+		if String(res.outcome) == "caught":
+			var got := Game.land_fish(res.fish)
+			_say((Txt.t("UI_FISH_NEW") + " " if got.new else "") + Txt.f("UI_FISH_GOT_KIND", Txt.t(String(res.fish.name_key))))
+		else:
+			_say(Txt.t("UI_FISH_NONE"))
+		_refresh_hud())
 
 
 ## MAKE CAMP ([USER] omr-9): once a leg. The party stands still a while (meals still come due on the road
@@ -235,8 +266,10 @@ func make_camp() -> void:
 	var tr := Game.travel
 	var rest := float(tr.get("rest", 0.0))
 	var camp := float(Db.levels.get("camp_seconds", 20))
-	for i in TravelRules.meals_between(float(tr.t) + rest, float(tr.t) + rest + camp):
+	var days := TravelRules.meals_between(float(tr.t) + rest, float(tr.t) + rest + camp)
+	for i in days:
 		TravelRules.eat(Game.run)
+	Game.pass_days(days)
 	tr["rest"] = rest + camp
 	tr["camped"] = true
 	_busy = true

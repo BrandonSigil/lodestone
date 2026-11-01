@@ -15,11 +15,15 @@ import json
 import sys
 from pathlib import Path
 
-HERO_TALL = 1.25
+import csv
+
+# The numbers live in game/data (shared with the map maker's QA panel, MapQA): map_qa.csv and prop_scale.csv.
+_DATA = Path(__file__).resolve().parents[2] / "game" / "data"
+_CFG = {r["key"]: float(r["value"]) for r in csv.DictReader(open(_DATA / "map_qa.csv"))}
+HERO_TALL = _CFG["hero_tall"]
 # sprite -> [door or opening height as a share of the sprite's height, headroom factor, aspect (w / h of the picture)]
-DOOR = {"prop_windmill": [0.18, 1.0, 201 / 256], "prop_boathouse": [0.30, 1.0, 369 / 256], "prop_crypt_gate": [0.55, 1.2, 291 / 256],
-        "b_home_a": [0.22, 1.0, 1.0], "b_home_b": [0.22, 1.0, 1.0], "b_home_c": [0.22, 1.0, 1.0], "b_home_hero": [0.22, 1.0, 1.0]}
-BUILDING_MIN = 2.0  # hero heights
+DOOR = {r["sprite"]: [float(r["door"]), float(r["headroom"]), float(r["aspect"])] for r in csv.DictReader(open(_DATA / "prop_scale.csv"))}
+BUILDING_MIN = _CFG["building_min"]  # hero heights
 
 
 def check(path):
@@ -38,7 +42,7 @@ def check(path):
             problems.append(f"{name} at {p['cell']}: its door is {door:.2f} hero heights (needs {head:.1f}); make it taller")
         fx, fy = p["foot"]
         width_ratio = (tall * 64 * aspect) / ((fx + fy) * 32 * 1.18)
-        if not 0.5 <= width_ratio <= 1.6:
+        if not _CFG["width_min"] <= width_ratio <= _CFG["width_max"]:
             problems.append(f"{name} at {p['cell']}: drawn {width_ratio:.2f}x the width of its {fx} x {fy} footprint; resize the footprint with it")
         if tall / HERO_TALL < BUILDING_MIN:
             problems.append(f"{name} at {p['cell']}: only {tall / HERO_TALL:.1f} hero heights tall")

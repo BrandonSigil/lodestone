@@ -21,6 +21,8 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 		var u := CombatUnit.from_member(m)  # the stats it fights with: class, levels, ranks, weapon
 		_label(box, Txt.f("UI_LS_MEMBER", [Txt.t(d.name_key), int(s.level), int(s.xp), int(Db.levels.get("xp_per_level", 100)),
 			int(m.hp), u.max_hp, u.damage, u.armor, u.crit, u.magic_power]), 14)
+		var band := Game.morale_band(id)  # per-character morale ([USER] 2026-10-31): the band and what it does
+		_label(box, Txt.f("UI_LS_MORALE", [Game.morale_of(id), Txt.t(String(band.name_key)), MoraleRules.describe(band)]), 13)
 		var rs := Game.rank_state(id)  # the hero's ranks belong to his job
 		if id == "lead" and Game.job_id() != "":
 			var job: Dictionary = Db.jobs[Game.job_id()]

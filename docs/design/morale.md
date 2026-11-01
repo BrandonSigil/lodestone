@@ -1,6 +1,6 @@
 # Morale: per character, persistent, and no hunger
 
-Game designer, 2026-10-31, from Brandon's answer on `design-goodboy` (the `[USER]` line is in `docs/decisions.md`). Everything below the quote is an `[AI]` proposal on his card `design-morale`; numbers are data in `game/data/`.
+Game designer, 2026-10-31, from Brandon's answer on `design-goodboy` (the `[USER]` line is in `docs/decisions.md`). Everything below the quote is an `[AI]` proposal on his card `design-morale`; numbers are data in `game/data/`. Built 2026-11-01 (Brandon picked "build", adding morale per journey day for characters at home): how it works now is `docs/systems/morale.md`. Not built yet: food as healing (no hunger).
 
 ## What he asked for
 Falls cost morale; a fall nobody picks up costs more. Low morale makes a character weaker, like the Banner Saga. Morale is persistent after a Lodestone run. There is no hunger: food is healing. Camping restores some morale, good food restores morale and health, and the village is the main way to recover it, by sleeping there or by leaving low-morale characters at home. It feeds the There and Back Again loop (you might beat the Lich with morale too low to finish).

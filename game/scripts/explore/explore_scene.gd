@@ -183,12 +183,26 @@ func _ready() -> void:
 		if not g.is_empty() and g.state != "gone":
 			start_fight(g, String(f.get("how", "party")))
 			return
-	if not Game.pending_lines.is_empty():
+	if not Game.homecoming.is_empty():
+		_show_homecoming()
+	elif not Game.pending_lines.is_empty():
 		_show_pending()
 	elif lead:
 		check_groups(true)  # stepping in beside a group: the party gets the first look, not an ambush
 		_refresh_units()
 	bookmark.call_deferred()
+
+
+## The homecoming page ([USER] Pitch J): what the trip gave and the next goal, after a fall, GO HOME or a trip walked
+## home. The square waits under it; OK closes it and shows any lines still waiting.
+func _show_homecoming() -> void:
+	var page := HomecomingUi.make(Game.homecoming)
+	Game.homecoming = {}
+	mode = M.DIALOG
+	page.done.connect(func() -> void:
+		mode = M.WALK
+		_show_pending())
+	_ui.add_child(page)
 
 
 ## Lines left for this screen (waking in the square after a fall, GO HOME).
@@ -650,6 +664,8 @@ func _after_step() -> bool:
 	_refresh_units()
 	if Game.trickle(1.0, "trickle_steps"):
 		_refresh_hud()
+	if TravelRules.node_for_map(Db.world_nodes, map.map_name) != "town":
+		Game.walk_days(1.0)  # out of town, walking counts journey days (morale for whoever stayed home)
 	return spotted
 
 
@@ -1071,11 +1087,18 @@ func choose(o: Dictionary, ctx: Dictionary) -> void:
 		if out.dismiss != "":
 			Game.dismiss(out.dismiss)
 			lines.append(Txt.f("UI_STAYS_HOME", Txt.t(Db.character(StringName(out.dismiss)).name_key)))
+		if out.sleep:  # the hero's bed: a night at home, once a trip
+			lines.append(Txt.f("UI_SLEPT", int(Db.morale.get("bed", 20))) if Game.sleep_at_home() else Txt.t("UI_BED_USED"))
+		if int(out.morale) != 0:
+			lines.append(Txt.f("UI_MORALE_ALL", "+%d" % int(out.morale) if int(out.morale) > 0 else str(out.morale)))
 		_after_change()
 		for f: String in out.unlocks:
 			if Txt.has("UI_GOT_" + f.to_upper()):
 				lines.append(Txt.t("UI_GOT_" + f.to_upper()))  # the dog joins, the Lodestone is taken
-		lines.append(fx.run.replace(";", "  "))
+		var shown_fx := Array(fx.run.split(";", false)).filter(func(p: String) -> bool:
+			return not p.begins_with("sleep") and not p.begins_with("morale"))  # said in their own lines above
+		if not shown_fx.is_empty():
+			lines.append("  ".join(shown_fx))
 	if Game.run.wiped():
 		# A trap took the last one standing: the run ends as a lost fight does.
 		lines.append(Txt.t("UI_DEFEAT"))
@@ -1403,6 +1426,8 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	for u: CombatUnit in battle.units:  # one fight with a boss, any end, and the party knows him
 		if u.boss:
 			Game.set_flag(ExploreRules.learned_flag(String(u.cls.id)))
+	var big := foes.any(func(f: Dictionary) -> bool: return bool(f.def.get("boss", false)) or bool(f.def.get("elite", false)))
+	var heart_lines := Game.fight_morale(battle.units, ("escaped" if battle.outcome.how == "exit" else "won") if won else "lost", big)
 	var box := _new_dialog(Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT"))
 	if not won:
 		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall())
@@ -1456,6 +1481,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	var lines := Game.award_xp(xp)
 	lines.insert(0, Txt.f("UI_XP_GAIN", xp))
 	lines.append_array(battle.award_bonds())
+	lines.append_array(heart_lines)
 	_sync_party_hp()
 	_refresh_hud()
 	if ends or loot_items == "":
@@ -1573,20 +1599,39 @@ func _have() -> Dictionary:
 		"party": Game.adventure_defs().map(func(d: CharacterDef) -> String: return String(d.id))}
 
 
-## Fishing off a dock or shore (a thing whose event's option has the `fish` effect): the same roll as the
-## world map's FISH ([USER] 2026-10-28: dice for now, a minigame later), the catch into the pack. The spot
-## rests until the next trip out of town ([AI] 2026-10-30; desk card dev-fishing-rules).
+## Fishing off a dock or shore (a thing whose event's option has the `fish` effect): the fishing minigame
+## ([USER] 2026-11-01: Look, Strike, Reel; FishingGame). A catch goes in the pack. The spot rests until the
+## next trip out of town once a line is cast ([AI] 2026-10-30; desk card dev-fishing-rules); leaving before
+## the cast costs nothing. The thing's `pool` (default lake) picks the fish (data/fish.csv spots).
+var fishing: FishingGame  ## the minigame while it's up
+
+
 func _fish(t: Dictionary) -> void:
 	if not TravelRules.can_try(Game.run, "fish"):  # no rod: the row's need should have hidden FISH already
 		board.float_text(leader().cell, Txt.t("OPT_NO_ROD"), Color(0.9, 0.8, 0.7))
 		return
-	var r := TravelRules.activity(Game.run, "fish")
+	_close_dialog()
+	mode = M.BUSY
+	fishing = FishingGame.open(self, String(t.get("pool", "lake")), FishingRules.mods_for(Game.run))
+	fishing.finished.connect(_fish_done.bind(t))
+
+
+func _fish_done(res: Dictionary, t: Dictionary) -> void:
+	fishing = null
+	mode = M.WALK
+	if String(res.outcome) == "left":
+		return
 	if not t.is_empty():
 		Game.use_for_trip(map.map_name + "/" + String(t.id))
 		t.done = true
-	board.float_text(leader().cell, Txt.f("UI_FISH_GOT", int(r.food)) if r.success else Txt.t("UI_FISH_NONE"),
-		Color(0.6, 0.85, 1.0))
+	if String(res.outcome) == "caught":
+		var got := Game.land_fish(res.fish)
+		var line := Txt.f("UI_FISH_GOT_KIND", Txt.t(String(res.fish.name_key)))
+		board.float_text(leader().cell, (Txt.t("UI_FISH_NEW") + " " if got.new else "") + line, Color(0.6, 0.85, 1.0))
+	else:
+		board.float_text(leader().cell, Txt.t("UI_FISH_NONE"), Color(0.6, 0.85, 1.0))
 	_after_change()
+	_refresh_units()
 
 
 # --- character sheets ([USER] 2026-10-30: the dog's, and one per build at the smithy rack) -------------------
@@ -1687,7 +1732,8 @@ func _party_editor() -> void:
 	for d in Game.companions():
 		var id := String(d.id)
 		var going := Game.in_party(id)
-		var label := Txt.f("UI_PARTY_IN" if going else "UI_PARTY_OUT", Txt.t(d.name_key))
+		var label := Txt.f("UI_PARTY_IN" if going else "UI_PARTY_OUT", Txt.t(d.name_key)) \
+			+ Txt.f("UI_PARTY_HEART", [Game.morale_of(id), Txt.t(String(Game.morale_band(id).name_key))])  # who needs a rest
 		_dialog_button(box, label, func() -> void:
 			if Game.in_party(id):
 				Game.dismiss(id)

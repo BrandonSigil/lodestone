@@ -25,7 +25,7 @@ if ! "${RUN[@]}" --headless --path . -s res://tests/run_tests.gd; then
 	fail=1
 fi
 
-for scene in launch village trail combat world_map battle_view explore map_maker overworld; do
+for scene in launch village trail combat world_map battle_view explore map_maker overworld fishing; do
 	out=$("${RUN[@]}" --headless --path . --quit-after 60 "res://scenes/$scene.tscn" 2>&1)
 	if grep -qE "SCRIPT ERROR|^ERROR|^killed: over memory cap" <<< "$out"; then
 		echo "FAIL scene $scene"

@@ -1,0 +1,14 @@
+key,value,note
+start,70,"every character starts here and keeps their own morale for good ([USER] 2026-10-31 design-goodboy: per character, persistent)"
+max,100,
+down,-5,a piece goes down in a fight
+left_down,-10,"and again if nobody helps them up: they bleed out or are knocked out (-15 in all)"
+wipe,-10,"and again for everyone when the whole party goes down"
+win,2,a won fight: each piece that never went down
+big_win,5,"an elite or boss win, in place of win"
+camp,10,MAKE CAMP's rest on the road: everyone in the party
+gloomy_camp,-2,a gloomy character gains this much less from a camp
+bed,20,"a night in the hero's bed at home: everyone, in the party and at home; once a trip"
+home_day,3,"[USER] 2026-10-31 (design-morale): every journey day gone, each character left at home gains this (the number is [AI])"
+day_steps,150,tiles walked on explore maps away from the village that make one journey day (the road's day is TravelRules.DAY_SECONDS)
+dog_soften_pct,20,"while Doggo is in the party, every party member's morale losses are this % smaller, rounded toward zero"

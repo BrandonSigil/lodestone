@@ -202,6 +202,15 @@
     3
    ],
    "once": "got_potion"
+  },
+  {
+   "id": "home_bed",
+   "kind": "bed",
+   "event": "home_bed",
+   "cell": [
+    1,
+    1
+   ]
   }
  ]
 }
