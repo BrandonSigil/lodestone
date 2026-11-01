@@ -1,0 +1,47 @@
+MENU MOCKUPS, ROUND 2 (Brandon, 2026-11-01, on the round 1 review card: "I think the green BG is nice for some major call outs, like the 'You Won!' title at the top, but it feels a little distracting for heavy menu usage, what if the inner menus were a darker green with a touch of transparency. I like the second home again screen all in one page, and the win screen. The encounter choice needs more work. Instead ... just a simple dialogue call/response screen.")
+Attach one picture: art/templates/ui/menu_mockup_board_v2.png (built by tools/art/menu_board.py; labelled panels 1 THE GAME, 2 MENU KIT, 3 CHARACTERS, 4 STYLE, 5 LAYOUT: HOME AGAIN, 6 LAYOUT: WIN).
+Settings: GPT Image 2.5 Sunburst, 2K, 16:9, High, one picture each, four runs. Same shared head every time.
+PREP ONLY until Brandon says go. Drafts only: nothing goes into the game until he approves it.
+
+===== SHARED HEAD (starts every prompt) =====
+The attached board has six labelled panels. Panel 1, THE GAME, is a screenshot of our cosy isometric fantasy tactics game, with its ornate green bottom frame. Panel 2, MENU KIT, is our approved menu look: deep green mottled felt panels inside a slim pale silver and soft blue double rim, small blue diamond studs and olive leaf sprigs at the corners only. Panel 3, CHARACTERS, is our party, to use as small portraits. Panel 4, STYLE, is the painting style: soft flat painted shapes, gentle hand-inked outlines, a light paper grain. Panels 5 and 6, LAYOUT, are earlier drafts of two screens: keep their arrangement where a prompt says so, but not their colouring.
+Paint ONE polished in-game menu screen for this game, as a 16:9 screenshot, like a professional indie game with a AAA finish (think Sea of Stars, Hades, Unicorn Overlord, Slay the Spire). The game world from panel 1 shows dimmed and softly blurred behind the menu; the green bottom frame stays at the bottom.
+NEW COLOUR RULE, important: the bright mottled green felt of panel 2 is only for major call-outs, meaning the title plate or banner at the top of a window. Everything the player works in, every window body, card, row, slot and grid, is a darker, calmer green (like panel 2's green mixed with night blue, about 40 percent darker) with a touch of transparency, so the dimmed game world shows faintly through it. Calmer, less busy, easy on the eyes for long use. Keep panel 2's pale silver and soft blue double rim, blue diamond studs and olive leaf sprigs on every frame, matched exactly.
+Readable hierarchy: one clear title, few words, large clear numbers, icons with short labels, portraits, coloured bars with labels. Lots of breathing room, generous margins inside every frame, nothing touching a frame edge. Every window has a round X close button at its top right in the same rim style, clearly visible. Nothing runs off the screen and nothing overlaps another element.
+Words: only short game labels, written clearly in a clean storybook serif, cream on green, large and easy to read: the ones named below and nothing else. No paragraphs, no names, no made-up words, no lorem ipsum, no garbled characters.
+Avoid: walls of text, tiny text, text running off the frame, photo textures, glossy plastic bevels, 3d render, neon, pure black, sci-fi, mobile-game clutter, extra windows.
+
+===== PROMPT A: DIALOGUE, call and response, no portrait (the locked chest) =====
+[SHARED HEAD]
+THIS SCREEN: the one standard dialogue box. It sits centred just above the bottom frame's centre diamond, wide and not tall, leaving the party and the world visible around it. No title plate. At its top, one line of large cream text: "THIS CHEST IS LOCKED". Under it a vertical list of four full-width pill answers, each with a small icon on the left:
+"I HAVE THE KEY!!!" (key icon, glowing, the main answer),
+"USE LOCKPICK" (lockpick icon) with a small chip on the right reading "60%",
+"SMASH IT" (fist or hammer icon),
+"LEAVE" (footprints icon, quieter, darker pill, last).
+The X at the window's top right.
+
+===== PROMPT B: DIALOGUE with a portrait (meeting a character) =====
+[SHARED HEAD]
+THIS SCREEN: the same standard dialogue box as a locked-chest prompt, in the same place (centred just above the bottom frame's centre diamond), but this version has a portrait element: on the left of the frame, a tall rimmed portrait picture of the fire mage from panel 3, big, head and shoulders, painted in the game's style, in its own silver and blue rimmed frame with leaf sprigs. To the right of the portrait, where the spoken line goes, show it as three soft placeholder bars of different lengths in pale cream-grey, like a loading skeleton, with NO letters, NO invented words. Under the bars a vertical list of three full-width pill answers, each with a small icon on the left:
+"TALK" (speech bubble icon, glowing, the main answer),
+"INVITE TO PARTY" (heart or plus icon),
+"LEAVE" (footprints icon, quieter, darker pill, last).
+The X at the window's top right.
+
+===== PROMPT C: HOME AGAIN, one page of cards, restyled =====
+[SHARED HEAD]
+THIS SCREEN: panel 5, LAYOUT: HOME AGAIN, with its arrangement kept exactly (one centred window about three quarters of the screen wide; three side-by-side cards BROUGHT HOME, PARTY and FRIENDS; the NEXT strip underneath; the glowing ONE MORE GO button at bottom right; a thin themed scrollbar on the window's right edge; round X at the top right), but restyled with the new colour rule: only the title plate "HOME AGAIN" and the three small heading plates are bright green; the window body and the three cards are the darker translucent green, the dimmed world faintly showing through.
+Same words as the layout and nothing else: "HOME AGAIN", "BROUGHT HOME", "PARTY", "FRIENDS", "NEXT", "ONE MORE GO", "SHOW ALL", "LV 3", "+3", "+13", "+6", and "0/4", "0/2", "0/3".
+Fix these problems from the draft: every number must be clean and correct, in particular the friends chips read exactly "+6" (the first one was garbled); more space inside every card, with the last row never touching the card's edge; larger labels and chips, all text clearly readable at a glance; the four party rows get distinct XP bar fills; the heart icons and chips lined up neatly.
+
+===== PROMPT D: WIN, restyled =====
+[SHARED HEAD]
+THIS SCREEN: panel 6, LAYOUT: WIN, with its arrangement kept (a wide banner plate at the top reading "WIN"; left half a 2 by 2 grid of party cards, each with a round portrait from panel 3, a red labelled "HP" bar and under it a blue "MP" bar, or an orange "RAGE" bar for the fire mage, and a gold "EXP +12" line; right half the loot and the pack), but restyled with the new colour rule: only the "WIN" banner is bright green; the window body, the party cards, the loot box and the pack are the darker translucent green, the dimmed world faintly showing through.
+Fix these problems from the draft:
+  the LOOT box is its own small framed box sized exactly to its contents: a 3 by 2 inventory grid of item icons (meat, potion, coin pile, rope, crystal, map), with no empty space, headed "LOOT";
+  the party pack is a separate larger framed box under it, headed "PACK", a 6 by 4 inventory grid half full, with a clear gap between the two boxes;
+  the "TAKE ALL" button sits centred on the bottom edge of the loot box, half over that edge, in the gap, and never covers any slot of the pack;
+  the "CONTINUE" glowing button sits INSIDE the window at its bottom right, not over the bottom frame;
+  the X at the window's top right is bigger and easier to hit, about one and a half times the draft's size;
+  clean margins everywhere, nothing touching a frame edge, all numbers clearly readable.
+Words: "WIN", "HP", "MP", "RAGE", "EXP +12", "LOOT", "PACK", "TAKE ALL", "CONTINUE", the bar numbers and the small item counts, and nothing else.
