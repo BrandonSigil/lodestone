@@ -1649,3 +1649,33 @@ func test_rescue_bushberry() -> void:
 	var spot: Array = village.things.filter(func(t: Dictionary) -> bool: return String(t.get("event", "")) == "recruit_bushberry")
 	ok(not spot.is_empty() and String(spot[0].when) == "rescued_bushberry", "his spot in the square shows once he's freed")
 	_restore(saved)
+
+
+## The tavern ([USER] 2026-11-01 design-bb-recruit, design-bb-menu): rebuilt at home once Bushberry is freed; then its
+## counter sells ration, jerky and stew for gold.
+func test_tavern_rebuild_and_menu() -> void:
+	var saved := _fresh_game()
+	ok(not RestoreRules.is_open(Db.restore, "tavern", Game.meta.flags), "shut until Bushberry is freed")
+	Game.meta.flags.append("rescued_bushberry")
+	ok(RestoreRules.is_open(Db.restore, "tavern", Game.meta.flags), "his rescue opens the ladder")
+	eq(Game.tavern_dishes(), [] as Array[Dictionary], "no counter before the rebuild")
+	var row := RestoreRules.next_step(Db.restore, "tavern", Game.meta.restore)
+	Game.meta.materials = RestoreRules.parse_needs(String(row.needs))
+	ok(Game.pay_step(String(row.id)), "paid from the village pile")
+	Game.meta.trips = int(Game.meta.trips) + 1
+	Game.home_again(true)
+	ok(Game.has_flag("tavern_open"), "done after a trip: the tavern is open")
+	var items := Game.tavern_dishes().map(func(d: Dictionary) -> String: return String(d.item))
+	eq(items, ["ration", "jerky", "meal_stew"], "three dishes at first")
+	Game.run.gold = 9
+	ok(Game.buy_dish("jerky"), "bought with gold")
+	eq(Game.run.gold, 2)
+	eq(Game.run.item_count("jerky"), 1, "into the pack")
+	ok(not Game.buy_dish("meal_stew"), "not enough gold")
+	eq(RunState.heal_per_portion("ration"), 0.0, "plain food only feeds")
+	ok(Db.recipes.stew.heal != "" and int(Db.recipes.stew.heal) > 0, "the stew heals as a team meal")
+	var counter: Array = ExploreMap.load_named("tavern").things.filter(func(t: Dictionary) -> bool: return String(t.event) == "tavern")
+	ok(not counter.is_empty(), "the counter stands in the tavern")
+	Game.pending_lines = []  # the trip's homecoming page would open in the next test's scene
+	Game.homecoming = {}
+	_restore(saved)

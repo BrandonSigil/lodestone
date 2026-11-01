@@ -1,0 +1,4 @@
+item,price,needs,note
+ration,2,,[USER] 2026-11-01 design-bb-menu: the first three dishes; plain food: feeds (its food column) and does not heal
+jerky,7,,plain food: feeds 30 portions
+meal_stew,10,,a cooked meal: a team meal at the night camp (feeds everyone, heals each its recipe's heal and +10 morale)

@@ -412,6 +412,15 @@
    ],
    "items": "meat:10;potion:1;gold:12",
    "trapped": true
+  },
+  {
+   "id": "counter",
+   "kind": "restore",
+   "event": "tavern",
+   "cell": [
+    6,
+    3
+   ]
   }
  ]
 }

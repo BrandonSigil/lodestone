@@ -16,3 +16,4 @@ bow_3,bow,3,RESTORE_BOW_3,wood:4;rare:2,,smithy_stone,
 book_1,book,1,RESTORE_BOOK_1,herb:3;wood:1,,smithy_stone,the book is mended at the smithy too
 book_2,book,2,RESTORE_BOOK_2,herb:3;rare:1,,smithy_stone,
 book_3,book,3,RESTORE_BOOK_3,herb:4;rare:2,,smithy_stone,
+tavern_1,tavern,1,RESTORE_TAVERN_1,wood:4;metal:2;ingredient:3,unlock:tavern_open,rescued_bushberry,[USER] 2026-11-01 design-bb-recruit: rebuilt at home once Bushberry is freed; opens the counter (cost [AI])

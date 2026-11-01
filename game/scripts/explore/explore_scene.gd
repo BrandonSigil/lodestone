@@ -979,7 +979,17 @@ func _restore_box(building: String) -> void:
 	if building == "inn":
 		for r: Dictionary in Game.recipes_open():
 			lines.append(Txt.f("UI_RECIPE_LINE", [Txt.t(String(r.name_key)), _needs_text(String(r.needs))]))
+	var dishes := Game.tavern_dishes() if building == "tavern" else [] as Array[Dictionary]
+	if not dishes.is_empty():
+		lines.append(Txt.t("UI_TAVERN_MENU"))
 	box = _new_dialog("\n".join(lines))
+	for d: Dictionary in dishes:  # [USER] 2026-11-01 design-bb-menu: the counter sells food for gold, into the pack
+		var item := String(d.item)
+		var b := _dialog_button(box, Txt.f("UI_TAVERN_BUY", [Txt.t(String(Db.items[item].name_key)), int(d.price)]), func() -> void:
+			Game.buy_dish(item)
+			_refresh_hud()
+			_restore_box(building))
+		b.disabled = Game.run.gold < int(d.price)
 	if building == "inn":
 		# [USER] omr-9: the chef's recipes, made at home into a meal to carry and cook at camp
 		for r: Dictionary in Game.recipes_open():
@@ -1266,7 +1276,7 @@ func _dialog_area() -> Rect2:
 	return r
 
 
-func _dialog_button(box: VBoxContainer, text: String, cb: Callable) -> void:
+func _dialog_button(box: VBoxContainer, text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -1274,6 +1284,7 @@ func _dialog_button(box: VBoxContainer, text: String, cb: Callable) -> void:
 	b.add_theme_font_size_override("font_size", 19)
 	b.pressed.connect(cb)
 	box.add_child(b)
+	return b
 
 
 func _close_dialog() -> void:

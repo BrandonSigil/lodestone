@@ -1021,6 +1021,38 @@ func start_trip() -> void:
 
 ## Why a ladder is shut: nobody lives there yet, or another step has to be done first (the weapons wait
 ## for the smithy's sharpening stone).
+## The tavern counter ([USER] 2026-11-01 design-bb-menu): the dishes it sells now (data/tavern_menu.csv), once the
+## tavern is rebuilt (tavern_open). A row's needs, split by ";": flag:<f> (set), home:<material> (some in the village
+## pile), char:<id> (met); empty is always on the menu. The menu grows by rows.
+func tavern_dishes() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if not has_flag("tavern_open"):
+		return out
+	for row: Dictionary in Db.tavern_menu:
+		var ok := Db.items.has(String(row.item))
+		for need in String(row.get("needs", "")).split(";", false):
+			var kv := need.split(":")
+			match kv[0]:
+				"flag": ok = ok and has_flag(kv[1])
+				"home": ok = ok and int(meta.materials.get(kv[1], 0)) > 0
+				"char": ok = ok and Db.character(StringName(kv[1])) != null and is_unlocked(Db.character(StringName(kv[1])))
+		if ok:
+			out.append(row)
+	return out
+
+
+## Buy one dish at the counter with the run's gold: into the pack (or FOUND when it doesn't fit). False when it isn't
+## sold or there isn't enough gold.
+func buy_dish(item: String) -> bool:
+	for row in tavern_dishes():
+		if String(row.item) == item and run.gold >= int(row.price):
+			run.gold -= int(row.price)
+			run.add_item(item, 1)
+			save_adventure()
+			return true
+	return false
+
+
 func locked_text(building: String) -> String:
 	var first := RestoreRules.opened_by(Db.restore, building)
 	return Txt.f("UI_RESTORE_NEEDS_FIRST", Txt.t(String(first.name_key))) if not first.is_empty() else Txt.t("UI_RESTORE_LOCKED")

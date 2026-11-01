@@ -35,6 +35,17 @@ func run(s: Node, f: int, step: String) -> bool:
 			s.focus_h = 1.0
 			s._apply_camera()
 		return f == 30
+	if step == "tavern":
+		# the tavern counter after the rebuild: Bushberry freed, the tavern open, 12 gold to spend (map: tavern)
+		if f == 5:
+			var game: Node = s.get_node("/root/Game")
+			game.save_enabled = false
+			game.meta.flags.append_array(["rescued_bushberry", "tavern_open"])
+			game.meta.restore["tavern_1"] = {"state": "done"}
+			game.run.gold = 12
+			s._refresh_hud()
+			s._open_thing(_thing(s, "counter"))
+		return f == 90
 	if step.begins_with("near:") or step.begins_with("use:"):
 		if f == 5:
 			if step.begins_with("near:"):

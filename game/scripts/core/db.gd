@@ -22,6 +22,7 @@ var growth: Dictionary = {}  # character id -> {stat: % chance a level}, from da
 var boons: Dictionary = {}  # id -> data/boons.csv row (kind blessing or setback, effect)
 var fish: Dictionary = {}  # fish id -> data/fish.csv row (grade, shadow size, how it darts, reward); see FishingRules
 var recipes: Dictionary = {}  # recipe id -> data/recipes.csv row (meal, needs, kitchen flag, buff)
+var tavern_menu: Array[Dictionary] = []  # rows of data/tavern_menu.csv: what the tavern counter sells (item, price, needs)
 var morale: Dictionary = {}  # key -> number, from data/morale.csv (see MoraleRules)
 var morale_bands: Array[Dictionary] = []  # data/morale_bands.csv rows, highest band first (see MoraleRules)
 var restore: Array[Dictionary] = []  # village restore ladders, data/restore.csv rows (see RestoreRules)
@@ -90,6 +91,7 @@ func reload() -> void:
 	recipes.clear()
 	for row in CsvTable.load_rows("res://data/recipes.csv"):
 		recipes[row.id] = row
+	tavern_menu = CsvTable.load_rows("res://data/tavern_menu.csv")
 	jobs.clear()
 	for row in CsvTable.load_rows("res://data/jobs.csv"):
 		jobs[row.id] = row
