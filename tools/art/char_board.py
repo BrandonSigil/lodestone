@@ -43,6 +43,8 @@ def trim_alpha(im):
 
 def main():
     import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "ne-flow":
+        return main_ne_flow(sys.argv[2] if len(sys.argv) > 2 else "art/templates/characters/char_board_ne_flow.png")
     if len(sys.argv) > 2 and sys.argv[1] == "ne":
         return main_ne(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "art/templates/characters/char_board_ne.png")
     board = Image.new("RGB", (W, H), CREAM)
@@ -106,6 +108,48 @@ def main_ne(se_sheet, out):
     panel(1, 0, "CHARACTER (FACING SE)", se_sheet)
     panel(0, 1, "FACING NE", "art/templates/characters/facing_ne.png")
     panel(1, 1, "STYLE", "docs/art/characters/00-reference-sheet.png")
+    board.save(out)
+    print(out)
+
+
+def main_ne_flow(out):
+    """The NE board for Brandon's chained Picsart flow (the SE sheet comes in on its own): LAYOUT, FACING NE, and
+    ATTACK NE, the back-view pose with drawn arrows for the weapon's path, so the swing goes up and away, not toward the
+    camera ([USER] 2026-11-01: "he's still attacking in the SE direction").
+        ~/.lodestone/venv/bin/python tools/art/char_board.py ne-flow [out png]"""
+    board = Image.new("RGB", (W, H), CREAM)
+    d = ImageDraw.Draw(board)
+    area_h = PH - LAB
+
+    def frame(x, y, w, h, label):
+        d.rectangle([x, y, x + w, y + h], outline=INK, width=3)
+        d.text((x + 14, y + 4), label, fill=INK, font=font(34))
+        return x, y + LAB, w, h - LAB
+
+    x, y, w, h = frame(20, 20, PW, PH, "LAYOUT")
+    im = fit(Image.open("art/templates/characters/sprite_grid.png").convert("RGB"), w - 20, h - 10)
+    board.paste(im, (x + (w - im.width) // 2, y + (h - im.height) // 2))
+    x, y, w, h = frame(20 + PW + 16, 20, PW, PH, "FACING NE")
+    im = fit(Image.open("art/templates/characters/facing_ne.png").convert("RGB"), w - 20, h - 10)
+    board.paste(im, (x + (w - im.width) // 2, y + (h - im.height) // 2))
+    # ATTACK NE: the back-view pose with one straight arrow from the weapon arm toward the top right: the strike goes up
+    # and away from the camera. A diagram, not art; the hero's own NE attack shows his face, so it can't serve.
+    x, y, w, h = frame(20, 20 + PH + 20, W - 40, PH, "ATTACK NE: THE STRIKE GOES UP AND RIGHT, AWAY FROM US")
+    pose = Image.open("art/templates/characters/facing_ne.png").convert("RGB")
+    box = pose.getbbox()
+    pose = pose.crop((max(0, box[0] - 30), max(0, box[1] - 30), min(pose.width, box[2] + 30), min(pose.height, box[3] + 30)))
+    pose = fit(pose, w // 3, h - 50)
+    px, py = x + w // 2 - pose.width // 2 - 140, y + (h - pose.height) // 2
+    board.paste(pose, (px, py))
+    import math
+    sx, sy = px + pose.width * 0.78, py + pose.height * 0.42  # the right shoulder, seen from behind
+    ex, ey = sx + 250, sy - 150  # toward the top right corner
+    red = (196, 70, 40)
+    d.line([(sx, sy), (ex, ey)], fill=red, width=12)
+    ang = math.atan2(ey - sy, ex - sx)
+    for s2 in (-0.45, 0.45):
+        d.line([(ex, ey), (ex - 46 * math.cos(ang + s2), ey - 46 * math.sin(ang + s2))], fill=red, width=12)
+    d.text((ex + 24, ey - 10), "STRIKE", fill=red, font=font(34))
     board.save(out)
     print(out)
 
