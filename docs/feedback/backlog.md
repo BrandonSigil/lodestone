@@ -12,9 +12,9 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | # | Problem (his words) | Owner | Status |
 | --- | --- | --- | --- |
 | F1 | "I dont see a way to "aid" my teammate. If youre next to a downed friend you should see an aid button on your actions bar" | Studio PM thread | done (#90) |
-| F2 | "Doesnt seem like Bark works. Just used it right next to the elite wolf and nothing happens." | Fix Bark feedback and Amber's starting kit | done (this PR) |
-| F3 | "amber has all spells right away? She should start with 1 ranged attack thats just her doing a regular fire attack" | Fix Bark feedback and Amber's starting kit | done (this PR) |
-| F4 | "Fire Zap should just be Ambers main attack, and a passive "A Heart that Burns" should allow your regular attacks to have a chance to burn the target causing X damage over Y turns" (chance, damage, turns open) | Fix Bark feedback and Amber's starting kit | done (this PR) |
+| F2 | "Doesnt seem like Bark works. Just used it right next to the elite wolf and nothing happens." | Fix Bark feedback and Amber's starting kit | done (#98) |
+| F3 | "amber has all spells right away? She should start with 1 ranged attack thats just her doing a regular fire attack" | Fix Bark feedback and Amber's starting kit | done (#98) |
+| F4 | "Fire Zap should just be Ambers main attack, and a passive "A Heart that Burns" should allow your regular attacks to have a chance to burn the target causing X damage over Y turns" (chance, damage, turns open) | Fix Bark feedback and Amber's starting kit | done (#98) |
 | F5 | "Good shot is lame ... It should just be a passive that makes your regular attacks better and say that. Maybe add a "if its the killing blow, you get to attack again"" | open (not taken by the Bark/Amber thread) | call recorded (#94), build open |
 | F6 | "It's hard to click the tile directly above your character, right now I cant get dogo to just move directly up one tile" | Studio PM thread | done (#93) |
 
@@ -23,7 +23,7 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | --- | --- | --- | --- |
 | L1 | "Saw this, but theres no skills. then when I said decide later and actual menu came up" (empty skill pick) | Polish UI windows and victory screen | in progress |
 | L2 | "Dog level 2 window isnt needed. Make that the heading of the skill pick menu "Level up!" then the number they just reached, then a summary of the cool things they gained +3 HP, then the ability upgrade selector" | Polish UI windows and victory screen | in progress (call recorded #94) |
-| L3 | "The Good Boy passive should show here where he buffs a person next to him. I want to upgrade that passive" (passives upgradable at level up) | Fix Bark feedback and Amber's starting kit | done (this PR) |
+| L3 | "The Good Boy passive should show here where he buffs a person next to him. I want to upgrade that passive" (passives upgradable at level up) | Fix Bark feedback and Amber's starting kit | done (#98) |
 
 ### Windows and UI
 | # | Problem (his words) | Owner | Status |
