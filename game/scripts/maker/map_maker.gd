@@ -69,7 +69,11 @@ const PHASES := [["shape", "1  Shape", "The map itself: size, name, environment,
 		["play", "3  Play", "Where players go: spawns, enemy groups, goals, doors, chests, events and triggers"]]
 const TOOL_PHASE := {"select": ["decor", "play"], "stamp": ["decor", "play"], "erase": ["decor", "play"], "party": ["play"], "enemy": ["play"]}
 const PLAY_DRAWERS := ["Interactables", "Markers"]  ## the catalog drawers that are Play-phase things; the rest is Decor
-const PHASE_PAGES := {"shape": ["map"], "decor": ["assets", "inspect"], "play": ["assets", "inspect"]}
+const PHASE_PAGES := {"shape": ["map", "qa"], "decor": ["assets", "inspect", "qa"], "play": ["assets", "inspect", "qa"]}
+## The QA panel ([USER] 2026-11-01, card master-first-tool): the colour each check paints its problem cells in.
+const QA_COLORS := {"reach": Color(1.0, 0.34, 0.34), "box": Color(1.0, 0.62, 0.2), "stairs": Color(0.78, 0.45, 1.0),
+	"scale": Color(1.0, 0.88, 0.3), "deploy": Color(0.35, 0.78, 1.0)}
+const QA_LIVE_DELAY := 0.35  ## seconds after an edit before a live QA panel checks again
 const THING_COLOR := Color(0.98, 0.84, 0.48)
 const START_COLOR := Color(0.45, 0.72, 1.0)
 const FOE_COLOR := Color(1.0, 0.48, 0.42)
@@ -183,6 +187,16 @@ var _skirt_spin: SpinBox
 var _strange_spin: SpinBox
 var _seed_spin: SpinBox
 var _recipe_pick: OptionButton
+# QA panel
+var qa: Array[Dictionary] = []  ## the last QA run (MapQA.run); empty until the QA button is pressed on this map
+var qa_live := true  ## check again after every edit while the panel has run
+var qa_paint := true
+var qa_hidden := {}  ## check ids whose cells aren't painted
+var _qa_box: VBoxContainer
+var _qa_head: Label
+var _qa_stale := false
+var _qa_wait := 0.0
+var _qa_version := -1
 
 
 func _ready() -> void:
@@ -234,6 +248,10 @@ func _open(d: MapDoc) -> void:
 	board.strangeness = doc.strangeness
 	board.rot = doc.view
 	Game.maker_map = doc.key()
+	qa = []
+	_qa_version = -1
+	if _qa_box != null:
+		_fill_qa()
 	_sync_ui()
 	_build_catalog()
 	_refresh_marks()
@@ -251,6 +269,7 @@ func _push_undo() -> void:
 		_undo.pop_front()
 	_redo.clear()
 	_dirty = true
+	_qa_edited()
 
 
 func _restore(s: Dictionary) -> void:
@@ -262,6 +281,7 @@ func _restore(s: Dictionary) -> void:
 	board.grid = doc.grid
 	board.art_set = doc.art_set
 	board.strangeness = doc.strangeness
+	_qa_edited()
 	if not _sel_valid():
 		selection = {}
 	_sync_ui()
@@ -526,6 +546,15 @@ func _process(delta: float) -> void:
 			flat.fit()
 	_hover()
 	_title.text = "%s%s" % [doc.key(), "  *" if _dirty else ""]
+	if not qa.is_empty() and qa_live:
+		if doc.grid.version != _qa_version:
+			_qa_stale = true
+			_qa_version = doc.grid.version
+			_qa_wait = QA_LIVE_DELAY
+		if _qa_stale and _stroke.is_empty() and _move.is_empty():
+			_qa_wait -= delta
+			if _qa_wait <= 0.0:
+				run_qa(false)
 
 
 ## Let go of keyboard focus, so painting and the shortcuts work again ([USER] 2026-10-30: the level box "doesnt really let
@@ -1845,6 +1874,8 @@ func _build_top() -> void:
 		_root.visible = false
 		_fit_view())
 	bar.add_child(MakerUI.spacer(8))
+	var qb2 := _icon(bar, "qa", "QA: check this map before anyone looks at it (reachability, box score, stairs to nowhere, scale against the hero, deploy room) and paint the problems on it", func() -> void: run_qa(true), 34.0, "QA")
+	qb2.add_theme_color_override("font_color", MakerUI.ACCENT)
 	var play := _icon(bar, "play", "Save and play this map", play_test, 34.0, "Play test")
 	play.add_theme_color_override("font_color", MakerUI.ACCENT)
 	_back_btn = Button.new()
@@ -2223,7 +2254,7 @@ func _build_dock() -> void:
 	var tabs := HBoxContainer.new()
 	tabs.add_theme_constant_override("separation", 4)
 	col.add_child(tabs)
-	for t in [["assets", "assets", "Assets"], ["inspect", "inspect", "Inspector"], ["map", "map", "Map"]]:
+	for t in [["assets", "assets", "Assets"], ["inspect", "inspect", "Inspector"], ["map", "map", "Map"], ["qa", "qa", "QA"]]:
 		var b := MakerUI.IconButton.new(t[1], "", 32.0, t[2])
 		b.toggle_mode = true
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2242,6 +2273,8 @@ func _build_dock() -> void:
 	_build_assets_page(_pages.assets.get_child(0))
 	_insp_box = _pages.inspect.get_child(0)
 	_build_map_page(_pages.map.get_child(0))
+	_qa_box = _pages.qa.get_child(0)
+	_fill_qa()
 
 
 func _show_page(id: String) -> void:
@@ -2954,3 +2987,145 @@ func _spin_row(parent: Control, text: String, lo: float, hi: float, step: float,
 	s.value_changed.connect(cb)
 	parent.add_child(row)
 	return s
+
+
+# --- QA panel ----------------------------------------------------------------------------
+# [USER] 2026-11-01 (card master-first-tool): "one button that checks reachability, the box score, stairs to nowhere,
+# scale against the hero and deploy room, and paints the problems on the map". The rules are MapQA's; this shows them.
+
+## Run every check on the map as it stands, list them on the QA tab and paint their problem cells.
+func run_qa(show := true) -> void:
+	qa = MapQA.run(doc.grid, doc.kind, doc.data)
+	_qa_stale = false
+	_qa_version = doc.grid.version
+	_fill_qa()
+	if show:
+		_show_page("qa")
+		var w := MapQA.worst(qa)
+		var fails := qa.filter(func(c: Dictionary) -> bool: return c.level != "ok").size()
+		_say("QA: all %d checks pass" % qa.size() if w == "ok" else "QA: %d of %d checks need work, painted on the map" % [fails, qa.size()])
+
+
+## Something changed: a live QA panel checks again a moment after the edit (and its stroke) is done.
+func _qa_edited() -> void:
+	if not qa.is_empty():
+		_qa_stale = true
+		_qa_wait = QA_LIVE_DELAY
+
+
+func clear_qa() -> void:
+	qa = []
+	_fill_qa()
+
+
+## The cells to paint: [{"cell", "color"}] for every shown check.
+func qa_cells() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if not qa_paint:
+		return out
+	for c: Dictionary in qa:
+		if qa_hidden.has(c.id) or c.level == "ok":
+			continue
+		for cell: Vector2i in c.cells:
+			out.append({"cell": cell, "color": QA_COLORS.get(c.id, MakerUI.BAD)})
+	return out
+
+
+func _fill_qa() -> void:
+	overlay.qa = qa_cells()
+	if _qa_box == null:
+		return
+	for n in _qa_box.get_children():
+		n.queue_free()
+	var head := HBoxContainer.new()
+	_qa_box.add_child(head)
+	_qa_head = MakerUI.label("Map QA", 15, MakerUI.ACCENT, true)
+	_qa_head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(_qa_head)
+	var again := _text_button(head, "Check" if qa.is_empty() else "Check again", func() -> void: run_qa(true))
+	again.size_flags_horizontal = Control.SIZE_SHRINK_END
+	if qa.is_empty():
+		var l := MakerUI.label("Press Check (or QA in the top bar) to test this map before anyone looks at it: every cell reachable, the box score, stairs to nowhere, props against the hero, room to deploy at every fight. Problems are painted on the map.", 12, MakerUI.DIM)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_qa_box.add_child(l)
+		return
+	var opts := HBoxContainer.new()
+	_qa_box.add_child(opts)
+	var live := CheckBox.new()
+	live.text = "Live"
+	live.tooltip_text = "Check again after every edit"
+	live.button_pressed = qa_live
+	live.focus_mode = Control.FOCUS_NONE
+	live.toggled.connect(func(on: bool) -> void: qa_live = on)
+	opts.add_child(live)
+	var paint := CheckBox.new()
+	paint.text = "Paint problems"
+	paint.button_pressed = qa_paint
+	paint.focus_mode = Control.FOCUS_NONE
+	paint.toggled.connect(func(on: bool) -> void:
+		qa_paint = on
+		overlay.qa = qa_cells())
+	opts.add_child(paint)
+	var w := MapQA.worst(qa)
+	var passed := qa.filter(func(c: Dictionary) -> bool: return c.level == "ok").size()
+	var verdict := MakerUI.label("Ready for a look: all %d checks pass" % qa.size() if w == "ok" else "%d of %d checks pass" % [passed, qa.size()],
+		13, MakerUI.GOOD if w == "ok" else MakerUI.BAD)
+	_qa_box.add_child(verdict)
+	for c: Dictionary in qa:
+		_qa_card(c)
+
+
+func _qa_card(c: Dictionary) -> void:
+	var card := PanelContainer.new()
+	var col: Color = QA_COLORS.get(c.id, MakerUI.BAD)
+	card.add_theme_stylebox_override("panel", MakerUI.box(MakerUI.RAISED, 8, 8.0, Color(col, 0.0) if c.level == "ok" else Color(col, 0.8)))
+	_qa_box.add_child(card)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 3)
+	card.add_child(v)
+	var row := HBoxContainer.new()
+	v.add_child(row)
+	var mark := MakerUI.label({"ok": "PASS", "warn": "LOOK", "fail": "FAIL"}[c.level], 11, MakerUI.GOOD if c.level == "ok" else col, true)
+	mark.custom_minimum_size.x = 44
+	row.add_child(mark)
+	var name := MakerUI.label(String(c.name), 13, MakerUI.INK)
+	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(name)
+	if c.level != "ok" and not (c.cells as Array).is_empty():
+		var show := CheckBox.new()
+		show.tooltip_text = "Paint this check's cells"
+		show.button_pressed = not qa_hidden.has(c.id)
+		show.focus_mode = Control.FOCUS_NONE
+		show.add_theme_color_override("font_color", col)
+		var id: String = c.id
+		show.toggled.connect(func(on: bool) -> void:
+			if on:
+				qa_hidden.erase(id)
+			else:
+				qa_hidden[id] = true
+			overlay.qa = qa_cells())
+		row.add_child(show)
+	var sum := MakerUI.label(String(c.summary), 12, MakerUI.DIM)
+	sum.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(sum)
+	for p: Dictionary in c.problems:
+		var b := Button.new()
+		b.text = "%d,%d  %s" % [p.cell.x, p.cell.y, p.text]
+		b.tooltip_text = "Fly to it"
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		b.focus_mode = Control.FOCUS_NONE
+		b.add_theme_font_size_override("font_size", 11)
+		var cell: Vector2i = p.cell
+		b.pressed.connect(func() -> void: qa_fly(cell))
+		v.add_child(b)
+
+
+## Centre the view on a problem and ring it for a moment.
+func qa_fly(c: Vector2i) -> void:
+	overlay.qa_focus = c
+	overlay.qa_focus_t = 2.0
+	if flat.visible:
+		flat.center_on(c)
+	else:
+		_look_at(c)

@@ -86,3 +86,9 @@ func run(m: Node, script: String) -> void:
 				m.set("paint_t", int(a[1]))
 			"view":  # flip a top-bar view toggle: soft, grid, heights, labels
 				m.call("_toggle_view", a[1])
+			"qa":  # qa: press the QA button (run every check, open the QA tab, paint the problems)
+				m.call("run_qa", true)
+			"qafly":  # qafly:<check index>:<problem index>: click a QA problem row (fly to it)
+				var res: Array = m.get("qa")
+				var pr: Array = res[int(a[1])].problems
+				m.call("qa_fly", pr[int(a[2])].cell)

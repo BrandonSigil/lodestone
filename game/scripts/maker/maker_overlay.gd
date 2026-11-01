@@ -18,11 +18,16 @@ var marks: Array[Dictionary] = []
 var ghost := {}
 var hover_cells: Array[Vector2i] = []  ## what the select tool would pick
 var selected_cells: Array[Vector2i] = []
+## The QA panel's problem cells: [{"cell": Vector2i, "color": Color}] (map_maker.qa_cells), and the one flown to.
+var qa: Array[Dictionary] = []
+var qa_focus := Vector2i(-999, -999)
+var qa_focus_t := 0.0
 var _t := 0.0
 
 
 func _process(delta: float) -> void:
 	_t += delta
+	qa_focus_t = maxf(0.0, qa_focus_t - delta)
 	queue_redraw()
 
 
@@ -49,6 +54,17 @@ func _draw() -> void:
 			var top := _foot_center(b, a, p.foot) + Vector2(0, -float(p.tall) * 2.0 * CombatBoard.HS - 10.0)
 			var text := String(p.get("name", "")) if p.get("blob", false) else String(p.id)
 			_tag(font, top, text, CombatBoard.blob_color(text) if p.get("blob", false) else MakerUI.INK)
+	var qpulse := 0.75 + 0.25 * sin(_t * 3.0)
+	for q in qa:
+		var qc: Vector2i = q.cell
+		if g.in_bounds(qc) and not b.hidden(qc):
+			_fill(b, qc, Color(q.color, 0.42 * qpulse))
+			_outline(b, qc, Color(q.color, 0.95), 1.5)
+	if qa_focus_t > 0.0 and g.in_bounds(qa_focus):
+		var fp := b.cell_top(qa_focus)
+		var rr := 18.0 + 40.0 * fposmod(_t, 0.8) / 0.8
+		draw_arc(fp, rr, 0, TAU, 40, Color(1, 1, 1, minf(1.0, qa_focus_t)), 3.0, true)
+		_outline(b, qa_focus, Color.WHITE, 3.0)
 	if maker != null:
 		for c: Vector2i in maker.region:
 			_fill(b, c, Color(0.3, 0.8, 1.0, 0.28))
