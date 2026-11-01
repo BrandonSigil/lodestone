@@ -1,0 +1,35 @@
+World map for the game: the look of Brandon's favourite map, with every region filling one uniform hexagon so the game can highlight tiles and hide the unseen ones (Brandon, 2026-11-01: "help me get that image on the right to work in game basically, which I take to mean that these tiles need to be uniform so we can actually map them/highlight them and and hide the ones we havent seen yet")
+Attach ONE picture: art/templates/world/world_board_game.png (tools/art/world_board.py game). Two labelled panels:
+  STYLE = Brandon's favourite map; HEX LAYOUT = the twelve uniform hexagons seen from straight above.
+Settings: GPT image, 2K, 3:2, High, 4 tries.
+
+----- PROMPT -----
+
+The attached picture is a reference board with two labelled panels (STYLE, HEX LAYOUT). It is only a reference: make ONE single map picture that fills the whole frame, with no panels, labels or board layout.
+
+Paint a world map in exactly the look of the STYLE panel: an illustrated fantasy map on warm tan parchment, a blue sea with drawn wave lines, inked coastlines with rocky cliffs, small islands, chunky trees and peaks, warm soft colours, a slightly worn paper edge.
+
+THE STRUCTURE IS THE HEX LAYOUT PANEL. The land is twelve equal hexagon regions arranged exactly as in the HEX LAYOUT panel: the same twelve hexagons, all the same size, in the same places, filling the same part of the frame (centred, about two thirds of the picture's height). The map is seen from straight above, like the panel.
+- Each region is painted entirely inside its own hexagon, with its main features in the middle of the cell. Nothing crosses into a neighbouring hexagon except the roads and the river where cells share an edge.
+- Neighbouring regions touch, with no gaps or channels between them. A thin, faint inked hexagon line runs along every border between regions, like a grid on a board game map.
+- The outer coast follows the outer edges of the hexagons, loosely and naturally, with cliffs and surf.
+
+THE TWELVE REGIONS, by position in the HEX LAYOUT (left column, then the next columns to the right):
+- Left column, top: a frozen dam: ice cliffs, a frozen lake and a stone gate set in the ice.
+- Left column, middle: a coastal beach: pale sand, one palm, a shipwreck on the shore.
+- Left column, bottom: forest roads: mixed woods with a few dirt roads through them.
+- Second column, top: snowy plains: snow, scattered pines, one standing stone.
+- Second column, second: dwarven mines: grey peaks with a timber mine entrance and a cart track.
+- Second column, third: a mountain pass in the highlands: green hills climbing to rocky peaks, a ruined stone arch.
+- Second column, bottom: home: a small village of a few cottages with a little dock at the coast.
+- Third column, top: enchanted woods: deep pines around a glowing stone archway.
+- Third column, middle: grassland with patches of melting snow and a few pines.
+- Third column, bottom: farmland: golden field strips, a windmill and a red barn.
+- Right column, top: more enchanted woods, denser, with a few pink blossom trees.
+- Right column, bottom: the capital city: a walled town with tall towers and blue roofs, and a small harbour.
+
+ROADS AND RIVER: thin dirt roads link the regions and lead from home to the gate in the wall. A river runs from the mountain pass down past the farmland to the sea.
+
+BEYOND THE MAP: a long stone wall with square towers and a gate with blue banners runs across the top, behind the back row of hexagons. Beyond the wall the parchment fades into drawn clouds and faint inked peaks, unknown land.
+
+Avoid: text, letters, numbers, labels, names, a compass rose, map borders or frames, hexagons of different sizes, regions spilling into each other, gaps or channels between regions, thick or bold grid lines, isometric or perspective view, glossy surfaces, photorealism, pixel art, tiny detail that can't be read when small.

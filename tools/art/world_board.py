@@ -2,6 +2,7 @@
 """One labelled reference board for the hex world map prompt: CONTENT, HEX STRUCTURE, STYLE on one picture.
 
     ~/.lodestone/venv/bin/python tools/art/world_board.py        # writes art/templates/world/world_board.png
+    ~/.lodestone/venv/bin/python tools/art/world_board.py game   # in-game map art: STYLE (his liked map) + HEX LAYOUT
     ~/.lodestone/venv/bin/python tools/art/world_board.py flat   # the scroll map board: HEX LAYOUT is the flat guide (hex_flat_guide.py)
 
 1536 x 1024 (3:2), cream paper, built only from pictures we already have, nothing painted:
@@ -37,6 +38,13 @@ def font(n):
 
 if FLAT:
     PANELS[1] = ("HEX LAYOUT", "art/templates/world/hex_flat_guide.png", PANELS[1][2])
+GAME = len(sys.argv) > 1 and sys.argv[1] == "game"  # the in-game map art (2026-11-01): his liked map's look on the uniform grid
+if GAME:
+    OUT = "art/templates/world/world_board_game.png"
+    PANELS = [
+        ("STYLE", "art/templates/world/world_style_scroll.png", (M, M, 900, H - 2 * M)),
+        ("HEX LAYOUT", "art/templates/world/hex_flat_guide.png", (900 + 2 * M, M, W - 900 - 3 * M, H - 2 * M)),
+    ]
 
 
 def main():
