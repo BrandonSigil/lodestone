@@ -417,6 +417,38 @@ func run(s: Node, f: int, step: String) -> bool:
 				s.call("_rebuild_party")
 				s.call("_level_up_flow", 0 if step == "levelup" else 1)
 			return f == 40
+		"win", "win_lv", "win_mid":
+			# the victory screen: a crypt fight won at once (win_lv: the hero and the dog a step from a level; win_mid:
+			# the bars still filling)
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false  # a shot never writes the real save
+				game.take_weapon("sword")
+				game.meta.flags.append("met_dog")
+				game.refresh_party()
+				if step == "win_lv":
+					for id in ["lead", "dog"]:
+						var ls: Dictionary = game.level_state(id)
+						ls.xp = 80
+						ls.level = 2 if id == "lead" else 1  # the hero to an odd level (stats roll), the dog to an even (a pick)
+						game.meta.levels[id] = ls
+				s.call("_rebuild_party")
+				s.grid.set_terrain(Vector2i(26, 18), CombatGrid.T.ROAD)
+				_thing(s, "gate").done = true
+				_put(s, Vector2i(25, 13))
+				s.start_fight(s.groups[0], "party")
+			if f == 15:
+				s._begin_battle()
+			if f == 25:
+				var b: Battle = s.battle
+				b.rounds_done = 3
+				for u: CombatUnit in b.units:
+					if u.team == 1:
+						u.hp = 0
+					elif u.hp > 3:
+						u.hp -= 3  # a scratch or two to show on the HP bars
+				b._check_end()
+			return f == (40 if step == "win_mid" else 160)
 		"deploy", "fight":
 			if f == 5:
 				s.grid.set_terrain(Vector2i(26, 18), CombatGrid.T.ROAD)

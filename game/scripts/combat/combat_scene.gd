@@ -93,7 +93,9 @@ func _on_finished(won: bool) -> void:
 			u.member.hp = u.hp
 			Game.store_res(u)
 	Game.fight_done()  # one fight less on a camp meal's buff
-	var heart_lines := Game.fight_morale(battle.units, ("escaped" if battle.outcome.how == "exit" else "won") if won else "lost", false)
+	var mine := battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 0 and not u.member.is_empty())
+	var before := VictoryUi.snapshot(mine.map(func(u: CombatUnit) -> String: return String(u.figure)))  # the bars fill from here
+	Game.fight_morale(battle.units, ("escaped" if battle.outcome.how == "exit" else "won") if won else "lost", false)
 	var loot_items := ""
 	var coins := 0
 	if won:  # coins and unlocks at once; food, medicine and things into the shared loot grid
@@ -105,30 +107,36 @@ func _on_finished(won: bool) -> void:
 			if part.begins_with("gold:"):
 				coins += int(part.split(":")[1])
 	_refresh_hud()
-	var panel := PanelContainer.new()
-	var box := VBoxContainer.new()
-	panel.add_child(box)
-	var l := Label.new()
-	l.text = Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT")
-	l.add_theme_font_size_override("font_size", 28)
-	box.add_child(l)
-	if won and Game.run.adventure:
-		var foes := battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 1).size()
-		var xp := LevelRules.fight_xp(foes, false, Db.levels)
-		var lines := Game.award_xp(xp)
-		lines.insert(0, Txt.f("UI_XP_GAIN", xp))
-		lines.append_array(battle.award_bonds())
-		lines.append_array(heart_lines)
-		var x := Label.new()
-		x.text = "\n".join(lines)
-		box.add_child(x)
-	var b := Button.new()
-	b.text = Txt.t("UI_CONTINUE")
-	b.pressed.connect(func() -> void:
-		panel.queue_free()
-		_loot_panel(loot_items, coins, won))
-	box.add_child(b)
-	_place_panel(panel)
+	var go_on := func() -> void: _loot_panel(loot_items, coins, won)
+	if not won or not Game.run.adventure:
+		var panel := PanelContainer.new()
+		panel.theme_type_variation = &"DialogPanel"
+		var box := VBoxContainer.new()
+		panel.add_child(box)
+		var l := Label.new()
+		l.text = Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT")
+		l.add_theme_font_size_override("font_size", 28)
+		box.add_child(l)
+		var b := Button.new()
+		b.text = Txt.t("UI_CONTINUE")
+		b.pressed.connect(func() -> void:
+			panel.queue_free()
+			go_on.call())
+		box.add_child(b)
+		_place_panel(panel)
+		return
+	var downed := battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 1 and not u.alive()).size()
+	var foes := battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 1).size()
+	var xp := LevelRules.fight_xp(foes, false, Db.levels)
+	Game.award_xp(xp)
+	battle.award_bonds()
+	var rep := VictoryUi.report(before, mine, {"title": "UI_ESCAPED" if battle.outcome.how == "exit" else "UI_VICTORY",
+		"xp": xp, "downed": downed, "coins": coins, "loot": loot_items, "bonds": battle.bond_ups})
+	hud.root.add_child(VictoryUi.make(rep, [[Txt.t("UI_CONTINUE"), func() -> void:
+		for n in hud.root.get_children():
+			if n is VictoryUi:
+				n.queue_free()
+		go_on.call()]]))
 
 
 ## The loot as one shared grid, then the level-ups. What does not fit goes to the FOUND box, and past that is lost
