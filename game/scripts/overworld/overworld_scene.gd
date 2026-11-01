@@ -646,10 +646,11 @@ func _draw_painted(k: float) -> void:
 		var ring := _screen_ring(TravelRules.tile_top(_node(id), 5.0))
 		draw_colored_polygon(ring, Color(1.0, 0.93, 0.6, 0.10 + 0.08 * glow))
 		draw_polyline(_closed(ring), Color(1.0, 0.9, 0.55, 0.55 + 0.3 * glow), 3.0, true)
-	if at != "":  # where the party stands: a soft light over the tile and a thin border ([USER] 2026-11-01: subtle)
+	if at != "":  # where the party stands: a soft green light over the tile and a thin border ([USER] 2026-11-01: subtle;
+		# "give it a little green highlight rather than another tan on the active zone")
 		var ring := _screen_ring(TravelRules.tile_top(_node(at), 4.0))
-		draw_colored_polygon(ring, Color(1.0, 0.98, 0.9, 0.16))
-		draw_polyline(_closed(ring), Color(1.0, 0.98, 0.9, 0.7), 2.0, true)
+		draw_colored_polygon(ring, Color(0.55, 0.85, 0.45, 0.22))
+		draw_polyline(_closed(ring), Color(0.62, 0.9, 0.5, 0.8), 2.0, true)
 	if _hover != "" and _hover != at and TravelRules.seen(_hover, flags):
 		draw_polyline(_closed(_screen_ring(TravelRules.tile_top(_node(_hover), 5.0))), Color(1, 1, 1, 0.85), 2.5, true)
 	if walking():
