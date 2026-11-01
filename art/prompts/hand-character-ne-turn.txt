@@ -1,0 +1,15 @@
+Character NE turn: one picture, one prompt (Brandon, 2026-11-01: "append all references images into one image with labels. That way I just send 1 image and 1 prompt")
+Attach ONE picture: the character's NE board, made by
+  ~/.lodestone/venv/bin/python tools/art/char_board.py ne <the character's approved SE sheet> <out png>
+  (the blueberry bush's is art/templates/characters/char_board_ne_bush.png). Four labelled panels: LAYOUT, CHARACTER (FACING SE), FACING NE, STYLE.
+Settings: GPT image, 2K, 3:2, High, 2 tries.
+
+----- PROMPT -----
+
+The attached picture is a reference board with four labelled panels (LAYOUT, CHARACTER (FACING SE), FACING NE, STYLE). Never draw the board, its panels, its labels or its frames.
+
+Draw ONE new sprite sheet that fills the whole picture, in exactly the layout of the LAYOUT panel: a flat magenta background, the same rows and frames (IDLE 4 + BLINK 1, WALK 6, ATTACK 6, CAST 6 with one small round soft spark on the fourth frame, HURT 2 + DOWN 2), each frame centred in its cell with the feet on the cell's diamond, nothing in the crossed-out cells, and no grid lines, diamonds, numbers, words or labels.
+
+Every frame shows the SAME character as the CHARACTER (FACING SE) panel, with the same design, colours, size and drawing style, but turned to face the upper right like the FACING NE panel: a three-quarter back view, so we see the back and one shoulder, and the face is turned away. Keep the drawing style of the STYLE panel: soft flat colours, a warm dark outline, chunky simple shapes.
+
+For the blueberry bush: from behind he reads as a round leafy bush with blueberries and his little trunk legs below; his eyes and leaf mustache are hidden by the turn.

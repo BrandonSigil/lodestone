@@ -42,6 +42,9 @@ def trim_alpha(im):
 
 
 def main():
+    import sys
+    if len(sys.argv) > 2 and sys.argv[1] == "ne":
+        return main_ne(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "art/templates/characters/char_board_ne.png")
     board = Image.new("RGB", (W, H), CREAM)
     d = ImageDraw.Draw(board)
     area_h = PH - LAB
@@ -80,6 +83,29 @@ def main():
     d.text((x + PW // 4 - 40, ground + 10), "HERO", fill=INK, font=font(28))
     d.text((x + 3 * PW // 4 - 80, ground + 10), f"{pct} PER CENT", fill=INK, font=font(28))
     out = Path("art/templates/characters/char_board.png")
+    board.save(out)
+    print(out)
+
+
+def main_ne(se_sheet, out):
+    """The NE turn as one picture ([USER] 2026-11-01: one image and one prompt): LAYOUT, STYLE, FACING NE, and the
+    character's own approved SE sheet as CHARACTER.
+        ~/.lodestone/venv/bin/python tools/art/char_board.py ne <se sheet png> [out png]"""
+    board = Image.new("RGB", (W, H), CREAM)
+    d = ImageDraw.Draw(board)
+    area_h = PH - LAB
+
+    def panel(col, row, label, src):
+        x, y = 20 + col * (PW + 16), 20 + row * (PH + 20)
+        d.rectangle([x, y, x + PW, y + PH], outline=INK, width=3)
+        d.text((x + 14, y + 4), label, fill=INK, font=font(34))
+        im = fit(Image.open(src).convert("RGB"), PW - 20, area_h - 10)
+        board.paste(im, (x + (PW - im.width) // 2, y + LAB + (area_h - im.height) // 2))
+
+    panel(0, 0, "LAYOUT", "art/templates/characters/sprite_grid.png")
+    panel(1, 0, "CHARACTER (FACING SE)", se_sheet)
+    panel(0, 1, "FACING NE", "art/templates/characters/facing_ne.png")
+    panel(1, 1, "STYLE", "docs/art/characters/00-reference-sheet.png")
     board.save(out)
     print(out)
 
