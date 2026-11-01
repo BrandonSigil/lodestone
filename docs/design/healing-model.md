@@ -32,3 +32,9 @@ Falls cost morale and an unrevived fall costs more, so mend raising a downed fri
 
 ## For the systems developer
 Daily eating at camp is already being put back. The model above adds: camp and meal rules, eating meat on purpose, out-of-combat skills costing mana, the unfed-camp "journey over" result with -10 morale, and a cooked meal counting as the party's day. Heal values live in `items.csv` (`heal`) and `recipes.csv`.
+
+## Camp meal picker (Brandon, 2026-11-01)
+He picked model A and added: at camp each night the player picks what food each member eats, or uses a team Feast item for everyone if one is in the pack.
+- **The picker:** a camp screen lists each member with the food kinds in the pack. Pick one per member; their daily portions come from it. Any food heals its `heal` when eaten (meat 2 a portion; ration, sack, jerky 0), so picking meat for a hurt member is the healing choice, and the same pool pays the upkeep.
+- **Team meal:** a cooked meal item in the pack (stew, roast, Feast) feeds everyone at once, replaces the individual picks, heals each member its `heal`, gives its `morale` and its buff for the next fights. The Feast is the biggest.
+- **Default:** a button, "same as last night", fills the picks so a quiet camp takes one click. If the pack cannot cover everyone, the camp warns and the journey ends as above.
