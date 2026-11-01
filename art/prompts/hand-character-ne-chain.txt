@@ -1,0 +1,14 @@
+Character NE turn, chained in Picsart's flow (Brandon, 2026-11-01: "I use those first sections to get the SE model until I like it, then I chain the NE versions to it")
+The flow: Styling Guide text + Game Asset Concept board (char_board.png) -> Sprite Sheet Animation (the SE sheet). When the SE sheet is right, chain it into an Image node together with the NE board (LAYOUT + FACING NE), and paste this prompt into that Image node.
+Inputs to the NE node: the finished SE sprite sheet (from the step before) and the NE board (LAYOUT + FACING NE panels).
+Settings: GPT image, 2K, same shape as the SE sheet, High, 2 tries.
+
+----- PROMPT -----
+
+Two pictures come in. One is a finished character sprite sheet on magenta: that is THE CHARACTER. The other is a reference board with two labelled panels, LAYOUT and FACING NE: never draw the board, its panels, its labels or its frames.
+
+Draw ONE new sprite sheet that fills the whole picture, exactly like the character sprite sheet in every way: the same flat magenta background, the same grid of frames in the same places, the same rows and frame count, the same character at the same size, with the same colours, outline and drawing style, and the feet on the same spot in every frame. Nothing goes in the crossed-out cells, and there are no grid lines, diamonds, numbers, words or labels.
+
+The only change: in every frame the character is turned to face the upper right, like the FACING NE panel. It's a three-quarter back view, so we see the back and one shoulder, and the face is turned away. Each frame does the same action as the frame in the same place on the character sheet, seen from behind: idle breathing, the blink frame (the head turned a little, eyes not visible), the walk cycle, the attack swing, the cast with its one small round spark on the fourth frame, the hurt flinch, and lying down.
+
+Keep anything the character carries on the same side of the body it is on in the character sheet, seen from behind.
