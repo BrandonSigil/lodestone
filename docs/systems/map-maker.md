@@ -140,6 +140,11 @@ plain blocks, G grid, H hide panels, ctrl Z undo, ctrl shift Z redo (80 steps), 
 - Props save their extras only when set: `face`, `flip`, `id`, `blob`, `name`, `note`
   (`CombatGrid.PROP_EXTRA`). Things save `note` alongside the fields the explore scene reads.
 
+## QA
+**QA** in the top bar checks the map before anyone looks at it (reachability, box score, stairs to nowhere, scale
+against the hero, deploy room), lists the problems on the **QA** tab and paints them on the map; Live checks again after
+each edit. Details: `docs/systems/map-qa.md`.
+
 ## Play test
 Play test saves, then a battle map opens in the combat sandbox with the fight started, an explore map in the
 explore scene at its start. F8, or BACK TO MAKER in the fight's top bar, comes back. Moving pieces or

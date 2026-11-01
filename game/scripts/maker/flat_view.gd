@@ -44,6 +44,12 @@ func fit() -> void:
 	queue_redraw()
 
 
+## Pan so cell c sits in the middle of the view (the QA panel flying to a problem).
+func center_on(c: Vector2i) -> void:
+	origin = (size * 0.5 - (Vector2(c) + Vector2(0.5, 0.5)) * cs).floor()
+	queue_redraw()
+
+
 func cell_at(p: Vector2) -> Vector2i:
 	var q := (p - origin) / cs
 	return Vector2i(floori(q.x), floori(q.y))
@@ -223,6 +229,11 @@ func _draw_marks() -> void:
 							o.draw_rect(Rect2(origin + (Vector2(dc) + Vector2(0.25, 0.25) - Vector2(off) * 0.5) * cs, Vector2(cs, cs) * 0.5), Color(0, 0, 0, 0.75))
 		else:
 			o.draw_rect(Rect2(origin + (Vector2(a) + Vector2(0.35, 0.35)) * cs, Vector2(cs, cs) * 0.3), Color(0.25, 0.25, 0.28, 0.9))
+	for q in ov.qa:  # the QA panel's problem cells
+		o.draw_rect(_cell_rect(q.cell), Color(q.color, 0.5))
+		o.draw_rect(_cell_rect(q.cell), Color(q.color.darkened(0.3), 0.95), false, 1.5)
+	if ov.qa_focus_t > 0.0 and g.in_bounds(ov.qa_focus):
+		o.draw_rect(_cell_rect(ov.qa_focus).grow(cs * 0.6), Color(0.1, 0.1, 0.1, minf(1.0, ov.qa_focus_t)), false, 3.0)
 	for c: Vector2i in maker.region:  # the Area tool's selection
 		o.draw_rect(_cell_rect(c), Color(0.3, 0.8, 1.0, 0.3))
 		o.draw_rect(_cell_rect(c), Color(0.3, 0.8, 1.0, 0.9), false, 1.0)

@@ -303,6 +303,10 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 			for i in 3:
 				for j in 3:
 					_line([Vector2(0.14 + i * 0.25, 0.14 + j * 0.25), Vector2(0.14 + i * 0.25 + 0.2, 0.14 + j * 0.25), Vector2(0.14 + i * 0.25 + 0.2, 0.14 + j * 0.25 + 0.2), Vector2(0.14 + i * 0.25, 0.14 + j * 0.25 + 0.2)], true)
+		"qa":  # a check mark in a magnifier: the machine QA
+			_circle(0.42, 0.42, 0.3)
+			_line([Vector2(0.64, 0.64), Vector2(0.9, 0.9)])
+			_line([Vector2(0.28, 0.43), Vector2(0.39, 0.54), Vector2(0.57, 0.3)])
 		"note":
 			_line([Vector2(0.16, 0.12), Vector2(0.84, 0.12), Vector2(0.84, 0.66), Vector2(0.6, 0.9), Vector2(0.16, 0.9)], true)
 			for y in [0.32, 0.5]:

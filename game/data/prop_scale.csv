@@ -1,0 +1,8 @@
+sprite,door,headroom,aspect,note
+prop_windmill,0.18,1.0,0.785,door height as a share of the sprite's height; headroom: times the hero's height the door needs; aspect: picture width over height
+prop_boathouse,0.30,1.0,1.441,
+prop_crypt_gate,0.55,1.2,1.137,a gate wants room above the hero
+b_home_a,0.22,1.0,1.0,
+b_home_b,0.22,1.0,1.0,
+b_home_c,0.22,1.0,1.0,
+b_home_hero,0.22,1.0,1.0,
