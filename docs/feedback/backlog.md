@@ -47,9 +47,9 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | --- | --- | --- | --- |
 | M1 | "weird character clipping when walking around, the person who should be behind the player is in front" | Studio PM thread | done (#86) |
 | M2 | "turn off click to move during open world movement. Keep that just WASD" | Studio PM thread | done (#86) |
-| M3 | "This map is a MESS, holes everywhere, these stub walls are broken all over the place." (wolf den) | Fix broken walls and see-through walls | in progress |
-| M4 | "I think these are stairs but I cant see because theres a wall on the front" | Fix broken walls and see-through walls | in progress |
-| M5 | "cant place my character where I want to because the wall is visually infront of it" (deploy) | Fix broken walls and see-through walls | in progress |
+| M3 | "This map is a MESS, holes everywhere, these stub walls are broken all over the place." (wolf den) | Fix broken walls and see-through walls | done (#99) |
+| M4 | "I think these are stairs but I cant see because theres a wall on the front" | Fix broken walls and see-through walls | done (#99) |
+| M5 | "cant place my character where I want to because the wall is visually infront of it" (deploy) | Fix broken walls and see-through walls | done (#99) |
 
 ### Map maker
 | # | Problem (his words) | Owner | Status |
