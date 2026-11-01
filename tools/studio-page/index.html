@@ -1306,11 +1306,11 @@ function toggleChat(open) {
 function wakePm(text, pics) {
   wake("Studio chat from Brandon: " + (text || "(a picture)") + (pics ? ` [+${pics} picture${pics > 1 ? "s" : ""} in the chat]` : ""), true);
 }
-// Card answers and notes wait in the "Send to the team" bar and go in one send, on every device: each send
-// wakes the team, so one send per sitting saves usage ([USER] 2026-11-01 "Make all cuts"), and on a phone the
-// Claude app leaves this page on every send. A chat message takes any waiting ones along. The answers themselves
-// are saved the moment he sends them; only the wake-up waits.
-const holdWakes = () => true;
+// On a phone the Claude app leaves this page every time something is sent to Claude, so there card answers and
+// notes wait in the "Send to the team" bar and go in one send; a chat message takes any waiting ones along. On a
+// computer they go at once ([USER] 2026-11-01: "I dont think We need the "send to: message anymore for desk items,
+// that was just a phone app problem"). The answers themselves are saved the moment he sends them.
+const holdWakes = () => matchMedia("(pointer: coarse)").matches;
 S.wakeQueue = (() => { try { return JSON.parse(localStorage.getItem("studio-wake-queue") || "[]"); } catch { return []; } })();
 function saveWakeQueue() { try { localStorage.setItem("studio-wake-queue", JSON.stringify(S.wakeQueue)); } catch {} }
 function renderWakeBar() {
