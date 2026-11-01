@@ -444,8 +444,17 @@ static func draw_item(ci: CanvasItem, id: String, db: Dictionary, cells: Array[V
 		if cc.distance_to(center) < best_d:
 			best_d = cc.distance_to(center)
 			best = cc
-	Riso.draw_item_icon(ci, kind, best, cell * 0.8)
-	if not ICON_KINDS.has(kind) and cell >= 30.0:  # no icon drawn for these yet, so they carry their name
+	var tex := ActionInfo.icon(id)  # Brandon's item icon (game/art/source/icons/<id>.png) when there is one
+	if tex != null:
+		# a solid block (rope, crate, a feast) gets one big icon across it; an L or T shape keeps it on one cell
+		var ext := InventoryGrid.extent(cells)
+		var solid := cells.size() == ext.x * ext.y
+		var side := (mini(ext.x, ext.y) if solid else 1) * cell * 0.86
+		var at := (top_left + Vector2(ext) * cell * 0.5) if solid else best
+		ci.draw_texture_rect(tex, Rect2(at - Vector2(side, side) * 0.5, Vector2(side, side)), false, Color(1, 1, 1, a))
+	else:
+		Riso.draw_item_icon(ci, kind, best, cell * 0.8)
+	if tex == null and not ICON_KINDS.has(kind) and cell >= 30.0:  # no icon drawn for these yet, so they carry their name
 		Riso.draw_label(ci, Txt.t(String(db[id].name_key)), center, maxi(10, int(cell * 0.22)), ink, HORIZONTAL_ALIGNMENT_CENTER)
 	if bound:
 		Riso.draw_stamp_star(ci, top_left + Vector2(cell * 0.2, cell * 0.2), cell * 0.12, Riso.alpha(Riso.INDIGO, a))
