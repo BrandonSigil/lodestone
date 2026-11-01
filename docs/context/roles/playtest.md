@@ -37,6 +37,13 @@ Studio role id `playtest`, name "Playtester". Page: https://claude.ai/artifact/5
 - Ceiling (fresh level 5, sim 60 fights): throne win sword 38%, daggers 55%, bow 52%. Beatable.
 - Per-road-fight cost is noisy across seeds (HP 0-40%, resources 2-46%); no reliable average. Mana/charges are what the road spends.
 
+## Re-measure after the retune (d658ae5, check.sh 395 tests 0 failures; 2026-11-01)
+- explore_foe_hp_pct 70, hex world map, daily camp meals. 108 runs (24 seeds noheal, 12 heal per weapon), all pass, no script errors.
+- Lich attempt 1: noheal 3/72 (4%), heal 1/36 (3%); attempt 2: noheal 15/69 (22%), heal 8/35 (23%). Targets 5-10% and 25-50%.
+- Arrival HP at the throne (noheal): sword 60%, daggers 53%, bow 59%; resources 12% / 58% / 55%. The stock robot heals up before the fight (arrives 97-100%).
+- Food is never short (34 left at the throne in noheal); the empty-larder ending, Bushberry's rescue and the tavern are not exercised by the robot. Only 2 non-Lich falls in 108 runs.
+- Recommendation sent: explore_foe_hp_pct 60 (first try under 5%). Sample is small, so 1-2 more wins would move it.
+
 ## Open
 - Nothing filed by me is open. Last rule from the game designer: ambusher softens if `pass_bandits` loses over half its first tries (it does not).
 - Clutch tools: WARD only helps if cast after the Lich's mark (wiped at your next phase otherwise); SHADOW SWAP repositions but does not revive; forcing tools in the sim lowers Lich wins. Not played by hand (no window control); CARRY and COMMAND wording untested. Log line has a garbled figure ("14 to 8 hurt, 6 left"): correct is 14 to 6.
