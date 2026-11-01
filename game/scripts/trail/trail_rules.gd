@@ -212,7 +212,8 @@ static func resolve_option(run: RunState, opt: Dictionary) -> Dictionary:
 
 ## Effects are "key:+n;key:-n" strings from events.csv and encounters.csv.
 static func apply_effects(run: RunState, effects: String) -> Dictionary:
-	var out := {"combat": "", "unlocks": [], "weapon": "", "invite": "", "dismiss": "", "blessings": 0, "setbacks": 0, "morale": 0, "sleep": false}
+	var out := {"combat": "", "unlocks": [], "weapon": "", "invite": "", "dismiss": "", "blessings": 0, "setbacks": 0, "morale": 0, "sleep": false,
+		"rescue": ""}
 	for part in effects.split(";", false):
 		var kv := part.split(":")
 		if kv.size() != 2:
@@ -255,6 +256,10 @@ static func apply_effects(run: RunState, effects: String) -> Dictionary:
 			"invite": out.invite = val  # invite:dog / dismiss:dog: a companion's home in the village (Game.invite)
 			"dismiss": out.dismiss = val
 			"unlock": out.unlocks.append(val)
+			"rescue":  # rescue:bushberry, on a captor group's loot ([USER] 2026-11-01 design-bb-recruit): met and freed (Game.rescued)
+				out.unlocks.append("found_" + val)
+				out.unlocks.append("rescued_" + val)
+				out.rescue = val
 			_:
 				if Db.items.has(key):
 					run.add_item(key, n)  # rope:+1, stuff:+3: any carried thing in data/items.csv

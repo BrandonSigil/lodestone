@@ -1848,7 +1848,8 @@
 			],
 			"event": "recruit_bushberry",
 			"id": "sq_bushberry",
-			"kind": "companion"
+			"kind": "companion",
+			"when": "rescued_bushberry"
 		}
 	],
 	"turn": false,

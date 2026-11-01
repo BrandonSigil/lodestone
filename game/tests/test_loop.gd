@@ -1621,3 +1621,31 @@ func test_containers() -> void:
 	ok((pv.windows[1].rect as Rect2).encloses(belt_r), "the belts live in the second window")
 	page.free()
 	_restore(saved)
+
+
+## [USER] 2026-11-01 design-bb-recruit: beating the elite ogre frees Bushberry; he joins if there's room, else he runs
+## back to the village and waits at home (benched), and his spot in the square shows from then on.
+func test_rescue_bushberry() -> void:
+	var saved := _fresh_game()
+	ok(not Game.in_party("bushberry"), "not met yet")
+	var out := TrailRules.apply_effects(Game.run, "rescue:bushberry")
+	eq(String(out.rescue), "bushberry")
+	Game.absorb(out.unlocks)
+	ok(Game.has_flag("rescued_bushberry") and Game.has_flag("found_bushberry"), "freed and met")
+	ok(Game.rescued("bushberry"), "room in the party: he joins")
+	ok(Game.in_party("bushberry"))
+	_restore(saved)
+	saved = _fresh_game()
+	Game.meta.flags.append_array(["met_dog", "met_fire_mage"])
+	var keep_max = Db.levels.get("party_max", 4)
+	Db.levels["party_max"] = 3  # hero, dog and Amber fill it
+	Game.refresh_party()
+	eq(Game.adventure_defs().size(), 3, "a full party")
+	Game.absorb(TrailRules.apply_effects(Game.run, "rescue:bushberry").unlocks)
+	ok(not Game.rescued("bushberry"), "a full party: he runs home")
+	ok(Game.meta.benched.has("bushberry") and not Game.in_party("bushberry"), "and waits at home to be invited")
+	Db.levels["party_max"] = keep_max
+	var village := ExploreMap.load_named("village")
+	var spot: Array = village.things.filter(func(t: Dictionary) -> bool: return String(t.get("event", "")) == "recruit_bushberry")
+	ok(not spot.is_empty() and String(spot[0].when) == "rescued_bushberry", "his spot in the square shows once he's freed")
+	_restore(saved)

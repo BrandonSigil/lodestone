@@ -386,6 +386,24 @@ func in_party(id: String) -> bool:
 
 ## Bring a companion along (false when the party is full) or leave them at home. Only at home: the gate
 ## prompt and the companions' homes in the village call these.
+## A captive freed by beating their captors ([USER] 2026-11-01 design-bb-recruit: "he joins the party if theres room or he
+## runs back to the village"). The rescue effect has already set found_<id> and rescued_<id>. Full party: benched, so
+## they wait at their home in the village to be invited. Returns whether they joined.
+func rescued(id: String) -> bool:
+	refresh_party()
+	var d := Db.character(StringName(id))
+	var name := Txt.t(d.name_key) if d != null else id
+	if in_party(id):
+		counts.emit(Txt.f("UI_RESCUE_JOIN", name))
+		return true
+	if not meta.benched.has(id):
+		meta.benched.append(id)
+	refresh_party()
+	save_meta()
+	counts.emit(Txt.f("UI_RESCUE_HOME", name))
+	return false
+
+
 func invite(id: String) -> bool:
 	if in_party(id):
 		refresh_party()  # just unlocked (the square's recruit events set the flag first): bring them into the run

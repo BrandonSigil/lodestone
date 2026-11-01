@@ -1460,6 +1460,8 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 			var split := ContainerUi.split_loot(String(f.def.loot))
 			var out := TrailRules.apply_effects(Game.run, String(split.now))
 			Game.absorb(out.unlocks)
+			if String(out.rescue) != "":  # a freed captive: joins if there's room, else runs home
+				Game.rescued(String(out.rescue))
 			for part in String(split.now).split(";", false):
 				if part.begins_with("gold:"):
 					loot_coins += int(part.split(":")[1])
