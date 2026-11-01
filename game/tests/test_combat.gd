@@ -214,6 +214,8 @@ func test_counter_melee_only() -> void:
 	var g := CombatGrid.flat(6, 3)
 	var k := _unit("knight", 0, Vector2i(1, 1), g)
 	var b := _unit("bandit", 1, Vector2i(2, 1), g)
+	ok(not CombatRules.counters_from(g, k, b, k.cell), "counters are off in data ([USER] 2026-11-01 Cut both)")
+	Db.combat["counters"] = 1.0  # the rule still works when the switch is on
 	ok(CombatRules.counters_from(g, k, b, k.cell), "bandit hits back at an adjacent knight")
 	var h := _unit("hunter", 0, Vector2i(0, 1), g)
 	ok(not CombatRules.counters_from(g, h, b, h.cell), "melee can't hit back at range 2")
@@ -225,6 +227,7 @@ func test_counter_melee_only() -> void:
 	CombatRules.counters = false
 	ok(not CombatRules.counters_from(g, k, b, k.cell), "switch turns counters off")
 	CombatRules.reset_switches()
+	Db.combat["counters"] = 0.0
 
 
 func test_guard_and_phase_clear() -> void:
@@ -706,6 +709,8 @@ func test_a_corner_pair_teams_up() -> void:
 	foe.max_hp = 99
 	foe.hp = 99
 	var units := [a, b, foe]
+	eq(CombatRules.helper(a, foe, units, a.cell), null, "helping strikes are off in data ([USER] 2026-11-01 Cut both)")
+	Db.combat["helping_strikes"] = 1.0  # the rule still works when the switch is on
 	eq(CombatRules.helper(a, foe, units, a.cell), b)
 	var f := CombatRules.forecast(g, a, a.abilities[0], foe.cell, units, a.cell)
 	eq(f.targets[0].help, 1, "the forecast shows the help")
@@ -716,6 +721,33 @@ func test_a_corner_pair_teams_up() -> void:
 	eq(helps.size(), 1, "one helper per attack")
 	eq(helps[0].amount, 1, "a flat 1, past armor")
 	eq(helps[0].src, b)
+	Db.combat["helping_strikes"] = 0.0
+
+
+## [USER] 2026-11-01 "Characters get bonuses for being next to each other, but they dont attack do helping strikes": no
+## counter, no helping strike; an attack made beside a friend hits for beside_damage more (plus their bond's team-up bonus)
+## and earns the pair a team-up.
+func test_a_friend_beside_you_is_a_bonus() -> void:
+	CombatRules.reset_switches()
+	var g := CombatGrid.flat(5, 5)
+	var a := _unit("knight", 0, Vector2i(2, 1), g)
+	var b := _unit("hunter", 0, Vector2i(1, 1), g)
+	var foe := _unit("bandit", 1, Vector2i(2, 2), g)
+	foe.max_hp = 99
+	foe.hp = 99
+	var units := [a, b, foe]
+	var alone := CombatRules.damage(g, a, foe, a.cell, a.abilities[0], [a, foe])
+	eq(CombatRules.damage(g, a, foe, a.cell, a.abilities[0], units), alone + int(CombatRules.num("beside_damage")), "a friend beside: more damage")
+	a.bonds = {String(b.figure): 2}
+	eq(CombatRules.damage(g, a, foe, a.cell, a.abilities[0], units), alone + int(CombatRules.num("beside_damage")) + 2, "a bond adds its team-up bonus")
+	a.bonds = {}
+	var f := CombatRules.forecast(g, a, a.abilities[0], foe.cell, units, a.cell)
+	ok((f.targets[0].dmg_parts as Array).any(func(p: Array) -> bool: return p[0] == "MOD_BESIDE"), "the forecast shows it")
+	var ev := CombatRules.resolve(RandomNumberGenerator.new(), g, a, a.abilities[0], foe.cell, units)
+	ok(not ev.any(func(e: Dictionary) -> bool: return e.type == "help" or e.type == "counter"), "no helping strike, no counter")
+	ok(ev.any(func(e: Dictionary) -> bool: return e.type == "beside" and e.src == b), "the pair earns a team-up")
+	b.statuses[CombatRules.STATUS_SLEEP] = 1
+	eq(CombatRules.damage(g, a, foe, a.cell, a.abilities[0], units), alone, "a sleeping friend gives nothing")
 
 
 func test_who_teams_up() -> void:
@@ -724,6 +756,7 @@ func test_who_teams_up() -> void:
 	var b := _unit("hunter", 0, Vector2i(3, 2), g)
 	var foe := _unit("bandit", 1, Vector2i(2, 2), g)
 	var units := [a, b, foe]
+	Db.combat["helping_strikes"] = 1.0  # the rule as it stands when the switch is on
 	eq(CombatRules.helper(a, foe, units, a.cell), b, "opposite sides count ([USER] c19)")
 	Db.combat["teamup_opposite"] = 0.0
 	eq(CombatRules.helper(a, foe, units, a.cell), null, "with the switch off they must be next to each other")
@@ -735,6 +768,7 @@ func test_who_teams_up() -> void:
 	eq(CombatRules.helper(archer, foe, units + [archer], archer.cell), null, "a shot from afar isn't a team-up")
 	b.statuses[CombatRules.STATUS_SLEEP] = 1
 	eq(CombatRules.helper(a, foe, units, a.cell), null, "a sleeping teammate doesn't help")
+	Db.combat["helping_strikes"] = 0.0
 
 
 # --- fight goals and TALK ([USER] c10, c17, combat build step 6) --------------------------------

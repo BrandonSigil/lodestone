@@ -738,8 +738,10 @@ func test_leaf_frame_holds_pack_and_party() -> void:
 	hud.use_leaf_frame()
 	hud._layout_leaf()
 	var vs := hud.root.get_viewport_rect().size
-	var s := vs.x / 2000.0
+	var s := vs.x / 2000.0 * FrameHud.LEAF_THIN  # [USER] 2026-11-01 "The bottom fram is HUGE": a thinner band
 	ok(absf(hud.bottom_h - (264.0 - FrameHud.LEAF_BAND_TOP) * s) < 0.5, "the band is the bottom border")
+	ok(absf(hud._leaf_at(Vector2(2000, 0)).x - vs.x) < 1.0, "its plain runs stretch, so it still spans the window")
+	ok(absf((hud._leaf_at(Vector2(1100, 0)).x - hud._leaf_at(Vector2(900, 0)).x) - 200.0 * s) < 0.5, "the diamond keeps its shape")
 	ok(hud.center_rect().end.y <= vs.y - hud.bottom_h + 0.5, "the map stops at the band")
 	ok(hud.clear_rect().end.y < hud.center_rect().end.y, "a fitted map also clears the diamond")
 	var pressed := [0]
@@ -1433,16 +1435,16 @@ func test_bonds_grow_in_fights_and_boost_teamups() -> void:
 	foe.team = 1
 	foe.place(Vector2i(2, 2), 0)
 	lead.place(Vector2i(1, 2), 0)
-	dog.place(Vector2i(2, 1), 0)
+	dog.place(Vector2i(1, 1), 0)  # beside the hero ([USER] 2026-11-01: a friend beside you, not a helping strike)
 	var units := [lead, dog, foe]
-	var base := CombatRules.help_damage(lead, dog)
+	var base := CombatRules.beside_bonus(lead, dog)
 	lead.bonds = {"dog": 2}
-	eq(CombatRules.help_damage(lead, dog), base + 2, "bond 2: +2 on the dog's help")
+	eq(CombatRules.beside_bonus(lead, dog), base + 2, "bond 2: +2 on the bonus for the dog beside")
 	lead.bonds = {}
 	var b := Battle.new()
 	b.units = units
 	for ev in CombatRules.resolve(RandomNumberGenerator.new(), g, lead, lead.abilities[0], foe.cell, units):
-		if ev.type == "help":
+		if ev.type == "beside":
 			b._deed(ev.by, ev.src, "teamup")
 	ok(b.deeds.has("dog+lead"), "the team-up is noted")
 	foe.hp = 0

@@ -259,7 +259,7 @@ static func from_dict(d: Dictionary) -> SandboxSetup:
 	s.seed_value = int(d.get("seed", 1))
 	s.strangeness = float(d.get("strangeness", 0.0))
 	s.art_set = String(d.get("art_set", ""))
-	s.counters = bool(d.get("counters", true))
+	s.counters = bool(d.get("counters", true))  # the data switch (combat.csv counters) still has the last word
 	s.view = int(d.get("view", 0)) % 4
 	return s
 

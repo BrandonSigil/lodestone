@@ -424,6 +424,9 @@ static func flanked(att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector
 ## Every part is a [label key, value] pair so the forecast can print it.
 static func damage_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i, a: Ability = null, units: Array = []) -> Array:
 	var parts := [["MOD_DAMAGE", att.damage]]
+	var buddy := beside_friend(att, units, from)
+	if buddy != null and tgt.team != att.team:  # a friend at your side ([USER] 2026-11-01, instead of helping strikes)
+		parts.append(["MOD_BESIDE", beside_bonus(att, buddy)])
 	if a != null and a.power != 0:
 		parts.append(["MOD_SKILL", a.power])
 	var hl := height_levels(grid, from, tgt.cell) * int(num("height_damage"))
@@ -632,7 +635,7 @@ static func expected_damage(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, 
 
 ## Would `tgt` strike back at `att` standing on `from`?
 static func counters_from(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i) -> bool:
-	if not counters or not tgt.alive() or tgt.team == att.team or tgt.has_status(STATUS_SLEEP) or tgt.has_status(STATUS_FROZEN) \
+	if not counters or num("counters") == 0.0 or not tgt.alive() or tgt.team == att.team or tgt.has_status(STATUS_SLEEP) or tgt.has_status(STATUS_FROZEN) \
 			or tgt.has_trait(TRAIT_STRUCTURE):
 		return false
 	return in_reach(grid, tgt.cell, from, ability_range(tgt, null))
@@ -712,6 +715,9 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 					t.hp = maxi(0, t.hp - n)
 					t.statuses.erase(STATUS_SLEEP)
 					events.append({"type": "help", "src": h, "unit": t, "amount": n, "by": u})
+				var side := beside_friend(u, units, u.cell) if a.kind == "attack" and t.team != u.team else null
+				if side != null:  # the friend at its side earns the pair a team-up for their bond
+					events.append({"type": "beside", "src": side, "unit": t, "by": u})
 			"heal":
 				if t.downed() and raises(a):  # MEND on a downed friend: up again at its heal amount
 					t.hp = mini(t.max_hp, heal_amount(u, a))
@@ -1416,7 +1422,7 @@ static func commandable(u: CombatUnit, a: Ability, o: CombatUnit, from: Vector2i
 ## The teammate who helps att's hit on tgt from `from`: both stand next to the foe (diagonal neighbours of
 ## each other, or anywhere round it while teamup_opposite is on). Awake and standing. null if nobody.
 static func helper(att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2i) -> CombatUnit:
-	if dist(from, tgt.cell) != 1 or tgt.team == att.team:
+	if num("helping_strikes") == 0.0 or dist(from, tgt.cell) != 1 or tgt.team == att.team:
 		return null
 	var any_side := num("teamup_opposite") != 0.0
 	for o: CombatUnit in units:
@@ -1428,6 +1434,24 @@ static func helper(att: CombatUnit, tgt: CombatUnit, units: Array, from: Vector2
 		if any_side or maxi(absi(side.x), absi(side.y)) == 1:
 			return o
 	return null
+
+
+## The friend standing next to `from` whose bond with att is strongest (awake, not a pillar), or null. Attacking from
+## beside a friend hits harder ([USER] 2026-11-01: "Characters get bonuses for being next to each other").
+static func beside_friend(att: CombatUnit, units: Array, from: Vector2i) -> CombatUnit:
+	var best: CombatUnit = null
+	for o: CombatUnit in units:
+		if o == att or o.team != att.team or not o.alive() or o.hiding or o.has_trait(TRAIT_STRUCTURE) \
+				or o.has_status(STATUS_SLEEP) or o.has_status(STATUS_FROZEN) or dist(o.cell, from) != 1:
+			continue
+		if best == null or int(att.bonds.get(String(o.figure), 0)) > int(att.bonds.get(String(best.figure), 0)):
+			best = o
+	return best
+
+
+## What standing beside friend adds: `beside_damage`, plus their bond's team-up bonus (data/bonds.csv teamup_per_level).
+static func beside_bonus(att: CombatUnit, friend: CombatUnit) -> int:
+	return int(num("beside_damage")) + int(att.bonds.get(String(friend.figure), 0)) * int(Db.bonds.get("teamup_per_level", 1))
 
 
 ## What h's help adds to att's strike: `help_damage`, plus their bond's team-up bonus (BondRules, data/bonds.csv).

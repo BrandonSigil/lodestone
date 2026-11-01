@@ -27,7 +27,11 @@ var hud: FrameHud
 var _ui: CanvasLayer
 var _dialog: PanelContainer
 var _info: Label
-var _log_label: Label
+var _acts: PanelContainer  ## the walk's actions (or GO IN), right above the diamond ([USER] 2026-11-01: one standard place)
+var _acts_row: HBoxContainer
+var _flash: Label  ## the newest roll or camp line, shown a moment in the same place
+var _flash_t := 0.0
+var _lines_seen := 0
 var _busy := false  ## a box is up: the clock stops
 var _menu_open := false
 var _menu_which := ""  ## the open menu: "pack", "lodestone", ...
@@ -106,6 +110,15 @@ func _process(delta: float) -> void:
 			var c := _to_screen(_node_pos(id))
 			_weather.mask.append(Vector3(c.x, c.y, SNOW_REACH * float(_view().k)))
 	_note_time = maxf(0.0, _note_time - delta)
+	if _flash != null:
+		_flash_t = maxf(0.0, _flash_t - delta)
+		_flash.modulate.a = clampf(_flash_t / 0.5, 0.0, 1.0)
+		var r := hud.clear_rect()
+		var above := _acts.global_position.y if _acts != null and _acts.visible else r.end.y - 20.0
+		_flash.size = Vector2(r.size.x, 30)
+		_flash.position = Vector2(r.position.x, above - 36.0)
+	if _acts != null:
+		_acts.visible = _dialog == null and not _menu_open and (_info.visible or _acts_row.get_child_count() > 0)
 	if not _busy and _dialog == null and int(Game.travel.get("nights_due", 0)) > 0:
 		_night()  # a night still owed (after a road fight, or MAKE CAMP's rest ran past nightfall)
 	if not _busy and _dialog == null and Game.run.overfull():
@@ -555,8 +568,7 @@ func party_pos() -> Vector2:
 
 ## Map units to the screen: the tiles' bounds fitted into the room above the frame, left of the side box.
 func _view() -> Dictionary:
-	var r := hud.clear_rect().grow(-24.0)
-	r.size.x -= FrameHud.RIGHT_W
+	var r := hud.clear_rect().grow(-24.0)  # no side panel any more ([USER] 2026-11-01): the map centres in the window
 	var b := _bounds()
 	var k := minf(r.size.x / b.size.x, r.size.y / b.size.y)
 	return {"k": k, "o": r.get_center() - (b.position + b.size * 0.5) * k}
@@ -859,27 +871,66 @@ func _label(p: Vector2, text: String, size: int, col: Color) -> void:
 
 # --- hud --------------------------------------------------------------------------------------------
 
+## [USER] 2026-11-01 "What is this whole menu on the right ... let's put all dialogue/actions/ right above the diamond": no
+## side panel. The walk's actions (FAST, HUNT, FISH, FORAGE, TALK, CAMP) or, standing at a place, its GO IN sit in one
+## box right above the bottom frame's diamond while no dialogue is open; the newest roll or camp line flashes over them.
 func _side() -> void:
 	hud.clear_side()
 	hud.top_label.text = Txt.t("UI_OW_TITLE")
-	_info = hud.add_side_label("", 14)
+	if _acts == null:
+		_acts = PanelContainer.new()
+		_acts.theme_type_variation = &"DialogPanel"
+		var col := VBoxContainer.new()
+		col.add_theme_constant_override("separation", 6)
+		_acts.add_child(col)
+		_info = Label.new()
+		_info.add_theme_font_size_override("font_size", 16)
+		_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		col.add_child(_info)
+		_acts_row = HBoxContainer.new()
+		_acts_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		_acts_row.add_theme_constant_override("separation", 8)
+		col.add_child(_acts_row)
+		_ui.add_child(_acts)
+		UiTheme.at_diamond(_acts, hud.clear_rect, UiTheme.small())
+		_flash = Label.new()
+		_flash.add_theme_font_size_override("font_size", 18)
+		_flash.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+		_flash.add_theme_constant_override("outline_size", 6)
+		_flash.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_ui.add_child(_flash)
+		_lines_seen = Game.run.lines.size()
+	for c in _acts_row.get_children():
+		_acts_row.remove_child(c)
+		c.queue_free()
 	if walking():
-		hud.add_button(Txt.t("UI_OW_FAST"), fast_forward)
-		hud.add_button(Txt.t("UI_OW_HUNT"), act.bind("hunt"))
-		var fish := hud.add_button(Txt.t("UI_OW_FISH"), act.bind("fish"))
+		_act_button(Txt.t("UI_OW_FAST"), fast_forward)
+		_act_button(Txt.t("UI_OW_HUNT"), act.bind("hunt"))
+		var fish := _act_button(Txt.t("UI_OW_FISH"), act.bind("fish"))
 		fish.disabled = not TravelRules.can_try(Game.run, "fish")  # no rod in the pack
 		fish.tooltip_text = "" if not fish.disabled else Txt.t("UI_OW_NO_ROD")
-		hud.add_button(Txt.t("UI_OW_FORAGE"), act.bind("forage"))
-		hud.add_button(Txt.t("UI_OW_TALK"), talk)
+		_act_button(Txt.t("UI_OW_FORAGE"), act.bind("forage"))
+		_act_button(Txt.t("UI_OW_TALK"), talk)
 		if not Game.travel.get("camped", false):
-			hud.add_button(Txt.t("UI_OW_CAMP"), make_camp)
+			_act_button(Txt.t("UI_OW_CAMP"), make_camp)
 	else:
 		var n := _node(String(Game.travel.get("at", "town")))
 		if map_ready(String(Game.travel.get("at", "town"))):  # no GO IN until the tile's map is built
-			hud.add_button(Txt.f("UI_OW_ENTER", Txt.t(n.name_key)), _enter)
-	hud.add_help(Txt.t("UI_OW_HELP"))
-	_log_label = hud.add_side_label("", 12)
+			_act_button(Txt.f("UI_OW_ENTER", Txt.t(n.name_key)), _enter)
+	_acts.tooltip_text = Txt.t("UI_OW_HELP")
+	_acts.reset_size()
 	_refresh_side()
+
+
+func _act_button(text: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(0, 40)
+	b.add_theme_font_size_override("font_size", 16)
+	b.pressed.connect(cb)
+	_acts_row.add_child(b)
+	return b
 
 
 func _refresh_side() -> void:
@@ -893,7 +944,14 @@ func _refresh_side() -> void:
 	else:  # [USER] 2026-11-01 fewer words: the map marks where the party stands and GO IN names it, so no line here
 		_info.text = ""
 	_info.visible = _info.text != ""
-	_log_label.text = "\n".join(Game.run.lines.slice(-8))
+	_acts.visible = _dialog == null and not _menu_open and (_info.visible or _acts_row.get_child_count() > 0)
+	if Game.run.lines.size() > _lines_seen:  # a new roll or camp line: a moment in the standard place
+		_lines_seen = Game.run.lines.size()
+		_flash.text = String(Game.run.lines[Game.run.lines.size() - 1])
+		_flash_t = FLASH_TIME
+
+
+const FLASH_TIME := 2.5  ## seconds a roll's line shows over the action box
 
 
 func _refresh_hud() -> void:
@@ -951,7 +1009,11 @@ func _new_dialog(text: String) -> VBoxContainer:
 		box.add_child(l)
 	_ui.add_child(_dialog)
 	var k := 1.0 if _menu_open else UiTheme.small()  # [USER] 2026-10-30: event dialogues about half size
-	UiTheme.keep_inside(_dialog, hud.center_rect, k)  # never spills off the screen; shrinks to fit when it must
+	# event dialogues stand right above the diamond, menus at the top ([USER] 2026-11-01: one standard place)
+	if _menu_open:
+		UiTheme.keep_inside(_dialog, hud.clear_rect, k)  # never spills off the screen; shrinks to fit when it must
+	else:
+		UiTheme.at_diamond(_dialog, hud.clear_rect, k)
 	if fresh:
 		UiTheme.pop_in_later(_dialog)
 	return box

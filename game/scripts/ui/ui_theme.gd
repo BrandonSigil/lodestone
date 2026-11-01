@@ -237,6 +237,13 @@ static func keep_inside(c: Control, area: Callable, base := 1.0, top := true) ->
 const FIT_MARGIN := 12.0
 
 
+## The one standard place for dialogue and action prompts ([USER] 2026-11-01: "let's put all dialogue/actions/ right above
+## the diamond. I'd like to have a standard place for these things so players arent looking around"): centred, its bottom
+## right on the bottom frame's diamond. `area` gives the play area clear of the frame (FrameHud.clear_rect).
+static func at_diamond(c: Control, area: Callable, base := 1.0) -> void:
+	keep_inside(c, area, base, false)
+
+
 ## A menu closing: shrinks a touch and fades, then frees itself. Its buttons die at once, so nothing on the way
 ## out can be pressed.
 ## Esc on an open box ([USER] 2026-11-01: "Let esc close out windows in game too"): presses the box's own

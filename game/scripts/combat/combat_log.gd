@@ -22,7 +22,7 @@ func _init() -> void:
 	_text.bbcode_enabled = false
 	_text.fit_content = false
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_text.add_theme_font_size_override("normal_font_size", 13)
+	_text.add_theme_font_size_override("normal_font_size", 11)
 	_text.add_theme_color_override("default_color", Color(0.93, 0.9, 0.82))
 	_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -45,8 +45,8 @@ func clear() -> void:
 
 ## The log's box inside the fight's screen rect r: bottom right, clear of the action dock `avoid` (a rect, or empty).
 func place(r: Rect2, avoid: Rect2) -> void:
-	var w := minf(340.0, r.size.x * 0.3)
-	var h := minf(170.0, r.size.y * 0.3)
+	var w := minf(250.0, r.size.x * 0.22)  # [USER] 2026-11-01 "make it much smaller"
+	var h := minf(96.0, r.size.y * 0.18)
 	var x := r.end.x - w - 8.0
 	if avoid.has_area() and avoid.end.x + 8.0 > x and avoid.position.y < r.end.y and avoid.end.y > r.end.y - h - 8.0:
 		w = maxf(150.0, r.end.x - avoid.end.x - 16.0)  # squeezed between the dock and the edge

@@ -160,21 +160,26 @@ func _chips() -> void:
 	row.add_theme_constant_override("v_separation", 8)
 	row.custom_minimum_size.x = 4 * (CARD_W + 16)
 	_page.add_child(row)
-	row.add_child(_chip("star_guide", "+%d" % int(r.get("xp", 0)), XP_GOLD))
+	# each chip names itself on hover, like the pack's icons ([USER] 2026-11-01 "What do these icons mean?")
+	row.add_child(_chip("star_guide", "+%d" % int(r.get("xp", 0)), XP_GOLD, Txt.t("UI_WIN_XP_TIP")))
 	if int(r.get("downed", 0)) > 0:
-		row.add_child(_chip("knock_out", "%d" % int(r.downed)))
+		row.add_child(_chip("knock_out", "%d" % int(r.downed), UiTheme.PARCHMENT, Txt.t("UI_WIN_DOWNED_TIP")))
 	if int(r.get("coins", 0)) > 0:
-		row.add_child(_chip("gold", "+%d" % int(r.coins), XP_GOLD))
+		row.add_child(_chip("gold", "+%d" % int(r.coins), XP_GOLD, Txt.t("UI_PACK_GOLD_TIP")))
 	for part in String(r.get("loot", "")).split(";", false):
 		var kv := part.split(":")
 		var id := kv[0].strip_edges()
 		id = {"food": RunState.FOOD_ITEM, "medicine": RunState.MED_ITEM}.get(id, id)
-		row.add_child(_chip(id if _icon(id) != null else "sack", "x%d" % (int(kv[1]) if kv.size() > 1 else 1)))
+		var item: Dictionary = Db.items.get(id, {})
+		var tip := Txt.t(String(item.name_key)) if item.has("name_key") else id
+		row.add_child(_chip(id if _icon(id) != null else "sack", "x%d" % (int(kv[1]) if kv.size() > 1 else 1), UiTheme.PARCHMENT, tip))
 
 
-func _chip(icon: String, text: String, col := UiTheme.PARCHMENT) -> Control:
+func _chip(icon: String, text: String, col := UiTheme.PARCHMENT, tip := "") -> Control:
 	var p := PanelContainer.new()
 	p.theme_type_variation = &"InfoPanel"
+	p.tooltip_text = tip
+	p.mouse_filter = Control.MOUSE_FILTER_STOP
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 6)
 	p.add_child(h)

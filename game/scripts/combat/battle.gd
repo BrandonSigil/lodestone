@@ -152,6 +152,7 @@ func _build_ui() -> void:
 	_hud.layout = action_layout()
 	_hud.on_swap = _swap
 	_hud.on_hover = preview_reach
+	_hud.on_hover_move = preview_move
 	_hud.on_unhover = func() -> void: board.reach = {}
 	hand_layer.add_child(_hud)
 	_hud.visible = false
@@ -199,6 +200,7 @@ func _on_rotated() -> void:
 
 ## enemy_first: the party was caught (spotted on an exploration map), so the enemy moves before round 1.
 func start(enemy_first := false) -> void:
+	_log_view.visible = true  # a won fight hid it under its victory screen
 	round_no = 0
 	rounds_done = 0
 	board.goal_cells = {}
@@ -236,6 +238,12 @@ func _start_player_phase() -> void:
 	changed.emit()
 	if auto_fight:
 		_auto_player_phase()
+		return
+	# always a selected character in the player phase ([USER] 2026-11-01 "there shouldnt be a state where a character's
+	# UI/action bar isnt showing during combat"): the first ready one now, the next as each finishes, SWAP cycles them
+	var waiting := _ready_units()
+	if not waiting.is_empty():
+		_select(waiting[0])
 
 
 func end_player_phase() -> void:
@@ -587,6 +595,8 @@ func _play(ev: Dictionary) -> void:
 			board.float_text(t.cell, "%s -%d" % [Txt.t("UI_" + String(ev.type).to_upper()), ev.amount], Color(1, 0.7, 0.4))
 			log_line.emit("  %s %s -%d" % [Txt.t(t.name_key), Txt.t("UI_" + String(ev.type).to_upper()), ev.amount])
 			await get_tree().create_timer(0.25).timeout
+		"beside":
+			_deed(ev.get("by"), ev.src, "teamup")
 		"help":
 			_deed(ev.get("by"), ev.src, "teamup")
 			await board.animate_attack(ev.src, t, true)
@@ -685,8 +695,10 @@ func _finish(won: bool) -> void:
 	board.danger = {}
 	board.marks = {}
 	board.combat_stance = false
-	_banner.text = Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT")
+	# a win's own screen says WIN: no second line under it, and the log steps behind it ([USER] 2026-11-01)
+	_banner.text = "" if won else Txt.t("UI_DEFEAT")
 	log_line.emit(Txt.t("LOG_FIGHT_WON") if won else Txt.t("LOG_FIGHT_LOST"))
+	_log_view.visible = false
 	changed.emit()
 	finished.emit(won)
 
@@ -892,16 +904,32 @@ func _process(_delta: float) -> void:
 
 ## The range of action a for the selected piece ([USER] 2026-10-30): every place it could aim at in blue,
 ## foes in reach marked. null (MOVE, GUARD, WAIT) clears it.
+## Hovering an action before picking it ([USER] 2026-11-01 "show their range when you hover over them, to see where they
+## would land, or how far they could go"): the cells it can reach; a skill centred on the piece (COLD SNAP) shows the
+## tiles its blast covers instead of just the piece's own.
 func preview_reach(a: Ability) -> void:
 	var out := {}
 	var u := selected
 	if a != null and u != null and state != S.TARGET:
-		for c in CombatRules.reach_cells(grid, u, a, u.cell):
+		var cells: Array = CombatRules.area(grid, a, u.cell, u.cell) if a.target == "self" and a.radius > 0 \
+			else CombatRules.reach_cells(grid, u, a, u.cell)
+		for c in cells:
 			out[c] = 1
 		if a.hostile():
 			for o: CombatUnit in units:
 				if o.alive() and o.team != u.team and out.has(o.cell):
 					out[o.cell] = 2
+	board.reach = out
+
+
+## Hovering MOVE: every tile the piece could walk to this phase, in the same blue.
+func preview_move() -> void:
+	var out := {}
+	var u := selected
+	if u != null and state != S.TARGET and not u.moved and CombatRules.move_points(u) > 0:
+		for c: Vector2i in CombatRules.reachable(grid, u, units).cost:
+			if c != u.cell:
+				out[c] = 1
 	board.reach = out
 
 
@@ -1121,8 +1149,7 @@ func _back() -> void:
 				_cancel_move()
 			elif selected.moved and not selected.acted and not selected.left_guard:
 				_undo_move()
-			else:
-				_deselect()
+			# else: the character stays selected (never a turn without an action bar, [USER] 2026-11-01)
 
 
 func _on_cell_clicked(c: Vector2i, right: bool) -> void:

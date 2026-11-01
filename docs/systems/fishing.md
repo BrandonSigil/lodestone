@@ -29,3 +29,11 @@ Brandon's call ([USER] 2026-11-01, card design-fishing-research): one cast in th
 
 ## Graybox
 The pool, shadows, lily pads, reeds, bobber, rod, angler and bar are flat shapes drawn in code until Brandon's art. All words are placeholders in `game/text/placeholder.csv` (FISH_*, GRADE_*, UI_FISH_*).
+
+## Calm beats between phases (2026-11-01, [USER] "it doesnt need to be so lightning fast from one part to another")
+Difficulty unchanged; each beat's length is in `levels.csv` ([AI]):
+- Cast: the bobber lands with a splash, bobs and settles for `fish_settle` (0.8 s) before a fish can notice it.
+- Strike: a good strike shows HOOKED! for `fish_hooked_beat` (1 s), the fish thrashing on a taut line and easing to the middle, before the reel bar (`S.HOOKED`).
+- Catch: the card shows the fish for at least `fish_catch_beat` (1.5 s) before a click closes it.
+- A fish that gets away (lost on the reel, or scared by an early or late strike) swims off and fades for `fish_lost_beat` (1 s) before its card (`S.SWIM_OFF`).
+- The minigame still closes after the card (a spot gives one fish a trip). Clip: `game/tools/feel_clip.gd -- fishing`.

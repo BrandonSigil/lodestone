@@ -20,10 +20,12 @@ const FRAME_ART := 24.0  ## how far the bottom frame's art (the diamond crest, t
 const TIP_DELAY := 0.5  ## seconds resting on a box before its details show
 const TIP_W := 205.0  ## narrow enough to sit beside the dock's portrait panel
 const PORTRAIT_DIR := "res://art/source/portraits/"
+const DOCK_GROW := 1.5  ## [USER] 2026-11-01 "the player UI/actionbar is tiny": the dock, its pop-ups and tips this much over the small size
 
 var layout := "dock"
 var on_hover: Callable  ## (ability or null): light its range
 var on_unhover: Callable
+var on_hover_move: Callable  ## (): light where MOVE could take the piece
 var on_swap: Callable  ## SWAP: the next character with moves
 var swap_count := 0  ## other characters who still have moves (SWAP shows when there are any)
 var _unit: CombatUnit
@@ -356,7 +358,7 @@ func _pop(s: ActionSlot) -> void:
 	if not is_instance_valid(_pop_panel) or _pop_for != s:
 		return
 	_pop_panel.reset_size()
-	var k := UiTheme.small()
+	var k := UiTheme.small() * DOCK_GROW
 	_pop_panel.scale = Vector2(k, k)
 	var r := s.get_global_rect()
 	var x := r.get_center().x - _pop_panel.size.x * k * 0.5
@@ -397,7 +399,7 @@ func _place() -> void:
 	if _dock == null:
 		return
 	_dock.reset_size()
-	var k := UiTheme.small()  # [USER] 2026-10-30: the fight dock much smaller, with a size option
+	var k := UiTheme.small() * DOCK_GROW  # [USER] 2026-10-30: the fight dock much smaller, with a size option
 	_dock.scale = Vector2(k, k)
 	_dock.position = Vector2(_area.get_center().x - _dock.size.x * k * 0.5, _area.end.y - FRAME_ART - _dock.size.y * k)
 	if not _bar_slots.is_empty() and not hovering():
@@ -477,7 +479,9 @@ func _portrait(u: CombatUnit, window: Rect2) -> Control:
 
 func _hover(s: ActionSlot) -> void:
 	var a: Ability = s.entry.get("ability")
-	if on_hover.is_valid():
+	if a == null and String(s.entry.get("kind", "")) == "move" and on_hover_move.is_valid():
+		on_hover_move.call()  # MOVE shows how far the piece can go
+	elif on_hover.is_valid():
 		on_hover.call(a)
 	if a == null:
 		return
@@ -531,7 +535,7 @@ func _show_tip(s: ActionSlot) -> void:
 	_tip.reset_size()
 	await get_tree().process_frame
 	if _tip_for == s:
-		var k := UiTheme.small()
+		var k := UiTheme.small() * DOCK_GROW
 		_tip.scale = Vector2(k, k)
 		_tip.position = Vector2(_area.position.x + 10, _area.end.y - _tip.size.y * k - FRAME_ART * 0.6)  # bottom left
 

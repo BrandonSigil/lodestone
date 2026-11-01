@@ -285,7 +285,9 @@ func test_minigame_opens_and_reports_once() -> void:
 	g._cast_aimed()
 	eq(g.state, FishingGame.S.CAST, "casting at the aim")
 	g._process(FishingGame.CAST_TIME + 0.01)
-	ok(g.state == FishingGame.S.COME or g.state == FishingGame.S.WAIT, "the bobber lands: a fish notices or none does")
+	eq(g.state, FishingGame.S.CAST, "the bobber has landed and settles a moment ([USER] 2026-11-01 calm beats)")
+	g._process(FishingRules.tune("fish_settle", 0.8))
+	ok(g.state == FishingGame.S.COME or g.state == FishingGame.S.WAIT, "then a fish notices or none does")
 	for i in 40:  # beside a shadow: sooner or later one swims over
 		if g.state == FishingGame.S.WAIT:
 			g._notice()
@@ -293,11 +295,40 @@ func test_minigame_opens_and_reports_once() -> void:
 	g._process(FishingRules.tune("fish_approach", 0.9) + 0.01)
 	eq(g.state, FishingGame.S.STRIKE, "and the nibbling starts")
 	g._strike_now()
-	eq(g.state, FishingGame.S.RESULT, "striking at once is too soon")
-	eq(String(g.result.outcome), "early", "and scares the fish")
-	eq(g._pond.size(), int(FishingRules.tune("fish_pond_size", 3)) - 1, "which is gone from the pond for good")
+	eq(g.state, FishingGame.S.SWIM_OFF, "striking at once is too soon: the fish swims off")
+	eq(String(g.result.outcome), "early", "scared")
+	eq(g._pond.size(), int(FishingRules.tune("fish_pond_size", 3)) - 1, "and gone from the pond for good")
+	g._process(FishingRules.tune("fish_lost_beat", 1.0) + 0.01)
+	eq(g.state, FishingGame.S.RESULT, "then its card")
 	g._phase_t = 1.0
 	g._press(false)
 	g._press(false)
 	eq(got.size(), 1, "reports once")
 	host.free()
+	# a good strike: HOOKED! for a beat before the reel bar; a catch's card holds a while before a click closes it
+	var host2 := Node.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(host2)
+	var g2 := FishingGame.open(host2, "lake", {}, 5)
+	g2._aim = FishingRules.shadow_pos(g2._shadows[0], g2._t)
+	g2._cast_aimed()
+	g2._process(FishingGame.CAST_TIME + FishingRules.tune("fish_settle", 0.8) + 0.01)
+	for i in 40:
+		if g2.state == FishingGame.S.WAIT:
+			g2._notice()
+	g2._process(FishingRules.tune("fish_approach", 0.9) + 0.01)
+	g2._phase_t = float(g2._plan.bite) + 0.05
+	g2._strike_now()
+	eq(g2.state, FishingGame.S.HOOKED, "a good strike: HOOKED!")
+	g2._process(FishingRules.tune("fish_hooked_beat", 1.0) + 0.01)
+	eq(g2.state, FishingGame.S.REEL, "then the reel")
+	g2._end("caught")
+	eq(g2.state, FishingGame.S.RESULT, "a catch goes straight to its card")
+	var got2: Array = []
+	g2.finished.connect(func(res: Dictionary) -> void: got2.append(res))
+	g2._phase_t = 0.5
+	g2._press(false)
+	eq(got2.size(), 0, "the catch shows a while: an early click doesn't close it")
+	g2._phase_t = FishingRules.tune("fish_catch_beat", 1.5) + 0.01
+	g2._press(false)
+	eq(got2.size(), 1, "then a click does")
+	host2.free()

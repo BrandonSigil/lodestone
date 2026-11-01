@@ -85,6 +85,13 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | X6 | "Things need highlight when youre about to interact with them" | Systems developer | done (evening round) |
 | X7 | "Take all should move money over too and the party menu should say total gold too" | Systems developer | done (evening round) |
 | X8 | "You should be able to walk through stools, they make this whole room very hard to navigate" (tavern) | Systems developer | done (evening round; only stools, chairs and benches still block) |
+| X9 | "Remove the Lorem Ipsum What do these icons mean? Hide the combat log behind the win window and make it much smaller. We dont need the second win lorem ipsum" | Systems developer | done (evening round) |
+| X10 | "What is this whole menu on the right ... let's put all dialogue/actions/ right above the diamond" (overworld side panel; one standard place) | Systems developer | done (evening round) |
+| X11 | "The bottom fram is HUGE and the player UI/actionbar is tiny" | Systems developer | done (evening round) |
+| X12 | "I'd like for these skills to show their range when you hover over them" | Systems developer | done (evening round) |
+| X13 | "I want to always be on a selected cahracter" | Systems developer | done (evening round) |
+| X14 | "these windows should fit the size. there shouldnt be all this green space" (loot windows) | Systems developer | done (evening round) |
+| X15 | "Fishing is still very fast ... it doesnt need to be so lightning fast from one part to another" | PM (pace), Systems developer (beats) | done (4425bd3, 24c2147, evening round) |
 
 ## Older standing asks still open
 - Food as healing with no hunger ([USER] 2026-10-31 morale call; `docs/systems/morale.md` says not built, the road still eats every day). Owner: Systems developer (first account), done (2026-11-01, "Food heals, nobody hungers" commit); the numbers are on the desk as dev-food-review.

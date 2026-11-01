@@ -1314,7 +1314,10 @@ func _new_dialog(text: String, top := false, portrait := "") -> VBoxContainer:
 	l.add_theme_font_size_override("font_size", 22)
 	box.add_child(l)
 	_ui.add_child(_dialog)
-	UiTheme.keep_inside(_dialog, _dialog_area, 1.0, top)  # never spills off the screen; shrinks to fit when it must
+	if top:  # a menu stands at the top
+		UiTheme.keep_inside(_dialog, _dialog_area, 1.0, true)
+	else:  # dialogue and actions: the standard place, right above the diamond (shrinks to fit when it must)
+		UiTheme.at_diamond(_dialog, _dialog_area)
 	if text == "":
 		l.queue_free()
 	if fresh:
@@ -1322,11 +1325,9 @@ func _new_dialog(text: String, top := false, portrait := "") -> VBoxContainer:
 	return box
 
 
-## Where boxes may go: the play area above the bottom frame's crest.
+## Where boxes may go: the play area above the bottom frame's diamond; a box stands right on it ([USER] 2026-11-01).
 func _dialog_area() -> Rect2:
-	var r := hud.center_rect()
-	r.size.y -= ActionHud.FRAME_ART
-	return r
+	return hud.clear_rect()
 
 
 func _dialog_button(box: VBoxContainer, text: String, cb: Callable) -> Button:

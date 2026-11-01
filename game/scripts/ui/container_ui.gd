@@ -95,6 +95,7 @@ const CELL := 46.0
 const GAP := 18.0  ## between the two windows
 const BUTTON_H := 40.0
 const X_SIZE := 34.0  ## the close X at a window's top right
+const MIN_BUTTON_W := 150.0  ## the narrowest a window gets for its TAKE ALL across the bottom edge
 
 
 ## Lays out a PackView set up on the pack as two windows: the inventory (pack, the courier's saddlebag beside it, the bin
@@ -121,16 +122,18 @@ static func windows(view: PackView, other: InventoryGrid, other_title: String, b
 	if view.bin.is_valid():  # THROW AWAY: a thin bar under the grids
 		view.place_bin(Rect2(Vector2(top.x, bottom + 14.0), Vector2(right - top.x, 32.0)), "UI_THROW", "UI_BOUND_THROW")
 		bottom += 46.0
-	view.flash_at = Vector2(top.x, bottom + 14.0)  # a line for "no room" and the like
-	bottom += 26.0
-	# the party's gold, always in sight under the pack ([USER] 2026-11-01 "the party menu should say total gold too")
+	# the party's gold, always in sight under the pack ([USER] 2026-11-01 "the party menu should say total gold too"); the
+	# "no room" line shares its row, so the window ends right under it
 	view.add_note(str(run.gold), Vector2(top.x, bottom + 8.0), right - top.x, ActionInfo.icon("gold"))
 	view.gold_note = view.notes.back()
+	view.flash_at = Vector2(top.x + 90.0, bottom + 8.0)
 	bottom += PackView.NOTE_LINE + 8.0
 	var left_w := right + pad
-	# the other window
+	# the other window hugs its grid ([USER] 2026-11-01 "these windows should fit the size"): only as wide as the title and
+	# its button need beyond that, and as tall as its own grid, note and button, not the pack's height
 	var ox := left_w + GAP
-	var ow := maxf(other.cols * cell, 250.0)
+	var title_w := Riso.font().get_string_size(other_title, HORIZONTAL_ALIGNMENT_LEFT, -1, 19).x + 24.0
+	var ow := maxf(other.cols * cell, maxf(title_w + (X_SIZE if x_close.is_valid() else 0.0), MIN_BUTTON_W - pad))
 	view.add_area(other, Vector2(ox + pad, top.y + head), "", null, 0)
 	if saddle != null:
 		var who: CharacterDef = run.courier().def
@@ -147,14 +150,16 @@ static func windows(view: PackView, other: InventoryGrid, other_title: String, b
 		for b in buttons:
 			made.append(view.add_button(String(b[0]), Rect2(Vector2(ox + pad, y), Vector2(ow, BUTTON_H)), b[1]))
 			y += BUTTON_H + 8.0
-	var h := maxf(bottom, y - 8.0) + pad
+	var lh := bottom + pad
+	var oh := y - 8.0 + pad
 	var other_w := ow + pad * 2.0
-	view.add_window(Rect2(Vector2.ZERO, Vector2(left_w, h)), Txt.t("UI_PACK"))
-	view.add_window(Rect2(Vector2(ox, 0), Vector2(other_w, h)), other_title)
+	view.add_window(Rect2(Vector2.ZERO, Vector2(left_w, lh)), Txt.t("UI_PACK"))
+	view.add_window(Rect2(Vector2(ox, 0), Vector2(other_w, oh)), other_title)
+	view.custom_minimum_size.y = maxf(view.custom_minimum_size.y, maxf(lh, oh))
 	if straddle:
-		var bw := minf(ow, 200.0)
-		made.append(view.add_button(String(buttons[0][0]), Rect2(Vector2(ox + (other_w - bw) * 0.5, h - BUTTON_H * 0.5), Vector2(bw, BUTTON_H)), buttons[0][1]))
-		view.custom_minimum_size.y = maxf(view.custom_minimum_size.y, h + BUTTON_H * 0.5)
+		var bw := minf(other_w - 16.0, 200.0)
+		made.append(view.add_button(String(buttons[0][0]), Rect2(Vector2(ox + (other_w - bw) * 0.5, oh - BUTTON_H * 0.5), Vector2(bw, BUTTON_H)), buttons[0][1]))
+		view.custom_minimum_size.y = maxf(view.custom_minimum_size.y, oh + BUTTON_H * 0.5)
 	if x_close.is_valid():
 		for wx in [left_w, ox + other_w]:
 			view.add_button("X", Rect2(Vector2(wx - X_SIZE - 10.0, 10.0), Vector2(X_SIZE, X_SIZE)), x_close)

@@ -18,6 +18,11 @@ const LEAF_BAR := Rect2(365, 118, 430, 42)  ## the long bar's top half (its orna
 const LEAF_PARTY_MAX := 4
 const LEAF_DECOR_TOP := 10.0  ## the corner leaves reach up to here; buttons above the frame sit higher
 const LEAF_DIAMOND_TOP := 62.0  ## the centre diamond's tip
+## [USER] 2026-11-01 "The bottom fram is HUGE": the band draws at this share of the width-filling size, and the art's two
+## plain runs (the long line bar, the party box) stretch sideways to fill the width, so the diamond, the corners and the
+## pack square keep their shape.
+const LEAF_THIN := 0.72
+const LEAF_STRETCH := [Vector2(400, 760), Vector2(1300, 1700)]  ## art x ranges that stretch (in order)
 const FRAME := Color(0.17, 0.23, 0.22)
 const PANEL := Color(0.23, 0.29, 0.28)
 const INK := Color(0.9, 0.92, 0.87)
@@ -36,7 +41,10 @@ var side_panel: PanelContainer = null  ## with the leaf frame: the screen's cont
 var leaf_pack: Button
 var leaf_party: HBoxContainer
 var leaf_goals: Label  ## tracked restore steps and what they still miss ([USER] omr-5)
-var _leaf_art: TextureRect
+var _leaf_art: Control  ## draws the band in pieces (LEAF_STRETCH)
+var _leaf_tex: Texture2D
+var _leaf_u := 1.0  ## screen px per art px
+var _leaf_extra: Array[float] = [0.0, 0.0]  ## art px each stretch run grows by
 var _leaf_block: Control
 var _leaf_pack_cb := Callable()
 var _border: StyleBoxFlat
@@ -150,11 +158,10 @@ func use_leaf_frame() -> void:
 	_leaf_block = Control.new()
 	_leaf_block.mouse_filter = Control.MOUSE_FILTER_STOP
 	leaf.add_child(_leaf_block)
-	_leaf_art = TextureRect.new()
-	_leaf_art.texture = load(LEAF_ART)
-	_leaf_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_leaf_art.stretch_mode = TextureRect.STRETCH_SCALE
+	_leaf_tex = load(LEAF_ART)
+	_leaf_art = Control.new()
 	_leaf_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_leaf_art.draw.connect(_draw_leaf)
 	leaf.add_child(_leaf_art)
 	leaf_pack = Button.new()
 	leaf_pack.tooltip_text = Txt.t("UI_PACK")
@@ -206,27 +213,62 @@ func use_leaf_frame() -> void:
 
 func _layout_leaf() -> void:
 	var vs := leaf.size if leaf.size.x > 0.0 else root.get_viewport_rect().size
-	var art := _leaf_art.texture.get_size()
-	var s := vs.x / art.x
+	var art := _leaf_tex.get_size()
+	var s := vs.x / art.x * LEAF_THIN
+	_leaf_u = s
+	var grow := maxf(0.0, vs.x / s - art.x)  # art px the stretch runs share
+	for k in LEAF_STRETCH.size():
+		_leaf_extra[k] = grow / LEAF_STRETCH.size()
 	var top := vs.y - art.y * s
 	_leaf_art.position = Vector2(0, top)
-	_leaf_art.size = art * s
+	_leaf_art.size = Vector2(vs.x, art.y * s)
+	_leaf_art.queue_redraw()
 	bottom_h = (art.y - LEAF_BAND_TOP) * s
 	clear_h = (art.y - LEAF_DIAMOND_TOP) * s
 	_leaf_block.position = Vector2(0, vs.y - bottom_h)
 	_leaf_block.size = Vector2(vs.x, bottom_h)
-	leaf_pack.position = Vector2(0, top) + LEAF_PACK.position * s
-	leaf_pack.size = LEAF_PACK.size * s
-	leaf_goals.position = Vector2(0, top) + LEAF_BAR.position * s
-	leaf_goals.size = LEAF_BAR.size * s
-	leaf_party.position = Vector2(0, top) + LEAF_PARTY.position * s
-	leaf_party.size = LEAF_PARTY.size * s
+	leaf_pack.position = Vector2(0, top) + _leaf_at(LEAF_PACK.position)
+	leaf_pack.size = _leaf_at(LEAF_PACK.end) - _leaf_at(LEAF_PACK.position)
+	leaf_goals.position = Vector2(0, top) + _leaf_at(LEAF_BAR.position)
+	leaf_goals.size = _leaf_at(LEAF_BAR.end) - _leaf_at(LEAF_BAR.position)
+	leaf_party.position = Vector2(0, top) + _leaf_at(LEAF_PARTY.position)
+	leaf_party.size = _leaf_at(LEAF_PARTY.end) - _leaf_at(LEAF_PARTY.position)
 	for c in leaf_party.get_children():
 		(c as Control).custom_minimum_size = _member_size()
 	var clear := (art.y - LEAF_DECOR_TOP) * s + 6.0
 	_pin(tools_box, 1, 1, 1, 1, -RIGHT_W + 14, -clear - 52, -14, -clear)
 	_pin(side_panel, 1, 0, 1, 0, -RIGHT_W + 4, side_top, -10, side_top)  # under a fight's test buttons
 	side_panel.grow_vertical = Control.GROW_DIRECTION_END
+
+
+## A point of the band's art (art px) on screen, relative to the band's top left: x passes the stretch runs.
+func _leaf_at(p: Vector2) -> Vector2:
+	var x := p.x
+	var add := 0.0
+	for k in LEAF_STRETCH.size():
+		var run: Vector2 = LEAF_STRETCH[k]
+		if p.x > run.x:
+			add += _leaf_extra[k] * clampf((p.x - run.x) / (run.y - run.x), 0.0, 1.0)
+	return Vector2(x + add, p.y) * _leaf_u
+
+
+## The band in pieces: fixed art between the stretch runs, each run drawn wider.
+func _draw_leaf() -> void:
+	var art := _leaf_tex.get_size()
+	var cuts: Array[float] = [0.0]
+	for run: Vector2 in LEAF_STRETCH:
+		cuts.append(run.x)
+		cuts.append(run.y)
+	cuts.append(art.x)
+	for i in cuts.size() - 1:
+		var a := cuts[i]
+		var b := cuts[i + 1]
+		if b <= a:
+			continue
+		var src := Rect2(a, 0, b - a, art.y)
+		var x0 := _leaf_at(Vector2(a, 0)).x
+		var x1 := _leaf_at(Vector2(b, 0)).x
+		_leaf_art.draw_texture_rect_region(_leaf_tex, Rect2(x0, 0, x1 - x0 + 0.5, art.y * _leaf_u), src)
 
 
 const RES_COLORS := {"mana": Color(0.35, 0.55, 1.0), "rage": Color(0.9, 0.3, 0.25), "charges": Color(0.95, 0.8, 0.3)}
@@ -306,11 +348,11 @@ func _leaf_member(e: Dictionary) -> Control:
 	words.add_theme_constant_override("separation", -2)
 	words.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var nm := _label(e.name, 10)
+	var nm := _label(e.name, 13)  # [USER] 2026-11-01 "the player UI/actionbar is tiny": bigger words
 	nm.clip_text = true
 	nm.custom_minimum_size.x = 10.0
 	words.add_child(nm)
-	var hpl := _label("%d/%d" % [e.hp, e.max_hp], 9)
+	var hpl := _label("%d/%d" % [e.hp, e.max_hp], 12)
 	hpl.clip_text = true
 	hpl.custom_minimum_size.x = 10.0
 	words.add_child(hpl)

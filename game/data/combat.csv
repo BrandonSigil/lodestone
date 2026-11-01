@@ -24,7 +24,10 @@ poison_turns,1,a dagger hit poisons for this many of the target's phases; a new 
 bleed_turns,3,a downed party piece can be helped up for this many of its own phases
 aid_pct,25,AID brings a downed piece back at this % of its max HP
 aid_hp,0,when above 0 AID brings a downed piece back at this many HP instead (game designer's mix; off: 6 to 10 tried 2026-10-30)
-help_damage,1,a teammate next to the same foe adds this to a hit (no wobble and no crit)
+help_damage,1,a teammate next to the same foe adds this to a hit (no wobble and no crit); only while helping_strikes is 1
+counters,0,"1: a foe in reach hits back once when attacked; 0: never ([USER] 2026-11-01 ""Cut both"" on pm-counters-helpers)"
+helping_strikes,0,"1: a teammate next to the same foe adds help_damage to a hit; 0: never ([USER] 2026-11-01 ""Cut both"")"
+beside_damage,1,"an attack made while standing next to a friend does this much more, plus the bond team-up bonus with that friend; [AI] 2026-11-01"
 teamup_opposite,1,1: two teammates on opposite sides of a foe team up too ([USER] c19); 0: they must also be next to each other
 mana_regen_pct,20,mana comes back this % of its max at the start of each of the owner's phases
 rage_per_hit,1,rage gained for each hit dealt or taken

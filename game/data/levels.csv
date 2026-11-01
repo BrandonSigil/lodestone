@@ -43,3 +43,7 @@ fish_ease_speed,0.4,Reel: the fish's speed at the start as a share of full (rise
 fish_ease_reach,0.5,Reel: how far the fish darts at the start as a share of full. [AI] 2026-11-01 FI3
 fish_ease_drain,0.2,Reel: how fast the meter drains at the start as a share of full. [AI] 2026-11-01 FI3
 fish_spring,6.0,Reel: how hard the marker is pulled back to the centre when the player lets go (bar widths a second per bar width off centre). [AI] 2026-11-01 FI4
+fish_settle,0.8,"Cast: seconds the bobber settles after it lands, before a fish can notice it ([USER] 2026-11-01 calm beats). [AI]"
+fish_hooked_beat,1.0,"Strike: seconds of HOOKED! after a good strike, before the reel bar ([USER] 2026-11-01 calm beats). [AI]"
+fish_catch_beat,1.5,"Catch: seconds the caught fish shows before a click closes it ([USER] 2026-11-01 calm beats). [AI]"
+fish_lost_beat,1.0,"Lost: seconds a fish that got away swims off before its card ([USER] 2026-11-01 calm beats). [AI]"

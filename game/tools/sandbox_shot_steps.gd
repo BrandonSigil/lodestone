@@ -48,6 +48,14 @@ func run(s: Node, _frames: int, _step: String) -> void:
 			if o.team == 0 and String(o.figure) == "lich_prince":
 				pb._select(o)
 		return
+	if _step == "hover" and _frames == 12:  # hovering MOVE before picking it: how far the piece can go
+		var hb: Battle = s.battle
+		for o: CombatUnit in hb.units:
+			if o.team == 0:
+				hb._select(o)
+				hb.preview_move()
+				break
+		return
 	if _step == "nepo" and _frames == 12:  # NEPO BABY: the hand rises among the foes (a clip: record from here)
 		var nb: Battle = s.battle
 		var prince: CombatUnit = null
