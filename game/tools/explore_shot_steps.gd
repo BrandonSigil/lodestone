@@ -263,9 +263,10 @@ func run(s: Node, f: int, step: String) -> bool:
 			if f == 5:
 				var run: RunState = s.get_node("/root/Game").run
 				run.adventure = true
-				run.food = 200
+				run.food = 100
 				run.add_item("rope", 1)
 				run.add_item("potion", 2)
+				run.add_item("tonic", 1)  # a kind with no icon: it must show its name, not a blank slot
 			return f == 30
 		"eat":
 			# EAT pressed in the PACK box: the party cards show who would gain what (the dog met, the hero hurt).
