@@ -102,9 +102,11 @@ func _advance_to(t1: float) -> void:
 	var stop := TravelRules.next_stop(float(tr.t), tr.stops, seconds)
 	t1 = minf(t1, stop)
 	var rest := float(tr.get("rest", 0.0))  # time spent at camp still counts toward meals
-	for i in TravelRules.meals_between(float(tr.t) + rest, t1 + rest):
+	var days := TravelRules.meals_between(float(tr.t) + rest, t1 + rest)
+	for i in days:
 		TravelRules.eat(Game.run)
 		_refresh_hud()
+	Game.pass_days(days)  # a journey day each meal: morale for whoever stayed home
 	if Game.trickle(maxf(0.0, t1 - float(tr.t)), "trickle_seconds"):
 		_refresh_hud()
 	tr.t = t1
@@ -264,8 +266,10 @@ func make_camp() -> void:
 	var tr := Game.travel
 	var rest := float(tr.get("rest", 0.0))
 	var camp := float(Db.levels.get("camp_seconds", 20))
-	for i in TravelRules.meals_between(float(tr.t) + rest, float(tr.t) + rest + camp):
+	var days := TravelRules.meals_between(float(tr.t) + rest, float(tr.t) + rest + camp)
+	for i in days:
 		TravelRules.eat(Game.run)
+	Game.pass_days(days)
 	tr["rest"] = rest + camp
 	tr["camped"] = true
 	_busy = true

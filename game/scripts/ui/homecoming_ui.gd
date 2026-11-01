@@ -158,15 +158,21 @@ func _bonds(col: VBoxContainer) -> void:
 			l.add_theme_color_override("font_color", UiTheme.GOLD)
 
 
-## Morale is per character ([USER] 2026-10-31 design-goodboy); until it is built meta has none and this stays hidden.
+## Morale is per character ([USER] 2026-10-31 design-goodboy; MoraleRules): who went up or down on the trip, with the
+## band they're in now, and the journey days gone (each one lifts whoever stayed home, [USER] design-morale).
 func _morale(col: VBoxContainer) -> void:
 	var rows: Array = s.get("morale", [])
-	if rows.is_empty():
+	var days := int(s.get("days", 0))
+	if rows.is_empty() and days <= 0:
 		return
 	var box := _section(col, "UI_HC_MORALE")
+	if days > 0:
+		_label(box, Txt.f("UI_HC_DAYS", days), 14).add_theme_color_override("font_color", UiTheme.PARCHMENT_DARK)
 	for r: Dictionary in rows:
 		var d := int(r.to) - int(r.from)
-		var l := _label(box, Txt.f("UI_HC_MORALE_LINE", [_name(String(r.id)), int(r.from), int(r.to), "+%d" % d if d > 0 else str(d)]), 15)
+		var band := MoraleRules.band(int(r.to), Db.morale_bands)
+		var l := _label(box, Txt.f("UI_HC_MORALE_LINE", [_name(String(r.id)), int(r.from), int(r.to), "+%d" % d if d > 0 else str(d)])
+			+ "   " + Txt.t(String(band.get("name_key", ""))), 15)
 		l.add_theme_color_override("font_color", UiTheme.GOLD if d > 0 else Color(0.95, 0.55, 0.45))
 
 

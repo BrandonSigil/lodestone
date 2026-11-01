@@ -30,7 +30,8 @@ func _process(_delta: float) -> bool:
 			"levels": [{"id": "lead", "from": 2, "to": 3, "xp": 140, "xp_now": 40, "xp_per": 100},
 				{"id": "dog", "from": 2, "to": 2, "xp": 60, "xp_now": 85, "xp_per": 100}],
 			"bonds": [{"key": "dog+lead", "from": 8, "to": 11}],
-			"morale": [{"id": "lead", "from": 62, "to": 48}, {"id": "dog", "from": 70, "to": 74}],
+			"days": 6,
+			"morale": [{"id": "lead", "from": 62, "to": 47}, {"id": "dog", "from": 70, "to": 82}],
 			"cards": ["lich"] if _fell else [],
 			"knowledge": {"got": 1, "beaten": 2} if not _fell else {"got": 1},
 			"restored": ["smithy_1"] if not _fell else []}

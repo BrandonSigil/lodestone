@@ -664,6 +664,8 @@ func _after_step() -> bool:
 	_refresh_units()
 	if Game.trickle(1.0, "trickle_steps"):
 		_refresh_hud()
+	if TravelRules.node_for_map(Db.world_nodes, map.map_name) != "town":
+		Game.walk_days(1.0)  # out of town, walking counts journey days (morale for whoever stayed home)
 	return spotted
 
 
@@ -1085,11 +1087,18 @@ func choose(o: Dictionary, ctx: Dictionary) -> void:
 		if out.dismiss != "":
 			Game.dismiss(out.dismiss)
 			lines.append(Txt.f("UI_STAYS_HOME", Txt.t(Db.character(StringName(out.dismiss)).name_key)))
+		if out.sleep:  # the hero's bed: a night at home, once a trip
+			lines.append(Txt.f("UI_SLEPT", int(Db.morale.get("bed", 20))) if Game.sleep_at_home() else Txt.t("UI_BED_USED"))
+		if int(out.morale) != 0:
+			lines.append(Txt.f("UI_MORALE_ALL", "+%d" % int(out.morale) if int(out.morale) > 0 else str(out.morale)))
 		_after_change()
 		for f: String in out.unlocks:
 			if Txt.has("UI_GOT_" + f.to_upper()):
 				lines.append(Txt.t("UI_GOT_" + f.to_upper()))  # the dog joins, the Lodestone is taken
-		lines.append(fx.run.replace(";", "  "))
+		var shown_fx := Array(fx.run.split(";", false)).filter(func(p: String) -> bool:
+			return not p.begins_with("sleep") and not p.begins_with("morale"))  # said in their own lines above
+		if not shown_fx.is_empty():
+			lines.append("  ".join(shown_fx))
 	if Game.run.wiped():
 		# A trap took the last one standing: the run ends as a lost fight does.
 		lines.append(Txt.t("UI_DEFEAT"))
@@ -1417,6 +1426,8 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	for u: CombatUnit in battle.units:  # one fight with a boss, any end, and the party knows him
 		if u.boss:
 			Game.set_flag(ExploreRules.learned_flag(String(u.cls.id)))
+	var big := foes.any(func(f: Dictionary) -> bool: return bool(f.def.get("boss", false)) or bool(f.def.get("elite", false)))
+	var heart_lines := Game.fight_morale(battle.units, ("escaped" if battle.outcome.how == "exit" else "won") if won else "lost", big)
 	var box := _new_dialog(Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT"))
 	if not won:
 		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall())
@@ -1470,6 +1481,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	var lines := Game.award_xp(xp)
 	lines.insert(0, Txt.f("UI_XP_GAIN", xp))
 	lines.append_array(battle.award_bonds())
+	lines.append_array(heart_lines)
 	_sync_party_hp()
 	_refresh_hud()
 	if ends or loot_items == "":
@@ -1720,7 +1732,8 @@ func _party_editor() -> void:
 	for d in Game.companions():
 		var id := String(d.id)
 		var going := Game.in_party(id)
-		var label := Txt.f("UI_PARTY_IN" if going else "UI_PARTY_OUT", Txt.t(d.name_key))
+		var label := Txt.f("UI_PARTY_IN" if going else "UI_PARTY_OUT", Txt.t(d.name_key)) \
+			+ Txt.f("UI_PARTY_HEART", [Game.morale_of(id), Txt.t(String(Game.morale_band(id).name_key))])  # who needs a rest
 		_dialog_button(box, label, func() -> void:
 			if Game.in_party(id):
 				Game.dismiss(id)

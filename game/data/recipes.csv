@@ -1,4 +1,4 @@
-id,name_key,meal,needs,kitchen,buff,note
-stew,MEAL_STEW,meal_stew,ingredient:3,kitchen_1,hp:+4,[USER] omr-9: made at home from the chef's recipes; first kitchen step
-roast,MEAL_ROAST,meal_roast,ingredient:4;herb:1,kitchen_2,damage:+1,
-feast,MEAL_FEAST,meal_feast,ingredient:5;herb:2;rare:1,kitchen_3,damage:+1;defense:+1;hp:+4,a full slot and more: 2 x 2
+id,name_key,meal,needs,kitchen,buff,morale,note
+stew,MEAL_STEW,meal_stew,ingredient:3,kitchen_1,hp:+4,10,[USER] omr-9: made at home from the chef's recipes; first kitchen step
+roast,MEAL_ROAST,meal_roast,ingredient:4;herb:1,kitchen_2,damage:+1,15,
+feast,MEAL_FEAST,meal_feast,ingredient:5;herb:2;rare:1,kitchen_3,damage:+1;defense:+1;hp:+4,25,a full slot and more: 2 x 2

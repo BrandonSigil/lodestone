@@ -108,7 +108,8 @@ var shown_hp := 1  ## HP the board draws; trails hp while hits animate
 
 ## mods: {"hp_pct": 100, "attack": 0, "defense": 0, "damage": 0, "move": 0}. Missing keys mean no change.
 ## Hits always land, so an attack bonus turns into crit chance and a defense bonus into armor.
-## Levels and gear add flat "hp", "range_min", "range_max" and "magic_power" (see LevelRules, Game.weapon_mods).
+## Levels and gear add flat "hp", "range_min", "range_max" and "magic_power" (see LevelRules, Game.weapon_mods);
+## low morale can take "res_max" off mana and charges (MoraleRules).
 func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 	cls = c
 	max_hp = maxi(1, int(round(c.max_hp * float(mods.get("hp_pct", 100)) / 100.0)) + int(mods.get("hp", 0)))
@@ -135,6 +136,8 @@ func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 	tags = c.tags.duplicate()
 	res_kind = c.resource
 	res_max = c.resource_max
+	if res_kind in ["mana", "charges"]:  # broken morale: one less (MoraleRules)
+		res_max = maxi(1, res_max + int(mods.get("res_max", 0))) if res_max > 0 else 0
 	res_every = c.resource_every
 	rage_bonus = int(mods.get("rage_per_hit", 0))
 	crit_heal = int(mods.get("crit_heal", 0))
