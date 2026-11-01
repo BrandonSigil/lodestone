@@ -50,3 +50,5 @@ Each turn: read the answered `art` cards and new `notes` for art, read every att
 - One review card per feature or job, not one per commit.
 - Run long checks in the foreground or wait for them; never end a turn with work unpushed. Commit, rebase onto origin/main, push, and confirm with `git log origin/main`.
 - Model: dev on Opus at medium effort; design, builder, playtest and art on Sonnet.
+
+- **One picture, one prompt** ([USER] 2026-11-01: "append all references images into one image with labels. That way I just send 1 image and 1 prompt"): every Picsart prompt card ships one labelled reference board (see `tools/art/char_board.py`, `tools/art/world_board.py`), and the prompt names the panels by their labels.
