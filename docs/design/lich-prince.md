@@ -16,8 +16,10 @@ All skills get three upgrade steps in `ability_upgrades.csv` when built.
 - He heals from camp rest (50%, free), support skills and belt items, as every hero. His morale comes from camp rest, the bed and wins.
 - Net: he saves the larder but cannot be topped up by cooking, so a hurt Prince leans on mend and rest.
 
-## The trigger, and the beaten-for-good boss
-`ExploreRules.stays_beaten` keeps a boss beaten once its `beaten_flag` is set; a boss killed once is never fought again. So "the times" cannot mean several kills. Whatever the trigger, the yield must be the one win that sets the beaten flag, plus a flag `lich_yielded` that unlocks his recruit event. A yield replaces the kill: the Lich is still beaten for good, just alive at 1 HP, and drops the usual loot.
-
-## Open (desk card `design-lich-prince`)
-Trigger: first win, third win (the Lich rearms until yielding; needs a win counter and a stays_beaten exception), or a win with nobody downed. `[AI]` pick: first win.
+## Progress and the yield (Brandon, 2026-11-01: third win)
+Brandon replaced "a beaten boss stays beaten": every fight returns every run unless a story beat says otherwise. The Lich is the first story beat.
+- `lich_wins` (persistent meta) counts wins over him. Wins 1 and 2 kill him as today (loot, boss XP, `e2e_done`).
+- Win 3 is the yield: he stops at 1 HP (the fight ends as a win), sets `lich_relented` and `lich_yielded`; `lich_yielded` unlocks the Prince's recruit event.
+- Later runs: the Lich starts calm. Walking up to him offers PASS (counts as the crypt's end and sets `e2e_done`) or FIGHT (a normal fight, normal loot, no new Prince).
+- The crypt's end and the way on: `e2e_done`/TEST DONE fires on any win, the yield, or PASS. The pass on the overworld opens the mines after a run-scoped "past the Lich" flag; once `lich_relented`, it is open from the start.
+- Old rule to remove: `stays_beaten` for bosses and elites, `clear_flag`/`after` walk-past, the beaten seal. A group is gone only if its data names a story flag (`relents`).
