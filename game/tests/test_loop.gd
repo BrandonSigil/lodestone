@@ -597,10 +597,26 @@ func test_a_cleared_place_opens_the_road_past_it() -> void:
 	var flags := [String(nodes.pass.clear_flag).split("|")[0]]
 	ok(TravelRules.cleared(nodes.pass, flags), "the boss flag clears the pass")
 	ok(TravelRules.open_now(nodes, "dwarven_mines", flags), "and opens the tile past it")
-	eq(TravelRules.route(paths, nodes, "town", "dwarven_mines", flags), ["town", "pass", "dwarven_mines"] as Array[String], "the road runs past the pass")
-	eq(TravelRules.route(paths, nodes, "dwarven_mines", "town", flags), ["dwarven_mines", "pass", "town"] as Array[String], "and back")
+	var there := TravelRules.route(paths, nodes, "town", "dwarven_mines", flags)  # past the pass or the forest: both border it
+	ok(there.size() == 3 and there[0] == "town" and there[2] == "dwarven_mines", "the road runs on to the mines")
+	eq(TravelRules.route(paths, nodes, "dwarven_mines", "town", flags).size(), 3, "and back")
 	eq(TravelRules.route(paths, nodes, "town", "pass", flags), ["town", "pass"] as Array[String], "the pass can still be gone into")
 	eq(TravelRules.route(paths, nodes, "town", "coastal_beach", flags), [] as Array[String], "shut tiles stay shut")
+
+
+## [USER] 2026-11-01 (pm-dev-painted-world-map): the painted map under the tiles, each tile's outline traced into data,
+## fog over tiles not seen yet.
+func test_painted_world_map() -> void:
+	_db()
+	var nodes := Db.world_nodes
+	ok(ResourceLoader.exists(Db.world_art), "the painted map is in art/source")
+	for id: String in nodes:
+		var n: Dictionary = nodes[id]
+		ok(n.has("outline") and (n.outline as PackedVector2Array).size() >= 5, id + " has a traced outline")
+		ok(Geometry2D.is_point_in_polygon(TravelRules.tile_pos(n), n.outline), id + ": its centre is inside it")
+	var flags := TravelRules.discover(nodes, "town")
+	ok(TravelRules.seen("town", flags) and TravelRules.seen("pass", flags) and TravelRules.seen("forest_roads", flags), "home and its neighbours come out of the fog")
+	ok(not TravelRules.seen("frozen_dam", flags), "the far north stays under it")
 
 
 ## [USER] 2026-11-01 (card pm-world-paths): the overworld is Brandon's twelve-tile hex map, any tile leads on to the

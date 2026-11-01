@@ -316,26 +316,69 @@ static func hex_ground(col: int, row: int) -> Vector2:
 	return HEX_ORIGIN + Vector2(col * 1.5 * HEX_R, y * HEX_SQ)
 
 
-## The middle of a tile's top face, where its glyph sits and the party stands.
+## The middle of a tile's top face, where its glyph sits and the party stands. With a traced outline (the painted map,
+## [USER] 2026-11-01 pm-dev-painted-world-map): the outline's centre, in picture pixels.
 static func tile_pos(node: Dictionary) -> Vector2:
+	if node.has("outline"):
+		return centre(node.outline)
 	return hex_ground(int(node.col), int(node.row)) - Vector2(0, HEX_LEVEL * int(node.height) + 20.0)
 
 
-## A tile's top face (six corners, clockwise from the right), shrunk by gap so neighbours stay apart.
+## A tile's top face, shrunk by gap toward its centre so neighbours stay apart: the traced outline, or the graybox hex
+## (six corners, clockwise from the right).
 static func tile_top(node: Dictionary, gap := 9.0) -> PackedVector2Array:
 	var c := tile_pos(node)
 	var out := PackedVector2Array()
+	if node.has("outline"):
+		for p: Vector2 in node.outline:
+			out.append(p + (c - p).normalized() * minf(gap, p.distance_to(c) * 0.5))
+		return out
 	for i in 6:
 		var a := deg_to_rad(60.0 * i)
 		out.append(c + Vector2(cos(a), sin(a) * HEX_SQ) * (HEX_R - gap))
 	return out
 
 
-## The tiles that share an edge with this one (any of the six sides), by column and row.
+## A polygon's centre of area (its middle for a non-uniform traced tile).
+static func centre(poly: PackedVector2Array) -> Vector2:
+	var area := 0.0
+	var c := Vector2.ZERO
+	for i in poly.size():
+		var a := poly[i]
+		var b := poly[(i + 1) % poly.size()]
+		var cross := a.cross(b)
+		area += cross
+		c += (a + b) * cross
+	if absf(area) < 0.001:
+		return poly[0] if not poly.is_empty() else Vector2.ZERO
+	return c / (3.0 * area)
+
+
+const SHARED_EDGE := 6.0  ## picture pixels: two traced corners this close are one corner
+
+
+## Do two traced outlines share a border? Two or more corners in common (one corner is only touching).
+static func share_border(a: PackedVector2Array, b: PackedVector2Array) -> bool:
+	var same := 0
+	for p in a:
+		for q in b:
+			if p.distance_to(q) <= SHARED_EDGE:
+				same += 1
+				break
+	return same >= 2
+
+
+## The tiles that share an edge with this one: by traced outline when the tiles have them, else by column and row
+## (any of the six sides).
 static func neighbours(nodes: Dictionary, id: String) -> Array[String]:
 	var n: Dictionary = nodes.get(id, {})
 	var out: Array[String] = []
 	if n.is_empty():
+		return out
+	if n.has("outline"):
+		for o: String in nodes:
+			if o != id and nodes[o].has("outline") and share_border(n.outline, nodes[o].outline):
+				out.append(o)
 		return out
 	var c := int(n.col)
 	var r := int(n.row)
@@ -383,6 +426,24 @@ static func cleared(node: Dictionary, flags: Array) -> bool:
 ## Every tile shows on the hex map ([USER] 2026-11-01: the other tiles show, shut).
 static func visible(nodes: Dictionary, id: String, _flags: Array) -> bool:
 	return nodes.has(id)
+
+
+## Fog on the painted map ([USER] 2026-11-01): a tile is seen once the party has stood on it or next to it. Saved as
+## meta flags seen_tile_<id>.
+static func seen_flag(id: String) -> String:
+	return "seen_tile_" + id
+
+
+static func seen(id: String, flags: Array) -> bool:
+	return flags.has(seen_flag(id))
+
+
+## The flags standing on a tile sets: it and every tile it shares a border with.
+static func discover(nodes: Dictionary, at: String) -> Array[String]:
+	var out: Array[String] = [seen_flag(at)]
+	for n in neighbours(nodes, at):
+		out.append(seen_flag(n))
+	return out
 
 
 ## Can the party go to this tile now? Open in data, and a tile `after` another one only once that one is cleared

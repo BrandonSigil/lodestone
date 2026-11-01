@@ -39,6 +39,11 @@ var _note := ""  ## a short line under the party (PATH SHUT, a talk line)
 var _note_time := 0.0
 var _rng := RandomNumberGenerator.new()
 var _weather: MapWeather
+var _art: Texture2D  ## the painted world map under the tiles (Db.world_art), null for the graybox blocks
+var _fog: Texture2D  ## parchment with soft clouds, drawn in code, laid over tiles not seen yet
+const FOG_PAPER := Color(0.91, 0.86, 0.74)
+const FOG_CLOUD := Color(0.98, 0.97, 0.93)
+const PIECE := 1.6  ## the party pieces and badges on the painted map, against its picture-pixel scale
 const SNOW_REACH := 190.0  ## map units round a snowy place that the snow falls over
 
 
@@ -54,6 +59,11 @@ func _ready() -> void:
 		if Game.travel.has(k) and not Db.world_nodes.has(String(Game.travel[k])):
 			Game.travel = {"at": "town"}
 			break
+	if Db.world_art != "" and ResourceLoader.exists(Db.world_art) and Db.world_nodes.values().all(func(n: Dictionary) -> bool: return n.has("outline")):
+		_art = load(Db.world_art)
+		_fog = _cloud_paper()
+		texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED  # the fog's clouds tile
+	_discover(String(Game.travel.get("at", Game.travel.get("from", "town"))))
 	_weather = MapWeather.new()  # snow round the snowy places ([USER] 2026-10-30, ambience)
 	add_child(_weather)
 	_weather.setup("snow" if Db.world_nodes.values().any(func(n: Dictionary) -> bool: return String(n.get("weather", "")) == "snow") else "",
@@ -153,6 +163,7 @@ func _arrive() -> void:
 	var to := String(Game.travel.to)
 	var then: Array = Game.travel.get("then", [])
 	Game.travel = {"at": to}
+	_discover(to)
 	bookmark()
 	Game.save_adventure()
 	if not then.is_empty():
@@ -495,8 +506,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func _click_node(id: String) -> void:
-	if not TravelRules.visible(Db.world_nodes, id, Game.meta.flags):
-		return
+	if not TravelRules.visible(Db.world_nodes, id, Game.meta.flags) or (_art != null and not TravelRules.seen(id, Game.meta.flags)):
+		return  # under the fog: nothing to click yet
 	if id == String(Game.travel.get("at", "")):
 		_enter()
 	elif not TravelRules.open_now(Db.world_nodes, id, Game.meta.flags):
@@ -558,6 +569,9 @@ var _bounds_cache := Rect2()
 func _bounds() -> Rect2:
 	if _bounds_cache.has_area():
 		return _bounds_cache
+	if _art != null:  # the painted map: the whole picture, in its own pixels
+		_bounds_cache = Rect2(Vector2.ZERO, _art.get_size())
+		return _bounds_cache
 	var b := Rect2()
 	var first := true
 	for id in Db.world_nodes:
@@ -584,6 +598,9 @@ func _draw() -> void:
 	var v := _view()
 	var k := float(v.k)
 	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), BACK)  # [USER] 2026-10-29: the game fills the window
+	if _art != null:
+		_draw_painted(k)
+		return
 	for id in _back_to_front():
 		_draw_tile(id, k)
 	for p: Dictionary in Db.world_paths:  # a road on every shared edge whose two tiles are both open now
@@ -600,6 +617,110 @@ func _draw() -> void:
 	if _note_time > 0.0:
 		var at := _to_screen(party_pos()) + Vector2(0, -46 * k)
 		_label(at, _note, 13, Color(1, 1, 1, minf(1.0, _note_time)))
+
+
+## The painted world map ([USER] 2026-11-01 pm-dev-painted-world-map): Brandon's picture as the ground, each tile on
+## its traced outline (data/world_tiles.csv). Tiles not seen yet lie under parchment and cloud; the tile the party is on
+## has an inked outline, the tiles it can walk to now glow softly, and hovering a seen tile names it.
+func _draw_painted(k: float) -> void:
+	var flags: Array = Game.meta.flags
+	var at := String(Game.travel.get("at", "")) if not walking() else ""
+	draw_texture_rect(_art, Rect2(_to_screen(Vector2.ZERO), _art.get_size() * k), false)
+	var near: Array[String] = []
+	if at != "":
+		for n in TravelRules.neighbours(Db.world_nodes, at):
+			if TravelRules.open_now(Db.world_nodes, n, flags):
+				near.append(n)
+	for id in Db.world_nodes:
+		var ring := _screen_ring(TravelRules.tile_top(_node(id), 0.0))
+		if not TravelRules.seen(id, flags):
+			_draw_fog(ring)
+		elif not TravelRules.open_now(Db.world_nodes, id, flags):
+			draw_colored_polygon(ring, Color(0.15, 0.13, 0.12, 0.28))  # seen but shut for now
+	for p: Dictionary in Db.world_paths:  # a road on every border whose two tiles are seen and open now
+		if TravelRules.seen(p.from, flags) and TravelRules.seen(p.to, flags) \
+				and TravelRules.open_now(Db.world_nodes, p.from, flags) and TravelRules.open_now(Db.world_nodes, p.to, flags):
+			_draw_path(PackedVector2Array([_node_pos(p.from), _node_pos(p.to)]), k * PIECE)
+	var glow := 0.5 + 0.5 * sin(_time * 2.5)
+	for id in near:  # where the party can walk to now
+		var ring := _screen_ring(TravelRules.tile_top(_node(id), 5.0))
+		draw_colored_polygon(ring, Color(1.0, 0.93, 0.6, 0.10 + 0.08 * glow))
+		draw_polyline(_closed(ring), Color(1.0, 0.9, 0.55, 0.55 + 0.3 * glow), 3.0, true)
+	if at != "":  # where the party stands: inked
+		var ring := _closed(_screen_ring(TravelRules.tile_top(_node(at), 4.0)))
+		draw_polyline(ring, Color(1, 1, 1, 0.6), 7.0, true)
+		draw_polyline(ring, INK, 4.0, true)
+	if _hover != "" and _hover != at and TravelRules.seen(_hover, flags):
+		draw_polyline(_closed(_screen_ring(TravelRules.tile_top(_node(_hover), 5.0))), Color(1, 1, 1, 0.85), 2.5, true)
+	if walking():
+		var lp := leg()
+		var pts: PackedVector2Array = lp.points
+		for st: float in Game.travel.stops:
+			_draw_stop(_to_screen(TravelRules.point_at(pts, st / float(lp.seconds))), k * PIECE)
+	for id in Db.world_nodes:
+		if TravelRules.seen(id, flags):
+			_draw_badges(id, k * PIECE)
+	_draw_party(k * PIECE)
+	if _hover != "" and TravelRules.seen(_hover, flags):  # the name on hover (placeholder text)
+		_label(_to_screen(_node_pos(_hover)) + Vector2(0, -34 * k * PIECE), Txt.t(_node(_hover).name_key), 16, INK)
+	if _note_time > 0.0:
+		_label(_to_screen(party_pos()) + Vector2(0, -46 * k * PIECE), _note, 13, Color(1, 1, 1, minf(1.0, _note_time)))
+
+
+func _screen_ring(pts: PackedVector2Array) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in pts:
+		out.append(_to_screen(p))
+	return out
+
+
+func _closed(ring: PackedVector2Array) -> PackedVector2Array:
+	var out := ring.duplicate()
+	out.append(ring[0])
+	return out
+
+
+## A tile not seen yet: parchment with soft clouds, clipped to its outline, its edge a little darker.
+func _draw_fog(ring: PackedVector2Array) -> void:
+	var uvs := PackedVector2Array()
+	var drift := Vector2(_time * 0.004, 0.0)
+	for p in ring:
+		uvs.append(p / 256.0 + drift)
+	draw_colored_polygon(ring, Color.WHITE, uvs, _fog)
+	draw_polyline(_closed(ring), FOG_PAPER.darkened(0.25), 2.0, true)
+
+
+## The fog's texture, made once: parchment, and noise for clouds over it. It tiles.
+func _cloud_paper() -> Texture2D:
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = 0.012
+	noise.fractal_octaves = 4
+	var size := 256
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	for y in size:
+		for x in size:
+			var a := float(x) / size * TAU
+			var b := float(y) / size * TAU
+			# sampled on a torus so the edges meet when it tiles
+			var n := noise.get_noise_3d(cos(a) * 40.0 + 40.0, sin(a) * 40.0 + cos(b) * 40.0, sin(b) * 40.0)
+			var c := smoothstep(-0.05, 0.45, n)
+			img.set_pixel(x, y, FOG_PAPER.lerp(FOG_CLOUD, c))
+	var tex := ImageTexture.create_from_image(img)
+	return tex
+
+
+## Stand on a tile: it and its neighbours come out of the fog, for good (meta flags).
+func _discover(id: String) -> void:
+	if not Db.world_nodes.has(id):
+		return
+	var changed := false
+	for f in TravelRules.discover(Db.world_nodes, id):
+		if not Game.has_flag(f):
+			Game.meta.flags.append(f)
+			changed = true
+	if changed:
+		Game.save_meta()
 
 
 ## One tile as a raised hex block: the three faces toward the viewer, then the top, washed with its land's colour.
@@ -656,6 +777,16 @@ func _draw_marks(id: String, k: float) -> void:
 		"city":
 			for i in 3:
 				draw_rect(Rect2(p + Vector2(-13 + i * 9, -10 + (i % 2) * 4) * k, Vector2(7, 16 - (i % 2) * 4) * k), Color(0.55, 0.5, 0.48))
+	_draw_badges(id, k)
+	if not open:
+		_label(p + Vector2(0, 8), "?", 22, Color(INK, 0.6))
+	_label(p + Vector2(0, 40 * k), Txt.t(n.name_key), 13, ink)
+
+
+## An elite fight still waiting (red !) and a cleared place (gold seal), by the tile's centre.
+func _draw_badges(id: String, k: float) -> void:
+	var n := _node(id)
+	var p := _to_screen(_node_pos(id))
 	if _elites.get(id, 0) > 0:  # [USER] pc-15: an elite fight waits here
 		var e := p + Vector2(-34, -18) * k
 		draw_circle(e, 9.0 * k + 2.0, Color(0.8, 0.22, 0.2))
@@ -666,9 +797,6 @@ func _draw_marks(id: String, k: float) -> void:
 		draw_circle(b, 9.0 * k + 2.0, Color(0.95, 0.75, 0.25))
 		draw_arc(b, 9.0 * k + 2.0, 0, TAU, 20, INK, 1.5, true)
 		draw_polyline(PackedVector2Array([b + Vector2(-4, 0) * k, b + Vector2(-1, 3.5) * k, b + Vector2(4.5, -4) * k]), INK, 2.0, true)
-	if not open:
-		_label(p + Vector2(0, 8), "?", 22, Color(INK, 0.6))
-	_label(p + Vector2(0, 40 * k), Txt.t(n.name_key), 13, ink)
 
 
 func _pine(p: Vector2, k: float) -> void:

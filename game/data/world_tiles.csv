@@ -1,0 +1,14 @@
+id,outline,note
+_map,res://art/source/world/world_map_v1.png,the picture the outlines are traced from ([USER] 2026-11-01: approved for now); a better map later needs only this path and new outlines
+frozen_dam,480:75|630:140|630:285|485:355|330:285|330:140,picture pixels clockwise from the top; outer edges close along the coast where the painted border fades
+snowy_plains,765:85|902:130|902:275|767:350|630:285|630:140,
+enchanted_woods_back,1040:95|1230:170|1190:285|1050:345|902:275|902:130,
+coastal_beach,330:285|485:355|485:478|335:550|185:480|200:350,
+dwarven_mines,630:285|767:350|767:490|615:550|485:478|485:355,
+grassland,902:275|1050:345|1045:485|880:505|767:490|767:350,
+enchanted_woods,1190:285|1350:350|1370:460|1290:500|1145:550|1045:485|1050:345,
+forest_roads,485:478|615:550|615:730|560:760|480:800|335:700|335:550,
+pass,615:550|767:490|880:505|880:730|750:770|615:730,
+farmland,880:505|1045:485|1145:550|1145:720|1010:800|930:770|880:730,
+capital_city,1145:550|1290:500|1440:570|1440:720|1290:800|1145:720,
+town,615:730|750:770|880:730|930:770|930:860|820:950|650:930|590:860|560:760,

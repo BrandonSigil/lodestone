@@ -35,6 +35,7 @@ var weapons: Dictionary = {}  # id -> row of data/weapons.csv: the smithy weapon
 var travel_events: Array[Dictionary] = []  # overworld encounters, data/travel_events.csv (events.csv format)
 var world_nodes: Dictionary = {}  # id -> row of data/overworld_nodes.csv
 var world_paths: Array[Dictionary] = []  # rows of data/overworld_paths.csv
+var world_art := ""  # the painted world map the tile outlines are traced from (data/world_tiles.csv, row _map)
 
 
 func _ready() -> void:
@@ -117,6 +118,12 @@ func reload() -> void:
 	for row in CsvTable.load_rows("res://data/overworld_nodes.csv"):
 		world_nodes[row.id] = row
 	world_paths = CsvTable.load_rows("res://data/overworld_paths.csv")
+	world_art = ""
+	for row in CsvTable.load_rows("res://data/world_tiles.csv"):  # each tile's outline, traced from the painted map
+		if row.id == "_map":
+			world_art = String(row.outline)
+		elif world_nodes.has(row.id):
+			world_nodes[row.id]["outline"] = TravelRules.parse_points(String(row.outline))
 
 
 ## Items the village shop sells, in table order.
