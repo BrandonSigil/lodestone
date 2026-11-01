@@ -6,6 +6,12 @@ box_min_corners,14,jut-outs and inlets per 100 footprint cells
 box_min_bays,0.30,share of the bounding box's four corner quarters left empty
 box_min_levels,8,distinct heights under the footprint
 box_min_climbs,8,separate stair runs
+fight_box_max_fill,0.62,the fight bar (battle maps up to 26 x 26): share of the bounding box the footprint may cover
+fight_box_min_edge,1.3,the fight bar: footprint edge cells over the bounding box perimeter
+fight_box_min_corners,14,the fight bar: jut-outs and inlets per 100 footprint cells
+fight_box_min_bays,0.30,the fight bar: share of the bounding box's four corner quarters left empty
+fight_box_min_levels,7,the fight bar: distinct heights under the footprint
+fight_box_min_climbs,4,the fight bar: separate stair runs
 jump,1,the Jump the reachability and stair checks walk with (a plain party member)
 deploy_radius,1,steps from the leader a slow member may start a fight (ExploreRules.deploy_radius for move 4)
 deploy_room,3,free cells the party needs next to the leader (party of 4 minus the leader)

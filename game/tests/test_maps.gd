@@ -1043,3 +1043,30 @@ func test_farmland_amber() -> void:
 	ok(not ExploreRules.need_met(sit.options[0].need, [], have), "no sitting before the fire is fed")
 	have.flags = ["amber_fed"]
 	ok(ExploreRules.need_met(sit.options[0].need, [], have), "sitting wakes her")
+
+
+## [USER] 2026-11-01 battle-maps plan: road fights come from hand-drawn plots (MapPlot, data/plots/forest). Every starter
+## plot is well formed and every seed of it makes a fight: both sides deploy, a land route joins them, one bridge at most.
+func test_forest_plots_make_fights() -> void:
+	var all := MapPlot.list("forest")
+	ok(all.size() >= 5, "five or more starter forest plots, drafts too (%d)" % all.size())
+	for p in all:
+		eq(MapPlot.problems(p), [] as Array[String], "%s is well formed" % p.id)
+	var plots := MapPlot.list("forest", false)
+	ok(plots.size() >= 3 and plots.size() < all.size(), "road fights use the finished plots only (%d of %d)" % [plots.size(), all.size()])
+	for p in plots:
+		for sd in [1, 2, 3]:
+			var g := MapPlot.build(p, sd, "forest")
+			var doc := MapDoc.create("battle", "test_tmp", g, "forest")
+			var by := {}
+			for c in MapQA.run(doc.grid, "battle", doc.data):
+				by[c.id] = c
+			ok(by.deploy.level != "fail" and by.route.level == "ok" and by.reach.level != "fail",
+				"%s seed %d fights: %s / %s / %s" % [p.id, sd, by.deploy.summary, by.route.summary, by.reach.summary])
+			ok((MapQA.crossings(g).bridges as Array).size() <= 1, "%s seed %d: one bridge at most" % [p.id, sd])
+			var foes := g.deploy_cells(1)
+			ok(foes.size() >= CombatGrid.DEPLOY_MIN and foes.all(func(c: Vector2i) -> bool: return c.x >= g.w - CombatGrid.DEPLOY_COLS),
+				"%s seed %d: the foes start on their own edge, across any bridge (%s)" % [p.id, sd, foes.slice(0, 3)])
+			ok(MapQA.check_box(g, "battle").level == "ok", "%s seed %d passes the fight box bar: %s" % [p.id, sd, MapQA.check_box(g, "battle").summary])
+	var g2 := MapGen.road_fight(5, "forest")
+	ok(g2.w == MapGen.FIGHT_W and g2.deploy_cells(0).size() >= CombatGrid.DEPLOY_MIN, "a forest road fight is built from a plot")

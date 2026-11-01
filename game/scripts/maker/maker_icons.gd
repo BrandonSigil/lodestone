@@ -181,6 +181,9 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 			_poly([Vector2(0.42, 0.2), Vector2(0.42, 0.8), Vector2(0.1, 0.8)])
 			_line([Vector2(0.58, 0.2), Vector2(0.58, 0.8), Vector2(0.9, 0.8)], true)
 			_line([Vector2(0.5, 0.06), Vector2(0.5, 0.94)])
+		"close":  # an X
+			_line([Vector2(0.22, 0.22), Vector2(0.78, 0.78)])
+			_line([Vector2(0.78, 0.22), Vector2(0.22, 0.78)])
 		"trash":
 			_line([Vector2(0.24, 0.3), Vector2(0.3, 0.88), Vector2(0.7, 0.88), Vector2(0.76, 0.3)])
 			_line([Vector2(0.14, 0.24), Vector2(0.86, 0.24)])

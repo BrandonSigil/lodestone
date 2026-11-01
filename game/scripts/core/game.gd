@@ -15,6 +15,7 @@ const BATTLE := "res://scenes/battle_view.tscn"  ## one fight on one map, no edi
 const SANDBOX := "res://scenes/combat_sandbox.tscn"  ## archived combat sandbox: in no menu or key, open it in the editor (F6)
 const EXPLORE := "res://scenes/explore.tscn"  ## walkable map, F10 from any screen for now
 const MAKER := "res://scenes/map_maker.tscn"  ## the map maker, F8 from any screen
+const PLOT_MAKER := "res://scenes/plot_maker.tscn"  ## the road-fight plot maker, from the map maker's top bar
 const LAUNCH := "res://scenes/launch.tscn"  ## the fast-travel menu the game opens on, F7 from any screen
 const FISHING := "res://scenes/fishing.tscn"  ## the fishing minigame on its own, for practice (launch menu)
 const OVERWORLD := "res://scenes/overworld.tscn"  ## the map between places: town, the snowy pass, and paths still shut

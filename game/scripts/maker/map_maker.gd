@@ -1901,6 +1901,7 @@ func _build_top() -> void:
 	bar.add_child(MakerUI.spacer(8))
 	var qb2 := _icon(bar, "qa", "QA: check this map before anyone looks at it (reachability, box score, stairs to nowhere, scale against the hero, deploy room) and paint the problems on it", func() -> void: run_qa(true), 34.0, "QA")
 	qb2.add_theme_color_override("font_color", MakerUI.ACCENT)
+	_icon(bar, "flat", "Plots: the road-fight skeletons (road, river, terraces) random fight maps are built from", func() -> void: Game.go(Game.PLOT_MAKER), 34.0, "Plots")
 	var play := _icon(bar, "play", "Save and play this map", play_test, 34.0, "Play test")
 	play.add_theme_color_override("font_color", MakerUI.ACCENT)
 	_back_btn = Button.new()

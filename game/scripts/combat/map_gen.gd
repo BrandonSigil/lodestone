@@ -16,6 +16,20 @@ const FIGHT_W := 21
 const FIGHT_H := 18
 
 
+## A road fight's map ([USER] 2026-11-01 battle-maps plan): from one of the region's plots (data/plots/<region>, MapPlot)
+## when it has any, picked and varied by the seed; a map that fails the checks tries the next seed (up to 8), and a
+## region with no plots (or no plot that holds) falls back to the generated valley.
+static func road_fight(seed_value: int, region: String, w := FIGHT_W, h := FIGHT_H) -> CombatGrid:
+	var plots := MapPlot.list(region, false)
+	for k in 8 if not plots.is_empty() else 0:
+		var sd := seed_value + k * 7919
+		var g := MapPlot.build(plots[posmod(sd, plots.size())], sd, region)
+		if g.deploy_cells(0).size() >= CombatGrid.DEPLOY_MIN and g.deploy_cells(1).size() >= CombatGrid.DEPLOY_MIN \
+				and MapOps.walk_steps(g, g.deploy_cells(0)[0]).has(g.deploy_cells(1)[0]):
+			return g
+	return valley(seed_value, w, h, region)
+
+
 ## [USER] 2026-11-01 battle-maps plan, step 1 (docs/design/battle-maps-research.md): the river has a job and the road
 ## comes first. A "flank" river (the default) runs along one side, parallel to the road, so it never splits the two
 ## starts; a "crossing" river cuts between them and the road crosses it on exactly one bridge, laid where the road
@@ -39,9 +53,9 @@ static func valley(seed_value: int, w := FIGHT_W, h := FIGHT_H, look_id := "alpi
 	if river_job == "crossing":
 		_road_bridge(g)  # the one bridge, where the road's line meets the river
 	MapOps.pillars(g, seed_value + 9, clampi(w * h / 160, 2, 4))
+	MapOps.flatten_dead_stairs(g)
 	MapOps.seal_unreachable(g)
 	_roads(g, rng)
-	MapOps.flatten_dead_stairs(g)
 	g.look = {"id": look_id}
 	return g
 

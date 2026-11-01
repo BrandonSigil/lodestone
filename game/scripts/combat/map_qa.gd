@@ -29,6 +29,9 @@ static var _scale := {}
 
 
 ## A setting from data/map_qa.csv.
+const FIGHT_MAX := 26  ## the largest battle map held to the fight box bar
+
+
 static func cfg(key: String) -> float:
 	if _cfg.is_empty():
 		for r in CsvTable.load_rows(QA_CSV):
@@ -49,7 +52,7 @@ static func run(grid: CombatGrid, kind: String, data: Dictionary) -> Array[Dicti
 	var reached := _reached(g, kind, data)
 	var out: Array[Dictionary] = []
 	out.append(check_reach(g, kind, data, reached))
-	out.append(check_box(g))
+	out.append(check_box(g, kind))
 	out.append(check_stairs(g, kind))
 	out.append(check_scale(g))
 	out.append(check_deploy(g, kind, data, reached))
@@ -523,8 +526,11 @@ static func box_stats(g: CombatGrid) -> Dictionary:
 		"bays": bays / 4.0, "levels": levels.size(), "climbs": runs, "box": Rect2i(x0, y0, bw, bh), "corner_cells": full}
 
 
-static func check_box(g: CombatGrid) -> Dictionary:
+## A battle map up to fight size (26 x 26) is held to the fight bar (`fight_box_*` in map_qa.csv; [AI] 2026-11-01: two
+## flat deploy bands on a 21 x 18 map can't wind like an explore map); everything else to the standard bar (`box_*`).
+static func check_box(g: CombatGrid, kind := "explore") -> Dictionary:
 	var c := _check("box")
+	var bar := "fight_box_" if kind == "battle" and g.w <= FIGHT_MAX and g.h <= FIGHT_MAX else "box_"
 	var s := box_stats(g)
 	if s.is_empty():
 		c.level = "fail"
@@ -539,25 +545,25 @@ static func check_box(g: CombatGrid) -> Dictionary:
 	var r: Rect2i = s.box
 	var mid := r.position + r.size / 2
 	var why: PackedStringArray = []
-	if s.fill > cfg("box_max_fill"):
-		why.append("fills %d%% of its box (max %d%%)" % [roundi(s.fill * 100), roundi(cfg("box_max_fill") * 100)])
+	if s.fill > cfg(bar + "max_fill"):
+		why.append("fills %d%% of its box (max %d%%)" % [roundi(s.fill * 100), roundi(cfg(bar + "max_fill") * 100)])
 		_problem(c, mid, "too square: the ground fills %d%% of its bounding box; cut bays and inlets" % roundi(s.fill * 100))
-	if s.edge < cfg("box_min_edge"):
-		why.append("edge %.2f (min %.1f)" % [s.edge, cfg("box_min_edge")])
+	if s.edge < cfg(bar + "min_edge"):
+		why.append("edge %.2f (min %.1f)" % [s.edge, cfg(bar + "min_edge")])
 		_problem(c, r.position, "outline too straight: edge %.2f, wind it in and out" % s.edge)
-	if s.corners < cfg("box_min_corners"):
-		why.append("corners %.1f (min %d)" % [s.corners, roundi(cfg("box_min_corners"))])
+	if s.corners < cfg(bar + "min_corners"):
+		why.append("corners %.1f (min %d)" % [s.corners, roundi(cfg(bar + "min_corners"))])
 		_problem(c, r.position, "few jut-outs: %.1f corners per 100 cells" % s.corners)
-	if s.bays < cfg("box_min_bays"):
-		why.append("bays %.2f (min %.2f)" % [s.bays, cfg("box_min_bays")])
+	if s.bays < cfg(bar + "min_bays"):
+		why.append("bays %.2f (min %.2f)" % [s.bays, cfg(bar + "min_bays")])
 		var cc: Array[Vector2i] = s.corner_cells
 		c.cells.append_array(cc)
 		_problem(c, cc[0] if not cc.is_empty() else r.position, "the box's corners are filled in: leave bays there (painted)")
-	if s.levels < cfg("box_min_levels"):
-		why.append("%d levels (min %d)" % [s.levels, roundi(cfg("box_min_levels"))])
+	if s.levels < cfg(bar + "min_levels"):
+		why.append("%d levels (min %d)" % [s.levels, roundi(cfg(bar + "min_levels"))])
 		_problem(c, mid, "too flat: %d heights under the ground" % s.levels)
-	if s.climbs < cfg("box_min_climbs"):
-		why.append("%d climbs (min %d)" % [s.climbs, roundi(cfg("box_min_climbs"))])
+	if s.climbs < cfg(bar + "min_climbs"):
+		why.append("%d climbs (min %d)" % [s.climbs, roundi(cfg(bar + "min_climbs"))])
 		_problem(c, mid, "few climbs: %d stair runs" % s.climbs)
 	if why.is_empty():
 		c.summary = "not a box: fill %d%%, %d levels, %d climbs" % [roundi(s.fill * 100), s.levels, s.climbs]

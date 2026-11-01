@@ -15,7 +15,7 @@ Catalog: `game/data/catalog.csv`. Scene: `scenes/map_maker.tscn`.
 ## Screen
 - **Top bar** (icons, tooltips name them): new, open, save, save as, undo, redo; the map's name (`*` unsaved); painted
   terrain (K, on), grid lines, height numbers, names over things; turn the view (editing only), fit, hide
-  panels; **Play test**.
+  panels; **Play test**; **Plots** opens the plot maker (`docs/systems/plots.md`).
 - **Tool rail** (left): Select V, Place B, Erase X, Party U, Enemy E | Raise 1, Lower 2, Level 3, Smooth 4, Tidy 5,
   Pillar 6 | Ground P, Path L, River W, Stairs T, Deck J | Cut C, Fill F, Zone Z. Hover a tool for what it does.
 - **Options bar** (top): what the picked tool needs: brush size and shape, the level height, ground

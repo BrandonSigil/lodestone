@@ -680,7 +680,8 @@ func deploy_cells(team: int) -> Array[Vector2i]:
 	return out
 
 
-## The biggest stretch of ground a Jump 1 piece can walk all over (stairs count). Fights deploy only on it,
+## The biggest stretch of ground a Jump 1 piece can walk all over (stairs and bridges count; only ground cells are
+## listed, decks are walked over). Fights deploy only on it,
 ## so nobody starts on a ledge or wall top they can't get down from, out of reach of the other side.
 func main_ground(jump := 1) -> Dictionary:
 	var best := {}
@@ -696,11 +697,12 @@ func main_ground(jump := 1) -> Dictionary:
 			while not queue.is_empty():
 				var c: Vector2i = queue.pop_back()
 				for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-					var n: Vector2i = c + d
-					if not done.has(n) and passable(n) and can_step(c, n, jump):
-						done[n] = true
-						region[n] = true
-						queue.append(n)
+					for n: Vector2i in places_next(c, d):  # bridge decks too: a bridge joins the ground on its two banks
+						if not done.has(n) and passable(n) and can_step(c, n, jump):
+							done[n] = true
+							if not on_deck(n):
+								region[n] = true
+							queue.append(n)
 			if region.size() > best.size():
 				best = region
 	return best
