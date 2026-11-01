@@ -88,6 +88,7 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | X7 | "Take all should move money over too and the party menu should say total gold too" | Systems developer | done (evening round) |
 | X8 | "Theres a random barrel here in the middle of the road, which is odd, and theres no asset for it. If we dont have a specific asset grey box it please" (forest_roads `forest_stash`, kind cache, at (19,14): only a tile glow and the ! marker show) | Systems developer | queued (after X7) |
 | X8 | "You should be able to walk through stools, they make this whole room very hard to navigate" (tavern) | Systems developer | done (evening round; only stools, chairs and benches still block) |
+| X9 | "These options should be conditional, we dont have a rogue in the party so they dont get a sneak hit. We havent done anything that warrants the ability to talk to them, so that shouldnt be an option" (the explore spot prompt: FIGHT / SNEAK HIT / TALK / BACK OFF on the elite ogre) | Systems developer | queued (after X8) |
 | X9 | "Remove the Lorem Ipsum What do these icons mean? Hide the combat log behind the win window and make it much smaller. We dont need the second win lorem ipsum" | Systems developer | done (evening round) |
 | X10 | "What is this whole menu on the right ... let's put all dialogue/actions/ right above the diamond" (overworld side panel; one standard place) | Systems developer | done (evening round) |
 | X11 | "The bottom fram is HUGE and the player UI/actionbar is tiny" | Systems developer | done (evening round) |
