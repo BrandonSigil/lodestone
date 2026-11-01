@@ -73,3 +73,7 @@ Playtest fixes X1 to X4 (2026-11-01):
 - Event options short only of a count of things ("item:wood*3") show greyed instead of hidden (`ExploreRules.options_short`); `need` takes `item:<id>*<n>`.
 - Amber's bonfire uses Brandon's own text and one action, Feed the flame (Wood x3), which sets `amber_fed`.
 - Clips: `game/tools/feel_clip.gd` (fishing, highlight, takeall) under Godot's movie writer, then `tools/clip_gif.sh` makes a GIF; the Lich Prince's hand is the sandbox shot's `nepo` step with `SHOT_FRAME`.
+
+## Seeing through trees and walls (2026-11-01, [USER] pm-occlusion)
+- Light silhouettes: whatever a tree, wall or cliff in front hides shows as a light flat silhouette over everything, drawn on three layers over the board's slabs with a flat-colour shader (`CombatBoard.SIL_COLORS`, `_paint_sil`): party pieces blue, foes red, people waiting on a map and the props of usable things gold. Hidden pieces keep their foot ring; the old x-ray copy is gone.
+- Every interactable character gets the see-through window the party gets: people waiting on a map (captives, recruits, companions; `board.figures`) open windows in trees and see-through props in front of them (`_front_cover`), and so do usable things' props (`board.usable`). A companion lying where he fell uses a low, wide box (`board.low_figures`) and is drawn centred on his tile.

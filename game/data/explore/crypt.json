@@ -432,7 +432,7 @@
    "event": "chest",
    "cell": [
     43,
-    46
+    45
    ]
   },
   {
@@ -449,7 +449,7 @@
    "kind": "key",
    "event": "crypt_key",
    "cell": [
-    67,
+    66,
     26
    ]
   },

@@ -147,3 +147,33 @@ func test_maker_qa_panel_paints_and_goes_live() -> void:
 	tree.root.remove_child(maker)
 	maker.free()
 	tree.root.get_node("Game").set("maker_map", keep)
+
+
+## [USER] 2026-11-01 pm-occlusion "a map rule to see if anything is obscured": a thing or group spot the camera can't
+## see (a tree, a tall prop or a cliff in front of it, for the map's view) is flagged; the explore maps keep theirs in the
+## open (snow_pass is the map builder's and Brandon's, not checked here).
+func test_sight_flags_hidden_spots() -> void:
+	var g := CombatGrid.flat(12, 12)
+	var chest := {"id": "chest_01", "kind": "chest", "cell": [5, 5]}
+	eq(_by_id(MapQA.run(g, "explore", _ex(Vector2i(1, 1), [chest])), "sight").level, "ok", "in the open: seen")
+	g.set_terrain(Vector2i(6, 6), T.FOREST)  # a tree straight in front of it (view 0: toward +x and +y)
+	var s := _by_id(MapQA.run(g, "explore", _ex(Vector2i(1, 1), [chest])), "sight")
+	eq(s.level, "warn", "a tree in front hides it")
+	ok((s.cells as Array).has(Vector2i(5, 5)), "and the spot is painted")
+	var turned := _ex(Vector2i(1, 1), [chest])
+	turned["view"] = 2  # the camera from the other side: the tree is behind it now
+	eq(_by_id(MapQA.run(g, "explore", turned), "sight").level, "ok", "the map's view decides what is in front")
+	g.set_terrain(Vector2i(6, 6), T.GRASS)
+	g.set_height(Vector2i(6, 6), 3)  # a cliff face in front
+	eq(_by_id(MapQA.run(g, "explore", _ex(Vector2i(1, 1), [chest])), "sight").level, "warn", "a cliff in front hides it")
+	g.set_height(Vector2i(6, 6), 0)
+	var den := {"id": "den", "units": [{"id": "wolf", "cell": [8, 8]}]}
+	g.set_terrain(Vector2i(9, 8), T.FOREST)
+	g.set_terrain(Vector2i(8, 9), T.FOREST)
+	eq(_by_id(MapQA.run(g, "explore", _ex(Vector2i(1, 1), [], [den])), "sight").level, "warn", "trees on both front sides hide a group spot")
+	for m in ExploreMap.list_maps():
+		if m == "snow_pass":
+			continue
+		var d: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/explore/%s.json" % m))
+		var sight := _by_id(MapQA.run(CombatGrid.from_dict(d.grid), "explore", d), "sight")
+		eq(int(sight.stats.get("hidden_spots", 0)), 0, "%s keeps its spots in the open: %s" % [m, sight.problems])

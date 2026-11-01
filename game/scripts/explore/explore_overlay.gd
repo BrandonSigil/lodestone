@@ -27,6 +27,8 @@ func _draw() -> void:
 	board.glow = scene.lit_doors()  # doors glow on the board, under the pieces
 	board.focus = {use.cell: true} if not use.is_empty() and board.fog.get(use.cell, 0) == 2 else {}  # the one F uses lights up
 	var figs := {}  # people waiting here draw with the board's pieces, in depth order (not over the hero)
+	var low := {}  # companions lying where they fell
+	var can_use := {}  # usable things in sight: a prop of theirs hidden behind a tree gets a gold silhouette (pm-occlusion)
 	for t: Dictionary in scene.things:
 		if t.done or not scene.shown(t):
 			continue
@@ -36,6 +38,8 @@ func _draw() -> void:
 			continue
 		var p := board.cell_top(c)
 		var dim := state == 1
+		if not dim and not NO_MARK_KINDS.has(String(t.kind)):
+			can_use[c] = true
 		_thing(String(t.kind), p, dim, not dim and use.get("id") == t.id and use.cell == t.cell)
 		if String(t.kind) == "companion":
 			# a companion stands at home while benched ([USER] pc-10: walk up to invite them)
@@ -43,6 +47,8 @@ func _draw() -> void:
 			var who := String(t.get("event", "")).trim_prefix("companion_").trim_prefix("recruit_").trim_prefix("rescue_")
 			if who != "" and not Game.in_party(who):
 				figs[c] = _figure.bind(StringName(who), dim, _time, bool(t.get("fallen", false)))
+				if bool(t.get("fallen", false)):
+					low[c] = true
 		elif String(t.kind) == "dog":
 			figs[c] = _figure.bind(&"dog", dim, _time)  # the dog waiting in his house: Doggo's own sprite (backlog X1)
 		if dim or lead == null or not scene.walking():
@@ -80,6 +86,8 @@ func _draw() -> void:
 				draw_arc(cap, 10.0, 0, TAU, 20, ICON, 1.5, true)
 				draw_string(font, cap + Vector2(-10, 5), "F", HORIZONTAL_ALIGNMENT_CENTER, 20, 14, ICON)
 	board.figures = figs
+	board.usable = can_use
+	board.low_figures = low
 
 
 ## A companion standing on p: their own sprite (idle, facing the camera) when they have art, else the code figure.
@@ -96,7 +104,8 @@ func _figure(ci: CanvasItem, p: Vector2, who: StringName, dim: bool, time: float
 		return
 	Pawn.ellipse(ci, p + Vector2(0, 2), 26.0 if fallen else 15.0, 6.0 if fallen else 5.0, Color(0, 0, 0, 0.25))
 	var s: float = f.scale
-	var lie := Vector2(f.anchor.y * s * 0.5, -4.0) if fallen else Vector2.ZERO  # head left, body centred on his cell
+	# head left, the frame's middle on his cell (turned a quarter, the frame's height runs along x)
+	var lie := Vector2((f.anchor.y - f.region.size.y * 0.5) * s, -4.0 + (f.region.size.x * 0.5 - f.anchor.x) * s) if fallen else Vector2.ZERO
 	ci.draw_set_transform(p + lie, turn, Vector2(-s if f.flip else s, s))
 	var tone := Color(0.55, 0.55, 0.55) if dim else (Color(0.78, 0.78, 0.8) if fallen else Color.WHITE)
 	ci.draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, tone)

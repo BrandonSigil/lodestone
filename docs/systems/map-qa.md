@@ -35,3 +35,7 @@ for each map (exit status 1 when one fails). Screenshot steps in `tools/maker_sh
 crypt and wolf_den pass all five. village_v2 fails stairs (3 leftover stair cells, e.g. 32,48 by the south gate);
 snow_pass fails reachability (96 cells in 13 patches, ledge_chest and rope_down out of reach) and one stair; battle maps
 like temple, cliffs and arena_c fail the box score.
+
+## Hidden spots (2026-11-01, [USER] pm-occlusion)
+- `sight` (`MapQA.check_sight`): every thing (not doorways, ways out, windows or hidden finds), every group unit's spot and the start must be seen by the camera. A spot is hidden when the tile straight in front of it (toward the camera, by the map's `view`: `MapQA.camera_steps`) holds a tree (forest ground), a tall see-through prop (`sight_tall` 0.9 or a building) or ground `sight_cliff` (2) levels above it, or when both tiles beside that one do (`hidden_spot`, `blocks_view`). Each hidden spot is a warning; the share of walkable ground out of sight goes in the summary. Fix it on the map by moving the spot into the open.
+- First pass (2026-11-01): forest_roads' Bushberry (unit and fallen spot) moved to (21,13), crypt `hall_chest` to (43,45) and `wing_key` to (66,26), farmland `farm_stash` to (30,28), village_v2 `chef` to (34,30). Still flagged: snow_pass `rope_ledge` at (15,24) (not touched: the map builder's). Test: `test_sight_flags_hidden_spots` (every explore map but snow_pass keeps its spots in the open).

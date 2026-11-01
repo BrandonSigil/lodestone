@@ -14,3 +14,5 @@ hero_tall,1.25,the hero's height in prop height units (tools/art/prop_scale_chec
 building_min,2.0,buildings are at least this many hero heights tall
 width_min,0.5,a sprite's drawn width over its footprint's screen width: at least
 width_max,1.6,and at most
+sight_cliff,2,"hidden spots: ground this many levels above a spot, in front of it, hides it ([USER] 2026-11-01 pm-occlusion)"
+sight_tall,0.9,"hidden spots: a see-through prop at least this tall (prop height units), in front of a spot, hides it"

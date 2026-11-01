@@ -8,6 +8,7 @@ extends RefCounted
 ##   stairs   no stair to nowhere: every stair run joins two levels, and none stops short of the ledge above it
 ##   scale    props make sense against the hero: doors taller than him, buildings big enough (prop_scale_check.py)
 ##   deploy   room to start every fight: the party fits round the leader where it meets each group
+##   sight    hidden spots: things, group spots and the start a tree, tall prop or cliff in front hides from the camera
 ## Thresholds: data/map_qa.csv. Prop sizes: data/prop_scale.csv. How it shows in the maker: docs/systems/map-qa.md.
 ## Each check: {"id", "name", "level": "ok" | "warn" | "fail", "summary", "stats": {}, "cells": [painted cells],
 ## "problems": [{"cell": Vector2i, "text"}]}.
@@ -15,9 +16,9 @@ extends RefCounted
 const T := CombatGrid.T
 const QA_CSV := "res://data/map_qa.csv"
 const SCALE_CSV := "res://data/prop_scale.csv"
-const ORDER := ["reach", "box", "stairs", "scale", "deploy"]
+const ORDER := ["reach", "box", "stairs", "scale", "deploy", "sight"]
 const NAMES := {"reach": "Reachability", "box": "Box score", "stairs": "Stairs to nowhere", "scale": "Scale against the hero",
-	"deploy": "Deploy room"}
+	"deploy": "Deploy room", "sight": "Hidden spots"}
 const N4: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 const PROBLEM_MAX := 40  ## rows listed per check; every problem cell is still painted
 
@@ -50,6 +51,7 @@ static func run(grid: CombatGrid, kind: String, data: Dictionary) -> Array[Dicti
 	out.append(check_stairs(g, kind))
 	out.append(check_scale(g))
 	out.append(check_deploy(g, kind, data, reached))
+	out.append(check_sight(g, kind, data, reached))
 	for c in out:  # paint and list ground cells (a deck place is painted on its cell)
 		var cells: Array[Vector2i] = []
 		var seen := {}
@@ -149,6 +151,81 @@ static func _reached(g: CombatGrid, kind: String, data: Dictionary) -> Dictionar
 					seen[n] = true
 					todo.append(n)
 	return seen
+
+
+# --- hidden spots ([USER] 2026-11-01 pm-occlusion: "a map rule to see if anything is obscured and if so we handle it
+# better via the map") ---------------------------------------------------------------------------------------------
+
+## The two grid steps that go one tile toward the camera on screen, for the map's view (CombatBoard._rot): the cell
+## straight in front is their sum.
+static func camera_steps(view: int) -> Array[Vector2i]:
+	match view % 4:
+		1:
+			return [Vector2i(0, -1), Vector2i(1, 0)]
+		2:
+			return [Vector2i(-1, 0), Vector2i(0, -1)]
+		3:
+			return [Vector2i(0, 1), Vector2i(-1, 0)]
+	return [Vector2i(1, 0), Vector2i(0, 1)]
+
+
+## Does cell c stand in front of a spot at height h and hide it: a tree (forest ground), a tall see-through prop (a
+## house, a wall, a tree prop), or ground two levels or more above the spot (a cliff face)?
+static func blocks_view(g: CombatGrid, c: Vector2i, h: int) -> bool:
+	if not g.in_bounds(c):
+		return false
+	if g.terrain_at(c) == T.FOREST or g.height_at(c) - h >= int(cfg("sight_cliff")):
+		return true
+	var p := g.prop_at(c)
+	return not p.is_empty() and not bool(p.get("walk", false)) and not bool(p.get("arch", false)) \
+		and (float(p.tall) <= 0.0 or float(p.tall) >= float(cfg("sight_tall"))) and CombatBoard.see_through(p)
+
+
+## The camera can't see spot c: the tile straight in front of it hides it, or both tiles beside that one do.
+static func hidden_spot(g: CombatGrid, c: Vector2i, view: int) -> bool:
+	var st := camera_steps(view)
+	var h := g.height_at(c)
+	return blocks_view(g, c + st[0] + st[1], h) or (blocks_view(g, c + st[0], h) and blocks_view(g, c + st[1], h))
+
+
+## Things (not doorways, ways out or hidden finds), every group's spots and the start, each hidden spot a warning; the
+## share of walkable cells the camera can't see goes in the stats. Fix by moving the spot into the open on the map.
+static func check_sight(g: CombatGrid, kind: String, data: Dictionary, reached: Dictionary) -> Dictionary:
+	var c := _check("sight")
+	if kind != "explore":
+		c.summary = "battle maps: not checked"
+		return c
+	var view := int(data.get("view", 0))
+	var spots: Array = []  # [cell, what]
+	for t: Dictionary in data.get("things", []):
+		if not String(t.get("kind", "chest")) in SIGHT_SKIP:
+			spots.append([_cell(t.cell), "%s (%s)" % [String(t.get("id", "thing")), String(t.get("kind", "chest"))]])
+	for gr: Dictionary in data.get("groups", []):
+		for u: Dictionary in gr.get("units", []):
+			spots.append([_cell(u.cell), "%s: %s" % [String(gr.get("id", "group")), String(u.get("char", u.get("id", "unit")))]])
+	for s0 in _from(kind, data):
+		spots.append([s0, "the start"])
+	var bad := 0
+	for sp in spots:
+		if hidden_spot(g, sp[0], view):
+			bad += 1
+			c.cells.append(sp[0])
+			_problem(c, sp[0], "%s is hidden from the camera: move it into the open" % sp[1])
+	var walk := 0
+	var unseen := 0
+	for q: Vector2i in reached:
+		if CombatGrid.ground(q) != q:
+			continue  # a deck place: the deck stands over whatever is in front
+		walk += 1
+		if hidden_spot(g, q, view):
+			unseen += 1
+	c.stats = {"spots": spots.size(), "hidden_spots": bad, "walkable": walk, "hidden_walkable": unseen}
+	c.level = "warn" if bad > 0 else "ok"
+	c.summary = "%d of %d spots hidden; %d%% of walkable ground out of sight" % [bad, spots.size(), roundi(100.0 * unseen / maxf(1.0, walk))]
+	return c
+
+
+const SIGHT_SKIP := ["enter", "door", "rubble", "window", "hidden", "exit"]  ## things that sit in walls or are meant to be found
 
 
 # --- reachability --------------------------------------------------------------------

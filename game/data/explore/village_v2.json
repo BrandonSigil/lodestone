@@ -1367,7 +1367,7 @@
    "kind": "settler",
    "event": "settler_chef",
    "cell": [
-    35,
+    34,
     30
    ],
    "once": "settler_chef"

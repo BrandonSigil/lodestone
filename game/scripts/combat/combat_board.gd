@@ -76,7 +76,6 @@ const WINDOW_R := 56.0  ## see-through window round a piece behind a prop: radiu
 const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
 const WINDOW_MIN := 0.12  ## the prop's alpha in the open middle
 const WINDOW_CELL := 8.0  ## mesh cell size the window's soft edge is drawn with
-const WINDOW_RING_ONLY := true  ## a piece only props hide gets its foot ring, not the tinted x-ray copy
 const WINDOW_TINT := Color(0.55, 0.75, 1.0, 0.3)  ## a flat wash in the prop's shape where the window clears it
 const WINDOW_TALL := 0.9  ## tile widths: a prop the catalog doesn't list, or a tile set's terrain prop, opens the window only this tall (over a piece)
 const FG_FADE := 0.05  ## how far the band's top edge feathers up into the wallpaper, as a share of the view
@@ -109,6 +108,15 @@ var wallpaper := false  ## test: the set's skyline fills the view and stays put,
 var combat_stance := false  ## pieces stand ready (weapon drawn) instead of relaxed; Battle sets it
 var _fade := {}  ## cell -> window centres: its props draw see-through round a piece standing behind them
 var _covered := {}  ## units something in front hides this frame -> true when a cliff hides them, not just a windowed prop
+var _covered_figs := {}  ## figure cells (people waiting on a map) a tree or prop in front hides this frame
+var _covered_props := {}  ## prop anchors of usable things a tree or prop in front hides this frame
+var low_figures := {}  ## figure cells drawn lying down (a fallen companion): their cover box is low and wide
+var usable := {}  ## cell -> true: things the party can use here (ExploreOverlay); their props get a silhouette when hidden
+## [USER] 2026-11-01 (pm-occlusion) "a mix of light silhoutte cover": what something in front hides shows as a light flat
+## silhouette over everything, party blue, foes red, gold for people and things you can use. One layer per colour.
+const SIL_COLORS := [Color(0.45, 0.72, 1.0, 0.4), Color(1.0, 0.42, 0.36, 0.4), Color(1.0, 0.86, 0.45, 0.42)]
+const SIL_SHADER := "shader_type canvas_item;\nuniform vec4 tint : source_color;\nvoid fragment() { COLOR = vec4(tint.rgb, texture(TEXTURE, UV).a * tint.a); }"
+var _sil: Array[Node2D] = []
 var _paint_button := 0
 var hover := NONE
 var selected: CombatUnit = null
@@ -216,6 +224,37 @@ func _process(delta: float) -> void:
 		s.t -= delta
 	_shouts = _shouts.filter(func(s: Dictionary) -> bool: return s.t > 0.0)
 	_sync_slabs()
+	for n in _sil:
+		n.queue_redraw()
+
+
+## One silhouette layer: 0 the party's hidden pieces, 1 the foes', 2 hidden people waiting and usable things' props.
+func _paint_sil(i: int) -> void:
+	if grid == null:
+		return
+	_ci = _sil[i]
+	if i < 2:
+		for u: CombatUnit in units:
+			if u.shown_hp <= 0 or not _covered.has(u) or u.hiding or (u.team == 0) != (i == 0):
+				continue
+			var base := _unit_base(u)
+			if u.team == 1 and u.sprite == CharacterArt.FALLBACK and FoeFigure.has_look(u.figure):
+				var d := Vector2(u.facing)
+				FoeFigure.draw(_ci, base, u.figure, iso(1.0 + d.x, 1.0 + d.y, 0.0) - iso(1.0, 1.0, 0.0), u.anim, _time - u.anim_start, Color.WHITE, false)
+			elif CharacterArt.has_art(u.sprite):
+				_draw_frame(u, base, Color.WHITE)
+			else:
+				PlaceholderFigure.draw(_ci, base, 26.0, u.figure, u.team, u.anim, _time - u.anim_start, u.facing.x < 0, Color.WHITE, false)
+	else:
+		for c: Vector2i in _covered_figs:
+			if figures.has(c):
+				(figures[c] as Callable).call(_ci, cell_top(c))
+		for a: Vector2i in _covered_props:
+			var p: Dictionary = grid.props[a]
+			var tex := prop_texture(p, grid.zone_at(a))
+			if tex != null:
+				_ci.draw_texture_rect(tex, _prop_rect(a, p, tex), false)
+	_ci = self
 
 
 ## The wallpaper and foreground band, drawn behind the slabs so the board and its trees stand in front.
@@ -560,6 +599,18 @@ func _init() -> void:
 	_stack = Node2D.new()
 	_stack.name = "Slabs"
 	add_child(_stack)  # first child, so overlays hosts add later draw on top
+	var sh := Shader.new()
+	sh.code = SIL_SHADER
+	for i in SIL_COLORS.size():  # the silhouettes: over the slabs, under any overlay a host adds later
+		var n := Node2D.new()
+		n.name = "Silhouette%d" % i
+		var m := ShaderMaterial.new()
+		m.shader = sh
+		m.set_shader_parameter("tint", SIL_COLORS[i])
+		n.material = m
+		n.draw.connect(_paint_sil.bind(i))
+		add_child(n)
+		_sil.append(n)
 
 
 func _slab(kind: int, d: int) -> Slab:
@@ -1108,19 +1159,14 @@ func _draw_wide_bridge(lo: Vector2, h: float, z0: float, bd: Dictionary, k: Dict
 
 func _paint_top() -> void:
 	var font := ThemeDB.fallback_font
-	# Ghost pass: pieces something in front hides still show, over everything: a party sprite as a tinted
-	# see-through copy (x-ray), anyone else as a bright foot ring and head outline.
+	# Ghost pass: pieces something in front hides keep a foot ring in their team's colour over everything; their body
+	# shows as a light silhouette (_paint_sil).
 	for u: CombatUnit in units:
 		if u.shown_hp > 0 and _covered.has(u):
 			var base := _unit_base(u)
 			var ring := Color(0.4, 0.7, 1.0) if u.team == 0 else Color(1.0, 0.4, 0.35)
 			Pawn.ellipse(_ci, base, 26.0 * 0.62, 26.0 * 0.22, Color(ring, 0.85), false, 2.0)
-			if not _covered[u] and WINDOW_RING_ONLY:
-				continue  # only props hide it, and their window shows the piece itself: the ring is enough
-			if CharacterArt.has_art(u.sprite):
-				_draw_frame(u, base, Color(ring.lightened(0.3), 0.55))
-			else:
-				_ci.draw_arc(base + Vector2(0, -26.0 * 1.22), 26.0 * 0.3, 0, TAU, 20, Color(ring, 0.7), 2.0, true)
+			# the body itself shows as a light silhouette on its colour's layer (_paint_sil)
 	for s in _shouts:  # BARK: three rings rolling out from the dog's feet across the board
 		var base := _unit_base(s.unit)
 		var k := 1.0 - float(s.t) / SHOUT_TIME
@@ -3942,28 +3988,49 @@ func _find_cover() -> void:
 						col = col.expand(q + Vector2(0, (h - u.vis_h) * HS))
 					if _overlap(box, col) > 0.35:
 						_covered[u] = true
+	_covered_figs.clear()
+	_covered_props.clear()
 	for fc: Vector2i in figures:  # people waiting on an explore map (a fallen Bushberry among trees) get windows too
-		if hidden(fc):
+		var fbox := Rect2(cell_top(fc) + Vector2(-30, -26), Vector2(60, 28)) if low_figures.has(fc) else Rect2(cell_top(fc) + Vector2(-20, -54), Vector2(40, 54))
+		if not hidden(fc) and _front_cover(fbox, fc, depth_of(fc.x, fc.y)):
+			_covered_figs[fc] = true
+	for uc: Vector2i in usable:  # a usable thing's prop (a barrel, a chest) a tree in front hides gets a gold silhouette
+		var a := grid.prop_anchor(uc)
+		if a == CombatGrid.NONE_CELL or hidden(uc):
 			continue
-		var fbox := Rect2(cell_top(fc) + Vector2(-20, -54), Vector2(40, 54))
-		var fd := depth_of(fc.x, fc.y)
-		for dy in range(-2, 3):
-			for dx in range(-2, 3):
-				var c := fc + Vector2i(dx, dy)
-				if not grid.in_bounds(c) or depth_of(c.x, c.y) <= fd or hidden(c):
-					continue
-				var art := BattleArt.props(grid.terrain_at(c), grid.zone_at(c))
-				if not art.list.is_empty() and art.count > 0 and art.height >= WINDOW_TALL and not _wall(c):
-					var ph: float = art.height * TW * 1.1
-					var mid := cell_top(c)
-					if _overlap(fbox, Rect2(mid.x - TW * 0.45, mid.y - ph, TW * 0.9, ph)) > 0.2:
-						_fade[c] = _fade.get(c, []) + [fbox.get_center()]
-				var a := grid.prop_anchor(c)
-				if a != CombatGrid.NONE_CELL and _prop_front(a, grid.props[a]) == c and grid.prop_anchor(fc) != a:
-					var pr: Dictionary = grid.props[a]
-					var tex := prop_texture(pr, grid.zone_at(a))
-					if tex != null and see_through(pr) and _overlap(fbox, _prop_rect(a, pr, tex)) > 0.2:
-						_fade[a] = _fade.get(a, []) + [fbox.get_center()]
+		var pr: Dictionary = grid.props[a]
+		var tex := prop_texture(pr, grid.zone_at(a))
+		if tex == null:
+			continue
+		var front := _prop_front(a, pr)
+		if _front_cover(_prop_rect(a, pr, tex), a, depth_of(front.x, front.y), 0.3):
+			_covered_props[a] = true
+
+
+## Trees and see-through props in front of the screen box `box` (standing on `at`, depth d): each that overlaps it by
+## more than `share` opens its see-through window round the box. True if any did (the box is hidden behind something).
+func _front_cover(box: Rect2, at: Vector2i, d: int, share := 0.2) -> bool:
+	var hit := false
+	for dy in range(-2, 3):
+		for dx in range(-2, 3):
+			var c := at + Vector2i(dx, dy)
+			if not grid.in_bounds(c) or depth_of(c.x, c.y) <= d or hidden(c):
+				continue
+			var art := BattleArt.props(grid.terrain_at(c), grid.zone_at(c))
+			if not art.list.is_empty() and art.count > 0 and art.height >= WINDOW_TALL and not _wall(c):
+				var ph: float = art.height * TW * 1.1
+				var mid := cell_top(c)
+				if _overlap(box, Rect2(mid.x - TW * 0.45, mid.y - ph, TW * 0.9, ph)) > share:
+					_fade[c] = _fade.get(c, []) + [box.get_center()]
+					hit = true
+			var a := grid.prop_anchor(c)
+			if a != CombatGrid.NONE_CELL and _prop_front(a, grid.props[a]) == c and grid.prop_anchor(at) != a:
+				var pr: Dictionary = grid.props[a]
+				var tex := prop_texture(pr, grid.zone_at(a))
+				if tex != null and see_through(pr) and _overlap(box, _prop_rect(a, pr, tex)) > share:
+					_fade[a] = _fade.get(a, []) + [box.get_center()]
+					hit = true
+	return hit
 
 
 ## Does this prop open the see-through window round a piece behind it? Only full-height things do ([USER]

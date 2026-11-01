@@ -415,8 +415,8 @@
      "id": "bushberry",
      "char": "bushberry",
      "cell": [
-      23,
-      14
+      21,
+      13
      ]
     }
    ]
@@ -466,8 +466,8 @@
    "kind": "companion",
    "event": "rescue_bushberry",
    "cell": [
-    23,
-    14
+    21,
+    13
    ],
    "once": "rescued_bushberry",
    "when": "bushberry_down",

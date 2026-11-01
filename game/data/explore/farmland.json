@@ -829,7 +829,7 @@
    "event": "farm_stash",
    "cell": [
     30,
-    29
+    28
    ],
    "once": "got_farm_stash"
   },
