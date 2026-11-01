@@ -303,7 +303,7 @@ func _through_level_ups(s: Node) -> void:
 		if s.get("battle") == null or s.get("_dialog") == null:
 			return
 		await _press_text(s, Txt.t("UI_BOX_TAKE_ALL"))  # the loot grid: the robot takes it all, as a player would
-		var buttons := (s.get("_dialog") as Node).find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return not (b as Button).disabled)
+		var buttons := (s.get("_dialog") as Node).find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return not (b as Button).disabled and (b as Button).text != "X")
 		if buttons.is_empty():
 			return
 		(buttons[buttons.size() - 1] as Button).pressed.emit()
@@ -314,7 +314,7 @@ func _press(s: Node, n: int) -> void:
 	var d: Node = s.get("_dialog")
 	if d == null:
 		return
-	var buttons := d.find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return not (b as Button).disabled)
+	var buttons := d.find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return not (b as Button).disabled and (b as Button).text != "X")
 	if n < buttons.size():
 		(buttons[n] as Button).pressed.emit()
 	await _frames(2)

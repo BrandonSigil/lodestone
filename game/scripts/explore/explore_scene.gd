@@ -1292,7 +1292,7 @@ func _new_dialog(text: String, top := false, portrait := "") -> VBoxContainer:
 	_dialog.theme_type_variation = &"DialogPanel"
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 14)
-	_dialog.add_child(row)
+	_dialog.set_meta("frame_x", UiTheme.frame_window(_dialog, row, _dialog_area))  # an X at its top right; scrolls past the room
 	var path := "res://art/source/portraits/%s.png" % portrait
 	if portrait != "" and ResourceLoader.exists(path):
 		var face := TextureRect.new()

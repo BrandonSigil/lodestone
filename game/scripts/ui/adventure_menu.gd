@@ -419,6 +419,8 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	var party_win := Rect2(Vector2(ox, 0), Vector2(W + pad * 2.0, 0))
 	grid.add_window(pack_win, Txt.t("UI_PACK"))
 	grid.add_window(party_win, Txt.t("UI_PARTY"))
+	for wx in [pack_win.end.x, party_win.end.x]:  # an X at each window's top right ([USER] 2026-11-01 X11)
+		grid.add_button("X", Rect2(Vector2(wx - ContainerUi.X_SIZE - 10.0, 10.0), Vector2(ContainerUi.X_SIZE, ContainerUi.X_SIZE)), close)
 	var fit := func() -> void:
 		var h := maxf(bottom, col.position.y + maxf(col.size.y, col.get_combined_minimum_size().y)) + pad
 		grid.windows[0].rect = Rect2(pack_win.position, Vector2(pack_win.size.x, h))

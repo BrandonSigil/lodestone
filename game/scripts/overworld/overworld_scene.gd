@@ -999,7 +999,7 @@ func _new_dialog(text: String) -> VBoxContainer:
 	_dialog.theme_type_variation = &"DialogPanel"
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 6)
-	_dialog.add_child(box)
+	UiTheme.frame_window(_dialog, box, hud.clear_rect)  # an X at its top right; scrolls past the room ([USER] 2026-11-01 X11)
 	if text != "":
 		var l := Label.new()
 		l.text = text

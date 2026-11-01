@@ -108,6 +108,15 @@ func _ready() -> void:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_page.add_child(l)
 	_buttons()
+	var x := Button.new()  # the X at the top right does what the first button does ([USER] 2026-11-01 X11)
+	x.text = "X"
+	x.custom_minimum_size = Vector2(UiTheme.FRAME_X, UiTheme.FRAME_X)
+	x.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	x.position += Vector2(-UiTheme.FRAME_X - 16.0, 16.0)
+	x.pressed.connect(func() -> void:
+		if _first != null and is_instance_valid(_first):
+			_first.pressed.emit())
+	add_child(x)
 	_holder.resized.connect(_fit)
 	_fit.call_deferred()
 	_play.call_deferred()

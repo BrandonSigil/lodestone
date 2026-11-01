@@ -249,7 +249,67 @@ static func at_diamond(c: Control, area: Callable, base := 1.0) -> void:
 ## Esc on an open box ([USER] 2026-11-01: "Let esc close out windows in game too"): presses the box's own
 ## close-type button (CLOSE, BACK, OK, CANCEL, LEAVE...), the last one if there are several. A box with none
 ## (a real choice, or the full pack whose way out throws things away) stays open. True if it pressed one.
-const ESC_KEYS := ["UI_CLOSE_MENU", "UI_CLOSE", "UI_BOX_CLOSE", "UI_OPT_BACK", "UI_CONTINUE", "UI_CANCEL", "UI_STAY_MAP", "OPT_LEAVE"]
+const ESC_KEYS := ["UI_CLOSE_MENU", "UI_CLOSE", "UI_BOX_CLOSE", "UI_OPT_BACK", "UI_CONTINUE", "UI_CANCEL", "UI_STAY_MAP", "OPT_LEAVE",
+	"OPT_BACK_OFF", "OPT_STAY", "UI_HC_OK"]
+
+
+## Does the box have a close-type button to press (press_close would do something)?
+static func has_close(box: Control) -> bool:
+	if box == null or not is_instance_valid(box):
+		return false
+	var texts: PackedStringArray = []
+	for k: String in ESC_KEYS:
+		texts.append(Txt.t(k))
+	return box.find_children("*", "Button", true, false).any(func(b: Button) -> bool: return b.visible and not b.disabled and texts.has(b.text))
+
+
+## Every framed window's structure ([USER] 2026-11-01 X11: "it doesnt fit on the screen, no scrolling. Ive asked for close X
+## boxes at the top right of all these frames"): `panel` (empty) gets a header row with an X at its top right and `content`
+## in a ScrollContainer whose height is capped to the room `area` gives (FrameHud.clear_rect or the viewport), so the frame
+## never runs off-screen and the rest scrolls (wheel, or drag on the frame). The X does what Esc does: `close` when given,
+## else the box's own close-type button (press_close: CLOSE, BACK, OK, CONTINUE, LEAVE...); it greys out while the box
+## offers no way out (a real choice). Returns the X.
+const FRAME_X := 34.0
+const FRAME_ROOM_MARGIN := 140.0  ## the panel's own frame and header, kept clear inside the room
+
+static func frame_window(panel: PanelContainer, content: Control, area: Callable, close := Callable()) -> Button:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	panel.add_child(col)
+	var head := HBoxContainer.new()
+	head.alignment = BoxContainer.ALIGNMENT_END
+	col.add_child(head)
+	var x := Button.new()
+	x.text = "X"
+	x.custom_minimum_size = Vector2(FRAME_X, FRAME_X)
+	x.focus_mode = Control.FOCUS_NONE
+	x.pressed.connect(func() -> void:
+		if close.is_valid():
+			close.call()
+		else:
+			press_close(content))
+	head.add_child(x)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = false  # opens at the top, not scrolled to a focused button at the foot
+	col.add_child(scroll)
+	scroll.add_child(content)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var fit := func() -> void:
+		if not is_instance_valid(scroll) or not is_instance_valid(content):
+			return
+		var room: Rect2 = area.call() if area.is_valid() else panel.get_viewport_rect()
+		var need := content.get_combined_minimum_size()
+		scroll.custom_minimum_size = Vector2(need.x, minf(need.y, maxf(120.0, room.size.y - FRAME_ROOM_MARGIN)))
+		if not close.is_valid():
+			x.disabled = not has_close(content)
+	content.minimum_size_changed.connect(fit)
+	content.child_entered_tree.connect(func(_n: Node) -> void: fit.call_deferred())
+	scroll.gui_input.connect(func(e: InputEvent) -> void:  # drag the frame's inside to scroll, as on a phone
+		if e is InputEventMouseMotion and (e as InputEventMouseMotion).button_mask & MOUSE_BUTTON_MASK_LEFT:
+			scroll.scroll_vertical -= int((e as InputEventMouseMotion).relative.y))
+	fit.call_deferred()
+	return x
 
 
 static func press_close(box: Control) -> bool:

@@ -175,6 +175,9 @@ func _loot_panel(items: String, coins: int, won: bool) -> void:
 
 
 func _place_panel(panel: PanelContainer) -> void:
+	var inner := panel.get_child(0) as Control  # framed: an X at its top right, scrolls past the room ([USER] 2026-11-01 X11)
+	panel.remove_child(inner)
+	UiTheme.frame_window(panel, inner, hud.center_rect)
 	hud.root.add_child(panel)
 	panel.custom_minimum_size = Vector2(480, 100)
 	for _i in 3:  # the level-up box fills in over a frame or two: keep it centred in the play area as it grows

@@ -244,6 +244,8 @@ static func bare(box: Control, view: Control = null) -> void:
 		return
 	var panel := n as PanelContainer
 	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	if panel.has_meta("frame_x"):  # its windows carry their own X's
+		(panel.get_meta("frame_x") as Control).visible = false
 	if view != null and panel.is_inside_tree():  # decided now, before the pop-in tween takes the scale as its target
 		var vs := panel.get_viewport_rect().size
 		var room := Vector2(vs.x - 32.0, vs.y - FRAME_ROOM - 16.0)  # a menu stands at the top, 16 down
