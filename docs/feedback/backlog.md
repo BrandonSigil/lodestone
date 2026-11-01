@@ -64,6 +64,16 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | S1 | "Our chat window needs help, I'm always seeing your latest replies at the very bottom. It should be a back and forth based on time" | Studio PM thread | done (#94) |
 | S2 | "Everything is idle?" (roles sat idle with work waiting) | Studio PM thread | answered; standing rule "Idle is not done" in `docs/systems/studio.md` |
 
+## 2026-11-01 afternoon (Studio chat)
+
+### Fishing
+| # | Problem (his words) | Owner | Status |
+| --- | --- | --- | --- |
+| FI1 | "let me actually aim the cast to land in a spot, and see if a fish notices it" | Systems developer (next fresh session) | open |
+| FI2 | "if you pull too fast that fish should be gone for good so the amount of fish dwindle, (like 3 fish in a pond, catch 1 means one less in the pond, miss one it swims away, third one you try and catch but fail the reel challenge" | Systems developer (next fresh session) | open |
+| FI3 | "the left right thing is sooo hard haha, one thing is that it just starts right away. both the fish and the reel bar should start in the middle, and give the player a quick ease in before the difficulty ramps up" | Systems developer (next fresh session) | open |
+| FI4 | "if you use the left arrow you should be pulling the bar left and the second you release it pulls back to the center, same with the right. I want it to feel like the fish is pullign on the line" | Systems developer (next fresh session) | open |
+
 ## Older standing asks still open
 - Food as healing with no hunger ([USER] 2026-10-31 morale call; `docs/systems/morale.md` says not built, the road still eats every day). Owner: Systems developer (first account), done (2026-11-01, "Food heals, nobody hungers" commit); the numbers are on the desk as dev-food-review.
 - Daily eating at camp again, an empty larder ends the journey ([USER] 2026-11-01, card dev-food-review: "The party must eat every day at camp, no food= journeys over"). Owner: Systems developer (first account), done (0b2acb3). The rest of healing waits for the healing model build.
