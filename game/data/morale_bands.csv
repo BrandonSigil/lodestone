@@ -1,0 +1,6 @@
+min,band,name_key,damage,move,defense,res_max,attack,check,note
+80,heartened,MORALE_HEARTENED,0,0,0,0,2,1,"[USER] 2026-10-31 Pitch B: high morale (80 to 100) is a passive bonus, not something to spend. +10% crit (attack:+2) and +1 on d20 checks are [AI]"
+60,steady,MORALE_STEADY,0,0,0,0,0,0,"[USER] Pitch B: morale stays stable in the middle"
+40,shaken,MORALE_SHAKEN,-1,0,0,0,0,0,
+20,low,MORALE_LOW,-1,-1,0,0,0,-2,
+0,broken,MORALE_BROKEN,-2,-1,-1,-1,0,-3,"res_max: one less max mana or charges"

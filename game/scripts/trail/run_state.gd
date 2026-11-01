@@ -44,7 +44,10 @@ var medicine: int:
 	get: return item_count(MED_ITEM)
 	set(v): add_item(MED_ITEM, maxi(0, v) - item_count(MED_ITEM))
 var gold := 0
-var morale := 70
+var morale := 70  ## the shelved trail's group morale; the adventure run uses hearts
+## Adventure runs: per-character morale, id -> 0..100 ([USER] 2026-10-31; MoraleRules). The same dictionary as
+## Game.meta.morale (Game links it), so it is kept for good. Empty on the shelved trail.
+var hearts: Dictionary = {}
 var day := 1
 var distance := 0
 var passed_wall := false

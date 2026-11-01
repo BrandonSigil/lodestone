@@ -685,7 +685,8 @@ func test_the_gate_asks_go_or_edit() -> void:
 	ok(texts.has(Txt.t("UI_GATE_GO")) and texts.has(Txt.t("UI_GATE_PARTY")), "GO (F) and EDIT PARTY (P)")
 	s._party_editor()
 	texts = s._dialog.find_children("*", "Button", true, false).map(func(b: Button) -> String: return b.text)
-	ok(texts.has(Txt.f("UI_PARTY_IN", Txt.t("CHAR_DOG"))), "the dog is listed, coming")
+	ok(texts.any(func(t: String) -> bool: return t.begins_with(Txt.f("UI_PARTY_IN", Txt.t("CHAR_DOG")))), "the dog is listed, coming")
+	ok(texts.any(func(t: String) -> bool: return t.contains(Txt.t(String(Game.morale_band("dog").name_key)))), "with his morale band")
 	s.free()
 	Game.explore_memory.clear()
 	Game.explore_map = "home"

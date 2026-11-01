@@ -211,6 +211,7 @@ func load_meta() -> void:
 		for k in meta:
 			if data.has(k):
 				meta[k] = data[k]
+	_link_hearts()
 
 
 func save_meta() -> void:
@@ -224,7 +225,7 @@ func save_meta() -> void:
 static func _fresh_meta() -> Dictionary:
 	return {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": [],
 		"levels": {}, "pack": {}, "materials": {}, "benched": [], "bookmark": {}, "restore": {}, "tracked": [], "trips": 0,
-		"bonds": {}, "talks_heard": [], "settings": {}, "ledger": {}}
+		"bonds": {}, "talks_heard": [], "settings": {}, "ledger": {}, "morale": {}, "days": 0}
 
 
 ## Saves one option (the options screen) and applies it.
@@ -247,6 +248,7 @@ func _apply_settings() -> void:
 
 func reset_meta() -> void:
 	meta = _fresh_meta()
+	_link_hearts()
 	save_meta()
 
 
@@ -434,6 +436,8 @@ func start_adventure() -> void:
 			m.res = int(saved[id][0])
 			m.res_tick = int(saved[id][1])
 	run.on_pickup = _on_pickup  # from here on, pickups that count toward a tracked step say so
+	_link_hearts()
+	refresh_party()  # with morale linked: each member's band in their fight numbers
 
 
 # --- mana and charges carry on an outing ([USER] 2026-10-30, "Fights must cost"; docs/design/outing-tuning.md) ------
@@ -451,6 +455,8 @@ func member_res(m: Dictionary) -> Dictionary:
 	var c: ClassDef = (m.def as CharacterDef).class_def
 	var kind := String(c.resource)
 	var most := int(c.resource_max) if kind in ["mana", "charges"] else 0
+	if most > 0:  # broken morale takes one off (MoraleRules)
+		most = maxi(1, most + int(Dictionary(m.get("bonus", {})).get("res_max", 0)))
 	var have := most if int(m.get("res", -1)) < 0 else clampi(int(m.res), 0, most)
 	return {"kind": kind if most > 0 else "", "res": have, "res_max": most}
 
@@ -508,6 +514,11 @@ func camp_rest() -> bool:
 	for m in run.members:
 		if int(m.hp) > 0:
 			m.hp = mini(run.max_hp(m), int(m.hp) + int(ceil(run.max_hp(m) * float(Db.levels.get("camp_hp_pct", 50)) / 100.0)))
+		var gain := int(Db.morale.get("camp", 10))
+		if (m.def as CharacterDef).deficiency == &"gloomy":
+			gain += int(Db.morale.get("gloomy_camp", -2))
+		MoraleRules.change(meta.morale, String((m.def as CharacterDef).id), gain, Db.morale)
+	refresh_party()
 	return true
 
 
@@ -531,13 +542,15 @@ func refresh_party() -> void:
 				for it in bag.items:
 					run.add_item(String(it.id), int(it.get("n", 1)))
 			run.members.erase(m)
+	_seed_hearts()
 	for m in run.members:
 		var id := String((m.def as CharacterDef).id)
 		if id == "lead":
 			m.def = hero_def()  # the class follows the weapon
 		var before := run.max_hp(m)
 		var s := level_state(id)
-		m.bonus = LevelRules.merge(LevelRules.merge(LevelRules.merge(LevelRules.bonus(s, Db.levels), weapon_mods(id)), meal_mods()), boon_mods())
+		m.bonus = LevelRules.merge(LevelRules.merge(LevelRules.merge(LevelRules.merge(LevelRules.bonus(s, Db.levels), weapon_mods(id)), meal_mods()), boon_mods()),
+			morale_mods(id))
 		m.ranks = rank_state(id).ranks
 		m.learned = rank_state(id).learned
 		m.hp = clampi(int(m.hp) + maxi(0, run.max_hp(m) - before), 0, run.max_hp(m))
@@ -839,6 +852,110 @@ func home_again(wake := false) -> void:
 			save_meta()
 
 
+# --- morale, per character ([USER] 2026-10-31 design-goodboy, design-morale; MoraleRules, docs/systems/morale.md) ----
+
+var _day_clock := {}  ## the part of a journey day walked on explore maps so far (MoraleRules.days_in)
+
+
+## The run's hearts are meta.morale itself, so every change is kept for good.
+func _link_hearts() -> void:
+	if not meta.get("morale") is Dictionary:
+		meta["morale"] = {}
+	if run != null and run.adventure:
+		run.hearts = meta.morale
+
+
+## Everyone met has a morale from the start, so the homecoming page sees their first change.
+func _seed_hearts() -> void:
+	if run == null or not run.adventure:
+		return
+	_link_hearts()
+	var ids: Array[String] = ["lead"]
+	for d in companions():
+		ids.append(String(d.id))
+	for id in ids:
+		if not meta.morale.has(id):
+			meta.morale[id] = int(Db.morale.get("start", 70))
+
+
+func morale_of(id: String) -> int:
+	return MoraleRules.of(meta.get("morale", {}), id, Db.morale)
+
+
+## The band a character's morale sits in: its row of data/morale_bands.csv (band, name_key, the mods).
+func morale_band(id: String) -> Dictionary:
+	return MoraleRules.band(morale_of(id), Db.morale_bands)
+
+
+## What a character's morale band does in a fight, in CombatUnit mod keys. Only on adventure runs.
+func morale_mods(id: String) -> Dictionary:
+	if run == null or not run.adventure:
+		return {}
+	return MoraleRules.fight_mods(morale_of(id), Db.morale_bands)
+
+
+func _dog_along() -> bool:
+	return run != null and run.members.any(func(m: Dictionary) -> bool: return String((m.def as CharacterDef).id) == "dog")
+
+
+## A fight is over: falls cost morale, a fall nobody picked up costs more, a wipe more again; a win lifts whoever
+## stayed up. outcome: "won", "lost" or "escaped"; big: an elite or boss fight. Returns the lines for the summary.
+func fight_morale(units: Array, outcome: String, big: bool) -> PackedStringArray:
+	var lines: PackedStringArray = []
+	if run == null or not run.adventure:
+		return lines
+	var pieces := []
+	for u: CombatUnit in units:
+		if u.team == 0 and not u.member.is_empty():
+			pieces.append({"id": String((u.member.def as CharacterDef).id), "downs": u.downs, "out": u.hp <= 0 and not u.downed()})
+	var change := MoraleRules.after_fight(pieces, outcome, big, Db.morale)
+	var dog := _dog_along()
+	for id: String in change:
+		var d := MoraleRules.change(meta.morale, id, int(change[id]), Db.morale, dog)
+		if d != 0:
+			lines.append(Txt.f("UI_MORALE_CHANGE", [Txt.t(Db.character(StringName(id)).name_key), "+%d" % d if d > 0 else str(d)]))
+	refresh_party()
+	return lines
+
+
+## Journey days gone by ([USER] design-morale: "for every day gone, a character at home gets X morale"). The road
+## counts one every TravelRules.DAY_SECONDS walked (each meal), explore maps away from the village one every
+## `day_steps` tiles. Everyone met who isn't with the party (left home, or the courier sent home) gains `home_day`.
+func pass_days(n: int) -> void:
+	if n <= 0 or run == null or not run.adventure:
+		return
+	meta.days = int(meta.get("days", 0)) + n
+	var home: Array[String] = []
+	for d in companions():
+		var id := String(d.id)
+		if not run.members.any(func(m: Dictionary) -> bool: return String((m.def as CharacterDef).id) == id):
+			home.append(id)
+	MoraleRules.home_days(meta.morale, home, n, Db.morale)
+
+
+## Tiles walked on an explore map out of town: a journey day every `day_steps`.
+func walk_days(steps: float) -> void:
+	pass_days(MoraleRules.days_in(_day_clock, steps, float(Db.morale.get("day_steps", 150))))
+
+
+## A night in the hero's bed at home: everyone met gains `bed` morale, the party is healed. Once a trip.
+## False when the bed was already slept in since the party last went out.
+func sleep_at_home() -> bool:
+	if run == null or used_this_trip("home/bed"):
+		return false
+	use_for_trip("home/bed")
+	_seed_hearts()
+	for id: String in meta.morale.keys():
+		if id == "lead" or companions().any(func(d: CharacterDef) -> bool: return String(d.id) == id):
+			MoraleRules.change(meta.morale, id, int(Db.morale.get("bed", 20)), Db.morale)
+	for m in run.members:
+		m.hp = run.max_hp(m)
+	refill_resources()
+	refresh_party()
+	save_adventure()
+	return true
+
+
 # --- restoring the village ([USER] omr-2, omr-5, omr-12; one-more-run step 2) --------------------------
 
 signal counts(text: String)  ## a pickup counts toward a tracked step: screens show the line
@@ -981,6 +1098,8 @@ func eat_meal(meal_item: String) -> bool:
 	run.add_item(meal_item, -1)
 	run.meal = {"recipe": String(r.id), "fights": int(Db.levels.get("meal_fights", 2))}
 	run.note(Txt.f("LOG_MEAL", Txt.t(String(r.name_key))))
+	for m in run.members:  # good food lifts everyone's morale (the recipe's morale column)
+		MoraleRules.change(meta.morale, String((m.def as CharacterDef).id), int(r.get("morale", 0)), Db.morale)
 	refresh_party()
 	save_adventure()
 	return true

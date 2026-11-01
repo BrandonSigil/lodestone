@@ -11,14 +11,29 @@ const FORAGE_DC := 11
 const RODENT_CHANCE := 0.2
 
 
-## Best living member's skill for this check, plus morale.
+## Best living member's skill for this check, plus morale: the group's on the shelved trail, on an adventure run
+## each member's own (their skill plus their morale band's check mod, MoraleRules).
 static func party_bonus(run: RunState, check_id: String) -> int:
 	var best := -99
 	for m in run.alive():
-		best = maxi(best, (m.def as CharacterDef).skill(check_id))
+		best = maxi(best, (m.def as CharacterDef).skill(check_id) + member_morale_mod(run, m))
 	if best == -99:
 		best = 0
-	return best + morale_mod(run)
+	return best + (0 if run.adventure else morale_mod(run))
+
+
+## One member's morale band on a d20 check (adventure runs; 0 on the shelved trail).
+static func member_morale_mod(run: RunState, m: Dictionary) -> int:
+	if not run.adventure:
+		return 0
+	return MoraleRules.check_mod(MoraleRules.of(run.hearts, String((m.def as CharacterDef).id), Db.morale), Db.morale_bands)
+
+
+## An event's morale on an adventure run: every party member's own, softened while Doggo is along.
+static func party_morale(run: RunState, n: int) -> void:
+	var dog := run.members.any(func(m: Dictionary) -> bool: return String((m.def as CharacterDef).id) == "dog")
+	for m in run.members:
+		MoraleRules.change(run.hearts, String((m.def as CharacterDef).id), n, Db.morale, dog)
 
 
 static func morale_mod(run: RunState) -> int:
@@ -142,7 +157,8 @@ static func heal(run: RunState, who: Dictionary = {}) -> void:
 static func best_member(run: RunState, check_id: String) -> Variant:
 	var best: Variant = null
 	for m in run.alive():
-		if best == null or (m.def as CharacterDef).skill(check_id) > (best.def as CharacterDef).skill(check_id):
+		if best == null or (m.def as CharacterDef).skill(check_id) + member_morale_mod(run, m) \
+				> (best.def as CharacterDef).skill(check_id) + member_morale_mod(run, best):
 			best = m
 	return best
 
@@ -196,7 +212,7 @@ static func resolve_option(run: RunState, opt: Dictionary) -> Dictionary:
 
 ## Effects are "key:+n;key:-n" strings from events.csv and encounters.csv.
 static func apply_effects(run: RunState, effects: String) -> Dictionary:
-	var out := {"combat": "", "unlocks": [], "weapon": "", "invite": "", "dismiss": "", "blessings": 0, "setbacks": 0}
+	var out := {"combat": "", "unlocks": [], "weapon": "", "invite": "", "dismiss": "", "blessings": 0, "setbacks": 0, "morale": 0, "sleep": false}
 	for part in effects.split(";", false):
 		var kv := part.split(":")
 		if kv.size() != 2:
@@ -209,7 +225,13 @@ static func apply_effects(run: RunState, effects: String) -> Dictionary:
 			"food": run.add_food(n)
 			"medicine": run.add_medicine(n)
 			"gold": run.gold = maxi(0, run.gold + n)
-			"morale": run.morale = clampi(run.morale + n, 0, 100)
+			"morale":
+				if run.adventure:
+					party_morale(run, n)
+					out.morale = int(out.morale) + n
+				else:
+					run.morale = clampi(run.morale + n, 0, 100)
+			"sleep": out.sleep = true  # a night in the bed at home (Game.sleep_at_home)
 			"dist":
 				run.distance = clampi(run.distance + n, 0, RunState.GOAL)
 				_check_wall(run)

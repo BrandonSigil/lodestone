@@ -4,7 +4,7 @@
 gave and closes on the next goal. Built 2026-11-01.
 
 ## How it works
-- **The ledger.** `Game.meta.ledger` is a snapshot of levels, bonds, flags and morale (`HomecomingRules.snapshot`).
+- **The ledger.** `Game.meta.ledger` is a snapshot of levels, bonds, flags, morale and journey days (`HomecomingRules.snapshot`).
   The village gate (`Game.start_trip`) opens one; `ensure_run` opens one if none exists (a new game, an old save).
 - **Closing it.** `Game.home_again(wake)` closes the ledger into `Game.homecoming` (`HomecomingRules.summary`):
   - a fall or GO HOME (`wake_in_town`) always shows the page, and the wake-up line becomes its headline;
@@ -19,7 +19,7 @@ gave and closes on the next goal. Built 2026-11-01.
 | Stuff brought home | the materials `home_again` banked |
 | Grow strong | XP and levels from `meta.levels` against the ledger, with an XP bar to the next level |
 | Friends closer | bond points from `meta.bonds`, gold when a bond level is reached |
-| Heart | per-character morale from `meta.morale`. Morale isn't built yet, so this stays hidden until it is |
+| Heart | the journey days gone (`meta.days`), then each character's morale change from `meta.morale` and their band now (`docs/systems/morale.md`) |
 | Big bad known now | a boss card for every new `learned_<class>` flag: HP, armor, move and every move's plain rules text. On a fall it leads the page |
 | Know now | new lasting finds (`got_`), bosses and elites down for good (`beaten_`), foes got past (`passed_`) |
 | Village fixed | restore steps that just finished |

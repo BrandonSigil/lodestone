@@ -6,7 +6,7 @@ extends RefCounted
 ## the party just learned. Pure: Game keeps a ledger (a snapshot of meta taken when a trip starts) and hands it here.
 ##
 ## ledger: {"gate": opened at the village gate, "trip", "levels": id -> {"level", "xp"}, "bonds": key -> points,
-##   "flags": [..], "morale": id -> value}.
+##   "flags": [..], "morale": id -> value, "days": meta.days (journey days counted so far, Game.pass_days)}.
 
 ## Flag prefixes that count as knowledge kept for good, in the order the page lists them.
 ## learned_: a boss's card (ExploreRules.learned_flag); got_: a lasting find; beaten_: a boss or elite down for good;
@@ -22,7 +22,7 @@ static func snapshot(meta: Dictionary, gate: bool) -> Dictionary:
 			levels[id] = {"level": int(s.get("level", 1)), "xp": int(s.get("xp", 0))}
 	return {"gate": gate, "trip": int(meta.get("trips", 0)), "levels": levels,
 		"bonds": Dictionary(meta.get("bonds", {})).duplicate(), "flags": Array(meta.get("flags", [])).duplicate(),
-		"morale": Dictionary(meta.get("morale", {})).duplicate()}
+		"morale": Dictionary(meta.get("morale", {})).duplicate(), "days": int(meta.get("days", 0))}
 
 
 ## Does coming home now close the ledger? A fall or GO HOME always does; walking in through the gate only after a
@@ -80,7 +80,8 @@ static func summary(before: Dictionary, meta: Dictionary, banked: Dictionary, fi
 	var restored: Array[String] = []
 	for r: Dictionary in finished:
 		restored.append(String(r.id))
-	return {"fell": fell, "materials": banked.duplicate(), "levels": levels, "bonds": bonds, "morale": morale,
+	return {"fell": fell, "days": maxi(0, int(meta.get("days", 0)) - int(before.get("days", meta.get("days", 0)))),
+		"materials": banked.duplicate(), "levels": levels, "bonds": bonds, "morale": morale,
 		"cards": cards, "knowledge": knowledge, "restored": restored}
 
 
