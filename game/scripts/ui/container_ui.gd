@@ -83,8 +83,11 @@ static func fill(box: VBoxContainer, container: InventoryGrid, title: String, ch
 		buttons.append([close_text, close])
 	var note := str(waiting) if waiting > 0 else ("+%d" % coins if coins > 0 else "")
 	windows(view, container, title, buttons, true, note, ActionInfo.icon("gold"), close if close_text == "" else Callable())
-	if waiting > 0:
-		coin_note = view.notes.back()
+	if waiting > 0:  # the box's own coin line (not the party's gold line under the pack, which windows() adds after it)
+		for n: Dictionary in view.notes:
+			if n != view.gold_note and String(n.text) == note:
+				coin_note = n
+				break
 	view.changed.connect(changed)
 	box.add_child(view)
 	bare(box, view)
