@@ -220,6 +220,7 @@ static func reel_step(s: Dictionary, rng: RandomNumberGenerator, dt: float, inpu
 	if float(s.wait) > 0.0:
 		s.wait = float(s.wait) - dt
 	else:
+		s.started = true  # the fish has begun to pull: from here the catch meter counts
 		s.fish = move_toward(float(s.fish), float(s.target), float(s.speed) * easy * dt)
 		if is_equal_approx(float(s.fish), float(s.target)):
 			var reach := float(s.reach) * lerpf(tune("fish_ease_reach", 0.5), 1.0, k)
@@ -243,10 +244,13 @@ static func reel_step(s: Dictionary, rng: RandomNumberGenerator, dt: float, inpu
 	if float(s.marker) < half or float(s.marker) > 1.0 - half:
 		s.marker = clampf(float(s.marker), half, 1.0 - half)
 		s.vel = 0.0
-	# the catch meter
+	# the catch meter: it stands still while the hooked fish hovers before its first dart, so no fish is landed
+	# before it ever pulls (the developer's finding, 2026-11-01: the meter filled in 1.75 s, the first dart came at 2 s)
 	var gap := float(s.fish) - float(s.marker)
 	s.on = absf(gap) <= half
 	s.pull = clampf(gap / 0.35, -1.0, 1.0)
+	if not bool(s.get("started", false)):
+		return s
 	var drain := float(s.drain) * lerpf(tune("fish_ease_drain", 0.2), 1.0, k)
 	s.catch = clampf(float(s.catch) + (float(s.fill) if s.on else -drain) * dt, 0.0, 1.0)
 	if float(s.catch) >= 1.0:

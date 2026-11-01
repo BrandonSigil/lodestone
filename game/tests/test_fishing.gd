@@ -116,11 +116,20 @@ func test_reel_starts_centred_and_eases_in() -> void:
 	late.fish = 0.9
 	early.wait = 9.0
 	late.wait = 9.0
+	early.started = true  # both fish are already pulling (the meter holds still before the first dart)
+	late.started = true
 	var early_catch := float(early.catch)
 	FishingRules.reel_step(early, _rng(1), 0.5, {"axis": -1.0})
 	FishingRules.reel_step(late, _rng(1), 0.5, {"axis": -1.0})
 	ok(early_catch > float(early.catch) and float(early.catch) > float(late.catch), "the meter drains less in the ease-in")
 	eq(FishingRules.ramp(late), 1.0, "after fish_ease seconds it is full difficulty")
+	# no fish is landed before it pulls: the meter holds still while it hovers before its first dart
+	var hover := FishingRules.reel_start(Db.fish["minnow"])
+	var start_catch := float(hover.catch)
+	for i in 60:
+		FishingRules.reel_step(hover, _rng(1), 1.0 / 60.0, {})
+	eq(float(hover.catch), start_catch, "the meter waits for the first dart")
+	ok(hover.done == "", "and the fish is not landed yet")
 
 
 ## FI4 ([USER] 2026-11-01): holding left or right pulls the marker that way; let go and it springs back to the centre.
