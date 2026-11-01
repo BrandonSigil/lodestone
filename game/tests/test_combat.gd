@@ -308,6 +308,66 @@ func test_a_bark_pulls_the_foes() -> void:
 	eq(CombatRules.target_cells(g, b, b.abilities[0], units, b.cell).size(), 2, "the taunt ends at the dog's next phase")
 
 
+## Brandon's playtest (2026-11-01): BARK next to the elite wolf did nothing, because the wolf stepped to a tile out of
+## the dog's reach and bit someone softer. A foe that can walk to the dog and hit him this phase must.
+func test_a_bark_pulls_a_wolf_that_could_walk_away() -> void:
+	var g := CombatGrid.flat(10, 5)
+	var dog := _unit("dog", 0, Vector2i(2, 2), g)
+	var mage := _unit("job_ember", 0, Vector2i(7, 2), g)
+	mage.hp = 3  # a soft kill the wolf would much rather have
+	var wolf := _unit("alpha_wolf", 1, Vector2i(4, 2), g)
+	wolf.elite = true
+	var units := [dog, mage, wolf]
+	ok(EnemyAi.plan(g, wolf, units).target == mage, "with no bark the wolf goes for the soft mage")
+	CombatRules.resolve(RandomNumberGenerator.new(), g, dog, _ab("bark"), dog.cell, units)
+	eq(CombatRules.taunt_pulls(g, dog, units), [wolf] as Array[CombatUnit], "the wolf can reach the dog, so the bark pulls it")
+	var p := EnemyAi.plan(g, wolf, units)
+	ok(p.target == dog, "after the bark the elite wolf must attack the dog")
+	ok(CombatRules.in_reach(g, p.move, dog.cell, CombatRules.ability_range(wolf, p.ability)), "from where it ends up")
+	var far := _unit("alpha_wolf", 1, Vector2i(9, 0), g)
+	far.move = 1
+	units.append(far)
+	ok(not CombatRules.taunt_pulls(g, dog, units).has(far), "a wolf that can't reach the dog this phase isn't pulled")
+
+
+## [USER] 2026-11-01: Amber starts with one plain ranged fire attack (FIRE ZAP, her HIT), no spells; her passive
+## A Heart that Burns may set the target burning.
+func test_amber_starts_with_her_fire_zap() -> void:
+	var g := CombatGrid.flat(6, 3)
+	var amber := CombatUnit.from_def(Db.character(&"fire_mage"))
+	amber.place(Vector2i(0, 1), 0)
+	eq(amber.abilities.size(), 1, "one action: her plain attack")
+	var zap: Ability = amber.abilities[0]
+	eq(zap.id, "fire_zap")
+	ok(zap.is_basic() and not zap.is_spell(), "it is her basic attack, not a spell")
+	eq(zap.element, "fire")
+	eq(zap.res_cost, 0, "free")
+	eq(CombatRules.ability_range(amber, zap), Vector2i(2, 3), "ranged, 2 to 3 tiles")
+	ok(amber.has_trait(CombatRules.TRAIT_HEART_BURNS))
+	var b := _unit("bandit", 1, Vector2i(3, 1), g)
+	b.max_hp = 99
+	b.hp = 99
+	var burned := 0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	for i in 200:
+		b.statuses.erase(CombatRules.STATUS_BURN)
+		CombatRules.resolve(rng, g, amber, zap, b.cell, [amber, b])
+		b.hp = 99
+		if b.has_status(CombatRules.STATUS_BURN):
+			burned += 1
+	var pct := int(CombatRules.num("heart_burn_pct"))
+	ok(burned > pct and burned < pct * 3, "burns about %d%% of hits (%d of 200)" % [pct, burned])
+	b.statuses[CombatRules.STATUS_BURN] = int(CombatRules.num("burn_turns"))
+	var hp := b.hp
+	CombatRules.begin_phase([amber, b], 1)
+	eq(b.hp, hp - int(CombatRules.num("burn_damage")), "a burn hurts at the start of the foe's phase, through armor")
+	CombatRules.end_phase([amber, b], 1)
+	CombatRules.begin_phase([amber, b], 1)
+	CombatRules.end_phase([amber, b], 1)
+	ok(not b.has_status(CombatRules.STATUS_BURN), "and ends after burn_turns phases")
+
+
 func test_every_skill_has_something_to_pay_with() -> void:
 	for f in DirAccess.get_files_at("res://data/classes"):
 		if not f.ends_with(".tres"):

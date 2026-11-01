@@ -83,7 +83,7 @@ static func recharge(u: CombatUnit, a: Ability) -> float:
 
 
 ## Approved spare icons standing in for actions the sheet hasn't painted yet (art runner, 2026-10-30).
-const SPARES := {"ward": "shield", "shadow_swap": "teleport", "carry": "dash", "command": "rally", "overwatch": "focus"}
+const SPARES := {"fire_zap": "fire", "ward": "shield", "shadow_swap": "teleport", "carry": "dash", "command": "rally", "overwatch": "focus"}
 
 
 ## An action's icon: its own id, else for an item the pack item it spends (the sheet names items by item id), else a

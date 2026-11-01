@@ -125,8 +125,13 @@ func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 	magic = c.magic
 	magic_power = int(mods.get("magic_power", 0))
 	abilities.clear()
-	var strike := Db.ability("strike")
+	var strike := Db.ability(String(c.strike)) if c.strike != &"" else null
+	if strike == null:
+		strike = Db.ability("strike")
 	if strike:
+		if strike.id != "strike":  # a class's own plain attack (Amber's fire hit): a copy marked as the basic
+			strike = strike.copy()
+			strike.basic = true
 		abilities.append(strike)
 	for id in c.abilities:
 		var a := Db.ability(String(id))

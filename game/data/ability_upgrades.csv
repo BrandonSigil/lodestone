@@ -137,3 +137,6 @@ bite,3,power:+1,,Does 1 more damage
 carry,1,power:+1,,Carries a friend 1 tile further
 carry,2,power:+1,,Carries a friend 1 tile further
 carry,3,range_max:+1,,Can pick up a friend 2 tiles away
+fire_zap,1,power:+1,,Does 1 more damage
+fire_zap,2,crit:+10,,+10% crit chance
+fire_zap,3,power:+1,,Does 1 more damage

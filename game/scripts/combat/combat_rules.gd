@@ -24,6 +24,7 @@ const STATUS_FOE_WARD := "foe_ward"  ## a warder's ward on a foe: more armor unt
 const STATUS_BLEED := "bleed"  ## loses a little HP at the start of each of its phases (a ranked bite)
 const STATUS_WARD := "ward"  ## the book's WARD: the next hit on this piece does 0 and no status; gone at the mage's next phase
 const STATUS_OVERWATCH := "overwatch"  ## the bow's OVERWATCH: the first foe to move into its reach takes a plain shot and stops
+const STATUS_BURN := "burn"  ## Amber's A Heart that Burns: `burn_damage` at the start of each phase for `burn_turns` phases
 const STATUS_POISON := "poison"  ## the same, from the rogue's blades: `poison_damage` for `poison_turns` phases
 ## Cleared when the owner's next phase starts (they protect through the enemy phase).
 const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT, STATUS_WARD, STATUS_OVERWATCH, STATUS_FOE_WARD]
@@ -41,6 +42,7 @@ const TRAIT_BLOODIED := &"bloodied"  ## Reaver: more damage and crit the lower i
 const TRAIT_KEEPS_BACK := &"keeps_back"  ## Mender foe: stays 2 or more tiles from heroes, attacks only when cornered
 const TRAIT_CHARGE := &"charge"  ## Rusher and bull: a straight run of 3 or more tiles this phase adds charge_bonus to its hits
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
+const TRAIT_HEART_BURNS := &"heart_burns"  ## Amber ([USER] 2026-11-01): plain attacks may set the target burning (heart_burn_pct)
 const TRAIT_POISON_BLADES := &"poison_blades"  ## Rogue: every hit leaves POISON ([USER] design-boss-daggers)
 const TRAIT_STAND_WATCH := &"stand_watch"  ## Bow: an archer that doesn't move in its phase ends it on OVERWATCH, free
 const TRAIT_STRUCTURE := &"structure"  ## an ice pillar: never acts or hits back, stands in the way, doesn't count toward winning
@@ -203,6 +205,22 @@ static func blind_cells(grid: CombatGrid, u: CombatUnit, from: Vector2i) -> Arra
 				continue
 			if d <= r.y + clampi(grid.height_at(from) - grid.height_at(c), 0, HIGH_RANGE_MAX) and not grid.line_of_sight(from, c):
 				out.append(c)
+	return out
+
+
+## The foes a taunter pulls ([USER] 2026-10-29: any foe that can reach it must hit it): every awake, unhidden foe
+## that could walk somewhere this phase and land its plain hit on the taunter from there. Bark's feedback turns these
+## to face the dog, and EnemyAi makes them hit him.
+static func taunt_pulls(grid: CombatGrid, taunter: CombatUnit, units: Array) -> Array[CombatUnit]:
+	var out: Array[CombatUnit] = []
+	for o: CombatUnit in units:
+		if o.team == taunter.team or not o.alive() or o.hiding or o.has_status(STATUS_SLEEP) or o.has_trait(TRAIT_STRUCTURE):
+			continue
+		var r := ability_range(o, null)
+		for f: Vector2i in reachable(grid, o, units).cost:
+			if in_reach(grid, f, taunter.cell, r):
+				out.append(o)
+				break
 	return out
 
 
@@ -439,7 +457,7 @@ static func crit_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units
 		parts.append(["MOD_STEADY", int(num("crit_steady"))])
 	if att.has_status(STATUS_GUIDED):
 		parts.append(["MOD_GUIDED", int(num("crit_guided"))])
-	if att.has_trait(TRAIT_QUICK_HANDS) and a != null and a.id == "strike" and upg(att, "quick_crit") > 0:
+	if att.has_trait(TRAIT_QUICK_HANDS) and a != null and a.is_basic() and upg(att, "quick_crit") > 0:
 		parts.append(["MOD_QUICK", upg(att, "quick_crit")])
 	if bloodied_level(att) > 0:
 		parts.append(["MOD_BLOODIED", int(num("bloodied_crit")) + upg(att, "bloodied_crit")])
@@ -477,7 +495,7 @@ static func _starlit(grid: CombatGrid, u: CombatUnit, from: Vector2i, a: Ability
 
 ## How many times this ability rolls against each target (Lewith & Flark's basic hit swings twice, so do the shade's quick hands).
 static func swings(u: CombatUnit, a: Ability) -> int:
-	return 2 if a != null and a.id == "strike" and (u.has_trait(TRAIT_DOUBLE_STRIKE) or u.has_trait(TRAIT_QUICK_HANDS)) else 1
+	return 2 if a != null and a.is_basic() and (u.has_trait(TRAIT_DOUBLE_STRIKE) or u.has_trait(TRAIT_QUICK_HANDS)) else 1
 
 
 ## A number upgrade the piece took at a level-up ("guard_armor", "quick_damage"...): 0 without it.
@@ -670,6 +688,9 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 		t.statuses[STATUS_POISON] = int(num("poison_turns")) + upg(u, "poison_turns")
 		t.poison_dmg = maxi(t.poison_dmg, int(num("poison_damage")) + upg(u, "poison_damage"))
 		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_POISON})
+	if t.alive() and a.is_basic() and u.has_trait(TRAIT_HEART_BURNS) and rng.randi_range(1, 100) <= int(num("heart_burn_pct")):
+		t.statuses[STATUS_BURN] = int(num("burn_turns"))  # renews, doesn't stack
+		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_BURN})
 	if t.alive() and a.push > 0:
 		events.append_array(push(grid, units, u.cell, t, a.push))
 	return events
@@ -742,7 +763,7 @@ static func begin_phase(units: Array, team: int) -> Array:
 		u.left_guard = false
 		if u.alive():
 			u.phase_no += 1
-		for s: String in [STATUS_BLEED, STATUS_POISON]:  # through armor
+		for s: String in [STATUS_BLEED, STATUS_POISON, STATUS_BURN]:  # through armor
 			if u.alive() and u.has_status(s):
 				var n := mini(maxi(int(num(s + "_damage")), u.poison_dmg if s == STATUS_POISON else 0), u.hp)
 				u.hp -= n

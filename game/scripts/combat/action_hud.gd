@@ -87,7 +87,7 @@ func hand_entries() -> Array:
 	if first.is_empty():
 		first = _entries.filter(func(e: Dictionary) -> bool: return e.kind == "move")
 	out.append_array(first)
-	var strike := _entries.filter(func(e: Dictionary) -> bool: return e.kind == "skill" and e.ability.id == "strike")
+	var strike := _entries.filter(func(e: Dictionary) -> bool: return e.kind == "skill" and e.ability.is_basic())
 	var under_hit := _entries.filter(func(e: Dictionary) -> bool: return e.kind in ["guard", "talk"])
 	if not strike.is_empty():
 		var hit: Dictionary = strike[0].duplicate()
@@ -117,7 +117,7 @@ func second_entries() -> Array:
 
 
 func _skills() -> Array:
-	return _entries.filter(func(e: Dictionary) -> bool: return e.kind == "skill" and e.ability.id != "strike")
+	return _entries.filter(func(e: Dictionary) -> bool: return e.kind == "skill" and not e.ability.is_basic())
 
 
 ## Keys 1 to 0: the bar's boxes. TRICKS and BELT pop their column and go up into it; HIT strikes (GUARD is up its
