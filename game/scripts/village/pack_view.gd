@@ -13,6 +13,9 @@ const CELL := 72.0
 const SELL_SIZE := Vector2(150, 110)
 const LABEL_H := 20.0  ## room above a labeled grid for its name
 const FACE := 18.0  ## a small face before a grid's name
+## Kinds Riso.draw_item_icon draws an icon for. Every other kind (gear, material, meal, tonic...) shows its name instead,
+## so nothing in the pack is a blank square (Brandon's bug, 2026-11-01: a tonic looked like an empty slot).
+const ICON_KINDS := ["food", "crate", "med", "herb", "book"]
 
 var bag: InventoryGrid  ## the first grid (the pack)
 var areas: Array[Dictionary] = []  ## {"bag": InventoryGrid, "at": Vector2 (top-left here), "label": String}
@@ -442,7 +445,7 @@ static func draw_item(ci: CanvasItem, id: String, db: Dictionary, cells: Array[V
 			best_d = cc.distance_to(center)
 			best = cc
 	Riso.draw_item_icon(ci, kind, best, cell * 0.8)
-	if (kind == "gear" or kind == "material" or kind == "meal") and cell >= 30.0:  # no icon drawn for these yet, so they carry their name
+	if not ICON_KINDS.has(kind) and cell >= 30.0:  # no icon drawn for these yet, so they carry their name
 		Riso.draw_label(ci, Txt.t(String(db[id].name_key)), center, maxi(10, int(cell * 0.22)), ink, HORIZONTAL_ALIGNMENT_CENTER)
 	if bound:
 		Riso.draw_stamp_star(ci, top_left + Vector2(cell * 0.2, cell * 0.2), cell * 0.12, Riso.alpha(Riso.INDIGO, a))
