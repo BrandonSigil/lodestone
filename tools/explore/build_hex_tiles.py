@@ -280,19 +280,118 @@ def forest_roads():
 
 
 def farmland():
-    legs = [("E", 7, 2), ("N", 6, 2), ("E", 7, -2), ("N", 6, 2), ("E", 7, -2), ("N", 6, 2), ("E", 7, 2), ("N", 6, 2), ("E", 7, -2)]
-    start = (6, 40)
-    sp0 = Spine(start, legs)
-    ends = [i for i in range(1, len(sp0.cells)) if sp0.cells[i][3] != sp0.cells[i - 1][3]]
-    clear = {i: 6.6 for i in ends}
-    clear[0] = 5.4
-    clear[len(sp0.cells) - 1] = 5.4
-    m, cells, sp, off = build("farmland", start, legs, clear, radius=5.0, rock_pct=5, rim_pct=14)
-    sx, sy = cells[0][0], cells[0][1]
-    ex, ey = cells[-1][0], cells[-1][1]
-    ce = [cells[i] for i in ends]
-    keep = set()
+    """Flat open fields ([USER] 2026-11-01): gentle one-level rises, a path with a fence line along it that the party
+    can walk away from, a barn and a windmill, and in the north-east corner a tiny path through dense woods to a rocky
+    outcrop with a lit bonfire where Amber sleeps (events amber_fire, companion_fire_mage)."""
+    W, H = 60, 38
+    m = Map("farmland", W, H, t=".", hgt=0)
+
+    def yc(x):
+        return 20 + 3.2 * math.sin(x / 8.5)
+
+    bounds = (8, 15, 22, 29, 36, 43)  # seven plateaus, two levels apart, with a stair flight or two at each rise
+
+    def lvl(x, y):
+        return 2 * sum(1 for b_ in bounds if x >= b_)
+
+    land = set()
+    for x in range(3, W - 3):
+        hh = 4.8 + 4.0 * math.sin(x / 3.7 + 1) + 2.2 * math.sin(x / 1.9) + hsh(x, 0) % 2
+        hh = min(max(hh, 5.0), 3.0 + (x - 3) * 0.8, 3.0 + (W - 4 - x) * 0.8)
+        for y in range(H):
+            if abs(y - yc(x)) <= hh:
+                land.add((x, y))
+    # the outcrop corner: a lobe in the north-east, cut off from the fields by woods
+    ox, oy = W - 11, 7
+    lobe = {(x, y) for y in range(H) for x in range(W) if math.hypot(x - ox, y - oy) <= 4.6}
+    land |= lobe
+    for (x, y) in land:
+        m.put(x, y, "g", lvl(x, y))
+    # the path along the field's middle, two cells wide in places
+    path = []
+    for x in range(3, W - 3):
+        y = round(yc(x))
+        path.append((x, y))
+        for yy in ((y, y + 1) if (x // 6) % 2 else (y,)):
+            if (x, yy) in land:
+                m.put(x, yy, "d", m.height[yy][x])
+    # woods round the outcrop: a dense belt between the lobe and the fields, a one-cell path winding through it
+    belt = {(x, y) for y in range(H) for x in range(W)
+            if 4.6 < math.hypot(x - ox, y - oy) <= 9.5 and (x, y) in land and y < yc(x) - 3}
+    for (x, y) in belt:
+        m.put(x, y, "f", m.height[y][x])
+    tp = []
+    px, py = ox - 1, oy + 5
+    tp.append((px, py))
+    while py < round(yc(px)) - 3:
+        py += 1
+        tp.append((px, py))
+        if py % 3 == 0:
+            px += 1 if (py // 3) % 2 else -1
+            tp.append((px, py))
+    for (x, y) in tp:
+        m.put(x, y, "d", m.height[y][x])
+    py2 = tp[-1][1]
+    while m.terrain[py2 + 1][tp[-1][0]] != "d" and py2 < H - 3:
+        py2 += 1
+        tp.append((tp[-1][0], py2))
+        m.put(tp[-1][0], py2, "d", m.height[py2][tp[-1][0]])
+    join = (tp[-1][0], tp[-1][1] + 1)
+    top = m.height[join[1]][join[0]]  # the whole tiny path and the outcrop stand level with the field where it joins
+    for (x, y) in tp:
+        m.put(x, y, "d", top)
+    for (x, y) in lobe:
+        m.put(x, y, "g", top)
+    # the outcrop: ringed with rock, open on the south where the path comes in
+    for (x, y) in lobe:
+        d = math.hypot(x - ox, y - oy)
+        if d > 3.4 and not (y > oy and abs(x - (ox - 1)) <= 1):
+            m.put(x, y, "r", top)
+    for dy in range(1, 5):
+        m.put(ox - 1, oy + dy, "d", top)
+    flown_ = {}
+    # the rises: a flight (two columns, three wide, rock either side) at the path and one more at each rise
+    nfl = 0
+    for b_ in bounds:
+        done_ = 0
+        for y0 in sorted(range(4, H - 4), key=lambda v: abs(v - yc(b_))):
+            if done_ == 3:
+                break
+            cols = (b_, b_ - 1)
+            if all(c2 in (b_, b_ - 1, b_ - 2, b_ + 1) for c2 in cols) and all(0 <= y0 + dy < H and (c, y0 + dy) in land and m.terrain[y0 + dy][c] in "gd" for c in cols for dy in (-1, 0, 1)) \
+                    and not any(abs(y0 - q) < 5 for q in flown_.get(b_, [])):
+                band = [[(c, y0 + dy) for dy in (-1, 0, 1)] for c in cols]
+                flight(m, band, 2 * (sum(1 for b2 in bounds if b2 <= b_)))
+                for c in cols:
+                    for dy in (-2, 2):
+                        if (c, y0 + dy) in land and m.terrain[y0 + dy][c] == "g":
+                            m.put(c, y0 + dy, "r", m.height[y0 + dy][c])
+                flown_.setdefault(b_, []).append(y0)
+                done_ += 1
+                nfl += 1
+    # rim woods and a ragged forest fringe round the fields
+    for (x, y) in list(land):
+        if m.terrain[y][x] == "g" and any(not (0 <= x + dx < W and 0 <= y + dy < H) or m.terrain[y + dy][x + dx] == "." for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))) and hsh(x, y, 5) < 22:
+            m.put(x, y, "f")
+    for ring, pct in ((1, 60), (2, 20)):
+        add = []
+        for y in range(H):
+            for x in range(W):
+                if m.terrain[y][x] != ".":
+                    continue
+                near = [(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1) if (dx or dy) and 0 <= x + dx < W and 0 <= y + dy < H
+                        and m.terrain[y + dy][x + dx] in ("g", "d", "f") and (ring == 1 or m.terrain[y + dy][x + dx] == "f")]
+                if near and hsh(x, y, 11 + ring) < pct:
+                    add.append((x, y, m.height[near[0][1]][near[0][0]]))
+        for x, y, h in add:
+            m.put(x, y, "f", h)
+    # things and props
+    sx, sy = path[0]
+    ex, ey = path[-1]
     m.start = [[sx + 2, sy]]
+    keep = set(path) | set(tp)
+    things = []
+    far = path[-3]
 
     def thing(**t):
         m.thing(**t)
@@ -300,44 +399,64 @@ def farmland():
 
     thing(id="exit_home", kind="exit", event="exit", cell=[sx, sy])
     thing(id="exit_far", kind="exit", event="exit", cell=[ex, ey])
-    c2, c4, c6, c8 = ce[1], ce[3], ce[5], ce[7]
-    # the barn on the flat of the second clearing, the windmill on the high one, crop strips between
-    thing(id="farm_cache", kind="cache", event="farm_cache", cell=[c2[0] - 1, c2[1] + 2], once="got_farm_cache")
-    thing(id="farm_stash", kind="cache", event="farm_stash", cell=[c6[0] + 1, c6[1] + 2], once="got_farm_stash")
-    road = {(c[0], c[1]) for c in cells}
-    barn = carve_pad(m, 4, 3, (c2[0], c2[1]), c2[2], road | keep)
+    # the fence line: a post every cell on the north side of the path with gaps, walked round or through the gaps
+    fence = []
+    for (x, y) in path[4:-4]:
+        c = (x, y - 3)
+        if (x // 7) % 3 != 2 and m.terrain[c[1]][c[0]] == "g" and c not in keep:
+            m.prop("prop_fence", c[0], c[1], tall=0.5, sight=0.0)
+            fence.append(c)
+    keep.update(fence)
+    mid = path[len(path) // 2]
+    barn = carve_pad(m, 4, 3, (18, round(yc(18)) + 7), lvl(18, 0), keep | around(mid, 3), reach=12)
     m.prop("b_home_c", barn[0], barn[1], (4, 3), tall=0.0, sight=3.0)
     keep.update({(barn[0] + dx, barn[1] + dy) for dx in range(-1, 5) for dy in range(-1, 4)})
-    wind = carve_pad(m, 4, 4, (c8[0], c8[1]), c8[2], road | keep)
+    wind = carve_pad(m, 4, 4, (32, round(yc(32)) + 7), lvl(32, 0), keep | around(mid, 3), reach=12)
     m.prop("prop_windmill", wind[0], wind[1], (4, 4), tall=7.0, sight=6.0)
     keep.update({(wind[0] + dx, wind[1] + dy) for dx in range(-1, 5) for dy in range(-1, 5)})
+    cc = next(c for c in ((barn[0] + 1, barn[1] + 4), (barn[0] + 1, barn[1] - 2), (barn[0] + 5, barn[1] + 1), (barn[0] - 2, barn[1] + 1)) if 0 <= c[0] < W and 0 <= c[1] < H and m.terrain[c[1]][c[0]] == "g")
+    thing(id="farm_cache", kind="cache", event="farm_cache", cell=list(cc), once="got_farm_cache")
+    thing(id="farm_stash", kind="cache", event="farm_stash", cell=[wind[0] - 1, wind[1] + 5], once="got_farm_stash")
+    bc = path[len(path) * 2 // 3]
     groups = [
         {"id": "farm_bandits", "event": "spot_people", "sight": 5, "loot": "food:+3;gold:+6",
-         "units": [{"id": "bandit", "cell": [c4[0] + 1, c4[1] - 1]}, {"id": "bandit_archer", "cell": [c4[0] - 2, c4[1] - 2], "leader": True}]},
+         "units": [{"id": "bandit", "cell": [bc[0] + 1, bc[1] - 2]}, {"id": "bandit_archer", "cell": [bc[0] + 4, bc[1] - 3], "leader": True}]},
     ]
     for g in groups:
         for u in g["units"]:
             keep.add(tuple(u["cell"]))
-    for dx, dy in ((2, 4), (-3, 2), (3, -4), (-2, 5)):  # hay by the barn, on open grass
-        hc = (c2[0] + dx, c2[1] + dy)
-        if 0 <= hc[0] < m.w and 0 <= hc[1] < m.h and m.terrain[hc[1]][hc[0]] == "g" and hc not in _prop_cells(m) and hc not in keep:
+    # the bonfire (a brazier, graybox), Amber asleep on the far side, a log beside her
+    fire = (ox, oy)
+    m.prop("prop_brazier", fire[0], fire[1], tall=0.9, sight=0.0)
+    thing(id="amber_fire", kind="cache", event="amber_fire", cell=[fire[0] - 1, fire[1]])
+    thing(id="amber_log", kind="companion", event="companion_fire_mage", cell=[fire[0] + 1, fire[1] + 1], once="met_fire_mage")
+    m.prop("prop_bench", fire[0] + 2, fire[1] + 1, tall=0.5, sight=0.0)
+    keep.update(around(fire, 3))
+    taken_p = set(_prop_cells(m))
+    # ponds in the fields and rock clusters: open water and stone, so the open ground has a ragged edge of its own
+    pond_keep = set(keep)
+    for (px_, py_, pr) in ((14, 12, 3.5), (22, 28, 3.7), (38, 28, 3.3), (30, 11, 3.1), (46, 28, 3.1), (6, 27, 2.7), (52, 15, 2.9), (22, 11, 3.3), (44, 22, 2.7), (34, 14, 2.9), (28, 32, 3.2)):
+        for y in range(H):
+            for x in range(W):
+                c = (x, y)
+                if math.hypot(x - px_, y - py_) <= pr and m.terrain[y][x] == "g" and (x, y) not in taken_p and not any(abs(x - q[0]) <= 1 and abs(y - q[1]) <= 1 for q in pond_keep):
+                    m.put(x, y, "w", m.height[y][x])
+    # hay by the barn and crop strips on flat open grass
+    for dx, dy in ((5, 1), (-2, 4), (5, -3), (-2, -2)):
+        hc = (barn[0] + dx, barn[1] + dy)
+        if 0 <= hc[0] < W and 0 <= hc[1] < H and m.terrain[hc[1]][hc[0]] == "g" and hc not in _prop_cells(m) and hc not in keep:
             m.prop("prop_hay", hc[0], hc[1], tall=0.65, sight=0.5)
-    # crop strips: 1 x 3 beds in rows on flat open grass
     taken = _prop_cells(m)
-    n = 0
-    for (cx, cy, lv, li) in cells[::7]:
-        pass
-    for y in range(1, m.h - 4):
-        for x in range(1, m.w - 1):
-            if x % 2 != 0:
+    for y in range(1, H - 4):
+        for x in range(1, W - 1):
+            if x % 3 != 0:
                 continue
             cs = [(x, y + k) for k in range(3)]
-            if all(m.terrain[c[1]][c[0]] == "g" and c not in keep and c not in taken and not any((c[0] + a, c[1] + b) in {(t["cell"][0], t["cell"][1]) for t in m.things} for a in (-1, 0, 1) for b in (-1, 0, 1)) for c in cs) \
-                    and len({m.height[c[1]][c[0]] for c in cs}) == 1 and all(min(abs(c[0] - q[0]) + abs(c[1] - q[1]) for q in cells) > 1 for c in cs) \
-                    and not any(m.terrain[c[1] + dy][c[0] + dx] == "t" for c in cs for dx in (-1, 0, 1) for dy in (-1, 0, 1) if 0 <= c[0] + dx < m.w and 0 <= c[1] + dy < m.h):
+            if all(m.terrain[c[1]][c[0]] == "g" and c not in keep and c not in taken and all((c[0] + a, c[1] + b) not in keep for a in (-1, 0, 1) for b in (-1, 0, 1)) for c in cs) \
+                    and len({m.height[c[1]][c[0]] for c in cs}) == 1:
                 m.prop("prop_crops", x, y, (1, 3), tall=0.7, sight=0.0)
                 taken = _prop_cells(m)
-    scatter(m, cells, keep | set(_prop_cells(m)), tree_pct=3, rock_pct=1)
+    scatter(m, path, keep | set(_prop_cells(m)), tree_pct=3, rock_pct=1)
     finish(m, groups)
 
 

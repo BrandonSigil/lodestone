@@ -1839,7 +1839,8 @@
 			],
 			"event": "recruit_fire_mage",
 			"id": "sq_fire_mage",
-			"kind": "companion"
+			"kind": "companion",
+			"when": "met_fire_mage"
 		},
 		{
 			"cell": [

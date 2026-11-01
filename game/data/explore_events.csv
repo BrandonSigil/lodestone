@@ -39,3 +39,5 @@ settler_chef,EX_SETTLER_CHEF,OPT_WELCOME,noflag:settler_chef,none,0,unlock:settl
 crypt_vault,EX_CRYPT_VAULT,OPT_OPEN,flag:crypt_key,none,0,rare:+1;metal:+2;gold:+15;unlock:got_crypt_vault;remove,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,
 fish_dock,EX_FISH_DOCK,OPT_FISH,item:rod,none,0,fish,,OPT_NO_ROD,noitem:rod,none,0,,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,
 home_bed,EX_HOME_BED,OPT_SLEEP,,none,0,sleep:1,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,
+amber_fire,EX_BONFIRE,OPT_ADD_WOOD,item:wood&noflag:amber_w1,none,0,wood:-1;unlock:amber_w1,,OPT_ADD_WOOD,flag:amber_w1&noflag:amber_w2&item:wood,none,0,wood:-1;unlock:amber_w2,,OPT_ADD_WOOD,flag:amber_w2&noflag:amber_fed&item:wood,none,0,wood:-1;unlock:amber_fed,,OPT_LEAVE,,none,0,,,,,,,,,
+companion_fire_mage,EX_SLEEPER,OPT_SIT,flag:amber_fed&noparty:fire_mage,none,0,unlock:met_fire_mage;invite:fire_mage,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,

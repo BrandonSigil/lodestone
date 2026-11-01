@@ -6,96 +6,430 @@
  "turn": false,
  "fog": true,
  "grid": {
-  "w": 50,
-  "h": 39,
+  "w": 60,
+  "h": 38,
   "terrain": [
-   ".................................fff.fff....f.....",
-   "...............................fffgfffffffff......",
-   "..............................ffgggfg.fffffffff...",
-   "............................ggggggffgf..ffggggf...",
-   "............................gggggggggggggfggfff...",
-   "............................ggggggggggrrgggggf.f..",
-   "...........................fgggggggdddttdddggfff..",
-   ".........................fffggggggddddttddddgfff..",
-   "........................ffffggggggddddttdddggffff.",
-   ".........................fffggfggrtttrrrgggggffff.",
-   ".......................ffffgggggfrtttrgfgggggfff.f",
-   ".....................f.fgfgggggrrgdddgg.gfg.ffff..",
-   ".....................ff.ggggdddttddddggggfff.f....",
-   ".................fffffgfgggddddttddddggg.ffff.f...",
-   "................f.fffggffggddddttdddggggf.f..f....",
-   "................ffff.gggfgrtttrrrggggfffff........",
-   "..............f.ffffggggffrtttrgfgggggffff........",
-   "...............fff.gggggrrgdddgg.fgggggff.........",
-   ".........fffgggggggggdddttddddggggggggfff.........",
-   "........f.ffggggggggddddttddddrggggfffffff........",
-   ".........ffgggggggfgddddttdddgggffgf.ff...........",
-   ".......f.fgggggggggrtttrrrgggrggffff..............",
-   ".......fffg.ggggggfrtttrgfgrggfggf................",
-   ".......fffffggrggrrgdddgg.ff.gg.gf................",
-   ".......ffffgggdddttddddggffffffffff...............",
-   "....fffffffgrddddttddddggf.f.ffff.f...............",
-   "....fgffg.gggddddttdddgggffff.....................",
-   "..ff.gfggfggrtttrrrgggggg.fff.....................",
-   ".f.fgggggfggrtttrgggggffff.f......................",
-   ".fffgggggrrggdddggf.ggf.fff.f.....................",
-   ".fffgggddttdddddgfgfggff.ff.......................",
-   ".fffggdddttdddddgfgfgfff...f......................",
-   ".f..gggddttddddggfgfgf............................",
-   ".fgggggggrrgggggffffff............................",
-   ".ffggggggfggggggf.fff.............................",
-   ".f.ffgggffggg.fffff...............................",
-   "...ffggfffffffffffff..............................",
-   "....fffffff.fffff.................................",
-   ".......f....f....................................."
+   "............................................................",
+   "............................................................",
+   "............................................................",
+   "...............................................rrrrr........",
+   "..............................................rrgggrr.......",
+   ".............................................rrgggggrr......",
+   ".............................................rgggggggr......",
+   ".........................f...................rgggggggr......",
+   "........................f.f..................rggdggggr......",
+   ".........................f.fff...............rrgdgggrr......",
+   ".......................ffwffwff......f....f.f.rgdggrr.......",
+   ".......................ffwfwwwff.f.f.ffffffffffgdgrr.f......",
+   ".....................f..fwfgrr.ff.fff.gggfff.fffdff.f.......",
+   ".....................fffwffgttwffwwwwgggggffffffdfff.f......",
+   ".....................fffgffgttffffffwgggggggffffdffffff.....",
+   ".....................fffgfffttfggggrrgggggrrggggddffffff.f..",
+   ".....f...............fffgfffrrgggggttgggggttgggggdgffww.f...",
+   "...ff.gg..ff....ff...gffffggrrgggggttdddddttddgggdggwwwg.ff.",
+   "..ffggggfffffffffgggggfgggggttgddddttgggggttddddddggggggff..",
+   "..fgggggfgfffffffgggggggggggttdddddrrgggggrrggddggdddggggf..",
+   "..ffggggggggggfggggggrrgggddttdggggggggggggwwwgggggggddgff..",
+   "..fddggrrgggggrrgggggttdddggrrgggggggggfggwwwwwgggggggdddf..",
+   "..fggddttgggggttggggdttdggggrrggggggggffffffwwwggggggggddf..",
+   ".ffgggdttdddddttdddddttgggggttggggggffff..fffwwggggggggggf..",
+   "..ffgggttdddggttggddgrrgggggttggggggf.......ffffgggggggg.ff.",
+   "..f.gwwrrgggggrrggggwwwwwgggttgggggg..........ffggggggffff..",
+   "....fwwwwgggggggggggggwwwwfgrrgggggg.........ffwwgggff..f...",
+   ".....ffwwgggggggggggggwwwwfgfggggggg..........f.fffff.......",
+   "....ffffff.gfggggggggffwwwgffggggggg..........fffff.f.......",
+   ".......f..ff.ffgggggg.fwwwfwfff..................f..........",
+   ".............f.gggggg.ff.wwwff.f............................",
+   "...............gggggg...fw.wf...............................",
+   "........................fffff...............................",
+   ".............................f..............................",
+   "............................................................",
+   "............................................................",
+   "............................................................",
+   "............................................................"
   ],
   "heights": [
-   "00000000000000000000000000000000099909990000700000",
-   "00000000000000000000000000000009999999999777000000",
-   "00000000000000000000000000000099999990997777777000",
-   "00000000000000000000000000009999999999007777777000",
-   "00000000000000000000000000009999999999977777777000",
-   "00000000000000000000000000009999999999997777770700",
-   "00000000000000000000000000059999999999987777777700",
-   "00000000000000000000000005559999999999987777777700",
-   "00000000000000000000000055559999999999987777777770",
-   "00000000000000000000000005555555999999997777777770",
-   "00000000000000000000000555555555798889777777777707",
-   "00000000000000000000050555555557777777707770777700",
-   "00000000000000000000055055555556777777777777070000",
-   "00000000000000000555555555555556777777770777707000",
-   "00000000000000005055555555555556777777777070070000",
-   "00000000000000005555055555555557777777777700000000",
-   "00000000000000505555555553544453777777777700000000",
-   "00000000000000055505555555333333077777777000000000",
-   "00000000055555555555555554333333337777777000000000",
-   "00000000505555555555555554333333333777777700000000",
-   "00000000055555555555555554333333333307700000000000",
-   "00000005055555555555555555333333333300000000000000",
-   "00000005555055555535444533333333330000000000000000",
-   "00000005555555555553333330330330330000000000000000",
-   "00000001555555555543333333333333333000000000000000",
-   "00001111155555555543333333030333303000000000000000",
-   "00001111105555555543333333333000000000000000000000",
-   "00110111113555555553333330333000000000000000000000",
-   "01011111113354445333333333030000000000000000000000",
-   "01111111133333333330333033303000000000000000000000",
-   "01111111123333333333333303300000000000000000000000",
-   "01111111123333333333333300030000000000000000000000",
-   "01001111123333333333330000000000000000000000000000",
-   "01111111133333333333330000000000000000000000000000",
-   "01111111113333333033300000000000000000000000000000",
-   "01011111113330333330000000000000000000000000000000",
-   "00011111111133333333000000000000000000000000000000",
-   "00001111111033333000000000000000000000000000000000",
-   "00000001000030000000000000000000000000000000000000"
+   "000000000000000000000000000000000000000000000000000000000000",
+   "000000000000000000000000000000000000000000000000000000000000",
+   "000000000000000000000000000000000000000000000000000000000000",
+   "00000000000000000000000000000000000000000000000ccccc00000000",
+   "0000000000000000000000000000000000000000000000ccccccc0000000",
+   "000000000000000000000000000000000000000000000ccccccccc000000",
+   "000000000000000000000000000000000000000000000ccccccccc000000",
+   "000000000000000000000000060000000000000000000ccccccccc000000",
+   "000000000000000000000000606000000000000000000ccccccccc000000",
+   "000000000000000000000000060666000000000000000ccccccccc000000",
+   "0000000000000000000000066666666000000a0000a0c0ccccccc0000000",
+   "00000000000000000000000666666888080808aaaaaacccccccc0c000000",
+   "00000000000000000000060066666808808880aaaaac0cccccc0c0000000",
+   "000000000000000000000666666678888888aaaaaaaccccccccc0c000000",
+   "000000000000000000000666666678888888aaaaaaacccccccccccc00000",
+   "000000000000000000000666666678888888aaaaaaaccccccccccccc0c00",
+   "000000000000000000000646666668888889aaaaaabcccccccccccc0c000",
+   "000000000022000044000466666668888889aaaaaabccccccccccccc0cc0",
+   "000000002222222244444466666678888889aaaaaabccccccccccccccc00",
+   "000000002222222444444466666678888888aaaaaaaccccccccccccccc00",
+   "000000002222222444444466666678888888aaaaaaaccccccccccccccc00",
+   "000000002222222444444566666668888888aaaaaaaccccccccccccccc00",
+   "000000012222223444444566666668888888aaaaaaaacccccccccccccc00",
+   "0000000122222234444445666666788888888aaa00accccccccccccccc00",
+   "00000001222222344444446666667888888880000000cccccccccccc0cc0",
+   "0000000022222224444444666666788888880000000000cccccccccccc00",
+   "000000002222222444444466666668888888000000000ccccccccc00c000",
+   "0000000022222224444444666666688888880000000000c0ccccc0000000",
+   "0000000002022224444444466666688888880000000000ccccc0c0000000",
+   "0000000000220224444440666666668000000000000000000c0000000000",
+   "000000000000020444444066066666080000000000000000000000000000",
+   "000000000000000444444000660660000000000000000000000000000000",
+   "000000000000000000000000666660000000000000000000000000000000",
+   "000000000000000000000000000006000000000000000000000000000000",
+   "000000000000000000000000000000000000000000000000000000000000",
+   "000000000000000000000000000000000000000000000000000000000000",
+   "000000000000000000000000000000000000000000000000000000000000",
+   "000000000000000000000000000000000000000000000000000000000000"
   ],
   "props": [
    {
-    "sprite": "b_home_c",
+    "sprite": "prop_fence",
+    "cell": [
+     7,
+     19
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     8,
+     20
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     9,
+     20
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     10,
+     20
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     11,
+     20
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     12,
+     20
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
     "cell": [
      13,
+     20
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     21,
      19
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     22,
+     19
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     23,
+     18
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     24,
+     18
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     25,
+     18
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     26,
+     17
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     27,
+     17
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     30,
+     16
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     31,
+     15
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     32,
+     15
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     33,
+     15
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     34,
+     15
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     42,
+     14
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     43,
+     14
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     46,
+     15
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     47,
+     15
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_fence",
+    "cell": [
+     50,
+     16
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 0.5,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "b_home_c",
+    "cell": [
+     16,
+     28
     ],
     "foot": [
      4,
@@ -108,8 +442,8 @@
    {
     "sprite": "prop_windmill",
     "cell": [
-     29,
-     4
+     31,
+     24
     ],
     "foot": [
      4,
@@ -120,150 +454,52 @@
     "walk": false
    },
    {
-    "sprite": "prop_hay",
+    "sprite": "prop_brazier",
     "cell": [
-     17,
-     29
+     49,
+     7
     ],
     "foot": [
      1,
      1
     ],
-    "tall": 0.65,
-    "sight": 0.5,
-    "walk": false
-   },
-   {
-    "sprite": "prop_hay",
-    "cell": [
-     18,
-     21
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.65,
-    "sight": 0.5,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     36,
-     2
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
+    "tall": 0.9,
     "sight": 0.0,
     "walk": false
    },
    {
-    "sprite": "prop_crops",
+    "sprite": "prop_bench",
     "cell": [
-     42,
-     3
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     34,
-     4
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     44,
-     5
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     44,
+     51,
      8
     ],
     "foot": [
      1,
-     3
+     1
     ],
-    "tall": 0.7,
+    "tall": 0.5,
     "sight": 0.0,
     "walk": false
    },
    {
-    "sprite": "prop_crops",
+    "sprite": "prop_hay",
     "cell": [
-     28,
-     9
+     14,
+     26
     ],
     "foot": [
      1,
-     3
+     1
     ],
-    "tall": 0.7,
-    "sight": 0.0,
+    "tall": 0.65,
+    "sight": 0.5,
     "walk": false
    },
    {
     "sprite": "prop_crops",
     "cell": [
-     42,
-     9
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     38,
-     10
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     40,
-     10
+     27,
+     12
     ],
     "foot": [
      1,
@@ -277,48 +513,6 @@
     "sprite": "prop_crops",
     "cell": [
      24,
-     11
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     26,
-     11
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     22,
-     13
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     36,
      14
     ],
     "foot": [
@@ -332,8 +526,8 @@
    {
     "sprite": "prop_crops",
     "cell": [
-     34,
-     15
+     18,
+     18
     ],
     "foot": [
      1,
@@ -346,7 +540,35 @@
    {
     "sprite": "prop_crops",
     "cell": [
-     24,
+     48,
+     20
+    ],
+    "foot": [
+     1,
+     3
+    ],
+    "tall": 0.7,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_crops",
+    "cell": [
+     51,
+     21
+    ],
+    "foot": [
+     1,
+     3
+    ],
+    "tall": 0.7,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_crops",
+    "cell": [
+     27,
      22
     ],
     "foot": [
@@ -360,7 +582,35 @@
    {
     "sprite": "prop_crops",
     "cell": [
-     24,
+     48,
+     23
+    ],
+    "foot": [
+     1,
+     3
+    ],
+    "tall": 0.7,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_crops",
+    "cell": [
+     51,
+     24
+    ],
+    "foot": [
+     1,
+     3
+    ],
+    "tall": 0.7,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_crops",
+    "cell": [
+     9,
      25
     ],
     "foot": [
@@ -374,120 +624,22 @@
    {
     "sprite": "prop_crops",
     "cell": [
-     8,
-     26
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     20,
-     27
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     4,
-     28
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     16,
-     30
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     18,
-     30
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     20,
-     30
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     4,
-     31
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
-     6,
-     33
-    ],
-    "foot": [
-     1,
-     3
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_crops",
-    "cell": [
      12,
-     33
+     25
+    ],
+    "foot": [
+     1,
+     3
+    ],
+    "tall": 0.7,
+    "sight": 0.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_crops",
+    "cell": [
+     27,
+     25
     ],
     "foot": [
      1,
@@ -500,8 +652,8 @@
    {
     "sprite": "prop_tree_2",
     "cell": [
-     37,
-     12
+     40,
+     13
     ],
     "foot": [
      1,
@@ -526,10 +678,24 @@
     "walk": false
    },
    {
+    "sprite": "prop_pine_1",
+    "cell": [
+     9,
+     19
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
     "sprite": "prop_tree_4",
     "cell": [
-     31,
-     20
+     37,
+     22
     ],
     "foot": [
      1,
@@ -540,24 +706,52 @@
     "walk": false
    },
    {
-    "sprite": "prop_boulder_2",
+    "sprite": "prop_pine_1",
     "cell": [
-     26,
-     22
+     25,
+     23
     ],
     "foot": [
      1,
      1
     ],
-    "tall": 0.6,
+    "tall": 1.25,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     26,
+     25
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
+    "sight": 1.0,
+    "walk": false
+   },
+   {
+    "sprite": "prop_tree_4",
+    "cell": [
+     49,
+     26
+    ],
+    "foot": [
+     1,
+     1
+    ],
+    "tall": 1.6,
     "sight": 1.0,
     "walk": false
    },
    {
     "sprite": "prop_pine_2",
     "cell": [
-     8,
-     34
+     26,
+     28
     ],
     "foot": [
      1,
@@ -571,8 +765,8 @@
  },
  "start": [
   [
-   9,
-   31
+   5,
+   21
   ]
  ],
  "groups": [
@@ -585,15 +779,15 @@
     {
      "id": "bandit",
      "cell": [
-      23,
-      18
+      40,
+      15
      ]
     },
     {
      "id": "bandit_archer",
      "cell": [
-      20,
-      17
+      43,
+      14
      ],
      "leader": true
     }
@@ -606,8 +800,8 @@
    "kind": "exit",
    "event": "exit",
    "cell": [
-    7,
-    31
+    3,
+    21
    ]
   },
   {
@@ -615,8 +809,8 @@
    "kind": "exit",
    "event": "exit",
    "cell": [
-    42,
-    7
+    56,
+    21
    ]
   },
   {
@@ -624,8 +818,8 @@
    "kind": "cache",
    "event": "farm_cache",
    "cell": [
-    14,
-    27
+    17,
+    26
    ],
    "once": "got_farm_cache"
   },
@@ -635,9 +829,28 @@
    "event": "farm_stash",
    "cell": [
     30,
-    15
+    29
    ],
    "once": "got_farm_stash"
+  },
+  {
+   "id": "amber_fire",
+   "kind": "cache",
+   "event": "amber_fire",
+   "cell": [
+    48,
+    7
+   ]
+  },
+  {
+   "id": "amber_log",
+   "kind": "companion",
+   "event": "companion_fire_mage",
+   "cell": [
+    50,
+    8
+   ],
+   "once": "met_fire_mage"
   }
  ],
  "level": 1

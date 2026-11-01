@@ -1008,3 +1008,25 @@ func test_forest_captors() -> void:
 		if t.id == "captive_bushberry" and String(t.get("once", "")) == "rescued_bushberry":
 			captive = true
 	ok(captive, "the captive shows until he is freed")
+
+
+func test_farmland_amber() -> void:
+	var f := FileAccess.open("res://data/explore/farmland.json", FileAccess.READ)
+	var d: Dictionary = JSON.parse_string(f.get_as_text())
+	var ids := {}
+	for t: Dictionary in d.things:
+		ids[t.id] = t
+	ok(ids.has("amber_fire") and ids.has("amber_log"), "the bonfire and the log are on the farmland")
+	eq(String(ids.amber_log.event), "companion_fire_mage", "the log draws Amber while she sleeps")
+	var evs: Dictionary = Db.explore_events
+	ok(evs.has("amber_fire") and evs.has("companion_fire_mage"), "both events exist")
+	var have := {"items": {"wood": 1}, "flags": [], "party": []}
+	var fire: Dictionary = evs.amber_fire
+	ok(ExploreRules.need_met(fire.options[0].need, [], have), "the first wood goes on")
+	ok(not ExploreRules.need_met(fire.options[1].need, [], have), "the second waits for the first")
+	have.flags = ["amber_w1", "amber_w2"]
+	ok(ExploreRules.need_met(fire.options[2].need, [], have), "the third wood lights her up")
+	var sit: Dictionary = evs.companion_fire_mage
+	ok(not ExploreRules.need_met(sit.options[0].need, [], have), "no sitting before the fire is fed")
+	have.flags = ["amber_fed"]
+	ok(ExploreRules.need_met(sit.options[0].need, [], have), "sitting wakes her")
