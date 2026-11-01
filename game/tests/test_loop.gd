@@ -112,23 +112,78 @@ func test_travel_plan_and_fast_forward() -> void:
 	eq(TravelRules.days_between(29.0, 31.0), 1)
 
 
-## [USER] 2026-11-01 "The party must eat every day at camp, no food= journeys over".
+## [USER] 2026-11-01 "The party must eat every day at camp, no food= journeys over", and healing model A: the player
+## picks each member's food at camp; food heals its portions' worth, plain food only feeds.
 func test_daily_meal_at_camp() -> void:
 	_db()
 	var r := RunState.create([Db.character(&"lead"), Db.character(&"dog")], 1)
-	eq(r.food_need(), 2, "one portion each")
 	r.food = 3
+	r.add_item("ration", 1)
 	r.add_item("fish_good", 1)
-	eq(r.portions(), 5, "3 meat and a good fish (2 portions)")
+	eq(TravelRules.shares(r), {"lead": 1, "dog": 1}, "one portion each")
+	eq(r.larder(), ["ration", "meat", "fish_good"] as Array[String], "plain food first, then by HP a portion heals")
+	eq(r.portions(), 3 + int(Db.items.ration.food) + 2)
+	var picks := TravelRules.default_picks(r)
+	eq(picks, {"lead": "ration", "dog": "ration"}, "the picker opens on plain food")
 	r.members[0].hp = 1
-	ok(TravelRules.eat(r), "the night's meal")
-	eq(r.food, 1, "meat goes first")
-	eq(r.item_count("fish_good"), 1, "the fish is kept")
-	eq(int(r.members[0].hp), 1, "the daily meal heals nobody")
-	ok(TravelRules.eat(r), "the next night: the last meat and then the fish")
-	eq(r.portions(), 0)
-	ok(not TravelRules.eat(r), "an empty larder: no meal")
+	ok(TravelRules.camp_meal(r, picks), "the night's meal")
+	eq(int(r.members[0].hp), 1, "plain food only feeds")
+	eq(r.item_count("ration"), 0, "the ration was opened")
+	eq(r.portions_of("ration"), int(Db.items.ration.food) - 2, "and what's left of it keeps")
+	eq(r.meals_eaten, 1)
+	picks.lead = "meat"
+	eq(TravelRules.meal_heals(r, picks).lead, 2, "meat heals a portion's worth")
+	ok(TravelRules.camp_meal(r, picks))
+	eq(int(r.members[0].hp), 3, "meat for a hurt member is the healing choice")
+	eq(TravelRules.default_picks(r), {"lead": "meat", "dog": "ration"}, "SAME AS LAST NIGHT")
+	eq(r.food, 2)
+	r.opened.clear()
+	r.food = 0
+	r.add_item("fish_good", -1)
+	ok(not TravelRules.can_feed(r), "an empty larder can't feed the party")
+	ok(not TravelRules.camp_meal(r, picks), "no meal")
 	eq(TravelRules.food_heal(r), int(Db.items.meat.heal), "meat eaten on purpose still heals its heal column")
+
+
+## The team meal ([USER] 2026-11-01: "or use a team Feast item if you have one"): one cooked meal feeds everyone
+## tonight, heals, lifts morale and buffs the next fights.
+func test_team_meal_at_camp() -> void:
+	var saved := _fresh_game()
+	Game.run.add_item("meal_stew", 1)
+	var hero: Dictionary = Game.run.members[0]
+	hero.hp = 1
+	var heart := Game.morale_of("lead")
+	var meals := Game.run.meals_eaten
+	ok(Game.team_meal("meal_stew"))
+	eq(Game.run.meals_eaten, meals + 1, "it counts as the night's meal")
+	ok(int(hero.hp) > 1, "it heals")
+	ok(Game.morale_of("lead") > heart or heart >= 100, "and lifts morale")
+	ok(not Game.team_meal("meal_stew"), "none left")
+	_restore(saved)
+
+
+## Support heals out of a fight ([USER] 2026-11-01 healing model A): cast from the party window at their mana cost.
+func test_support_heals_on_the_road() -> void:
+	var saved := _fresh_game()
+	Game.take_weapon("book")
+	Game.refresh_party()
+	var hero: Dictionary = Game.run.members[0]
+	hero["learned"] = ["mend"]  # the book's hero starts on Fire Zap; mend is learned at a level up
+	var heals := TravelRules.road_heals(hero)
+	ok(not heals.is_empty(), "the book's hero has a heal to cast")
+	if not heals.is_empty():
+		var a: Ability = heals[0]
+		var key := TravelRules.cast_key(hero, a)
+		eq(TravelRules.gain(Game.run, key, hero), 0, "nobody hurt, nothing to heal")
+		hero.hp = 1
+		var mana := int(Game.member_res(hero).res)
+		ok(TravelRules.use_on(Game.run, key, hero), "cast on a hurt friend")
+		eq(int(hero.hp), mini(Game.run.max_hp(hero), 1 + TravelRules.cast_amount(hero, a)), "heals as in a fight")
+		eq(int(Game.member_res(hero).res), mana - a.res_cost, "and costs its mana")
+		hero.res = 0
+		hero.hp = 1
+		ok(not TravelRules.use_on(Game.run, key, hero), "no mana, no cast")
+	_restore(saved)
 
 
 ## An empty larder ends the journey: home like a fall, nobody hurt, everyone loses morale, not a death.

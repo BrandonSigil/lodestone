@@ -307,6 +307,25 @@ func run(s: Node, f: int, step: String) -> bool:
 					if b.text == Txt.t("UI_EAT"):
 						b.pressed.emit()
 			return f == 30
+		"cast":
+			# a support heal on the road: the book's hero with mend, the dog hurt, CAST pressed in the PARTY window
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false
+				if not game.meta.flags.has("met_dog"):
+					game.meta.flags.append("met_dog")
+				game.take_weapon("book")
+				game.refresh_party()
+				var run: RunState = game.run
+				run.members[0]["learned"] = ["mend"]
+				run.members[1].hp = 6
+				s._refresh_hud()
+				s._open_menu("pack")
+			if f == 20:
+				for b: Button in s._dialog.find_children("*", "Button", true, false):
+					if b.text == Txt.t("UI_CAST"):
+						b.pressed.emit()
+			return f == 30
 		"fish":
 			# caught fish in the PACK box: each grade its own EAT row, the prize fish's EAT pressed (the hero hurt)
 			if f == 5:

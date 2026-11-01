@@ -393,7 +393,7 @@ func _road(to: String) -> Node:
 	for attempt in TRIES:
 		s.call("_click_node", to)
 		_check(s.call("walking"), "on the road to " + to)
-		var eaten := 0  ## food the nightly camp meals took (finds and foraging add some back)
+		var meals: int = game.run.meals_eaten  ## the night camps on the walk (the robot eats the picks offered)
 		var foraged := false
 		var fell := false
 		_heal_up()
@@ -409,14 +409,13 @@ func _road(to: String) -> Node:
 				s = await _scene("overworld")
 				continue
 			if s.get("_busy"):
-				await _press(s, 0)
+				if not await _press_text(s, Txt.t("UI_CAMP_EAT")):  # the night's camp: eat what it offers
+					await _press(s, 0)
 			else:
-				var food: int = game.run.food
 				s.call("fast_forward")
-				eaten += maxi(0, food - game.run.food)
 		if not fell:
 			_check(game.travel.get("at", "") == to, "arrived at " + to)
-			_check(eaten > 0, "the party ate at camp on the walk")
+			_check(game.run.meals_eaten > meals, "the party ate at camp on the walk")
 			return s
 		var v := await _fell("a road fight")
 		await _use(v, "gate", "OPT_GO_ON")

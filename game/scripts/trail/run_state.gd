@@ -25,6 +25,9 @@ var courier_bag: InventoryGrid = null  ## the courier's saddlebag while it's bei
 var boons: Array[String] = []  ## blessings and setbacks held until home ([USER] omr-7, omr-8)
 var food_extra := 0  ## food each day's meal costs on top (spoiling food) or less (a small belly), from boons
 var meal := {}  ## a camp meal's buff: {"recipe": id, "fights": fights left} ([USER] omr-9); {} when none
+var opened := {}  ## food kind -> portions left in an item already opened at camp (a ration feeds 5; one eaten leaves 4)
+var last_picks := {}  ## member id -> the food kind they ate last night (the camp picker's SAME AS LAST NIGHT)
+var meals_eaten := 0  ## camp meals this run
 var on_pickup := Callable()  ## (id, n) after something is added to the pack: Game says when it counts toward a goal
 var away: Array[Dictionary] = []  ## members sent home with a bag: {"member": Dictionary, "bag": InventoryGrid}
 ## What the party carries in the pack and on its belts, id -> count (gear bound to a member left out).
@@ -342,20 +345,52 @@ func food_need() -> int:
 	return maxi(0, n + food_extra)
 
 
-## Food kinds that feed, cheapest first (meat, then the fish grades): id -> portions one gives (data/items.csv food).
+## Food kinds that feed, plain food first (it only feeds), then by HP a portion heals (meat, then the fish grades).
 func larder() -> Array[String]:
 	var out: Array[String] = []
 	for id: String in Db.items:
-		if String(Db.items[id].kind) == "food" and int(Db.items[id].food) > 0 and item_count(id) > 0:
+		if String(Db.items[id].kind) == "food" and int(Db.items[id].food) > 0 and portions_of(id) > 0:
 			out.append(id)
-	out.sort_custom(func(a: String, b: String) -> bool: return int(Db.items[a].food) < int(Db.items[b].food))
+	out.sort_custom(func(a: String, b: String) -> bool:
+		return heal_per_portion(a) < heal_per_portion(b) or (heal_per_portion(a) == heal_per_portion(b) and a < b))
 	return out
+
+
+## The HP one portion of this food heals (its heal column spread over its portions): meat 2, a good fish 3, a ration 0.
+static func heal_per_portion(id: String) -> float:
+	var row: Dictionary = Db.items.get(id, {})
+	return float(row.get("heal", 0)) / maxf(1.0, float(row.get("food", 1)))
+
+
+## Portions of one food kind: whole items plus what is left of an opened one.
+func portions_of(id: String) -> int:
+	return item_count(id) * int(Db.items.get(id, {}).get("food", 0)) + int(opened.get(id, 0))
 
 
 ## Every portion the pack holds.
 func portions() -> int:
 	var n := 0
 	for id in larder():
-		n += item_count(id) * int(Db.items[id].food)
+		n += portions_of(id)
 	return n
+
+
+## Eat n portions of one food kind: the opened item's first, then whole items opened (their spare portions stay
+## in opened). Returns how many were eaten (fewer when the kind runs out).
+func take_portions(id: String, n: int) -> int:
+	var got := 0
+	while got < n:
+		var left := int(opened.get(id, 0))
+		if left > 0:
+			var use := mini(left, n - got)
+			opened[id] = left - use
+			got += use
+			if int(opened[id]) <= 0:
+				opened.erase(id)
+			continue
+		if item_count(id) <= 0:
+			break
+		add_item(id, -1)
+		opened[id] = int(Db.items[id].food)
+	return got
 

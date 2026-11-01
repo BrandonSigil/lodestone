@@ -368,6 +368,16 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 		grid.choosing = RunState.MED_ITEM
 		grid.flash = "UI_WHO_DRINK"
 		grid.queue_redraw())
+	for m in run.members:  # [USER] 2026-11-01 healing model A: support heals cast out of a fight, at their mana cost
+		for a: Ability in TravelRules.road_heals(m):
+			var key := TravelRules.cast_key(m, a)
+			var r := Game.member_res(m)
+			var who := Txt.t((m.def as CharacterDef).name_key)
+			_use_row(col, a.id, int(r.res), "%s: %s (%d %s)" % [who, Txt.t(a.name_key), a.res_cost, String(r.kind)], Txt.t("UI_CAST"),
+				TravelRules.can_cast(m, a) and hurt, func() -> void:
+					grid.choosing = key
+					grid.flash = "UI_WHO_HEAL"
+					grid.queue_redraw(), TravelRules.cast_amount(m, a))
 	if run.item_count("tonic") > 0:  # mana and charges back, on the walk or at camp
 		var short := run.members.any(func(m: Dictionary) -> bool:
 			var r := Game.member_res(m)

@@ -3,7 +3,8 @@ extends SceneTree
 ## Steps: camp (walking to the pass with a stew in the pack, MAKE CAMP open), carry (the party panel after fights:
 ## the book hero's mana and the dog's charges half spent), carry_camp (the same with MAKE CAMP open: rest and tonic),
 ## pack (I pressed: the inventory page, the dog along), map (the hex world map at home, nothing open), walk (halfway
-## along the leg to forest roads), arrive (at forest roads: its map not built yet).
+## along the leg to forest roads), arrive (at forest roads), night (the night's camp picker: the dog along, the hero
+## hurt, meat, a ration, a fish and a stew in the pack).
 
 var _frames := 0
 var _out := ""
@@ -45,6 +46,21 @@ func _process(_delta: float) -> bool:
 		s.call("_side")
 		if _step == "carry_camp":
 			s.call("make_camp")
+	if _frames == 5 and _step == "night":
+		var game: Node = root.get_node("Game")
+		game.get("meta")["flags"].append("met_dog")
+		game.call("refresh_party")
+		var run: Object = game.get("run")
+		run.set("food", 6)
+		run.call("add_item", "ration", 1)
+		run.call("add_item", "fish_good", 1)
+		run.call("add_item", "meal_stew", 1)
+		var members: Array = run.get("members")
+		members[0]["hp"] = 7
+		s.call("_start_leg", "pass")
+		game.get("travel")["stops"] = []
+		game.get("travel")["t"] = 29.0
+		s.call("_advance_to", 30.5)
 	if _frames == 5 and _step == "arrive":
 		root.get_node("Game").get("run").set("food", 20)  # the camp meals on the way
 		s.call("_start_leg", "forest_roads")

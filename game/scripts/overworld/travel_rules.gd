@@ -45,22 +45,86 @@ static func days_between(t0: float, t1: float) -> int:
 	return maxi(0, int(floor(t1 / DAY_SECONDS)) - int(floor(t0 / DAY_SECONDS)))
 
 
-## The night's meal at camp: everyone's portions (RunState.food_need) from the larder, meat first, then the fish grades.
-## The daily meal only feeds; it heals nobody. False, and nothing eaten, when the pack can't feed everyone: the journey
-## is over (Game.larder_empty).
-static func eat(run: RunState) -> bool:
-	var need := run.food_need()
-	if run.portions() < need:
+## The camp meal ([USER] 2026-11-01 healing model A, docs/design/healing-model.md): each night every member eats their
+## food_per_day portions of the kind the player picked for them (the camp picker), and food heals its portions'
+## worth (RunState.heal_per_portion): meat for a hurt member is the healing choice, plain food only feeds. A member
+## whose kind runs out eats from the others, plain first. Blessings and setbacks add to or take from the hero's share.
+## Nobody needs to eat: true.
+
+## Each living member's share tonight: member id -> portions (0 for one who doesn't eat).
+static func shares(run: RunState) -> Dictionary:
+	var out := {}
+	for m in run.alive():
+		out[String((m.def as CharacterDef).id)] = (m.def as CharacterDef).food_per_day
+	if not out.is_empty():  # Small Belly and Bad Food change the meal by a portion: on the first share
+		var first: String = out.keys()[0]
+		out[first] = maxi(0, int(out[first]) + run.food_extra)
+	return out
+
+
+## The picks the camp screen opens with: last night's kind where some is left, else the larder's first (plain food,
+## then the food that heals least).
+static func default_picks(run: RunState) -> Dictionary:
+	var larder := run.larder()
+	var out := {}
+	for id: String in shares(run):
+		var last := String(run.last_picks.get(id, ""))
+		out[id] = last if last != "" and run.portions_of(last) > 0 else (larder[0] if not larder.is_empty() else "")
+	return out
+
+
+## Can the pack feed everyone tonight?
+static func can_feed(run: RunState) -> bool:
+	var need := 0
+	for id: String in shares(run):
+		need += int(shares(run)[id])
+	return run.portions() >= need
+
+
+## The HP each member would gain from tonight's picks (before capping at max HP): member id -> HP.
+static func meal_heals(run: RunState, picks: Dictionary) -> Dictionary:
+	var out := {}
+	for id: String in shares(run):
+		out[id] = roundi(int(shares(run)[id]) * RunState.heal_per_portion(String(picks.get(id, ""))))
+	return out
+
+
+## Eat tonight's meal with these picks (member id -> food kind). False, and nothing eaten, when the pack can't feed
+## everyone: the journey is over (Game.larder_empty). The picks are kept for SAME AS LAST NIGHT.
+static func camp_meal(run: RunState, picks: Dictionary) -> bool:
+	if not can_feed(run):
 		run.note(Txt.t("LOG_STARVE"))
 		return false
-	var left := need
-	for id in run.larder():
-		var per := int(Db.items[id].food)
-		while left > 0 and run.item_count(id) > 0:
-			run.add_item(id, -1)
-			left -= per
-	run.note(Txt.f("LOG_ATE", need))
+	var total := 0
+	var share := shares(run)
+	for m in run.alive():
+		var id := String((m.def as CharacterDef).id)
+		var need := int(share.get(id, 0))
+		if need <= 0:
+			continue
+		var heal := 0.0
+		var kinds: Array[String] = [String(picks.get(id, ""))]
+		kinds.append_array(run.larder())
+		for kind in kinds:
+			if need <= 0:
+				break
+			if kind == "":
+				continue
+			var got := run.take_portions(kind, need)
+			need -= got
+			heal += got * RunState.heal_per_portion(kind)
+		total += int(share[id])
+		if roundi(heal) > 0:
+			run.heal_member(m, roundi(heal))
+	run.last_picks = picks.duplicate()
+	run.meals_eaten += 1
+	run.note(Txt.f("LOG_ATE", total))
 	return true
+
+
+## The night's meal with the picks the camp screen opens with (tests and callers that don't ask).
+static func eat(run: RunState) -> bool:
+	return camp_meal(run, default_picks(run))
 
 
 ## What one piece of this food heals when eaten on purpose (meat by default): its heal column, never below 1. Caught
@@ -99,17 +163,81 @@ static func eat_one(run: RunState, m: Dictionary = {}, item := RunState.FOOD_ITE
 
 
 ## The HP member m would gain from one of this food or potion now: 0 when full, down or it heals nothing.
+## item can also be a support heal cast out of a fight: "cast:<caster id>:<ability id>" (cast_key).
 static func gain(run: RunState, item: String, m: Dictionary) -> int:
 	if int(m.hp) <= 0:
 		return 0
-	var amount := food_heal(run, item) if is_food(item) else (TrailRules.potion_heal(run) if item == RunState.MED_ITEM else 0)
+	var amount := 0
+	if item.begins_with("cast:"):
+		var c := _cast_parts(run, item)
+		if c.is_empty() or not can_cast(c.caster, c.ability) or (String(c.ability.target) == "self" and c.caster != m):
+			return 0
+		amount = cast_amount(c.caster, c.ability)
+	else:
+		amount = food_heal(run, item) if is_food(item) else (TrailRules.potion_heal(run) if item == RunState.MED_ITEM else 0)
 	return mini(amount, run.max_hp(m) - int(m.hp))
+
+
+# --- support healing out of a fight ([USER] 2026-11-01 healing model A: "out of combat support can still heal but it
+# costs mana like in combat") -------------------------------------------------------------------------------------
+
+## The heals a member can cast on the road: their own heal abilities (mend, renew, patch...) paid with mana or charges.
+## Rage resets every fight, so a rage heal waits for one.
+static func road_heals(m: Dictionary) -> Array[Ability]:
+	var out: Array[Ability] = []
+	var r := Game.member_res(m)
+	if not String(r.kind) in ["mana", "charges"] or int(m.hp) <= 0:
+		return out
+	for a: Ability in CombatUnit.from_member(m).abilities:
+		if a.kind == "heal" and a.target in ["ally", "self"] and a.res_cost > 0:
+			out.append(a)
+	return out
+
+
+static func can_cast(m: Dictionary, a: Ability) -> bool:
+	return int(m.hp) > 0 and int(Game.member_res(m).res) >= a.res_cost
+
+
+## What a road cast heals: the same as in a fight (CombatRules.heal_amount, magic included).
+static func cast_amount(m: Dictionary, a: Ability) -> int:
+	return CombatRules.heal_amount(CombatUnit.from_member(m), a)
+
+
+static func cast_key(m: Dictionary, a: Ability) -> String:
+	return "cast:%s:%s" % [String((m.def as CharacterDef).id), a.id]
+
+
+static func _cast_parts(run: RunState, key: String) -> Dictionary:
+	var bits := key.split(":")
+	if bits.size() != 3:
+		return {}
+	for m in run.members:
+		if String((m.def as CharacterDef).id) == bits[1]:
+			for a in road_heals(m):
+				if a.id == bits[2]:
+					return {"caster": m, "ability": a}
+	return {}
+
+
+## Cast a support heal on member m out of a fight: the caster pays its cost (the run keeps it until camp or the trickle).
+static func cast_on(run: RunState, key: String, m: Dictionary) -> bool:
+	var c := _cast_parts(run, key)
+	var g := gain(run, key, m)
+	if c.is_empty() or g <= 0:
+		return false
+	var caster: Dictionary = c.caster
+	caster.res = int(Game.member_res(caster).res) - int(c.ability.res_cost)
+	run.heal_member(m, g)
+	run.note(Txt.f("LOG_ROAD_HEAL", [Txt.t((caster.def as CharacterDef).name_key), Txt.t((m.def as CharacterDef).name_key), g]))
+	return true
 
 
 ## Use one food or potion on member m (EAT / DRINK, or a stack dropped on their card). False if it can't help.
 static func use_on(run: RunState, item: String, m: Dictionary) -> bool:
 	if gain(run, item, m) <= 0:
 		return false
+	if item.begins_with("cast:"):
+		return cast_on(run, item, m)
 	if is_food(item):
 		return eat_one(run, m, item)
 	if item == RunState.MED_ITEM and run.medicine > 0:

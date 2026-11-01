@@ -422,6 +422,8 @@ func start_adventure() -> void:
 				run.add_item(id, int(pack["items"][id]))
 	run.gold = int(pack.get("gold", 0))
 	run.meal = Dictionary(pack.get("meal", {})).duplicate()
+	run.opened = Dictionary(pack.get("opened", {})).duplicate()  # food portions left in opened items
+	run.last_picks = Dictionary(pack.get("last_picks", {})).duplicate()
 	run.boons.assign(Array(pack.get("boons", [])).filter(func(id: Variant) -> bool: return Db.boons.has(String(id))))
 	run.load_waiting(pack.get("waiting", {}))
 	refresh_party()
@@ -783,7 +785,8 @@ func save_adventure() -> void:
 		if int(m.get("res", -1)) >= 0:
 			res[String((m.def as CharacterDef).id)] = [int(m.res), int(m.get("res_tick", 0))]
 	meta.pack = {"grid": run.pack.to_save(), "belts": run.belts_save(), "waiting": run.waiting_save(), "gold": run.gold, "hp": hp, "res": res,
-		"meal": run.meal.duplicate(), "boons": run.boons.duplicate()}
+		"meal": run.meal.duplicate(), "boons": run.boons.duplicate(), "opened": run.opened.duplicate(),
+		"last_picks": run.last_picks.duplicate()}
 	save_meta()
 
 
@@ -1099,7 +1102,17 @@ func recipe_of(meal_item: String) -> Dictionary:
 	return {}
 
 
-## Eat a carried meal at camp: everyone gets its buff for the next few fights (meal_fights), heals the recipe's heal
+## A team meal at the night's camp ([USER] 2026-11-01: "or use a team Feast item if you have one"): one cooked meal
+## feeds the whole party for the night instead of the picks, heals each its recipe's heal, gives its morale and its buff
+## for the next fights (eat_meal). False when there is none.
+func team_meal(meal_item: String) -> bool:
+	if not eat_meal(meal_item):
+		return false
+	run.meals_eaten += 1
+	return true
+
+
+## Eat a carried meal: everyone gets its buff for the next few fights (meal_fights), heals the recipe's heal
 ## and gains its morale ([USER] 2026-10-31: "good food you make or buy would do both morale and health").
 func eat_meal(meal_item: String) -> bool:
 	var r := recipe_of(meal_item)

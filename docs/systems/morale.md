@@ -53,10 +53,17 @@ character at home gets X morale". Built 2026-11-01 from the proposal in `docs/de
 - X, the morale per journey day at home, is 3. A trip to the pass and back is about 6 to 8 days, so about +20.
 - Heartened's fight bonus (+10% crit) is new; the design draft had none. Blessing statues ([USER] Pitch B) can grant
   morale through an event's `morale:+n` once one is placed.
-- Daily eating is back ([USER] 2026-11-01, replacing "no hunger"): each journey day on the road ends at camp, where
-  everyone eats their `food_per_day` portions from the pack (meat first, then caught fish by the `food` column). The
-  daily meal only feeds. If the pack can't feed everyone, the journey is over (`Game.larder_empty`): the party goes home
-  as in a fall, nobody hurt, loot kept, not a death, and everyone loses `no_food` morale (-10). Food eaten on purpose
-  still heals its `heal` column, and camp REST stays free. The rest of the healing model (`docs/design/healing-model.md`,
-  the camp meal picker) waits for its build.
+- Healing model A is built ([USER] 2026-11-01, `docs/design/healing-model.md`). Each journey day on the road ends
+  at a night camp (`OverworldScene._night`): every member eats their `food_per_day` portions of the food kind the
+  player picks for them, the picks open as last night's (SAME AS LAST NIGHT), and food heals its portions' worth
+  (`heal` / `food` in `data/items.csv`: meat 2, a good fish 3, plain rations, sacks and jerky 0), so meat for a hurt
+  member is the healing choice. A food item with several portions keeps what's left once opened (`RunState.opened`).
+  A cooked meal in the pack is a TEAM MEAL: it feeds everyone that night, heals each its recipe's `heal`, gives its
+  `morale` and its buff for the next fights (`Game.team_meal`). If the pack can't feed everyone the camp warns and the
+  journey is over (`Game.larder_empty`): home as in a fall, nobody hurt, loot kept, not a death, -10 morale
+  (`no_food`), and the day doesn't pass. MAKE CAMP (once a leg) is the free REST: half HP, all mana and charges, +10
+  morale. Support heals (mend, renew, patch: a member's `heal` abilities paid with mana or charges) can be cast out of
+  a fight from the PARTY window (CAST, then a party card), at their cost and with their fight amount
+  (`TravelRules.road_heals`, `cast_on`); mana trickles back on the road and refills at REST. In a fight nothing
+  changes: skills, passives and belt items only.
 - How the tavern restores morale ([USER] Pitch G) is open.

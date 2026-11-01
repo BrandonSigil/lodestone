@@ -96,6 +96,8 @@ func _process(delta: float) -> void:
 			var c := _to_screen(_node_pos(id))
 			_weather.mask.append(Vector3(c.x, c.y, SNOW_REACH * float(_view().k)))
 	_note_time = maxf(0.0, _note_time - delta)
+	if not _busy and _dialog == null and int(Game.travel.get("nights_due", 0)) > 0:
+		_night()  # a night still owed (after a road fight, or MAKE CAMP's rest ran past nightfall)
 	if not _busy and _dialog == null and Game.run.overfull():
 		_open_menu("pack")  # a pickup found no room: the player decides before walking on
 	if walking() and not _busy:
@@ -110,17 +112,23 @@ func _advance_to(t1: float) -> void:
 	var stop := TravelRules.next_stop(float(tr.t), tr.stops, seconds)
 	t1 = minf(t1, stop)
 	var rest := float(tr.get("rest", 0.0))  # time spent at camp still counts toward journey days
-	if not _nights(TravelRules.days_between(float(tr.t) + rest, t1 + rest)):
-		return  # the larder ran out: the journey is over
+	var days := TravelRules.days_between(float(tr.t) + rest, t1 + rest)
+	if days > 0:  # each journey day ends at camp: the night's meal waits for the player's picks
+		tr["nights_due"] = int(tr.get("nights_due", 0)) + days
 	if Game.trickle(maxf(0.0, t1 - float(tr.t)), "trickle_seconds"):
 		_refresh_hud()
 	tr.t = t1
+	var then := Callable()
 	if t1 >= stop - 0.001:
 		if stop >= seconds:
-			_arrive()
+			then = _arrive
 		else:
 			tr.stops.erase(stop)
-			_encounter()
+			then = _encounter
+	if int(tr.get("nights_due", 0)) > 0:
+		_night(then)  # the camp first; the arrival or the encounter after it
+	elif then.is_valid():
+		then.call()
 	_refresh_side()
 
 
@@ -276,48 +284,143 @@ func _go_fish() -> void:
 		_refresh_hud())
 
 
-## Each journey day on the road ends at camp with a meal ([USER] 2026-11-01: "The party must eat every day at camp, no
-## food= journeys over"): everyone's portions come out of the pack, then the day counts for morale. With too little food
-## the journey ends (Game.larder_empty) and this returns false.
-func _nights(days: int) -> bool:
-	for i in days:
-		if not TravelRules.eat(Game.run):
-			Game.larder_empty()
-			return false
-		Game.pass_days(1)
-		_refresh_hud()
-	return true
+## The night's camp ([USER] 2026-11-01 healing model A: "at the camp at night you as the player should pick what food
+## they each eat or use a team Feast item if you have one"). Each member gets a row with the food kinds in the pack;
+## their portions come from the kind picked (meat heals, plain food only feeds; the row shows the HP it gives). A cooked
+## meal feeds everyone instead (TEAM MEAL). The picks open as last night's (SAME AS LAST NIGHT puts them back). If the
+## pack can't feed everyone the camp says so and the journey is over (Game.larder_empty): the day doesn't pass. then:
+## what the clock reached on the way (the arrival or an encounter), run once the nights are eaten.
+func _night(then := Callable()) -> void:
+	_busy = true
+	_night_box(TravelRules.default_picks(Game.run), then)
 
 
-## MAKE CAMP ([USER] omr-9): once a leg. The party stands still a while (the road clock runs on, meals included), can
-## cook a meal it carries (buff, heal and morale) and can rest for free (mana, some HP, morale).
+func _night_box(picks: Dictionary, then: Callable) -> void:
+	var run := Game.run
+	if not TravelRules.can_feed(run):
+		var hungry := _new_dialog(Txt.t("UI_CAMP_HUNGRY"))
+		_button(hungry, Txt.t("UI_CAMP_GO_HOME"), func() -> void:
+			_close_dialog()
+			Game.larder_empty())
+		return
+	var box := _new_dialog(Txt.t("UI_CAMP_NIGHT"))
+	var share := TravelRules.shares(run)
+	var heals := TravelRules.meal_heals(run, picks)
+	for m in run.alive():
+		var id := String((m.def as CharacterDef).id)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		box.add_child(row)
+		var face := TextureRect.new()
+		face.texture = ContainerUi.face_of(id)
+		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		face.custom_minimum_size = Vector2(36, 36)
+		face.tooltip_text = Txt.t((m.def as CharacterDef).name_key)
+		row.add_child(face)
+		var hp := Label.new()
+		var gain := mini(int(heals.get(id, 0)), run.max_hp(m) - int(m.hp))
+		hp.text = "%d/%d%s" % [int(m.hp), run.max_hp(m), ("  " + Txt.f("UI_GAIN_HP", gain)) if gain > 0 else ""]
+		hp.custom_minimum_size.x = 104
+		hp.add_theme_font_size_override("font_size", 14)
+		row.add_child(hp)
+		if int(share.get(id, 0)) <= 0:
+			var none := Label.new()
+			none.text = Txt.t("UI_CAMP_NO_EAT")
+			row.add_child(none)
+			continue
+		for kind in run.larder():  # one button per food kind: its icon, the portions left, what one portion heals
+			var b := Button.new()
+			b.toggle_mode = true
+			b.set_pressed_no_signal(String(picks.get(id, "")) == kind)
+			b.icon = ActionInfo.icon(kind)
+			b.add_theme_constant_override("icon_max_width", 26)
+			b.custom_minimum_size = Vector2(104, 36)
+			if String(picks.get(id, "")) == kind:  # the pick stands out
+				b.add_theme_color_override("font_color", UiTheme.GOLD)
+				b.add_theme_color_override("font_pressed_color", UiTheme.GOLD)
+				b.modulate = Color(1.15, 1.15, 1.0)
+			else:
+				b.modulate = Color(1, 1, 1, 0.7)
+			var hpp := RunState.heal_per_portion(kind)
+			b.text = "%d%s" % [run.portions_of(kind), (" +%d" % roundi(hpp * int(share[id]))) if hpp > 0.0 else ""]
+			b.tooltip_text = Txt.t(String(Db.items[kind].name_key))
+			b.add_theme_font_size_override("font_size", 13)
+			b.pressed.connect(func() -> void:
+				picks[id] = kind
+				_night_box(picks, then))
+			row.add_child(b)
+	var meals := run.items.keys().filter(func(k: String) -> bool: return String(Db.items[k].kind) == "meal")
+	if not meals.is_empty():  # a cooked meal feeds the whole party tonight: heal, morale and its buff
+		var team := HBoxContainer.new()
+		team.add_theme_constant_override("separation", 6)
+		box.add_child(team)
+		var l := Label.new()
+		l.text = Txt.t("UI_CAMP_TEAM")
+		team.add_child(l)
+		for k: String in meals:
+			var b := Button.new()
+			b.icon = ActionInfo.icon(k)
+			b.add_theme_constant_override("icon_max_width", 26)
+			b.text = Txt.t(String(Db.items[k].name_key))
+			b.custom_minimum_size = Vector2(0, 36)
+			b.add_theme_font_size_override("font_size", 13)
+			b.pressed.connect(func() -> void:
+				if Game.team_meal(k):
+					_say(Txt.t("UI_CAMP_ATE"))
+				_end_night(then))
+			team.add_child(b)
+	var acts := HBoxContainer.new()
+	acts.add_theme_constant_override("separation", 8)
+	box.add_child(acts)
+	var eat := Button.new()
+	eat.text = Txt.t("UI_CAMP_EAT")
+	eat.custom_minimum_size = Vector2(140, 34)
+	eat.pressed.connect(func() -> void:
+		if TravelRules.camp_meal(run, picks):
+			_end_night(then)
+		else:
+			_night_box(picks, then))
+	acts.add_child(eat)
+	var same := Button.new()
+	same.text = Txt.t("UI_CAMP_SAME")
+	same.custom_minimum_size = Vector2(200, 34)
+	same.disabled = run.last_picks.is_empty()
+	same.pressed.connect(func() -> void: _night_box(TravelRules.default_picks(run), then))
+	acts.add_child(same)
+
+
+## A night eaten: the day counts (morale for whoever is home), and the next night owed or what the clock reached.
+func _end_night(then: Callable) -> void:
+	var tr := Game.travel
+	tr["nights_due"] = maxi(0, int(tr.get("nights_due", 0)) - 1)
+	Game.pass_days(1)
+	_close_dialog()
+	_refresh_hud()
+	if int(tr.get("nights_due", 0)) > 0:
+		_night(then)
+	elif then.is_valid():
+		then.call()
+	_side()
+
+
+## MAKE CAMP ([USER] omr-9): once a leg. The party stands still a while (the road clock runs on: a night that falls
+## meanwhile is eaten after) and can rest for free (mana and charges, some HP, morale) or drink a tonic. Cooked meals are
+## eaten at the night's camp, as a team meal.
 func make_camp() -> void:
 	if not walking() or _busy or Game.travel.get("camped", false):
 		return
 	var tr := Game.travel
 	var rest := float(tr.get("rest", 0.0))
 	var camp := float(Db.levels.get("camp_seconds", 20))
-	if not _nights(TravelRules.days_between(float(tr.t) + rest, float(tr.t) + rest + camp)):
-		return
+	var days := TravelRules.days_between(float(tr.t) + rest, float(tr.t) + rest + camp)
+	if days > 0:
+		tr["nights_due"] = int(tr.get("nights_due", 0)) + days
 	tr["rest"] = rest + camp
 	tr["camped"] = true
 	_busy = true
 	var box := _new_dialog(Txt.t("UI_CAMP"))
-	var meals := Game.run.items.keys().filter(func(id: String) -> bool: return String(Db.items[id].kind) == "meal")
-	if meals.is_empty():
-		var l := Label.new()
-		l.text = Txt.t("UI_CAMP_NO_MEAL")
-		box.add_child(l)
-	for id: String in meals:
-		var b := Button.new()
-		b.text = Txt.f("UI_COOK", Txt.t(String(Db.items[id].name_key)))
-		b.pressed.connect(func() -> void:
-			Game.eat_meal(id)
-			_say(Txt.t("UI_CAMP_ATE"))
-			_close_dialog()
-			_side())
-		box.add_child(b)
-	var rest_btn := Button.new()  # a rest: all mana and charges, some HP, morale; free (no hunger)
+	var rest_btn := Button.new()  # a rest: all mana and charges, some HP, morale; free
 	rest_btn.text = Txt.t("UI_CAMP_REST")
 	rest_btn.pressed.connect(func() -> void:
 		if Game.camp_rest():
