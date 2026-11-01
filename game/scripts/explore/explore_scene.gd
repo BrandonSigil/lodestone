@@ -17,8 +17,6 @@ const ZOOM_START := 1.35  ## [USER] 2026-10-29: close in; what's on screen is wh
 const ZOOM_MIN := 1.0
 const ZOOM_MAX := 1.8
 const PAN_SPEED := 700.0
-const PATH_COLOR := Color(1.0, 1.0, 1.0, 0.16)
-const GOAL_COLOR := Color(0.4, 0.75, 1.0, 0.45)
 const WATCH_COLOR := Color(1.0, 0.35, 0.3, 0.22)  ## cells a hovered enemy group can see
 const DEPLOY_COLOR := Color(0.35, 0.6, 1.0, 0.35)  ## where the picked member may start the fight
 
@@ -558,23 +556,19 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 		return
 	if mode != M.WALK or right or c == CombatBoard.NONE:
 		return
+	# No click to move ([USER] 2026-11-01: "turn off click to move during open world movement. Keep that just
+	# WASD"). A click still uses a thing already in reach and opens a party piece's sheet; it never walks.
 	var t := thing_at(c)
 	if not t.is_empty():
-		_go_use(t)
+		var lead := leader()
+		var path := ExploreRules.path_to_use(grid, lead.cell, t.cell, lead.jump, _blocked(), seen, true)
+		if path.size() == 1:
+			_open_thing(t)
 		return
 	for u: CombatUnit in party:  # a party piece (the dog at his heels): its character sheet
 		if u.cell == c and board.units.has(u):
 			open_sheet(_member_id(u))
 			return
-	if not group_at(c).is_empty():
-		return
-	var lead := leader()
-	var path := ExploreRules.find_path(grid, lead.cell, c, leader().jump, _blocked(), seen, true)
-	if path.size() < 2:
-		board.float_text(c, Txt.t("UI_EX_NO_WAY"), Color(0.9, 0.8, 0.7))
-		return
-	follow = true
-	walk(path)
 
 
 func _go_use(t: Dictionary) -> void:
@@ -716,13 +710,7 @@ func _on_cell_hovered(c: Vector2i) -> void:
 		_info.text = Txt.t("EX_KIND_" + String(t.kind).to_upper())
 		return
 	_info.text = "%s  H%d" % [CombatGrid.T.keys()[grid.terrain_at(c)], grid.height_at(c)]
-	if walking_now:
-		return
-	var path := ExploreRules.find_path(grid, leader().cell, c, leader().jump, _blocked(), seen, true)
-	for p in path.slice(1):
-		board.highlights[p] = PATH_COLOR
-	if path.size() > 1:
-		board.highlights[c] = GOAL_COLOR
+	# no path preview: clicking the ground doesn't walk any more (WASD only, [USER] 2026-11-01)
 
 
 func _enemy_text(g: Dictionary) -> String:

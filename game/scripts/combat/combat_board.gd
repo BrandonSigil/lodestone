@@ -158,6 +158,10 @@ var _skirt_fade_prev := {}
 var _skirt_by_depth := {}
 var _over_by_depth := {}  ## this frame: depth -> {cell: true} with a highlight, the cursor or the fog veil
 var _units_by_depth := {}
+var _figs_by_depth := {}  ## depth -> cells in figures standing there
+## cell -> Callable(ci: CanvasItem, p: Vector2): extra standing figures (people waiting on an explore map) drawn
+## in the pieces' depth order, so whoever stands nearer the camera is in front.
+var figures := {}
 var _deck_over := {}  ## this frame: depth -> {deck place: true} with an overlay (drawn on the deck, DECK slab)
 var _deck_units := {}  ## this frame: depth -> pieces standing on a deck
 ## A piece under a deck: the deck goes see-through round it (the window), as buildings do. Off: the deck stays
@@ -625,6 +629,12 @@ func _sync_slabs() -> void:
 		_bucket(_deck_over if CombatGrid.on_deck(hover) else _over_by_depth, hover)
 	_units_by_depth.clear()
 	_deck_units.clear()
+	_figs_by_depth.clear()
+	for c: Vector2i in figures:
+		var fd := _depth_at(c)
+		if not _figs_by_depth.has(fd):
+			_figs_by_depth[fd] = []
+		_figs_by_depth[fd].append(c)
 	for u: CombatUnit in units:
 		if (u.shown_hp > 0 or u.downed()) and not u.hiding:  # an ambusher not spotted yet isn't drawn
 			var d := clampi(_unit_depth(u) + _off, 0, _depths.size() - 1)
@@ -791,6 +801,8 @@ func _paint(sl: Slab) -> void:
 				for c: Vector2i in _depths[sl.depth]:
 					if grid.in_bounds(c) and grid.terrain_at(c) == CombatGrid.T.VOID:
 						_ci.draw_polyline(_ring(_diamond(c, 0.0)), Color(1, 1, 1, 0.5 if c == hover else 0.14), 1.0, true)
+			for c: Vector2i in _figs_by_depth.get(sl.depth, []):
+				(figures[c] as Callable).call(_ci, cell_top(c))
 			for u: CombatUnit in _units_by_depth.get(sl.depth, []):
 				_draw_unit(u)
 		Slab.K.DECK:
