@@ -1251,13 +1251,7 @@ func _new_dialog(text: String, top := false, portrait := "") -> VBoxContainer:
 	l.add_theme_font_size_override("font_size", 22)
 	box.add_child(l)
 	_ui.add_child(_dialog)
-	var r := hud.center_rect()
-	var k := 1.0
-	_dialog.scale = Vector2(k, k)
-	var wide := DIALOG_TEXT_W + (DIALOG_PORTRAIT + 14.0 if portrait != "" else 0.0) + 40.0
-	_dialog.position = Vector2(r.get_center().x - wide * 0.5 * k, r.position.y + 16 if top else r.end.y - 330 * k)
-	if not top:
-		_sit_on_frame(_dialog, k)
+	UiTheme.keep_inside(_dialog, _dialog_area, 1.0, top)  # never spills off the screen; shrinks to fit when it must
 	if text == "":
 		l.queue_free()
 	if fresh:
@@ -1265,14 +1259,11 @@ func _new_dialog(text: String, top := false, portrait := "") -> VBoxContainer:
 	return box
 
 
-## A dialogue at the bottom stands just above the frame's crest once its size is known.
-## (A frame's wait on the tree, not a deferred call: the dialogue may be swapped or freed by then; see docs/context.)
-func _sit_on_frame(d: Control, k: float) -> void:
-	await get_tree().process_frame
-	if not is_instance_valid(d) or d != _dialog:
-		return
-	d.reset_size()
-	d.position.y = hud.center_rect().end.y - ActionHud.FRAME_ART - d.size.y * k
+## Where boxes may go: the play area above the bottom frame's crest.
+func _dialog_area() -> Rect2:
+	var r := hud.center_rect()
+	r.size.y -= ActionHud.FRAME_ART
+	return r
 
 
 func _dialog_button(box: VBoxContainer, text: String, cb: Callable) -> void:
@@ -1430,9 +1421,10 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		if u.boss:
 			Game.set_flag(ExploreRules.learned_flag(String(u.cls.id)))
 	var big := foes.any(func(f: Dictionary) -> bool: return bool(f.def.get("boss", false)) or bool(f.def.get("elite", false)))
-	var heart_lines := Game.fight_morale(battle.units, ("escaped" if battle.outcome.how == "exit" else "won") if won else "lost", big)
-	var box := _new_dialog(Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT"))
+	var before := VictoryUi.snapshot(party.map(func(u: CombatUnit) -> String: return String(u.figure)))  # the bars fill from here
+	Game.fight_morale(battle.units, ("escaped" if battle.outcome.how == "exit" else "won") if won else "lost", big)
 	if not won:
+		var box := _new_dialog(Txt.t("UI_DEFEAT"))
 		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall())
 		mode = M.OVER
 		return
@@ -1481,34 +1473,32 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		* int(Db.levels.get("xp_minion", 0))
 	if elite:
 		xp = xp * int(CombatRules.num("elite_xp_pct")) / 100  # better rewards; loot waits on the one-more-run theme
-	var lines := Game.award_xp(xp)
-	lines.insert(0, Txt.f("UI_XP_GAIN", xp))
-	lines.append_array(battle.award_bonds())
-	lines.append_array(heart_lines)
+	Game.award_xp(xp)
+	battle.award_bonds()
 	_sync_party_hp()
 	_refresh_hud()
 	if ends or loot_items == "":
 		if loot_items != "":  # the end of the E2E test: no grid, it all goes in the pack
 			Game.absorb(TrailRules.apply_effects(Game.run, loot_items).unlocks)
-	lines.append(_fight_summary(foes, downed))
+	var rep := VictoryUi.report(before, party, {"title": "UI_ESCAPED" if escaped else "UI_VICTORY", "xp": xp,
+		"downed": downed, "coins": loot_coins, "loot": loot_items, "bonds": battle.bond_ups})
 	if ends:
 		# The boss is down: the end of the E2E test.
 		Game.set_flag("e2e_done")
-		box = _new_dialog("%s\n%s\n\n%s" % [Txt.t("UI_VICTORY"), "\n".join(lines), Txt.t("UI_E2E_DONE")])
-		_dialog_button(box, Txt.t("UI_E2E_WAKE"), func() -> void: Game.wake_in_town(false))
-		_dialog_button(box, Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.LAUNCH))
+		rep.end_text = Txt.t("UI_E2E_DONE")
+		_victory(rep, [[Txt.t("UI_E2E_WAKE"), func() -> void: Game.wake_in_town(false)],
+			[Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.LAUNCH)]])
 		mode = M.OVER
 		return
-	box = _new_dialog("%s\n%s" % [Txt.t("UI_ESCAPED" if escaped else "UI_VICTORY"), "\n".join(lines)])
-	_dialog_button(box, Txt.t("UI_CONTINUE"), _loot_flow.bind(loot_items, loot_coins))
+	_victory(rep, [[Txt.t("UI_CONTINUE"), _loot_flow.bind(loot_items, loot_coins)]])
 
 
-## The after-fight summary's last lines: the rounds and the foes down, and every party piece's HP.
-func _fight_summary(_foes: Array, downed: int) -> String:
-	var parts: PackedStringArray = [Txt.f("UI_SUM_ROUNDS", [battle.rounds_done, downed])]
-	for u: CombatUnit in party:
-		parts.append(Txt.f("UI_SUM_HP", [Txt.t(u.name_key), maxi(1, u.hp), u.max_hp]))
-	return "\n".join(parts)
+## The victory screen (VictoryUi) as the open dialog: the next box (loot, level-ups) replaces it.
+func _victory(rep: Dictionary, btns: Array) -> void:
+	if _dialog:
+		_dialog.queue_free()
+	_dialog = VictoryUi.make(rep, btns)
+	_ui.add_child(_dialog)
 
 
 ## The loot as one shared grid (a big default size) after the summary: TAKE ALL, drag or click; what is left stays on the
@@ -1559,10 +1549,6 @@ func _level_up_flow(i: int) -> void:
 	LevelUpUi.picks(box, id, _level_up_flow.bind(i))  # a pick rebuilds this box
 	var waiting := int(Game.rank_state(id).pending) > 0
 	_dialog_button(box, Txt.t("UI_LV_LATER") if waiting else Txt.t("UI_CONTINUE"), _level_up_flow.bind(i + 1))
-	await get_tree().process_frame  # the detail panel fills in on the first frame: stand the taller box on the frame again
-	await get_tree().process_frame
-	if _dialog != null and is_instance_valid(_dialog):
-		_sit_on_frame(_dialog, 1.0)
 
 
 func _end_fight() -> void:

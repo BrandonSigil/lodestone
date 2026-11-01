@@ -188,7 +188,10 @@ static func pop_in(c: Control) -> void:
 	c.scale = target * 0.94
 	c.modulate.a = 0.0
 	var tw := c.create_tween().set_parallel().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(c, "scale", target, OPEN_TIME)
+	if c.has_meta("fit_k"):  # a box kept inside the screen: the size it fits at may change mid-open
+		tw.tween_method(func(f: float) -> void: c.scale = Vector2.ONE * float(c.get_meta("fit_k")) * f, 0.94, 1.0, OPEN_TIME)
+	else:
+		tw.tween_property(c, "scale", target, OPEN_TIME)
 	tw.tween_property(c, "modulate:a", 1.0, OPEN_TIME * 0.8)
 
 
@@ -207,6 +210,31 @@ static func pop_in_later(c: Control) -> void:
 	await c.get_tree().process_frame  # a frame's wait on the tree: if the game is shutting down it never resumes
 	if is_instance_valid(c) and c.is_inside_tree():
 		pop_in(c)
+
+
+## Keeps a box inside the play area ([USER] 2026-11-01: "Menus spill out of the window"; "too small or too large"):
+## centred across, its top at the area's top (`top`) or standing on its foot, and scaled down from `base` whenever it
+## would spill over. Runs again each time the box changes size (a menu rebuilt, a detail filled in). `area` returns
+## the Rect2 the box may use.
+static func keep_inside(c: Control, area: Callable, base := 1.0, top := true) -> void:
+	var fit := func() -> void:
+		if not is_instance_valid(c) or not c.is_inside_tree():
+			return
+		if c.size != c.get_combined_minimum_size():
+			c.reset_size()  # shrink back when the box loses rows (this runs again from resized)
+			return
+		var r: Rect2 = area.call()
+		var room := r.size - Vector2(FIT_MARGIN, FIT_MARGIN) * 2.0
+		var k := minf(base, minf(room.x / maxf(1.0, c.size.x), room.y / maxf(1.0, c.size.y)))
+		c.set_meta("fit_k", k)  # pop_in grows to this even when the box changes size while it opens
+		c.scale = Vector2(k, k)
+		c.position.x = roundf(r.get_center().x - c.size.x * k * 0.5)
+		c.position.y = roundf(r.position.y + FIT_MARGIN if top else r.end.y - FIT_MARGIN - c.size.y * k)
+	c.resized.connect(fit)
+	fit.call()
+
+
+const FIT_MARGIN := 12.0
 
 
 ## A menu closing: shrinks a touch and fades, then frees itself. Its buttons die at once, so nothing on the way
