@@ -16,7 +16,10 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 	if not u.alive():
 		plan["events"] = events
 		return plan
+	var moved: bool = plan.move != u.cell
 	u.place(plan.move, grid.height_at(plan.move))
+	if moved:
+		events.append_array(CombatRules.hoarfrost(u, units))  # ended its move by the Lich Prince
 	if not stop.is_empty():
 		events.append_array(CombatRules.stop_events(rng, grid, stop, u, units))
 		u.moved = true

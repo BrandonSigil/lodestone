@@ -118,6 +118,7 @@ func _ready() -> void:
 			u.place(e.cell, grid.height_at(e.cell))
 			u.leader = bool(e.get("leader", false))  # FightGoals: beat this one to win a "leader" fight
 			u.boss = bool(g.get("boss", false))
+			u.yields = g.units.find(e) == 0 and ExploreRules.yields_now(g, Game.meta, Game.meta.flags)  # the Lich's third win
 			u.talk_to = g.has("talk") and int(g.talk.get("unit", -1)) == g.units.find(e)
 			u.summon_cells = g.get("summon", [] as Array[Vector2i])
 			u.hiding = bool(e.get("hidden", false))
@@ -132,8 +133,9 @@ func _ready() -> void:
 	for g in groups:
 		if settled.has(String(g.def.id)):
 			g.state = settled[String(g.def.id)]
-		elif ExploreRules.stays_beaten(map.map_name, g.def, Game.meta.flags):
-			g.state = "gone"
+		elif ExploreRules.relented(g.def, Game.meta.flags):
+			g.state = "calm"  # a story beat settled it ([USER] 2026-11-01): it waits, and asks before any fight
+			g["relented"] = true
 	var done_before: Array = memory.get("done", [])
 	for p: Dictionary in memory.get("piles", []):  # what fights left on the floor of this map, while the party is still on it
 		things.append(_pile_thing(String(p.id), Vector2i(int(p.cell[0]), int(p.cell[1]))))
@@ -682,6 +684,15 @@ func _after_step() -> bool:
 func check_groups(arriving := false) -> bool:
 	var cells := [leader().cell]
 	for g in groups:
+		if g.get("relented", false) and g.state == "calm":  # never attacks; seen, it asks PASS or FIGHT once a sighting
+			var seen_now := _group_cells(g).any(func(c: Vector2i) -> bool: return in_sight.has(c))
+			if seen_now and not g.get("asked", false):
+				g["asked"] = true
+				open_event(String(g.def.get("relent_event", "boss_relented")), {"group": g})
+				return true
+			if not seen_now:
+				g["asked"] = false
+	for g in groups:
 		if g.state != "idle" and g.state != "noticed":
 			continue
 		var gc := _group_cells(g)
@@ -1166,7 +1177,10 @@ func _apply_map_fx(list: Array, ctx: Dictionary) -> void:
 				g.state = "calm"
 				board.float_text(_group_cells(g)[0], Txt.t("UI_EX_PACIFIED"), Color(0.7, 1.0, 0.7))
 			"fight":
+				g.state = "idle"  # a relented group fought by choice is a normal fight
 				start_fight(g, "party")
+			"pass":  # PASS a relented boss: the end of his place, as a win, with no loot and no XP
+				_pass_boss(g)
 			"sneak_attack":
 				start_fight(g, "sneak")
 			"ambushed":
@@ -1464,6 +1478,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	var elite := false
 	var boss := false
 	var ends := false
+	var yielded := false
 	for flag: String in battle.outcome.joined:
 		Game.set_flag(flag)  # a foe talked round ([USER] c17)
 	# [USER] c10: an escape is a win for "some XP", not a beating: no loot, no beaten flag, no end, and the
@@ -1472,7 +1487,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	for f: Dictionary in foes:
 		f.state = "escaped" if escaped else "gone"  # beaten, fled or talked round: done with the party
 		if f.def.get("boss", false):
-			Game.set_flag(ExploreRules.passed_flag(map.map_name, String(f.def.id)))  # past him either way
+			Game.set_trip_flag(ExploreRules.passed_flag(map.map_name, String(f.def.id)))  # past him either way, this trip
 		for u: CombatUnit in f.units:
 			if not u.alive():
 				downed += 1
@@ -1481,7 +1496,13 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		if escaped:
 			continue
 		if f.def.get("boss", false) or f.def.get("elite", false):
-			Game.set_flag(ExploreRules.beaten_flag(map.map_name, String(f.def.id)))
+			Game.set_trip_flag(ExploreRules.beaten_flag(map.map_name, String(f.def.id)))  # for the elite badge, this trip
+		if String(f.def.get("wins", "")) != "" and not f.get("relented", false):  # a fight by choice after he relents doesn't count
+			Game.meta[f.def.wins] = int(Game.meta.get(f.def.wins, 0)) + 1
+		if battle.outcome.get("yielded", false) and String(f.def.get("yields", "")) != "":
+			for y in String(f.def.yields).split("|", false):  # the yield: the story flags it sets (lich_relented, lich_yielded)
+				Game.set_flag(y)
+			yielded = true
 		elite = elite or bool(f.def.get("elite", false))
 		boss = boss or bool(f.def.get("boss", false))
 		ends = ends or bool(f.def.get("end", false))
@@ -1517,11 +1538,25 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		# The boss is down: the end of the E2E test.
 		Game.set_flag("e2e_done")
 		rep.end_text = Txt.t("UI_E2E_DONE")
+		if yielded:  # he stopped at 1 HP and offers his son (placeholder text)
+			rep.end_text = Txt.t("UI_BOSS_YIELDS") + "\n" + rep.end_text
 		_victory(rep, [[Txt.t("UI_E2E_WAKE"), func() -> void: Game.wake_in_town(false)],
 			[Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.LAUNCH)]])
 		mode = M.OVER
 		return
 	_victory(rep, [[Txt.t("UI_CONTINUE"), _loot_flow.bind(loot_items, loot_coins)]])
+
+
+## PASS a relented boss ([USER] 2026-11-01: "doesn't attack unless you choose to"): the party is past him this trip and
+## his place is done (e2e_done), with no loot and no XP.
+func _pass_boss(g: Dictionary) -> void:
+	Game.set_trip_flag(ExploreRules.passed_flag(map.map_name, String(g.def.id)))
+	mode = M.OVER
+	if bool(g.def.get("end", false)):
+		Game.set_flag("e2e_done")
+	var box := _new_dialog(Txt.t("UI_BOSS_PASSED") + "\n" + Txt.t("UI_E2E_DONE"))
+	_dialog_button(box, Txt.t("UI_E2E_WAKE"), func() -> void: Game.wake_in_town(false))
+	_dialog_button(box, Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.LAUNCH))
 
 
 ## The victory screen (VictoryUi) as the open dialog: the next box (loot, level-ups) replaces it.

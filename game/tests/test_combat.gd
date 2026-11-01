@@ -1765,3 +1765,38 @@ func test_lich_prince_kit() -> void:
 	eq(d.food_per_day, 0, "he eats no rations")
 	ok(d.traits.has(&"cold_blooded"), "Cold Blooded is his passive")
 	ok(d.class_def.traits.has(&"hoarfrost"), "Hoarfrost is his class passive")
+	# ICE ARMOR: a friend gets more armor, and a foe that hits them is slowed
+	var friend := _unit("knight", 0, Vector2i(1, 3), g)
+	var bandit := _unit("bandit", 1, Vector2i(2, 3), g)
+	var bare := CombatRules.damage(g, bandit, friend, bandit.cell)
+	CombatRules.resolve(rng, g, prince, _ab("ice_armor"), friend.cell, [prince, friend, bandit, wolf], false)
+	ok(friend.has_status(CombatRules.STATUS_ICE), "ICE ARMOR coats the friend")
+	eq(CombatRules.damage(g, bandit, friend, bandit.cell), maxi(1, bare - int(CombatRules.num("ice_armor_armor"))), "2 more armor")
+	CombatRules.resolve(rng, g, bandit, bandit.abilities[0], friend.cell, [prince, friend, bandit, wolf], false)
+	ok(bandit.has_status(CombatRules.STATUS_SLOW), "the foe that hit the iced friend is slowed")
+	CombatRules.end_phase([bandit], 1)
+	ok(bandit.has_status(CombatRules.STATUS_SLOW), "through its next phase")
+	# COLD SNAP: round him, foes only, 2 less than a normal hit, and slowed
+	var g2 := CombatGrid.flat(8, 8)
+	var p2 := _unit("prince", 0, Vector2i(3, 3), g2)
+	var pal := _unit("knight", 0, Vector2i(3, 4), g2)
+	var f1 := _unit("wolf", 1, Vector2i(4, 3), g2)
+	var f2 := _unit("wolf", 1, Vector2i(2, 3), g2)
+	var far := _unit("wolf", 1, Vector2i(6, 3), g2)
+	for f in [f1, f2, far]:
+		f.max_hp = 99
+		f.hp = 99
+	var snap := _ab("cold_snap")
+	var hit := CombatRules.affected_units(g2, p2, snap, p2.cell, [p2, pal, f1, f2, far], p2.cell)
+	ok(hit.has(f1) and hit.has(f2) and not hit.has(far) and not hit.has(pal) and not hit.has(p2), "COLD SNAP reaches the foes next to him, not friends")
+	var normal := CombatRules.damage(g2, p2, f1, p2.cell)
+	eq(CombatRules.damage(g2, p2, f1, p2.cell, snap), maxi(0, normal - 2), "2 less than his normal hit")
+	CombatRules.resolve(rng, g2, p2, snap, p2.cell, [p2, pal, f1, f2, far], false)
+	ok(f1.has_status(CombatRules.STATUS_SLOW) and f2.has_status(CombatRules.STATUS_SLOW) and not far.has_status(CombatRules.STATUS_SLOW), "and slows them")
+	# HOARFROST: a foe that ends its move next to him is slowed for its next phase
+	far.statuses.clear()
+	eq(CombatRules.hoarfrost(far, [p2, far]), [], "far off: nothing")
+	far.place(Vector2i(3, 2), 0)
+	ok(not CombatRules.hoarfrost(far, [p2, far]).is_empty() and far.has_status(CombatRules.STATUS_SLOW), "next to him: slowed")
+	CombatRules.end_phase([far], 1)
+	ok(far.has_status(CombatRules.STATUS_SLOW), "through its next phase")

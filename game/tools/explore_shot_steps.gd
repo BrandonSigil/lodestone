@@ -58,6 +58,19 @@ func run(s: Node, f: int, step: String) -> bool:
 			s._refresh_hud()
 			s._open_thing(_thing(s, "counter"))
 		return f == 90
+	if step == "relent":
+		# The Lich after the third win ([USER] 2026-11-01): calm on his throne, asking PASS or FIGHT (crypt).
+		if f == 5:
+			var game: Node = s.get_node("/root/Game")
+			game.save_enabled = false  # a shot never writes the real save
+			game.meta.flags.append_array(["lich_relented", "lich_yielded"])
+			for g: Dictionary in s.groups:
+				if g.def.id == "throne":
+					g.state = "calm"
+					g["relented"] = true
+					_put(s, Vector2i(63, 11))
+					s.open_event("boss_relented", {"group": g})
+		return f == 60
 	if step.begins_with("near:") or step.begins_with("use:"):
 		if f == 5:
 			if step.begins_with("near:"):

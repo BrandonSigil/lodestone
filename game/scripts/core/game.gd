@@ -20,7 +20,7 @@ const FISHING := "res://scenes/fishing.tscn"  ## the fishing minigame on its own
 const OVERWORLD := "res://scenes/overworld.tscn"  ## the map between places: town, the snowy pass, and paths still shut
 const SQUARE := Vector2i(20, 23)  ## where the party wakes in the village: the square, by the statue
 ## Who can be in the adventure party: the hero first, then companions once their unlock flag is set.
-const ADVENTURE_ROSTER := [&"lead", &"dog", &"fire_mage", &"bushberry"]  ## everyone with art (playtest: met in the square)
+const ADVENTURE_ROSTER := [&"lead", &"dog", &"fire_mage", &"bushberry", &"lich_prince"]  ## everyone with art (playtest: met in the square)
 
 var meta := _fresh_meta()
 var run: RunState = null
@@ -1027,6 +1027,29 @@ func use_for_trip(key: String) -> void:
 	save_meta()
 
 
+## Run-scoped flags ([USER] 2026-11-01 progress change: "You have to fight everything unless a story beat says
+## otherwise"): getting past a boss or beating an elite counts for this trip only, then every fight is back.
+## Stored as flag -> the trip it was set on.
+func set_trip_flag(f: String) -> void:
+	var tf: Dictionary = meta.get("trip_flags", {})
+	tf[f] = int(meta.trips)
+	meta["trip_flags"] = tf
+	save_meta()
+
+
+func has_trip_flag(f: String) -> bool:
+	return int(meta.get("trip_flags", {}).get(f, -1)) == int(meta.trips)
+
+
+## The meta flags plus this trip's run-scoped ones: what the overworld's cleared places and the elite badge read.
+func flags_now() -> Array:
+	var out: Array = meta.flags.duplicate()
+	for f: String in meta.get("trip_flags", {}):
+		if has_trip_flag(f):
+			out.append(f)
+	return out
+
+
 func used_this_trip(key: String) -> bool:
 	return int(meta.get("trip_used", {}).get(key, -1)) == int(meta.trips)
 
@@ -1191,6 +1214,8 @@ func eat_meal(meal_item: String) -> bool:
 	run.meal = {"recipe": String(r.id), "fights": int(Db.levels.get("meal_fights", 2))}
 	run.note(Txt.f("LOG_MEAL", Txt.t(String(r.name_key))))
 	for m in run.members:  # good food heals and lifts everyone's morale (the recipe's heal and morale columns)
+		if not TravelRules.eats_food(m):
+			continue  # Cold Blooded: no heal and no morale from food
 		if int(m.hp) > 0:
 			run.heal_member(m, int(r.get("heal", 0)))
 		MoraleRules.change(meta.morale, String((m.def as CharacterDef).id), int(r.get("morale", 0)), Db.morale)

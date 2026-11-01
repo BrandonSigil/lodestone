@@ -41,3 +41,5 @@ fish_dock,EX_FISH_DOCK,OPT_FISH,item:rod,none,0,fish,,OPT_NO_ROD,noitem:rod,none
 home_bed,EX_HOME_BED,OPT_SLEEP,,none,0,sleep:1,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,,
 amber_fire,EX_BONFIRE,OPT_ADD_WOOD,item:wood&noflag:amber_w1,none,0,wood:-1;unlock:amber_w1,,OPT_ADD_WOOD,flag:amber_w1&noflag:amber_w2&item:wood,none,0,wood:-1;unlock:amber_w2,,OPT_ADD_WOOD,flag:amber_w2&noflag:amber_fed&item:wood,none,0,wood:-1;unlock:amber_fed,,OPT_LEAVE,,none,0,,,,,,,,,,
 companion_fire_mage,EX_SLEEPER,OPT_SIT,flag:amber_fed&noparty:fire_mage,none,0,unlock:met_fire_mage;invite:fire_mage,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,,,,,,,
+boss_relented,EX_BOSS_RELENTED,OPT_PASS,,none,0,pass,,OPT_FIGHT,,none,0,fight,,OPT_BACK_OFF,,none,0,,,,,,,,,,,,,,,,
+recruit_lich_prince,EX_RECRUIT,OPT_INVITE,noparty:lich_prince,none,0,unlock:found_lich_prince;invite:lich_prince,,OPT_SEND_HOME,party:lich_prince,none,0,dismiss:lich_prince,,OPT_LEAVE,,none,0,,,,,,,,,,,,,,,,

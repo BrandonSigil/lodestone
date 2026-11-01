@@ -323,6 +323,8 @@ func _ai_turn(u: CombatUnit) -> void:
 		await board.animate_move(u, plan.path)
 		u.place(plan.move, grid.height_at(plan.move))
 		await _spot(u)
+		for ev in CombatRules.hoarfrost(u, units):  # ended its move by the Lich Prince
+			await _play(ev)
 	u.move_spent += int(plan.cost)
 	if not stop.is_empty():
 		for ev in CombatRules.stop_events(rng, grid, stop, u, units):
@@ -661,6 +663,14 @@ func _play(ev: Dictionary) -> void:
 func _check_end() -> bool:
 	if state == S.OVER:
 		return true
+	for u: CombatUnit in units:  # a piece that yields stops at 1 HP: the fight is won ([USER] 2026-11-01, the Lich)
+		if u.yields and u.hp <= 0:
+			u.hp = 1
+			u.sync_view()
+			outcome["yielded"] = true
+			outcome.how = "yield"
+			_finish(true)
+			return true
 	var r := goals.check(units, rounds_done)
 	if not r.won and not r.lost:
 		return false

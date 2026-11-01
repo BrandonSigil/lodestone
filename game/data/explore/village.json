@@ -1851,6 +1851,16 @@
 			"id": "sq_bushberry",
 			"kind": "companion",
 			"when": "rescued_bushberry"
+		},
+		{
+			"cell": [
+				21.0,
+				25.0
+			],
+			"event": "recruit_lich_prince",
+			"id": "sq_lich_prince",
+			"kind": "companion",
+			"when": "lich_yielded"
 		}
 	],
 	"turn": false,

@@ -19,7 +19,7 @@ Combat
 - One fixed camera angle per map, no player rotation; maps are built to read from it (2026-10-28).
 - Casters pick 1 or 2 spells; every character has its own combat quirk (2026-10-26).
 - Fights start where you meet foes on an explore map; only the leader walks, the rest deploy around them (2026-10-27).
-- The Lich King is the first real skill check, like a first boss in Hades; a beaten boss stays beaten (2026-10-29).
+- The Lich King is the first real skill check, like a first boss in Hades (2026-10-29). Every fight comes back each run unless a story beat says otherwise; the Lich relents after the third win and offers his son (2026-11-01).
 - Early fights shouldn't squash a level-1 party; foes were softened, difficulty can come back by scaling or bigger groups (2026-10-29).
 
 Choice and growth

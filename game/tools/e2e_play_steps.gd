@@ -83,6 +83,7 @@ func play(t: SceneTree) -> void:
 	print("  hero level %d, HP %d/%d before the boss" % [lv, game.run.members[0].hp, game.run.max_hp(game.run.members[0])])
 	s = await _fight(s, "throne", true, ["plaza", "tower"])
 	_check(game.has_flag("e2e_done"), "the Lich King is down: test done")
+	_check(int(game.meta.get("lich_wins", 0)) == 1 and not game.has_flag("lich_relented"), "one win over him counted; he died, no yield yet")
 	print("  fights lost on the way: %d" % falls)
 
 	# A fall costs nothing: wake in the square with everything.
@@ -109,12 +110,12 @@ func play(t: SceneTree) -> void:
 	_check(pile >= pile_before + mats and game.run.items.keys().all(func(k: String) -> bool: return String(Db.items[k].kind) != "material"),
 		"the materials found on the way went to the village pile (%d carried)" % mats)
 
-	# A beaten boss stays beaten: back in the crypt after the fall, the throne is empty.
+	# Every fight comes back ([USER] 2026-11-01): back in the crypt after the fall, the Lich King is on his throne again.
 	game.explore_map = "crypt"
 	game.explore_entry = Vector2i(-1, -1)
 	game.go(game.EXPLORE)
 	s = await _explore("crypt")
-	_check(s.get("groups").any(func(g: Dictionary) -> bool: return g.def.id == "throne" and g.state == "gone"), "the Lich King stays beaten")
+	_check(s.get("groups").any(func(g: Dictionary) -> bool: return g.def.id == "throne" and g.state == "idle"), "the Lich King is back")
 
 	# A full pack ([USER] 2026-10-29): what doesn't fit waits, PACK opens on its own, and the dog can carry
 	# it home. He's out of the party until the party is home too.
@@ -142,11 +143,32 @@ func play(t: SceneTree) -> void:
 		_check(not game.run.is_away(&"dog") and game.run.members.size() == 2, "home again, the dog is back")
 		_check(game.run.food == meat + carried, "with the meat he carried")
 
-	# The road goes on ([USER] 2026-10-29): from the town gate past the cleared pass, without going in.
+	# The third win ([USER] 2026-11-01): he stops at 1 HP and yields. A second win stands in here to keep the run short.
+	game.wake_in_town(false)
+	game.meta["lich_wins"] = 2
+	game.explore_map = "crypt"
+	game.explore_entry = Vector2i(-1, -1)
+	game.go(game.EXPLORE)
+	s = await _explore("crypt")
+	s = await _fight(s, "throne", true, ["plaza", "tower"])
+	_check(game.has_flag("lich_relented") and game.has_flag("lich_yielded") and int(game.meta.lich_wins) == 3, "the third win: he yields at 1 HP")
+	game.wake_in_town(false)
+	game.explore_map = "crypt"
+	game.explore_entry = Vector2i(-1, -1)
+	game.go(game.EXPLORE)
+	s = await _explore("crypt")
+	var lich: Array = s.get("groups").filter(func(g: Dictionary) -> bool: return g.def.id == "throne")
+	_check(not lich.is_empty() and lich[0].state == "calm" and lich[0].get("relented", false), "on later runs he waits, calm")
+	if not lich.is_empty():
+		s.call("_pass_boss", lich[0])
+		_check(game.has_trip_flag(ExploreRules.passed_flag("crypt", "throne")) and int(game.meta.lich_wins) == 3, "PASS: past him, no new win")
+
+	# The road goes on ([USER] 2026-10-29): from the town gate past the highlands, without going in; since he relented
+	# that's open from the start ([USER] 2026-11-01: otherwise every run fights through).
 	game.wake_in_town(false)
 	s = await _explore("village")
 	await _gate(s)
-	s = await _road("dwarven_mines")  # the hex tile past the highlands, open once the Lich King is beaten
+	s = await _road("dwarven_mines")  # the hex tile past the highlands
 	_check(tree.current_scene == s and s.get("_dialog") != null, "arrived past the pass, on the big map")
 	await _press(s, 0)
 

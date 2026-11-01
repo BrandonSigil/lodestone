@@ -22,6 +22,9 @@ var start: Array[Vector2i] = []  ## party cells, leader first
 ## [{"id", "event", "sight", "loot", "boss": a boss fight (more XP), "end": beating it ends the E2E test,
 ##   "units": [{"id": class id, "cell": Vector2i}]}]
 var groups: Array[Dictionary] = []
+## A group's story-beat keys ([USER] 2026-11-01): relents (a flag that settles it: calm every run), relent_event (what it
+## asks then), wins (a meta counter of wins over it), yield_at (the win it yields on) and yields (the flags the yield sets).
+const STORY_KEYS := ["relents", "relent_event", "wins", "yield_at", "yields"]
 ## [{"id", "kind", "event", "cell": Vector2i, "floor": terrain letter the cell becomes when opened,
 ##   "to": map an "enter" thing leads to, "at": Vector2i cell it arrives on there,
 ##   "once": flags ("a|b"); when any is set the thing is gone for good,
@@ -76,6 +79,9 @@ static func from_dict(d: Dictionary) -> ExploreMap:
 			"boss": bool(g.get("boss", false)), "end": bool(g.get("end", false)), "goals": String(g.get("goals", "")),
 			"exit": Array(g.get("exit", [])), "talk": Dictionary(g.get("talk", {})), "elite": bool(g.get("elite", false)),
 			"summon": summon})
+		for k in STORY_KEYS:  # a story beat's keys, kept only where a group has them (the Lich: ExploreRules.relented, yields_now)
+			if g.has(k):
+				m.groups.back()[k] = int(g[k]) if k == "yield_at" else String(g[k])
 	for t: Dictionary in d.get("things", []):
 		m.things.append({"id": String(t.get("id", "thing%d" % m.things.size())), "kind": String(t.get("kind", "chest")),
 			"event": String(t.get("event", "")), "cell": _cell(t.cell), "floor": String(t.get("floor", "s")),

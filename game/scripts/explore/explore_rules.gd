@@ -15,19 +15,18 @@ const NOISE_RANGE := 12  ## a noisy failure draws the nearest group within this 
 const JOIN_RANGE := 3  ## other groups this close to a fight join it
 
 ## Effects the map handles itself. Anything else ("food:+3", "hp_one:-2") goes to TrailRules on the run.
-const MAP_EFFECTS := ["open", "remove", "noise", "reveal", "exit", "fight", "sneak_attack", "ambushed", "pacify", "travel", "fish"]
+const MAP_EFFECTS := ["open", "remove", "noise", "reveal", "exit", "fight", "sneak_attack", "ambushed", "pacify", "travel", "fish", "pass"]
 
 
-## A beaten boss stays beaten for good, through falls and new trips in ([USER] 2026-10-29: once the
-## Lich King is cleared the party doesn't fight through his map again unless it wants to). Other groups
-## come back after a fall or a trip out, as before.
+## A boss or elite group beaten on this trip (a run-scoped flag, Game.set_trip_flag): the elite badge counts what is
+## left this run. Nothing stays beaten past the trip ([USER] 2026-11-01 progress change).
 static func beaten_flag(map_name: String, group_id: String) -> String:
 	return "beaten_%s_%s" % [map_name, group_id]
 
 
 ## Set when the party gets past a boss, beaten or escaped by its fight's exit: what completes the region and opens
-## what comes after ([USER] 2026-10-30 design-world-gate: sneaking past the Lich King is fine too). Only beating
-## him pays the boss XP and his loot.
+## what comes after ([USER] 2026-10-30 design-world-gate: sneaking past the Lich King is fine too), for this trip only
+## (run-scoped since [USER] 2026-11-01). Only beating him pays the boss XP and his loot.
 static func passed_flag(map_name: String, group_id: String) -> String:
 	return "passed_%s_%s" % [map_name, group_id]
 
@@ -46,9 +45,19 @@ static func taken_flag(map_name: String, thing_id: String) -> String:
 const LASTING_KINDS := ["boost", "key", "rare", "find"]  ## find: a one-time cache; its event is the effects, "rod:+1"
 
 
-## Bosses and elite groups, once beaten, stay beaten.
-static func stays_beaten(map_name: String, group: Dictionary, flags: Array) -> bool:
-	return (bool(group.get("boss", false)) or bool(group.get("elite", false))) and flags.has(beaten_flag(map_name, String(group.id)))
+## A story beat that settles a group for good ([USER] 2026-11-01: "unless a story beat says otherwise"): its data names
+## a flag in `relents`, and once that flag is set the group starts calm on every run (the Lich after the third win). It
+## asks before any fight (`relent_event`) and never attacks.
+static func relented(group: Dictionary, flags: Array) -> bool:
+	var f := String(group.get("relents", ""))
+	return f != "" and flags.has(f)
+
+
+## A group that yields instead of dying on the win that brings its count (meta `wins`) to `yield_at` (the Lich's third).
+static func yields_now(group: Dictionary, meta: Dictionary, flags: Array) -> bool:
+	var key := String(group.get("wins", ""))
+	return key != "" and int(group.get("yield_at", 0)) > 0 and not relented(group, flags) \
+		and int(meta.get(key, 0)) + 1 >= int(group.yield_at)
 
 
 ## The stat mods an elite group's foes fight with (data/combat.csv: tougher; [USER] pc-6, pc-15).
@@ -85,7 +94,7 @@ static func group_depth(level: int, group: Dictionary) -> int:
 	return 1 if bool(group.get("boss", false)) else level
 
 
-## Elite groups on these maps still standing: what the overworld's elite badge warns of.
+## Elite groups on these maps still standing this run: what the overworld's elite badge warns of. flags: Game.flags_now().
 static func elites_left(maps: Array, flags: Array) -> int:
 	var n := 0
 	for name: String in maps:

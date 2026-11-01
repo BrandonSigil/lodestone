@@ -390,16 +390,19 @@ func test_village_maps_link_up() -> void:
 	ok(not q.grid.line_of_sight(inside, book[0].cell), "the book can't be seen from the door")
 
 
-func test_a_beaten_boss_stays_beaten() -> void:
-	var throne := {"id": "throne", "boss": true}
-	var cave := {"id": "cave", "boss": false}
-	var flag := ExploreRules.beaten_flag("crypt", "throne")
-	ok(not ExploreRules.stays_beaten("crypt", throne, []), "the boss is there before he's beaten")
-	ok(ExploreRules.stays_beaten("crypt", throne, [flag]), "once beaten he stays gone")
-	ok(not ExploreRules.stays_beaten("crypt", cave, [ExploreRules.beaten_flag("crypt", "cave")]), "other groups come back")
-	ok(not ExploreRules.stays_beaten("snow_pass", throne, [flag]), "the flag is per map")
+## [USER] 2026-11-01 progress change: every fight comes back each run unless a story beat says otherwise.
+func test_every_fight_comes_back_unless_a_story_beat_relents() -> void:
+	var throne := {"id": "throne", "boss": true, "relents": "lich_relented", "wins": "lich_wins", "yield_at": 3}
+	ok(not ExploreRules.relented(throne, [ExploreRules.beaten_flag("crypt", "throne"), "beat_lich"]), "a beaten boss is back next run")
+	ok(ExploreRules.relented(throne, ["lich_relented"]), "the story beat settles him")
+	ok(not ExploreRules.relented({"id": "cave"}, ["lich_relented"]), "a group without one always comes back")
+	ok(not ExploreRules.yields_now(throne, {}, []), "the first win kills him")
+	ok(not ExploreRules.yields_now(throne, {"lich_wins": 1}, []), "and the second")
+	ok(ExploreRules.yields_now(throne, {"lich_wins": 2}, []), "the third: he yields")
+	ok(not ExploreRules.yields_now(throne, {"lich_wins": 2}, ["lich_relented"]), "a fight by choice after that never yields again")
 	var crypt := _crypt()
-	ok(crypt.groups.any(func(g: Dictionary) -> bool: return g.id == "throne" and g.boss), "the crypt's throne group is a boss")
+	ok(crypt.groups.any(func(g: Dictionary) -> bool: return g.id == "throne" and g.boss and g.get("relents", "") == "lich_relented" \
+		and int(g.get("yield_at", 0)) == 3), "the crypt's throne group is a boss who relents after the third win")
 
 
 func test_only_full_height_props_see_through() -> void:

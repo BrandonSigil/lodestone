@@ -127,6 +127,12 @@ static func eat(run: RunState) -> bool:
 	return camp_meal(run, default_picks(run))
 
 
+## Cold Blooded (the Lich Prince, [USER] 2026-11-01: "doesnt require rations"): eats nothing at camp (food_per_day 0)
+## and food and cooked meals give him no heal and no morale. Camp rest, support skills and belt items work as usual.
+static func eats_food(m: Dictionary) -> bool:
+	return not (m.def as CharacterDef).traits.has(&"cold_blooded")
+
+
 ## What one piece of this food heals when eaten on purpose (meat by default): its heal column, never below 1. Caught
 ## fish are food too, a bigger grade healing more (data/items.csv).
 static func food_heal(_run: RunState, item := RunState.FOOD_ITEM) -> int:
@@ -173,6 +179,8 @@ static func gain(run: RunState, item: String, m: Dictionary) -> int:
 		if c.is_empty() or not can_cast(c.caster, c.ability) or (String(c.ability.target) == "self" and c.caster != m):
 			return 0
 		amount = cast_amount(c.caster, c.ability)
+	elif is_food(item) and not eats_food(m):
+		return 0  # Cold Blooded: food never heals him
 	else:
 		amount = food_heal(run, item) if is_food(item) else (TrailRules.potion_heal(run) if item == RunState.MED_ITEM else 0)
 	return mini(amount, run.max_hp(m) - int(m.hp))

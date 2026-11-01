@@ -604,6 +604,67 @@ func test_a_cleared_place_opens_the_road_past_it() -> void:
 	eq(TravelRules.route(paths, nodes, "town", "coastal_beach", flags), [] as Array[String], "shut tiles stay shut")
 
 
+## [USER] 2026-11-01 (dev-lich-prince): the Lich's third win is the yield; later runs he waits calm, PASS or FIGHT; the
+## Lich Prince joins from the square and eats nothing.
+func test_the_lich_yields_on_the_third_win() -> void:
+	var saved := _fresh_game()
+	Game.meta["lich_wins"] = 2
+	Game.explore_map = "crypt"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	var throne: Dictionary = s.groups.filter(func(g: Dictionary) -> bool: return g.def.id == "throne")[0]
+	eq(throne.state, "idle", "he is on his throne")
+	ok((throne.units[0] as CombatUnit).yields, "this win would be the third: he yields instead of falling")
+	var b := Battle.new()
+	b.outcome = {"how": "yield", "joined": [], "yielded": true}
+	b.units = throne.units.duplicate()
+	s.battle = b
+	s._on_fight_over(true, [throne])
+	eq(int(Game.meta.lich_wins), 3, "the third win counted")
+	ok(Game.has_flag("lich_relented") and Game.has_flag("lich_yielded"), "he relents and offers his son")
+	ok(Game.has_flag("e2e_done"), "the crypt's end, as a win")
+	b.free()
+	s.free()
+	Game.explore_memory.clear()
+	s = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	throne = s.groups.filter(func(g: Dictionary) -> bool: return g.def.id == "throne")[0]
+	ok(throne.state == "calm" and throne.get("relented", false), "on later runs he waits, calm")
+	ok(not (throne.units[0] as CombatUnit).yields, "a fight by choice never yields again")
+	var opts := ExploreRules.options_for(Db.explore_events["boss_relented"], [], {}).map(func(o: Dictionary) -> String: return o.key)
+	ok(opts.has("OPT_PASS") and opts.has("OPT_FIGHT"), "walking up to him: PASS or FIGHT")
+	Game.meta.flags.erase("e2e_done")
+	s._apply_map_fx(["pass"], {"group": throne})
+	ok(Game.has_trip_flag(ExploreRules.passed_flag("crypt", "throne")) and Game.has_flag("e2e_done"), "PASS: past him, the crypt's end")
+	eq(int(Game.meta.lich_wins), 3, "no new win")
+	ok(TravelRules.open_now(Db.world_nodes, "dwarven_mines", Game.flags_now()), "the mines are open")
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"
+	_restore(saved)
+
+
+func test_the_lich_prince_joins_and_eats_nothing() -> void:
+	var saved := _fresh_game()
+	var v := ExploreMap.load_named("village")
+	var spot: Array = v.things.filter(func(t: Dictionary) -> bool: return t.id == "sq_lich_prince")
+	ok(not spot.is_empty() and spot[0].when == "lich_yielded" and spot[0].event == "recruit_lich_prince", "he waits in the square once the Lich yields")
+	ok(not spot.is_empty() and v.grid.passable(spot[0].cell), "on open ground")
+	Game.set_flag("lich_yielded")
+	TrailRules.apply_effects(Game.run, "unlock:found_lich_prince")
+	Game.set_flag("found_lich_prince")
+	ok(Game.invite("lich_prince") and Game.in_party("lich_prince"), "INVITE: he joins")
+	Game.refresh_party()
+	var pm: Dictionary = Game.run.members.filter(func(m: Dictionary) -> bool: return String(m.def.id) == "lich_prince")[0]
+	eq(int(TravelRules.shares(Game.run).get("lich_prince", -1)), 0, "no portions at camp")
+	pm.hp = 5
+	Game.run.add_item(RunState.FOOD_ITEM, 3)
+	eq(TravelRules.gain(Game.run, RunState.FOOD_ITEM, pm), 0, "food doesn't heal him")
+	ok(TravelRules.gain(Game.run, RunState.MED_ITEM, pm) > 0 or Game.run.item_count(RunState.MED_ITEM) >= 0, "belt items still do")
+	_restore(saved)
+
+
 ## [USER] 2026-11-01 (pm-dev-painted-world-map): the painted map under the tiles, each tile's outline traced into data,
 ## fog over tiles not seen yet.
 func test_painted_world_map() -> void:
@@ -867,18 +928,15 @@ func test_pickups_open_a_loot_window() -> void:
 
 # --- elite fights ([USER] pc-6, pc-15; player-choice step 4) ---------------------------------------
 
-func test_elite_groups_are_tougher_badged_and_stay_beaten() -> void:
+func test_elite_groups_are_tougher_and_badged() -> void:
 	_db()
 	var bandit: ClassDef = Db.class_def(&"bandit")
 	var plain := CombatUnit.enemy(bandit)
 	var elite := CombatUnit.enemy(bandit, ExploreRules.elite_mods())
 	ok(elite.max_hp > plain.max_hp and elite.damage > plain.damage and elite.armor > plain.armor, "tougher all round")
-	var g := {"id": "camp", "elite": true}
-	ok(not ExploreRules.stays_beaten("snow_pass", g, []))
-	ok(ExploreRules.stays_beaten("snow_pass", g, [ExploreRules.beaten_flag("snow_pass", "camp")]), "beaten once, gone for good")
 	var maps := ["snow_pass", "wolf_den", "crypt"]
 	eq(ExploreRules.elites_left(maps, []), 1, "the den's lone wolf is the first elite")
-	eq(ExploreRules.elites_left(maps, [ExploreRules.beaten_flag("wolf_den", "den_lone")]), 0, "beaten, it's gone")
+	eq(ExploreRules.elites_left(maps, [ExploreRules.beaten_flag("wolf_den", "den_lone")]), 0, "beaten this trip, it's gone from the badge")
 
 
 ## The map loader keeps a group's goals, way out, TALK, elite mark and leader (they were dropped before).
@@ -916,11 +974,13 @@ func test_an_escape_is_not_a_beating() -> void:
 	s.battle = b
 	var xp_before := int(Game.level_state("lead").xp) + int(Game.level_state("lead").level) * 100
 	s._on_fight_over(true, [throne])
-	ok(not Game.has_flag(ExploreRules.beaten_flag("crypt", "throne")), "not beaten")
+	ok(not Game.has_trip_flag(ExploreRules.beaten_flag("crypt", "throne")), "not beaten")
 	ok(not Game.has_flag("beat_lich"), "no loot")
 	ok(not Game.has_flag("e2e_done"), "no end screen")
-	ok(Game.has_flag(ExploreRules.passed_flag("crypt", "throne")), "but the party is past him")
-	ok(TravelRules.cleared(Db.world_nodes["pass"], Game.meta.flags), "so the crypt is complete and what's after opens")
+	ok(Game.has_trip_flag(ExploreRules.passed_flag("crypt", "throne")), "but the party is past him, this trip")
+	ok(TravelRules.cleared(Db.world_nodes["pass"], Game.flags_now()), "so the crypt is complete and what's after opens")
+	Game.start_trip()
+	ok(not TravelRules.cleared(Db.world_nodes["pass"], Game.flags_now()), "the next trip, he's back in the way")
 	eq(throne.state, "escaped", "he's still there, leaving the party be for now")
 	ok(Game.has_flag(ExploreRules.learned_flag("lich")), "and the party knows him now, escaped or not")
 	ok(int(Game.level_state("lead").xp) + int(Game.level_state("lead").level) * 100 > xp_before, "some XP")

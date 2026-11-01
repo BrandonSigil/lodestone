@@ -22,6 +22,7 @@ const STATUS_SLOW := "slow"  ## less move for a phase
 const STATUS_SPOOK := "spook"  ## a hexer's scare: hits for less until the end of the phase it lands in (acts as spooked)
 const STATUS_FOE_WARD := "foe_ward"  ## a warder's ward on a foe: more armor until that side next moves
 const STATUS_BLEED := "bleed"  ## loses a little HP at the start of each of its phases (a ranked bite)
+const STATUS_ICE := "ice_armor"  ## the Lich Prince's ICE ARMOR: ice_armor_armor more armor; a foe that hits the piece is slowed
 const STATUS_BRANCH := "branch_armor"  ## Bushberry's BRANCH ARMOR: the next foe hit does branch_soften less (at least 1), the hitter takes branch_thorns; gone at his side's next phase
 const STATUS_WARD := "ward"  ## the book's WARD: the next hit on this piece does 0 and no status; gone at the mage's next phase
 const STATUS_OVERWATCH := "overwatch"  ## the bow's OVERWATCH: the first foe to move into its reach takes a plain shot and stops
@@ -52,6 +53,7 @@ const TRAIT_BLOODIED := &"bloodied"  ## Reaver: more damage and crit the lower i
 const TRAIT_KEEPS_BACK := &"keeps_back"  ## Mender foe: stays 2 or more tiles from heroes, attacks only when cornered
 const TRAIT_CHARGE := &"charge"  ## Rusher and bull: a straight run of 3 or more tiles this phase adds charge_bonus to its hits
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
+const TRAIT_HOARFROST := &"hoarfrost"  ## the Lich Prince: a foe that ends its move next to him is slowed on its next phase
 const TRAIT_GLEAN := &"glean"  ## Bushberry ([USER] 2026-11-01 design-bb-kit): friends next to him heal at the start of their phase; stacks with Good Boy
 const TRAIT_GOOD_BOY := &"good_boy"  ## Doggo ([USER] 2026-10-31 design-goodboy): a friend next to him heals at the start of its phase
 const TRAIT_HEART_BURNS := &"heart_burns"  ## Amber ([USER] 2026-11-01): plain attacks may set the target burning (heart_burn_pct)
@@ -396,7 +398,10 @@ static func affected_units(grid: CombatGrid, user: CombatUnit, a: Ability, cente
 			continue
 		if (a.target == "enemy" or a.kind == "hex") and o.team == user.team:
 			continue  # a hex (FLASH, a scare) never lands on the user's own side
-		if (a.target == "ally" or a.target == "self") and o.team != user.team:
+		if a.target == "self" and a.kind == "attack":
+			if o.team == user.team:
+				continue  # an attack round the user (COLD SNAP) only reaches foes
+		elif (a.target == "ally" or a.target == "self") and o.team != user.team:
 			continue  # a buff round the user (INSPIRE, LAST STAND) only reaches friends
 		out.append(o)
 	return out
@@ -499,6 +504,8 @@ static func armor_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from
 		parts.append(["MOD_TAUNT", upg(tgt, "taunt_armor")])
 	if tgt.has_status(STATUS_VEIL):
 		parts.append(["MOD_VEIL", int(num("veil_armor"))])
+	if tgt.has_status(STATUS_ICE):
+		parts.append(["MOD_ICE", int(num("ice_armor_armor"))])
 	if tgt.has_status(STATUS_FOE_WARD):
 		parts.append(["MOD_FOE_WARD", int(num("foe_ward_armor"))])
 	var wall := shield_armor(tgt, units)
@@ -769,6 +776,9 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 				events.append({"type": "heal", "src": u, "unit": u, "amount": u.hp - before})
 		t.statuses.erase(STATUS_SLEEP)
 		events.append({"type": "hit", "src": u, "unit": t, "amount": dmg, "crit": crit})
+		if t.has_status(STATUS_ICE) and t.team != u.team and u.alive():  # ICE ARMOR slows the hitter, through its next phase
+			u.statuses[STATUS_SLOW] = int(num("ice_slow_turns")) + 1
+			events.append({"type": "status", "src": t, "unit": u, "status": STATUS_SLOW})
 	if t.alive() and a.status != "":
 		t.statuses[a.status] = a.status_turns
 		if a.status == STATUS_WARD:
@@ -1284,6 +1294,21 @@ static func stop_events(rng: RandomNumberGenerator, grid: CombatGrid, stop: Dict
 	if stop.has("watcher"):
 		return watch_shot(rng, grid, stop.watcher, mover, units)
 	return spring(grid, stop.field, stop.cell, mover, units)
+
+
+## HOARFROST: a foe that ends its move within reach of a piece with the trait (1 tile, upgrades add) is slowed for its
+## next phase (the status counts down at the end of the mover's own phase, hence the +1).
+static func hoarfrost(mover: CombatUnit, units: Array) -> Array:
+	var events := []
+	if not mover.alive():
+		return events
+	for o: CombatUnit in units:
+		if o.alive() and o.team != mover.team and o.has_trait(TRAIT_HOARFROST) \
+				and dist(o.cell, mover.cell) <= int(num("hoarfrost_reach")) + upg(o, "hoarfrost_reach"):
+			mover.statuses[STATUS_SLOW] = int(num("hoarfrost_turns")) + upg(o, "hoarfrost_turns") + 1
+			events.append({"type": "status", "src": o, "unit": mover, "status": STATUS_SLOW})
+			break
+	return events
 
 
 ## A trap or caltrops on c goes off on mover: the maker's damage with the skill's power, less armor. A trap is spent;

@@ -49,7 +49,7 @@ const SNOW_REACH := 190.0  ## map units round a snowy place that the snow falls 
 
 func _ready() -> void:
 	for id in Db.world_nodes:
-		_elites[id] = ExploreRules.elites_left(Array(String(Db.world_nodes[id].maps).split("|")), Game.meta.flags)
+		_elites[id] = ExploreRules.elites_left(Array(String(Db.world_nodes[id].maps).split("|")), Game.flags_now())
 	Game.ensure_run()
 	Game.refresh_party()
 	_rng.randomize()  # talk lines only; encounters roll on the run's dice
@@ -148,7 +148,7 @@ func _start_leg(to: String, then: Array = []) -> void:
 	var at := String(Game.travel.get("at", "town"))
 	var p := TravelRules.path_between(Db.world_paths, at, to)
 	if p.is_empty():
-		var way := TravelRules.route(Db.world_paths, Db.world_nodes, at, to, Game.meta.flags)
+		var way := TravelRules.route(Db.world_paths, Db.world_nodes, at, to, Game.flags_now())
 		if way.size() < 2:
 			_say(Txt.t("UI_OW_CLOSED"))
 			return
@@ -213,7 +213,7 @@ func fast_forward() -> void:
 # --- encounters ---------------------------------------------------------------------------------
 
 func _encounter() -> void:
-	var ev := TrailRules.pick_event(Game.run, Db.travel_events, Game.meta.flags)
+	var ev := TrailRules.pick_event(Game.run, Db.travel_events, Game.flags_now())
 	if ev.is_empty():
 		return
 	_busy = true
@@ -506,11 +506,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func _click_node(id: String) -> void:
-	if not TravelRules.visible(Db.world_nodes, id, Game.meta.flags) or (_art != null and not TravelRules.seen(id, Game.meta.flags)):
+	if not TravelRules.visible(Db.world_nodes, id, Game.flags_now()) or (_art != null and not TravelRules.seen(id, Game.flags_now())):
 		return  # under the fog: nothing to click yet
 	if id == String(Game.travel.get("at", "")):
 		_enter()
-	elif not TravelRules.open_now(Db.world_nodes, id, Game.meta.flags):
+	elif not TravelRules.open_now(Db.world_nodes, id, Game.flags_now()):
 		_say(Txt.t("UI_OW_CLOSED"))
 	else:
 		_start_leg(id)
@@ -604,7 +604,7 @@ func _draw() -> void:
 	for id in _back_to_front():
 		_draw_tile(id, k)
 	for p: Dictionary in Db.world_paths:  # a road on every shared edge whose two tiles are both open now
-		if TravelRules.open_now(Db.world_nodes, p.from, Game.meta.flags) and TravelRules.open_now(Db.world_nodes, p.to, Game.meta.flags):
+		if TravelRules.open_now(Db.world_nodes, p.from, Game.flags_now()) and TravelRules.open_now(Db.world_nodes, p.to, Game.flags_now()):
 			_draw_path(PackedVector2Array([_node_pos(p.from), _node_pos(p.to)]), k)
 	if walking():
 		var lp := leg()
@@ -623,7 +623,7 @@ func _draw() -> void:
 ## its traced outline (data/world_tiles.csv). Tiles not seen yet lie under parchment and cloud; the tile the party is on
 ## has an inked outline, the tiles it can walk to now glow softly, and hovering a seen tile names it.
 func _draw_painted(k: float) -> void:
-	var flags: Array = Game.meta.flags
+	var flags: Array = Game.flags_now()
 	var at := String(Game.travel.get("at", "")) if not walking() else ""
 	draw_texture_rect(_art, Rect2(_to_screen(Vector2.ZERO), _art.get_size() * k), false)
 	var near: Array[String] = []
@@ -727,7 +727,7 @@ func _discover(id: String) -> void:
 ## A shut tile is darker and plain grey.
 func _draw_tile(id: String, k: float) -> void:
 	var n := _node(id)
-	var open := TravelRules.open_now(Db.world_nodes, id, Game.meta.flags)
+	var open := TravelRules.open_now(Db.world_nodes, id, Game.flags_now())
 	var top := PackedVector2Array()
 	for c in TravelRules.tile_top(n):
 		top.append(_to_screen(c))
@@ -754,7 +754,7 @@ func _draw_tile(id: String, k: float) -> void:
 func _draw_marks(id: String, k: float) -> void:
 	var n := _node(id)
 	var p := _to_screen(_node_pos(id))
-	var open := TravelRules.open_now(Db.world_nodes, id, Game.meta.flags)
+	var open := TravelRules.open_now(Db.world_nodes, id, Game.flags_now())
 	var ink := INK if open else Color(INK, 0.5)
 	match String(n.kind) if open else "shut":  # a shut tile shows only its "?"
 		"town":
@@ -792,7 +792,7 @@ func _draw_badges(id: String, k: float) -> void:
 		draw_circle(e, 9.0 * k + 2.0, Color(0.8, 0.22, 0.2))
 		draw_arc(e, 9.0 * k + 2.0, 0, TAU, 20, INK, 1.5, true)
 		_label(e + Vector2(0, 4), "!", 12, Color(1, 1, 1))
-	if TravelRules.cleared(n, Game.meta.flags):  # done: a gold seal, like a cleared level on an old console map
+	if TravelRules.cleared(n, Game.flags_now()):  # done: a gold seal, like a cleared level on an old console map
 		var b := p + Vector2(34, -18) * k
 		draw_circle(b, 9.0 * k + 2.0, Color(0.95, 0.75, 0.25))
 		draw_arc(b, 9.0 * k + 2.0, 0, TAU, 20, INK, 1.5, true)
