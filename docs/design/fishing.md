@@ -29,3 +29,39 @@ What every version shares (already decided or built):
 
 ## Our pick
 2, Read the water. It's the most beautiful (a screenshot moment by the dock), the friendliest on a phone, and each cast is a choice rather than a reflex. The party's kits change what you can see, which ties into pitch D. 3 is the cheapest fallback if we want it in sooner.
+
+## Research: what makes fishing a quick hit [AI]
+Asked for by Brandon on 2026-11-01. This comes from what we know about these games, not a formal study.
+
+### Games built around fishing
+- **Animal Crossing**: you see shadows and their size tells you roughly what you'll get. The bobber nibbles a few times before the real bite, and striking early scares the fish off. Each try is a few seconds, and the museum log and rare fish keep you casting. It's the closest thing to idea 2.
+- **Dredge**: each fish has its own short ring minigame (tap when the needle hits the marks), and harder fish get tighter rings. Strange "aberrant" variants of known fish turn up in risky places. It's a close match for what fishing past the Wall could be.
+- **Stardew Valley**: the bar-and-zone tension game from idea 1. People love it once they get it, but many find it hard, especially on a touch screen.
+- **Sega Bass Fishing** and the arcade fishing games: one fish is one short fight, with loud payoff for the big ones. The feel comes from the sound and the splash.
+- **Ridiculous Fishing** (it grew out of the 2010 flash game Radical Fishing): three quick phases on one cast. Drop the line and dodge fish to go deep, reel up and catch as many as you can, then shoot them in the air for cash that buys upgrades. A whole run takes about a minute.
+
+### 2000s flash fishing games
+- **Club Penguin's Ice Fishing**: drop the line, catch a fish, and steer it up past crabs, jellyfish and sharks that cost you the catch or the worm. You keep going until your worms run out, and the rare big fish waits at the very end. It's push-your-luck with a hazard in every lane, and kids played it for hours.
+- **Radical Fishing**: see above. Every run ends with money and an upgrade, so even a bad run moves you forward.
+- **Neopets and the browser pet sites**: a daily cast with a small random prize and a fishing skill that rises slowly. It's a tiny ritual you come back to each day.
+- **Fishy and Feed the Fish**: not rod fishing, but "eat smaller fish, grow, avoid bigger ones" ran on the same rule that one mistake ends the run.
+
+### What they share (why they hook people)
+1. **One try is seconds long.** The fun is in casting again, not in one long fight.
+2. **A risk you choose.** You decide to go deeper or bank what you have, and losing a catch feels like your own call, not bad luck.
+3. **A false bite.** Nibbles before the real bite turn waiting into watching.
+4. **A collection.** A log with empty slots, plus rare fish people talk about.
+5. **Even a bad try gives something.** Money, an upgrade step or a log entry.
+6. **Payoff juice.** A splash, a pop, the fish held up. Cheap to add, and it does a lot.
+
+### Combining 2 and 3: one cast, three beats
+- **Look**: the pool with drifting shadows (idea 2). Tap a shadow to cast to it. Shadow size hints at the grade, and the moon kit, Doggo and bait work as in idea 2.
+- **Strike**: the bobber nibbles once or twice, then truly dips. Tap on the real dip. Too early scares the fish off, so the try ends with nothing.
+- **Reel**: the fish comes up in two or three steps (idea 3). Each step is one roll, shown as a quick tug on the line. After each step you **bank** (keep it at this grade) or **push** (go for the next grade). A failed roll snaps the line, as with Club Penguin's sharks. Party members add rerolls or +1 as in idea 3, and a better rod gives one free push.
+- Prize fish only come up if you push to the last step. Past the Wall, shadows are strange shapes and the catch is unknown food (Pitch H).
+- One cast at a spot, about 20 seconds, playable with one thumb.
+
+### Open questions for Brandon
+- How many casts per spot: one (as now), or a few "worms" like Club Penguin, where a snapped line costs one?
+- Should every try give something (a small fish or a log entry, as in Radical Fishing), or can a try come back empty?
+- Do we want a slow fishing skill that grows, like the Neopets daily cast, or only gear and the party?
