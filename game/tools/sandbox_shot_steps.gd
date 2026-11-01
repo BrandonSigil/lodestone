@@ -22,6 +22,9 @@ func run(s: Node, _frames: int, _step: String) -> void:
 		if _frames == 6:
 			s.preview.turn(int(_step.substr(4)))
 		return
+	if (_step == "bark" or _step == "amber") and _frames == 4:  # Doggo and Amber in the party
+		s.setup.party = [{"id": "dog", "cell": s.setup.party[0].cell}, {"id": "fire_mage", "cell": s.setup.party[1].cell},
+			{"id": "lead", "cell": s.setup.party[2].cell}]
 	if _frames == 5 and _step != "edit" and _step != "wall":  # "player" enters play, so the lead piece exists
 		s._enter_play()
 	if _step == "restart_mid":
@@ -54,8 +57,21 @@ func run(s: Node, _frames: int, _step: String) -> void:
 		var b: Battle = s.battle
 		var u: CombatUnit = b.units[0]
 		match _step:
-			"menu":
+			"menu", "amber":
+				b._select(u if _step == "menu" else b.units[1])
+			"bark":
+				var foe: CombatUnit = null
+				for o: CombatUnit in b.units:
+					if o.team == 1 and (foe == null or CombatRules.dist(o.cell, u.cell) < CombatRules.dist(foe.cell, u.cell)):
+						foe = o
+				for d: Vector2i in [Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 0)]:
+					var c := foe.cell + d
+					if b.grid.passable(c) and CombatRules.unit_at(b.units, c) == null:
+						u.place(c, b.grid.height_at(c))
+						break
 				b._select(u)
+				for ev in CombatRules.resolve(RandomNumberGenerator.new(), b.grid, u, Db.ability("bark"), u.cell, b.units):
+					b._play(ev)
 			"aim":
 				# Walk the first piece to the cell nearest the enemy, then aim its best ready skill.
 				b._select(u)

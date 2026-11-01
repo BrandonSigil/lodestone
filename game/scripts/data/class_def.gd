@@ -22,6 +22,7 @@ extends Resource
 @export var range_max: int = 1
 @export var magic: bool = false  ## ignores terrain cover
 @export var skills: Dictionary = {}  ## check id -> bonus, e.g. {"hunt": 5}
+@export var strike: StringName = &"strike"  ## the row of data/abilities.csv that is this class's plain attack (the HIT box)
 @export var abilities: Array[StringName] = []  ## rows of data/abilities.csv beyond the basic strike
 @export var spell_pool: Array[StringName] = []  ## spells (magic rows of data/abilities.csv) this class can learn
 @export var spell_slots: int = 0  ## how many it brings into a fight

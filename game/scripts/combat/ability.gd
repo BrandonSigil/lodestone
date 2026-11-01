@@ -19,6 +19,7 @@ var status_turns := 0
 var bleed := 0  ## phases of BLEED a hit adds (a skill rank's effect, data/skill_ranks.csv)
 var magic := false  ## ignores cover
 var element := ""  ## fire, moon, frost or empty. Some traits care (flammable takes more from fire).
+var basic := false  ## the piece's plain attack (the HIT box): `strike`, or the row its class names in ClassDef.strike
 ## A boss's big moves ([USER] 2026-10-30 design-boss-warning, design-boss-shape). windup > 0: marked on the user's
 ## phase besides its action and landing that many of its phases later. summon: a class id it calls `count` of.
 var windup := 0
@@ -104,4 +105,9 @@ func hostile() -> bool:
 
 ## Spells are the magic skills a caster picks into their slots. The basic strike never counts.
 func is_spell() -> bool:
-	return magic and id != "strike"
+	return magic and not is_basic()
+
+
+## The plain attack: `strike`, or a class's own basic (Amber's fire hit, [USER] 2026-11-01). Never a spell.
+func is_basic() -> bool:
+	return basic or id == "strike"

@@ -19,7 +19,7 @@ tracker,1,0,trap,ability,0,a tile hazard foes avoid or take damage on
 tracker,2,0,snare,ability,1,
 tracker,3,0,call_companion,ability,0,the dog or another beast acts again
 tracker,4,0,lure,ability,0,pull a foe 2 tiles (push below 0)
-ember,1,0,firebolt,ability,1,
+ember,1,0,fire_zap,basic,1,her plain attack ([USER] 2026-11-01); the A Heart that Burns passive rides on it
 ember,2,0,fireball,ability,1,
 ember,3,0,ignite,ability,0,a line of 2 to 3 burning tiles that last and hit whoever stands on them
 ember,4,0,flash,ability,0,blind foes in range for a phase

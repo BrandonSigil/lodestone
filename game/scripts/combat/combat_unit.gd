@@ -78,6 +78,7 @@ var minions: Array = []  ## the pieces it called, standing or not
 var summoner: CombatUnit = null  ## who called this piece
 var hiding := false  ## an ambusher not seen yet (a map group's "hidden"): not drawn, not in the danger zone, until spotted or it strikes
 var upgrades := {}  ## number upgrades from the level-up picks (docs/design/level-up.md): "guard_armor" -> +2 ...
+var burn_dmg := 0  ## HP a burn on it takes each phase, when its burner's A Heart that Burns was upgraded
 var poison_dmg := 0  ## HP a poison on it takes each phase, when its poisoner's blades were upgraded
 var ward_hits := 0  ## hits a WARD on it still blocks
 var watch_left := 0  ## watch shots a readied OVERWATCH still has (an upgrade gives a second)
@@ -125,8 +126,13 @@ func apply_class(c: ClassDef, mods: Dictionary = {}) -> void:
 	magic = c.magic
 	magic_power = int(mods.get("magic_power", 0))
 	abilities.clear()
-	var strike := Db.ability("strike")
+	var strike := Db.ability(String(c.strike)) if c.strike != &"" else null
+	if strike == null:
+		strike = Db.ability("strike")
 	if strike:
+		if strike.id != "strike":  # a class's own plain attack (Amber's fire hit): a copy marked as the basic
+			strike = strike.copy()
+			strike.basic = true
 		abilities.append(strike)
 	for id in c.abilities:
 		var a := Db.ability(String(id))
