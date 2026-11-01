@@ -1,0 +1,45 @@
+MENU MOCKUPS (Brandon, 2026-11-01: "Use our picsart MCP to come up with a better menus gameplan and apply them game wide")
+Attach one picture: art/templates/ui/menu_mockup_board.png (labelled panels 1 THE GAME, 2 MENU KIT, 3 STYLE, 4 CHARACTERS).
+Settings: 2K, 16:9 (these are full game screens), High. Research behind them: docs/design/menus-research.md.
+Drafts only. Nothing goes into the game until Brandon approves it.
+
+===== SHARED HEAD (starts every prompt) =====
+The attached board has four labelled panels. Panel 1, THE GAME, is a screenshot of our cosy isometric fantasy tactics game, with its ornate green bottom frame. Panel 2, MENU KIT, is our approved menu look: deep green mottled felt panels inside a slim pale silver and soft blue double rim, small blue diamond studs and olive leaf sprigs at the corners only. Panel 3, STYLE, is the painting style: soft flat painted shapes, gentle hand-inked outlines, a light paper grain. Panel 4, CHARACTERS, is our party, to use as small portraits.
+Paint ONE polished in-game menu screen for this game, as a 16:9 screenshot, like a professional indie game with a AAA finish (think Sea of Stars, Hades, Unicorn Overlord, Slay the Spire). The game world from panel 1 shows dimmed and softly blurred behind the menu; the green bottom frame stays at the bottom. The menu itself is built from panel 2's pieces, matched exactly in colour, rim, diamonds and leaves.
+Readable hierarchy: one clear title, few words, large clear numbers, icons with short labels, portraits, coloured bars with labels. Lots of breathing room. Every window has a small round X close button at its top right in the same rim style. Nothing runs off the screen.
+Words: only short game labels, written clearly in a clean storybook serif, cream on green: the ones named below and nothing else. No paragraphs, no names, no made-up words, no lorem ipsum.
+Avoid: walls of text, tiny text, text running off the frame, photo textures, glossy plastic bevels, 3d render, neon, pure black, sci-fi, mobile-game clutter, extra windows.
+
+===== PROMPT 1: HOME AGAIN (back from an outing), tab pages =====
+[SHARED HEAD]
+THIS SCREEN: the summary after the party comes home. One centred window, about two thirds of the screen wide. At its top a title plate reading "HOME AGAIN" and the X at the top right. Under it a row of four pill tabs with small icons: "BROUGHT HOME", "PARTY" (selected, glowing), "FRIENDS", "NEXT".
+The PARTY tab is open: four neat rows, one per party member, each with a round portrait from panel 4 in a small rimmed frame with a level badge, a gold XP bar filling with a bright tip, a small chip "LV 1 > 3", and on the right a small heart icon with a green "+13" chip. Lots of space between rows.
+Bottom right, one large glowing primary button "ONE MORE GO". A row of four small dots under the tabs shows the page.
+
+===== PROMPT 2: HOME AGAIN, one page of cards (the alternative) =====
+[SHARED HEAD]
+THIS SCREEN: the same summary as one page instead of tabs. One centred window, about two thirds of the screen wide, title plate "HOME AGAIN", X at the top right. Inside, three side-by-side cards, each a smaller felt panel with its own little heading plate:
+left card "BROUGHT HOME": a small grid of six item icons (meat, potion, rope, wood, coin, herb), each with a "+3" style chip;
+middle card "PARTY": four compact rows, round portrait, gold XP bar, "LV 3" badge, green heart chip "+13";
+right card "FRIENDS": three rows, each two tiny portraits joined by a heart and a green "+6" chip, then a small quiet row "SHOW ALL".
+Under the cards a slim strip "NEXT" with three material icons and small bars reading "0/4", "0/2", "0/3". Bottom right, one glowing button "ONE MORE GO". A thin themed scrollbar on the window's right edge.
+
+===== PROMPT 3: WIN (after a fight) =====
+[SHARED HEAD]
+THIS SCREEN: the victory screen after a battle. A wide banner plate at the top reading "WIN", the X at the window's top right. Left half: a 2 by 2 grid of party cards, each a small felt card with a round portrait from panel 4, a red labelled "HP" bar and under it a blue "MP" bar (or orange "RAGE"), and a gold "EXP +12" line. Right half: a "LOOT" box sized to its contents: a 3 by 2 inventory grid with item icons (meat, potion, coin pile, rope), and under it the party pack, a larger 6 by 4 inventory grid, half full, so items can be dragged down. A "TAKE ALL" button sits half over the bottom edge of the loot box. Bottom right, one glowing "CONTINUE" button.
+
+===== PROMPT 4: ENCOUNTER CHOICE (foes spotted) =====
+[SHARED HEAD]
+THIS SCREEN: a choice when the party spots foes while exploring. A compact window standing just above the bottom frame's centre diamond, not covering the party. Left side of the window: a small rimmed picture of a big grey ogre in the game's style. Right side: one short title "ELITE" with a small gold skull badge, then a vertical list of three full-width pill buttons, each with an icon on the left:
+"FIGHT" (crossed swords icon, glowing, the main choice),
+"SNEAK HIT" (dagger icon) with a small chip on the right reading "45%",
+"BACK OFF" (footprints icon, quieter, darker pill, last).
+The X at the window's top right.
+
+===== PROMPT 5: UI KIT AND ICON SHEET (the pieces the game will build from) =====
+[SHARED HEAD, but not a game screen: plain flat cream paper (#eae8d6) background, pieces laid out flat with wide gaps, nothing overlapping, no world behind]
+THIS SHEET: the reusable menu pieces, straight on, flat, matching panel 2 exactly:
+top row: a round X close button (normal and hover), a pill tab (normal and selected), a primary button (glowing) and a quiet button, all empty of words;
+middle row: a thin vertical scrollbar (track and thumb), a round portrait frame with a small level badge at its corner, a square item slot, a small chip plate, a section divider with a tiny diamond;
+bottom row: sixteen flat icons in one consistent hand-inked line weight, each about the same size, cream and gold with touches of the panel 2 blue and green: heart, star, crossed swords, dagger, footprints, shield, potion, coin, sack, key, boot, meat, rope, wood log, speech bubble, lock.
+No words or letters anywhere on this sheet.
