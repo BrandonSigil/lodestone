@@ -29,6 +29,8 @@ Read and write them with the `ArtifactData` tool and the URL above. Pin every wr
 | `refs` | a group on the References wall | `title`, `used_for`, `warning`, `images` [{url, caption, path, slot}], `prompts`, `order`, `retired` |
 | `library` | a shelf | `title`, `path`, `kind` (`ingame`, `raw`, `code`), `status`, `note`, `items` [{url, name}], `order` |
 
+**Write card text so it formats** ([USER] 2026-11-01: "Desk items are still coming in without their descriptions formatted"): a card's `context` and `result` are never one long paragraph. Start with one short lead sentence, then a blank line, then `- ` bullets, one fact each, with `**bold**` labels where they help (`- **Cost:** 4 wood, 2 metal`). Use real line breaks in the stored string, not a literal backslash-n.
+
 Card kinds (any card may carry `link: {url, label}`, shown as an Open button; `report` is a read-and-mark-read card):
 - `choice`: `options` [{id, label, detail, image}], `multi` for pick-many. The page always adds **Neither** with a required "why". Answer: `{picks, why, at}`.
 - `go` (Picsart go-ahead): `batch` {prompt, model, count, cost, refs [{url, caption}]}. The cost on the card is a ceiling: if a run would go past it, stop and post a new `go` card for the rest. Answer: `{pick: "go" | "nogo", why, at}`.
