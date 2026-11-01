@@ -119,10 +119,9 @@ func test_daily_meal_at_camp() -> void:
 	var r := RunState.create([Db.character(&"lead"), Db.character(&"dog")], 1)
 	r.food = 3
 	r.add_item("ration", 1)
-	r.add_item("fish_good", 1)
 	eq(TravelRules.shares(r), {"lead": 1, "dog": 1}, "one portion each")
-	eq(r.larder(), ["ration", "meat", "fish_good"] as Array[String], "plain food first, then by HP a portion heals")
-	eq(r.portions(), 3 + int(Db.items.ration.food) + 2)
+	eq(r.larder(), ["ration", "meat"] as Array[String], "plain food first, then by HP a portion heals")
+	eq(r.portions(), 3 + int(Db.items.ration.food))
 	var picks := TravelRules.default_picks(r)
 	eq(picks, {"lead": "ration", "dog": "ration"}, "the picker opens on plain food")
 	r.members[0].hp = 1
@@ -139,7 +138,6 @@ func test_daily_meal_at_camp() -> void:
 	eq(r.food, 2)
 	r.opened.clear()
 	r.food = 0
-	r.add_item("fish_good", -1)
 	ok(not TravelRules.can_feed(r), "an empty larder can't feed the party")
 	ok(not TravelRules.camp_meal(r, picks), "no meal")
 	eq(TravelRules.food_heal(r), int(Db.items.meat.heal), "meat eaten on purpose still heals its heal column")
@@ -1021,7 +1019,7 @@ func test_cook_at_home_eat_at_camp() -> void:
 	Game.meta.materials = {"ingredient": 5, "herb": 1}
 	ok(not Game.cook("stew"), "no kitchen yet")
 	Game.meta.flags.append("kitchen_1")
-	eq(Game.recipes_open().map(func(r: Dictionary) -> String: return r.id), ["stew"], "the first kitchen step opens the first recipe")
+	eq(Game.recipes_open().map(func(r: Dictionary) -> String: return r.id), ["stew", "fish_grill"], "the first kitchen step opens the first recipes (the stew and the small-fish grill)")
 	ok(Game.cook("stew"))
 	eq(int(Game.meta.materials.ingredient), 2, "its ingredients came from the village pile")
 	eq(Game.run.item_count("meal_stew"), 1, "a meal to carry")
@@ -1206,7 +1204,7 @@ func test_fishing_from_any_dock_spot() -> void:
 	var fish_before: int = Game.run.item_count("fish_good")
 	var ing_before: int = Game.run.item_count("ingredient")
 	s.fishing.resolve("caught", row)
-	eq(Game.run.item_count("fish_good"), fish_before + 1, "the catch goes in the pack: a good fish, food that heals")
+	eq(Game.run.item_count("fish_good"), fish_before + 1, "the catch goes in the pack: a good fish (rations until it is cooked at home)")
 	eq(Game.run.item_count("ingredient"), ing_before + 1, "a good fish brings an ingredient too")
 	ok(Game.has_flag("caught_fish_trout"), "the kind is marked caught")
 	ok(spot.done, "the spot rests")
@@ -1678,4 +1676,21 @@ func test_tavern_rebuild_and_menu() -> void:
 	ok(not counter.is_empty(), "the counter stands in the tavern")
 	Game.pending_lines = []  # the trip's homecoming page would open in the next test's scene
 	Game.homecoming = {}
+	_restore(saved)
+
+
+## Every building's box opens (the kitchen, the smithy and the tavern counter share one box).
+func test_restore_boxes_open() -> void:
+	var saved := _fresh_game()
+	Game.meta.flags.append_array(["settler_chef", "settler_smith", "rescued_bushberry", "tavern_open", "kitchen_1"])
+	Game.explore_map = "village"
+	Game.explore_entry = Vector2i(-1, -1)
+	var tree := Engine.get_main_loop() as SceneTree
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	for building in ["inn", "smithy", "tavern"]:
+		s._restore_box(building)
+		ok(s._dialog != null, building + "'s box opens")
+		s._close_dialog()
+	s.queue_free()
 	_restore(saved)

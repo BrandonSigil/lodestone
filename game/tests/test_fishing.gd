@@ -126,26 +126,32 @@ func test_landing_a_fish_fills_the_pack() -> void:
 	eq(run.item_count("rare"), 1, "in the pack")
 
 
-## Fish are food that heals ([USER] 2026-10-31 food as healing; PM 2026-11-01): a bigger grade heals more.
-func test_fish_heal_by_grade() -> void:
+## Raw fish are rations ([USER] 2026-11-01 on dev-fish-review: "Uncooked fish should count as rations, or you need to go
+## home and put them in actual recipes"): they feed by size and heal nobody; at home they go to the village pile, where
+## the kitchen's fish recipes cook them into meals that heal.
+func test_fish_feed_and_cook_at_home() -> void:
 	_db()
-	var heals: Array[int] = []
+	var portions: Array[int] = []
 	for grade in ["small", "good", "prize"]:
 		var item: String = "fish_" + String(grade)
-		ok(TravelRules.is_food(item), item + " is food that heals")
-		heals.append(TravelRules.food_heal(RunState.new(), item))
+		ok(not TravelRules.is_food(item), item + " doesn't heal raw")
+		eq(RunState.heal_per_portion(item), 0.0, item + " only feeds")
+		portions.append(int(Db.items[item].food))
 		eq(ActionInfo.icon(item), ActionInfo.icon("fish"), item + " borrows the fish icon")
-	ok(heals[0] < heals[1] and heals[1] < heals[2], "a bigger grade heals more")
-	ok(heals[0] > TravelRules.food_heal(RunState.new()), "even a small fish beats a piece of meat")
+	eq(portions, [1, 2, 3] as Array[int], "portions by size")
 	for id: String in Db.fish:  # every catch gives a fish
 		ok(FishingRules.reward(Db.fish[id]).keys().any(func(k: String) -> bool: return k.begins_with("fish_")), id + " gives a fish")
 	var run := RunState.create([Db.character(&"lead")], 1)
-	FishingRules.land(run, Db.fish["trout"])
-	var lead: Dictionary = run.members[0]
-	lead.hp = 1
-	ok(TravelRules.use_on(run, "fish_good", lead), "a fish dropped on a card: they eat it")
-	eq(int(lead.hp), 1 + heals[1])
-	eq(run.item_count("fish_good"), 0, "and it is gone")
+	FishingRules.land(run, Db.fish["minnow"])
+	FishingRules.land(run, Db.fish["minnow"])
+	eq(run.portions_of("fish_small"), 2, "two small fish feed two portions")
+	var banked := run.bank_materials()
+	eq(int(banked.get("fish_small", 0)), 2, "home: the fish go to the village pile")
+	eq(run.item_count("fish_small"), 0)
+	var cooks := Db.recipes.values().filter(func(r: Dictionary) -> bool: return String(r.needs).contains("fish_"))
+	ok(not cooks.is_empty(), "the kitchen has fish recipes")
+	for r: Dictionary in cooks:
+		ok(int(r.heal) > 0 and String(Db.items[String(r.meal)].kind) == "meal", String(r.id) + " is a cooked meal that heals")
 
 
 ## The minigame on screen: it opens over a scene, runs its beats, and reports once.

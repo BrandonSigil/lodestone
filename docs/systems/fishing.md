@@ -6,12 +6,13 @@ Brandon's call ([USER] 2026-11-01, card design-fishing-research): one cast in th
 - **Look**: a flat top-down pool with drifting fish shadows. Shadow size hints at the grade. Click a shadow (or pick with left/right and press Space / A) to cast to it. LEAVE or Esc / B backs out and costs nothing.
 - **Strike**: the bobber nibbles 0 to 2 times, then truly dips ("!" and rings). Strike on the dip (click, Space or A). Striking on a nibble or before the dip scares the fish off; missing the dip window loses it.
 - **Reel**: the fish darts left and right along a bar. Steer the marker with the mouse (or a finger), arrows / A D, or the left stick and d-pad. On the fish the catch meter fills, off it the meter drains. Full lands the fish, empty loses it. The rod leans toward the fish and bends and twitches when you're off it, and the hooked shadow thrashes in the pool where the fish is on the bar.
-- A caught fish goes in the pack (its `reward` column) and the first of each kind says NEW FISH. The fish itself is food
-  that heals: a small fish (minnow, perch) heals 3, a good fish (trout, pike) 6 and the prize fish (king) 12, by the
-  `heal` column of `fish_small`, `fish_good` and `fish_prize` in `data/items.csv`. They are 1, 2 and 3 cells long and
-  share the fish icon (the item's `icon` column). EAT them from the party window or drop one on a party card.
-
-## Where it runs
+- A caught fish goes in the pack (its `reward` column) and the first of each kind says NEW FISH. Raw fish are rations ([USER] 2026-11-01, dev-fish-review: "Uncooked fish should count as rations, or you need to go
+  home and put them in actual recipes"): a small fish (minnow, perch), a good fish (trout, pike) and the prize fish (king)
+  feed 1, 2 or 3 portions at the night camp (`fish_small`, `fish_good`, `fish_prize` in `data/items.csv`, `food` column)
+  and heal nobody. They are 1, 2 and 3 cells long and share the fish icon. At home they go to the village pile with the
+  materials (the `bank` column), and the kitchen cooks them: FIRE FISH (two small fish, kitchen 1) and BIG FISH PLATE
+  (a good fish and the prize fish, kitchen 2), cooked meals that heal at the night camp's team meal (`data/recipes.csv`,
+  [AI] numbers).
 - Any explore thing whose event has the `fish` effect (the village v2 dock), with a rod in the pack. The thing's optional `pool` picks the fish (default `lake`). The spot rests for the trip once a line is cast.
 - The overworld's FISH button (pool `road`). The road clock stops while it's up; leaving before the cast doesn't start the cooldown.
 - Launch menu > PLAY > Fishing: practice casts back to back. Nothing goes in the pack.

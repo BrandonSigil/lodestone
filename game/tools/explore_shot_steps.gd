@@ -35,6 +35,18 @@ func run(s: Node, f: int, step: String) -> bool:
 			s.focus_h = 1.0
 			s._apply_camera()
 		return f == 30
+	if step == "fishcook":
+		# the inn kitchen with fish in the village pile: FIRE FISH to cook (map: village)
+		if f == 5:
+			var game: Node = s.get_node("/root/Game")
+			game.save_enabled = false
+			game.meta.flags.append_array(["settler_chef", "kitchen_1", "kitchen_2"])
+			game.meta.restore["inn_1"] = {"state": "done"}
+			game.meta.restore["inn_2"] = {"state": "done"}
+			game.meta.materials = {"fish_small": 2, "fish_good": 1, "fish_prize": 1, "ingredient": 3}
+			s._refresh_hud()
+			s._open_thing(_thing(s, "inn_restore"))
+		return f == 90
 	if step == "tavern":
 		# the tavern counter after the rebuild: Bushberry freed, the tavern open, 12 gold to spend (map: tavern)
 		if f == 5:

@@ -268,7 +268,7 @@ func bank_materials() -> Dictionary:
 	for g in all:
 		for i in range(g.items.size() - 1, -1, -1):
 			var it: Dictionary = g.items[i]
-			if String(Db.items[it.id].kind) == "material":
+			if String(Db.items[it.id].kind) == "material" or String(Db.items[it.id].get("bank", "")) == "1":  # fish go home to be cooked
 				out[it.id] = int(out.get(it.id, 0)) + int(it.get("n", 1))
 				g.remove(i)
 	for id: String in out:

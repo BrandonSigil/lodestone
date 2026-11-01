@@ -56,7 +56,7 @@ character at home gets X morale". Built 2026-11-01 from the proposal in `docs/de
 - Healing model A is built ([USER] 2026-11-01, `docs/design/healing-model.md`). Each journey day on the road ends
   at a night camp (`OverworldScene._night`): every member eats their `food_per_day` portions of the food kind the
   player picks for them, the picks open as last night's (SAME AS LAST NIGHT), and food heals its portions' worth
-  (`heal` / `food` in `data/items.csv`: meat 2, a good fish 3, plain rations, sacks and jerky 0), so meat for a hurt
+  (`heal` / `food` in `data/items.csv`: meat 2; plain rations, sacks, jerky and raw fish 0, cooked at home instead), so meat for a hurt
   member is the healing choice. A food item with several portions keeps what's left once opened (`RunState.opened`).
   A cooked meal in the pack is a TEAM MEAL: it feeds everyone that night, heals each its recipe's `heal`, gives its
   `morale` and its buff for the next fights (`Game.team_meal`). If the pack can't feed everyone the camp warns and the
