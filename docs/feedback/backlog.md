@@ -92,6 +92,7 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | X9 | "Remove the Lorem Ipsum What do these icons mean? Hide the combat log behind the win window and make it much smaller. We dont need the second win lorem ipsum" | Systems developer | done (evening round) |
 | X10 | "These ! are weird, theres no asset tied to them. Also it doesnt look like we're using the downed frames for our characters." (forest_roads: ! markers float over empty ground; the cut sheets have `<id>_down_se/ne.png` but downed characters do not show them) | Systems developer | queued (with X8) |
 | X10 | "What is this whole menu on the right ... let's put all dialogue/actions/ right above the diamond" (overworld side panel; one standard place) | Systems developer | done (evening round) |
+| X11 | "These menus are so ugly ... it doesnt fit on the screen, no scrolling. Ive asked for close X boxes at the top right of all these frames but theyre no where." (HOME AGAIN overflows; X only on loot windows) | Systems developer (X close, fit, scroll now); PM (research, Picsart mockups, menu kit plan) | X/fit/scroll queued; research running |
 | X11 | "The bottom fram is HUGE and the player UI/actionbar is tiny" | Systems developer | done (evening round) |
 | X12 | "I'd like for these skills to show their range when you hover over them" | Systems developer | done (evening round) |
 | X13 | "I want to always be on a selected cahracter" | Systems developer | done (evening round) |
