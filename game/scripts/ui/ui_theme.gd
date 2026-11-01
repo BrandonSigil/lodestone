@@ -211,6 +211,28 @@ static func pop_in_later(c: Control) -> void:
 
 ## A menu closing: shrinks a touch and fades, then frees itself. Its buttons die at once, so nothing on the way
 ## out can be pressed.
+## Esc on an open box ([USER] 2026-11-01: "Let esc close out windows in game too"): presses the box's own
+## close-type button (CLOSE, BACK, OK, CANCEL, LEAVE...), the last one if there are several. A box with none
+## (a real choice, or the full pack whose way out throws things away) stays open. True if it pressed one.
+const ESC_KEYS := ["UI_CLOSE_MENU", "UI_CLOSE", "UI_OPT_BACK", "UI_CONTINUE", "UI_CANCEL", "UI_STAY_MAP", "OPT_LEAVE"]
+
+
+static func press_close(box: Control) -> bool:
+	if box == null or not is_instance_valid(box):
+		return false
+	var texts: PackedStringArray = []
+	for k: String in ESC_KEYS:
+		texts.append(Txt.t(k))
+	var pick: Button = null
+	for b: Button in box.find_children("*", "Button", true, false):
+		if b.visible and not b.disabled and texts.has(b.text):
+			pick = b
+	if pick == null:
+		return false
+	pick.pressed.emit()
+	return true
+
+
 static func pop_out(c: Control) -> void:
 	if not is_instance_valid(c) or not c.is_inside_tree():
 		if is_instance_valid(c):
