@@ -142,6 +142,23 @@ func run(s: Node, _frames: int, _step: String) -> void:
 						CombatRules.lay_field(b.grid, u, Db.ability(id), free[i])
 						i += 3
 				b._select(u)
+			"goodshot":
+				# GOOD SHOT: the first piece downs a foe with a plain attack and gets its action back (AGAIN!).
+				var foe: CombatUnit = null
+				for o: CombatUnit in b.units:
+					if o.team == 1 and (foe == null or CombatRules.dist(o.cell, u.cell) < CombatRules.dist(foe.cell, u.cell)):
+						foe = o
+				for d: Vector2i in CombatRules.DIRS:
+					var c := foe.cell + d
+					if b.grid.passable(c) and CombatRules.unit_at(b.units, c) == null:
+						u.place(c, b.grid.height_at(c))
+						break
+				u.traits.append(CombatRules.TRAIT_GOOD_SHOT)
+				foe.hp = 1
+				b._select(u)
+				for ev in CombatRules.resolve(RandomNumberGenerator.new(), b.grid, u, u.abilities[0], foe.cell, b.units):
+					b._play(ev)
+				b._after_action(u)
 			"danger":
 				b.show_danger = true
 				b._refresh_danger()

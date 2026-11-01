@@ -53,6 +53,7 @@ const TRAIT_CHARGE := &"charge"  ## Rusher and bull: a straight run of 3 or more
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
 const TRAIT_GOOD_BOY := &"good_boy"  ## Doggo ([USER] 2026-10-31 design-goodboy): a friend next to him heals at the start of its phase
 const TRAIT_HEART_BURNS := &"heart_burns"  ## Amber ([USER] 2026-11-01): plain attacks may set the target burning (heart_burn_pct)
+const TRAIT_GOOD_SHOT := &"good_shot"  ## the bow ([USER] 2026-11-01 F5): plain attacks hit harder and crit more; a kill gives another attack
 const TRAIT_POISON_BLADES := &"poison_blades"  ## Rogue: every hit leaves POISON ([USER] design-boss-daggers)
 const TRAIT_STAND_WATCH := &"stand_watch"  ## Bow: an archer that doesn't move in its phase ends it on OVERWATCH, free
 const TRAIT_STRUCTURE := &"structure"  ## an ice pillar: never acts or hits back, stands in the way, doesn't count toward winning
@@ -451,6 +452,8 @@ static func damage_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, fro
 			parts.append(["FOE_" + String(t).to_upper(), n])
 	if att.spooked or att.has_status(STATUS_SPOOK):
 		parts.append(["MOD_SPOOKED", int(num("spooked_damage")) + (att.spook_extra if att.has_status(STATUS_SPOOK) else 0)])
+	if a != null and a.is_basic() and att.has_trait(TRAIT_GOOD_SHOT):
+		parts.append(["MOD_GOOD_SHOT", int(num("good_shot_damage")) + upg(att, "good_shot_damage")])
 	if att.has_status(STATUS_INSPIRED) and att.inspire_dmg != 0:
 		parts.append(["MOD_INSPIRED", att.inspire_dmg])
 	if att.rally_dmg > 0:
@@ -516,6 +519,8 @@ static func crit_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, units
 		parts.append(["MOD_GUIDED", int(num("crit_guided"))])
 	if att.has_trait(TRAIT_QUICK_HANDS) and a != null and a.is_basic() and upg(att, "quick_crit") > 0:
 		parts.append(["MOD_QUICK", upg(att, "quick_crit")])
+	if a != null and a.is_basic() and att.has_trait(TRAIT_GOOD_SHOT):
+		parts.append(["MOD_GOOD_SHOT", int(num("good_shot_crit")) + upg(att, "good_shot_crit")])
 	if bloodied_level(att) > 0:
 		parts.append(["MOD_BLOODIED", int(num("bloodied_crit")) + upg(att, "bloodied_crit")])
 	if att.watching_shot and upg(att, "watch_crit") > 0:
@@ -705,6 +710,9 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 					events.append({"type": "status", "src": u, "unit": t, "status": a.status})
 	if u.hiding and a.hostile():
 		u.hiding = false
+	if allow_counter and a.is_basic() and u.has_trait(TRAIT_GOOD_SHOT) and u.alive() \
+			and hit_list.any(func(t: CombatUnit) -> bool: return t.team != u.team and not t.alive()):
+		u.shot_kill = true  # GOOD SHOT: a plain attack that downs a foe earns another attack (extra_shot)
 	if allow_counter and a.kind == "attack" and a.radius == 0 and hit_list.size() == 1:
 		var t: CombatUnit = hit_list[0]
 		if u.alive() and counters_from(grid, u, t, u.cell):
@@ -811,6 +819,18 @@ static func push_place(grid: CombatGrid, at: Vector2i, c: Vector2i) -> Vector2i:
 	return best
 
 
+## GOOD SHOT's extra attack: after the action that downed a foe with a plain attack, the piece may attack again
+## from where it stands, `good_shot_again` times a turn (more with the upgrade). Reopens its action; true if it did.
+static func extra_shot(u: CombatUnit) -> bool:
+	var kill := u.shot_kill
+	u.shot_kill = false
+	if not kill or not u.alive() or u.shots_again >= int(num("good_shot_again")) + upg(u, "good_shot_again"):
+		return false
+	u.shots_again += 1
+	u.acted = false
+	return true
+
+
 static func guard(u: CombatUnit) -> void:
 	u.statuses[STATUS_GUARD] = 1
 
@@ -835,6 +855,8 @@ static func begin_phase(units: Array, team: int, grid: CombatGrid = null) -> Arr
 		u.move_origin = u.cell
 		u.move_spent = 0
 		u.left_guard = false
+		u.shot_kill = false
+		u.shots_again = 0
 		if u.alive():
 			u.phase_no += 1
 		for s: String in [STATUS_BLEED, STATUS_POISON, STATUS_BURN]:  # through armor

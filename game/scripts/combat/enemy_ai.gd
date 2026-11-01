@@ -96,6 +96,18 @@ static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 		"score": best_score, "dest": extra.get("dest", best_cell), "spot": extra.get("spot", best_aim)}
 
 
+## GOOD SHOT's extra attack (CombatRules.extra_shot): the best attack u can make from where it stands, as
+## {"ability", "aim"}; {} when there is none worth making.
+static func second_shot(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
+	var keep := u.move_spent
+	u.move_spent = CombatRules.move_points(u)
+	var p := plan(grid, u, units)
+	u.move_spent = keep
+	if p.ability == null or not p.ability.hostile() or p.move != u.cell or p.ability.kind in ["carry", "command", "swap"]:
+		return {}
+	return {"ability": p.ability, "aim": p.aim}
+
+
 const CARRY_DOWNED := 20.0  ## carrying a downed friend out of reach; below AID (REVIVE_SCORE), which gets them back up
 const CARRY_BAD_CELL := 12.0
 const SWAP_DOWNED := 20.0  ## SHADOW SWAP on a downed friend: under AID, which gets them up

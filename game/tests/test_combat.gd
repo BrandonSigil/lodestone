@@ -1605,6 +1605,57 @@ func test_kit_batch_two() -> void:
 	eq(dog.cmd_bonus, 1, "the upgrade adds a point to its hits")
 
 
+## GOOD SHOT is a passive ([USER] 2026-11-01 F5): plain attacks hit harder and crit more, and a plain attack that
+## downs a foe earns another attack, once a turn (twice with the third upgrade).
+func test_good_shot_passive() -> void:
+	var g := CombatGrid.flat(8, 4)
+	var bow := _unit("job_archer", 0, Vector2i(0, 1), g)
+	ok(bow.has_trait(CombatRules.TRAIT_GOOD_SHOT), "the bow's job has it")
+	ok(not bow.abilities.any(func(a: Ability) -> bool: return a.id == "aimed_shot"), "no GOOD SHOT skill any more")
+	var foe := _unit("bandit", 1, Vector2i(3, 1), g)
+	var hit := bow.abilities[0]
+	ok(CombatRules.damage_parts(g, bow, foe, bow.cell, hit, [bow, foe]).any(func(p: Array) -> bool: return p[0] == "MOD_GOOD_SHOT" and p[1] == 1), "+1 damage on a plain attack")
+	ok(CombatRules.crit_parts(g, bow, foe, [bow, foe], bow.cell, hit).any(func(p: Array) -> bool: return p[0] == "MOD_GOOD_SHOT" and p[1] == 15), "+15% crit")
+	bow.upgrades = {"good_shot_damage": 1, "good_shot_crit": 10}
+	ok(CombatRules.damage_parts(g, bow, foe, bow.cell, hit, [bow, foe]).any(func(p: Array) -> bool: return p[0] == "MOD_GOOD_SHOT" and p[1] == 2), "upgrades add damage")
+	ok(CombatRules.crit_parts(g, bow, foe, [bow, foe], bow.cell, hit).any(func(p: Array) -> bool: return p[0] == "MOD_GOOD_SHOT" and p[1] == 25), "and crit")
+	# a kill: another attack, once a turn
+	var rng := RandomNumberGenerator.new()
+	foe.hp = 1
+	bow.acted = true
+	CombatRules.resolve(rng, g, bow, hit, foe.cell, [bow, foe])
+	ok(not foe.alive(), "the foe is down")
+	ok(CombatRules.extra_shot(bow), "a kill earns another attack")
+	ok(not bow.acted, "its action is back")
+	var foe2 := _unit("bandit", 1, Vector2i(3, 2), g)
+	foe2.hp = 1
+	CombatRules.resolve(rng, g, bow, hit, foe2.cell, [bow, foe, foe2])
+	ok(not CombatRules.extra_shot(bow), "only once a turn")
+	CombatRules.begin_phase([bow], 0)
+	var foe3 := _unit("bandit", 1, Vector2i(2, 1), g)
+	foe3.hp = 99
+	foe3.max_hp = 99
+	CombatRules.resolve(rng, g, bow, hit, foe3.cell, [bow, foe3])
+	ok(foe3.alive() and not CombatRules.extra_shot(bow), "no kill, no extra attack")
+	bow.upgrades = {"good_shot_again": 1}
+	for i in 2:
+		var f := _unit("bandit", 1, Vector2i(2, 2 + i % 2), g)
+		f.hp = 1
+		CombatRules.resolve(rng, g, bow, hit, f.cell, [bow, f])
+		ok(CombatRules.extra_shot(bow), "the upgrade allows a second extra attack")
+	# the robot takes the extra attack too
+	var sim_bow := _unit("job_archer", 0, Vector2i(0, 0), g)
+	var a1 := _unit("bandit", 1, Vector2i(3, 0), g)
+	var a2 := _unit("bandit", 1, Vector2i(4, 0), g)
+	a1.hp = 1
+	a2.hp = 1
+	sim_bow.crit = -100
+	sim_bow.range_min = 2  # a bow in hand
+	sim_bow.range_max = 5
+	var plan := CombatSim.take_turn(rng, g, sim_bow, [sim_bow, a1, a2])
+	ok(not a1.alive() and not a2.alive(), "a kill, then another shot that kills too")
+
+
 ## Doggo's Good Boy ([USER] 2026-10-31 design-goodboy: +1 heal to the friend next to him), upgradable at level up
 ## ([USER] 2026-11-01: "I want to upgrade that passive").
 func test_good_boy_heals_the_friend_next_to_him() -> void:

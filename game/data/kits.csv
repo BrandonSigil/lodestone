@@ -11,7 +11,7 @@ shade,1,0,throw_dagger,ability,1,
 shade,2,0,poison_blades,trait,1,
 shade,3,0,shadow_swap,ability,1,
 shade,4,0,quick_hands,trait,1,"passive: the regular attack is two hits, each about a point lighter (backstab and kick are out of the kit for now)"
-sharpshooter,1,0,aimed_shot,ability,1,
+sharpshooter,1,0,good_shot,trait,1,"passive: plain attacks hit harder and crit more; a kill gives another attack ([USER] 2026-11-01, replaces the aimed_shot skill)"
 sharpshooter,2,0,volley,ability,1,
 sharpshooter,3,0,snare,ability,1,
 sharpshooter,4,0,overwatch,ability,1,

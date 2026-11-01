@@ -350,6 +350,12 @@ func _ai_turn(u: CombatUnit) -> void:
 		await _use_clutch(u, plan.ability, plan.aim, plan.dest, plan.spot)
 	elif plan.ability != null:
 		await _use(u, plan.ability, plan.aim)
+		while u.alive() and CombatRules.extra_shot(u) and not _check_end():  # GOOD SHOT: another attack from here
+			board.float_text(u.cell, Txt.t("UI_SHOOT_AGAIN"), Color(1.0, 0.95, 0.6))
+			var shot := EnemyAi.second_shot(grid, u, units)
+			if shot.is_empty():
+				break
+			await _use(u, shot.ability, shot.aim)
 		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of the foes' reach
 			var away := EnemyAi.retreat(grid, u, units)
 			if away.move != u.cell and await _leave_guards(u, away.move):
@@ -1019,6 +1025,15 @@ func _undo_move() -> void:
 ## run: hit and run reopened the move, so its tiles come straight up (CANCEL goes to the menu: WAIT ends it).
 func _after_action(u: CombatUnit, run := false) -> void:
 	u.acted = true
+	if CombatRules.extra_shot(u):  # GOOD SHOT downed a foe: attack again from here
+		board.float_text(u.cell, Txt.t("UI_SHOOT_AGAIN"), Color(1.0, 0.95, 0.6))
+		log_line.emit(Txt.f("LOG_SHOOT_AGAIN", Txt.t(u.name_key)))
+		u.moved = true
+		u.move_spent = CombatRules.move_points(u)
+		u.left_guard = true  # the walk is behind it: no undoing the move after the first attack
+		_refresh_danger()
+		_select(u)
+		return
 	if not u.alive() or u.done() or CombatRules.move_left(u) == 0:
 		u.moved = true
 		_finish_unit()
@@ -1094,7 +1109,7 @@ func _back() -> void:
 		S.MENU:
 			if _moving:
 				_cancel_move()
-			elif selected.moved and not selected.acted:
+			elif selected.moved and not selected.acted and not selected.left_guard:
 				_undo_move()
 			else:
 				_deselect()

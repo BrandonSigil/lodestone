@@ -1025,3 +1025,8 @@ LOG_SPRING,%s STEP IN %s!
 MOD_INSPIRED,FIRED UP
 MOD_RALLIED,GO AGAIN
 FOE_COMPANION,PET
+TRAIT_GOOD_SHOT,GOOD SHOT
+TRAIT_GOOD_SHOT_DESC,"Passive. Your regular attacks do 1 more damage and have 15% more crit chance. If a regular attack downs a foe, you can attack again right away from where you stand, once a turn."
+UI_SHOOT_AGAIN,AGAIN!
+LOG_SHOOT_AGAIN,%s SHOOT AGAIN!
+MOD_GOOD_SHOT,GOOD SHOT

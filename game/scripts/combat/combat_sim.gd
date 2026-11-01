@@ -54,6 +54,11 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 		if plan.ability.id in ["overwatch", "ward"]:
 			u.uses[plan.ability.id] = int(u.uses.get(plan.ability.id, 0)) + 1
 		events.append_array(CombatRules.resolve(rng, grid, u, plan.ability, plan.aim, units))
+		while u.alive() and CombatRules.extra_shot(u):  # GOOD SHOT: another attack from where it stands
+			var shot := EnemyAi.second_shot(grid, u, units)
+			if shot.is_empty():
+				break
+			events.append_array(CombatRules.resolve(rng, grid, u, shot.ability, shot.aim, units))
 		if CombatRules.hit_and_run(u, plan.ability):  # the rogue steps back out of the foes' reach
 			var away := EnemyAi.retreat(grid, u, units)
 			events.append_array(CombatRules.leave_hits(rng, grid, u, units, away.move))

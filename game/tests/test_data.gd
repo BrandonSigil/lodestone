@@ -157,7 +157,7 @@ func test_archetypes_load() -> void:
 					ok(Txt.has("DESC_" + String(r.ability).to_upper()), "%s: a line for %s" % [id, r.ability])
 				"trait":
 					if r.built == "1":
-						ok([CombatRules.TRAIT_SHIELD_WALL, CombatRules.TRAIT_POISON_BLADES, CombatRules.TRAIT_BLOODIED, CombatRules.TRAIT_QUICK_HANDS].has(StringName(r.ability)), "%s: %s is a combat trait" % [id, r.ability])
+						ok([CombatRules.TRAIT_SHIELD_WALL, CombatRules.TRAIT_POISON_BLADES, CombatRules.TRAIT_BLOODIED, CombatRules.TRAIT_QUICK_HANDS, CombatRules.TRAIT_GOOD_SHOT].has(StringName(r.ability)), "%s: %s is a combat trait" % [id, r.ability])
 					else:
 						ok(String(r.needs) != "", "%s: the unbuilt trait %s says what it needs" % [id, r.ability])
 				"basic":  # the class's own plain attack (ClassDef.strike), known from the start

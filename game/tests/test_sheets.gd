@@ -43,7 +43,7 @@ func test_a_sheet_per_build_changes_nothing() -> void:
 	eq(sword.job, "JOB_KNIGHT")
 	eq(sword.weapon, "ITEM_SWORD")
 	ok(sword.moves.any(func(m: Dictionary) -> bool: return m.id == "shove"), "the sword's job moves")
-	ok(bow.moves.any(func(m: Dictionary) -> bool: return m.id == "aimed_shot"), "the bow's")
+	ok(not bow.moves.any(func(m: Dictionary) -> bool: return m.id == "shove"), "the bow's own, not the sword's")
 	ok((bow.range as Vector2i).y > (sword.range as Vector2i).y, "the bow reaches further")
 	ok(sword.moves.size() <= SheetRules.MOVES)
 	Game.take_weapon("sword")

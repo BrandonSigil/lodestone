@@ -92,9 +92,9 @@ bark,3,range_max:+1,,Taunts foes 1 tile further
 shove,1,push:+1,,Pushes 1 tile further
 shove,2,power:+1,,Does 1 more damage
 shove,3,crit:+10,,+10% crit chance
-aimed_shot,1,crit:+10,,+10% crit chance
-aimed_shot,2,power:+1,,Does 1 more damage
-aimed_shot,3,crit:+10,,+10% crit chance
+good_shot,1,,good_shot_crit:+10,Your regular attacks get 10% more crit chance
+good_shot,2,,good_shot_damage:+1,Your regular attacks do 1 more damage
+good_shot,3,,good_shot_again:+1,You can take the extra attack after a kill twice a turn
 snare,1,status_turns:+1,,Its effect lasts 1 turn longer
 snare,2,power:+1,,Does 1 more damage
 snare,3,range_max:+1,,Reaches 1 tile further

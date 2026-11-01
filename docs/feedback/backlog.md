@@ -15,7 +15,7 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | F2 | "Doesnt seem like Bark works. Just used it right next to the elite wolf and nothing happens." | Fix Bark feedback and Amber's starting kit | done (#98) |
 | F3 | "amber has all spells right away? She should start with 1 ranged attack thats just her doing a regular fire attack" | Fix Bark feedback and Amber's starting kit | done (#98) |
 | F4 | "Fire Zap should just be Ambers main attack, and a passive "A Heart that Burns" should allow your regular attacks to have a chance to burn the target causing X damage over Y turns" (chance, damage, turns open) | Fix Bark feedback and Amber's starting kit | done (#98) |
-| F5 | "Good shot is lame ... It should just be a passive that makes your regular attacks better and say that. Maybe add a "if its the killing blow, you get to attack again"" | Systems developer (first account) | in progress (call recorded #94) |
+| F5 | "Good shot is lame ... It should just be a passive that makes your regular attacks better and say that. Maybe add a "if its the killing blow, you get to attack again"" | Systems developer (first account) | done (2026-11-01, "Good Shot as a passive" commit) |
 | F6 | "It's hard to click the tile directly above your character, right now I cant get dogo to just move directly up one tile" | Studio PM thread | done (#93) |
 
 ### Level up and passives

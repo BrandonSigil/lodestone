@@ -20,4 +20,5 @@ range_min = 2
 range_max = 5
 magic = false
 skills = {"sneak": 2, "nerve": 5}
-abilities = Array[StringName]([&"aimed_shot"])
+abilities = Array[StringName]([])
+traits = Array[StringName]([&"good_shot"])

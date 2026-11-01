@@ -49,3 +49,6 @@ bloodied_crit,10,% crit a bloodied reaver adds under its line
 field_turns,1,"a field (fire, caltrops) lasts until its maker's side has started this many more phases; a trap and smoke use their skill's status_turns instead"
 rally_move,1,RALLY: extra move the friend gets on its second walk this phase
 inspire_damage,1,INSPIRE: extra damage on every hit for allies in its area while it lasts
+good_shot_damage,1,"GOOD SHOT: plain attacks do this much more ([USER] 2026-11-01 F5: a passive that makes regular attacks better; [AI] number)"
+good_shot_crit,15,GOOD SHOT: % crit chance plain attacks add (the old aimed_shot's 15)
+good_shot_again,1,"GOOD SHOT: extra attacks a turn after a plain attack downs a foe ([USER] 2026-11-01: ""if its the killing blow, you get to attack again"")"
