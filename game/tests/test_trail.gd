@@ -7,10 +7,10 @@ func _run(ids: Array, food := 40) -> RunState:
 	return r
 
 
-func test_eating() -> void:
+func test_no_daily_meal() -> void:
 	var r := _run(["lead", "stardrop", "lewith_flark"], 20)
 	TrailRules.end_day(r)
-	eq(r.food, 16, "1 + 1 + 2 (the duo eats for two)")
+	eq(r.food, 20, "nobody eats on the clock ([USER] 2026-10-31: no hunger)")
 	eq(r.day, 2)
 
 
@@ -18,16 +18,16 @@ func test_bushberry_and_skeleton() -> void:
 	var r := _run(["bushberry", "skeleton_archer"], 5)
 	var morale := r.morale
 	TrailRules.end_day(r)
-	eq(r.food, 6, "bush adds 1, neither eats")
+	eq(r.food, 6, "bush adds 1")
 	eq(r.morale, morale - 2, "skeleton is gloomy")
 
 
-func test_starving_hurts() -> void:
+func test_no_food_no_harm() -> void:
 	var r := _run(["lead", "hunter"], 0)
 	var hp: int = r.members[0].hp
 	TrailRules.end_day(r)
-	eq(r.members[0].hp, hp - 2)
-	eq(r.morale, 60)
+	eq(r.members[0].hp, hp, "no food hurts nobody")
+	eq(r.morale, 70)
 
 
 func test_wizard_books_fill_slots() -> void:

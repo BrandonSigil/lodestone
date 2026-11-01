@@ -23,7 +23,7 @@ var pack: InventoryGrid = InventoryGrid.create(PACK_COLS, PACK_ROWS)
 var found: InventoryGrid = InventoryGrid.create(FOUND_COLS, FOUND_ROWS)
 var courier_bag: InventoryGrid = null  ## the courier's saddlebag while it's being filled
 var boons: Array[String] = []  ## blessings and setbacks held until home ([USER] omr-7, omr-8)
-var food_extra := 0  ## food each meal costs on top (spoiling food) or less (a small belly), from boons
+var food_heal_extra := 0  ## HP each food eaten heals on top (a small belly) or less (spoiled food), from boons
 var meal := {}  ## a camp meal's buff: {"recipe": id, "fights": fights left} ([USER] omr-9); {} when none
 var on_pickup := Callable()  ## (id, n) after something is added to the pack: Game says when it counts toward a goal
 var away: Array[Dictionary] = []  ## members sent home with a bag: {"member": Dictionary, "bag": InventoryGrid}
@@ -334,8 +334,3 @@ func _load_into(g: InventoryGrid, saved: Array) -> Array:
 	return []
 
 
-func food_need() -> int:
-	var n := 0
-	for m in alive():
-		n += (m.def as CharacterDef).food_per_day
-	return maxi(0, n + food_extra)

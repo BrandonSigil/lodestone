@@ -126,17 +126,16 @@ func test_resources_carry_between_fights() -> void:
 	dog.res = 0
 	ok(Game.tonic_effect(), "a tonic helps a piece that is short")
 	eq(Game.member_res(dog).res, int(Db.levels.tonic_charges), "the dog gets a charge")
-	# a camp rest: costs food, refills, heals half
+	# a camp rest: free ([USER] 2026-10-31, no hunger), refills, heals half, lifts morale
 	dog.res = 0
 	dog.hp = 2
-	Game.run.food = 20
-	var food: int = Game.run.food
-	ok(Game.camp_rest(), "a camp rest")
-	eq(Game.run.food, food - int(Db.levels.camp_food), "it costs a ration's worth of food")
+	Game.run.food = 0
+	var heart := Game.morale_of("dog")
+	ok(Game.camp_rest(), "a camp rest, even with no food")
+	eq(Game.run.food, 0, "it eats nothing")
 	eq(Game.member_res(dog).res, Game.member_res(dog).res_max, "and refills")
 	ok(dog.hp > 2, "and heals")
-	Game.run.food = 0
-	ok(not Game.camp_rest(), "no food, no rest")
+	ok(Game.morale_of("dog") > heart or heart >= 100, "and lifts morale")
 	# a wake-up refills everything
 	dog.res = 0
 	Game.wake_in_town(true)

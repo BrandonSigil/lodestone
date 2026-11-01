@@ -504,12 +504,11 @@ func tonic_effect() -> bool:
 	return did
 
 
-## A camp rest: costs camp_food, everyone's mana and charges are back and camp_hp_pct of max HP. False if it can't be paid.
+## A camp rest, free ([USER] 2026-10-31: no hunger; "camping for the night and resting would regain some morale"):
+## everyone's mana and charges are back, camp_hp_pct of max HP, and the camp morale. False with no run.
 func camp_rest() -> bool:
-	var cost := int(Db.levels.get("camp_food", 5))
-	if run == null or run.food < cost:
+	if run == null:
 		return false
-	run.food -= cost
 	refill_resources()
 	for m in run.members:
 		if int(m.hp) > 0:
@@ -1090,7 +1089,8 @@ func recipe_of(meal_item: String) -> Dictionary:
 	return {}
 
 
-## Eat a carried meal at camp: everyone gets its buff for the next few fights (meal_fights).
+## Eat a carried meal at camp: everyone gets its buff for the next few fights (meal_fights), heals the recipe's heal
+## and gains its morale ([USER] 2026-10-31: "good food you make or buy would do both morale and health").
 func eat_meal(meal_item: String) -> bool:
 	var r := recipe_of(meal_item)
 	if r.is_empty() or run.item_count(meal_item) <= 0:
@@ -1098,7 +1098,9 @@ func eat_meal(meal_item: String) -> bool:
 	run.add_item(meal_item, -1)
 	run.meal = {"recipe": String(r.id), "fights": int(Db.levels.get("meal_fights", 2))}
 	run.note(Txt.f("LOG_MEAL", Txt.t(String(r.name_key))))
-	for m in run.members:  # good food lifts everyone's morale (the recipe's morale column)
+	for m in run.members:  # good food heals and lifts everyone's morale (the recipe's heal and morale columns)
+		if int(m.hp) > 0:
+			run.heal_member(m, int(r.get("heal", 0)))
 		MoraleRules.change(meta.morale, String((m.def as CharacterDef).id), int(r.get("morale", 0)), Db.morale)
 	refresh_party()
 	save_adventure()
@@ -1162,8 +1164,8 @@ func boon_mods() -> Dictionary:
 		return out
 	for id in run.boons:
 		out = LevelRules.merge(out, RestoreRules.parse_needs(String(Db.boons[id].effect)))
-	run.food_extra = int(out.get("food", 0))
-	out.erase("food")
+	run.food_heal_extra = int(out.get("food_heal", 0))
+	out.erase("food_heal")
 	return out
 
 

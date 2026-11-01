@@ -108,20 +108,16 @@ func test_travel_plan_and_fast_forward() -> void:
 	eq(TravelRules.next_stop(0.0, [20.0, 40.0], 60.0), 20.0)
 	eq(TravelRules.next_stop(20.0, [20.0, 40.0], 60.0), 40.0, "fast forward from a stop goes to the next")
 	eq(TravelRules.next_stop(41.0, [20.0, 40.0], 60.0), 60.0, "then to the end of the leg")
-	eq(TravelRules.meals_between(0.0, 60.0), 2, "a 60 second leg is two meals")
-	eq(TravelRules.meals_between(29.0, 31.0), 1)
+	eq(TravelRules.days_between(0.0, 60.0), 2, "a 60 second leg is two journey days")
+	eq(TravelRules.days_between(29.0, 31.0), 1)
 
 
-func test_food_drains_and_starving_never_kills() -> void:
+## [USER] 2026-10-31 "I don't think we'd have a hunger metric. Food would be healing.": nothing on the road clock eats.
+func test_no_hunger() -> void:
 	_db()
-	var r := RunState.create([Db.character(&"lead"), Db.character(&"dog")], 1)
-	r.food = 3
-	ok(TravelRules.eat(r))
-	eq(r.food, 1)
-	r.members[0].hp = 1
-	ok(not TravelRules.eat(r), "not enough food")
-	eq(r.food, 0)
-	eq(int(r.members[0].hp), 1, "starving stops at 1 HP")
+	ok(not TravelRules.new().has_method("eat"), "no daily meal")
+	ok(not RunState.new().has_method("food_need"), "nobody needs food a day")
+	eq(TravelRules.food_heal(RunState.new()), int(Db.items.meat.heal), "one food heals the meat's heal column")
 
 
 func test_eat_and_activities() -> void:
@@ -131,7 +127,7 @@ func test_eat_and_activities() -> void:
 	ok(not TravelRules.eat_one(r), "nobody hurt, nothing eaten")
 	r.members[1].hp = 3
 	ok(TravelRules.eat_one(r))
-	eq(int(r.members[1].hp), 3 + TravelRules.EAT_HEAL)
+	eq(int(r.members[1].hp), 3 + TravelRules.food_heal(r))
 	var acts := {}
 	ok(TravelRules.can_act(acts, "hunt", 0.0))
 	acts["hunt"] = 5.0
@@ -906,8 +902,11 @@ func test_cook_at_home_eat_at_camp() -> void:
 	eq(Game.run.pack.items.filter(func(it: Dictionary) -> bool: return it.id == "meal_stew")[0].shape.size(), 2, "it takes a full slot")
 	var hero: Dictionary = Game.run.members[0]
 	var hp := Game.run.max_hp(hero)
+	hero.hp = 1
 	ok(Game.eat_meal("meal_stew"))
 	eq(Game.run.item_count("meal_stew"), 0)
+	eq(int(hero.hp), 1 + int(Db.recipes.stew.heal) + int(Game.meal_mods().get("hp", 0)),
+		"good food heals too ([USER] 2026-10-31: morale and health), on top of the +4 max HP it brings")
 	eq(Game.run.max_hp(hero), hp + 4, "the buff: +4 HP")
 	Game.fight_done()
 	eq(int(Game.run.meal.fights), 1, "one fight down")
@@ -932,7 +931,8 @@ func test_blessings_and_setbacks_last_till_home() -> void:
 	Game.run.boons.assign(["strong_arms", "spoiled_food"])
 	Game.refresh_party()
 	var hero := CombatUnit.from_member(Game.run.members[0])
-	ok(Game.run.food_need() > 0 and Game.run.food_extra == 1, "spoiled food: each meal costs one more")
+	eq(Game.run.food_heal_extra, -1, "spoiled food: each food heals one less")
+	eq(TravelRules.food_heal(Game.run), maxi(1, int(Db.items.meat.heal) - 1))
 	Game.run.boons.clear()
 	Game.refresh_party()
 	eq(hero.damage, CombatUnit.from_member(Game.run.members[0]).damage + 1, "strong arms: +1 damage")
@@ -1104,7 +1104,7 @@ func test_pick_who_eats_or_drinks() -> void:
 	r.members[0].hp = r.max_hp(r.members[0]) - 1
 	r.members[1].hp = 3
 	eq(TravelRules.gain(r, RunState.FOOD_ITEM, r.members[0]), 1, "one short of full: one HP")
-	eq(TravelRules.gain(r, RunState.FOOD_ITEM, r.members[1]), TravelRules.EAT_HEAL)
+	eq(TravelRules.gain(r, RunState.FOOD_ITEM, r.members[1]), TravelRules.food_heal(r))
 	ok(TravelRules.use_on(r, RunState.FOOD_ITEM, r.members[0]), "the player's pick eats, not the most hurt")
 	eq(int(r.members[0].hp), r.max_hp(r.members[0]))
 	eq(int(r.members[1].hp), 3, "the dog wasn't fed")
@@ -1126,7 +1126,7 @@ func test_pack_cards_take_a_pick_or_a_drop() -> void:
 	eq(grid.targets.size(), run.members.size(), "a card per member")
 	grid.choosing = RunState.FOOD_ITEM
 	grid._gui_input(_click((grid.targets[0].rect as Rect2).get_center()))
-	eq(int(run.members[0].hp), 2 + TravelRules.EAT_HEAL, "clicking the hero's card feeds him")
+	eq(int(run.members[0].hp), 2 + TravelRules.food_heal(run), "clicking the hero's card feeds him")
 	eq(grid.choosing, "", "and the pick is done")
 	var food_i := -1
 	for i in run.pack.items.size():
@@ -1136,7 +1136,7 @@ func test_pack_cards_take_a_pick_or_a_drop() -> void:
 	grid.held_area = 0
 	var food: int = run.food
 	grid._drop((grid.targets[0].rect as Rect2).get_center())
-	eq(int(run.members[0].hp), 2 + 2 * TravelRules.EAT_HEAL, "meat dropped on his card: he eats")
+	eq(int(run.members[0].hp), 2 + 2 * TravelRules.food_heal(run), "meat dropped on his card: he eats")
 	eq(run.food, food - 1, "one from the stack")
 	box.free()
 	_restore(saved)

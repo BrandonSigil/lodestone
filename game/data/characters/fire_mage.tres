@@ -12,7 +12,6 @@ off_skills = {}
 perks = Array[StringName]([])
 traits = Array[StringName]([])
 deficiency = &""
-food_per_day = 1
 party_slots = 1
 inventory_slots = 0
 unlock = "met_fire_mage"

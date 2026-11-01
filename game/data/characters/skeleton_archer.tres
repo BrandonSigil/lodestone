@@ -12,7 +12,6 @@ off_skills = {}
 perks = Array[StringName]([&"no_needs"])
 traits = Array[StringName]([&"bones"])
 deficiency = &"gloomy"
-food_per_day = 0
 party_slots = 1
 inventory_slots = 0
 unlock = "reached_wall"

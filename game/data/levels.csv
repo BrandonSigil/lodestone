@@ -9,13 +9,12 @@ xp_minion,5,plus this per piece a boss called that the party downed (not the one
 xp_boss,100,plus this for a boss fight
 branch_level,10,a job splits into one of its two branches at this job level
 party_max,4,how many fight: the hero and up to three companions ([USER] pc-1)
-camp_seconds,20,MAKE CAMP stands the party still this long on the road clock (meals still come due)
+camp_seconds,20,MAKE CAMP stands the party still this long on the road clock (journey days still count)
 meal_fights,2,a meal cooked at camp lasts this many fights
 blessing_max,5,the party carries at most this many blessings at once ([USER] omr-7)
 trickle_steps,10,tiles walked on an explore map for one mana or one charge back to each piece that is short ([USER] 2026-10-30 fights must cost)
 trickle_seconds,8,seconds walked on the overworld for the same
 camp_hp_pct,50,% of max HP a camp rest gives back
-camp_food,5,food a camp rest costs: a ration
 tonic_mana,3,mana a tonic gives (and one charge, `tonic_charges`)
 tonic_charges,1,
 rolls_odd,2,stat rolls on an odd level (3, 5, 7...): the growth table twice so total growth stays near the old one roll every level

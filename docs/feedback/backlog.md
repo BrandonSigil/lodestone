@@ -65,7 +65,7 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | S2 | "Everything is idle?" (roles sat idle with work waiting) | Studio PM thread | answered; standing rule "Idle is not done" in `docs/systems/studio.md` |
 
 ## Older standing asks still open
-- Food as healing with no hunger ([USER] 2026-10-31 morale call; `docs/systems/morale.md` says not built, the road still eats every day). Owner: Systems developer (first account), in progress 2026-11-01.
+- Food as healing with no hunger ([USER] 2026-10-31 morale call; `docs/systems/morale.md` says not built, the road still eats every day). Owner: Systems developer (first account), done (2026-11-01, "Food heals, nobody hungers" commit); the numbers are on the desk as dev-food-review.
 - Picsart requests are tabled until Brandon checks in; then make him a doc of all art needs by priority (2026-11-01, see `docs/systems/studio.md`).
 - PM note: once kit wiring and morale land, make a Project Report (every working system, what's built, what core pieces are missing), repeated at milestones.
 - Playtest note: re-measure the Lich odds with the robot at the next milestone, after the road retune.

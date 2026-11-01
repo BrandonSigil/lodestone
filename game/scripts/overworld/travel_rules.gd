@@ -1,13 +1,13 @@
 class_name TravelRules
 extends RefCounted
 ## Overworld travel ([USER] 2026-10-28): a leg between two places takes about a minute of real time, with
-## a random encounter or two on the way. Food drains while walking; hunt, fish and forage are dice rolls
-## (placeholders for minigames). Pure functions so tests run headless; the scene owns the clock.
+## a random encounter or two on the way. No hunger ([USER] 2026-10-31: "I don't think we'd have a hunger metric. Food
+## would be healing."): food heals whoever eats it (the item's heal column), and the road clock only counts journey days.
+## Hunt, fish and forage are dice rolls (placeholders for minigames). Pure functions so tests run headless; the scene
+## owns the clock.
 
-const DAY_SECONDS := 30.0  ## the party eats once per this many seconds walked
-const STARVE_HP := 1  ## each member loses this when there is no food at a meal (never below 1 HP)
+const DAY_SECONDS := 30.0  ## one journey day per this many seconds walked (morale for whoever stayed home)
 const ACT_COOLDOWN := 15.0  ## seconds walked before the same activity can be tried again
-const EAT_HEAL := 2  ## EAT from the pack: one food heals the most hurt member this much
 ## Activity id -> {"check", "dc", "food", "medicine", "item"}: what a win gives (plus the margin for food), and
 ## the gear it needs in the pack, if any.
 const ACTS := {
@@ -40,23 +40,14 @@ static func next_stop(t: float, stops: Array, seconds: float) -> float:
 	return seconds
 
 
-## Meals due walking from t0 to t1.
-static func meals_between(t0: float, t1: float) -> int:
+## Journey days passed walking from t0 to t1.
+static func days_between(t0: float, t1: float) -> int:
 	return maxi(0, int(floor(t1 / DAY_SECONDS)) - int(floor(t0 / DAY_SECONDS)))
 
 
-## One meal: everyone eats their food_per_day. Short of food, each member loses STARVE_HP (not below 1).
-static func eat(run: RunState) -> bool:
-	var need := run.food_need()
-	if run.food >= need:
-		run.food -= need
-		run.note(Txt.f("LOG_ATE", need))
-		return true
-	run.food = 0
-	run.note(Txt.t("LOG_STARVE"))
-	for m in run.alive():
-		m.hp = maxi(1, int(m.hp) - STARVE_HP)
-	return false
+## What one piece of food heals: the meat's heal column, plus or minus a blessing or setback, never below 1.
+static func food_heal(run: RunState) -> int:
+	return maxi(1, int(Db.items.get(RunState.FOOD_ITEM, {}).get("heal", 2)) + run.food_heal_extra)
 
 
 ## The living member missing the most HP, or {} when nobody is hurt.
@@ -75,9 +66,10 @@ static func eat_one(run: RunState, m: Dictionary = {}) -> bool:
 		m = most_hurt(run)
 	if run.food <= 0 or m.is_empty() or gain(run, RunState.FOOD_ITEM, m) <= 0:
 		return false
+	var heal := food_heal(run)
 	run.food -= 1
-	run.heal_member(m, EAT_HEAL)
-	run.note(Txt.f("LOG_SNACK", [Txt.t((m.def as CharacterDef).name_key), EAT_HEAL]))
+	run.heal_member(m, heal)
+	run.note(Txt.f("LOG_SNACK", [Txt.t((m.def as CharacterDef).name_key), heal]))
 	return true
 
 
@@ -85,7 +77,7 @@ static func eat_one(run: RunState, m: Dictionary = {}) -> bool:
 static func gain(run: RunState, item: String, m: Dictionary) -> int:
 	if int(m.hp) <= 0:
 		return 0
-	var amount := EAT_HEAL if item == RunState.FOOD_ITEM else (TrailRules.potion_heal(run) if item == RunState.MED_ITEM else 0)
+	var amount := food_heal(run) if item == RunState.FOOD_ITEM else (TrailRules.potion_heal(run) if item == RunState.MED_ITEM else 0)
 	return mini(amount, run.max_hp(m) - int(m.hp))
 
 

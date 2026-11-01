@@ -3,7 +3,7 @@
 Code: `game/scripts/trail/`. Rules are in `trail_rules.gd`, state in `run_state.gd`.
 
 - Each button is one day: WALK (10 leagues), WALK HARD (15, -5 morale, -1 HP each), REST (+2 HP, +5 morale), HUNT, FIND HERB. USE MEDICINE heals the most hurt member and doesn't take a day.
-- End of every day: each member eats `food_per_day`, Bushberry adds 1 food, Skeleton Archer costs 2 morale. No food = -2 HP each and -10 morale.
+- End of every day: Bushberry adds 1 food, Skeleton Archer costs 2 morale. Nobody eats on the clock ([USER] 2026-10-31: no hunger); food only heals when eaten.
 - Wayfinding: each walk rolls the party's best Wayfind vs 8 + 8 x strangeness. Failing covers half the distance.
 - Events: 35% per walk, from `data/events.csv`. Each option is a check (or `none` / `fight`) with a DC and win/lose effects. Buttons show the party's success chance.
 - Inventory: the shared 4 x 3 shaped pack (`RunState.pack`, see overworld.md). Food is meat, 10 a cell; medicine is potions, 3 a cell; the Wizard's books take 3 cells, bound to him. Overflow is lost.

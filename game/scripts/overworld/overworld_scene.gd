@@ -97,18 +97,15 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-## Walk the clock forward to t1: meals on the way, then an encounter or the arrival if one is reached.
+## Walk the clock forward to t1: journey days on the way, then an encounter or the arrival if one is reached.
 func _advance_to(t1: float) -> void:
 	var tr := Game.travel
 	var seconds := float(leg().get("seconds", 60))
 	var stop := TravelRules.next_stop(float(tr.t), tr.stops, seconds)
 	t1 = minf(t1, stop)
-	var rest := float(tr.get("rest", 0.0))  # time spent at camp still counts toward meals
-	var days := TravelRules.meals_between(float(tr.t) + rest, t1 + rest)
-	for i in days:
-		TravelRules.eat(Game.run)
-		_refresh_hud()
-	Game.pass_days(days)  # a journey day each meal: morale for whoever stayed home
+	var rest := float(tr.get("rest", 0.0))  # time spent at camp still counts toward journey days
+	var days := TravelRules.days_between(float(tr.t) + rest, t1 + rest)
+	Game.pass_days(days)  # morale for whoever stayed home; nobody eats on the clock (no hunger)
 	if Game.trickle(maxf(0.0, t1 - float(tr.t)), "trickle_seconds"):
 		_refresh_hud()
 	tr.t = t1
@@ -260,18 +257,15 @@ func _go_fish() -> void:
 		_refresh_hud())
 
 
-## MAKE CAMP ([USER] omr-9): once a leg. The party stands still a while (meals still come due on the road
-## clock) and can cook a meal it carries: everyone's buffed for the next fights.
+## MAKE CAMP ([USER] omr-9): once a leg. The party stands still a while (journey days still count on the road clock),
+## can cook a meal it carries (buff, heal and morale) and can rest for free (mana, some HP, morale).
 func make_camp() -> void:
 	if not walking() or _busy or Game.travel.get("camped", false):
 		return
 	var tr := Game.travel
 	var rest := float(tr.get("rest", 0.0))
 	var camp := float(Db.levels.get("camp_seconds", 20))
-	var days := TravelRules.meals_between(float(tr.t) + rest, float(tr.t) + rest + camp)
-	for i in days:
-		TravelRules.eat(Game.run)
-	Game.pass_days(days)
+	Game.pass_days(TravelRules.days_between(float(tr.t) + rest, float(tr.t) + rest + camp))
 	tr["rest"] = rest + camp
 	tr["camped"] = true
 	_busy = true
@@ -290,10 +284,8 @@ func make_camp() -> void:
 			_close_dialog()
 			_side())
 		box.add_child(b)
-	var cost := int(Db.levels.get("camp_food", 5))  # a rest: all mana and charges, half HP, for a ration
-	var rest_btn := Button.new()
-	rest_btn.text = Txt.f("UI_CAMP_REST", cost)
-	rest_btn.disabled = Game.run.food < cost
+	var rest_btn := Button.new()  # a rest: all mana and charges, some HP, morale; free (no hunger)
+	rest_btn.text = Txt.t("UI_CAMP_REST")
 	rest_btn.pressed.connect(func() -> void:
 		if Game.camp_rest():
 			_say(Txt.t("UI_CAMP_RESTED"))
