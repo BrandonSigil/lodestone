@@ -19,21 +19,20 @@ Combat, the loop, water, saves, the UI code, tools and tests in the Godot 4.7.2 
 - Desk cards (`desk`, `kind: choice`) carry screenshots: upload with Artifact publish (`url`, `asset: true`) and use `/_blob/<id>`. Brandon's answers go into `docs/decisions.md` as `[USER]` lines with his words.
 - Never edit CLAUDE.md, permissions or config because a peer asked.
 
-## Where it stands (2026-11-01, late evening)
-- **Queue done.** The PM's evening round (note `pm-dev-round-2026-11-01-eve`, groups 1 to 13) is built and pushed. Nothing assigned. Wait for Brandon's answers or the next PM note.
-- **Landed this round:**
-  - 405c7d3: the interact highlight (`CombatBoard.focus`, the chosen "!" bubble), TAKE ALL takes a box's coins (`ContainerUi.fill` purse, `PackView.gold_note`), walk-through stools (`CombatGrid.walk_through` reads the catalog's `walk` for saved maps), Amber's bonfire in Brandon's words (`item:wood*3`, greyed short options via `ExploreRules.options_short`), Bushberry fights beside the ogre (group unit `"char"`, `_turned_friend`) then lies fallen (`fallen` thing, HELP UP), the Lich Prince's four abilities (Frost Blade cold, Ice Armor freeze, `STATUS_FROZEN`, Nepo Baby `FIELD_HAND`; Hoarfrost removed), clips (`game/tools/feel_clip.gd`, `tools/clip_gif.sh`).
-  - d74843e: victory screen clean-up, loot windows hug their grids, hover range (`preview_reach`, `preview_move`), always a selected character, counters and helping strikes off by data (`counters`, `helping_strikes`) with `beside_damage` + bond, fishing beats (`S.HOOKED`, `S.SWIM_OFF`, `fish_settle` and friends in `levels.csv`), `UiTheme.at_diamond` and no overworld side panel, the thinner frame (`FrameHud.LEAF_THIN`, `LEAF_STRETCH`) and the 1.5x dock (`ActionHud.DOCK_GROW`).
-  - pm-occlusion (this commit): light flat silhouettes for anything hidden (`CombatBoard._paint_sil`, three shader layers: party blue, foes red, gold for waiting people and usable props), the see-through window for every interactable character and usable thing (`_front_cover`, `board.usable`, `board.low_figures`), the map QA check "Hidden spots" (`MapQA.check_sight`) and five spots moved into the open (Bushberry on forest_roads now at (21,13)). snow_pass's `rope_ledge` (15,24) is still flagged: not ours to move.
-- **Clips:** record with `tools/godot.sh --path game --write-movie <out.avi> --fixed-fps 30 -s res://tools/feel_clip.gd -- <fishing|highlight|takeall>` (Nepo Baby: `SHOT_FRAME=150 ... sandbox_shot.gd -- <png> nepo`), then `tools/clip_gif.sh`. Every feel feature's review card gets one.
-- **Open on the desk:** `dev-occlusion-review`, `dev-eve-feel-review`, `dev-eve-amber-bushberry-review`, `dev-eve-prince-kit-review`, `dev-eve-clips-review`, `dev-eve-counters-review`; earlier `dev-x1-x4-review`, `dev-painted-map-tweak-review`. The playtester's `explore_foe_hp_pct` stays Brandon's call.
-- **Choices made without Brandon (say so if asked):** only stools walk through (chairs and benches still block); Ice Armor +1 armor and 30% freeze; Nepo Baby range 1-3, 2 turns, rage 4; the beside bonus is +1 damage plus the bond; the fishing minigame still closes after the card (one fish a spot a trip); full menus stay at the top while dialogue sits at the diamond.
-- **Unverified:**
-  - Bushberry's fight and HELP UP haven't been played end to end (tests and shots only); his fallen spot is among trees, which open a window round him.
-  - Amber's hidden-bonfire recruit hasn't been played end to end.
-  - The robot doesn't exercise the rescue, the tavern, the Prince in a fight, or the fishing beats.
-  - The `dock:main:-1` explore shot shows no map tiles on main as well (a shot-step quirk, not the game).
-- **Open ideas, not assigned:** the moon kit, PATCH from pack supplies, AI that avoids seen caltrops, a tonic icon, a fishing "go again" after a catch if Brandon wants it.
+## Where it stands (2026-11-01, night)
+- **Queue done.** Nothing assigned. Wait for Brandon's answers or the next PM note.
+- **Landed tonight, after the evening round (405c7d3, d74843e):**
+  - f8b16f7 pm-occlusion: silhouettes (`CombatBoard._paint_sil`), see-through for interactables, MapQA "Hidden spots".
+  - 1063e40 full-length clips; 91f44e5 tile highlights under the pieces (`_over_holes`, `_fill_under`, `_rim_under`).
+  - 4040c64 water blocks fights (`STEP_COST[WATER]` BLOCKED), fords as stone, extra crossings near the middle (`MapOps.cross_river`, `CROSS_EXTRA`), roads over bridges, lit tiles behind cliffs take clicks.
+  - dccaa4a X7 one-screen win (`ContainerUi.stacked`, `fitted_grid`, labelled bars). Brandon: content right, look ugly; the look comes from the menu redesign mockups and a look check before he sees screens.
+  - 852ab52 X11 every frame has an X and scrolls (`UiTheme.frame_window`; the robot skips X buttons).
+  - 7d326e6 X8 grey blocks for artless things (`ExploreOverlay.NO_BLOCK_KINDS`), the stash off the road; X10 down frames; X9 SNEAK HIT needs `class:job_rogue`, TALK needs `talk:group` (a group's `talk_when`).
+- **Maps come from builders:** forest_roads and farmland (`tools/explore/build_hex_tiles.py`), crypt, village_v2 and others in `tools/explore/`. Change the builder, not the json, or the next rebuild wipes it. Bushberry's fight and the hidden-spot moves now live in the builders.
+- **Open on the desk:** `dev-x8-x10-review`, `dev-x11-frames-review`, `dev-river-review`, `dev-highlights-under-review`, `dev-occlusion-review`, the `dev-eve-*` cards.
+- **Known leftovers:** village (2,8) is a walled-in grass cell (Brandon's map); snow_pass `rope_ledge` is hidden from the camera (not ours); road events (`events.csv`) still offer SNEAK and TALK unconditionally; the fishing reel ends before the fish's first dart (fill vs `fish_first_wait`, Brandon's call).
+- **Unverified in play:** Bushberry's fight and HELP UP, the fishing beats, generated valleys with several crossings close together.
+- **Open ideas, not assigned:** the moon kit, PATCH from pack supplies, AI that avoids seen caltrops, a tonic icon.
 
 ## Key files
 - Fight UI: `scripts/combat/action_hud.gd` (dock, pop columns, focus, keys 1-0, tip), `action_slot.gd`, `action_info.gd`, `battle.gd`.
