@@ -1,0 +1,39 @@
+World map mockup: the whole world as hex tiles (Brandon, 2026-11-01)
+Attach exactly two pictures, in this order:
+  Image 1 = art/templates/world/hex_world_guide.png (grey hex block-out, the structure)
+  Image 2 = Brandon's style reference (the chunky grass-block diorama with pines, a grey rock and a dirt path on cream paper)
+Do not attach the pixel-art world map or earlier glossy tries: they pull the finish toward a shiny mobile-game look.
+Settings: GPT image, 2K, 3:2, High, 4 tries.
+
+----- PROMPT -----
+
+Image 1 is a grey block-out on cream paper: twelve hexagon blocks on a 2:1 game camera. It is the STRUCTURE. Keep every hexagon exactly where it is, the same size and the same shape, with the same thin gap between neighbours. Paint each hexagon's top as its own little land, and paint its visible side faces as cliffs of earth and rock. Do not merge the hexagons into one island, do not round them, do not draw extra hexagons, and do not draw the grey or the outlines of Image 1 themselves.
+
+Image 2 is the LOOK. Copy its finish exactly: chunky diorama blocks with flat painted tops and layered earth sides, soft flat watercolour fills with one lighter and one darker tone per surface, a soft slightly wobbly dark warm charcoal outline (#373335, never pure black), simple chunky trees and rocks, muted warm colours, plain cream paper (#eae8d6) around everything. Take its finish and its chunky block feel, not its layout.
+
+WHAT THIS IS: the world map of a cosy fantasy tactics game. Every hexagon is one explorable map, shown as a small raised diorama tile; together they make the whole world, seen from far away. Each tile is one idea that reads at a glance by its colour and two or three big shapes.
+
+THE TWELVE TILES (positions as seen in Image 1):
+- Back, top centre: snowy plains. White snow, a few snow-dusted pines.
+- Back left: a frozen dam. Pale blue ice cliffs and a frozen waterfall over a stone dam.
+- Back, right of centre: enchanted woods. Deep green pines with a few soft pink-purple blossom trees.
+- Far right, upper: more enchanted woods, a little denser, with a faint teal glow among the trees.
+- Middle, centre: dwarven mines. Grey stone peaks with a timber mine entrance and a cart track.
+- Middle left: a coastal beach. Pale sand, a few palms, a small wooden jetty at its edge.
+- Middle, right of centre: a highland moor of green grass with patches of melting snow and a few pines.
+- Right, lower: the capital city. A walled town of pale stone with red roofs and one tall keep.
+- Front, centre left: highlands. Green hills climbing to grey rocky peaks, with a small waterfall.
+- Front left: forest roads. Mixed green woods with a sandy road winding through.
+- Front, right of centre: farmland. Golden fields in strips, a red barn and a small windmill.
+- Front, bottom centre: the starting village. A few cosy cottages around a little square, fall trees.
+
+LINKS: a pale sandy road starts at the starting village and runs from tile to tile, crossing each shared edge in the middle of that edge, so you can see which maps connect. A blue-teal river runs from the highlands down past the farmland. Roads and rivers cross the thin gaps on small wooden bridges.
+
+BEHIND: a long grey stone wall with square towers and one closed gate runs behind the back row, from edge to edge, the far boundary of the world.
+
+CAMERA: 2:1 dimetric, high and far, exactly as Image 1. Orthographic: no perspective, no vanishing point, uprights perfectly vertical. Light from the upper left: tops lightest, left faces mid-tone, right faces darkest. No cast shadows on the paper.
+
+Avoid: text, letters, numbers, labels, names, legends, compass roses, borders, frames, banners, a sky, clouds, a horizon, an ocean filling the background, glossy or shiny surfaces, saturated colours, glow effects, photorealism, 3d render look, pixel art, perspective, merged hexagons, hexagons drawn as lines on a flat map, tiny detail that can't be read when small.
+
+----- OPTIONAL SWAP -----
+To float the world in a sea instead of on paper, replace "plain cream paper (#eae8d6) around everything" with "a calm flat painted sea, muted teal-blue, around the tiles, with gentle white foam where the cliffs meet it", and remove "an ocean filling the background" from Avoid.
