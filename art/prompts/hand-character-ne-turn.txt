@@ -2,7 +2,7 @@ Character NE turn: one picture, one prompt (Brandon, 2026-11-01: "append all ref
 Attach ONE picture: the character's NE board, made by
   ~/.lodestone/venv/bin/python tools/art/char_board.py ne <the character's approved SE sheet> <out png>
   (the blueberry bush's is art/templates/characters/char_board_ne_bush.png). Four labelled panels: LAYOUT, CHARACTER (FACING SE), FACING NE, STYLE.
-Settings: GPT image, 2K, 3:2, High, 2 tries.
+Settings: GPT image, 1K, 3:2, High, No EP, 2 tries (1K and 2K look the same once cut to sprite size; 1K costs about 40% less).
 
 ----- PROMPT -----
 
