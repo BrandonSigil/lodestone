@@ -1667,7 +1667,7 @@ func test_dog_saddlebag_is_carried() -> void:
 func test_containers() -> void:
 	var saved := _fresh_game()
 	eq(ContainerUi.size_of("barrel"), Vector2i(2, 2), "a barrel is 2 x 2")
-	eq(ContainerUi.size_of("chest"), Vector2i(2, 4), "a chest is 2 x 4")
+	eq(ContainerUi.size_of("chest"), Vector2i(4, 2), "a chest is 4 wide, 2 tall")
 	var size := ContainerUi.size_of("chest")
 	var chest := InventoryGrid.create(size.x, size.y)
 	var gold := ContainerUi.fill_grid(chest, "meat:12;potion:2;gold:7;nothing_here:3")
