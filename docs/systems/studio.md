@@ -14,6 +14,9 @@ Three rooms:
 ## The rule
 Any decision Brandon owes goes on the desk as a card, with screenshots, not as a question buried in chat. That includes every Picsart batch: a "go" card before the run, then a "review" card with the results, each scored against the References wall, for his stamp. You may also ask in chat, but the card is the record.
 
+## The look check (Brandon, 2026-11-01: "Does this look like a professional AAA but indie video game?")
+Before any screenshot goes on the desk, look at it at full size and answer that question honestly. It fails, and goes back to the work instead of to Brandon, if any of these hold: it runs off the screen or hides content with no scroll; a frame has no X at its top right; it is a wall of plain text where icons, portraits, bars or a short list would do; raw keys, lorem beyond placeholders, or debug text show; things overlap or float over nothing; it ignores `docs/style-bible.md`. Say on the card that it passed the look check. The menu kit and layout rules land in `docs/design/menus-research.md` and then `docs/systems/ui-kit.md`.
+
 ## The records (the page's database)
 Read and write them with the `ArtifactData` tool and the URL above. Pin every write to a document you read with `if_version`; create new ones without it. An `update` takes the fields themselves (`{status: "done", result}`), never wrapped in `data`: a wrapped write lands as a nested `data` field and the card stays answered.
 
