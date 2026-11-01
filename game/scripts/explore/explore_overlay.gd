@@ -25,6 +25,7 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	var use: Dictionary = scene.nearest_thing() if lead != null and scene.walking() else {}  # the one F uses gets the F
 	board.glow = scene.lit_doors()  # doors glow on the board, under the pieces
+	var figs := {}  # people waiting here draw with the board's pieces, in depth order (not over the hero)
 	for t: Dictionary in scene.things:
 		if t.done or not scene.shown(t):
 			continue
@@ -40,7 +41,7 @@ func _draw() -> void:
 			# (recruit_<id>: the playtest line-up in the square, 2026-10-31: everyone with art waits there)
 			var who := String(t.get("event", "")).trim_prefix("companion_").trim_prefix("recruit_")
 			if who != "" and not Game.in_party(who):
-				_figure(p, StringName(who), dim)
+				figs[c] = _figure.bind(StringName(who), dim, _time)
 		if dim or lead == null or not scene.walking():
 			continue
 		var near := ExploreRules.dist(lead.cell, c) <= ExploreRules.HINT_RANGE
@@ -64,21 +65,22 @@ func _draw() -> void:
 			if near and use.get("id") == t.id and use.cell == t.cell:
 				draw_string_outline(font, top + Vector2(-30, -16), "F", HORIZONTAL_ALIGNMENT_CENTER, 60, 12, 3, Color(0, 0, 0, 0.8))
 				draw_string(font, top + Vector2(-30, -16), "F", HORIZONTAL_ALIGNMENT_CENTER, 60, 12, ICON)
+	board.figures = figs
 
 
 ## A companion standing on p: their own sprite (idle, facing the camera) when they have art, else the code figure.
-func _figure(p: Vector2, who: StringName, dim: bool) -> void:
+func _figure(ci: CanvasItem, p: Vector2, who: StringName, dim: bool, time: float) -> void:
 	var d: CharacterDef = Db.character(who)
 	var art_id: StringName = d.sprite_id() if d != null else who
-	var f := CharacterArt.frame(art_id, "idle", "se", _time) if CharacterArt.has_art(art_id) else {}
+	var f := CharacterArt.frame(art_id, "idle", "se", time) if CharacterArt.has_art(art_id) else {}
 	if f.is_empty():
-		PlaceholderFigure.draw(self, p, 26.0, who, 0, "idle", _time, false, Color(0.4, 0.7, 1.0), dim)
+		PlaceholderFigure.draw(ci, p, 26.0, who, 0, "idle", time, false, Color(0.4, 0.7, 1.0), dim)
 		return
-	Pawn.ellipse(self, p + Vector2(0, 2), 15.0, 5.0, Color(0, 0, 0, 0.25))
+	Pawn.ellipse(ci, p + Vector2(0, 2), 15.0, 5.0, Color(0, 0, 0, 0.25))
 	var s: float = f.scale
-	draw_set_transform(p, 0.0, Vector2(-s if f.flip else s, s))
-	draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, Color(0.55, 0.55, 0.55) if dim else Color.WHITE)
-	draw_set_transform(Vector2.ZERO)
+	ci.draw_set_transform(p, 0.0, Vector2(-s if f.flip else s, s))
+	ci.draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, Color(0.55, 0.55, 0.55) if dim else Color.WHITE)
+	ci.draw_set_transform(Vector2.ZERO)
 
 
 func _thing(kind: String, p: Vector2, dim: bool) -> void:
