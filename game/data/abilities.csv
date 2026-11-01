@@ -56,6 +56,7 @@ throw_dagger,SKILL_THROW_DAGGER,attack,enemy,2,3,0,-1,10,1,0,,0,0,,0,0,0,,0,0,,,
 fire_zap,SKILL_FIRE_ZAP,attack,enemy,0,0,0,0,0,0,0,,0,1,fire,0,0,0,,0,0,,,0
 tug,SKILL_TUG,attack,enemy,2,4,0,-1,0,3,-1,,0,1,,0,0,0,,0,0,,,0
 branch_armor,SKILL_BRANCH_ARMOR,buff,ally,0,3,0,0,0,4,0,branch_armor,1,1,,0,0,0,,0,0,,,0
-frost_blade,SKILL_FROST_BLADE,attack,enemy,0,0,0,0,0,0,0,slow,1,0,,0,0,0,,0,0,,,0
+frost_blade,SKILL_FROST_BLADE,attack,enemy,0,0,0,0,0,0,0,slow,1,0,frost,0,0,0,,0,0,,,0
 ice_armor,SKILL_ICE_ARMOR,buff,ally,1,3,0,0,0,2,0,ice_armor,2,0,,0,0,0,,0,0,,,0
 cold_snap,SKILL_COLD_SNAP,attack,self,0,0,1,-2,0,3,0,slow,1,0,,0,0,0,,0,0,,,0
+nepo_baby,SKILL_NEPO_BABY,attack,cell,1,3,1,1,0,4,0,hand,2,0,frost,0,0,0,,0,0,,hand,0

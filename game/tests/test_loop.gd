@@ -1705,7 +1705,24 @@ func test_containers() -> void:
 	var box := VBoxContainer.new()
 	var shown := ContainerUi.fill(box, chest, "CHEST", func() -> void: pass, func() -> void: pass, "", 7)
 	eq(shown.windows.size(), 2, "two windows: the inventory and the container")
-	eq(String(shown.notes[0].text), "+7", "the gold it gave: a number by the gold icon ([USER] 2026-11-01 fewer words)")
+	eq(String(shown.notes.back().text), "+7", "the gold it gave: a number by the gold icon ([USER] 2026-11-01 fewer words)")
+	eq(String(shown.gold_note.text), str(Game.run.gold), "the party's gold total under the pack ([USER] 2026-11-01)")
+	# [USER] 2026-11-01 "Take all should move money over too": a box's coins wait in it until TAKE ALL
+	var purse := {"coins": 5}
+	var gold_before := Game.run.gold
+	var box2 := VBoxContainer.new()
+	var with_coins := ContainerUi.fill(box2, InventoryGrid.create(2, 2), "CHEST", func() -> void: pass, func() -> void: pass, "", 0, purse)
+	eq(String(with_coins.notes.back().text), "5", "the coins show under the box's grid")
+	eq(Game.run.gold, gold_before, "nothing paid on opening")
+	var take: Button = null
+	for b in with_coins.get_children():
+		if b is Button and (b as Button).text == Txt.t("UI_BOX_TAKE_ALL"):
+			take = b
+	take.pressed.emit()
+	eq(Game.run.gold, gold_before + 5, "TAKE ALL moves the coins to the party's gold")
+	eq(int(purse.coins), 0, "and the box has none left")
+	eq(String(with_coins.gold_note.text), str(gold_before + 5), "the total under the pack goes up")
+	box2.free()
 	ok(shown.areas[1].bag == chest, "the container is the second grid")
 	eq(int(shown.areas[0].click_to), 1, "a click in the pack sends to the container")
 	ok((shown.windows[1].rect as Rect2).position.x >= (shown.windows[0].rect as Rect2).end.x, "the container's window stands right of the inventory")
@@ -1754,6 +1771,39 @@ func test_rescue_bushberry() -> void:
 	var village := ExploreMap.load_named("village")
 	var spot: Array = village.things.filter(func(t: Dictionary) -> bool: return String(t.get("event", "")) == "recruit_bushberry")
 	ok(not spot.is_empty() and String(spot[0].when) == "rescued_bushberry", "his spot in the square shows once he's freed")
+	_restore(saved)
+
+
+## [USER] 2026-11-01 "Bushberry flights alongside the ogre and uses all his abilities we've given him at their rank 1
+## levels": on forest_roads he is a foe beside the ogre with his own kit; once freed he is not in the fight again.
+func test_bushberry_fights_beside_the_ogre() -> void:
+	var saved := _fresh_game()
+	Game.explore_map = "forest_roads"
+	Game.explore_entry = Vector2i(-1, -1)
+	var tree := Engine.get_main_loop() as SceneTree
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	var bb: CombatUnit = null
+	for g: Dictionary in s.groups:
+		for u: CombatUnit in g.units:
+			if String(u.figure) == "bushberry":
+				bb = u
+	ok(bb != null and bb.team == 1, "Bushberry stands with the ogre's group, on their side")
+	if bb != null:
+		var kit: Array = bb.abilities.map(func(a: Ability) -> String: return String(a.id))
+		ok(kit.has("tug") and kit.has("mend") and kit.has("branch_armor"), "his whole kit, unranked: %s" % [kit])
+		ok(bb.has_trait(&"glean"), "and his Glean")
+	s.free()
+	Game.meta.flags.append("rescued_bushberry")
+	s = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	var again := false
+	for g: Dictionary in s.groups:
+		for u: CombatUnit in g.units:
+			again = again or String(u.figure) == "bushberry"
+	ok(not again, "freed: the ogre fights alone")
+	s.free()
+	Game.explore_map = "home"
 	_restore(saved)
 
 

@@ -63,6 +63,8 @@ const PLATE_SCALE := 1.35  ## a painted backdrop plate's width as a multiple of 
 const FG_HEIGHT := 0.16  ## the solid foreground band's height as a share of the view
 const GLOW := Color(1.0, 0.97, 0.82)  ## a door's light when the party is close: warm white, to read on golden grass
 const GLOW_RINGS := 6
+const FOCUS_BOOST := 1.6  ## the thing F would use glows this much brighter than a near door ([USER] 2026-11-01 highlight)
+const FOCUS_RIM := 2.5  ## px: the light rim round the prop of the thing F would use
 const NAVY_DEPTH := 6000.0  ## how far down (board pixels) the navy under the front treeline reaches: past any view
 const MARK := Color(0.85, 0.3, 1.0)  ## a boss's marked tiles: violet, apart from the danger zone's orange
 const REACH := Color(0.35, 0.6, 1.0)  ## the player's colour: an action's range while it's hovered in the menu
@@ -93,6 +95,7 @@ var guard_ring := {}  # cell -> true, next to a guarding piece: foes starting he
 var goal_cells := {}  # cell -> true, a fight's way out (FightGoals exit), ringed in green
 var marks := {}  # cell -> own phases left before a boss's marked big move lands there (always shown)
 var glow := {}  # cell -> true, a door the party is close to: a warm pool of light on its doorstep (ExploreOverlay)
+var focus := {}  # cell -> true, the thing F would use now: a brighter pool and a light rim round its prop (ExploreOverlay)
 var show_coords := false
 var edit_void := false  ## map editor: show VOID cells as faint outlines and let them be picked
 ## Play, not editing: walls, rock and anything else nobody stands on never take a click or the hover, so the
@@ -662,7 +665,7 @@ func _sync_slabs() -> void:
 	# What moves: bucket this frame's overlays and pieces by depth, then redraw those slabs.
 	_over_by_depth.clear()
 	_deck_over.clear()
-	for dict: Dictionary in [highlights, danger, reach, area, guard_ring, goal_cells, glow, marks, grid.fields]:
+	for dict: Dictionary in [highlights, danger, reach, area, guard_ring, goal_cells, glow, focus, marks, grid.fields]:
 		for c: Vector2i in dict:
 			_bucket(_deck_over if CombatGrid.on_deck(c) else _over_by_depth, c)
 	if hover != NONE and grid.in_bounds(hover):
@@ -2826,8 +2829,8 @@ func _draw_over(c: Vector2i) -> void:
 	if goal_cells.has(c):
 		_ci.draw_colored_polygon(top, Color(0.4, 0.95, 0.5, 0.18))
 		_ci.draw_polyline(ring, Color(0.45, 1.0, 0.55, 0.9), 2.0, true)
-	if glow.has(c):  # a door the party is close to ([USER] 2026-10-30: doors glow instead of a "!")
-		var pulse := 0.75 + 0.25 * sin(_time * 3.0)
+	if glow.has(c) or focus.has(c):  # a door the party is close to ([USER] 2026-10-30: doors glow instead of a "!")
+		var pulse := (0.75 + 0.25 * sin(_time * 3.0)) * (FOCUS_BOOST if focus.has(c) else 1.0)
 		var mid := (top[0] + top[2]) * 0.5
 		for i in GLOW_RINGS:  # soft pool: stacked diamonds, wide and faint to small and bright
 			var k := 1.0 - 0.85 * float(i) / GLOW_RINGS
@@ -2871,6 +2874,47 @@ func _draw_fields(c: Vector2i, top: PackedVector2Array) -> void:
 				_ci.draw_colored_polygon(top, Color(0.75, 0.75, 0.78, 0.55))
 				for q in [Vector2(-10, -6), Vector2(8, -4), Vector2(0, 4)]:
 					_ci.draw_circle(mid + q, 9.0, Color(0.85, 0.85, 0.88, 0.5))
+			CombatRules.FIELD_HAND:
+				# NEPO BABY ([USER] 2026-11-01): frost on every tile it reaches, and the hand itself on its centre
+				var pulse := 0.8 + 0.2 * sin(_time * 3.0 + c.x + c.y)
+				_ci.draw_colored_polygon(top, Color(0.6, 0.85, 1.0, 0.34 * pulse))
+				_ci.draw_polyline(PackedVector2Array([top[0], top[1], top[2], top[3], top[0]]), Color(0.8, 0.95, 1.0, 0.8 * pulse), 2.0, true)
+				if f.get("center", c) == c:
+					_hand(mid, f)
+
+
+var _hand_born := {}  ## a NEPO BABY field (its dictionary) -> when the board first drew it, for the rise
+
+
+## The hand rising from the ground (graybox until Brandon draws it): a cracked ground ring, then a pale palm and four
+## long fingers and a thumb that rise out of it over HAND_RISE seconds with an overshoot, then flex slowly.
+const HAND_RISE := 0.7
+const HAND_BONE := Color(0.82, 0.9, 0.96)
+const HAND_INK := Color(0.2, 0.28, 0.36)
+
+func _hand(mid: Vector2, f: Dictionary) -> void:
+	if not _hand_born.has(f):
+		_hand_born[f] = _time
+	var t := clampf((_time - float(_hand_born[f])) / HAND_RISE, 0.0, 1.0)
+	var rise := 1.0 - pow(1.0 - t, 3.0) + sin(t * PI) * 0.12  # eases out, a little over the top
+	var shake := Vector2(sin(_time * 50.0), 0.0) * 1.5 * (1.0 - t)
+	Pawn.ellipse(_ci, mid, 24.0, 10.0, Color(0.15, 0.2, 0.26, 0.6))  # the hole it comes out of
+	Pawn.ellipse(_ci, mid, 24.0, 10.0, Color(0.7, 0.88, 1.0, 0.85), false, 2.0)
+	var h := 50.0 * rise
+	var base := mid + shake
+	var palm := PackedVector2Array([base + Vector2(-11, 0), base + Vector2(11, 0), base + Vector2(13, -h * 0.55), base + Vector2(-13, -h * 0.55)])
+	_ci.draw_colored_polygon(palm, HAND_BONE)
+	_ci.draw_polyline(palm + PackedVector2Array([palm[0]]), HAND_INK, 1.5, true)
+	var flex := sin(_time * 1.6) * 0.12
+	for i in 4:  # fingers, splayed a little, the middle two longest
+		var x := -9.75 + i * 6.5
+		var root := base + Vector2(x, -h * 0.55)
+		var tip := root + Vector2(x * 0.18 + flex * 6.0, -h * (0.5 if i in [1, 2] else 0.4))
+		_ci.draw_line(root, tip, HAND_INK, 6.5, true)
+		_ci.draw_line(root, tip, HAND_BONE, 4.2, true)
+	var thumb := base + Vector2(-12, -h * 0.3)
+	_ci.draw_line(thumb, thumb + Vector2(-9, -h * 0.22), HAND_INK, 6.5, true)
+	_ci.draw_line(thumb, thumb + Vector2(-9, -h * 0.22), HAND_BONE, 4.2, true)
 
 
 ## What stands on the cell (LIVE slab: props fade when a piece is behind them): placed props, the tile
@@ -2997,6 +3041,14 @@ func _prop_rect(anchor: Vector2i, p: Dictionary, tex: Texture2D) -> Rect2:
 	return Rect2(base.x - pw * 0.5, base.y + (hi.y - lo.y) * 0.18 - ph, pw, ph)
 
 
+## The thing F would use stands on this prop (one of its footprint cells is in `focus`).
+func _focused(a: Vector2i, p: Dictionary) -> bool:
+	for c: Vector2i in focus:
+		if Rect2i(CombatGrid.ground(a), p.foot).has_point(CombatGrid.ground(c)):
+			return true
+	return false
+
+
 ## A placed prop (well, bed, a whole house), drawn from its front cell. Graybox block until its art exists.
 func _placed(c: Vector2i) -> void:
 	var a := grid.prop_anchor(c)
@@ -3025,6 +3077,13 @@ func _placed(c: Vector2i) -> void:
 	if p.tall > 0.0 and not p.walk:
 		var b := Vector2(r.get_center().x, r.end.y)
 		Pawn.ellipse(_ci, b, r.size.x * 0.36, r.size.x * 0.13, Color(0.1, 0.1, 0.12, 0.22 * col.a), true)
+	if _focused(a, p):
+		# "Things need highlight when youre about to interact with them" ([USER] 2026-11-01): an over-bright
+		# copy peeks out round the art as a pale rim, and the art itself lifts a little.
+		var pulse := 0.75 + 0.25 * sin(_time * 4.0)
+		for o in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1), Vector2(0, -1.4), Vector2(0, 1.4), Vector2(-1.4, 0), Vector2(1.4, 0)]:
+			_ci.draw_texture_rect(tex, Rect2(r.position + o * FOCUS_RIM, r.size), false, Color(4.0, 3.9, 3.4, 0.7 * pulse))
+		col = Color(col.r * 1.18, col.g * 1.18, col.b * 1.12, col.a)
 	if not holes.is_empty():
 		_draw_windowed(tex, r, col, holes, Rect2(0, 0, 1, 1), p.get("flip", false))
 	elif p.get("flip", false):
@@ -3883,6 +3942,28 @@ func _find_cover() -> void:
 						col = col.expand(q + Vector2(0, (h - u.vis_h) * HS))
 					if _overlap(box, col) > 0.35:
 						_covered[u] = true
+	for fc: Vector2i in figures:  # people waiting on an explore map (a fallen Bushberry among trees) get windows too
+		if hidden(fc):
+			continue
+		var fbox := Rect2(cell_top(fc) + Vector2(-20, -54), Vector2(40, 54))
+		var fd := depth_of(fc.x, fc.y)
+		for dy in range(-2, 3):
+			for dx in range(-2, 3):
+				var c := fc + Vector2i(dx, dy)
+				if not grid.in_bounds(c) or depth_of(c.x, c.y) <= fd or hidden(c):
+					continue
+				var art := BattleArt.props(grid.terrain_at(c), grid.zone_at(c))
+				if not art.list.is_empty() and art.count > 0 and art.height >= WINDOW_TALL and not _wall(c):
+					var ph: float = art.height * TW * 1.1
+					var mid := cell_top(c)
+					if _overlap(fbox, Rect2(mid.x - TW * 0.45, mid.y - ph, TW * 0.9, ph)) > 0.2:
+						_fade[c] = _fade.get(c, []) + [fbox.get_center()]
+				var a := grid.prop_anchor(c)
+				if a != CombatGrid.NONE_CELL and _prop_front(a, grid.props[a]) == c and grid.prop_anchor(fc) != a:
+					var pr: Dictionary = grid.props[a]
+					var tex := prop_texture(pr, grid.zone_at(a))
+					if tex != null and see_through(pr) and _overlap(fbox, _prop_rect(a, pr, tex)) > 0.2:
+						_fade[a] = _fade.get(a, []) + [fbox.get_center()]
 
 
 ## Does this prop open the see-through window round a piece behind it? Only full-height things do ([USER]

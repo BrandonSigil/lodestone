@@ -22,7 +22,8 @@ const STATUS_SLOW := "slow"  ## less move for a phase
 const STATUS_SPOOK := "spook"  ## a hexer's scare: hits for less until the end of the phase it lands in (acts as spooked)
 const STATUS_FOE_WARD := "foe_ward"  ## a warder's ward on a foe: more armor until that side next moves
 const STATUS_BLEED := "bleed"  ## loses a little HP at the start of each of its phases (a ranked bite)
-const STATUS_ICE := "ice_armor"  ## the Lich Prince's ICE ARMOR: ice_armor_armor more armor; a foe that hits the piece is slowed
+const STATUS_ICE := "ice_armor"  ## the Lich Prince's ICE ARMOR: ice_armor_armor more armor; a foe that hits the piece may be frozen
+const STATUS_FROZEN := "frozen"  ## ICE ARMOR's freeze: skips the owner's next phase and can't hit back; damage doesn't end it
 const STATUS_BRANCH := "branch_armor"  ## Bushberry's BRANCH ARMOR: the next foe hit does branch_soften less (at least 1), the hitter takes branch_thorns; gone at his side's next phase
 const STATUS_WARD := "ward"  ## the book's WARD: the next hit on this piece does 0 and no status; gone at the mage's next phase
 const STATUS_OVERWATCH := "overwatch"  ## the bow's OVERWATCH: the first foe to move into its reach takes a plain shot and stops
@@ -37,6 +38,7 @@ const FIELD_TRAP := "trap"  ## a foe walking onto it stops there and takes the t
 const FIELD_CALTROPS := "caltrops"  ## a foe walking onto it stops there, takes the hit and is slowed; it stays
 const FIELD_FIRE := "fire"  ## burning ground: nobody can walk onto it
 const FIELD_SMOKE := "smoke"  ## nobody can attack from more than 1 tile away into, out of or across it
+const FIELD_HAND := "hand"  ## NEPO BABY ([USER] 2026-11-01): the hand's tiles chill foes on them (cold damage and slow)
 ## Cleared when the owner's next phase starts (they protect through the enemy phase).
 const STATUS_UNTIL_OWN_PHASE := [STATUS_BRANCH, STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT, STATUS_WARD, STATUS_OVERWATCH, STATUS_FOE_WARD]
 
@@ -53,7 +55,6 @@ const TRAIT_BLOODIED := &"bloodied"  ## Reaver: more damage and crit the lower i
 const TRAIT_KEEPS_BACK := &"keeps_back"  ## Mender foe: stays 2 or more tiles from heroes, attacks only when cornered
 const TRAIT_CHARGE := &"charge"  ## Rusher and bull: a straight run of 3 or more tiles this phase adds charge_bonus to its hits
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
-const TRAIT_HOARFROST := &"hoarfrost"  ## the Lich Prince: a foe that ends its move next to him is slowed on its next phase
 const TRAIT_GLEAN := &"glean"  ## Bushberry ([USER] 2026-11-01 design-bb-kit): friends next to him heal at the start of their phase; stacks with Good Boy
 const TRAIT_GOOD_BOY := &"good_boy"  ## Doggo ([USER] 2026-10-31 design-goodboy): a friend next to him heals at the start of its phase
 const TRAIT_HEART_BURNS := &"heart_burns"  ## Amber ([USER] 2026-11-01): plain attacks may set the target burning (heart_burn_pct)
@@ -95,7 +96,7 @@ static func height_levels(grid: CombatGrid, from: Vector2i, to: Vector2i) -> int
 
 
 static func move_points(u: CombatUnit) -> int:
-	if u.has_status(STATUS_ROOTED) or u.has_status(STATUS_SLEEP):
+	if u.has_status(STATUS_ROOTED) or u.has_status(STATUS_SLEEP) or u.has_status(STATUS_FROZEN):
 		return 0
 	return maxi(1, u.move + (SPOOKED_MOVE if u.spooked else 0) + (int(num("slow_move")) if u.has_status(STATUS_SLOW) else 0) \
 		+ (u.rally_move if u.has_status(STATUS_RALLIED) else 0))
@@ -606,7 +607,14 @@ static func _sum(parts: Array) -> int:
 ## `units` is needed for the wolf's pack trait and the shield wall.
 static func damage(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i, a: Ability = null, units: Array = [], wobble := 0) -> int:
 	var raw := _sum(damage_parts(grid, att, tgt, from, a, units)) + wobble
-	return maxi(int(num("min_damage")), raw - _sum(armor_parts(grid, att, tgt, from, a, units)))
+	return maxi(int(num("min_damage")), raw - _sum(armor_parts(grid, att, tgt, from, a, units))) + cold_damage(att, a)
+
+
+## FROST BLADE's cold on top of the regular hit, through armor ([USER] 2026-11-01: "regular damage + X cold damage").
+static func cold_damage(att: CombatUnit, a: Ability) -> int:
+	if a == null or a.id != "frost_blade":
+		return 0
+	return int(num("frost_blade_cold")) + upg(att, "frost_blade_cold")
 
 
 ## Lowest and highest damage of one hit, before a crit.
@@ -624,7 +632,8 @@ static func expected_damage(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, 
 
 ## Would `tgt` strike back at `att` standing on `from`?
 static func counters_from(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from: Vector2i) -> bool:
-	if not counters or not tgt.alive() or tgt.team == att.team or tgt.has_status(STATUS_SLEEP) or tgt.has_trait(TRAIT_STRUCTURE):
+	if not counters or not tgt.alive() or tgt.team == att.team or tgt.has_status(STATUS_SLEEP) or tgt.has_status(STATUS_FROZEN) \
+			or tgt.has_trait(TRAIT_STRUCTURE):
 		return false
 	return in_reach(grid, tgt.cell, from, ability_range(tgt, null))
 
@@ -683,6 +692,10 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 		u.belt.take(a.spends, a.cost)
 	if a.field != "":
 		events.append_array(lay_field(grid, u, a, center))
+		if a.field == FIELD_HAND:  # the hand rises: foes on its tiles are chilled at once
+			for t: CombatUnit in units:
+				if t.alive() and t.team != u.team and field_at(grid, t.cell, FIELD_HAND) != null:
+					events.append_array(_chill(u, a, t, false))
 		if a.field != FIELD_FIRE:  # a trap, caltrops or smoke only lies there; IGNITE's fire also hits who stands in it
 			return events
 	var hit_list := affected_units(grid, u, a, center, units, u.cell)
@@ -727,6 +740,8 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 					if a.status == STATUS_BRANCH:  # the caster's numbers ride on the friend until the hit comes
 						t.branch_soften = int(num("branch_soften")) + upg(u, "branch_soften")
 						t.branch_thorns = int(num("branch_thorns")) + upg(u, "branch_thorns")
+					if a.status == STATUS_ICE:
+						t.ice_freeze = int(num("ice_freeze_pct")) + upg(u, "ice_freeze_pct")
 					events.append_array(_buff(u, a, t))
 					events.append({"type": "status", "src": u, "unit": t, "status": a.status})
 	if u.hiding and a.hostile():
@@ -776,9 +791,9 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 				events.append({"type": "heal", "src": u, "unit": u, "amount": u.hp - before})
 		t.statuses.erase(STATUS_SLEEP)
 		events.append({"type": "hit", "src": u, "unit": t, "amount": dmg, "crit": crit})
-		if t.has_status(STATUS_ICE) and t.team != u.team and u.alive():  # ICE ARMOR slows the hitter, through its next phase
-			u.statuses[STATUS_SLOW] = int(num("ice_slow_turns")) + 1
-			events.append({"type": "status", "src": t, "unit": u, "status": STATUS_SLOW})
+		if t.has_status(STATUS_ICE) and t.team != u.team and u.alive() and rng.randi_range(1, 100) <= t.ice_freeze:
+			u.statuses[STATUS_FROZEN] = int(num("ice_freeze_turns")) + 1  # after its hit, through its next phase
+			events.append({"type": "status", "src": t, "unit": u, "status": STATUS_FROZEN})
 	if t.alive() and a.status != "":
 		t.statuses[a.status] = a.status_turns
 		if a.status == STATUS_WARD:
@@ -901,9 +916,12 @@ static func begin_phase(units: Array, team: int, grid: CombatGrid = null) -> Arr
 			u.bleed -= 1  # one of its own phases gone; at 0 it's out for the fight
 			if u.bleed <= 0:
 				events.append({"type": "bled_out", "unit": u})
-		if u.has_status(STATUS_SLEEP):
+		if u.has_status(STATUS_SLEEP) or u.has_status(STATUS_FROZEN):
 			u.moved = true
 			u.acted = true
+		var hand := _foe_hand(grid, u) if grid != null and u.alive() else {}
+		if not hand.is_empty():  # NEPO BABY: a foe that starts its phase by the hand is chilled again
+			events.append_array(_chill(hand.src, hand.ability, u, true))
 		if u.alive() and u.has_trait(TRAIT_DEEP_ROOTS) and u.hp < u.max_hp:
 			u.hp = mini(u.max_hp, u.hp + REGROW)
 			events.append({"type": "heal", "src": u, "unit": u, "amount": REGROW})
@@ -1255,7 +1273,7 @@ static func lay_field(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vecto
 			cells.append(c)
 	for c in cells:
 		var list: Array = grid.fields.get(c, []).filter(func(f: Dictionary) -> bool: return f.kind != a.field)
-		list.append({"kind": a.field, "team": u.team, "turns": maxi(1, turns), "src": u, "ability": a})
+		list.append({"kind": a.field, "team": u.team, "turns": maxi(1, turns), "src": u, "ability": a, "center": center})
 		grid.fields[c] = list
 	return [{"type": "field", "src": u, "field": a.field, "cells": cells}]
 
@@ -1296,18 +1314,37 @@ static func stop_events(rng: RandomNumberGenerator, grid: CombatGrid, stop: Dict
 	return spring(grid, stop.field, stop.cell, mover, units)
 
 
-## HOARFROST: a foe that ends its move within reach of a piece with the trait (1 tile, upgrades add) is slowed for its
-## next phase (the status counts down at the end of the mover's own phase, hence the +1).
-static func hoarfrost(mover: CombatUnit, units: Array) -> Array:
-	var events := []
+## NEPO BABY ([USER] 2026-11-01): a foe that ends its move on the hand's tiles is slowed through its next phase (the
+## status counts down at the end of the mover's own phase, hence the +1). No damage here: that comes at its phase start.
+static func hand_chill(grid: CombatGrid, mover: CombatUnit, units: Array) -> Array:
 	if not mover.alive():
-		return events
-	for o: CombatUnit in units:
-		if o.alive() and o.team != mover.team and o.has_trait(TRAIT_HOARFROST) \
-				and dist(o.cell, mover.cell) <= int(num("hoarfrost_reach")) + upg(o, "hoarfrost_reach"):
-			mover.statuses[STATUS_SLOW] = int(num("hoarfrost_turns")) + upg(o, "hoarfrost_turns") + 1
-			events.append({"type": "status", "src": o, "unit": mover, "status": STATUS_SLOW})
-			break
+		return []
+	var hand := _foe_hand(grid, mover)
+	if hand.is_empty():
+		return []
+	mover.statuses[STATUS_SLOW] = maxi(int(mover.statuses.get(STATUS_SLOW, 0)), 2)
+	return [{"type": "status", "src": hand.src, "unit": mover, "status": STATUS_SLOW}]
+
+
+## The other side's hand field on u's tile, or {}.
+static func _foe_hand(grid: CombatGrid, u: CombatUnit) -> Dictionary:
+	for f: Dictionary in grid.fields.get(u.cell, []):
+		if f.kind == FIELD_HAND and int(f.team) != u.team:
+			return f
+	return {}
+
+
+## The hand's chill on t: its power in cold damage through armor (at least 1), and slowed through its next (or this) phase.
+## tick: at the start of t's phase, shown as a "bleed" tick (floated like burn); else the cast, shown as a hit.
+static func _chill(src: CombatUnit, a: Ability, t: CombatUnit, tick: bool) -> Array:
+	var n := mini(maxi(1, a.power), t.hp)
+	t.hp -= n
+	t.statuses.erase(STATUS_SLEEP)
+	var events := [{"type": "bleed", "unit": t, "amount": n, "status": FIELD_HAND, "src": src} if tick \
+		else {"type": "hit", "src": src, "unit": t, "amount": n, "crit": false}]
+	if t.alive():
+		t.statuses[STATUS_SLOW] = maxi(int(t.statuses.get(STATUS_SLOW, 0)), 1)
+		events.append({"type": "status", "src": src, "unit": t, "status": STATUS_SLOW})
 	return events
 
 

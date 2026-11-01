@@ -1734,9 +1734,9 @@ func test_bushberry_kit() -> void:
 	eq(far.hp, 1, "only friends next to him")
 
 
-## The Lich Prince ([USER] 2026-11-01, docs/design/lich-prince.md; numbers [AI]): a cold knight on rage whose plain attack
-## slows. His passives HOARFROST and ICE ARMOR's retaliation, and COLD SNAP's self-centred hit on foes, wait for the
-## senior's rules (see docs/systems/combat.md); this checks the data that exists.
+## The Lich Prince ([USER] 2026-11-01 kit rework, junior-lich-prince-review; numbers [AI]): a cold knight on rage with four
+## upgradable abilities: FROST BLADE (regular damage + cold, slows), ICE ARMOR (a friend's armor, may freeze the hitter),
+## COLD SNAP (unchanged) and NEPO BABY (a hand that chills foes near it). No Hoarfrost.
 func test_lich_prince_kit() -> void:
 	CombatRules.reset_switches()
 	var g := CombatGrid.flat(10, 6)
@@ -1747,35 +1747,55 @@ func test_lich_prince_kit() -> void:
 	ok(prince.abilities[0].is_basic(), "and it counts as the basic")
 	ok(prince.abilities.any(func(a: Ability) -> bool: return a.id == "ice_armor"), "ICE ARMOR in his kit")
 	ok(prince.abilities.any(func(a: Ability) -> bool: return a.id == "cold_snap"), "COLD SNAP in his kit")
+	ok(prince.abilities.any(func(a: Ability) -> bool: return a.id == "nepo_baby"), "NEPO BABY in his kit")
 	eq(_ab("ice_armor").res_cost, 2, "ICE ARMOR costs 2 rage")
 	eq(_ab("cold_snap").res_cost, 3, "COLD SNAP costs 3 rage")
 	# FROST BLADE: a normal melee hit that slows the foe for a turn
 	var wolf := _unit("wolf", 1, Vector2i(2, 1), g)
 	wolf.max_hp = 99
 	wolf.hp = 99
+	var plain := CombatRules.damage(g, prince, wolf, prince.cell)
+	eq(CombatRules.damage(g, prince, wolf, prince.cell, prince.abilities[0]), plain + int(CombatRules.num("frost_blade_cold")),
+		"FROST BLADE: regular damage plus its cold, through armor")
+	prince.upgrades = {"frost_blade_cold": 1}
+	eq(CombatRules.damage(g, prince, wolf, prince.cell, prince.abilities[0]), plain + int(CombatRules.num("frost_blade_cold")) + 1, "upgraded: 1 more cold")
+	prince.upgrades = {}
 	CombatRules.resolve(rng, g, prince, prince.abilities[0], wolf.cell, [prince, wolf], false)
 	ok(wolf.hp < 99, "the hit lands")
 	ok(wolf.has_status(CombatRules.STATUS_SLOW), "and slows the foe")
 	ok(CombatRules.move_left(wolf) < wolf.move, "so it has less move")
 	# the Prince himself: 3 ranks of upgrades for each skill, and the character is on the roster, no rations
-	for skill in ["frost_blade", "ice_armor", "cold_snap", "hoarfrost"]:
+	for skill in ["frost_blade", "ice_armor", "cold_snap", "nepo_baby"]:
 		eq(Db.skill_ranks.get(skill, []).size(), 3, "%s has three upgrade steps" % skill)
 	var d := Db.character(&"lich_prince")
 	ok(d != null and Db.ROSTER.has(&"lich_prince"), "he is on the roster")
 	eq(d.food_per_day, 0, "he eats no rations")
 	ok(d.traits.has(&"cold_blooded"), "Cold Blooded is his passive")
-	ok(d.class_def.traits.has(&"hoarfrost"), "Hoarfrost is his class passive")
-	# ICE ARMOR: a friend gets more armor, and a foe that hits them is slowed
+	ok(d.class_def.traits.is_empty(), "no Hoarfrost: Nepo Baby took its place")
+	# ICE ARMOR: a friend gets a little armor, and a foe that hits them may be frozen (no slow)
 	var friend := _unit("knight", 0, Vector2i(1, 3), g)
 	var bandit := _unit("bandit", 1, Vector2i(2, 3), g)
 	var bare := CombatRules.damage(g, bandit, friend, bandit.cell)
 	CombatRules.resolve(rng, g, prince, _ab("ice_armor"), friend.cell, [prince, friend, bandit, wolf], false)
 	ok(friend.has_status(CombatRules.STATUS_ICE), "ICE ARMOR coats the friend")
-	eq(CombatRules.damage(g, bandit, friend, bandit.cell), maxi(1, bare - int(CombatRules.num("ice_armor_armor"))), "2 more armor")
+	eq(CombatRules.damage(g, bandit, friend, bandit.cell), maxi(1, bare - int(CombatRules.num("ice_armor_armor"))), "a little more armor")
+	eq(friend.ice_freeze, int(CombatRules.num("ice_freeze_pct")), "the caster's freeze chance rides on the friend")
+	friend.ice_freeze = 100  # a sure freeze, to see what it does
+	friend.max_hp = 99
+	friend.hp = 99
 	CombatRules.resolve(rng, g, bandit, bandit.abilities[0], friend.cell, [prince, friend, bandit, wolf], false)
-	ok(bandit.has_status(CombatRules.STATUS_SLOW), "the foe that hit the iced friend is slowed")
+	ok(friend.hp < 99, "the hitter's damage still lands")
+	ok(bandit.has_status(CombatRules.STATUS_FROZEN) and not bandit.has_status(CombatRules.STATUS_SLOW), "then it is frozen, not slowed")
 	CombatRules.end_phase([bandit], 1)
-	ok(bandit.has_status(CombatRules.STATUS_SLOW), "through its next phase")
+	CombatRules.begin_phase([bandit], 1, g)
+	ok(bandit.done() and CombatRules.move_points(bandit) == 0, "it skips its next turn")
+	ok(not CombatRules.counters_from(g, prince, bandit, Vector2i(2, 2)), "and can't hit back")
+	CombatRules.end_phase([bandit], 1)
+	ok(not bandit.has_status(CombatRules.STATUS_FROZEN), "for 1 turn")
+	friend.ice_freeze = 0
+	bandit.statuses.clear()
+	CombatRules.resolve(rng, g, bandit, bandit.abilities[0], friend.cell, [prince, friend, bandit, wolf], false)
+	ok(not bandit.has_status(CombatRules.STATUS_FROZEN), "no luck, no freeze")
 	# COLD SNAP: round him, foes only, 2 less than a normal hit, and slowed
 	var g2 := CombatGrid.flat(8, 8)
 	var p2 := _unit("prince", 0, Vector2i(3, 3), g2)
@@ -1793,10 +1813,43 @@ func test_lich_prince_kit() -> void:
 	eq(CombatRules.damage(g2, p2, f1, p2.cell, snap), maxi(0, normal - 2), "2 less than his normal hit")
 	CombatRules.resolve(rng, g2, p2, snap, p2.cell, [p2, pal, f1, f2, far], false)
 	ok(f1.has_status(CombatRules.STATUS_SLOW) and f2.has_status(CombatRules.STATUS_SLOW) and not far.has_status(CombatRules.STATUS_SLOW), "and slows them")
-	# HOARFROST: a foe that ends its move next to him is slowed for its next phase
-	far.statuses.clear()
-	eq(CombatRules.hoarfrost(far, [p2, far]), [], "far off: nothing")
-	far.place(Vector2i(3, 2), 0)
-	ok(not CombatRules.hoarfrost(far, [p2, far]).is_empty() and far.has_status(CombatRules.STATUS_SLOW), "next to him: slowed")
-	CombatRules.end_phase([far], 1)
-	ok(far.has_status(CombatRules.STATUS_SLOW), "through its next phase")
+	# NEPO BABY: a hand rises on a tile 1 to 3 away; foes on it or next to it take its cold and are slowed, now and at the
+	# start of each of their phases while it stands; a foe ending its move there is slowed through its next phase
+	var g3 := CombatGrid.flat(10, 8)
+	var p3 := _unit("prince", 0, Vector2i(1, 3), g3)
+	var near := _unit("wolf", 1, Vector2i(4, 3), g3)
+	var by := _unit("wolf", 1, Vector2i(4, 4), g3)
+	var away := _unit("wolf", 1, Vector2i(8, 3), g3)
+	var mate := _unit("knight", 0, Vector2i(3, 3), g3)
+	for f in [near, by, away, mate]:
+		f.max_hp = 99
+		f.hp = 99
+	var all3 := [p3, near, by, away, mate]
+	var nepo := _ab("nepo_baby")
+	eq(nepo.res_cost, 4, "NEPO BABY costs 4 rage")
+	ok(CombatRules.target_cells(g3, p3, nepo, all3, p3.cell).has(Vector2i(4, 3)), "aimed at a tile 3 away")
+	var evs := CombatRules.resolve(rng, g3, p3, nepo, Vector2i(4, 3), all3, false)
+	ok(evs.any(func(e: Dictionary) -> bool: return e.type == "field" and e.field == CombatRules.FIELD_HAND), "the hand rises")
+	eq(near.hp, 99 - nepo.power, "the foe on its tile takes its cold")
+	eq(by.hp, 99 - nepo.power, "so does the one next to it")
+	ok(near.has_status(CombatRules.STATUS_SLOW) and by.has_status(CombatRules.STATUS_SLOW), "and both are slowed")
+	eq(away.hp, 99, "a foe away from it: nothing")
+	eq(mate.hp, 99, "friends are never chilled")
+	ok(not mate.has_status(CombatRules.STATUS_SLOW), "or slowed")
+	CombatRules.end_phase(all3, 0)
+	CombatRules.begin_phase(all3, 1, g3)
+	eq(near.hp, 99 - nepo.power * 2, "at the start of its phase by the hand: chilled again")
+	ok(CombatRules.move_points(near) < near.move, "slowed this phase")
+	away.place(Vector2i(5, 3), 0)
+	ok(not CombatRules.hand_chill(g3, away, all3).is_empty() and away.has_status(CombatRules.STATUS_SLOW), "ending its move there: slowed")
+	CombatRules.end_phase(all3, 1)
+	ok(away.has_status(CombatRules.STATUS_SLOW), "through its next phase")
+	for i in 2:
+		CombatRules.begin_phase(all3, 0, g3)
+		CombatRules.end_phase(all3, 0)
+		CombatRules.begin_phase(all3, 1, g3)
+		CombatRules.end_phase(all3, 1)
+	eq(CombatRules.field_at(g3, Vector2i(4, 3), CombatRules.FIELD_HAND), null, "the hand sinks after its turns")
+	var ranked := LevelRules.ranked(nepo, 3, Db.skill_ranks)
+	ok(ranked.power == nepo.power + 1 and ranked.radius == nepo.radius + 1 and ranked.status_turns == nepo.status_turns + 1,
+		"its upgrades: more cold, further reach, stays longer")

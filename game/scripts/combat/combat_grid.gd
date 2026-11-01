@@ -476,9 +476,24 @@ static func from_dict(d: Dictionary) -> CombatGrid:
 		if bool(p.get("deck", false)):
 			anchor = deck_of(anchor)
 		g.add_prop(anchor, String(p.get("sprite", "")), Vector2i(int(foot[0]), int(foot[1])),
-			float(p.get("tall", 0.0)), float(p.get("sight", 1.0)), bool(p.get("walk", false)), _extra(p))
+			float(p.get("tall", 0.0)), float(p.get("sight", 1.0)), bool(p.get("walk", false)) or walk_through(String(p.get("sprite", ""))), _extra(p))
 	g.look = (d.get("look", {}) as Dictionary).duplicate()
 	return g
+
+
+static var _walk_through := {}  ## sprite stems the catalog marks `walk` (rugs, stools), whatever a saved map says
+
+
+## Pieces walk over this prop art: the catalog's `walk` column, so a change there reaches maps already saved
+## ([USER] 2026-11-01 "You should be able to walk through stools").
+static func walk_through(sprite: String) -> bool:
+	if _walk_through.is_empty():
+		_walk_through[""] = false
+		for row in CsvTable.load_rows("res://data/catalog.csv"):
+			var full := String(row.sprite)
+			if full != "" and String(row.get("walk", "")) == "1":
+				_walk_through[full.substr(full.rfind("/") + 1)] = true
+	return _walk_through.has(sprite) and bool(_walk_through[sprite])
 
 
 static func _extra(p: Dictionary) -> Dictionary:

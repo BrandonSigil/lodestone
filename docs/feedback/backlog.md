@@ -82,6 +82,9 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | X3 | "THis said "rope on hook" again, just let me interact with the barrel and have a loot inventory box show up" (the rope barrel in the smithy yard; "again" means it was reported before, so every pickup box must go, not just this one) | Systems developer | done (89e2681) |
 | X4 | "While we test, let me pick from all playable characters here before heading out" (at the village gate box, GO ON / STAY: a party picker with every playable character, recruited or not, for playtesting). Then: "This box isnt needed, it opens another dialogue that tells you to pick your party, stay or go" (drop the GATE GO ON / STAY box; the gate opens the party picker straight away, with Go and Stay on it) | Systems developer | done (89e2681) |
 | X5 | "I cant walk forward here theres an invisilbe barrier" (village square: a companion spot hidden by its `when` flag, or one whose companion is in the party, still blocked its cell) | PM | done (2026-11-01, "Hidden things never block" commit) |
+| X6 | "Things need highlight when youre about to interact with them" | Systems developer | done (evening round) |
+| X7 | "Take all should move money over too and the party menu should say total gold too" | Systems developer | done (evening round) |
+| X8 | "You should be able to walk through stools, they make this whole room very hard to navigate" (tavern) | Systems developer | done (evening round; only stools, chairs and benches still block) |
 
 ## Older standing asks still open
 - Food as healing with no hunger ([USER] 2026-10-31 morale call; `docs/systems/morale.md` says not built, the road still eats every day). Owner: Systems developer (first account), done (2026-11-01, "Food heals, nobody hungers" commit); the numbers are on the desk as dev-food-review.

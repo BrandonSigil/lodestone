@@ -2,13 +2,14 @@
 
 `[USER]` 2026-11-01 (decisions.md): the Lich's son, a knight-class companion with a cold twist who needs no rations. After the Lich is bested, he stops at 1 HP and offers his son as an apprentice. All numbers and the kit below are `[AI]` proposals until Brandon retags them. Dialogue is caveman placeholder; names and story are Brandon's.
 
-## Kit (knight line, rage; same shape as Bushberry and Doggo)
-- **Frost Blade** (basic): a normal melee hit; the foe is slowed (2 less move, 1 turn).
-- **Ice Armor** (ally, range 1-3, rage 2): +2 armor for 2 turns; a foe that hits that friend is slowed.
-- **Cold Snap** (self area, radius 1, rage 3): every adjacent foe takes 2 less than normal damage and is slowed.
-- **Hoarfrost** (passive): a foe that ends its move next to him is slowed on its next phase.
+## Kit: four upgradable abilities ([USER] 2026-11-01, junior-lich-prince-review: "too passive heavy")
+Brandon's shape; numbers are `[AI]` proposals. Built in the dev evening round (docs/systems/combat.md has the rules).
+- **Frost Blade** (basic): weapon damage + 1 cold (through armor) + slow (2 less move, 1 turn). Upgrades: +1 cold, slow +1 turn, +1 cold.
+- **Ice Armor** (ally, range 1-3, rage 2, 2 turns): +1 armor; a foe that hits that friend has a 30% chance to be frozen after its hit and skip its next turn. No slow. Upgrades: +15% freeze, +1 turn, cost -1.
+- **Cold Snap** (self area, radius 1, rage 3): unchanged. Every adjacent foe takes 2 less than normal damage and is slowed.
+- **Nepo Baby** (Brandon's name; a tile 1-3 away, rage 4, 2 turns): his father's hand rises from the ground. Foes on it or next to it take 1 cold (through armor) and are slowed when it rises and at the start of each of their turns there; a foe ending its move there is slowed through its next turn. Low damage, mainly the slow. Upgrades: +1 cold, +1 reach, +1 turn.
 - **Cold Blooded** (passive): eats no rations and takes no heal from food.
-All skills get three upgrade steps in `ability_upgrades.csv` when built.
+- Hoarfrost is gone: Nepo Baby took its place.
 
 ## No rations and healing model A
 - He is not a mouth: the daily camp check and the "no food ends the journey" rule skip him; the camp meal picker shows him with "no food needed".

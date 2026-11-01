@@ -104,6 +104,10 @@ func _ready() -> void:
 	for g in map.groups:
 		var units: Array = []
 		for e: Dictionary in g.units:
+			if e.has("char"):  # a friend on their side, until he is freed (or already walks with the party)
+				if grid.passable(e.cell) and not Game.has_flag("rescued_" + String(e.char)) and not Game.in_party(String(e.char)):
+					units.append(_turned_friend(e))
+				continue
 			var cls := Db.class_def(e.id)
 			if cls == null or not grid.passable(e.cell):
 				continue
@@ -297,7 +301,7 @@ func _stands_there(t: Dictionary) -> bool:
 	if String(t.get("when", "")) != "" and not Game.has_flag(t.when):
 		return false
 	if String(t.kind) == "companion":
-		var who := String(t.get("event", "")).trim_prefix("companion_").trim_prefix("recruit_")
+		var who := String(t.get("event", "")).trim_prefix("companion_").trim_prefix("recruit_").trim_prefix("rescue_")
 		if who != "" and Game.in_party(who):
 			return false
 	return true
@@ -827,8 +831,9 @@ func _box_of(t: Dictionary) -> Dictionary:
 		Game.run._load_into(grid, saved.get("grid", []))
 		state.unlocked = bool(saved.get("unlocked", false))
 		state.disarmed = bool(saved.get("disarmed", false))
-	elif not Game.has_flag(_looted_flag(t)):  # a first opening ever: its things, and coins straight to gold
-		state["coins"] = ContainerUi.fill_grid(grid, String(t.items))  # paid out when it is opened
+		state["coins"] = int(saved.get("coins", 0))
+	elif not Game.has_flag(_looted_flag(t)):  # a first opening ever: its things and its coins
+		state["coins"] = ContainerUi.fill_grid(grid, String(t.items))  # they wait in the box until TAKE ALL
 	else:
 		state["spent"] = true  # opened and left behind on an earlier visit: nothing is put back
 	_boxes[id] = state
@@ -915,15 +920,11 @@ func _spring_trap(t: Dictionary, state: Dictionary) -> void:
 
 func _box_open(t: Dictionary, state: Dictionary) -> void:
 	Game.set_flag(_looted_flag(t))  # opened for good: left things stay while the party is on this map, then they are gone
-	var coins := int(state.get("coins", 0))
-	if coins > 0:
-		Game.run.gold += coins
-		state["coins"] = 0
-	var box := _new_dialog("")
+	var box := _new_dialog("")  # its coins wait in it until TAKE ALL ([USER] 2026-11-01)
 	ContainerUi.fill(box, state.grid, Txt.t("CONTAINER_" + String(t.type).to_upper()), func() -> void:
 		Game.save_adventure()
 		_refresh_hud()
-		_remember(), _close_box, "", coins)
+		_remember(), _close_box, "", 0, state)
 
 
 ## Lasting map rewards ([USER] omr-10; one-more-run step 6), taken for good. A thing's event says what it holds:
@@ -1112,6 +1113,11 @@ func open_event(id: String, ctx: Dictionary) -> void:
 			label += "      " + Txt.f("UI_EX_CHANCE", [Txt.t((who.def as CharacterDef).name_key), Txt.t("CHECK_" + String(o.check).to_upper()),
 				bonus, int(round(Dice.chance(bonus, o.dc) * 100))])
 		_dialog_button(box, label, choose.bind(o, ctx))
+	for o: Dictionary in ExploreRules.options_short(ev, _defs(), _have()):  # short of things: shown, greyed
+		_dialog_button(box, Txt.t(o.key), Callable()).disabled = true
+	var leave := box.get_children().filter(func(c: Node) -> bool: return c is Button and (c as Button).text == Txt.t("OPT_LEAVE"))
+	if not leave.is_empty():
+		box.move_child(leave[0], -1)  # LEAVE stays last, under a greyed option
 
 
 func _defs() -> Array:
@@ -1138,6 +1144,9 @@ func choose(o: Dictionary, ctx: Dictionary) -> void:
 			lines.append(Txt.f("UI_NOW_JOB", Txt.t(String(Db.jobs[Game.job_id()].name_key))))
 		if out.invite != "":
 			lines.append(Txt.f("UI_JOINS" if Game.invite(out.invite) else "UI_PARTY_FULL", Txt.t(Db.character(StringName(out.invite)).name_key)))
+		if out.rescue != "":  # helped up where he fell ([USER] 2026-11-01): joins if there's room, else runs home
+			var name := Txt.t(Db.character(StringName(out.rescue)).name_key)
+			lines.append(Txt.f("UI_RESCUE_JOIN" if Game.rescued(out.rescue) else "UI_RESCUE_HOME", name))
 		if out.dismiss != "":
 			Game.dismiss(out.dismiss)
 			lines.append(Txt.f("UI_STAYS_HOME", Txt.t(Db.character(StringName(out.dismiss)).name_key)))
@@ -1326,7 +1335,8 @@ func _dialog_button(box: VBoxContainer, text: String, cb: Callable) -> Button:
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.custom_minimum_size = Vector2(DIALOG_TEXT_W, 44)
 	b.add_theme_font_size_override("font_size", 19)
-	b.pressed.connect(cb)
+	if cb.is_valid():
+		b.pressed.connect(cb)
 	box.add_child(b)
 	return b
 
@@ -1557,6 +1567,16 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		mode = M.OVER
 		return
 	_victory(rep, [[Txt.t("UI_CONTINUE"), _loot_flow.bind(loot_items, loot_coins)]])
+
+
+## A companion on the foes' side ([USER] 2026-11-01: "Bushberry flights alongside the ogre and uses all his abilities
+## we've given him at their rank 1 levels"): his own sheet and kit, unranked, on team 1. A group unit with "char".
+func _turned_friend(e: Dictionary) -> CombatUnit:
+	var u := CombatUnit.from_def(Db.character(StringName(e.char)))
+	u.team = 1
+	u.facing = Vector2i(-1, 0)
+	u.place(e.cell, grid.height_at(e.cell))
+	return u
 
 
 ## PASS a relented boss ([USER] 2026-11-01: "doesn't attack unless you choose to"): the party is past him this trip and
@@ -1870,7 +1890,7 @@ func _remember() -> void:
 	for id: String in _boxes:
 		var b: Dictionary = _boxes[id]
 		if not b.get("spent", false) or not (b.grid as InventoryGrid).items.is_empty():
-			boxes[id] = {"grid": (b.grid as InventoryGrid).to_save(), "unlocked": b.unlocked, "disarmed": b.disarmed}
+			boxes[id] = {"grid": (b.grid as InventoryGrid).to_save(), "unlocked": b.unlocked, "disarmed": b.disarmed, "coins": int(b.get("coins", 0))}
 	var piles := []
 	for t in things:
 		if String(t.id).begins_with("pile_"):

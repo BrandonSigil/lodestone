@@ -705,7 +705,8 @@ static func pickup_loot(ev: Dictionary) -> Dictionary:
 	return {"type": String(ev.box), "items": ";".join(items), "now": ";".join(now)}
 
 
-## "" (anyone), "skill:<check>" (someone has it), "class:<id>", "char:<id>", "item:<id>" (the pack holds one),
+## "" (anyone), "skill:<check>" (someone has it), "class:<id>", "char:<id>", "item:<id>" (the pack holds one; "item:<id>*3"
+## at least three),
 ## "flag:<id>" or "noflag:<id>" (a meta flag is or isn't set), "party:<id>" or "noparty:<id>" (a companion is or
 ## isn't in the party: have.party); several joined by "&" must all hold.
 ## `defs`: the party's CharacterDefs. have: {"items": id -> count, "flags": Array of set flags}.
@@ -718,8 +719,9 @@ static func need_met(need: String, defs: Array, have := {}) -> bool:
 	if kv.size() != 2:
 		return false
 	match kv[0]:
-		"item":
-			return int(have.get("items", {}).get(kv[1], 0)) > 0
+		"item":  # "item:wood*3": the pack holds at least 3 (Amber's fire, [USER] 2026-11-01)
+			var want := kv[1].split("*")
+			return int(have.get("items", {}).get(want[0], 0)) >= (int(want[1]) if want.size() > 1 else 1)
 		"noitem":  # the pack holds none (the dock's NO ROD line)
 			return int(have.get("items", {}).get(kv[1], 0)) <= 0
 		"flag":
@@ -759,6 +761,17 @@ static func rack_builds(ev: Dictionary, defs: Array, have := {}) -> Array:
 ## The options this party can pick.
 static func options_for(ev: Dictionary, defs: Array, have := {}) -> Array:
 	return ev.options.filter(func(o: Dictionary) -> bool: return need_met(o.need, defs, have))
+
+
+## Options shown greyed out: everything they need holds but a count of things in the pack ("item:wood*3", Amber's
+## fire), so the party sees what it is short of. A need on flags or the party still hides the option.
+static func options_short(ev: Dictionary, defs: Array, have := {}) -> Array:
+	return ev.options.filter(func(o: Dictionary) -> bool:
+		if need_met(o.need, defs, have):
+			return false
+		var parts := Array(String(o.need).split("&", false)).map(func(n: String) -> String: return n.strip_edges())
+		return parts.any(func(n: String) -> bool: return n.begins_with("item:") and n.contains("*")) \
+			and parts.all(func(n: String) -> bool: return n.begins_with("item:") or need_met(n, defs, have)))
 
 
 ## Splits "open;food:+3;noise" into the map's own effects (in order) and the run effects string.

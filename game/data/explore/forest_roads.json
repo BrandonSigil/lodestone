@@ -402,13 +402,21 @@
    "event": "spot_people",
    "sight": 4,
    "elite": true,
-   "loot": "rescue:bushberry;gold:+10",
+   "loot": "gold:+10;unlock:bushberry_down",
    "units": [
     {
      "id": "ogre",
      "cell": [
       22,
       12
+     ]
+    },
+    {
+     "id": "bushberry",
+     "char": "bushberry",
+     "cell": [
+      23,
+      14
      ]
     }
    ]
@@ -456,12 +464,14 @@
   {
    "id": "captive_bushberry",
    "kind": "companion",
-   "event": "",
+   "event": "rescue_bushberry",
    "cell": [
     23,
     14
    ],
-   "once": "rescued_bushberry"
+   "once": "rescued_bushberry",
+   "when": "bushberry_down",
+   "fallen": true
   }
  ],
  "level": 1

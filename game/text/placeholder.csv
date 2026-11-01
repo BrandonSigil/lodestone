@@ -928,8 +928,10 @@ TRAIT_QUICK_HANDS_DESC,Your regular attack is two hits, each 1 weaker than one f
 CHAR_FIRE_MAGE,AMBER
 UNLOCK_MET_FIRE_MAGE,MEET AMBER IN SQUARE
 EX_RECRUIT,FRIEND WAIT IN SQUARE. lorem ipsum. COME?
-EX_BONFIRE,FIRE LOW. lorem ipsum. WOOD?
-OPT_ADD_WOOD,ADD WOOD
+EX_FALLEN_FRIEND,BUSH FALL DOWN. lorem ipsum. HELP UP?
+OPT_HELP_UP,HELP UP
+EX_BONFIRE,"The dimmest embers remain in the center of this fire pit, they pulse up and down almost like they're breathing"
+OPT_FEED_FLAME,Feed the flame (Wood x3)
 EX_SLEEPER,SLEEP PERSON BY FIRE. lorem ipsum. SIT?
 OPT_SIT,SIT ON LOG
 ENEMY_ALPHA_WOLF,BIG WOLF. lorem ipsum
@@ -1081,15 +1083,19 @@ UNLOCK_FOUND_LICH_PRINCE,LOCKED: beat big dead guy
 SKILL_FROST_BLADE,FROST BLADE
 SKILL_ICE_ARMOR,ICE ARMOR
 SKILL_COLD_SNAP,COLD SNAP
-TRAIT_HOARFROST,Hoarfrost
+SKILL_NEPO_BABY,NEPO BABY
 TRAIT_COLD_BLOODED,Cold Blooded
-DESC_FROST_BLADE,"Your regular attack. Hits an adjacent foe for normal damage and slows it: 2 less move for 1 turn."
-DESC_ICE_ARMOR,"Coat a friend 1 to 3 tiles away in ice for 2 turns. They get 2 more armor, and a foe that hits them is slowed: 2 less move for 1 turn."
+DESC_FROST_BLADE,"Your regular attack. Hits an adjacent foe for normal damage plus 1 cold damage (through armor) and slows it: 2 less move for 1 turn."
+DESC_ICE_ARMOR,"Coat a friend 1 to 3 tiles away in ice for 2 turns. They get 1 more armor, and a foe that hits them has a 30% chance to be frozen after its hit: it skips its next turn."
 DESC_COLD_SNAP,"A burst of cold around you. Every foe on the 4 tiles next to you takes 2 less than your normal damage (less its armor) and is slowed: 2 less move for 1 turn."
-TRAIT_HOARFROST_DESC,"A foe that ends its move next to you is slowed on its next turn: 2 less move for 1 turn."
+DESC_NEPO_BABY,"A hand rises from the ground on a tile 1 to 3 tiles away and stays for 2 turns. Every foe on it or the 4 tiles next to it takes 1 cold damage (through armor) and is slowed (2 less move) when it rises and at the start of each of its turns there; a foe that ends its move there is slowed through its next turn."
+FIELD_HAND,HAND
+TAG_FROZEN,FROZEN
+TAGDESC_FROZEN,Skips its next turn and cannot fight back.
+MOD_COLD,COLD
 TRAIT_COLD_BLOODED_DESC,"Eats no rations and is not healed by food. Camp rest, healing skills and belt items work as usual."
 TAG_ICE_ARMOR,ICE ARMOR
-TAGDESC_ICE_ARMOR,"2 more armor. A foe that hits this piece is slowed: 2 less move for 1 turn."
+TAGDESC_ICE_ARMOR,"1 more armor. A foe that hits this piece may be frozen after its hit and skip its next turn."
 EX_BOSS_RELENTED,BIG BONE KING NOT FIGHT NOW. lorem ipsum. PASS / FIGHT
 OPT_PASS,PASS
 UI_BOSS_YIELDS,BONE KING STOP. ONE BREATH LEFT. HE GIVE SON. lorem

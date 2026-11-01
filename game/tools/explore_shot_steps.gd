@@ -74,18 +74,30 @@ func run(s: Node, f: int, step: String) -> bool:
 	if step.begins_with("near:") or step.begins_with("use:"):
 		if f == 5:
 			if step.begins_with("near:"):
-				# near:<x>,<y>[:<flag>,...] - flags set first, so things behind a "when" show.
+				# near:<x>,<y>[:<flag>,...] - flags set first, so things behind a "when" show (and a group whose loot sets one is gone).
 				var parts := step.substr(5).split(":")
 				if parts.size() > 1:
 					var game: Node = s.get_node("/root/Game")
 					game.save_enabled = false  # a shot never writes the real save
 					game.meta.flags.append_array(parts[1].split(","))
+					for g in s.groups:  # a flag a group's loot sets: that group was beaten (Bushberry fallen after the ogre)
+						for fl in parts[1].split(","):
+							if String(g.def.loot).contains("unlock:" + fl):
+								g.state = "gone"
 				var xy := parts[0].split(",")
 				var at := Vector2i(int(xy[0]), int(xy[1]))
 				_put(s, CombatGrid.deck_of(at) if xy.size() > 2 and xy[2] == "deck" else at)  # near:x,y,deck stands on the deck
 			else:
 				s._go_use(_thing(s, step.substr(4)))
 		return f == 90
+	if step.begins_with("open:"):
+		# open:<thing id> - the lead stands beside it and it opens at once (a box's two windows, an event's dialog)
+		if f == 5:
+			s.get_node("/root/Game").save_enabled = false  # a shot never writes the real save
+			var t: Dictionary = _thing(s, step.substr(5))
+			_put(s, t.cell + Vector2i(1, 0) if s.grid.passable(t.cell + Vector2i(1, 0)) else t.cell + Vector2i(0, 1))
+			s._open_thing(t)
+		return f == 30
 	if step.begins_with("deployat:"):
 		# deployat:<x>,<y>:<group index> - any map: the lead (with the dog along) stands at x,y and that group's
 		# fight starts, so the deploy ring shows (walls in front of it cut away).

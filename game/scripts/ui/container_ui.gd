@@ -57,19 +57,34 @@ static func split_loot(loot: String) -> Dictionary:
 ## inventory (the pack, the dog's saddlebag right beside it) and the container's own window with TAKE ALL and CLOSE. Belts and
 ## the party live on the full inventory page (I). `changed` runs after every move (the host saves and redraws its HUD),
 ## `close` shuts the box. `coins`: the gold it gave, a gold icon and +N under the container's grid.
-static func fill(box: VBoxContainer, container: InventoryGrid, title: String, changed: Callable, close: Callable, close_text := "", coins := 0) -> PackView:
+## `purse`: a box's state whose "coins" still wait in it; they show under its grid and TAKE ALL moves them to the party's gold
+## ([USER] 2026-11-01 "Take all should move money over too").
+static func fill(box: VBoxContainer, container: InventoryGrid, title: String, changed: Callable, close: Callable, close_text := "", coins := 0, purse := {}) -> PackView:
 	var view := PackView.new()
 	view.setup_bag(Game.run.pack, Db.items, Callable(), CELL)
+	var waiting := int(purse.get("coins", 0))
+	var coin_note := {}
 	# ([USER] 2026-11-01: "I want X's at the top right and take all should be over the bottom center of the frame, like half
 	# way in the menu and half way out"): an X on each window closes, TAKE ALL straddles the container window's bottom edge.
 	# After a fight the window keeps its labelled CONTINUE button: there it moves the game on, not just shuts a box.
 	var buttons := [[Txt.t("UI_BOX_TAKE_ALL"), func() -> void:
+		if int(purse.get("coins", 0)) > 0:
+			Game.run.gold += int(purse.coins)
+			purse.coins = 0
+			coin_note.text = ""
+			coin_note.icon = null
+			view.gold_note.text = str(Game.run.gold)
+			view.queue_redraw()
+			changed.call()
 		if not view.send_all(1, 0):
 			view.flash = "UI_BOX_FULL"
 			view.queue_redraw()]]
 	if close_text != "":
 		buttons.append([close_text, close])
-	windows(view, container, title, buttons, true, "+%d" % coins if coins > 0 else "", ActionInfo.icon("gold"), close if close_text == "" else Callable())
+	var note := str(waiting) if waiting > 0 else ("+%d" % coins if coins > 0 else "")
+	windows(view, container, title, buttons, true, note, ActionInfo.icon("gold"), close if close_text == "" else Callable())
+	if waiting > 0:
+		coin_note = view.notes.back()
 	view.changed.connect(changed)
 	box.add_child(view)
 	bare(box, view)
@@ -108,6 +123,10 @@ static func windows(view: PackView, other: InventoryGrid, other_title: String, b
 		bottom += 46.0
 	view.flash_at = Vector2(top.x, bottom + 14.0)  # a line for "no room" and the like
 	bottom += 26.0
+	# the party's gold, always in sight under the pack ([USER] 2026-11-01 "the party menu should say total gold too")
+	view.add_note(str(run.gold), Vector2(top.x, bottom + 8.0), right - top.x, ActionInfo.icon("gold"))
+	view.gold_note = view.notes.back()
+	bottom += PackView.NOTE_LINE + 8.0
 	var left_w := right + pad
 	# the other window
 	var ox := left_w + GAP

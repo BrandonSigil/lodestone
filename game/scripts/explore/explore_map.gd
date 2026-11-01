@@ -20,7 +20,7 @@ var wall_tall := 0  ## on a walls map, back walls stand this many levels over th
 var wall_kit := ""  ## on a walls map, the art set its back walls' pieces come from (village_in, dungeon); "" = block walls
 var start: Array[Vector2i] = []  ## party cells, leader first
 ## [{"id", "event", "sight", "loot", "boss": a boss fight (more XP), "end": beating it ends the E2E test,
-##   "units": [{"id": class id, "cell": Vector2i}]}]
+##   "units": [{"id": class id, "cell": Vector2i, "char": a companion's id when he fights on their side}]}]
 var groups: Array[Dictionary] = []
 ## A group's story-beat keys ([USER] 2026-11-01): relents (a flag that settles it: calm every run), relent_event (what it
 ## asks then), wins (a meta counter of wins over it), yield_at (the win it yields on) and yields (the flags the yield sets).
@@ -28,7 +28,8 @@ const STORY_KEYS := ["relents", "relent_event", "wins", "yield_at", "yields"]
 ## [{"id", "kind", "event", "cell": Vector2i, "floor": terrain letter the cell becomes when opened,
 ##   "to": map an "enter" thing leads to, "at": Vector2i cell it arrives on there,
 ##   "once": flags ("a|b"); when any is set the thing is gone for good,
-##   "when": a flag that must be set before the thing shows at all ("" = always)}]
+##   "when": a flag that must be set before the thing shows at all ("" = always),
+##   "fallen": a companion's spot drawn lying down (Bushberry after the ogre fight)}]
 var things: Array[Dictionary] = []
 
 
@@ -73,6 +74,8 @@ static func from_dict(d: Dictionary) -> ExploreMap:
 		for u: Dictionary in g.get("units", []):
 			units.append({"id": String(u.id), "cell": _cell(u.cell), "leader": bool(u.get("leader", false)),
 				"hidden": bool(u.get("hidden", false))})  # an ambusher, unseen until spotted
+			if u.has("char"):  # a companion fighting on the foes' side (Bushberry beside the ogre, [USER] 2026-11-01)
+				units.back()["char"] = String(u.char)
 		# goals, exit and talk: how the fight is won (FightGoals); elite: a tougher, badged group ([USER] pc-15)
 		m.groups.append({"id": String(g.get("id", "group%d" % m.groups.size())), "event": String(g.get("event", "spot_people")),
 			"sight": int(g.get("sight", ExploreRules.ENEMY_SIGHT)), "loot": String(g.get("loot", "")), "units": units,
@@ -86,7 +89,7 @@ static func from_dict(d: Dictionary) -> ExploreMap:
 		m.things.append({"id": String(t.get("id", "thing%d" % m.things.size())), "kind": String(t.get("kind", "chest")),
 			"event": String(t.get("event", "")), "cell": _cell(t.cell), "floor": String(t.get("floor", "s")),
 			"to": String(t.get("to", "")), "at": _cell(t.get("at", [-1, -1])), "once": String(t.get("once", "")),
-			"when": String(t.get("when", "")),
+			"when": String(t.get("when", "")), "fallen": bool(t.get("fallen", false)),  # a companion lying where he fell
 			# a container (kind "container"): its type picks the size (data/containers.csv), items "meat:4;potion:1;gold:10",
 			# the two flags are separate: locked (a key flag, or a rogue's pick) and trapped (a rogue's disarm, or it springs)
 			"type": String(t.get("type", "chest")), "items": String(t.get("items", "")), "locked": bool(t.get("locked", false)),

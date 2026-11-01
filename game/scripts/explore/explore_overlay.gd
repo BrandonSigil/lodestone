@@ -25,6 +25,7 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	var use: Dictionary = scene.nearest_thing() if lead != null and scene.walking() else {}  # the one F uses gets the F
 	board.glow = scene.lit_doors()  # doors glow on the board, under the pieces
+	board.focus = {use.cell: true} if not use.is_empty() and board.fog.get(use.cell, 0) == 2 else {}  # the one F uses lights up
 	var figs := {}  # people waiting here draw with the board's pieces, in depth order (not over the hero)
 	for t: Dictionary in scene.things:
 		if t.done or not scene.shown(t):
@@ -35,13 +36,13 @@ func _draw() -> void:
 			continue
 		var p := board.cell_top(c)
 		var dim := state == 1
-		_thing(String(t.kind), p, dim)
+		_thing(String(t.kind), p, dim, not dim and use.get("id") == t.id and use.cell == t.cell)
 		if String(t.kind) == "companion":
 			# a companion stands at home while benched ([USER] pc-10: walk up to invite them)
 			# (recruit_<id>: the playtest line-up in the square, 2026-10-31: everyone with art waits there)
-			var who := String(t.get("event", "")).trim_prefix("companion_").trim_prefix("recruit_")
+			var who := String(t.get("event", "")).trim_prefix("companion_").trim_prefix("recruit_").trim_prefix("rescue_")
 			if who != "" and not Game.in_party(who):
-				figs[c] = _figure.bind(StringName(who), dim, _time)
+				figs[c] = _figure.bind(StringName(who), dim, _time, bool(t.get("fallen", false)))
 		elif String(t.kind) == "dog":
 			figs[c] = _figure.bind(&"dog", dim, _time)  # the dog waiting in his house: Doggo's own sprite (backlog X1)
 		if dim or lead == null or not scene.walking():
@@ -57,36 +58,56 @@ func _draw() -> void:
 			continue
 		var hovered := board.hover == c
 		if near or hovered:
-			# The interact icon: a bobbing bubble with a "!" over anything the party can use.
-			var top := p + Vector2(0, -58 + sin(_time * 4.0) * 3.0)
-			draw_circle(top + Vector2(2, 2), 12.0, Color(0, 0, 0, 0.35))
-			draw_circle(top, 12.0, ICON)
-			draw_arc(top, 12.0, 0, TAU, 24, INK, 2.0, true)
-			draw_colored_polygon(PackedVector2Array([top + Vector2(-4, 10), top + Vector2(4, 10), top + Vector2(0, 17)]), ICON)
-			draw_string(font, top + Vector2(-12, 6), "!", HORIZONTAL_ALIGNMENT_CENTER, 24, 18, INK)
-			if near and use.get("id") == t.id and use.cell == t.cell:
-				draw_string_outline(font, top + Vector2(-30, -16), "F", HORIZONTAL_ALIGNMENT_CENTER, 60, 12, 3, Color(0, 0, 0, 0.8))
-				draw_string(font, top + Vector2(-30, -16), "F", HORIZONTAL_ALIGNMENT_CENTER, 60, 12, ICON)
+			# The interact icon: a bobbing bubble with a "!" over anything the party can use. The one F would use stands
+			# out ([USER] 2026-11-01 "Things need highlight when youre about to interact with them"): bigger, ringed in
+			# light, the F key beside it; the others step back while it is chosen.
+			var chosen: bool = near and use.get("id") == t.id and use.cell == t.cell
+			var k := 1.3 if chosen else 1.0
+			var fade := 1.0 if chosen or use.is_empty() else 0.5
+			var top := p + Vector2(0, (-58 + sin(_time * 4.0) * 3.0) * (1.08 if chosen else 1.0))
+			if chosen:
+				var pulse := 0.6 + 0.4 * sin(_time * 5.0)
+				draw_circle(top, 12.0 * k + 6.0, Color(1.0, 0.97, 0.82, 0.25 * pulse))
+				draw_arc(top, 12.0 * k + 3.0, 0, TAU, 32, Color(1.0, 0.98, 0.9, 0.9 * pulse), 2.5, true)
+			draw_circle(top + Vector2(2, 2), 12.0 * k, Color(0, 0, 0, 0.35 * fade))
+			draw_circle(top, 12.0 * k, Color(ICON, fade))
+			draw_arc(top, 12.0 * k, 0, TAU, 24, Color(INK, fade), 2.0, true)
+			draw_colored_polygon(PackedVector2Array([top + Vector2(-4, 10) * k, top + Vector2(4, 10) * k, top + Vector2(0, 17) * k]), Color(ICON, fade))
+			draw_string(font, top + Vector2(-12, 6) * k, "!", HORIZONTAL_ALIGNMENT_CENTER, 24 * k, int(18 * k), Color(INK, fade))
+			if chosen:  # the key that uses it, on a small dark cap at the bubble's right
+				var cap := top + Vector2(12.0 * k + 12.0, -6.0)
+				draw_circle(cap, 10.0, Color(INK, 0.9))
+				draw_arc(cap, 10.0, 0, TAU, 20, ICON, 1.5, true)
+				draw_string(font, cap + Vector2(-10, 5), "F", HORIZONTAL_ALIGNMENT_CENTER, 20, 14, ICON)
 	board.figures = figs
 
 
 ## A companion standing on p: their own sprite (idle, facing the camera) when they have art, else the code figure.
-func _figure(ci: CanvasItem, p: Vector2, who: StringName, dim: bool, time: float) -> void:
+## fallen: lying on his side where the fight left him (Bushberry after the ogre, [USER] 2026-11-01), still, a little grey.
+func _figure(ci: CanvasItem, p: Vector2, who: StringName, dim: bool, time: float, fallen := false) -> void:
 	var d: CharacterDef = Db.character(who)
 	var art_id: StringName = d.sprite_id() if d != null else who
-	var f := CharacterArt.frame(art_id, "idle", "se", time) if CharacterArt.has_art(art_id) else {}
+	var f := CharacterArt.frame(art_id, "idle", "se", 0.0 if fallen else time) if CharacterArt.has_art(art_id) else {}
+	var turn := FALLEN_TURN if fallen else 0.0
 	if f.is_empty():
-		PlaceholderFigure.draw(ci, p, 26.0, who, 0, "idle", time, false, Color(0.4, 0.7, 1.0), dim)
+		ci.draw_set_transform(p, turn, Vector2.ONE)
+		PlaceholderFigure.draw(ci, Vector2.ZERO, 26.0, who, 0, "idle", 0.0 if fallen else time, false, Color(0.4, 0.7, 1.0), dim)
+		ci.draw_set_transform(Vector2.ZERO)
 		return
-	Pawn.ellipse(ci, p + Vector2(0, 2), 15.0, 5.0, Color(0, 0, 0, 0.25))
+	Pawn.ellipse(ci, p + Vector2(0, 2), 26.0 if fallen else 15.0, 6.0 if fallen else 5.0, Color(0, 0, 0, 0.25))
 	var s: float = f.scale
-	ci.draw_set_transform(p, 0.0, Vector2(-s if f.flip else s, s))
-	ci.draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, Color(0.55, 0.55, 0.55) if dim else Color.WHITE)
+	var lie := Vector2(f.anchor.y * s * 0.5, -4.0) if fallen else Vector2.ZERO  # head left, body centred on his cell
+	ci.draw_set_transform(p + lie, turn, Vector2(-s if f.flip else s, s))
+	var tone := Color(0.55, 0.55, 0.55) if dim else (Color(0.78, 0.78, 0.8) if fallen else Color.WHITE)
+	ci.draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, tone)
 	ci.draw_set_transform(Vector2.ZERO)
 
 
-func _thing(kind: String, p: Vector2, dim: bool) -> void:
-	var k := 0.55 if dim else 1.0
+const FALLEN_TURN := -PI * 0.5  ## a fallen companion lies on his side: the standing figure turned a quarter
+
+
+func _thing(kind: String, p: Vector2, dim: bool, lit := false) -> void:
+	var k := 0.55 if dim else (1.25 + 0.1 * sin(_time * 5.0) if lit else 1.0)  # the one F would use lifts and breathes
 	match kind:
 		"chest", "container":
 			_box(p + Vector2(0, 2), 11.0, 10.0, Color(0.62, 0.42, 0.24) * k)

@@ -39,14 +39,36 @@ func run(s: Node, _frames: int, _step: String) -> void:
 				b._play(ev)
 			b._select(bush)
 		return
-	if _step == "prince" and _frames == 4:  # the Lich Prince with the hero and Doggo
+	if (_step == "prince" or _step == "nepo") and _frames == 4:  # the Lich Prince with the hero and Doggo
 		s.setup.party = [{"id": "lich_prince", "cell": s.setup.party[0].cell}, {"id": "lead", "cell": s.setup.party[1].cell},
 			{"id": "dog", "cell": s.setup.party[2].cell}]
 	if _step == "prince" and _frames == 12:  # his skills shown
 		var pb: Battle = s.battle
 		for o: CombatUnit in pb.units:
-			if o.team == 0 and o.traits.has(&"hoarfrost"):
+			if o.team == 0 and String(o.figure) == "lich_prince":
 				pb._select(o)
+		return
+	if _step == "nepo" and _frames == 12:  # NEPO BABY: the hand rises among the foes (a clip: record from here)
+		var nb: Battle = s.battle
+		var prince: CombatUnit = null
+		var foe: CombatUnit = null
+		for o: CombatUnit in nb.units:
+			if o.team == 0 and String(o.figure) == "lich_prince":
+				prince = o
+			elif o.team == 1 and o.alive() and foe == null:
+				foe = o
+		if prince != null and foe != null:
+			var at := foe.cell  # an empty tile beside the foe, so the hand shows
+			for d in [Vector2i(-1, 0), Vector2i(0, -1), Vector2i(0, 1), Vector2i(1, 0)]:
+				if nb.grid.passable(foe.cell + d) and CombatRules.occupant(nb.units, foe.cell + d) == null:
+					at = foe.cell + d
+					break
+			var stand := at + Vector2i(-2, 0) if nb.grid.passable(at + Vector2i(-2, 0)) else prince.cell
+			prince.place(stand, nb.grid.height_at(stand))
+			prince.res = prince.res_max
+			for ev in CombatRules.resolve(RandomNumberGenerator.new(), nb.grid, prince, Db.ability("nepo_baby"), at, nb.units):
+				nb._play(ev)
+			nb._select(prince)
 		return
 	if (_step == "bark" or _step == "amber") and _frames == 4:  # Doggo and Amber in the party
 		s.setup.party = [{"id": "dog", "cell": s.setup.party[0].cell}, {"id": "fire_mage", "cell": s.setup.party[1].cell},

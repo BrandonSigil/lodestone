@@ -49,6 +49,7 @@ const WINDOW_PAD := 34.0  ## from a window's edge to its grids, clear of the fra
 const WINDOW_TITLE := 46.0  ## room for a window's title plate
 var notes: Array[Dictionary] = []  ## lines of text in a window: {"text", "at" (top-left), "width"}
 const NOTE_LINE := 24.0
+var gold_note := {}  ## in windows: the party's gold under the pack, kept current when coins come over (one of `notes`)
 var flash_at := Vector2(-1, -1)  ## where the flash line goes in windows; unset, it sits under everything
 
 

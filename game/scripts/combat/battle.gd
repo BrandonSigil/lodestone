@@ -262,8 +262,8 @@ func _enemy_phase() -> void:
 	for e: CombatUnit in units:
 		if e.team != 1 or not e.alive() or e.done() or state == S.OVER:  # done: called this phase, acts next
 			continue
-		if e.has_status(CombatRules.STATUS_SLEEP):
-			board.float_text(e.cell, Txt.t("TAG_SLEEP"), Color(0.75, 0.85, 1.0))
+		if e.has_status(CombatRules.STATUS_SLEEP) or e.has_status(CombatRules.STATUS_FROZEN):
+			board.float_text(e.cell, Txt.t("TAG_SLEEP" if e.has_status(CombatRules.STATUS_SLEEP) else "TAG_FROZEN"), Color(0.75, 0.85, 1.0))
 			continue
 		await _ai_turn(e)
 		if _check_end():
@@ -323,7 +323,7 @@ func _ai_turn(u: CombatUnit) -> void:
 		await board.animate_move(u, plan.path)
 		u.place(plan.move, grid.height_at(plan.move))
 		await _spot(u)
-		for ev in CombatRules.hoarfrost(u, units):  # ended its move by the Lich Prince
+		for ev in CombatRules.hand_chill(grid, u, units):  # ended its move by the Lich Prince's hand (NEPO BABY)
 			await _play(ev)
 	u.move_spent += int(plan.cost)
 	if not stop.is_empty():

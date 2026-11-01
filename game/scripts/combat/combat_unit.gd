@@ -84,6 +84,7 @@ var poison_dmg := 0  ## HP a poison on it takes each phase, when its poisoner's 
 var ward_hits := 0  ## hits a WARD on it still blocks
 var branch_soften := 0  ## BRANCH ARMOR on it: how much the next hit loses (the caster's number, upgrades in)
 var branch_thorns := 0  ## and what the piece that hits it takes
+var ice_freeze := 0  ## ICE ARMOR on it: % chance a foe that hits it is frozen (the caster's number, upgrades in)
 var watch_left := 0  ## watch shots a readied OVERWATCH still has (an upgrade gives a second)
 var cmd_bonus := 0  ## damage a COMMAND adds to this piece's hits until its phase is over
 var free_hitting := false  ## true while it takes the free hit on a piece walking away from a guard

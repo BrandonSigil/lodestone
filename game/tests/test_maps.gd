@@ -1001,13 +1001,18 @@ func test_forest_captors() -> void:
 	for g: Dictionary in d.groups:
 		if g.id == "forest_ogre":
 			ogre = g
-	ok(not ogre.is_empty() and bool(ogre.get("elite", false)), "an elite ogre group holds Bushberry")
-	ok(String(ogre.get("loot", "")).contains("rescue:bushberry"), "beating it frees him")
-	var captive := false
+	ok(not ogre.is_empty() and bool(ogre.get("elite", false)), "an elite ogre group")
+	ok((ogre.units as Array).any(func(u: Dictionary) -> bool: return String(u.get("char", "")) == "bushberry"),
+		"Bushberry fights on the ogre's side ([USER] 2026-11-01)")
+	ok(String(ogre.get("loot", "")).contains("unlock:bushberry_down"), "beating it leaves him fallen on the map")
+	var fallen := {}
 	for t: Dictionary in d.things:
-		if t.id == "captive_bushberry" and String(t.get("once", "")) == "rescued_bushberry":
-			captive = true
-	ok(captive, "the captive shows until he is freed")
+		if t.id == "captive_bushberry":
+			fallen = t
+	ok(String(fallen.get("once", "")) == "rescued_bushberry" and String(fallen.get("when", "")) == "bushberry_down" and bool(fallen.get("fallen", false)),
+		"he lies there after the fight until he is helped up")
+	var ev: Dictionary = Db.explore_events.get(String(fallen.get("event", "")), {})
+	ok(not ev.is_empty() and String(ev.options[0].win) == "rescue:bushberry", "helping him up frees him (joins, or runs home)")
 
 
 func test_farmland_amber() -> void:
@@ -1020,12 +1025,14 @@ func test_farmland_amber() -> void:
 	eq(String(ids.amber_log.event), "companion_fire_mage", "the log draws Amber while she sleeps")
 	var evs: Dictionary = Db.explore_events
 	ok(evs.has("amber_fire") and evs.has("companion_fire_mage"), "both events exist")
-	var have := {"items": {"wood": 1}, "flags": [], "party": []}
+	var have := {"items": {"wood": 2}, "flags": [], "party": []}
 	var fire: Dictionary = evs.amber_fire
-	ok(ExploreRules.need_met(fire.options[0].need, [], have), "the first wood goes on")
-	ok(not ExploreRules.need_met(fire.options[1].need, [], have), "the second waits for the first")
-	have.flags = ["amber_w1", "amber_w2"]
-	ok(ExploreRules.need_met(fire.options[2].need, [], have), "the third wood lights her up")
+	eq(String(fire.options[0].key), "OPT_FEED_FLAME", "one action: Feed the flame ([USER] 2026-11-01)")
+	ok(not ExploreRules.need_met(fire.options[0].need, [], have), "two wood is not enough")
+	eq(ExploreRules.options_short(fire, [], have).size(), 1, "Feed the flame shows greyed while the pack is short of wood")
+	have.items.wood = 3
+	ok(ExploreRules.need_met(fire.options[0].need, [], have), "three wood feeds the flame")
+	ok(String(fire.options[0].win).contains("wood:-3") and String(fire.options[0].win).contains("unlock:amber_fed"), "it costs Wood x3 and wakes her")
 	var sit: Dictionary = evs.companion_fire_mage
 	ok(not ExploreRules.need_met(sit.options[0].need, [], have), "no sitting before the fire is fed")
 	have.flags = ["amber_fed"]
