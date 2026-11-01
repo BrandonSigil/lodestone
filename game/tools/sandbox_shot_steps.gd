@@ -48,6 +48,14 @@ func run(s: Node, _frames: int, _step: String) -> void:
 			if o.team == 0 and String(o.figure) == "lich_prince":
 				pb._select(o)
 		return
+	if _step == "movetiles" and _frames == 12:  # MOVE picked: the blue tiles round the party (they draw under the pieces)
+		var mb: Battle = s.battle
+		for o: CombatUnit in mb.units:
+			if o.team == 0:
+				mb._select(o)
+				mb._begin_move()
+				break
+		return
 	if _step == "hover" and _frames == 12:  # hovering MOVE before picking it: how far the piece can go
 		var hb: Battle = s.battle
 		for o: CombatUnit in hb.units:

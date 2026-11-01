@@ -2842,39 +2842,42 @@ func _draw_falls(c: Vector2i) -> void:
 			_marker_down(sheet.b, h, foot)
 
 
-## The cursor, highlights, danger and skill area on the cell's top (LIVE slab).
+## The cursor, highlights, danger and skill area on the cell's top (LIVE slab). Every one lies under the pieces
+## ([USER] 2026-11-01 "Highlights should be under the players not on top of them"): where a piece drawn before this tile
+## (standing behind it, a step lower) overlaps it, the fill and outline leave the piece's body clear.
 func _draw_over(c: Vector2i) -> void:
 	var top := _diamond(c, _surf(c))
+	var holes := _over_holes(c, top)  # pieces already drawn this tile would cover: the highlight goes under them
 	var ring := PackedVector2Array([top[0], top[1], top[2], top[3], top[0]])
 	if danger.has(c):
-		_ci.draw_colored_polygon(top, Color(1.0, 0.55, 0.15, 0.22))
+		_fill_under(holes, top, Color(1.0, 0.55, 0.15, 0.22))
 	if highlights.has(c):
-		_ci.draw_colored_polygon(top, highlights[c])
+		_fill_under(holes, top, highlights[c])
 		if BattleArt.top(grid.terrain_at(c), grid.zone_at(c)) != null:
 			# Painted tops are busier than graybox, so highlighted cells also get a solid rim.
 			var rim: Color = highlights[c]
-			_ci.draw_polyline(ring, Color(rim, 0.95), 2.0, true)
+			_rim_under(holes, ring, Color(rim, 0.95), 2.0, true)
 	if area.has(c):
-		_ci.draw_colored_polygon(top, Color(1.0, 0.4, 0.2, 0.45))
+		_fill_under(holes, top, Color(1.0, 0.4, 0.2, 0.45))
 	if c == hover:
-		_ci.draw_colored_polygon(top, Color(1, 1, 1, 0.18))
+		_fill_under(holes, top, Color(1, 1, 1, 0.18))
 	if danger.has(c):
-		_ci.draw_polyline(ring, Color(1.0, 0.5, 0.1, 0.7), 1.5, true)
+		_rim_under(holes, ring, Color(1.0, 0.5, 0.1, 0.7), 1.5, true)
 	if reach.has(c):  # the hovered action's range: the danger zone's look in the player's blue, foes marked
 		var foe: bool = int(reach[c]) == 2
-		_ci.draw_colored_polygon(top, Color(REACH, 0.42 if foe else 0.22))
-		_ci.draw_polyline(ring, Color(REACH, 0.95 if foe else 0.7), 2.5 if foe else 1.5, true)
+		_fill_under(holes, top, Color(REACH, 0.42 if foe else 0.22))
+		_rim_under(holes, ring, Color(REACH, 0.95 if foe else 0.7), 2.5 if foe else 1.5, true)
 	if marks.has(c):  # a boss's big move lands here ([USER] design-boss-warning): its own colour, the phases left
 		var pulse := 0.8 + 0.2 * sin(_time * 4.0)
-		_ci.draw_colored_polygon(top, Color(MARK, 0.32 * pulse))
-		_ci.draw_polyline(ring, Color(MARK, 0.95), 2.5, true)
+		_fill_under(holes, top, Color(MARK, 0.32 * pulse))
+		_rim_under(holes, ring, Color(MARK, 0.95), 2.5, true)
 		var font := ThemeDB.fallback_font
 		var mid := (top[0] + top[2]) * 0.5
 		_ci.draw_string_outline(font, mid + Vector2(-20, 6), str(marks[c]), HORIZONTAL_ALIGNMENT_CENTER, 40, 16, 4, Color(0, 0, 0, 0.8))
 		_ci.draw_string(font, mid + Vector2(-20, 6), str(marks[c]), HORIZONTAL_ALIGNMENT_CENTER, 40, 16, Color(1, 0.9, 1))
 	if goal_cells.has(c):
-		_ci.draw_colored_polygon(top, Color(0.4, 0.95, 0.5, 0.18))
-		_ci.draw_polyline(ring, Color(0.45, 1.0, 0.55, 0.9), 2.0, true)
+		_fill_under(holes, top, Color(0.4, 0.95, 0.5, 0.18))
+		_rim_under(holes, ring, Color(0.45, 1.0, 0.55, 0.9), 2.0, true)
 	if glow.has(c) or focus.has(c):  # a door the party is close to ([USER] 2026-10-30: doors glow instead of a "!")
 		var pulse := (0.75 + 0.25 * sin(_time * 3.0)) * (FOCUS_BOOST if focus.has(c) else 1.0)
 		var mid := (top[0] + top[2]) * 0.5
@@ -2883,9 +2886,9 @@ func _draw_over(c: Vector2i) -> void:
 			var pool := PackedVector2Array()
 			for q in top:
 				pool.append(mid + (q - mid) * k)
-			_ci.draw_colored_polygon(pool, Color(GLOW, 0.16 * pulse))
-		_ci.draw_polyline(ring, Color(GLOW, 0.3 * pulse), 6.0, true)
-		_ci.draw_polyline(ring, Color(GLOW, 0.85 * pulse), 2.0, true)
+			_fill_under(holes, pool, Color(GLOW, 0.16 * pulse))
+		_rim_under(holes, ring, Color(GLOW, 0.3 * pulse), 6.0, true)
+		_rim_under(holes, ring, Color(GLOW, 0.85 * pulse), 2.0, true)
 	if grid.fields.has(c):
 		_draw_fields(c, top)
 	if guard_ring.has(c):
@@ -2893,7 +2896,57 @@ func _draw_over(c: Vector2i) -> void:
 		var mid := (top[0] + top[2]) * 0.5
 		for p in ring:
 			inner.append(mid + (p - mid) * 0.82)
-		_ci.draw_polyline(inner, Color(0.55, 0.8, 1.0, 0.9), 2.0, true)
+		_rim_under(holes, inner, Color(0.55, 0.8, 1.0, 0.9), 2.0, true)
+
+
+## Body boxes (screen) of pieces drawn before tile c whose body its top `top` overlaps.
+func _over_holes(c: Vector2i, top: PackedVector2Array) -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	var d := _depth_at(c)
+	var bound := Rect2(top[0], Vector2.ZERO)
+	for q in top:
+		bound = bound.expand(q)
+	for k: int in _units_by_depth:
+		if k >= d:
+			continue
+		for u: CombatUnit in _units_by_depth[k]:
+			var base := _unit_base(u)
+			var b := Rect2(base + Vector2(-17.0, -52.0), Vector2(34.0, 59.0))  # the body and its foot ring, snug
+			if b.intersects(bound):
+				out.append(b)
+	return out
+
+
+## A highlight fill with the holes' boxes cut out: the parts of `poly` left, right, above and below each box.
+func _fill_under(holes: Array[Rect2], poly: PackedVector2Array, col: Color) -> void:
+	var parts: Array = [poly]
+	for h: Rect2 in holes:
+		var big := 1.0e5
+		var strips := [Rect2(-big, -big, h.position.x + big, 2.0 * big), Rect2(h.end.x, -big, big, 2.0 * big),
+			Rect2(h.position.x, -big, h.size.x, h.position.y + big), Rect2(h.position.x, h.end.y, h.size.x, big)]
+		var next: Array = []
+		for pp: PackedVector2Array in parts:
+			for r: Rect2 in strips:
+				var box := PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)])
+				next.append_array(Geometry2D.intersect_polygons(pp, box))
+		parts = next
+	for pp: PackedVector2Array in parts:
+		if pp.size() >= 3:
+			_ci.draw_colored_polygon(pp, col)
+
+
+## A highlight outline with the stretches inside the holes' boxes left out.
+func _rim_under(holes: Array[Rect2], line: PackedVector2Array, col: Color, width := -1.0, aa := false) -> void:
+	var parts: Array = [line]
+	for h: Rect2 in holes:
+		var box := PackedVector2Array([h.position, Vector2(h.end.x, h.position.y), h.end, Vector2(h.position.x, h.end.y)])
+		var next: Array = []
+		for pl: PackedVector2Array in parts:
+			next.append_array(Geometry2D.clip_polyline_with_polygon(pl, box))
+		parts = next
+	for pl: PackedVector2Array in parts:
+		if pl.size() >= 2:
+			_ci.draw_polyline(pl, col, width, aa)
 
 
 ## Graybox marks for what abilities left on the ground: a trap's cross (the party's own only), caltrops' spikes,
