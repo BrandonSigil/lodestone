@@ -590,7 +590,9 @@ const RAMP_MAX := 12  ## the longest run, in cells
 const BRIDGE_MAX := 4  ## the widest gap a bridge spans, in cells
 
 
-static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
+## over_water: false keeps its bridges to dry gaps (a ravine, a dip); a river is crossed only where a road meets it
+## ([USER] 2026-11-01 battle-maps plan).
+static func link(grid: CombatGrid, seed_value: int, jump := 1, over_water := true) -> int:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var placed := 0
@@ -633,6 +635,8 @@ static func link(grid: CombatGrid, seed_value: int, jump := 1) -> int:
 							for j in range(1, k):
 								var g := run[j]
 								if grid.terrain_at(g) != T.WATER and grid.height_at(g) > mini(hp, ht) - 1:
+									gap = false
+								if grid.terrain_at(g) == T.WATER and not over_water:
 									gap = false
 							if gap:
 								var bc := float(k) * 0.7 + rng.randf() * 0.3
@@ -730,6 +734,35 @@ static func bridge_clear(grid: CombatGrid, a: Vector2i, b: Vector2i) -> int:
 	return n
 
 
+## A stair left with nothing to climb to or step from (a later pass took its landing: a pillar, the seal) becomes plain
+## ground at its own height. Returns how many.
+static func flatten_dead_stairs(grid: CombatGrid) -> int:
+	var n := 0
+	for y in grid.h:
+		for x in grid.w:
+			var c := Vector2i(x, y)
+			if grid.terrain_at(c) != T.STAIRS:
+				continue
+			var up := false
+			var entry := false
+			for d: Vector2i in CombatRules.DIRS:
+				var q := c + d
+				if grid.has_deck(q):
+					var dh := int(grid.decks[CombatGrid.ground(q)].h)
+					if dh <= grid.height_at(c) and dh >= grid.height_at(c) - 1:
+						entry = true
+				if not grid.passable(q) or grid.terrain_at(q) == T.WATER:
+					continue
+				if grid.height_at(q) == grid.height_at(c) + 1:
+					up = true
+				elif grid.height_at(q) <= grid.height_at(c) and grid.height_at(q) >= grid.height_at(c) - 1:
+					entry = true
+			if not (up and entry):
+				grid.set_terrain(c, T.GRASS)
+				n += 1
+	return n
+
+
 ## Steps from `from` to every cell it can walk to (stairs help, as in `reach`).
 static func walk_steps(grid: CombatGrid, from: Vector2i, jump := 1) -> Dictionary:
 	var dist := {from: 0}
@@ -810,26 +843,7 @@ static func cross_river(grid: CombatGrid, count := 2) -> int:
 			break
 		n += _lay_crossing(grid, best)
 		laid.append((best[0] + best[1]) / 2)
-	# Water blocks the way in fights ([USER] 2026-11-01), so banks facing each other near the middle must not be a long
-	# walk apart: one that still is gets a crossing of its own.
-	for extra in CROSS_EXTRA:
-		var near: Array = []
-		var near_d := INF
-		for pair: Array in river_crossings(grid):
-			var mid := Vector2(pair[0] + pair[1]) * 0.5
-			var d := mid.distance_to(centre)
-			if d <= CROSS_NEAR and int(pair[2]) > CROSS_WALK and d < near_d:
-				near_d = d
-				near = pair
-		if near.is_empty():
-			break
-		n += _lay_crossing(grid, near)
-		laid.append((near[0] + near[1]) / 2)
 	return n
-
-
-const CROSS_NEAR := 6.0  ## banks within this of the middle must cross within CROSS_WALK steps
-const CROSS_EXTRA := 2  ## at most this many extra crossings for them (a bridge, or a ford where the banks differ)
 
 
 ## A bridge (banks within a level) or a ford (stepping stones, a level a cell) between a and b. Returns the cells it laid.

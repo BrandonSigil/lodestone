@@ -9,6 +9,8 @@ extends RefCounted
 ##   scale    props make sense against the hero: doors taller than him, buildings big enough (prop_scale_check.py)
 ##   deploy   room to start every fight: the party fits round the leader where it meets each group
 ##   sight    hidden spots: things, group spots and the start a tree, tall prop or cliff in front hides from the camera
+##   crossings one bridge and one ford at most per map, 8 apart; every bridge has road at both landings (battle-maps plan)
+##   route    the land walk between the two starts is at most route_max times their straight gap (a flank, not a maze)
 ## Thresholds: data/map_qa.csv. Prop sizes: data/prop_scale.csv. How it shows in the maker: docs/systems/map-qa.md.
 ## Each check: {"id", "name", "level": "ok" | "warn" | "fail", "summary", "stats": {}, "cells": [painted cells],
 ## "problems": [{"cell": Vector2i, "text"}]}.
@@ -16,9 +18,9 @@ extends RefCounted
 const T := CombatGrid.T
 const QA_CSV := "res://data/map_qa.csv"
 const SCALE_CSV := "res://data/prop_scale.csv"
-const ORDER := ["reach", "box", "stairs", "scale", "deploy", "sight"]
+const ORDER := ["reach", "box", "stairs", "scale", "deploy", "sight", "crossings", "route"]
 const NAMES := {"reach": "Reachability", "box": "Box score", "stairs": "Stairs to nowhere", "scale": "Scale against the hero",
-	"deploy": "Deploy room", "sight": "Hidden spots"}
+	"deploy": "Deploy room", "sight": "Hidden spots", "crossings": "Crossings", "route": "Route length"}
 const N4: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 const PROBLEM_MAX := 40  ## rows listed per check; every problem cell is still painted
 
@@ -52,6 +54,8 @@ static func run(grid: CombatGrid, kind: String, data: Dictionary) -> Array[Dicti
 	out.append(check_scale(g))
 	out.append(check_deploy(g, kind, data, reached))
 	out.append(check_sight(g, kind, data, reached))
+	out.append(check_crossings(g))
+	out.append(check_route(g, kind, data))
 	for c in out:  # paint and list ground cells (a deck place is painted on its cell)
 		var cells: Array[Vector2i] = []
 		var seen := {}
@@ -226,6 +230,124 @@ static func check_sight(g: CombatGrid, kind: String, data: Dictionary, reached: 
 
 
 const SIGHT_SKIP := ["enter", "door", "rubble", "window", "hidden", "exit"]  ## things that sit in walls or are meant to be found
+
+
+# --- crossings and route ([USER] 2026-11-01 battle-maps plan: "why would there be like 3 bridges all next to each other") --
+
+## The bridges (groups of bridge decks over water) and fords (stepping-stone cells with water on both sides along an
+## axis), each a list of cells.
+static func crossings(g: CombatGrid) -> Dictionary:
+	var bridge_cells := {}
+	for c: Vector2i in g.decks:  # bridges over water (a deck over a dry dip is not a river crossing)
+		if bool((g.decks[c] as Dictionary).get("bridge", false)) and g.terrain_at(c) == T.WATER:
+			bridge_cells[c] = true
+	var ford_cells := {}
+	for y in g.h:
+		for x in g.w:
+			var c := Vector2i(x, y)
+			if g.terrain_at(c) != T.STONE:
+				continue
+			for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+				if g.in_bounds(c + d) and g.in_bounds(c - d) and g.terrain_at(c + d) == T.WATER and g.terrain_at(c - d) == T.WATER:
+					ford_cells[c] = true
+	return {"bridges": _groups(bridge_cells), "fords": _groups(ford_cells)}
+
+
+static func _groups(cells: Dictionary) -> Array:
+	var out: Array = []
+	var seen := {}
+	for c: Vector2i in cells:
+		if seen.has(c):
+			continue
+		var group: Array[Vector2i] = []
+		var todo: Array[Vector2i] = [c]
+		seen[c] = true
+		while not todo.is_empty():
+			var q: Vector2i = todo.pop_back()
+			group.append(q)
+			for d in N4:
+				if cells.has(q + d) and not seen.has(q + d):
+					seen[q + d] = true
+					todo.append(q + d)
+		out.append(group)
+	return out
+
+
+static func check_crossings(g: CombatGrid) -> Dictionary:
+	var c := _check("crossings")
+	var got := crossings(g)
+	var bridges: Array = got.bridges
+	var fords: Array = got.fords
+	if bridges.size() > 1:
+		for b: Array in bridges:
+			c.cells.append_array(b)
+		_problem(c, bridges[1][0], "%d bridges: a map has one at most" % bridges.size())
+	if fords.size() > 1:
+		for f: Array in fords:
+			c.cells.append_array(f)
+		_problem(c, fords[1][0], "%d fords: a map has one at most" % fords.size())
+	if bridges.size() == 1 and fords.size() == 1 and Vector2(bridges[0][0]).distance_to(Vector2(fords[0][0])) < cfg("crossing_apart"):
+		_problem(c, fords[0][0], "the ford is within %d cells of the bridge" % int(cfg("crossing_apart")))
+	for b: Array in bridges:  # a bridge exists because a road meets the river: road near both landings
+		var lo: Vector2i = b[0]
+		var hi: Vector2i = b[0]
+		for q: Vector2i in b:
+			if q.x + q.y < lo.x + lo.y:
+				lo = q
+			if q.x + q.y > hi.x + hi.y:
+				hi = q
+		var along := Vector2i(1, 0) if hi.x != lo.x else Vector2i(0, 1)
+		for end in [lo - along, hi + along]:
+			if not _road_near(g, end, 2):
+				c.cells.append(end)
+				_problem(c, end, "a bridge landing with no road near it")
+	c.stats = {"bridges": bridges.size(), "fords": fords.size()}
+	c.level = "warn" if not (c.problems as Array).is_empty() else "ok"
+	c.summary = "%d bridge(s), %d ford(s)" % [bridges.size(), fords.size()]
+	return c
+
+
+static func _road_near(g: CombatGrid, c: Vector2i, r: int) -> bool:
+	for dy in range(-r, r + 1):
+		for dx in range(-r, r + 1):
+			if g.in_bounds(c + Vector2i(dx, dy)) and g.terrain_at(c + Vector2i(dx, dy)) == T.ROAD:
+				return true
+	return false
+
+
+## The land walk from the party's start to the nearest foe's, against the straight gap between them (battle maps).
+static func check_route(g: CombatGrid, kind: String, data: Dictionary) -> Dictionary:
+	var c := _check("route")
+	var party: Array[Vector2i] = []
+	var foes: Array[Vector2i] = []
+	if kind == "explore":
+		c.summary = "explore maps: not checked"
+		return c
+	for e in data.get("party", []):
+		party.append(_cell(e))
+	for e in data.get("enemies", []):
+		foes.append(_cell(e))
+	if party.is_empty() or foes.is_empty():
+		c.summary = "no starts to measure"
+		return c
+	var steps := MapOps.walk_steps(g, party[0], int(cfg("jump")))
+	var walk := 9999
+	var gap := 9999
+	for f in foes:
+		gap = mini(gap, absi(f.x - party[0].x) + absi(f.y - party[0].y))
+		walk = mini(walk, int(steps.get(f, 9999)))
+	c.stats = {"walk": walk, "gap": gap}
+	if walk >= 9999:
+		c.level = "fail"
+		c.summary = "no land route from the party to the foes"
+		_problem(c, party[0], "no land route to the foes")
+		return c
+	var k := float(walk) / maxf(1.0, float(gap))
+	c.level = "warn" if k > cfg("route_max") else "ok"
+	c.summary = "the walk is %.1f times the straight gap (%d steps for %d)" % [k, walk, gap]
+	if c.level == "warn":
+		_problem(c, party[0], "a long way round: %d steps for a gap of %d" % [walk, gap])
+	return c
 
 
 # --- reachability --------------------------------------------------------------------

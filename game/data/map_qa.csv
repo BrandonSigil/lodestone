@@ -16,3 +16,5 @@ width_min,0.5,a sprite's drawn width over its footprint's screen width: at least
 width_max,1.6,and at most
 sight_cliff,2,"hidden spots: ground this many levels above a spot, in front of it, hides it ([USER] 2026-11-01 pm-occlusion)"
 sight_tall,0.9,"hidden spots: a see-through prop at least this tall (prop height units), in front of a spot, hides it"
+crossing_apart,8,"crossings: a ford at least this many cells from the bridge (battle-maps plan, [USER] 2026-11-01)"
+route_max,1.6,"route length: the land walk between the starts at most this many times their straight gap"

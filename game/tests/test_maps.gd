@@ -405,22 +405,28 @@ func test_valley_every_shelf_has_a_stair_up() -> void:
 
 ## A river that splits the map is crossable near the middle ([USER] 2026-10-30): where two banks face each other
 ## within 6 cells of the centre, the walk between them is short (12 steps or fewer) for the nearest pair.
-func test_valley_river_has_a_bridge_near_the_middle() -> void:
-	var checked := 0
-	for s in 80:
-		var g := MapGen.valley(s, MapGen.FIGHT_W, MapGen.FIGHT_H, "snow")
-		var centre := Vector2(g.w - 1, g.h - 1) * 0.5
-		var best := 99
-		var best_d := INF
-		for pair: Array in MapOps.river_crossings(g):
-			var d := (Vector2(pair[0] + pair[1]) * 0.5).distance_to(centre)
-			if d <= 6.0 and d < best_d:
-				best_d = d
-				best = int(pair[2])
-		if best_d < INF:
-			checked += 1
-			ok(best <= MapOps.CROSS_WALK, "seed %d: the banks nearest the middle are %d steps apart" % [s, best])
-	ok(checked >= 20, "enough seeds had a river near the middle to check (%d)" % checked)
+func test_valley_river_has_a_job() -> void:
+	# [USER] 2026-11-01 battle-maps plan, step 1: the road first, one bridge where it meets a crossing river, none
+	# otherwise; a flank river (the default) never splits the starts. Seeds that fail are listed.
+	var bad: Array[String] = []
+	for s in 40:
+		for job in MapGen.RIVER_JOBS:
+			var g := MapGen.valley(s, MapGen.FIGHT_W, MapGen.FIGHT_H, "snow", job)
+			var doc := MapDoc.create("battle", "test_tmp", g, "snow")
+			var res := MapQA.run(doc.grid, "battle", doc.data)
+			var by := {}
+			for c in res:
+				by[c.id] = c
+			var got := MapQA.crossings(g)
+			if (got.bridges as Array).size() > 1 or not (got.fords as Array).is_empty():
+				bad.append("%s %d: %d bridges, %d fords" % [job, s, (got.bridges as Array).size(), (got.fords as Array).size()])
+			if job == "flank" and not (got.bridges as Array).is_empty():
+				bad.append("flank %d: a bridge" % s)
+			if by.route.level == "fail":
+				bad.append("%s %d: %s" % [job, s, by.route.summary])
+			if by.crossings.level != "ok":
+				bad.append("%s %d: %s" % [job, s, by.crossings.problems])
+	eq(bad, [] as Array[String], "every seed keeps to one bridge on a road, and a land route between the starts")
 
 
 ## The flat view is only a second view of the same map: same tools, same grid, and the tool stays put on the switch.

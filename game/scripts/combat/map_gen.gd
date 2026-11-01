@@ -16,7 +16,13 @@ const FIGHT_W := 21
 const FIGHT_H := 18
 
 
-static func valley(seed_value: int, w := FIGHT_W, h := FIGHT_H, look_id := "alpine") -> CombatGrid:
+## [USER] 2026-11-01 battle-maps plan, step 1 (docs/design/battle-maps-research.md): the river has a job and the road
+## comes first. A "flank" river (the default) runs along one side, parallel to the road, so it never splits the two
+## starts; a "crossing" river cuts between them and the road crosses it on exactly one bridge, laid where the road
+## meets the water. No other crossings: the generator never invents a ford or a second bridge.
+const RIVER_JOBS := ["flank", "crossing"]
+
+static func valley(seed_value: int, w := FIGHT_W, h := FIGHT_H, look_id := "alpine", river_job := "flank") -> CombatGrid:
 	var g := CombatGrid.flat(w, h)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
@@ -24,15 +30,93 @@ static func valley(seed_value: int, w := FIGHT_W, h := FIGHT_H, look_id := "alpi
 	MapOps.roughen(g, seed_value + 3, 0.55)
 	MapOps.tidy(g)
 	MapOps.keep_largest(g)
-	_river(g, rng)
+	if river_job == "crossing":
+		_river(g, rng)
+	else:
+		_river_flank(g, rng)
 	_dress(g, seed_value, rng)
-	MapOps.link(g, seed_value + 5)
-	MapOps.cross_river(g)
+	MapOps.link(g, seed_value + 5, 1, false)  # stairs, and bridges over dry gaps only: the river's one bridge comes next
+	if river_job == "crossing":
+		_road_bridge(g)  # the one bridge, where the road's line meets the river
 	MapOps.pillars(g, seed_value + 9, clampi(w * h / 160, 2, 4))
 	MapOps.seal_unreachable(g)
 	_roads(g, rng)
+	MapOps.flatten_dead_stairs(g)
 	g.look = {"id": look_id}
 	return g
+
+
+## A flank river: from the left edge to the right one inside a band of rows along one side (the back or the front),
+## so it runs beside the road between the starts and never cuts across it. Straight for two cells before a turn (V9),
+## falls of two levels (V11).
+static func _river_flank(g: CombatGrid, rng: RandomNumberGenerator) -> void:
+	var front := rng.randf() < 0.5
+	var lo := 1 if not front else maxi(1, g.h - 4)
+	var hi := mini(g.h - 2, lo + 2)
+	var c := Vector2i(0, rng.randi_range(lo, hi))
+	while c.x < g.w and not g.solid(c):
+		c.x += 1
+	if c.x >= g.w:
+		return
+	var path: Array[Vector2i] = [c]
+	var seen := {c: true}
+	var dir := Vector2i(1, 0)
+	var run := 0
+	for guard in g.w * 3:
+		var pick := Vector2i(-999, -999)
+		var pick_s := INF
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var nb := c + d
+			if seen.has(nb) or nb.y < lo or nb.y > hi:
+				continue
+			if not g.solid(nb):
+				if d.x > 0:
+					pick = nb
+					pick_s = -INF
+				continue
+			var s := g.height_at(nb) * 1.2 - d.x * 2.0 + rng.randf() * 1.4
+			if run < 2:
+				s += -4.0 if d == dir else 4.0
+			if s < pick_s:
+				pick_s = s
+				pick = nb
+		if pick.x == -999 or not g.solid(pick):
+			break
+		run = run + 1 if pick - c == dir else 1
+		dir = pick - c
+		path.append(pick)
+		seen[pick] = true
+		c = pick
+	MapOps.river(g, path, 1, 2 if rng.randf() < 0.5 else 1, 2)
+
+
+## A crossing river's one bridge, where the road would cross ([USER] 2026-11-01: "A bridge exists because a road meets a
+## river"): of the places two banks within a level face each other across the water, the one that makes the walk between
+## the two starts' ends shortest. None when the river does not split them (the road just goes round).
+static func _road_bridge(g: CombatGrid) -> void:
+	var ends := _road_ends(g)
+	if ends[0].x < 0 or ends[1].x < 0:
+		return
+	var d0 := MapOps.walk_steps(g, ends[0])
+	if d0.has(ends[1]):
+		return
+	var d1 := MapOps.walk_steps(g, ends[1])
+	var best: Array = []
+	var best_cost := INF
+	for pair: Array in MapOps.river_crossings(g):
+		if absi(g.height_at(pair[0]) - g.height_at(pair[1])) > 1:
+			continue
+		var a: Vector2i = pair[0]
+		var b: Vector2i = pair[1]
+		var k := absi(b.x - a.x) + absi(b.y - a.y)
+		for ab in [[a, b], [b, a]]:
+			if d0.has(ab[0]) and d1.has(ab[1]):
+				var cost := float(d0[ab[0]]) + float(d1[ab[1]]) + k
+				if cost < best_cost:
+					best_cost = cost
+					best = pair
+	if not best.is_empty():
+		MapOps.bridge_span(g, best[0], best[1])
 
 
 ## Terraces: low-frequency noise leaning high toward the far corner, cut into LEVELS, then a mode filter
@@ -146,18 +230,27 @@ static func _dress(g: CombatGrid, seed_value: int, rng: RandomNumberGenerator) -
 
 
 ## A road from the left side of the map to the right, the easiest walk between them.
-static func _roads(g: CombatGrid, rng: RandomNumberGenerator) -> void:
-	var a := Vector2i(-1, -1)
-	var b := Vector2i(-1, -1)
-	for y in g.h:
-		for x in g.w:
-			var c := Vector2i(x, y)
-			if not g.passable(c) or g.terrain_at(c) == CombatGrid.T.WATER:
-				continue
-			var side := y - x  # high = screen left at the starting view
-			if a.x < 0 or side > a.y - a.x:
-				a = c
-			if b.x < 0 or side < b.y - b.x:
-				b = c
-	if a.x >= 0 and b.x >= 0 and rng.randf() < 0.85:
-		MapOps.road(g, a, b)
+## The road between the two starts' sides (the party deploys on the low-x columns, the foes on the high-x ones): from the
+## middle-most open cell of the first column to that of the last, over the bridge if a crossing river has one.
+static func _roads(g: CombatGrid, _rng: RandomNumberGenerator) -> void:
+	var ends := _road_ends(g)
+	if ends[0].x >= 0 and ends[1].x >= 0:
+		MapOps.road(g, ends[0], ends[1])
+
+
+static func _road_ends(g: CombatGrid) -> Array[Vector2i]:
+	var ends: Array[Vector2i] = []
+	for xs in [range(g.w), range(g.w - 1, -1, -1)]:
+		var got := Vector2i(-1, -1)
+		for x in xs:
+			var rows := range(g.h)
+			rows.sort_custom(func(p: int, q: int) -> bool: return absf(p - (g.h - 1) * 0.5) < absf(q - (g.h - 1) * 0.5))
+			for y in rows:
+				var c := Vector2i(x, y)
+				if g.passable(c) and g.terrain_at(c) != CombatGrid.T.STAIRS:
+					got = c
+					break
+			if got.x >= 0:
+				break
+		ends.append(got)
+	return ends
