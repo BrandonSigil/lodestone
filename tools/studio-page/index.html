@@ -109,6 +109,9 @@ a.btn.present { color: var(--chat-ink); }
 .md a { color: var(--gem); }
 .md h4 { font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink); margin: 12px 0 4px; }
 .md h4:first-child { margin-top: 0; }
+.codeblock { position: relative; margin: 4px 0 10px; }
+.codeblock pre { margin: 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--leaf-soft); color: var(--ink); border: 1px solid var(--rule); border-radius: 8px; padding: 40px 14px 12px; max-height: 420px; overflow-y: auto; }
+.codeblock .btn { position: absolute; top: 6px; right: 6px; background: var(--sheet); }
 .shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
 .shot { margin: 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .shot button { padding: 0; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--paper); aspect-ratio: 16 / 10; display: block; width: 100%; }
@@ -980,9 +983,17 @@ function mdInline(s) {
     .replace(/(^|[\s(])[*_]([^*_\s][^*_]*?)[*_](?=[\s).,;:!?]|$)/g, "$1<em>$2</em>")
     .replace(/(https:\/\/[^\s<]+[^\s<.,;:!?)])/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
 }
+// A block fenced with ``` shows as code (monospace) with a Copy button: prompts for Picsart and the like
+// ([USER] 2026-11-01: "make the prompt code font and have a copy button from now on").
 function mdLite(t, lead = true) {
-  const out = []; let list = null, para = null;
+  const out = []; let list = null, para = null, code = null;
   for (const raw of String(t ?? "").split(/\n/)) {
+    if (code) {
+      if (/^\s*```/.test(raw)) { out.push(`<div class="codeblock"><button type="button" class="btn small" data-act="copy-code">Copy</button><pre><code>${esc(code.join("\n"))}</code></pre></div>`); code = null; }
+      else code.push(raw);
+      continue;
+    }
+    if (/^\s*```/.test(raw)) { code = []; list = null; para = null; continue; }
     const l = raw.trim(); let m;
     if (!l) { list = null; para = null; continue; }
     if ((m = l.match(/^#{1,4}\s+(.*)/))) { list = null; para = null; out.push(`<h4>${mdInline(m[1])}</h4>`); }
@@ -992,6 +1003,7 @@ function mdLite(t, lead = true) {
     else if (para) para.lines.push(mdInline(l));
     else { list = null; out.push(para = { lines: [mdInline(l)] }); }
   }
+  if (code) out.push(`<div class="codeblock"><button type="button" class="btn small" data-act="copy-code">Copy</button><pre><code>${esc(code.join("\n"))}</code></pre></div>`);
   return out.map((x, i) => typeof x === "string" ? x
     : x.items ? `<${x.tag}${x.start > 1 ? ` start="${x.start}"` : ""}>${x.items.map((li) => `<li>${li}</li>`).join("")}</${x.tag}>`
     : `<p${lead && i === 0 ? ' class="lead"' : ""}>${x.lines.join("<br>")}</p>`).join("");
@@ -1166,6 +1178,13 @@ document.addEventListener("click", async (ev) => {
       case "qa-launch": launchNow(); break;
       case "qa-launch-pm": requestLaunch(); break;
       case "closeqa": closeQa(); break;
+      case "copy-code": {
+        const pre = t.closest(".codeblock")?.querySelector("pre");
+        if (!pre) break;
+        try { await navigator.clipboard.writeText(pre.textContent); toast("Prompt copied"); }
+        catch { const r = document.createRange(); r.selectNodeContents(pre); getSelection().removeAllRanges(); getSelection().addRange(r); toast("Selected: press ⌘C"); }
+        break;
+      }
       case "qa-copy": {
         const txt = $("launch-cmd")?.textContent || "";
         try { await navigator.clipboard.writeText(txt); toast("Copied"); }
