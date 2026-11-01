@@ -3,14 +3,12 @@ town,forest_roads,60,1,2,0.1,forest
 town,pass,60,1,2,0.1,snow
 town,farmland,60,1,2,0.05,forest
 forest_roads,coastal_beach,60,1,2,0.1,forest
-forest_roads,pass,60,1,2,0.1,snow
 forest_roads,dwarven_mines,60,1,2,0.1,snow
 coastal_beach,frozen_dam,60,1,2,0.1,snow
 coastal_beach,dwarven_mines,60,1,2,0.1,snow
 frozen_dam,dwarven_mines,60,1,2,0.1,snow
 frozen_dam,snowy_plains,60,1,2,0.1,snow
 pass,dwarven_mines,60,1,2,0.1,snow
-pass,farmland,60,1,2,0.1,snow
 pass,grassland,60,1,2,0.1,snow
 dwarven_mines,snowy_plains,60,1,2,0.1,snow
 dwarven_mines,grassland,60,1,2,0.1,snow

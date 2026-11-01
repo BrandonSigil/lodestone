@@ -401,6 +401,18 @@ static func neighbours(nodes: Dictionary, id: String) -> Array[String]:
 	return out
 
 
+## The tiles a leg in data/overworld_paths.csv joins this one to: where the party can walk from here. Links are data
+## per edge, not every shared border ([USER] 2026-11-01: the mountain pass has no side links).
+static func linked(paths: Array, id: String) -> Array[String]:
+	var out: Array[String] = []
+	for p: Dictionary in paths:
+		if p.from == id:
+			out.append(String(p.to))
+		elif p.to == id:
+			out.append(String(p.from))
+	return out
+
+
 ## The leg joining two tiles (either way), its points running from a's top to b's. {} when they share no edge.
 static func path_between(paths: Array, a: String, b: String, nodes: Dictionary = {}) -> Dictionary:
 	if nodes.is_empty():

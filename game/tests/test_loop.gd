@@ -703,7 +703,9 @@ func test_hex_world_map() -> void:
 		var key: String = edge.call(String(p.from), String(p.to))
 		ok(want.has(key), "a leg joins tiles that share an edge: " + key)
 		have[key] = true
-	eq(have.size(), want.size(), "every shared edge is a leg")
+	var pass_links := TravelRules.linked(paths, "pass")  # [USER] 2026-11-01: links are data per edge; no side links on the pass
+	ok(pass_links.has("town") and not pass_links.has("forest_roads") and not pass_links.has("farmland"), "the mountain pass: home and on up, no left or right")
+	ok(TravelRules.neighbours(nodes, "pass").has("forest_roads"), "though the painted tiles still touch")
 	var open := nodes.keys().filter(func(id: String) -> bool: return TravelRules.open_now(nodes, id, []))
 	open.sort()
 	eq(open, ["farmland", "forest_roads", "pass", "town"], "Home, forest roads, highlands and farmland open first")

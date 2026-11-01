@@ -628,7 +628,7 @@ func _draw_painted(k: float) -> void:
 	draw_texture_rect(_art, Rect2(_to_screen(Vector2.ZERO), _art.get_size() * k), false)
 	var near: Array[String] = []
 	if at != "":
-		for n in TravelRules.neighbours(Db.world_nodes, at):
+		for n in TravelRules.linked(Db.world_paths, at):  # a leg in data, not every shared border
 			if TravelRules.open_now(Db.world_nodes, n, flags):
 				near.append(n)
 	for id in Db.world_nodes:
@@ -640,16 +640,16 @@ func _draw_painted(k: float) -> void:
 	for p: Dictionary in Db.world_paths:  # a road on every border whose two tiles are seen and open now
 		if TravelRules.seen(p.from, flags) and TravelRules.seen(p.to, flags) \
 				and TravelRules.open_now(Db.world_nodes, p.from, flags) and TravelRules.open_now(Db.world_nodes, p.to, flags):
-			_draw_path(PackedVector2Array([_node_pos(p.from), _node_pos(p.to)]), k * PIECE)
+			_draw_route(_node_pos(p.from), _node_pos(p.to))
 	var glow := 0.5 + 0.5 * sin(_time * 2.5)
 	for id in near:  # where the party can walk to now
 		var ring := _screen_ring(TravelRules.tile_top(_node(id), 5.0))
 		draw_colored_polygon(ring, Color(1.0, 0.93, 0.6, 0.10 + 0.08 * glow))
 		draw_polyline(_closed(ring), Color(1.0, 0.9, 0.55, 0.55 + 0.3 * glow), 3.0, true)
-	if at != "":  # where the party stands: inked
-		var ring := _closed(_screen_ring(TravelRules.tile_top(_node(at), 4.0)))
-		draw_polyline(ring, Color(1, 1, 1, 0.6), 7.0, true)
-		draw_polyline(ring, INK, 4.0, true)
+	if at != "":  # where the party stands: a soft light over the tile and a thin border ([USER] 2026-11-01: subtle)
+		var ring := _screen_ring(TravelRules.tile_top(_node(at), 4.0))
+		draw_colored_polygon(ring, Color(1.0, 0.98, 0.9, 0.16))
+		draw_polyline(_closed(ring), Color(1.0, 0.98, 0.9, 0.7), 2.0, true)
 	if _hover != "" and _hover != at and TravelRules.seen(_hover, flags):
 		draw_polyline(_closed(_screen_ring(TravelRules.tile_top(_node(_hover), 5.0))), Color(1, 1, 1, 0.85), 2.5, true)
 	if walking():
@@ -665,6 +665,15 @@ func _draw_painted(k: float) -> void:
 		_label(_to_screen(_node_pos(_hover)) + Vector2(0, -34 * k * PIECE), Txt.t(_node(_hover).name_key), 16, INK)
 	if _note_time > 0.0:
 		_label(_to_screen(party_pos()) + Vector2(0, -46 * k * PIECE), _note, 13, Color(1, 1, 1, minf(1.0, _note_time)))
+
+
+## A route on the painted map: a thin, faint dashed line between two tile centres ([USER] 2026-11-01: subtler).
+func _draw_route(a: Vector2, b: Vector2) -> void:
+	var sa := _to_screen(a)
+	var sb := _to_screen(b)
+	var n := int(sa.distance_to(sb) / 9.0)
+	for i in range(0, n, 2):
+		draw_line(sa.lerp(sb, float(i) / n), sa.lerp(sb, float(i + 1) / n), Color(0.98, 0.94, 0.8, 0.75), 2.0, true)
 
 
 func _screen_ring(pts: PackedVector2Array) -> PackedVector2Array:
