@@ -23,6 +23,13 @@ HEIGHT_DIGITS = "0123456789abcdefghijklmnopqrstuvwxyz"  # one digit a cell, as C
 from collections import deque
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "game", "data", "explore")
+
+# Never wipe hand edits: Brandon edits snow_pass.json in the map maker, so a rerun over uncommitted changes stops.
+if __name__ == "__main__" and os.environ.get("FORCE_REBUILD") != "1":
+    import subprocess
+    _p = os.path.normpath(os.path.join(OUT_DIR, "snow_pass.json"))
+    if subprocess.run(["git", "diff", "--quiet", "--", _p]).returncode != 0:
+        raise SystemExit("snow_pass.json has uncommitted edits; commit or save them, or set FORCE_REBUILD=1 to overwrite.")
 STAIRS_CLIMB = 2  # CombatGrid.STAIRS_CLIMB
 JUMP = 1  # the leader's jump
 BLOCKED = set("ru.")  # rock, ruin, void (forest and water are slow but walkable)

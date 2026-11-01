@@ -266,7 +266,12 @@ def forest_roads():
          "units": [{"id": "bandit", "cell": [c4[0] - 1, c4[1] - 1]}, {"id": "bandit_archer", "cell": [c4[0] + 2, c4[1] - 2], "leader": True}]},
         {"id": "forest_wolves", "event": "spot_beasts", "sight": 4, "loot": "food:+4",
          "units": [{"id": "wolf", "cell": [c8[0] - 2, c8[1]]}, {"id": "wolf", "cell": [c8[0], c8[1] + 2]}]},
+        # Bushberry's captors (design-bb-recruit): beating them frees him. The road loops back past this
+        # clearing, so the party can back out down it or go round by the woods.
+        {"id": "forest_ogre", "event": "spot_people", "sight": 4, "elite": True, "loot": "rescue:bushberry;gold:+10",
+         "units": [{"id": "ogre", "cell": [c6[0] + 2, c6[1] - 1]}]},
     ]
+    thing(id="captive_bushberry", kind="companion", event="", cell=[c6[0] + 3, c6[1] + 1], once="rescued_bushberry")
     for g in groups:
         for u in g["units"]:
             keep.add(tuple(u["cell"]))

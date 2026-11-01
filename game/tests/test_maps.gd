@@ -992,3 +992,19 @@ func test_bridge_span_and_kit() -> void:
 	eq(int(g.decks[Vector2i(7, 7)].h), 3, "the far half at the far landing's")
 	g.set_height(Vector2i(8, 9), 5)
 	ok(String(MapOps.bridge_span(g, Vector2i(4, 9), Vector2i(8, 9)).error) != "", "three levels apart is refused")
+
+
+func test_forest_captors() -> void:
+	var f := FileAccess.open("res://data/explore/forest_roads.json", FileAccess.READ)
+	var d: Dictionary = JSON.parse_string(f.get_as_text())
+	var ogre := {}
+	for g: Dictionary in d.groups:
+		if g.id == "forest_ogre":
+			ogre = g
+	ok(not ogre.is_empty() and bool(ogre.get("elite", false)), "an elite ogre group holds Bushberry")
+	ok(String(ogre.get("loot", "")).contains("rescue:bushberry"), "beating it frees him")
+	var captive := false
+	for t: Dictionary in d.things:
+		if t.id == "captive_bushberry" and String(t.get("once", "")) == "rescued_bushberry":
+			captive = true
+	ok(captive, "the captive shows until he is freed")

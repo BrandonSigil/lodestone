@@ -396,6 +396,22 @@
      ]
     }
    ]
+  },
+  {
+   "id": "forest_ogre",
+   "event": "spot_people",
+   "sight": 4,
+   "elite": true,
+   "loot": "rescue:bushberry;gold:+10",
+   "units": [
+    {
+     "id": "ogre",
+     "cell": [
+      22,
+      12
+     ]
+    }
+   ]
   }
  ],
  "things": [
@@ -436,6 +452,16 @@
     14
    ],
    "once": "got_forest_stash"
+  },
+  {
+   "id": "captive_bushberry",
+   "kind": "companion",
+   "event": "",
+   "cell": [
+    23,
+    14
+   ],
+   "once": "rescued_bushberry"
   }
  ],
  "level": 1
