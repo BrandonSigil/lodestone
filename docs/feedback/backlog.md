@@ -77,10 +77,10 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 ### Explore maps
 | # | Problem (his words) | Owner | Status |
 | --- | --- | --- | --- |
-| X1 | "Old dog animation here, should be Doggos actual sprite" (the dog in house_dog is still the old code-drawn dog; the box also prints the raw effect "unlock:met_dog") | Systems developer | done (15134ce) |
-| X2 | "Dialogue like this isnt necessary, just open a loot window with a potion." (the cottage chest asks TAKE / LEAVE; it should open the container window like other chests) | Systems developer | done (15134ce) |
-| X3 | "THis said "rope on hook" again, just let me interact with the barrel and have a loot inventory box show up" (the rope barrel in the smithy yard; "again" means it was reported before, so every pickup box must go, not just this one) | Systems developer | done (15134ce) |
-| X4 | "While we test, let me pick from all playable characters here before heading out" (at the village gate box, GO ON / STAY: a party picker with every playable character, recruited or not, for playtesting). Then: "This box isnt needed, it opens another dialogue that tells you to pick your party, stay or go" (drop the GATE GO ON / STAY box; the gate opens the party picker straight away, with Go and Stay on it) | Systems developer | done (15134ce) |
+| X1 | "Old dog animation here, should be Doggos actual sprite" (the dog in house_dog is still the old code-drawn dog; the box also prints the raw effect "unlock:met_dog") | Systems developer | done (89e2681) |
+| X2 | "Dialogue like this isnt necessary, just open a loot window with a potion." (the cottage chest asks TAKE / LEAVE; it should open the container window like other chests) | Systems developer | done (89e2681) |
+| X3 | "THis said "rope on hook" again, just let me interact with the barrel and have a loot inventory box show up" (the rope barrel in the smithy yard; "again" means it was reported before, so every pickup box must go, not just this one) | Systems developer | done (89e2681) |
+| X4 | "While we test, let me pick from all playable characters here before heading out" (at the village gate box, GO ON / STAY: a party picker with every playable character, recruited or not, for playtesting). Then: "This box isnt needed, it opens another dialogue that tells you to pick your party, stay or go" (drop the GATE GO ON / STAY box; the gate opens the party picker straight away, with Go and Stay on it) | Systems developer | done (89e2681) |
 
 ## Older standing asks still open
 - Food as healing with no hunger ([USER] 2026-10-31 morale call; `docs/systems/morale.md` says not built, the road still eats every day). Owner: Systems developer (first account), done (2026-11-01, "Food heals, nobody hungers" commit); the numbers are on the desk as dev-food-review.
