@@ -152,17 +152,13 @@ func _loot_panel(items: String, coins: int, won: bool) -> void:
 	panel.theme_type_variation = &"DialogPanel"
 	var box := VBoxContainer.new()
 	panel.add_child(box)
-	var l := Label.new()
-	l.text = Txt.t("UI_LOOT_TITLE") + ("   " + Txt.f("UI_LOOT_COINS", coins) if coins > 0 else "")
-	l.add_theme_font_size_override("font_size", 22)
-	box.add_child(l)
 	ContainerUi.fill(box, grid, Txt.t("UI_LOOT_TITLE"), func() -> void:
 		Game.save_adventure()
 		_refresh_hud(), func() -> void:
 		for it in grid.items:
 			Game.run.add_item(String(it.id), int(it.get("n", 1)))  # the pack, then FOUND, then lost
 		panel.queue_free()
-		_level_ups(0, won), Txt.t("UI_CONTINUE"))
+		_level_ups(0, won), Txt.t("UI_CONTINUE"), Txt.f("UI_LOOT_COINS", coins) if coins > 0 else "")
 	_place_panel(panel)
 
 

@@ -242,7 +242,7 @@ const FIT_MARGIN := 12.0
 ## Esc on an open box ([USER] 2026-11-01: "Let esc close out windows in game too"): presses the box's own
 ## close-type button (CLOSE, BACK, OK, CANCEL, LEAVE...), the last one if there are several. A box with none
 ## (a real choice, or the full pack whose way out throws things away) stays open. True if it pressed one.
-const ESC_KEYS := ["UI_CLOSE_MENU", "UI_CLOSE", "UI_OPT_BACK", "UI_CONTINUE", "UI_CANCEL", "UI_STAY_MAP", "OPT_LEAVE"]
+const ESC_KEYS := ["UI_CLOSE_MENU", "UI_CLOSE", "UI_BOX_CLOSE", "UI_OPT_BACK", "UI_CONTINUE", "UI_CANCEL", "UI_STAY_MAP", "OPT_LEAVE"]
 
 
 static func press_close(box: Control) -> bool:
