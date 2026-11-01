@@ -10,6 +10,7 @@ Game designer, 2026-11-01, for the milestone "Bushberry joins" (`pm-next-milesto
 - His older traits stay: makes a ration a day (`bushberry_ration`), flammable (fire +2 damage taken), and `deep_roots`.
 
 ## What the game has today
+- **He can already join:** the playtest line-up in the village square lets anyone with art join, and Brandon had him in his party (2026-10-31). But his class `data/classes/bush.tres` has no abilities: 12 HP, move 2, damage 1, a plain 1-tile attack, and forage 3. So his kit is the most urgent part.
 - He sits in the village square as a `companion` thing with event `recruit_bushberry` (invite, send home, leave), unlocked by flag `found_bushberry`. That is the playtest line-up.
 - The `tavern` explore map (12 x 11) exists, with the cook (`settler_chef`) and four containers, but nothing opens it.
 - Morale is per character (`docs/systems/morale.md`): a night in the hero's bed +20 once a trip, camp +10, camp meals +10, +15 or +25, and each journey day a companion left at home gains `home_day` (3).
@@ -33,7 +34,7 @@ Bought with gold at the tavern counter, going into the pack as items. First size
 It grows by data rows in a new `data/tavern_menu.csv` (item, price, `needs`): a dish appears when you bring home its resource (herb, ingredient, rare), when its recipe unlocks (the inn's kitchen steps), or when a character who cooks or brings it joins. Dishes' names are placeholders.
 
 ## Build order
-1. His recruit flow, the `tavern_open` flag and the tavern door opening.
-2. His kit: `tug` in `abilities.csv`, the `kits.csv` rows, upgrade steps.
-3. The tavern counter: `tavern_menu.csv`, buying with gold into the pack.
+1. **His kit first** (he has none today): `tug` in `abilities.csv`, the `kits.csv` rows, upgrade steps, and the class change in `bush.tres` (mana, the four abilities, a mender's move and HP; keep forage).
+2. The real recruit flow that replaces the line-up for him: the bush on the pass, INVITE, the `tavern_open` flag when he reaches the village in your party.
+3. The tavern door opening, then the counter: `tavern_menu.csv`, buying with gold into the pack.
 4. The morale hooks (hang-out bonus, meals) in `MoraleRules`.
