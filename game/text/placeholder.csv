@@ -1027,3 +1027,10 @@ UI_PACK_GOLD_TIP,GOLD
 UI_PACK_SLOTS_TIP,PACK ROOM USED
 UI_PACK_WEAPON_TIP,WEAPON
 UI_VILLAGE_STORE_TIP,VILLAGE PILE
+SKILL_TUG,PULL
+SKILL_BRANCH_ARMOR,Branch Armor
+TRAIT_GLEAN,Glean
+DESC_TUG,"A bolt that hits one foe for 1 less than your spell damage, plus or minus 1, and pulls it 1 tile toward you."
+DESC_BRANCH_ARMOR,"Wrap a friend in brittle bark. The next hit on them does 3 less damage (at least 1), and the piece that hit them takes 2 damage. Lasts until it is used or your next turn."
+TRAIT_GLEAN_DESC,Friends standing next to you heal 1 HP at the start of each of their turns.
+TAGDESC_BRANCH_ARMOR,"The next hit does 3 less damage, and the attacker takes 2 damage."

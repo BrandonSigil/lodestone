@@ -54,3 +54,5 @@ foe_ward,SKILL_FOE_WARD,buff,ally,0,3,0,0,0,0,0,foe_ward,1,1,,0,0,0,,0,0,,,0
 gore,SKILL_GORE,attack,enemy,1,1,0,0,0,0,1,,0,0,,0,0,0,,0,0,,,0
 throw_dagger,SKILL_THROW_DAGGER,attack,enemy,2,3,0,-1,10,1,0,,0,0,,0,0,0,,0,0,,,0
 fire_zap,SKILL_FIRE_ZAP,attack,enemy,0,0,0,0,0,0,0,,0,1,fire,0,0,0,,0,0,,,0
+tug,SKILL_TUG,attack,enemy,2,4,0,-1,0,3,-1,,0,1,,0,0,0,,0,0,,,0
+branch_armor,SKILL_BRANCH_ARMOR,buff,ally,0,3,0,0,0,4,0,branch_armor,1,1,,0,0,0,,0,0,,,0

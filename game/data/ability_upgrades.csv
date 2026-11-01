@@ -146,3 +146,9 @@ good_boy,3,,good_boy_heal:+1,The friend heals 1 more
 heart_burns,1,,heart_burn_pct:+10,+10% chance to burn
 heart_burns,2,,burn_damage:+1,The burn does 1 more damage a turn
 heart_burns,3,,heart_burn_pct:+10,+10% chance to burn
+tug,1,power:+1,,Does 1 more damage
+tug,2,range_max:+1,,Reaches 1 tile further
+tug,3,res_cost:-1,,Costs 1 less
+branch_armor,1,,branch_soften:+1,The armor softens the hit by 1 more
+branch_armor,2,,branch_thorns:+1,The piece that hit takes 1 more damage
+branch_armor,3,res_cost:-1,,Costs 1 less

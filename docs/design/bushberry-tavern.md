@@ -16,25 +16,28 @@ Game designer, 2026-11-01, for the milestone "Bushberry joins" (`pm-next-milesto
 - Morale is per character (`docs/systems/morale.md`): a night in the hero's bed +20 once a trip, camp +10, camp meals +10, +15 or +25, and each journey day a companion left at home gains `home_day` (3).
 - Food items have `price`, `food` and `medicine` in `data/items.csv`. Food as healing is being built by the systems developer; the tavern menu must use whatever item columns that build lands.
 
-## 1. Finding and recruiting him (card `design-bb-recruit`)
-The flow, my pick: he is a bush beside the road on the **snow pass**, off the main path. Interacting offers INVITE or LEAVE (the existing `companion` event). INVITE puts him in the party. He is **recruited for good the first time he reaches the village in your party**, which sets flag `tavern_open` and opens the tavern door. If you fall on the way, he is still met, and he comes home with the wake-up (everyone wakes in the square), so it counts.
-Conditions: none to meet him; you just have to find him. No cost. The text is placeholder.
+## 1. Finding and recruiting him (`[USER]` `design-bb-recruit`)
+He is held captive on the snow pass by an **elite ogre** (the existing `ogre` class, at elite strength: 150% HP, +1 damage, +1 armor, `data/combat.csv`). Winning that fight frees him. He **joins the party if there is room** (four slots); if the party is full, **he runs back to the village** and waits at home to be invited. Either way, flag `rescued_bushberry` is set and the elite group stays beaten. A fall during the fight is a fight lost like any other. No cost. Story and dialogue are Brandon's; every text slot is a caveman placeholder. The map builder places the captive and the elite group on `snow_pass`; the line-up in the village square stops listing him.
 
-## 2. His kit (card `design-bb-kit`)
-Resource: mana (`job_mender` numbers, move 3). Four abilities, each with three upgrade steps in `data/ability_upgrades.csv` (existing rows for mend, ward, renew, far_aid):
-- **tug** (new): a ranged spell. Range 2-4 (scaled by scale C), costs 3 mana, damage 1 less than his spell damage, and the foe is **pulled 1 cell toward him**. Pull is the push system with a negative push (`push:-1`, as `lure` has `push:-2`). Upgrade steps: more damage, more range, 1 less mana.
-- **mend** (heals 4 plus magic, existing), **ward** (the next hit on a friend does nothing, existing), **renew** (heals over time, existing, unbuilt effect) and **far_aid** (helps a downed friend up from 3 tiles, existing, unbuilt effect).
-My pick is tug, mend, renew, far_aid: the full healer, since the tug is his one attack. Passives: `bushberry_ration` (makes a ration each journey day, which now heals, so it is a food source), `flammable` and `deep_roots` as before.
+## 2. His kit (`[USER]` `design-bb-kit`, numbers `[AI]`)
+Resource: mana (a mender's numbers, 3 move). Abilities, each with three upgrade steps in `data/ability_upgrades.csv`:
+- **tug** (new, in `abilities.csv`): ranged, 2-4 (scaled), 3 mana, 1 less than his spell damage, **pulls the foe 1 cell toward him** (`push:-1`). Steps: damage, reach, cost.
+- **mend:** heals 4 plus magic, range 2, and **can raise a downed friend** at its heal amount (`mend_raise`), so no far_aid.
+- **Branch Armor** (his name; replaces ward for him): 4 mana, a friend within 3. The next hit on them does 3 less damage (at least 1) and the piece that hit them takes 2 damage (`branch_soften`, `branch_thorns`). Lasts until used or his next turn; does not stack. Steps: softens 1 more, hurts 1 more, costs 1 less.
+- **renew:** heals over time at range 2; kept as the fourth ability. It does not clash with Glean.
+- **Passive Glean** (his name): friends standing next to him heal 1 HP at the start of each of their turns (`glean_hp`). Upgrade steps (+1 HP, a 2-tile radius, +1 HP) wait until the trait is on his class, because the data test requires a class trait to exist first.
+- Older passives stay: `bushberry_ration` (a ration each journey day), `flammable` (fire +2 damage taken), `deep_roots` (cannot be pushed).
+**Glean and Good Boy:** they stack. A friend next to both heals 1 from each at the start of its turn, 2 in all. Each source heals once a turn.
+`far_aid` stays in the mender archetype's kit (`kits.csv`); Brandon only said Bushberry does not need it.
 
-## 3. How the tavern restores morale (card `design-bb-morale`)
-Today morale comes back by the hero's bed (+20, once a trip), camp (+10), meals, and journey days at home (+3 a day for each companion left home). The tavern adds, in my pick: **meals bought there** (a stew gives 10, a roast 15, a feast 25, as the recipes already say) and **a hang-out bonus: a companion left at home gains 2 more morale per journey day while the tavern is open** (3 becomes 5). A free evening is the third option.
+## 3. How the tavern restores morale (`[USER]` `design-bb-morale`)
+**Meals only.** A character eats at the tavern counter; a stew gives its recipe's +10 morale. No hang-out bonus, no free evening. The hero's bed, camp and journey days work as in `docs/systems/morale.md`.
 
-## 4. The food menu at its first size (card `design-bb-menu`)
-Bought with gold at the tavern counter, going into the pack as items. First size, my pick: **three dishes**, a ration (2 gold, heals 4), a jerky (7 gold, heals 16) and a stew (10 gold, heals 6 and +10 morale).
-It grows by data rows in a new `data/tavern_menu.csv` (item, price, `needs`): a dish appears when you bring home its resource (herb, ingredient, rare), when its recipe unlocks (the inn's kitchen steps), or when a character who cooks or brings it joins. Dishes' names are placeholders.
+## 4. The tavern and its menu (`[USER]` `design-bb-recruit`, `design-bb-menu`)
+**The tavern is rebuilt at home** as a restore step: a `tavern` row in `data/restore.csv` with `needs` of resources and food (my starting cost: wood 4, metal 2 and ingredient 3), `gives: unlock:tavern_open`, settler Bushberry. Paying and returning from a run finishes it (the same `restore` flow as the smithy). Then the counter opens.
+**First menu, three dishes** (gold into the pack): ration (2 gold, heals 4), jerky (7 gold, heals 16), stew (10 gold, heals 6 and +10 morale). The menu grows by rows in `data/tavern_menu.csv` (item, price, `needs`): a dish appears when you bring home its resource (herb, ingredient, rare), when its recipe unlocks, or when a character who cooks or brings it joins. Food items follow whatever columns the developer's food-as-healing build lands on origin/main (today `items.csv` still has `food` and `medicine`); the heal numbers here are mine.
 
-## Build order
-1. **His kit first** (he has none today): `tug` in `abilities.csv`, the `kits.csv` rows, upgrade steps, and the class change in `bush.tres` (mana, the four abilities, a mender's move and HP; keep forage).
-2. The real recruit flow that replaces the line-up for him: the bush on the pass, INVITE, the `tavern_open` flag when he reaches the village in your party.
-3. The tavern door opening, then the counter: `tavern_menu.csv`, buying with gold into the pack.
-4. The morale hooks (hang-out bonus, meals) in `MoraleRules`.
+## Build order (kit first)
+1. **His kit** (he has no abilities today): `bush.tres` gets mana, the four abilities and the traits (Glean as a class trait, then add its upgrade rows); `tug` and `branch_armor` are in `abilities.csv` already (the effects are unbuilt); `mend_raise` in the engine.
+2. **The rescue and recruit:** the captive and the elite ogre on `snow_pass`, the join-or-run-home rule, `rescued_bushberry`; the playtest line-up stops listing him.
+3. **The tavern:** the restore step, `tavern_open`, the counter, `tavern_menu.csv`, buying with gold.

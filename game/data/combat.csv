@@ -52,3 +52,7 @@ inspire_damage,1,INSPIRE: extra damage on every hit for allies in its area while
 good_shot_damage,1,"GOOD SHOT: plain attacks do this much more ([USER] 2026-11-01 F5: a passive that makes regular attacks better; [AI] number)"
 good_shot_crit,15,GOOD SHOT: % crit chance plain attacks add (the old aimed_shot's 15)
 good_shot_again,1,"GOOD SHOT: extra attacks a turn after a plain attack downs a foe ([USER] 2026-11-01: ""if its the killing blow, you get to attack again"")"
+branch_soften,3,"Branch Armor: the next hit on the friend does this much less (at least 1); [AI] 2026-11-01 (game designer)"
+branch_thorns,2,"and the piece that made that hit takes this much damage, through armor; [AI] 2026-11-01"
+glean_hp,1,"Bushberry's Glean: a friend next to him heals this much at the start of its phase ([USER] 2026-11-01 design-bb-kit); stacks with Good Boy"
+mend_raise,1,"1: MEND on a downed friend stands them up at its heal amount ([USER] 2026-11-01 design-bb-kit)"
