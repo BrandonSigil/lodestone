@@ -323,6 +323,10 @@ html.locked { overflow: hidden; }
 .card.flash { outline: 3px solid var(--gem); outline-offset: 3px; transition: outline-color 1.2s; }
 .you { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 12px; }
 
+/* Phones: answers wait here and go to the team in one send (sending to Claude makes the Claude app leave the page) */
+.wake-bar { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 37; display: flex; align-items: center; gap: 10px; background: var(--sheet); border: 1.5px solid var(--chat); border-radius: 999px; padding: 6px 6px 6px 14px; box-shadow: var(--shadow), 0 6px 18px rgba(20,30,24,.2); font-size: 13.5px; max-width: calc(100vw - 104px); }
+.wake-bar .btn.primary { background: var(--chat); border-color: var(--chat); color: var(--chat-ink); border-radius: 999px; white-space: nowrap; }
+body.chat-on .wake-bar { display: none; }
 .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 8px 16px; border-radius: 8px; font-size: 14px; z-index: 30; }
 
 /* The chat: a round button bottom right, opening a small Slack-like window with the project manager */
@@ -517,6 +521,7 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
   <div class="lb-tools"><button id="lb-copy" type="button">Copy picture</button><button id="lb-save" type="button" hidden>Save picture</button></div>
 </div>
 <div class="toast" id="toast" hidden></div>
+<div class="wake-bar" id="wake-bar" hidden role="status"><span id="wake-n"></span><button class="btn primary small" id="wake-send" type="button">Send to the team</button></div>
 <button class="chat-fab" id="chat-fab" aria-label="Chat with Wren, the project manager" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span class="dot" id="chat-dot" hidden></span><span class="pip" id="chat-pip" hidden></span></button>
 <section class="chat" id="chat" hidden aria-labelledby="chat-h">
   <div class="chat-head" id="chat-anchor"><img src="/_blob/3d1ee047ea139add4c001f55c37a9319" alt=""><div><h2 id="chat-h">Wren</h2><small id="chat-sub">Opening…</small></div><button id="chat-x" aria-label="Close chat">×</button></div>
@@ -1272,7 +1277,7 @@ function renderChat() {
 }
 async function checkWake() {
   try { S.chatWake = S.comments ? await S.comments.canSendToClaude() : "off"; } catch { S.chatWake = "off"; }
-  renderChatHead();
+  renderChatHead(); renderWakeBar();
 }
 function toggleChat(open) {
   $("chat").hidden = !open; $("chat-fab").setAttribute("aria-expanded", String(open)); document.body.classList.toggle("chat-on", open);
@@ -1280,13 +1285,29 @@ function toggleChat(open) {
   else renderChat();
 }
 function wakePm(text, pics) {
-  wake("Studio chat from Brandon: " + (text || "(a picture)") + (pics ? ` [+${pics} picture${pics > 1 ? "s" : ""} in the chat]` : ""));
+  wake("Studio chat from Brandon: " + (text || "(a picture)") + (pics ? ` [+${pics} picture${pics > 1 ? "s" : ""} in the chat]` : ""), true);
+}
+// On a phone the Claude app leaves this page every time something is sent to Claude ([USER] 2026-11-01:
+// "Everytime I answer a question in Studio this artifact closes and takes me to the Claude agents screen").
+// So on a touch screen, card answers and notes wait in the "Send to the team" bar and go in one send; a chat
+// message takes any waiting ones along. On a computer they still go at once. The answers themselves are
+// saved the moment he sends them; only the wake-up waits.
+const holdWakes = () => matchMedia("(pointer: coarse)").matches;
+S.wakeQueue = (() => { try { return JSON.parse(localStorage.getItem("studio-wake-queue") || "[]"); } catch { return []; } })();
+function saveWakeQueue() { try { localStorage.setItem("studio-wake-queue", JSON.stringify(S.wakeQueue)); } catch {} }
+function renderWakeBar() {
+  const n = S.wakeQueue.length, show = n > 0 && S.chatWake === "available";
+  $("wake-bar").hidden = !show;
+  if (show) $("wake-n").textContent = `${n} ${n === 1 ? "answer" : "answers"} ready for the team`;
 }
 // Card answers and notes wake the PM too, so it routes them to the role at once instead of at the hourly desk watch.
-function wake(text) {
+function wake(text, now = false) {
   if (S.chatWake !== "available") return;
+  if (!now && holdWakes()) { S.wakeQueue.push(text); saveWakeQueue(); renderWakeBar(); return; }
+  const lines = [...S.wakeQueue.splice(0), text].filter(Boolean); saveWakeQueue(); renderWakeBar();
+  if (!lines.length) return;
   // A comment is one plain line of at most 4 KiB.
-  const line = text.replace(/\s+/g, " ").slice(0, 1500);
+  const line = lines.join(" | ").replace(/\s+/g, " ").slice(0, 3800);
   (async () => {
     try {
       if (S.chatThread) { await S.comments.sendToClaude({ threadId: S.chatThread, text: line }); return; }
@@ -1298,6 +1319,7 @@ function wake(text) {
     }
   })();
 }
+$("wake-send").addEventListener("click", () => wake("", true));
 async function sendChat() {
   const text = $("chat-in").value.trim(), images = attached("chat");
   if (!text && !images.length) return;
