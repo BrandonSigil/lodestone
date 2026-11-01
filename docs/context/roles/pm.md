@@ -42,4 +42,6 @@ Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the
 - Opus: the systems developer's build work and in-game graphics work (shaders, drawing, UI that renders in game), plus any key system that is complicated or keeps breaking. Brandon (2026-10-31): "let's lean more towards bumping up to Opus for Dev work and in-game graphics stuff too."
 
 ## Project Report (milestone ritual)
-At every milestone, make a Project Report as a Slides deck: the loop, the numbers, each built system with a screenshot, what is half done, what is missing, and next-milestone choices with a desk card. The first one (2026-11-01, first account) is https://claude.ai/artifact/4Z9FPm2nnpsUGECd9bsKSU, with the desk card pm-next-milestone. Gather the inventory with a Sonnet helper from docs/context, docs/systems and the backlog.
+At every milestone, put a Project Report on Brandon's desk as a `present` card (never a link to a separate deck; Brandon 2026-11-01: "Can you put stuff like this on my desk please"). It covers the loop, the numbers, each built system with a screenshot, what is half done, what is missing and what is next. Next-milestone choices go on their own `choice` card. The first report is desk card pm-project-report-1 (2026-11-01, first account). Gather the inventory with a Sonnet helper from docs/context, docs/systems and the backlog.
+
+Chat hygiene: `at` is the real time of writing (never a guess ahead of the clock, or replies sort out of order), and `ask: true` only for a question asked in the chat itself.
