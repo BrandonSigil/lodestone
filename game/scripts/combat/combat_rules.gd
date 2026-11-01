@@ -42,6 +42,7 @@ const TRAIT_BLOODIED := &"bloodied"  ## Reaver: more damage and crit the lower i
 const TRAIT_KEEPS_BACK := &"keeps_back"  ## Mender foe: stays 2 or more tiles from heroes, attacks only when cornered
 const TRAIT_CHARGE := &"charge"  ## Rusher and bull: a straight run of 3 or more tiles this phase adds charge_bonus to its hits
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
+const TRAIT_GOOD_BOY := &"good_boy"  ## Doggo ([USER] 2026-10-31 design-goodboy): a friend next to him heals at the start of its phase
 const TRAIT_HEART_BURNS := &"heart_burns"  ## Amber ([USER] 2026-11-01): plain attacks may set the target burning (heart_burn_pct)
 const TRAIT_POISON_BLADES := &"poison_blades"  ## Rogue: every hit leaves POISON ([USER] design-boss-daggers)
 const TRAIT_STAND_WATCH := &"stand_watch"  ## Bow: an archer that doesn't move in its phase ends it on OVERWATCH, free
@@ -688,8 +689,9 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 		t.statuses[STATUS_POISON] = int(num("poison_turns")) + upg(u, "poison_turns")
 		t.poison_dmg = maxi(t.poison_dmg, int(num("poison_damage")) + upg(u, "poison_damage"))
 		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_POISON})
-	if t.alive() and a.is_basic() and u.has_trait(TRAIT_HEART_BURNS) and rng.randi_range(1, 100) <= int(num("heart_burn_pct")):
+	if t.alive() and a.is_basic() and u.has_trait(TRAIT_HEART_BURNS) and rng.randi_range(1, 100) <= int(num("heart_burn_pct")) + upg(u, "heart_burn_pct"):
 		t.statuses[STATUS_BURN] = int(num("burn_turns"))  # renews, doesn't stack
+		t.burn_dmg = maxi(t.burn_dmg, int(num("burn_damage")) + upg(u, "burn_damage"))
 		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_BURN})
 	if t.alive() and a.push > 0:
 		events.append_array(push(grid, units, u.cell, t, a.push))
@@ -765,7 +767,7 @@ static func begin_phase(units: Array, team: int) -> Array:
 			u.phase_no += 1
 		for s: String in [STATUS_BLEED, STATUS_POISON, STATUS_BURN]:  # through armor
 			if u.alive() and u.has_status(s):
-				var n := mini(maxi(int(num(s + "_damage")), u.poison_dmg if s == STATUS_POISON else 0), u.hp)
+				var n := mini(maxi(int(num(s + "_damage")), u.poison_dmg if s == STATUS_POISON else (u.burn_dmg if s == STATUS_BURN else 0)), u.hp)
 				u.hp -= n
 				events.append({"type": "bleed", "unit": u, "amount": n, "status": s})
 		if u.downed():
@@ -778,6 +780,11 @@ static func begin_phase(units: Array, team: int) -> Array:
 		if u.alive() and u.has_trait(TRAIT_DEEP_ROOTS) and u.hp < u.max_hp:
 			u.hp = mini(u.max_hp, u.hp + REGROW)
 			events.append({"type": "heal", "src": u, "unit": u, "amount": REGROW})
+		var boy := good_boy_near(u, units)
+		if boy != null and u.hp < u.max_hp:  # Good Boy: one dog's heal, however many stand near
+			var n := mini(int(num("good_boy_heal")) + upg(boy, "good_boy_heal"), u.max_hp - u.hp)
+			u.hp += n
+			events.append({"type": "heal", "src": boy, "unit": u, "amount": n})
 		for s in STATUS_UNTIL_OWN_PHASE:
 			u.statuses.erase(s)
 		match u.res_kind:  # the job's resource comes back ([USER] c9, c16)
@@ -789,6 +796,17 @@ static func begin_phase(units: Array, team: int) -> Array:
 					u.res_tick = 0
 					u.res = mini(u.res_max, u.res + 1)
 	return events
+
+
+## The Good Boy (a standing dog of u's side, not u) whose reach covers u, or null. Reach: 1 tile, more with upgrades.
+static func good_boy_near(u: CombatUnit, units: Array) -> CombatUnit:
+	if not u.alive():
+		return null
+	for o: CombatUnit in units:
+		if o != u and o.team == u.team and o.alive() and o.has_trait(TRAIT_GOOD_BOY) \
+				and dist(o.cell, u.cell) <= 1 + upg(o, "good_boy_reach"):
+			return o
+	return null
 
 
 ## End of a team's phase: timed statuses like rooted tick down.

@@ -83,7 +83,13 @@ static func recharge(u: CombatUnit, a: Ability) -> float:
 
 
 ## Approved spare icons standing in for actions the sheet hasn't painted yet (art runner, 2026-10-30).
-const SPARES := {"fire_zap": "fire", "ward": "shield", "shadow_swap": "teleport", "carry": "dash", "command": "rally", "overwatch": "focus"}
+const SPARES := {"fire_zap": "firebolt", "good_boy": "heal", "heart_burns": "fire", "ward": "shield", "shadow_swap": "teleport", "carry": "dash", "command": "rally", "overwatch": "focus"}
+
+
+## A passive's icon: its own, else a spare that fits.
+static func trait_icon(id: String) -> Texture2D:
+	var t := icon(id)
+	return t if t != null else icon(String(SPARES.get(id, "")))
 
 
 ## An action's icon: its own id, else for an item the pack item it spends (the sheet names items by item id), else a

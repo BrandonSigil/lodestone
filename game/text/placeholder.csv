@@ -317,6 +317,8 @@ TRAIT_FLAMMABLE,BURNY
 TRAIT_FLAMMABLE_DESC,Takes 2 more fire damage.
 TRAIT_POISON_BLADES,SICK KNIFE
 TRAIT_HEART_BURNS,HOT HEART lorem
+TRAIT_GOOD_BOY,GOOD BOY
+TRAIT_GOOD_BOY_DESC,"A friend standing next to him heals 1 HP at the start of its turn."
 TRAIT_HEART_BURNS_DESC,"Your plain attacks have a 30% chance to burn the target: it loses 1 HP at the start of each of its next 2 turns, through armor. A new burn renews it and does not stack."
 TRAIT_POISON_BLADES_DESC,"Dagger hits poison the target: it loses 1 HP at the start of its next turn, through armor. A new hit renews it and does not stack."
 TRAIT_HIT_AND_RUN,HIT RUN

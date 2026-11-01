@@ -40,7 +40,10 @@ Code: `game/scripts/combat/`. Rules math is in `combat_rules.gd` (pure, no nodes
 - Statuses: GUARD, MOON SKIN and STAR (guided, +15% crit) last until the owner's next phase. STUCK (rooted) means 0 move and wears off at the end of the owner's next phase. NAP (sleep) skips the owner's next phase entirely and can't hit back; any damage (a hit, a bump or a fall) wakes it.
 - Hexes always land: they deal no damage and only add their status (MOON NAP).
 - Job resources ([USER] c9, c16, step 5; no cooldowns): each class spends one resource, set in its ClassDef (`resource`, `resource_max`, `resource_every`). MANA (mage, wizard, lich, strange thing; 10) starts full and a fifth comes back at the start of each of the owner's phases. RAGE (knight, Lewith & Flark, bandit; 5) starts at 0 and builds 1 per hit dealt or taken. GO charges (the dog 3, one back every 3 phases; hunter and archer 2, every 2; wolf 2, every 3) start full. A skill's price is the `cost` column of `abilities.csv`; the basic hit, AID and KNOCK OUT are free. Resources reset every fight. The bar shows under each piece's HP in the frame and the party strip (mana blue, rage red, charges gold); the menu shows each skill's price.
-- TAUNT (the dog's BARK): until the taunter's next phase, any foe that can reach it must hit it. SLOW (the dog's BITE): -2 move for a phase.
+- TAUNT (the dog's BARK): until the taunter's next phase, any foe that can reach it must hit it. "Reach" counts the foe's move: `EnemyAi.plan` takes its best strike on the taunter over anything else whenever one exists from any tile it can walk to (before 2026-11-01 it only counted from where it stood, so a wolf stepped out of reach and bit someone softer). `CombatRules.taunt_pulls` lists the foes that can walk to the taunter and land their plain hit. On the board BARK shows as three orange shout rings rolling out from the dog, LOOK AT ME over him, a pulsing orange ring under him while it lasts, and a "!" over every pulled foe, which turns to face him; the log says how many foes it pulled. SLOW (the dog's BITE): -2 move for a phase.
+- BURN (Amber's A Heart that Burns, `heart_burns`): each of her plain attacks that lands has a `heart_burn_pct` (30%) chance to set the target burning: it loses `burn_damage` (1) HP at the start of each of its next `burn_turns` (2) phases, through armor. A new burn renews it and doesn't stack. Upgrades: +10% chance, +1 damage, +10% chance.
+- GOOD BOY (Doggo, `good_boy`): at the start of each phase, a friend standing next to him (not himself) heals `good_boy_heal` (1) HP. Upgrades: heals 1 more, reaches 1 tile further, heals 1 more. The level-up picker offers any trait a piece has that has steps in `ability_upgrades.csv`, kit or not.
+- A class's plain attack (the HIT box) is `ClassDef.strike`, default `strike`. Amber's is FIRE ZAP (`fire_zap`: free, magic, fire, her weapon range 2 to 3). `Ability.is_basic()` marks it for the HIT box, double strike and the like.
 - Stardrop's skittish check runs at the start of each player phase.
 
 ## Terrain and height
@@ -93,7 +96,8 @@ Where to pick: in the sandbox, the right panel's SPELLS section has a picker per
 | Archer (Skeleton) | GOOD SHOT |
 | Duo (Lewith & Flark) | PUSH HIT |
 | Wolf | JUMP BITE: +10% crit, +1 damage, 1 charge |
-| Dog | BITE: melee, the foe is SLOW for a phase, 1 charge. BARK: TAUNT until the dog's next phase, 1 charge ([USER] c4: bite slows, bark taunts) |
+| Dog | BITE: melee, the foe is SLOW for a phase, 1 charge. BARK: TAUNT until the dog's next phase, 1 charge ([USER] c4: bite slows, bark taunts). Passive GOOD BOY (above) |
+| Amber (job_ember) | FIRE ZAP is her plain attack; no spells at the start ([USER] 2026-11-01). Passive A HEART THAT BURNS (above). FIREBALL is learned at a level pick (her kit, `data/kits.csv`); IGNITE and FLASH join the picks once their kit versions are built |
 | Bandit | DIRTY KICK: +5% crit, -1 damage, push 1, 2 rage |
 | Lich King (38 HP, undead) | FIRE ZAP. BIG BAD BOOM, his big move, and ICE STICK UP: ice pillars (below) |
 

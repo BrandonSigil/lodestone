@@ -1493,3 +1493,30 @@ func test_wired_kit_passives() -> void:
 	CombatRules.resolve(RandomNumberGenerator.new(), g, sw, Db.ability("second_wind"), sw.cell, [sw])
 	eq(sw.res, 0, "SECOND WIND spends all the rage")
 	ok(sw.hp > 2 + 3, "and heals the power plus the rage left")
+
+
+## Doggo's Good Boy ([USER] 2026-10-31 design-goodboy: +1 heal to the friend next to him), upgradable at level up
+## ([USER] 2026-11-01: "I want to upgrade that passive").
+func test_good_boy_heals_the_friend_next_to_him() -> void:
+	var g := CombatGrid.flat(6, 3)
+	var dog := CombatUnit.from_def(Db.character(&"dog"))
+	dog.place(Vector2i(1, 1), 0)
+	ok(dog.has_trait(CombatRules.TRAIT_GOOD_BOY))
+	var k := _unit("knight", 0, Vector2i(2, 1), g)
+	var far := _unit("knight", 0, Vector2i(4, 1), g)
+	k.hp = 5
+	far.hp = 5
+	dog.hp = 5
+	var ev := CombatRules.begin_phase([dog, k, far], 0)
+	eq(k.hp, 5 + int(CombatRules.num("good_boy_heal")), "the friend beside him heals")
+	eq(far.hp, 5, "two tiles off: no")
+	eq(dog.hp, 5, "not himself")
+	ok(ev.any(func(e: Dictionary) -> bool: return e.type == "heal" and e.unit == k and e.src == dog))
+	dog.upgrades = {"good_boy_reach": 1, "good_boy_heal": 1}
+	k.hp = 5
+	far.place(Vector2i(3, 1), 0)
+	CombatRules.begin_phase([dog, k, far], 0)
+	eq(k.hp, 5 + int(CombatRules.num("good_boy_heal")) + 1, "upgraded: heals 1 more")
+	eq(far.hp, 5 + int(CombatRules.num("good_boy_heal")) + 1, "and reaches 2 tiles")
+	ok(LevelRules.next_useful_rank("good_boy", 0, Db.skill_ranks) == 1, "its first step is offered at level up")
+	ok(LevelRules.next_useful_rank("heart_burns", 0, Db.skill_ranks) == 1, "and Amber's passive's")

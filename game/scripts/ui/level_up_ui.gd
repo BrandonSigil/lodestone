@@ -50,6 +50,16 @@ static func _options(id: String) -> Array[Dictionary]:
 		var nxt2 := LevelRules.next_useful_rank(sid, have2, Db.skill_ranks)
 		if known and nxt2 > 0:
 			options.append({"id": sid, "ability": null, "learn": false, "have": have2, "next": nxt2, "locked": false})
+	# a class's own passives (Doggo's Good Boy, Amber's A Heart that Burns) grow too ([USER] 2026-11-01: "I want to
+	# upgrade that passive")
+	for t: StringName in u.traits:
+		var tid := String(t)
+		if options.any(func(o: Dictionary) -> bool: return o.id == tid):
+			continue
+		var have3 := int(ranks.get(tid, 0))
+		var nxt3 := LevelRules.next_useful_rank(tid, have3, Db.skill_ranks)
+		if nxt3 > 0:
+			options.append({"id": tid, "ability": null, "learn": false, "have": have3, "next": nxt3, "locked": false})
 	# always four to look at when the kit has them: what is left of the kit whose effect is not built yet shows locked
 	for aid in Game.learnable(id, false):
 		if options.size() >= MIN_CHOICES:
@@ -168,7 +178,7 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
 		b.custom_minimum_size = Vector2(84, 84)
 		b.tooltip_text = _name(o)
 		b.focus_mode = Control.FOCUS_ALL
-		var tex := ActionInfo.icon_for(o.ability) if o.ability != null else ActionInfo.icon(String(o.id))
+		var tex := ActionInfo.icon_for(o.ability) if o.ability != null else ActionInfo.trait_icon(String(o.id))
 		if tex != null:
 			b.icon = tex
 			b.expand_icon = true

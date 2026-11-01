@@ -140,3 +140,9 @@ carry,3,range_max:+1,,Can pick up a friend 2 tiles away
 fire_zap,1,power:+1,,Does 1 more damage
 fire_zap,2,crit:+10,,+10% crit chance
 fire_zap,3,power:+1,,Does 1 more damage
+good_boy,1,,good_boy_heal:+1,The friend next to him heals 1 more
+good_boy,2,,good_boy_reach:+1,Reaches friends 1 tile further away
+good_boy,3,,good_boy_heal:+1,The friend heals 1 more
+heart_burns,1,,heart_burn_pct:+10,+10% chance to burn
+heart_burns,2,,burn_damage:+1,The burn does 1 more damage a turn
+heart_burns,3,,heart_burn_pct:+10,+10% chance to burn

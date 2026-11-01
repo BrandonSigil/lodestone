@@ -16,6 +16,7 @@ cover_ranged,1,brush and low walls and forest take this off ranged hits
 spooked_damage,-1,a spooked piece hits for this much less
 poison_damage,1,a poisoned piece loses this much HP at the start of each of its phases, through armor (the rogue's blades)
 run_melee_only,1,hit and run's AI steps out of the foes' reach-1 hits (game designer 2026-10-30); 0: only to a cell no foe could hit next phase, spells too (the danger zone), else stays
+good_boy_heal,1,"Doggo's Good Boy: a friend next to him heals this much at the start of its phase ([USER] 2026-10-31 design-goodboy)"
 burn_damage,1,a burning piece loses this much HP at the start of each of its phases, through armor (Amber's A Heart that Burns)
 burn_turns,2,a burn lasts this many of the target's phases; a new burn renews it and doesn't stack
 heart_burn_pct,30,% chance a plain attack from A Heart that Burns sets the target burning ([AI] numbers for Brandon's [USER] 2026-11-01 call)
