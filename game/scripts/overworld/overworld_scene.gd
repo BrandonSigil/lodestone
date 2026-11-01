@@ -361,6 +361,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_menu_close.call()
 		else:
 			_open_menu("pack")
+	elif event.pressed and not event.is_echo() and event.keycode == KEY_ESCAPE and _dialog != null:
+		if UiTheme.press_close(_dialog):  # the open box's own close button
+			get_viewport().set_input_as_handled()
 
 
 func _click_node(id: String) -> void:

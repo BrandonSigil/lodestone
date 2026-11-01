@@ -443,6 +443,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if not event.pressed or event.is_echo():
 		return
 	match event.keycode:
+		KEY_ESCAPE:  # closes the open box through its own close button (UiTheme.press_close)
+			if _dialog != null and (mode == M.WALK or mode == M.DIALOG) and UiTheme.press_close(_dialog):
+				get_viewport().set_input_as_handled()
 		KEY_SPACE:
 			follow = true
 		KEY_I:  # [USER] 2026-11-01: I opens and shuts the inventory

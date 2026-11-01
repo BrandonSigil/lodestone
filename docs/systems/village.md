@@ -20,7 +20,7 @@ embroidered band. Every picture is a pure function of `VillageView.SEED`.
 - Party panel: the picked pieces, first word of the name, HP dots.
 - Lodestone medallion: the arc fills with best distance. Click it (or MAP) to open `Game.WORLD_MAP`,
   which the world map thread owns. Without that scene a notice says so.
-- Pack panel: a mini copy of the grid plus food, medicine and gold totals.
+- Pack panel: a mini copy of the grid plus food, medicine and gold totals. Items draw with Brandon's icons (`game/art/source/icons/<item id>.png`, through `ActionInfo.icon`) where one exists: one big icon across a solid block, on the middle cell of an L or T. Kinds with no icon file and no code icon show their name ([USER] 2026-11-01: "We've got icons! We should use em!").
 - Tabs: a status tab (gold, deaths, best) and PACK, MAP, GO buttons.
 
 ## Pack (Tetris-style grid)

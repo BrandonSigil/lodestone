@@ -346,3 +346,20 @@ func test_the_dog_brings_materials_home_too() -> void:
 	Game.meta = saved
 	Game.save_enabled = was_on
 	Game.run = null
+
+
+func test_esc_presses_only_a_close_type_button() -> void:
+	var box := VBoxContainer.new()
+	var hits := []
+	var leave := Button.new()
+	leave.text = Txt.t("UI_LEAVE_REST")  # the full pack's way out throws things away: Esc must never press it
+	leave.pressed.connect(func() -> void: hits.append("leave"))
+	box.add_child(leave)
+	ok(not UiTheme.press_close(box), "no close-type button: Esc does nothing")
+	var close := Button.new()
+	close.text = Txt.t("UI_CLOSE_MENU")
+	close.pressed.connect(func() -> void: hits.append("close"))
+	box.add_child(close)
+	ok(UiTheme.press_close(box), "a CLOSE button: Esc presses it")
+	eq(hits, ["close"])
+	box.free()
