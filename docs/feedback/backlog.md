@@ -69,10 +69,10 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 ### Fishing
 | # | Problem (his words) | Owner | Status |
 | --- | --- | --- | --- |
-| FI1 | "let me actually aim the cast to land in a spot, and see if a fish notices it" | Junior developer | done (fishing rework, hash below) |
-| FI2 | "if you pull too fast that fish should be gone for good so the amount of fish dwindle, (like 3 fish in a pond, catch 1 means one less in the pond, miss one it swims away, third one you try and catch but fail the reel challenge" | Junior developer | done (fishing rework, hash below) |
-| FI3 | "the left right thing is sooo hard haha, one thing is that it just starts right away. both the fish and the reel bar should start in the middle, and give the player a quick ease in before the difficulty ramps up" | Junior developer | done (fishing rework, hash below) |
-| FI4 | "if you use the left arrow you should be pulling the bar left and the second you release it pulls back to the center, same with the right. I want it to feel like the fish is pullign on the line" | Junior developer | done (fishing rework, hash below) |
+| FI1 | "let me actually aim the cast to land in a spot, and see if a fish notices it" | Junior developer | done (5c0f592; review card junior-fishing-review) |
+| FI2 | "if you pull too fast that fish should be gone for good so the amount of fish dwindle, (like 3 fish in a pond, catch 1 means one less in the pond, miss one it swims away, third one you try and catch but fail the reel challenge" | Junior developer | done (5c0f592; review card junior-fishing-review) |
+| FI3 | "the left right thing is sooo hard haha, one thing is that it just starts right away. both the fish and the reel bar should start in the middle, and give the player a quick ease in before the difficulty ramps up" | Junior developer | done (5c0f592; review card junior-fishing-review) |
+| FI4 | "if you use the left arrow you should be pulling the bar left and the second you release it pulls back to the center, same with the right. I want it to feel like the fish is pullign on the line" | Junior developer | done (5c0f592; review card junior-fishing-review) |
 
 ### Explore maps
 | # | Problem (his words) | Owner | Status |
