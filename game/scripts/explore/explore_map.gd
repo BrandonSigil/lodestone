@@ -24,7 +24,7 @@ var start: Array[Vector2i] = []  ## party cells, leader first
 var groups: Array[Dictionary] = []
 ## A group's story-beat keys ([USER] 2026-11-01): relents (a flag that settles it: calm every run), relent_event (what it
 ## asks then), wins (a meta counter of wins over it), yield_at (the win it yields on) and yields (the flags the yield sets).
-const STORY_KEYS := ["relents", "relent_event", "wins", "yield_at", "yields"]
+const STORY_KEYS := ["relents", "relent_event", "wins", "yield_at", "yields", "talk_when"]  ## talk_when: the flag that opens TALK (X9)
 ## [{"id", "kind", "event", "cell": Vector2i, "floor": terrain letter the cell becomes when opened,
 ##   "to": map an "enter" thing leads to, "at": Vector2i cell it arrives on there,
 ##   "once": flags ("a|b"); when any is set the thing is gone for good,

@@ -708,7 +708,8 @@ static func pickup_loot(ev: Dictionary) -> Dictionary:
 ## "" (anyone), "skill:<check>" (someone has it), "class:<id>", "char:<id>", "item:<id>" (the pack holds one; "item:<id>*3"
 ## at least three),
 ## "flag:<id>" or "noflag:<id>" (a meta flag is or isn't set), "party:<id>" or "noparty:<id>" (a companion is or
-## isn't in the party: have.party); several joined by "&" must all hold.
+## isn't in the party: have.party), "talk:group" (the group asking names a `talk_when` flag that is set: have.talk_ok);
+## several joined by "&" must all hold.
 ## `defs`: the party's CharacterDefs. have: {"items": id -> count, "flags": Array of set flags}.
 static func need_met(need: String, defs: Array, have := {}) -> bool:
 	if need == "":
@@ -728,6 +729,9 @@ static func need_met(need: String, defs: Array, have := {}) -> bool:
 			return have.get("flags", []).has(kv[1])
 		"noflag":
 			return not have.get("flags", []).has(kv[1])
+		"talk":  # talk:group - the spotting group names a `talk_when` flag and it is set ([USER] 2026-11-01 X9: "We havent done
+			# anything that warrants the ability to talk to them, so that shouldnt be an option"); none by default
+			return bool(have.get("talk_ok", false))
 		"party":  # the companion is coming along / staying home ([USER] pc-10)
 			return have.get("party", []).has(kv[1])
 		"noparty":

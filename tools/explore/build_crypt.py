@@ -266,9 +266,9 @@ data = {
         crypt_door_thing,
         {"id": "yard_stone", "kind": "shrine", "event": "shrine", "cell": c("court", 2, -3)},
         {"id": "lookout_boost", "kind": "boost", "event": "hp:2", "cell": c("lookout", 0, -1)},
-        {"id": "hall_chest", "kind": "chest", "event": "chest", "cell": c("hall", 6, 2)},
+        {"id": "hall_chest", "kind": "chest", "event": "chest", "cell": c("hall", 6, 1)},  # in the open (pm-occlusion hidden-spots check, 2026-11-01)
         {"id": "chapel_chest", "kind": "chest", "event": "chest", "cell": c("chapel", 0, 4)},
-        {"id": "wing_key", "kind": "key", "event": "crypt_key", "cell": c("wing", 2, 5)},
+        {"id": "wing_key", "kind": "key", "event": "crypt_key", "cell": c("wing", 1, 5)},  # in the open (pm-occlusion hidden-spots check, 2026-11-01)
         {"id": "library_rare", "kind": "rare", "event": "rare:1;metal:2", "cell": c("library", -3, -2)},
         {"id": "way_out", "kind": "exit", "event": "exit", "cell": [63, 12]},
         {"id": "throne_doors", "kind": "door", "event": "locked_door", "cell": [39, 7], "floor": "s"},

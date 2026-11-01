@@ -260,18 +260,22 @@ def forest_roads():
     thing(id="exit_far", kind="exit", event="exit", cell=[ex, ey])
     c2, c4, c6, c8 = ce[1], ce[3], ce[5], ce[7]
     thing(id="forest_cache", kind="cache", event="forest_cache", cell=[c2[0] + 1, c2[1] + 1], once="got_forest_cache")
-    thing(id="forest_stash", kind="cache", event="forest_stash", cell=[c6[0] - 1, c6[1] + 1], once="got_forest_stash")
+    # beside the road, not in the middle of it ([USER] 2026-11-01 X8: "a random barrel here in the middle of the road")
+    thing(id="forest_stash", kind="cache", event="forest_stash", cell=[c6[0] - 1, c6[1] - 2], once="got_forest_stash")
     groups = [
         {"id": "forest_bandits", "event": "spot_people", "sight": 5, "loot": "food:+3;gold:+6",
          "units": [{"id": "bandit", "cell": [c4[0] - 1, c4[1] - 1]}, {"id": "bandit_archer", "cell": [c4[0] + 2, c4[1] - 2], "leader": True}]},
         {"id": "forest_wolves", "event": "spot_beasts", "sight": 4, "loot": "food:+4",
          "units": [{"id": "wolf", "cell": [c8[0] - 2, c8[1]]}, {"id": "wolf", "cell": [c8[0], c8[1] + 2]}]},
-        # Bushberry's captors (design-bb-recruit): beating them frees him. The road loops back past this
+        # Bushberry's captors (design-bb-recruit). [USER] 2026-11-01: Bushberry fights beside the ogre with his rank 1 kit
+        # ("char": a companion on the foes' side), then lies fallen where he stood and is helped up (rescue_bushberry).
+        # Both stand in the open on the road (pm-occlusion: the hidden-spots QA check). The road loops back past this
         # clearing, so the party can back out down it or go round by the woods.
-        {"id": "forest_ogre", "event": "spot_people", "sight": 4, "elite": True, "loot": "rescue:bushberry;gold:+10",
-         "units": [{"id": "ogre", "cell": [c6[0] + 2, c6[1] - 1]}]},
+        {"id": "forest_ogre", "event": "spot_people", "sight": 4, "elite": True, "loot": "gold:+10;unlock:bushberry_down",
+         "units": [{"id": "ogre", "cell": [c6[0] + 2, c6[1] - 1]}, {"id": "bushberry", "char": "bushberry", "cell": [c6[0] + 1, c6[1]]}]},
     ]
-    thing(id="captive_bushberry", kind="companion", event="", cell=[c6[0] + 3, c6[1] + 1], once="rescued_bushberry")
+    thing(id="captive_bushberry", kind="companion", event="rescue_bushberry", cell=[c6[0] + 1, c6[1]], once="rescued_bushberry",
+          when="bushberry_down", fallen=True)
     for g in groups:
         for u in g["units"]:
             keep.add(tuple(u["cell"]))
@@ -416,7 +420,7 @@ def farmland():
     keep.update({(wind[0] + dx, wind[1] + dy) for dx in range(-1, 5) for dy in range(-1, 5)})
     cc = next(c for c in ((barn[0] + 1, barn[1] + 4), (barn[0] + 1, barn[1] - 2), (barn[0] + 5, barn[1] + 1), (barn[0] - 2, barn[1] + 1)) if 0 <= c[0] < W and 0 <= c[1] < H and m.terrain[c[1]][c[0]] == "g")
     thing(id="farm_cache", kind="cache", event="farm_cache", cell=list(cc), once="got_farm_cache")
-    thing(id="farm_stash", kind="cache", event="farm_stash", cell=[wind[0] - 1, wind[1] + 5], once="got_farm_stash")
+    thing(id="farm_stash", kind="cache", event="farm_stash", cell=[wind[0] - 1, wind[1] + 4], once="got_farm_stash")  # in the open (pm-occlusion hidden-spots check, 2026-11-01)
     bc = path[len(path) * 2 // 3]
     groups = [
         {"id": "farm_bandits", "event": "spot_people", "sight": 5, "loot": "food:+3;gold:+6",

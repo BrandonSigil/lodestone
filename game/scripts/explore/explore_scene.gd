@@ -1105,7 +1105,10 @@ func open_event(id: String, ctx: Dictionary) -> void:
 	if ctx.get("group", {}).get("def", {}).get("elite", false):
 		text = Txt.t("UI_ELITE_WARN") + "\n" + text  # [USER] pc-15: a badge to warn
 	var box := _new_dialog(text, false, String(ev.get("portrait", "")))
-	for o: Dictionary in ExploreRules.options_for(ev, _defs(), _have()):
+	var have := _have()
+	var tw := String(ctx.get("group", {}).get("def", {}).get("talk_when", ""))
+	have["talk_ok"] = tw != "" and Game.has_flag(tw)  # TALK only when the group's data says what earns it (X9)
+	for o: Dictionary in ExploreRules.options_for(ev, _defs(), have):
 		var label := Txt.t(o.key)
 		if o.check != "none":
 			var who: Dictionary = TrailRules.best_member(Game.run, o.check)
@@ -1113,7 +1116,7 @@ func open_event(id: String, ctx: Dictionary) -> void:
 			label += "      " + Txt.f("UI_EX_CHANCE", [Txt.t((who.def as CharacterDef).name_key), Txt.t("CHECK_" + String(o.check).to_upper()),
 				bonus, int(round(Dice.chance(bonus, o.dc) * 100))])
 		_dialog_button(box, label, choose.bind(o, ctx))
-	for o: Dictionary in ExploreRules.options_short(ev, _defs(), _have()):  # short of things: shown, greyed
+	for o: Dictionary in ExploreRules.options_short(ev, _defs(), have):  # short of things: shown, greyed
 		_dialog_button(box, Txt.t(o.key), Callable()).disabled = true
 	var leave := box.get_children().filter(func(c: Node) -> bool: return c is Button and (c as Button).text == Txt.t("OPT_LEAVE"))
 	if not leave.is_empty():

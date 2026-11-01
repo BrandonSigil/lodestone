@@ -460,7 +460,7 @@ V.thing(id="weapon_rack", kind="rack", event="smithy_rack", cell=[45, 12], once=
 V.thing(id="smithy_restore", kind="restore", event="smithy", cell=[42, 15])  # in front of the forge
 V.thing(id="smith", kind="settler", event="settler_smith", cell=[38, 18], once="settler_smith")
 V.thing(id="inn_restore", kind="restore", event="inn", cell=[40, 33])
-V.thing(id="chef", kind="settler", event="settler_chef", cell=[35, 30], once="settler_chef")
+V.thing(id="chef", kind="settler", event="settler_chef", cell=[34, 30], once="settler_chef")  # in the open (pm-occlusion hidden-spots check, 2026-11-01)
 V.thing(id="dog_home", kind="companion", event="companion_dog", cell=[6, 27], when="met_dog")
 V.thing(id="food_barrel", kind="cache", event="cache_food", cell=[43, 30], once="got_food_barrel")
 V.thing(id="smithy_rope", kind="cache", event="cache_rope", cell=[47, 15], once="got_rope")

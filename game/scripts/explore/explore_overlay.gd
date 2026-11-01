@@ -40,7 +40,7 @@ func _draw() -> void:
 		var dim := state == 1
 		if not dim and not NO_MARK_KINDS.has(String(t.kind)):
 			can_use[c] = true
-		_thing(String(t.kind), p, dim, not dim and use.get("id") == t.id and use.cell == t.cell)
+		_thing(String(t.kind), p, dim, not dim and use.get("id") == t.id and use.cell == t.cell, not board.grid.prop_at(c).is_empty())
 		if String(t.kind) == "companion":
 			# a companion stands at home while benched ([USER] pc-10: walk up to invite them)
 			# (recruit_<id>: the playtest line-up in the square, 2026-10-31: everyone with art waits there)
@@ -95,19 +95,20 @@ func _draw() -> void:
 func _figure(ci: CanvasItem, p: Vector2, who: StringName, dim: bool, time: float, fallen := false) -> void:
 	var d: CharacterDef = Db.character(who)
 	var art_id: StringName = d.sprite_id() if d != null else who
-	var f := CharacterArt.frame(art_id, "idle", "se", 0.0 if fallen else time) if CharacterArt.has_art(art_id) else {}
-	var turn := FALLEN_TURN if fallen else 0.0
+	var lying := fallen and CharacterArt.has_anim(art_id, "down")  # its own down frames ([USER] 2026-11-01 X10)
+	var f := CharacterArt.frame(art_id, "down" if lying else "idle", "se", 99.0 if lying else (0.0 if fallen else time)) if CharacterArt.has_art(art_id) else {}
+	var turn := FALLEN_TURN if fallen and not lying else 0.0
 	if f.is_empty():
 		ci.draw_set_transform(p, turn, Vector2.ONE)
 		PlaceholderFigure.draw(ci, Vector2.ZERO, 26.0, who, 0, "idle", 0.0 if fallen else time, false, Color(0.4, 0.7, 1.0), dim)
 		ci.draw_set_transform(Vector2.ZERO)
 		return
-	Pawn.ellipse(ci, p + Vector2(0, 2), 26.0 if fallen else 15.0, 6.0 if fallen else 5.0, Color(0, 0, 0, 0.25))
+	Pawn.ellipse(ci, p + Vector2(0, 2), 22.0 if fallen else 15.0, 6.0 if fallen else 5.0, Color(0, 0, 0, 0.25))
 	var s: float = f.scale
 	# head left, the frame's middle on his cell (turned a quarter, the frame's height runs along x)
-	var lie := Vector2((f.anchor.y - f.region.size.y * 0.5) * s, -4.0 + (f.region.size.x * 0.5 - f.anchor.x) * s) if fallen else Vector2.ZERO
+	var lie := Vector2((f.anchor.y - f.region.size.y * 0.5) * s, -4.0 + (f.region.size.x * 0.5 - f.anchor.x) * s) if fallen and not lying else Vector2.ZERO
 	ci.draw_set_transform(p + lie, turn, Vector2(-s if f.flip else s, s))
-	var tone := Color(0.55, 0.55, 0.55) if dim else (Color(0.78, 0.78, 0.8) if fallen else Color.WHITE)
+	var tone := Color(0.55, 0.55, 0.55) if dim else (Color(0.78, 0.78, 0.8) if fallen and not lying else Color.WHITE)
 	ci.draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, tone)
 	ci.draw_set_transform(Vector2.ZERO)
 
@@ -115,7 +116,10 @@ func _figure(ci: CanvasItem, p: Vector2, who: StringName, dim: bool, time: float
 const FALLEN_TURN := -PI * 0.5  ## a fallen companion lies on his side: the standing figure turned a quarter
 
 
-func _thing(kind: String, p: Vector2, dim: bool, lit := false) -> void:
+## Kinds drawn by something else (a doorway, a person's figure) or meant to be found: no grey block for them.
+const NO_BLOCK_KINDS := ["enter", "companion", "dog", "hidden"]
+
+func _thing(kind: String, p: Vector2, dim: bool, lit := false, propped := false) -> void:
 	var k := 0.55 if dim else (1.25 + 0.1 * sin(_time * 5.0) if lit else 1.0)  # the one F would use lifts and breathes
 	match kind:
 		"chest", "container":
@@ -168,6 +172,10 @@ func _thing(kind: String, p: Vector2, dim: bool, lit := false) -> void:
 			else:
 				for o in [Vector2(-8, -6), Vector2(6, -4), Vector2(-1, -14)]:
 					_box(p + o, 6.0, 5.0, Color(0.5, 0.47, 0.42) * k)
+		_ when not propped and not NO_BLOCK_KINDS.has(kind):
+			# No art for this kind yet ([USER] 2026-11-01 X8: "If we dont have a specific asset grey box it please"):
+			# a plain grey block, so the "!" over it always sits on something.
+			_box(p + Vector2(0, 2), 11.0, 14.0, Color(0.58, 0.58, 0.6) * k)
 
 
 ## A little iso box standing on p: two faces and a lid.

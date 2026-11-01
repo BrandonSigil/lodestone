@@ -4240,6 +4240,23 @@ func _draw_unit(u: CombatUnit) -> void:
 
 ## A piece bleeding out ([USER] c6, c11): a dim marker where it fell and the phases left for an AID.
 func _draw_downed(u: CombatUnit, base: Vector2) -> void:
+	if CharacterArt.has_anim(u.sprite, "down"):
+		# its own lying-down frames ([USER] 2026-11-01 X10: "it doesnt look like we're using the downed frames"), then the
+		# bleed-out count over it
+		Pawn.ellipse(_ci, base + Vector2(0, 2), 22.0, 6.0, Color(0, 0, 0, 0.25))
+		Pawn.ellipse(_ci, base, 22.0, 7.0, Color(0.4, 0.7, 1.0, 0.9), false, 2.0)
+		var d := Vector2(u.facing)
+		var dir := CharacterArt.screen_dir(iso(1.0 + d.x, 1.0 + d.y, 0.0) - iso(1.0, 1.0, 0.0))
+		var f := CharacterArt.frame(u.sprite, "down", dir, _time - u.anim_start)
+		if not f.is_empty():
+			var s: float = f.scale
+			_ci.draw_set_transform(base, 0.0, Vector2(-s if f.flip else s, s))
+			_ci.draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, Color.WHITE)
+			_ci.draw_set_transform(Vector2.ZERO)
+		var cc := base + Vector2(0, -30)
+		_ci.draw_circle(cc, 11.0, Color(0.75, 0.2, 0.18))
+		_ci.draw_string(ThemeDB.fallback_font, cc + Vector2(-20, 6), str(u.bleed), HORIZONTAL_ALIGNMENT_CENTER, 40, 16, Color(1, 1, 1))
+		return
 	var r := 15.0
 	var pts := PackedVector2Array()
 	for i in 20:

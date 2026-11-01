@@ -485,3 +485,22 @@ func test_walls_between_floors_are_fences() -> void:
 	ok(g.line_of_sight(Vector2i(4, 3), Vector2i(4, 5)), "and is low enough to see over")
 	ok(not g.fences.has(Vector2i(3, 2)), "a lone block in the room is no fence")
 	eq(g.height_at(Vector2i(3, 2)), 1 + ExploreRules.WALL_HALF, "it keeps its block")
+
+
+## [USER] 2026-11-01 X9: "we dont have a rogue in the party so they dont get a sneak hit. We havent done anything that
+## warrants the ability to talk to them": SNEAK HIT needs a rogue (class job_rogue), TALK needs the group's talk_when flag.
+func test_spot_options_are_conditional() -> void:
+	var ev: Dictionary = Db.explore_events.spot_people
+	var hero := Db.character(&"lead")
+	var keys := func(defs: Array, have: Dictionary) -> Array:
+		return ExploreRules.options_for(ev, defs, have).map(func(o: Dictionary) -> String: return String(o.key))
+	var plain: Array = keys.call([hero], {"flags": [], "talk_ok": false})
+	eq(plain, ["OPT_FIGHT", "OPT_BACK_OFF"], "no rogue, nothing earned: FIGHT and BACK OFF only")
+	var rogue := CharacterDef.new()
+	rogue.class_def = Db.class_def("job_rogue")
+	ok((keys.call([hero, rogue], {"talk_ok": false}) as Array).has("OPT_SNEAK_HIT"), "a rogue along: SNEAK HIT")
+	var talker := CharacterDef.new()
+	talker.class_def = hero.class_def
+	talker.off_skills = {"persuade": 2}
+	ok(not (keys.call([talker], {"talk_ok": false}) as Array).has("OPT_TALK"), "persuasive but nothing earned: no TALK")
+	ok((keys.call([talker], {"talk_ok": true}) as Array).has("OPT_TALK"), "the group's talk_when flag set: TALK")
