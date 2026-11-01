@@ -45,7 +45,7 @@ const TOOLS := [
 	["bridge", "deck", "N", "Bridge", "drag from one landing to another across water, a gap or lower ground: a bridge is built between them at the landings' height (a step if they differ by one), with rails and piers, and the ground under it is not touched. Right drag: take a bridge away along the line. Size 1 to 4 ([ and ]) makes it that many cells wide, rails on its outer edges only."],
 	["deck", "deck", "J", "Deck", "drag: a bridge floor at the level height over the cells, with the lane under it still open (it stands at least two levels over the ground). Right drag: take decks away."],
 	["|"],
-	["region", "square", "A", "Area", "drag a box (or click a flat area) to select cells; then Height (or PageUp and PageDown) moves every cell in it one level, keeping its ground, walls, stairs, decks and props. Right click clears the selection."],
+	["region", "square", "A", "Area", "drag a box (or click a flat area) to select cells; then Height (or PageUp and PageDown) moves every cell in it one level, keeping its ground, walls, stairs, decks and props; Cut out (Delete) cuts it out of the map, Fill in fills it back. Right click clears the selection."],
 	["cut", "cut", "C", "Cut", "cut cells out of the map: the outline, chasms, pits. Right: fill them back."],
 	["fill", "fill", "F", "Fill", "give holes ground again at the height around them. Right: cut."],
 	["zone", "zone", "Z", "Zone", "paint another tile set onto cells (blend forest into ruins). Right: back to the map's set."],
@@ -638,7 +638,7 @@ func _preview_box() -> void:
 	region = {}
 	for y in range(mini(a.y, b.y), maxi(a.y, b.y) + 1):
 		for x in range(mini(a.x, b.x), maxi(a.x, b.x) + 1):
-			if doc.grid.solid(Vector2i(x, y)):
+			if doc.grid.in_bounds(Vector2i(x, y)):  # empty cells too, so Fill in can bring them back
 				region[Vector2i(x, y)] = true
 
 
@@ -677,19 +677,41 @@ func region_shift(dz: int) -> void:
 		_say("select an area first: drag a box or click a flat area with the Area tool")
 		return
 	var g := doc.grid
+	var cells: Array[Vector2i] = []
 	for c: Vector2i in region:
+		if g.solid(c):  # empty cells in the box have no height to move
+			cells.append(c)
+	for c: Vector2i in cells:
 		var h := g.height_at(c) + dz
 		if h < 0 or h > CombatGrid.MAX_HEIGHT:
 			_say("can't go %s: a selected cell would leave the map's %d to %d levels" % ["up" if dz > 0 else "down", 0, CombatGrid.MAX_HEIGHT])
 			return
 	_push_undo()
-	for c: Vector2i in region:
+	for c: Vector2i in cells:
 		g.set_height(c, g.height_at(c) + dz)
 		if g.has_deck(c):
 			var dk: Dictionary = g.decks[c]
 			g.add_deck(c, int(dk.h) + dz, int(dk.t))
 	_refresh_marks()
-	_say("%d cells %s one level" % [region.size(), "raised" if dz > 0 else "lowered"])
+	_say("%d cells %s one level" % [cells.size(), "raised" if dz > 0 else "lowered"])
+
+
+## Cut every selected cell out of the map (Delete or Backspace), or fill them back as ground (`fill`)
+## ([USER] 2026-11-01: "select a wide area and delete it"). Undoable; the selection stays so it can be undone or filled.
+func region_cut(fill := false) -> void:
+	if region.is_empty():
+		_say("select an area first: drag a box or click a flat area with the Area tool")
+		return
+	_push_undo()
+	var cells: Array[Vector2i] = []
+	for c: Vector2i in region:
+		cells.append(c)
+	if fill:
+		MapOps.fill(doc.grid, cells)
+	else:
+		MapOps.cut(doc.grid, cells)
+	_refresh_marks()
+	_say("%d cells %s" % [cells.size(), "filled back in" if fill else "cut out of the map (ctrl Z undoes)"])
 
 
 ## The level height (number keys in the flat view): and the Level tool, which paints it.
@@ -762,6 +784,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_PAGEDOWN:
 			if tool == "region":
 				region_shift(-1)
+		KEY_DELETE, KEY_BACKSPACE:
+			if tool == "region":
+				region_cut()
 		KEY_H:
 			hide_ui = not hide_ui
 			_root.visible = not hide_ui
@@ -2122,11 +2147,21 @@ func _build_options() -> void:
 	down.tooltip_text = "Lower every selected cell one level (PageDown)"
 	down.pressed.connect(func() -> void: region_shift(-1))
 	area.add_child(down)
+	var cut := Button.new()
+	cut.text = "Cut out ✕"
+	cut.tooltip_text = "Cut every selected cell out of the map, leaving empty paper (Delete)"
+	cut.pressed.connect(func() -> void: region_cut())
+	area.add_child(cut)
+	var fill := Button.new()
+	fill.text = "Fill in"
+	fill.tooltip_text = "Fill every selected empty cell back in as ground"
+	fill.pressed.connect(func() -> void: region_cut(true))
+	area.add_child(fill)
 	var clr := Button.new()
 	clr.text = "Clear"
 	clr.pressed.connect(func() -> void: region = {})
 	area.add_child(clr)
-	for b in [up, down, clr]:
+	for b in [up, down, cut, fill, clr]:
 		b.focus_mode = Control.FOCUS_NONE
 	row.add_child(area)
 	_opt_groups["region"] = area
