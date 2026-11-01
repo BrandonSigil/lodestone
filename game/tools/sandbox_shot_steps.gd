@@ -39,6 +39,15 @@ func run(s: Node, _frames: int, _step: String) -> void:
 				b._play(ev)
 			b._select(bush)
 		return
+	if _step == "prince" and _frames == 4:  # the Lich Prince with the hero and Doggo
+		s.setup.party = [{"id": "lich_prince", "cell": s.setup.party[0].cell}, {"id": "lead", "cell": s.setup.party[1].cell},
+			{"id": "dog", "cell": s.setup.party[2].cell}]
+	if _step == "prince" and _frames == 12:  # his skills shown
+		var pb: Battle = s.battle
+		for o: CombatUnit in pb.units:
+			if o.team == 0 and o.traits.has(&"hoarfrost"):
+				pb._select(o)
+		return
 	if (_step == "bark" or _step == "amber") and _frames == 4:  # Doggo and Amber in the party
 		s.setup.party = [{"id": "dog", "cell": s.setup.party[0].cell}, {"id": "fire_mage", "cell": s.setup.party[1].cell},
 			{"id": "lead", "cell": s.setup.party[2].cell}]
