@@ -33,6 +33,7 @@ CROP_GAME = (40, 130, 1400, 979)
 CROP_KIT = (1440, 180, 2358, 786)
 CROP_STYLE = (1698, 1062, 2100, 1467)
 CROP_CHARS = (180, 1242, 1260, 1428)
+CAPTION_Y = 140  # row of the sprite captions inside CROP_CHARS
 
 
 def font(n):
@@ -48,6 +49,31 @@ def font(n):
 def fit(im, w, h):
     s = min(w / im.width, h / im.height)
     return im.resize((max(1, round(im.width * s)), max(1, round(im.height * s))), Image.LANCZOS)
+
+
+def party(v1):
+    """The party sprites from board v1 with the caption text cleared and the repeated lich prince left out."""
+    row = v1.crop(CROP_CHARS)
+    row.paste(CREAM, (0, CAPTION_Y, row.width, row.height))  # caption text, so the model paints no names
+    px = row.load()
+    cols = [x for x in range(row.width) if any(abs(px[x, y][0] - CREAM[0]) + abs(px[x, y][1] - CREAM[1]) + abs(px[x, y][2] - CREAM[2]) > 40 for y in range(0, CAPTION_Y, 2))]
+    groups, start = [], None
+    for x in range(row.width + 1):
+        on = x in set(cols) if x < row.width else False
+        if on and start is None:
+            start = x
+        if not on and start is not None:
+            if groups and start - groups[-1][1] < 40:
+                groups[-1] = (groups[-1][0], x)
+            else:
+                groups.append((start, x))
+            start = None
+    keep = [groups[0], groups[1], groups[3]]  # lead, lich prince (once), fire mage
+    cell = max(b - a for a, b in keep) + 60
+    out = Image.new("RGB", (cell * 3, CAPTION_Y), CREAM)
+    for i, (a, b) in enumerate(keep):
+        out.paste(row.crop((a, 0, b, CAPTION_Y)), (i * cell + (cell - (b - a)) // 2, 0))
+    return out
 
 
 def main():
@@ -70,7 +96,7 @@ def main():
     ah = gh + LAB + 10
     kit_h = int(ah * 0.66)
     panel(rx, GAP, rw, kit_h, "2  MENU KIT (approved pieces)", v1.crop(CROP_KIT))
-    panel(rx, GAP + kit_h + GAP, rw, ah - kit_h - GAP, "3  CHARACTERS (for portraits)", v1.crop(CROP_CHARS))
+    panel(rx, GAP + kit_h + GAP, rw, ah - kit_h - GAP, "3  CHARACTERS (for portraits)", party(v1))
 
     # row B: style, then the two layouts
     by = GAP + ah + GAP
@@ -80,8 +106,8 @@ def main():
     lw = (W - GAP * 4 - sw) // 2
     home = Image.open(DRAFTS / "02_home_cards.png").convert("RGB")
     win = Image.open(DRAFTS / "03_win.png").convert("RGB")
-    panel(GAP + sw + GAP, by, lw, bh, "5  LAYOUT: HOME AGAIN (keep this arrangement)", home)
-    panel(GAP + sw + GAP + lw + GAP, by, lw, bh, "6  LAYOUT: WIN (keep this arrangement)", win)
+    panel(GAP + sw + GAP, by, lw, bh, "5  LAYOUT: HOME AGAIN (arrangement only)", home)
+    panel(GAP + sw + GAP + lw + GAP, by, lw, bh, "6  LAYOUT: WIN (arrangement only)", win)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     board.save(OUT, optimize=True)
