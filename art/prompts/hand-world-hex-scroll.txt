@@ -1,0 +1,24 @@
+World map mockup, new direction: a flat, hand-inked cartographer's scroll map of the twelve regions in hexagons (Brandon, 2026-11-01: "a flat handdrawn map of these regions in hexagons. It should look like an old scroll that a cartopgrapher inked. So very tan/papery with light coloring. Keep our general painterly simplistic style, but have it look like a map")
+Attach ONE picture: art/templates/world/world_board_flat.png (made by tools/art/world_board.py flat). Three labelled panels:
+  CONTENT = the latest try, only for WHAT is in each region; HEX LAYOUT = the twelve hexagons seen from straight above; STYLE = our painterly simple look.
+Settings: GPT image, 2K, 3:2, High, 4 tries.
+
+----- PROMPT -----
+
+The attached picture is a reference board with three labelled panels (CONTENT, HEX LAYOUT, STYLE). It is only a reference: make ONE single picture that fills the whole frame, with no panels, labels or board layout.
+
+Make a flat, hand-drawn map, the kind a cartographer inked by hand on an old scroll. Seen straight from above like a real map: no 3D, no raised tiles, no cliffs shown from the side, no perspective.
+
+THE SCROLL: one sheet of old, warm tan paper with soft stains and worn, slightly torn edges, rolled into a scroll at the top and the bottom. Most of the sheet stays the bare tan of the paper.
+
+THE HEX GRID: the twelve regions sit in the hexagon grid of the HEX LAYOUT panel, the same twelve hexagons in the same places, inked as thin, slightly wobbly brown-black lines like a pen on paper, one region per hexagon. The land is one continuous country across the grid: no gaps between regions.
+
+WHAT IS IN EACH REGION: the same lands and places as the CONTENT panel, drawn as small, simple inked map symbols rather than scenery. Snow-capped peaks and a frozen waterfall at the back left, snowy plains at the back middle with a road, deep woods with a few blossom trees at the back right, a mine entrance among rocky peaks in the middle, a beach with palms and a jetty on the left, open meadow in the centre, more woods with a crystal cluster on the right, the walled town with a keep on the right, woods at the front left, the small village with a little square at the front middle, and farm fields with a barn and a windmill at the front right. Trees are little inked tree shapes in clusters, mountains are inked peaks with a few strokes of shading, water is drawn with fine wave lines.
+
+THE EDGES OF THE WORLD: the coast is drawn as an inked coastline with a few ripple lines, and the sea around it is tinted pale blue-grey. A long stone wall with small square towers and a gate runs across the top of the map. Beyond the wall the map fades into drawn clouds and mist, with only a few faint inked peaks and odd tall shapes showing, as if the mapmaker never went there.
+
+ROADS AND RIVER: a dotted road starts at the village and winds through the regions to the gate in the wall. A river runs from the rocky middle down past the farm fields to the sea.
+
+COLOUR AND LOOK: light, soft watercolour washes over the ink: pale greens, ochres, muted blues and soft greys, never strong. Use the STYLE panel for the feel: simple, chunky, friendly shapes with a soft hand-drawn line, nothing fussy. The ink is warm dark brown-charcoal (#373335), never pure black. Each region reads at a glance from its colour and two or three symbols.
+
+Avoid: text, letters, numbers, labels, names, a title cartouche, a compass rose, 3D or raised tiles, isometric view, perspective, cliffs seen from the side, bridges on the hex borders, saturated colours, thick dark outlines, glossy surfaces, glow effects, photorealism, pixel art, tiny detail that can't be read when small.

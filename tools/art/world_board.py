@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """One labelled reference board for the hex world map prompt: CONTENT, HEX STRUCTURE, STYLE on one picture.
 
-    ~/.lodestone/venv/bin/python tools/art/world_board.py   # writes art/templates/world/world_board.png
+    ~/.lodestone/venv/bin/python tools/art/world_board.py        # writes art/templates/world/world_board.png
+    ~/.lodestone/venv/bin/python tools/art/world_board.py flat   # the scroll map board: HEX LAYOUT is the flat guide (hex_flat_guide.py)
 
 1536 x 1024 (3:2), cream paper, built only from pictures we already have, nothing painted:
   CONTENT        Brandon's latest Picsart try (art/templates/world/hex_closest_try_2.png), big on the left
@@ -16,7 +17,10 @@ CREAM = (234, 232, 214)
 INK = (55, 51, 53)
 FONT = "/System/Library/Fonts/Helvetica.ttc"
 W, H, M, LAB = 1536, 1024, 24, 52
-OUT = "art/templates/world/world_board.png"
+import sys
+
+FLAT = len(sys.argv) > 1 and sys.argv[1] == "flat"  # the inked scroll map (2026-11-01): flat top-down hex layout
+OUT = "art/templates/world/world_board_flat.png" if FLAT else "art/templates/world/world_board.png"
 PANELS = [  # label, source, box (x, y, w, h) including the label strip
     ("CONTENT", "art/templates/world/hex_closest_try_2.png", (M, M, 980, H - 2 * M)),
     ("HEX OVERLAY", "art/templates/world/hex_overlay_guide.png", (980 + 2 * M, M, W - 980 - 3 * M, (H - 3 * M) // 2)),
@@ -29,6 +33,10 @@ def font(n):
         return ImageFont.truetype(FONT, n, index=1)
     except OSError:
         return ImageFont.load_default()
+
+
+if FLAT:
+    PANELS[1] = ("HEX LAYOUT", "art/templates/world/hex_flat_guide.png", PANELS[1][2])
 
 
 def main():
