@@ -89,12 +89,26 @@ button { cursor: pointer; }
 .chip.kind-present { background: var(--chat-soft); color: var(--chat); }
 .chip.kind-review { background: var(--amber-soft); color: var(--amber); }
 .chip.kind-todo { background: var(--leaf-soft); color: var(--muted); }
+.chip.kind-report { background: var(--chat-soft); color: var(--chat); }
+a.btn { text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+a.btn.present { color: var(--chat-ink); }
 .chip.st-answered { background: var(--ok-soft); color: var(--ok); }
 .chip.st-done { background: var(--leaf-soft); color: var(--muted); }
 .card-body { padding: 8px 18px 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .card h3 { font-family: var(--display); font-weight: 400; font-size: 19px; margin: 0; text-wrap: balance; }
 .ask { font-weight: 600; margin: 0; }
-.ctx { color: var(--muted); margin: 0; max-width: 68ch; white-space: pre-line; }
+.ctx { color: var(--muted); margin: 0; max-width: 68ch; }
+/* Formatted body text (bullets, numbers, bold) in cards, slides, chat and logs */
+.md p { margin: 0 0 8px; }
+.md > :last-child { margin-bottom: 0; }
+.md ul, .md ol { margin: 0 0 8px; padding-left: 22px; }
+.md li + li { margin-top: 3px; }
+.md li::marker { color: var(--muted); }
+.md b { color: var(--ink); font-weight: 600; }
+.md code { font-family: var(--mono); font-size: .88em; background: var(--leaf-soft); color: var(--ink); padding: 1px 5px; border-radius: 4px; }
+.md a { color: var(--gem); }
+.md h4 { font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink); margin: 12px 0 4px; }
+.md h4:first-child { margin-top: 0; }
 .shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
 .shot { margin: 0; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .shot button { padding: 0; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--paper); aspect-ratio: 16 / 10; display: block; width: 100%; }
@@ -184,6 +198,12 @@ html.locked { overflow: hidden; }
 .pv-head { display: flex; align-items: center; gap: 14px; padding: 12px 16px 12px 22px; border-bottom: 1px solid var(--rule); }
 .pv-head h2 { font: 400 17px/1.2 var(--display); margin: 0; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pv-head small { color: var(--muted); font-family: var(--mono); font-size: 12.5px; }
+.pv-in { touch-action: pan-y; }
+.pv-stage.in-next { animation: pv-next .22s ease-out; }
+.pv-stage.in-prev { animation: pv-prev .22s ease-out; }
+@keyframes pv-next { from { opacity: 0; transform: translateX(36px); } }
+@keyframes pv-prev { from { opacity: 0; transform: translateX(-36px); } }
+@media (prefers-reduced-motion: reduce) { .pv-stage.in-next, .pv-stage.in-prev { animation: none; } }
 .pv-stage { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: clamp(20px, 4vw, 48px) clamp(20px, 5vw, 64px); }
 .pv-stage h3 { font: 400 clamp(26px, 3.4vw, 38px)/1.12 var(--display); margin: 0 0 16px; text-wrap: balance; }
 .pv-stage .lead { font-size: 18px; }
@@ -326,7 +346,8 @@ html.locked { overflow: hidden; }
 .msg .who { font-size: 12px; color: var(--muted); }
 .msg .re { font-size: 11.5px; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .msg .who b { color: var(--ink); font-weight: 600; margin-right: 6px; }
-.msg .bubble { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px 12px 12px 12px; padding: 7px 11px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.msg .bubble { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px 12px 12px 12px; padding: 7px 11px; overflow-wrap: anywhere; font-size: 14px; }
+.msg .bubble.md ul, .msg .bubble.md ol { padding-left: 18px; }
 .msg.mine { align-self: flex-end; align-items: flex-end; }
 .msg.mine .bubble { background: var(--chat-soft); border-color: transparent; border-radius: 12px 4px 12px 12px; }
 .msg .shots { margin-top: 4px; }
@@ -511,7 +532,10 @@ textarea.dropping { border-color: var(--gem); background: var(--gem-soft); }
 const S = { db: null, chat: [], chatWake: "off", chatThread: null, desk: [], roles: [], log: [], notes: [], refs: [], library: [], roadmap: [], requests: [], qa: null, reportHtml: "", tab: "open", libTab: "all", room: "office", openRole: null, openFolder: null, drafts: {} };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const KIND = { present: "Presentation", choice: "Your call", go: "Picsart go-ahead", review: "Art review", todo: "To do" };
+// Anything Brandon should look at (a report, a deck, a link) goes on the desk as a card, never only as a link in chat ([USER] 2026-11-01: "Can you put stuff like this on my desk please").
+// A card's optional `link: {url, label}` shows as an Open button; kind "report" is a read-and-mark-read card.
+const KIND = { present: "Presentation", choice: "Your call", go: "Picsart go-ahead", review: "Art review", todo: "To do", report: "Report" };
+function linkHtml(l) { return l?.url && /^https:\/\//.test(l.url) ? `<div class="row"><a class="btn present" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || "Open")} ↗</a></div>` : ""; }
 
 
 function ago(iso) {
@@ -600,6 +624,7 @@ function answerSummary(d) {
     const n = (k) => v.filter((x) => x.verdict === k).length;
     what = `${n("approve")} approved, ${n("redo")} redo, ${n("reject")} rejected`;
   } else if (d.kind === "todo") what = "Done";
+  else if (d.kind === "report") what = "Read";
   return `<div class="answered"><span><b>You:</b> ${esc(what)}</span>${a.why ? `<span>“${esc(a.why)}”</span>` : ""}${shownImages(a.images)}<small>${esc(ago(a.at))}${d.status === "answered" ? " · sent to " + esc(roleName(d.role)) : ""}</small></div>`;
 }
 
@@ -643,8 +668,8 @@ function cardHtml(d) {
       const all = (d.items || []).every((it) => iv[it.id]?.verdict);
       body += `<div class="why"><textarea id="why-${esc(d.id)}" placeholder="Overall notes (optional)">${esc(draft.why || "")}</textarea>${attachHtml(d.id)}
         <div class="row"><button class="btn primary" data-act="sendreview" data-id="${esc(d.id)}" ${all ? "" : "disabled"}>Stamp and send</button><small style="color:var(--muted)">${all ? "" : "Give every picture a verdict first."}</small></div></div>`;
-    } else if (d.kind === "todo") {
-      body += `<div class="row"><button class="btn primary" data-act="todo" data-id="${esc(d.id)}">Mark done</button></div>`;
+    } else if (d.kind === "todo" || d.kind === "report") {
+      body += `<div class="row"><button class="btn primary" data-act="todo" data-id="${esc(d.id)}">${d.kind === "report" ? "Mark read" : "Mark done"}</button></div>`;
     }
   } else {
     if (d.kind === "review") {
@@ -662,8 +687,9 @@ function cardHtml(d) {
       <h3>${esc(d.title)}</h3>
       ${d.working && st === "open" ? `<p class="working">${esc(roleName(d.role))} is reworking this: ${esc(d.working)}</p>` : ""}
       ${d.ask ? `<p class="ask">${esc(d.ask)}</p>` : ""}
-      ${d.context ? `<p class="ctx">${esc(d.context)}</p>` : ""}
+      ${d.context ? `<div class="ctx md">${mdLite(d.context, false)}</div>` : ""}
       ${d.kind !== "review" ? shotsHtml(d.images) : ""}
+      ${linkHtml(d.link)}
       ${body}
     </div></article>`;
 }
@@ -768,7 +794,7 @@ function renderRoleView(force) {
           <small>${r.updated ? "Updated " + esc(ago(r.updated)) : ""}</small>
         </div>
         <h3>Log</h3>
-        ${log.length ? `<ol class="rv-log">${log.map((l) => `<li><time datetime="${esc(l.at)}">${esc(when(l.at))}</time><p>${esc(l.text)}</p>${l.image ? `<img src="${esc(l.image)}" alt="" data-zoom="${esc(l.image)}" data-cap="${esc(l.text)}" loading="lazy">` : ""}</li>`).join("")}</ol>` : `<p class="rv-empty">Nothing logged yet. This role adds a line for each milestone, with a picture when there is one.</p>`}
+        ${log.length ? `<ol class="rv-log">${log.map((l) => `<li><time datetime="${esc(l.at)}">${esc(when(l.at))}</time><div class="md">${mdLite(l.text, false)}</div>${l.image ? `<img src="${esc(l.image)}" alt="" data-zoom="${esc(l.image)}" data-cap="${esc(l.text)}" loading="lazy">` : ""}</li>`).join("")}</ol>` : `<p class="rv-empty">Nothing logged yet. This role adds a line for each milestone, with a picture when there is one.</p>`}
       </section>
       <aside class="rv-side" aria-label="Your side">
         <div>
@@ -825,22 +851,46 @@ function renderPres() {
   if (!d) { pv.hidden = true; pv.innerHTML = ""; S.pres = null; return; }
   const slides = d.slides || [], n = slides.length + 1, i = Math.max(0, Math.min(S.pres.i, n - 1)); S.pres.i = i;
   const open = (d.status || "open") === "open";
+  const dir = S.presDir ? " in-" + S.presDir : ""; S.presDir = "";
   let stage;
   if (i < slides.length) {
     const sl = slides[i];
-    stage = sl.layout === "sheet" ? sheetHtml(sl) : `<h3>${esc(sl.title || "")}</h3>${sl.text ? mdLite(sl.text) : ""}${shotsHtml(sl.images)}`;
+    stage = sl.layout === "sheet" ? sheetHtml(sl) : `<h3>${esc(sl.title || "")}</h3>${sl.text ? `<div class="md">${mdLite(sl.text)}</div>` : ""}${shotsHtml(sl.images)}`;
   } else {
     stage = `<h3>Your call</h3>${d.ask ? `<p class="lead">${esc(d.ask)}</p>` : ""}${open ? choiceBody(d, S.drafts[d.id] || {}) : answerSummary(d)}`;
   }
   pv.innerHTML = `<div class="pv-in">
     <div class="pv-head"><h2 id="pv-h">${esc(d.title)}</h2><small>${i + 1} / ${n}</small><button class="rv-x" data-act="pres-close" aria-label="Close presentation">×</button></div>
-    <div class="pv-stage">${stage}</div>
+    <div class="pv-stage${dir}">${stage}</div>
     <div class="pv-foot"><button class="btn" data-act="pres-go" data-i="${i - 1}" ${i ? "" : "disabled"}>Back</button>
       <div class="pv-dots">${Array.from({ length: n }, (_, k) => `<button data-act="pres-go" data-i="${k}" aria-label="${k === n - 1 ? "Your call" : "Slide " + (k + 1)}" aria-current="${k === i}" class="${k === n - 1 && k !== i ? "call" : ""}"></button>`).join("")}</div>
       <button class="btn ${i === n - 1 ? "" : "primary"}" data-act="pres-go" data-i="${i + 1}" ${i === n - 1 ? "disabled" : ""}>${i === n - 2 ? "Your call" : "Next"}</button></div>
   </div>`;
   pv.hidden = false;
 }
+// Move through a presentation by k slides, keeping any typed answer; the slide slides in from the side it came from.
+function presStep(k) {
+  if (!S.pres || !k) return;
+  const tw = $("pv").querySelector("textarea"); if (tw) (S.drafts[S.pres.id] ||= {}).why = tw.value;
+  const d = S.desk.find((x) => x.id === S.pres.id), last = (d?.slides || []).length;
+  const to = Math.max(0, Math.min(S.pres.i + k, last));
+  if (to === S.pres.i) return;
+  S.presDir = to > S.pres.i ? "next" : "prev"; S.pres.i = to; renderPres();
+}
+// Swipe left or right anywhere on a presentation to flick through it (phones and touch screens).
+(() => {
+  let x0 = null, y0 = 0, t0 = 0;
+  $("pv").addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1 || /TEXTAREA|INPUT/.test(e.target.tagName)) { x0 = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  $("pv").addEventListener("touchend", (e) => {
+    if (x0 == null || !S.pres) return;
+    const p = e.changedTouches[0], dx = p.clientX - x0, dy = p.clientY - y0; x0 = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5 || Date.now() - t0 > 900) return;
+    presStep(dx < 0 ? 1 : -1);
+  }, { passive: true });
+})();
 function openPres(id) { S.pres = { id, i: 0 }; renderPres(); $("pv").querySelector("[data-act=pres-go]:last-of-type")?.focus(); }
 function closePres() { const id = S.pres?.id; S.pres = null; renderPres(); if (id) document.querySelector(`#card-${CSS.escape(id)} [data-act=present]`)?.focus(); }
 function closeRole() { const id = S.openRole; S.openRole = null; renderRoleView(); renderDesk(); document.querySelector(`#team [data-act=role][data-id="${id}"]`)?.focus(); }
@@ -916,16 +966,30 @@ function renderQa() {
 }
 
 // Status report: Claude writes it from the studio records; without Claude in this view, a plain summary.
-function mdLite(t) {
-  const out = []; let list = null;
-  for (const raw of String(t).split(/\n/)) {
-    const l = raw.trim().replace(/\*\*/g, "");
-    if (!l) { list = null; continue; }
-    if (/^#{1,4}\s/.test(l)) { list = null; out.push(`<h4>${esc(l.replace(/^#+\s*/, ""))}</h4>`); }
-    else if (/^[-*•]\s/.test(l)) { if (!list) { list = []; out.push(list); } list.push(`<li>${esc(l.replace(/^[-*•]\s*/, ""))}</li>`); }
-    else { list = null; out.push(`<p${out.length ? "" : ' class="lead"'}>${esc(l)}</p>`); }
+// Light markdown for every body text the team writes: "## " headings, "- " bullets, "1. " numbered steps,
+// **bold**, *italic*, `code` and https links. Lines next to each other stay one paragraph with line breaks; a blank line starts a new one.
+function mdInline(s) {
+  return esc(s)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+    .replace(/(^|[\s(])[*_]([^*_\s][^*_]*?)[*_](?=[\s).,;:!?]|$)/g, "$1<em>$2</em>")
+    .replace(/(https:\/\/[^\s<]+[^\s<.,;:!?)])/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+}
+function mdLite(t, lead = true) {
+  const out = []; let list = null, para = null;
+  for (const raw of String(t ?? "").split(/\n/)) {
+    const l = raw.trim(); let m;
+    if (!l) { list = null; para = null; continue; }
+    if ((m = l.match(/^#{1,4}\s+(.*)/))) { list = null; para = null; out.push(`<h4>${mdInline(m[1])}</h4>`); }
+    else if ((m = l.match(/^[-*•]\s+(.*)/))) { para = null; if (list?.tag !== "ul") out.push(list = { tag: "ul", items: [] }); list.items.push(mdInline(m[1])); }
+    else if ((m = l.match(/^(\d+)[.)]\s+(.*)/))) { para = null; if (list?.tag !== "ol") out.push(list = { tag: "ol", start: +m[1], items: [] }); list.items.push(mdInline(m[2])); }
+    else if (list && /^\s{2,}/.test(raw)) list.items[list.items.length - 1] += "<br>" + mdInline(l);
+    else if (para) para.lines.push(mdInline(l));
+    else { list = null; out.push(para = { lines: [mdInline(l)] }); }
   }
-  return out.map((x) => Array.isArray(x) ? `<ul>${x.join("")}</ul>` : x).join("");
+  return out.map((x, i) => typeof x === "string" ? x
+    : x.items ? `<${x.tag}${x.start > 1 ? ` start="${x.start}"` : ""}>${x.items.map((li) => `<li>${li}</li>`).join("")}</${x.tag}>`
+    : `<p${lead && i === 0 ? ' class="lead"' : ""}>${x.lines.join("<br>")}</p>`).join("");
 }
 function studioSnapshot() {
   const day = Date.now() - 86400000;
@@ -1088,7 +1152,7 @@ document.addEventListener("click", async (ev) => {
         setTab("open"); break;
       }
       case "present": openPres(id); break;
-      case "pres-go": if (S.pres) { const tw = $("pv").querySelector("textarea"); if (tw) (S.drafts[S.pres.id] ||= {}).why = tw.value; S.pres.i = Number(t.dataset.i); renderPres(); } break;
+      case "pres-go": if (S.pres) presStep(Number(t.dataset.i) - S.pres.i); break;
       case "pres-close": closePres(); break;
       case "role": S.openRole = id; renderRoleView(); break;
       case "closerole": closeRole(); break;
@@ -1158,7 +1222,7 @@ $("lb-save").addEventListener("click", async () => {
 $("lb").addEventListener("click", (e) => { if (e.target.id === "lb") closeLb(); });
 document.addEventListener("keydown", (e) => {
   if (S.pres && $("lb").hidden && !/TEXTAREA|INPUT/.test(document.activeElement?.tagName || "") && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
-    S.pres.i += e.key === "ArrowRight" ? 1 : -1; renderPres(); return;
+    presStep(e.key === "ArrowRight" ? 1 : -1); return;
   }
   if (e.key !== "Escape") return;
   if (!$("lb").hidden) closeLb();
@@ -1201,7 +1265,7 @@ function renderChat() {
     const mine = m.from === "brandon";
     const ims = (m.images || []).map((im) => ({ url: im.url, caption: im.caption || "" }));
     const waiting = asks.includes(m);
-    return `<div class="msg${mine ? " mine" : ""}${waiting ? " ask" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Wren" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.re && byIdChat[m.re] ? `<span class="re">↳ ${esc(String(byIdChat[m.re].text || "your picture").slice(0, 60))}</span>` : ""}${m.text ? `<div class="bubble">${esc(m.text)}</div>` : ""}${shotsHtml(ims)}${waiting ? `<span class="flag">Waiting on you</span>` : ""}</div>`;
+    return `<div class="msg${mine ? " mine" : ""}${waiting ? " ask" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Wren" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.re && byIdChat[m.re] ? `<span class="re">↳ ${esc(String(byIdChat[m.re].text || "your picture").slice(0, 60))}</span>` : ""}${m.text ? `<div class="bubble md">${mdLite(m.text, false)}</div>` : ""}${shotsHtml(ims)}${waiting ? `<span class="flag">Waiting on you</span>` : ""}</div>`;
   }).join("") : `<div class="empty">Talk to Wren, the project manager, here like a teammate: ask what's going on, pass on a decision, or paste a picture.</div>`;
   if (atEnd || S.chatJump) { log.scrollTop = phone ? 0 : log.scrollHeight; S.chatJump = false; }
   markChatSeen();
@@ -1296,3 +1360,4 @@ function watch(coll, key) {
 })();
 setInterval(renderTally, 60000);
 </script>
+
