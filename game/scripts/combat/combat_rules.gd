@@ -26,6 +26,15 @@ const STATUS_WARD := "ward"  ## the book's WARD: the next hit on this piece does
 const STATUS_OVERWATCH := "overwatch"  ## the bow's OVERWATCH: the first foe to move into its reach takes a plain shot and stops
 const STATUS_BURN := "burn"  ## Amber's A Heart that Burns: `burn_damage` at the start of each phase for `burn_turns` phases
 const STATUS_POISON := "poison"  ## the same, from the rogue's blades: `poison_damage` for `poison_turns` phases
+const STATUS_BLIND := "blind"  ## FLASH: its ranged attacks reach only 1 tile (so a bow or a spell can't attack at all)
+const STATUS_RALLIED := "rallied"  ## RALLY: walks again this phase with `rally_move` more
+const STATUS_INSPIRED := "inspired"  ## INSPIRE: `inspire_damage` more on every hit
+const STATUS_LAST_STAND := "last_stand"  ## LAST STAND: falling while it is on adds the skill's turns to the bleed-out
+## Fields: what an ability leaves on the ground (CombatGrid.fields).
+const FIELD_TRAP := "trap"  ## a foe walking onto it stops there and takes the trap's hit; the trap is spent
+const FIELD_CALTROPS := "caltrops"  ## a foe walking onto it stops there, takes the hit and is slowed; it stays
+const FIELD_FIRE := "fire"  ## burning ground: nobody can walk onto it
+const FIELD_SMOKE := "smoke"  ## nobody can attack from more than 1 tile away into, out of or across it
 ## Cleared when the owner's next phase starts (they protect through the enemy phase).
 const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT, STATUS_WARD, STATUS_OVERWATCH, STATUS_FOE_WARD]
 
@@ -83,7 +92,8 @@ static func height_levels(grid: CombatGrid, from: Vector2i, to: Vector2i) -> int
 static func move_points(u: CombatUnit) -> int:
 	if u.has_status(STATUS_ROOTED) or u.has_status(STATUS_SLEEP):
 		return 0
-	return maxi(1, u.move + (SPOOKED_MOVE if u.spooked else 0) + (int(num("slow_move")) if u.has_status(STATUS_SLOW) else 0))
+	return maxi(1, u.move + (SPOOKED_MOVE if u.spooked else 0) + (int(num("slow_move")) if u.has_status(STATUS_SLOW) else 0) \
+		+ (u.rally_move if u.has_status(STATUS_RALLIED) else 0))
 
 
 ## What's left of this phase's move: all of it, less what the piece already walked (hit and run spends the rest).
@@ -135,6 +145,8 @@ static func reachable(grid: CombatGrid, u: CombatUnit, units: Array, budget := -
 					continue
 				if not grid.can_step(c, n, u.jump):
 					continue
+				if not grid.fields.is_empty() and field_at(grid, n, FIELD_FIRE) != null:
+					continue  # IGNITE's burning ground blocks the way
 				var other := occupant(units, n)
 				if other != null and other.team != u.team:
 					continue
@@ -166,9 +178,10 @@ static func path_to(prev: Dictionary, from: Vector2i, to: Vector2i) -> Array[Vec
 
 ## Vector2i(min, max) for this unit using this ability. Strike and weapon-range skills use the unit's own range.
 static func ability_range(u: CombatUnit, a: Ability) -> Vector2i:
-	if a == null or a.uses_weapon_range():
-		return Vector2i(u.range_min, u.range_max)
-	return Vector2i(a.range_min, a.range_max)
+	var r := Vector2i(u.range_min, u.range_max) if a == null or a.uses_weapon_range() else Vector2i(a.range_min, a.range_max)
+	if u.has_status(STATUS_BLIND) and (a == null or a.hostile()):
+		r.y = mini(r.y, 1)  # FLASH: blinded, it can only hit what is next to it
+	return r
 
 
 ## Range 1 is melee: it can't cross more than MELEE_REACH levels, except over a step a piece could walk (a stair
@@ -187,7 +200,33 @@ static func in_reach(grid: CombatGrid, from: Vector2i, to: Vector2i, r: Vector2i
 		return false
 	if d > reach:
 		return false
+	if reach > 1 and d > 1 and not grid.fields.is_empty() and smoked(grid, from, to):
+		return false
 	return reach <= 1 or d <= 1 or grid.line_of_sight(from, to)
+
+
+## Is there SMOKE on `from`, on `to`, or on a tile the line between them crosses?
+static func smoked(grid: CombatGrid, from: Vector2i, to: Vector2i) -> bool:
+	var a := Vector2(CombatGrid.ground(from)) + Vector2(0.5, 0.5)
+	var b := Vector2(CombatGrid.ground(to)) + Vector2(0.5, 0.5)
+	var steps := maxi(1, int(ceil(a.distance_to(b) * 3.0)))
+	for i in steps + 1:
+		var p := a.lerp(b, float(i) / steps)
+		var c := Vector2i(int(floor(p.x)), int(floor(p.y)))
+		for q in grid.places_at(c):
+			if field_at(grid, q, FIELD_SMOKE) != null:
+				return true
+		if field_at(grid, c, FIELD_SMOKE) != null:
+			return true
+	return false
+
+
+## The field of `kind` on place c, or null.
+static func field_at(grid: CombatGrid, c: Vector2i, kind: String):
+	for f: Dictionary in grid.fields.get(c, []):
+		if f.kind == kind:
+			return f
+	return null
 
 
 ## Cells a ranged piece standing at `from` could reach with its basic attack but can't see ([USER] c14:
@@ -268,7 +307,7 @@ static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Arr
 		for o: CombatUnit in units:
 			if o == u or o.team != u.team or not (o.alive() or (a.kind != "command" and o.downed())):
 				continue
-			if a.kind == "command" or (a.kind == "carry" and dist(from, o.cell) == 1) or (a.kind == "swap" and dist(from, o.cell) <= a.range_max):
+			if (a.kind == "command" and commandable(u, a, o, from)) or (a.kind == "carry" and dist(from, o.cell) == 1) or (a.kind == "swap" and dist(from, o.cell) <= a.range_max):
 				out.append(o.cell)
 		return out
 	match a.target:
@@ -288,9 +327,12 @@ static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Arr
 				if in_reach(grid, from, oc, r):
 					out.append(oc)
 		"cell":
+			var ground := a.field == FIELD_TRAP or a.field == FIELD_CALTROPS  # set on an empty tile a foe could walk onto
 			for y in grid.h:
 				for x in grid.w:
 					for c in grid.places_at(Vector2i(x, y)):
+						if ground and (not grid.passable(c) or occupant(units, c) != null or (c == from)):
+							continue
 						if in_reach(grid, from, c, r):
 							out.append(c)
 	return out
@@ -317,9 +359,19 @@ static func reach_cells(grid: CombatGrid, u: CombatUnit, a: Ability, from: Vecto
 
 ## Cells hit when aiming at `center` (a plus shape for radius 1). On a deck the blast stays on the deck where
 ## the deck goes on and spills to the ground past its edge; in the lane under a deck the deck shields what's on it.
-static func area(grid: CombatGrid, a: Ability, center: Vector2i) -> Array[Vector2i]:
+static func area(grid: CombatGrid, a: Ability, center: Vector2i, from := CombatGrid.NONE_CELL) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	var mid := CombatGrid.ground(center)
+	if a.line > 0 and from != CombatGrid.NONE_CELL:  # IGNITE: a line from the aimed tile, away from the user
+		var d := mid - CombatGrid.ground(from)
+		var dir := Vector2i(signi(d.x), 0) if absi(d.x) >= absi(d.y) else Vector2i(0, signi(d.y))
+		if dir == Vector2i.ZERO:
+			dir = Vector2i(1, 0)
+		for i in a.line:
+			var c := mid + dir * i
+			if grid.in_bounds(c):
+				out.append(c)
+		return out
 	for y in range(mid.y - a.radius, mid.y + a.radius + 1):
 		for x in range(mid.x - a.radius, mid.x + a.radius + 1):
 			var c := Vector2i(x, y)
@@ -331,14 +383,14 @@ static func area(grid: CombatGrid, a: Ability, center: Vector2i) -> Array[Vector
 ## Units an ability affects when aimed at `center`. `user` stands in for whoever is at `from` while previewing a move.
 static func affected_units(grid: CombatGrid, user: CombatUnit, a: Ability, center: Vector2i, units: Array, from: Vector2i) -> Array[CombatUnit]:
 	var out: Array[CombatUnit] = []
-	for c in area(grid, a, center):
-		var o: CombatUnit = user if c == from else (occupant(units, c) if a.target == "downed" else unit_at(units, c))
+	for c in area(grid, a, center, from):
+		var o: CombatUnit = user if c == from else (occupant(units, c) if a.target == "downed" or a.status == STATUS_LAST_STAND else unit_at(units, c))
 		if o == null or (o == user and c != from):
 			continue
-		if a.target == "enemy" and o.team == user.team:
-			continue
-		if a.target == "ally" and o.team != user.team:
-			continue
+		if (a.target == "enemy" or a.kind == "hex") and o.team == user.team:
+			continue  # a hex (FLASH, a scare) never lands on the user's own side
+		if (a.target == "ally" or a.target == "self") and o.team != user.team:
+			continue  # a buff round the user (INSPIRE, LAST STAND) only reaches friends
 		out.append(o)
 	return out
 
@@ -398,7 +450,11 @@ static func damage_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, fro
 		if n != 0:
 			parts.append(["FOE_" + String(t).to_upper(), n])
 	if att.spooked or att.has_status(STATUS_SPOOK):
-		parts.append(["MOD_SPOOKED", int(num("spooked_damage"))])
+		parts.append(["MOD_SPOOKED", int(num("spooked_damage")) + (att.spook_extra if att.has_status(STATUS_SPOOK) else 0)])
+	if att.has_status(STATUS_INSPIRED) and att.inspire_dmg != 0:
+		parts.append(["MOD_INSPIRED", att.inspire_dmg])
+	if att.rally_dmg > 0:
+		parts.append(["MOD_RALLIED", att.rally_dmg])
 	if att.has_trait(TRAIT_CHARGE) and charged(att, from):
 		parts.append(["MOD_CHARGE", int(num("charge_bonus"))])
 	return parts
@@ -607,6 +663,10 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 		u.res = maxi(0, u.res - a.res_cost)
 	if a.is_item():
 		u.belt.take(a.spends, a.cost)
+	if a.field != "":
+		events.append_array(lay_field(grid, u, a, center))
+		if a.field != FIELD_FIRE:  # a trap, caltrops or smoke only lies there; IGNITE's fire also hits who stands in it
+			return events
 	var hit_list := affected_units(grid, u, a, center, units, u.cell)
 	for t in hit_list:
 		match a.kind:
@@ -641,6 +701,7 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 					t.statuses[a.status] = a.status_turns
 					if a.status == STATUS_WARD:
 						t.ward_hits = 1 + upg(u, "ward_hits")
+					events.append_array(_buff(u, a, t))
 					events.append({"type": "status", "src": u, "unit": t, "status": a.status})
 	if u.hiding and a.hostile():
 		u.hiding = false
@@ -681,6 +742,8 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 		t.statuses[a.status] = a.status_turns
 		if a.status == STATUS_WARD:
 			t.ward_hits = 1 + upg(u, "ward_hits")
+		if a.status == STATUS_SPOOK:
+			t.spook_extra = upg(u, "spook_damage")  # an upgraded scare takes more off
 		events.append({"type": "status", "src": u, "unit": t, "status": a.status, "struck": a.kind == "hex"})
 	if t.alive() and a.bleed > 0:
 		t.statuses[STATUS_BLEED] = a.bleed
@@ -693,12 +756,13 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 		t.statuses[STATUS_BURN] = int(num("burn_turns"))  # renews, doesn't stack
 		t.burn_dmg = maxi(t.burn_dmg, int(num("burn_damage")) + upg(u, "burn_damage"))
 		events.append({"type": "status", "src": u, "unit": t, "status": STATUS_BURN})
-	if t.alive() and a.push > 0:
+	if t.alive() and a.push != 0:  # below 0 pulls toward the user (LURE)
 		events.append_array(push(grid, units, u.cell, t, a.push))
 	return events
 
 
 ## Shoves `t` away from `from` up to n tiles. Blocked: bump damage. Dropping 2+ levels: fall damage.
+## n below 0 pulls it toward `from` instead (LURE): it stops short of whatever is in the way, with no bump.
 static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, n: int) -> Array:
 	var events := []
 	if t.has_trait(TRAIT_DEEP_ROOTS):
@@ -707,12 +771,18 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 	var dir := Vector2i(signi(delta.x), 0) if absi(delta.x) >= absi(delta.y) else Vector2i(0, signi(delta.y))
 	if dir == Vector2i.ZERO:
 		return events
+	var pull := n < 0
+	if pull:
+		dir = -dir
+		n = mini(-n, maxi(absi(delta.x), absi(delta.y)) - 1)
 	var path: Array[Vector2i] = [t.cell]
 	for i in n:
 		var dest := push_place(grid, t.cell, CombatGrid.ground(t.cell) + dir)
 		var blocked := not grid.passable(dest) or occupant(units, dest) != null
 		if not blocked and grid.height_at(dest) - grid.height_at(t.cell) > 1:
 			blocked = true
+		if blocked and pull:
+			break
 		if blocked:
 			t.hp = maxi(0, t.hp - BUMP_DAMAGE)
 			t.statuses.erase(STATUS_SLEEP)
@@ -747,8 +817,10 @@ static func guard(u: CombatUnit) -> void:
 
 ## Start of a team's phase: fresh actions, mana and charges come back, guard and veil end, sleepers lose the turn.
 ## Returns heal events for traits that regrow, so the board can show them.
-static func begin_phase(units: Array, team: int) -> Array:
+static func begin_phase(units: Array, team: int, grid: CombatGrid = null) -> Array:
 	var events := []
+	if grid != null:
+		tick_fields(grid, team)
 	for side in [0, 1]:  # a side with nobody seen left standing: its hidden pieces come out, or the fight never ends
 		if not units.any(func(o: CombatUnit) -> bool: return o.team == side and o.alive() and not o.hiding and not o.has_trait(TRAIT_STRUCTURE)):
 			for o: CombatUnit in units:
@@ -816,6 +888,7 @@ static func end_phase(units: Array, team: int) -> void:
 			continue
 		var stood := u.cell == u.move_origin
 		u.cmd_bonus = 0
+		u.rally_dmg = 0
 		u.move_spent = 0  # out of its own phase a piece's reach is its whole move (the other side's threat maps)
 		for s in u.statuses.keys():
 			if s in STATUS_UNTIL_OWN_PHASE:
@@ -1094,15 +1167,120 @@ static func watch_shot(rng: RandomNumberGenerator, grid: CombatGrid, w: CombatUn
 	return events
 
 
+# --- fields: traps, caltrops, fire and smoke on the ground -----------------------------------------------
+
+## Lays a's field on the tiles it covers (walkable ones, for a trap and caltrops). A field lasts its maker's side's
+## phases: the skill's status_turns when that status is the field itself (TRAP, SMOKE BOMB), else `field_turns`.
+static func lay_field(grid: CombatGrid, u: CombatUnit, a: Ability, center: Vector2i) -> Array:
+	var turns := a.status_turns if a.status == a.field else int(num("field_turns"))
+	var cells: Array[Vector2i] = []
+	for c in area(grid, a, center, u.cell):
+		if a.field == FIELD_SMOKE or grid.passable(c):
+			cells.append(c)
+	for c in cells:
+		var list: Array = grid.fields.get(c, []).filter(func(f: Dictionary) -> bool: return f.kind != a.field)
+		list.append({"kind": a.field, "team": u.team, "turns": maxi(1, turns), "src": u, "ability": a})
+		grid.fields[c] = list
+	return [{"type": "field", "src": u, "field": a.field, "cells": cells}]
+
+
+## The start of `team`'s phase: its fields lose a phase, and go at 0.
+static func tick_fields(grid: CombatGrid, team: int) -> void:
+	for c: Vector2i in grid.fields.keys():
+		var keep := []
+		for f: Dictionary in grid.fields[c]:
+			if f.team == team:
+				f.turns = int(f.turns) - 1
+			if int(f.turns) > 0:
+				keep.append(f)
+		if keep.is_empty():
+			grid.fields.erase(c)
+		else:
+			grid.fields[c] = keep
+
+
+## Where a walk along `path` stops early, and why: a foe on OVERWATCH sees it ({"watcher", "cell"}), or it walks
+## onto a trap or caltrops of the other side ({"field", "cell"}), whichever comes first. {} when it walks it all.
+static func walk_stop(grid: CombatGrid, mover: CombatUnit, path: Array, units: Array) -> Dictionary:
+	var watch := watch_stop(grid, mover, path, units)
+	for i in range(1, path.size()):
+		var c: Vector2i = path[i]
+		if not watch.is_empty() and watch.cell == c:
+			return watch
+		for f: Dictionary in grid.fields.get(c, []):
+			if f.team != mover.team and (f.kind == FIELD_TRAP or f.kind == FIELD_CALTROPS):
+				return {"field": f, "cell": c}
+	return watch
+
+
+## What happens where a walk stopped (walk_stop): the watcher's shot, or the trap or caltrops going off on mover.
+static func stop_events(rng: RandomNumberGenerator, grid: CombatGrid, stop: Dictionary, mover: CombatUnit, units: Array) -> Array:
+	if stop.has("watcher"):
+		return watch_shot(rng, grid, stop.watcher, mover, units)
+	return spring(grid, stop.field, stop.cell, mover, units)
+
+
+## A trap or caltrops on c goes off on mover: the maker's damage with the skill's power, less armor. A trap is spent;
+## caltrops stay and slow it as well.
+static func spring(grid: CombatGrid, f: Dictionary, c: Vector2i, mover: CombatUnit, units: Array) -> Array:
+	var src: CombatUnit = f.src
+	var a: Ability = f.ability
+	var events := [{"type": "spring", "src": src, "unit": mover, "field": f.kind}]
+	var dmg := damage(grid, src, mover, c, a, units)
+	mover.hp = maxi(0, mover.hp - dmg)
+	mover.statuses.erase(STATUS_SLEEP)
+	events.append({"type": "hit", "src": src, "unit": mover, "amount": dmg, "crit": false, "big": true})
+	if f.kind == FIELD_TRAP:
+		var list: Array = grid.fields.get(c, [])
+		list.erase(f)
+		if list.is_empty():
+			grid.fields.erase(c)
+	elif mover.alive() and a.status != "":
+		mover.statuses[a.status] = a.status_turns
+		events.append({"type": "status", "src": src, "unit": mover, "status": a.status})
+	return events
+
+
+## What a buff does on top of its status: RALLY walks the friend again, INSPIRE and LAST STAND set their numbers.
+static func _buff(u: CombatUnit, a: Ability, t: CombatUnit) -> Array:
+	match a.status:
+		STATUS_RALLIED:
+			t.moved = false
+			t.move_spent = 0
+			t.move_origin = t.cell
+			t.rally_move = int(num("rally_move")) + upg(u, "rally_move")
+			t.rally_dmg = upg(u, "rally_damage")
+		STATUS_INSPIRED:
+			t.inspire_dmg = int(num("inspire_damage")) + upg(u, "inspire_damage")
+		STATUS_LAST_STAND:
+			t.stand_extra = a.status_turns
+			t.statuses[a.status] = a.status_turns + 1  # through the foes' phase, when the falling happens
+			if t.downed():
+				t.bleed += a.status_turns
+	return []
+
+
 ## COMMAND: u gives up its action and friend takes a fresh phase at once (move and action), even after acting.
+## CALL COMPANION is the same for the party's beast (a class tagged `companion`), and costs charges.
 static func command(u: CombatUnit, a: Ability, friend: CombatUnit) -> Array:
 	u.ready_at[a.id] = u.phase_no + a.cooldown
+	if a.res_cost > 0:
+		u.res = maxi(0, u.res - a.res_cost)
 	friend.moved = false
 	friend.acted = false
 	friend.move_spent = 0
 	friend.move_origin = friend.cell
-	friend.cmd_bonus = upg(u, "command_bonus")  # until the end of that phase
+	friend.cmd_bonus = upg(u, "companion_bonus" if a.status == "companion" else "command_bonus")  # until the end of that phase
 	return [{"type": "command", "src": u, "unit": friend}]
+
+
+## Can COMMAND (or CALL COMPANION) give `o` a fresh turn? Any standing friend; CALL COMPANION only the beast, in reach.
+static func commandable(u: CombatUnit, a: Ability, o: CombatUnit, from: Vector2i) -> bool:
+	if o == u or o.team != u.team or not o.alive():
+		return false
+	if a.status != "companion":
+		return true
+	return o.tags.has(&"companion") and dist(from, o.cell) <= a.range_max  # the party's beast: Doggo's class is tagged
 
 
 # --- helping strikes ([USER] c12, c15, c19, combat build step 4) ------------------------------------------

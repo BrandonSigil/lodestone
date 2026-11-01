@@ -49,7 +49,7 @@ lure,2,power:+1,,Does 1 more damage
 lure,3,range_max:+1,,Reaches 1 tile further
 ignite,1,power:+1,,Does 1 more damage
 ignite,2,status_turns:+1,,The burn lasts 1 turn longer
-ignite,3,,line_length:+1,The line of fire is 1 tile longer
+ignite,3,line:+1,,The line of fire is 1 tile longer
 flash,1,status_turns:+1,,The blind lasts 1 turn longer
 flash,2,radius:+1,,The area is 1 tile bigger
 flash,3,res_cost:-1,,Costs 1 less

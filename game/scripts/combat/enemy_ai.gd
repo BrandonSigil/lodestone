@@ -114,7 +114,7 @@ static func _clutch(grid: CombatGrid, u: CombatUnit, units: Array, cost: Diction
 			var best: CombatUnit = null
 			var best_s := 0.0
 			for f: CombatUnit in units:
-				if f == u or f.team != u.team or not f.alive() or not f.done():
+				if not CombatRules.commandable(u, a, f, u.cell) or not f.done():
 					continue  # a friend still to act already has its turn
 				var keep := [f.moved, f.acted, f.move_spent, f.move_origin]
 				f.moved = false
@@ -322,7 +322,7 @@ static func mark_aim(grid: CombatGrid, u: CombatUnit, a: Ability, units: Array) 
 	var best_s := 0.0
 	for c in CombatRules.reach_cells(grid, u, a, u.cell):
 		var s := 0.0
-		for t in CombatRules.area(grid, a, c):
+		for t in CombatRules.area(grid, a, c, u.cell):
 			var o := CombatRules.unit_at(units, t)
 			if o == null or o == u or not o.alive():
 				continue
@@ -422,8 +422,12 @@ static func _buff_value(u: CombatUnit, t: CombatUnit, status: String, units: Arr
 				if o.team != u.team and o.alive() and not o.hiding:
 					nearest = mini(nearest, CombatRules.dist(o.cell, t.cell))
 			return 5.0 + float(8 - nearest) if nearest < 8 else 0.0
-		CombatRules.STATUS_GUIDED:
+		CombatRules.STATUS_GUIDED, CombatRules.STATUS_INSPIRED:
 			return 5.0 if t != u and not t.acted else 0.0
+		CombatRules.STATUS_RALLIED:  # a friend that has walked and not acted gets back in reach
+			return 4.0 if t != u and t.moved and not t.acted else 0.0
+		CombatRules.STATUS_LAST_STAND:
+			return 8.0 if t.downed() else 0.0
 		CombatRules.STATUS_TAUNT:
 			# pull the foes onto a piece that can take it, while they're close enough to matter
 			if u.hp * 2 < u.max_hp:

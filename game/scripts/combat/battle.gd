@@ -220,7 +220,7 @@ func is_player_turn() -> bool:
 
 func _start_player_phase() -> void:
 	round_no += 1
-	_show_phase_events(CombatRules.begin_phase(units, 0))
+	_show_phase_events(CombatRules.begin_phase(units, 0, grid))
 	_banner.text = Txt.f("UI_ROUND", round_no) + "  " + Txt.t("UI_PLAYER_PHASE")
 	log_line.emit(Txt.f("LOG_ROUND", round_no))
 	for u: CombatUnit in units:
@@ -255,7 +255,7 @@ func _enemy_phase() -> void:
 	log_line.emit(Txt.t("LOG_FOES_MOVE"))
 	board.danger = {}
 	phase_changed.emit(1)
-	_show_phase_events(CombatRules.begin_phase(units, 1))
+	_show_phase_events(CombatRules.begin_phase(units, 1, grid))
 	await _boss_events(CombatRules.boss_start(rng, grid, units, 1))  # a marked big move lands, his pieces come
 	if _check_end():
 		return
@@ -312,7 +312,7 @@ func _auto_player_phase() -> void:
 ## One piece's turn played by the AI: move, then use a skill or guard.
 func _ai_turn(u: CombatUnit) -> void:
 	var plan := EnemyAi.plan(grid, u, units)
-	var stop := CombatRules.watch_stop(grid, u, plan.path, units)  # a piece on OVERWATCH stops the walk with a shot
+	var stop := CombatRules.walk_stop(grid, u, plan.path, units)  # a piece on OVERWATCH, or a trap, stops the walk
 	if not stop.is_empty():
 		plan.move = stop.cell
 		plan.path = plan.path.slice(0, plan.path.find(stop.cell) + 1)
@@ -325,7 +325,7 @@ func _ai_turn(u: CombatUnit) -> void:
 		await _spot(u)
 	u.move_spent += int(plan.cost)
 	if not stop.is_empty():
-		for ev in CombatRules.watch_shot(rng, grid, stop.watcher, u, units):
+		for ev in CombatRules.stop_events(rng, grid, stop, u, units):
 			await _play(ev)
 		for o: CombatUnit in units:
 			o.sync_view()
@@ -595,6 +595,12 @@ func _play(ev: Dictionary) -> void:
 			await board.animate_attack(ev.src, t, true)
 			board.float_text(t.cell, Txt.t("UI_KNOCKED_OUT"), Color(1, 0.6, 0.5))
 			log_line.emit(Txt.f("LOG_KNOCKED_OUT", [Txt.t(ev.src.name_key), Txt.t(t.name_key)]))
+		"field":
+			log_line.emit(Txt.f("LOG_FIELD", [Txt.t(ev.src.name_key), Txt.t("FIELD_" + String(ev.field).to_upper())]))
+			await get_tree().create_timer(0.2).timeout
+		"spring":
+			board.float_text(t.cell, Txt.t("FIELD_" + String(ev.field).to_upper()), Color(1, 0.8, 0.5))
+			log_line.emit(Txt.f("LOG_SPRING", [Txt.t(t.name_key), Txt.t("FIELD_" + String(ev.field).to_upper())]))
 		"free_hit":
 			board.float_text(ev.src.cell, Txt.t("UI_FREE_HIT"), Color(1, 1, 1))
 			log_line.emit(Txt.f("LOG_FREE_HIT", [Txt.t(ev.src.name_key), Txt.t(t.name_key)]))
@@ -1197,7 +1203,7 @@ func _on_cell_hovered(c: Vector2i) -> void:
 	if state == S.TARGET and targeting != null:
 		board.area = {}
 		if board.highlights.has(c):
-			for a in CombatRules.area(grid, targeting, c):
+			for a in CombatRules.area(grid, targeting, c, selected.cell):
 				board.area[a] = true
 			_show_forecast(selected, targeting, c)
 		else:

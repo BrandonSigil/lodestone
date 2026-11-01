@@ -662,7 +662,7 @@ func _sync_slabs() -> void:
 	# What moves: bucket this frame's overlays and pieces by depth, then redraw those slabs.
 	_over_by_depth.clear()
 	_deck_over.clear()
-	for dict: Dictionary in [highlights, danger, reach, area, guard_ring, goal_cells, glow, marks]:
+	for dict: Dictionary in [highlights, danger, reach, area, guard_ring, goal_cells, glow, marks, grid.fields]:
 		for c: Vector2i in dict:
 			_bucket(_deck_over if CombatGrid.on_deck(c) else _over_by_depth, c)
 	if hover != NONE and grid.in_bounds(hover):
@@ -2837,12 +2837,40 @@ func _draw_over(c: Vector2i) -> void:
 			_ci.draw_colored_polygon(pool, Color(GLOW, 0.16 * pulse))
 		_ci.draw_polyline(ring, Color(GLOW, 0.3 * pulse), 6.0, true)
 		_ci.draw_polyline(ring, Color(GLOW, 0.85 * pulse), 2.0, true)
+	if grid.fields.has(c):
+		_draw_fields(c, top)
 	if guard_ring.has(c):
 		var inner := PackedVector2Array()
 		var mid := (top[0] + top[2]) * 0.5
 		for p in ring:
 			inner.append(mid + (p - mid) * 0.82)
 		_ci.draw_polyline(inner, Color(0.55, 0.8, 1.0, 0.9), 2.0, true)
+
+
+## Graybox marks for what abilities left on the ground: a trap's cross (the party's own only), caltrops' spikes,
+## burning ground, a smoke cloud.
+func _draw_fields(c: Vector2i, top: PackedVector2Array) -> void:
+	var mid := (top[0] + top[2]) * 0.5
+	for f: Dictionary in grid.fields[c]:
+		match String(f.kind):
+			CombatRules.FIELD_TRAP:
+				if int(f.team) != 0:
+					continue  # a foe's trap stays hidden
+				var k := 0.35
+				_ci.draw_line(mid + (top[0] - mid) * k, mid + (top[2] - mid) * k, Color(0.25, 0.15, 0.1), 3.0, true)
+				_ci.draw_line(mid + (top[1] - mid) * k, mid + (top[3] - mid) * k, Color(0.25, 0.15, 0.1), 3.0, true)
+			CombatRules.FIELD_CALTROPS:
+				for q in [Vector2(-0.25, 0.0), Vector2(0.25, 0.0), Vector2(0.0, -0.25), Vector2(0.0, 0.25), Vector2.ZERO]:
+					var p: Vector2 = mid + (top[2] - top[0]) * q.x + (top[3] - top[1]) * q.y
+					_ci.draw_colored_polygon(PackedVector2Array([p + Vector2(0, -6), p + Vector2(4, 2), p + Vector2(-4, 2)]), Color(0.35, 0.35, 0.4))
+			CombatRules.FIELD_FIRE:
+				var pulse := 0.8 + 0.2 * sin(_time * 6.0 + c.x)
+				_ci.draw_colored_polygon(top, Color(1.0, 0.45, 0.1, 0.5 * pulse))
+				_ci.draw_polyline(PackedVector2Array([top[0], top[1], top[2], top[3], top[0]]), Color(1.0, 0.75, 0.2, 0.9), 2.0, true)
+			CombatRules.FIELD_SMOKE:
+				_ci.draw_colored_polygon(top, Color(0.75, 0.75, 0.78, 0.55))
+				for q in [Vector2(-10, -6), Vector2(8, -4), Vector2(0, 4)]:
+					_ci.draw_circle(mid + q, 9.0, Color(0.85, 0.85, 0.88, 0.5))
 
 
 ## What stands on the cell (LIVE slab: props fade when a piece is behind them): placed props, the tile

@@ -46,3 +46,6 @@ scale_standard,1,1: scale C's move and reach (data/scale_standard.csv) for every
 explore_foe_hp_pct,70,% of their HP the ordinary explore-map groups come with: the road's cost (100 = as written); elites and bosses are untouched
 bloodied_half,50,the reaver's bloodied line: under this % of max HP it hits +1 (half this line: +2) and crits more; an upgrade moves the line
 bloodied_crit,10,% crit a bloodied reaver adds under its line
+field_turns,1,"a field (fire, caltrops) lasts until its maker's side has started this many more phases; a trap and smoke use their skill's status_turns instead"
+rally_move,1,RALLY: extra move the friend gets on its second walk this phase
+inspire_damage,1,INSPIRE: extra damage on every hit for allies in its area while it lasts

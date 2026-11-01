@@ -772,21 +772,21 @@ DESC_SECOND_WIND,Heal yourself for 4 HP.
 DESC_LEAP,"Jump up to 3 tiles in one move, ignoring height."
 DESC_BACKSTAB,Hit an adjacent foe for 1 more damage than a normal attack and 20% extra crit chance.
 DESC_VOLLEY,Fire at an area: everything on the target tile and the 4 tiles next to it takes 1 less than your normal damage. It hurts friends too.
-DESC_TRAP,Hide a trap on a tile. A foe that steps on it takes 2 damage.
-DESC_LURE,Pull a foe 2 tiles toward you and hit it for 3 less than your normal damage.
-DESC_CALL_COMPANION,Your companion takes another turn right away.
-DESC_IGNITE,Set a line of 2 to 3 tiles on fire. Whoever stands in it takes 1 fire damage plus your spell bonus and burns for 3 turns. The fire also blocks the way.
-DESC_FLASH,Blind the foes in a small area for 1 turn. They cannot attack from a distance.
+DESC_TRAP,"Hide a trap on an empty tile 1 to 3 tiles away. The first foe to walk onto it stops there and takes your attack damage plus 2, less its armor; then the trap is gone. It lasts until the start of your next turn. Foes can't see it."
+DESC_LURE,Hit a foe 2 to 4 tiles away for 3 less than your normal damage and pull it 2 tiles toward you. It stops early if something is in the way.
+DESC_CALL_COMPANION,"Give up your action: your dog, if within 4 tiles, takes a full extra turn right away, move and action."
+DESC_IGNITE,"Set a line of 2 tiles on fire, starting at a tile 2 to 4 tiles away and running away from you. Everyone standing there, friend or foe, takes your spell damage plus 1 and burns for 3 turns (1 HP at the start of each of their turns, through armor). Nobody can walk onto the burning tiles until the start of your next turn."
+DESC_FLASH,"Blind every foe on a tile up to 3 tiles away and on the 4 tiles next to it, until the end of their next turn. A blinded foe can only attack what is right next to it, so bows and spells can't attack at all."
 DESC_FAR_AID,Help up a downed friend from up to 3 tiles away. They come back with 25% of their max HP.
 DESC_RENEW,"Heal a friend for 1 HP plus your magic bonus now, then the same at the start of each of their next 3 turns."
-DESC_RALLY,"A friend within range moves again this turn, with 1 extra move."
-DESC_DISSONANCE,Scare a foe: it hits for 1 less damage for 1 turn.
-DESC_LAST_STAND,Allies within 3 tiles stay downed one turn longer before they bleed out.
-DESC_INSPIRE,Allies within 2 tiles hit for 1 more damage until your next turn.
+DESC_RALLY,"A friend within 3 tiles, or you, can walk again this turn: a full move plus 1 tile."
+DESC_DISSONANCE,Scare a foe 2 to 3 tiles away: it hits for 1 less damage during its next turn.
+DESC_LAST_STAND,"For you and friends within 3 tiles: anyone downed now gets 1 more turn before bleeding out, and anyone who falls before your next turn gets 1 more turn too."
+DESC_INSPIRE,You and friends within 2 tiles hit for 1 more damage for the rest of this turn.
 DESC_BOMB,Throw a bomb at the target tile and the 4 tiles next to it. Everything there takes 1 more than your normal damage. It hurts friends too.
-DESC_CALTROPS,Scatter spikes on a tile. A foe crossing it takes 2 less than your normal damage and is slowed: 2 less move for 1 turn.
-DESC_PATCH,Heal an adjacent friend for 3 HP using supplies from your pack.
-DESC_SMOKE_BOMB,"Throw smoke over a small area. For 1 turn nobody can see into or through it, so ranged attacks across it are blocked."
+DESC_CALTROPS,"Scatter spikes on an empty tile 1 to 3 tiles away. A foe walking onto it stops there, takes 2 less than your normal damage (less its armor) and is slowed: 2 less move for 1 turn. The spikes stay until the start of your next turn."
+DESC_PATCH,Heal an adjacent friend for 3 HP.
+DESC_SMOKE_BOMB,"Throw smoke on a tile 2 to 3 tiles away and the 4 tiles next to it, until the start of your next turn. Nobody can attack from more than 1 tile away into, out of or across the smoke."
 JOB_REAVER,AXE GUY
 JOB_TRACKER,TRAP GUY
 JOB_EMBER,FIRE GUY
@@ -1012,3 +1012,16 @@ EX_HOME_BED,OWN BED. SOFT. lorem ipsum
 EX_KIND_BED,BED
 UI_SLEPT,SLEEP ALL NIGHT. EVERYONE HEART +%d. HURT ALL HEAL.
 UI_BED_USED,SLEPT HERE ALREADY. GO OUT FIRST. lorem
+TAG_BLIND,NO SEE
+TAG_RALLIED,GO AGAIN
+TAG_INSPIRED,FIRED UP
+TAG_LAST_STAND,HOLD ON
+FIELD_TRAP,TRAP
+FIELD_CALTROPS,SPIKES
+FIELD_FIRE,FIRE
+FIELD_SMOKE,SMOKE
+LOG_FIELD,%s PUT %s.
+LOG_SPRING,%s STEP IN %s!
+MOD_INSPIRED,FIRED UP
+MOD_RALLIED,GO AGAIN
+FOE_COMPANION,PET

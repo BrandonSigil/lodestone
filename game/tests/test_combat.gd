@@ -1495,6 +1495,116 @@ func test_wired_kit_passives() -> void:
 	ok(sw.hp > 2 + 3, "and heals the power plus the rage left")
 
 
+## Kit wiring, batch 2: the tracker, ember, chanter and tinker skills (data/kits.csv) and their number upgrades.
+func test_kit_batch_two() -> void:
+	var g := CombatGrid.flat(10, 6)
+	var rng := RandomNumberGenerator.new()
+	var hero := _unit("knight", 0, Vector2i(1, 1), g)
+	var wolf := _unit("wolf", 1, Vector2i(6, 1), g)
+	var units := [hero, wolf]
+	# TRAP: on an empty tile only; a foe walking over it stops there, takes the hit, and the trap is spent
+	ok(not CombatRules.target_cells(g, hero, _ab("trap"), units, hero.cell).has(wolf.cell), "a trap goes on an empty tile")
+	CombatRules.resolve(rng, g, hero, _ab("trap"), Vector2i(3, 1), units)
+	ok(CombatRules.field_at(g, Vector2i(3, 1), CombatRules.FIELD_TRAP) != null, "the trap lies there")
+	var path: Array = [Vector2i(6, 1), Vector2i(5, 1), Vector2i(4, 1), Vector2i(3, 1), Vector2i(2, 1)]
+	var stop := CombatRules.walk_stop(g, wolf, path, units)
+	eq(stop.get("cell"), Vector2i(3, 1), "the walk stops on the trap")
+	var hp := wolf.hp
+	CombatRules.stop_events(rng, g, stop, wolf, units)
+	ok(wolf.hp < hp, "and the trap hurts")
+	ok(CombatRules.field_at(g, Vector2i(3, 1), CombatRules.FIELD_TRAP) == null, "a sprung trap is gone")
+	eq(CombatRules.walk_stop(g, hero, [hero.cell, Vector2i(2, 1)], units), {}, "a piece of the trap's own side walks on")
+	# CALTROPS: stop, hurt and slow; they stay until the maker's side starts its next phase
+	CombatRules.resolve(rng, g, hero, _ab("caltrops"), Vector2i(3, 2), units)
+	wolf.hp = wolf.max_hp
+	CombatRules.stop_events(rng, g, CombatRules.walk_stop(g, wolf, [Vector2i(4, 2), Vector2i(3, 2)], units), wolf, units)
+	ok(wolf.has_status(CombatRules.STATUS_SLOW), "caltrops slow")
+	ok(CombatRules.field_at(g, Vector2i(3, 2), CombatRules.FIELD_CALTROPS) != null, "and stay")
+	CombatRules.begin_phase(units, 1, g)
+	ok(CombatRules.field_at(g, Vector2i(3, 2), CombatRules.FIELD_CALTROPS) != null, "through the foes' phase")
+	CombatRules.begin_phase(units, 0, g)
+	ok(g.fields.is_empty(), "gone when the maker's side starts again")
+	# IGNITE: a line away from the user; the fire blocks the way and burns who stood there
+	var amber := _unit("mage", 0, Vector2i(1, 4), g)
+	var bandit := _unit("bandit", 1, Vector2i(4, 4), g)
+	var fire := Db.ability("ignite")
+	eq(CombatRules.area(g, fire, Vector2i(3, 4), amber.cell), [Vector2i(3, 4), Vector2i(4, 4)] as Array[Vector2i], "two tiles, running away from her")
+	var upgraded := LevelRules.ranked(fire, 3, Db.skill_ranks)
+	eq(CombatRules.area(g, upgraded, Vector2i(3, 4), amber.cell).size(), 3, "the upgrade makes the line 1 longer")
+	CombatRules.resolve(rng, g, amber, fire, Vector2i(3, 4), [amber, bandit])
+	ok(bandit.has_status(CombatRules.STATUS_BURN), "who stood in it burns")
+	ok(not CombatRules.reachable(g, hero, [hero]).cost.has(Vector2i(3, 4)), "nobody walks onto the fire")
+	g.fields.clear()
+	# SMOKE BOMB: no ranged attack across it; next to each other still works
+	var archer := _unit("archer", 1, Vector2i(6, 3), g)
+	ok(CombatRules.in_reach(g, archer.cell, Vector2i(3, 3), CombatRules.ability_range(archer, null)), "a clear shot")
+	CombatRules.resolve(rng, g, hero, _ab("smoke_bomb"), Vector2i(4, 3), units)
+	ok(not CombatRules.in_reach(g, archer.cell, Vector2i(3, 3), CombatRules.ability_range(archer, null)), "smoke blocks it")
+	g.fields.clear()
+	# FLASH: blinded, the bow reaches only next to it; friends in the area are not blinded
+	var mage := _unit("mage", 0, Vector2i(6, 5), g)
+	CombatRules.resolve(rng, g, mage, _ab("flash"), archer.cell, [mage, archer, wolf])
+	ok(archer.has_status(CombatRules.STATUS_BLIND), "the foe is blinded")
+	eq(CombatRules.ability_range(archer, null).y, 1, "and can only reach 1 tile")
+	CombatRules.resolve(rng, g, mage, _ab("flash"), mage.cell, [mage, archer])
+	ok(not mage.has_status(CombatRules.STATUS_BLIND), "a hex never lands on its own side")
+	# LURE: pulled 2 tiles toward the user, stopping next to it at the most
+	var lurer := _unit("knight", 0, Vector2i(0, 0), g)
+	var prey := _unit("bandit", 1, Vector2i(4, 0), g)
+	CombatRules.resolve(rng, g, lurer, _ab("lure"), prey.cell, [lurer, prey], false)
+	eq(prey.cell, Vector2i(2, 0), "pulled 2 tiles")
+	# RALLY: a friend who walked walks again, 1 tile further; the upgrade adds move and damage
+	var chanter := _unit("knight", 0, Vector2i(8, 0), g)
+	var friend := _unit("knight", 0, Vector2i(9, 0), g)
+	friend.moved = true
+	friend.move_spent = CombatRules.move_points(friend)
+	var walk := CombatRules.move_points(friend)
+	chanter.upgrades = {"rally_move": 1, "rally_damage": 1}
+	CombatRules.resolve(rng, g, chanter, _ab("rally"), friend.cell, [chanter, friend])
+	ok(not friend.moved, "rallied: it walks again")
+	eq(CombatRules.move_points(friend), walk + 2, "1 tile further, 1 more with the upgrade")
+	ok(CombatRules.damage_parts(g, friend, prey, friend.cell, null, []).any(func(p: Array) -> bool: return p[0] == "MOD_RALLIED"), "and hits harder this turn")
+	CombatRules.end_phase([chanter, friend], 0)
+	eq(friend.rally_dmg, 0, "the rally's damage ends with the phase")
+	# INSPIRE: friends within 2 hit harder; foes do not
+	var near := _unit("knight", 0, Vector2i(8, 2), g)
+	var foe_near := _unit("bandit", 1, Vector2i(7, 0), g)
+	CombatRules.resolve(rng, g, chanter, _ab("inspire"), chanter.cell, [chanter, near, foe_near])
+	ok(near.has_status(CombatRules.STATUS_INSPIRED) and chanter.has_status(CombatRules.STATUS_INSPIRED), "friends and the chanter are inspired")
+	ok(not foe_near.has_status(CombatRules.STATUS_INSPIRED), "foes are not")
+	ok(CombatRules.damage_parts(g, near, foe_near, near.cell, null, []).any(func(p: Array) -> bool: return p[0] == "MOD_INSPIRED" and p[1] == 1), "+1 damage")
+	# DISSONANCE: scared, and the upgrade takes 1 more off
+	chanter.upgrades = {"spook_damage": -1}
+	var loud := _unit("bandit", 1, Vector2i(8, 3), g)
+	CombatRules.resolve(rng, g, chanter, _ab("dissonance"), loud.cell, [chanter, loud])
+	var spook := CombatRules.damage_parts(g, loud, chanter, loud.cell, null, []).filter(func(p: Array) -> bool: return p[0] == "MOD_SPOOKED")
+	eq(spook[0][1] if not spook.is_empty() else 0, int(CombatRules.num("spooked_damage")) - 1, "scared, 1 more with the upgrade")
+	# LAST STAND: a downed friend in reach gets a turn more
+	var down := _unit("knight", 0, Vector2i(9, 2), g)
+	down.hp = 0
+	down.bleed = 2
+	CombatRules.resolve(rng, g, chanter, _ab("last_stand"), chanter.cell, [chanter, down])
+	eq(down.bleed, 3, "1 more turn to be helped up")
+	# CALL COMPANION: only the dog, within 4
+	var tracker := _unit("knight", 0, Vector2i(0, 5), g)
+	var dog := _unit("dog", 0, Vector2i(2, 5), g)
+	var other := _unit("knight", 0, Vector2i(1, 5), g)
+	var call := _ab("call_companion")
+	ok(CombatRules.commandable(tracker, call, dog, tracker.cell), "the dog can be called")
+	ok(not CombatRules.commandable(tracker, call, other, tracker.cell), "a person can't")
+	ok(CombatRules.commandable(tracker, _ab("command"), other, tracker.cell), "COMMAND still reaches anyone")
+	dog.moved = true
+	dog.acted = true
+	tracker.res_kind = "charges"
+	tracker.res_max = 3
+	tracker.res = 3
+	tracker.upgrades = {"companion_bonus": 1}
+	CombatRules.command(tracker, call, dog)
+	ok(not dog.done(), "the dog takes another turn")
+	eq(tracker.res, 1, "for 2 charges")
+	eq(dog.cmd_bonus, 1, "the upgrade adds a point to its hits")
+
+
 ## Doggo's Good Boy ([USER] 2026-10-31 design-goodboy: +1 heal to the friend next to him), upgradable at level up
 ## ([USER] 2026-11-01: "I want to upgrade that passive").
 func test_good_boy_heals_the_friend_next_to_him() -> void:

@@ -129,6 +129,19 @@ func run(s: Node, _frames: int, _step: String) -> void:
 				# The first piece guards: its ring of held cells shows ([USER] c13).
 				b._select(u)
 				b._on_guard()
+			"fields":
+				# Kit batch 2's ground marks in front of the first piece: a trap, caltrops, IGNITE's fire, a smoke cloud.
+				var free: Array[Vector2i] = []
+				for c: Vector2i in CombatRules.reachable(b.grid, u, b.units, 8).cost:
+					if c != u.cell and CombatRules.dist(c, u.cell) >= 2:
+						free.append(c)
+				free.sort_custom(func(p: Vector2i, q: Vector2i) -> bool: return CombatRules.dist(p, u.cell) < CombatRules.dist(q, u.cell))
+				var i := 0
+				for id in ["trap", "caltrops", "ignite", "smoke_bomb"]:
+					if i < free.size():
+						CombatRules.lay_field(b.grid, u, Db.ability(id), free[i])
+						i += 3
+				b._select(u)
 			"danger":
 				b.show_danger = true
 				b._refresh_danger()

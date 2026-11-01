@@ -1351,7 +1351,7 @@ func test_level_up_picks() -> void:
 	ok(LevelRules.learn(s, "goad"), "a waiting pick learns an ability")
 	eq(int(s.pending), 0)
 	ok(not LevelRules.learn(s, "cleave"), "no pick waiting: no")
-	ok(not LevelRules.step_useful("rally", 0, Db.skill_ranks), "a step nothing reads yet waits on its wiring")
+	ok(not LevelRules.step_useful("far_aid", 0, Db.skill_ranks), "a step nothing reads yet waits on its wiring")
 	ok(LevelRules.step_useful("guard", 0, Db.skill_ranks), "GUARD's extra armor is wired")
 	eq(LevelRules.next_useful_rank("bite", 0, Db.skill_ranks), 1, "an effect step is offered")
 	# the hero (sword job): the kit's goad is learnable, learning spends the job's pick and arms the piece

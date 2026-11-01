@@ -55,6 +55,9 @@ var fences := {}
 const FENCE_HIGH := 0.5
 var _prop_at := {}  ## every footprint cell -> its anchor (deck props: deck places -> deck anchor)
 var _sight := {}  ## line of sight cache, cleared on any edit
+## What abilities left on the ground this fight (not saved with the map): place -> [{"kind", "team", "turns",
+## "src", "ability"}]. kind: trap, caltrops, fire, smoke (CombatRules.FIELD_*); turns: its maker's phases left.
+var fields := {}
 
 
 static func flat(width: int, height: int) -> CombatGrid:

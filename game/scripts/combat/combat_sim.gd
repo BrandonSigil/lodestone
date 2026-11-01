@@ -8,7 +8,7 @@ const MAX_ROUNDS := 40
 ## Runs one AI turn for unit u: move, then act or guard. Returns the plan plus the events.
 static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var plan := EnemyAi.plan(grid, u, units)
-	var stop := CombatRules.watch_stop(grid, u, plan.path, units)  # a foe on OVERWATCH stops the walk with a shot
+	var stop := CombatRules.walk_stop(grid, u, plan.path, units)  # a foe on OVERWATCH, or a trap, stops the walk
 	if not stop.is_empty():
 		plan.move = stop.cell
 		plan.cost = int(plan.cost)
@@ -18,7 +18,7 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 		return plan
 	u.place(plan.move, grid.height_at(plan.move))
 	if not stop.is_empty():
-		events.append_array(CombatRules.watch_shot(rng, grid, stop.watcher, u, units))
+		events.append_array(CombatRules.stop_events(rng, grid, stop, u, units))
 		u.moved = true
 		u.move_spent = CombatRules.move_points(u)  # its move ends here; it acts from where it stopped, if it still can
 		if not u.alive():
@@ -86,7 +86,7 @@ static func play_phase(rng: RandomNumberGenerator, grid: CombatGrid, units: Arra
 ## One whole phase of `team`: its start (statuses tick, a boss's marked move lands, his pieces come), every
 ## piece's turn, a boss's new mark, its end. Returns the winning team once a side is gone, else -1.
 static func run_phase(rng: RandomNumberGenerator, grid: CombatGrid, units: Array, team: int) -> int:
-	CombatRules.begin_phase(units, team)
+	CombatRules.begin_phase(units, team, grid)
 	CombatRules.boss_start(rng, grid, units, team)
 	for side in [team, 1 - team]:  # poison or a big move can finish a side before anyone moves
 		if not CombatRules.team_alive(units, side):

@@ -12,7 +12,7 @@ var cell := Vector2i.ZERO
 var hp := 1:
 	set(v):
 		if v <= 0 and hp > 0 and team == 0:
-			bleed = int(CombatRules.num("bleed_turns"))
+			bleed = int(CombatRules.num("bleed_turns")) + (stand_extra if has_status(CombatRules.STATUS_LAST_STAND) else 0)
 			downs += 1
 		var fell := v <= 0 and hp > 0
 		hp = v
@@ -85,6 +85,11 @@ var watch_left := 0  ## watch shots a readied OVERWATCH still has (an upgrade gi
 var cmd_bonus := 0  ## damage a COMMAND adds to this piece's hits until its phase is over
 var free_hitting := false  ## true while it takes the free hit on a piece walking away from a guard
 var watching_shot := false  ## true while it fires a readied watch shot
+var rally_move := 0  ## move a RALLY adds while the piece is rallied
+var rally_dmg := 0  ## damage an upgraded RALLY adds to its hits until its phase is over
+var inspire_dmg := 0  ## damage an INSPIRE adds to its hits while it is inspired
+var spook_extra := 0  ## damage an upgraded DISSONANCE takes off its hits while it is scared (negative)
+var stand_extra := 0  ## own phases a LAST STAND adds to its bleeding out, if it falls while the stand is on
 var keep_res := false  ## its mana or charges come from its member and carry on (Battle.setup leaves them be)
 var scaled := false  ## ScaleTest.standard has run on this piece
 var hp_phase := 0  ## the boss's health phase (ClassDef.hp_phases): 0 until its HP first falls under the first line

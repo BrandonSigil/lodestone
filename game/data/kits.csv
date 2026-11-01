@@ -15,14 +15,14 @@ sharpshooter,1,0,aimed_shot,ability,1,
 sharpshooter,2,0,volley,ability,1,
 sharpshooter,3,0,snare,ability,1,
 sharpshooter,4,0,overwatch,ability,1,
-tracker,1,0,trap,ability,0,a tile hazard foes avoid or take damage on
+tracker,1,0,trap,ability,1,a tile hazard foes avoid or take damage on
 tracker,2,0,snare,ability,1,
-tracker,3,0,call_companion,ability,0,the dog or another beast acts again
-tracker,4,0,lure,ability,0,pull a foe 2 tiles (push below 0)
+tracker,3,0,call_companion,ability,1,the dog or another beast acts again
+tracker,4,0,lure,ability,1,pull a foe 2 tiles (push below 0)
 ember,1,0,fire_zap,basic,1,her plain attack ([USER] 2026-11-01); the A Heart that Burns passive rides on it
 ember,2,0,fireball,ability,1,
-ember,3,0,ignite,ability,0,a line of 2 to 3 burning tiles that last and hit whoever stands on them
-ember,4,0,flash,ability,0,blind foes in range for a phase
+ember,3,0,ignite,ability,1,a line of 2 to 3 burning tiles that last and hit whoever stands on them
+ember,4,0,flash,ability,1,blind foes in range for a phase
 moon,1,0,moonbeam,ability,0,"a 2x2 area: allies in it heal 2, foes take damage and burn 1 a phase for 2 phases (the shipped moonbeam is a plus-shape hit)"
 moon,2,0,moon_sleep,ability,0,sleeps 1 to 3 phases by a roll (shipped: 1); ends the moment the foe is hurt (built)
 moon,3,0,star_guide,ability,1,slot 3 is star_guide or moon_tide
@@ -32,11 +32,11 @@ mender,1,0,mend,ability,1,
 mender,2,0,ward,ability,1,
 mender,3,0,far_aid,ability,0,revive a downed piece from up to 3 tiles
 mender,4,0,renew,ability,0,heal over time (status regen)
-chanter,1,0,rally,ability,0,an ally moves again with +1 move
-chanter,2,0,dissonance,ability,0,a hex that spooks a foe: -1 damage a phase
-chanter,3,0,last_stand,ability,0,allies within 3 stand a downed turn longer
-chanter,4,0,inspire,ability,0,allies within 2 get +1 damage a phase
+chanter,1,0,rally,ability,1,an ally moves again with +1 move
+chanter,2,0,dissonance,ability,1,a hex that spooks a foe: -1 damage a phase
+chanter,3,0,last_stand,ability,1,allies within 3 stand a downed turn longer
+chanter,4,0,inspire,ability,1,allies within 2 get +1 damage a phase
 tinker,1,0,bomb,ability,1,
-tinker,2,0,caltrops,ability,0,a tile hazard that slows foes crossing it
-tinker,3,0,patch,ability,0,repair or heal an ally from items in the pack
-tinker,4,0,smoke_bomb,ability,0,blocks sight on a 3x3 for a phase
+tinker,2,0,caltrops,ability,1,a tile hazard that slows foes crossing it
+tinker,3,0,patch,ability,1,repair or heal an ally from items in the pack
+tinker,4,0,smoke_bomb,ability,1,blocks sight on a 3x3 for a phase
