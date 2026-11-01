@@ -16,6 +16,7 @@ const SANDBOX := "res://scenes/combat_sandbox.tscn"  ## archived combat sandbox:
 const EXPLORE := "res://scenes/explore.tscn"  ## walkable map, F10 from any screen for now
 const MAKER := "res://scenes/map_maker.tscn"  ## the map maker, F8 from any screen
 const LAUNCH := "res://scenes/launch.tscn"  ## the fast-travel menu the game opens on, F7 from any screen
+const FISHING := "res://scenes/fishing.tscn"  ## the fishing minigame on its own, for practice (launch menu)
 const OVERWORLD := "res://scenes/overworld.tscn"  ## the map between places: town, the snowy pass, and paths still shut
 const SQUARE := Vector2i(20, 23)  ## where the party wakes in the village: the square, by the statue
 ## Who can be in the adventure party: the hero first, then companions once their unlock flag is set.
@@ -823,6 +824,15 @@ func home_again() -> void:
 # --- restoring the village ([USER] omr-2, omr-5, omr-12; one-more-run step 2) --------------------------
 
 signal counts(text: String)  ## a pickup counts toward a tracked step: screens show the line
+
+
+## A fish landed in the fishing minigame: its reward into the pack, and its kind marked caught (the first
+## of each kind is new, for the Lodestone's knowledge page later). Returns {"items": id -> n, "new": bool}.
+func land_fish(row: Dictionary) -> Dictionary:
+	var got := FishingRules.land(run, row)
+	var first := set_flag("caught_fish_" + String(row.get("id", "")))
+	save_adventure()
+	return {"items": got, "new": first}
 
 
 ## A thing that rests for the rest of this trip once used (a fishing spot): `key` is "<map>/<thing id>".

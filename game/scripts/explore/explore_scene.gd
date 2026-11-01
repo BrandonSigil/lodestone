@@ -1573,20 +1573,39 @@ func _have() -> Dictionary:
 		"party": Game.adventure_defs().map(func(d: CharacterDef) -> String: return String(d.id))}
 
 
-## Fishing off a dock or shore (a thing whose event's option has the `fish` effect): the same roll as the
-## world map's FISH ([USER] 2026-10-28: dice for now, a minigame later), the catch into the pack. The spot
-## rests until the next trip out of town ([AI] 2026-10-30; desk card dev-fishing-rules).
+## Fishing off a dock or shore (a thing whose event's option has the `fish` effect): the fishing minigame
+## ([USER] 2026-11-01: Look, Strike, Reel; FishingGame). A catch goes in the pack. The spot rests until the
+## next trip out of town once a line is cast ([AI] 2026-10-30; desk card dev-fishing-rules); leaving before
+## the cast costs nothing. The thing's `pool` (default lake) picks the fish (data/fish.csv spots).
+var fishing: FishingGame  ## the minigame while it's up
+
+
 func _fish(t: Dictionary) -> void:
 	if not TravelRules.can_try(Game.run, "fish"):  # no rod: the row's need should have hidden FISH already
 		board.float_text(leader().cell, Txt.t("OPT_NO_ROD"), Color(0.9, 0.8, 0.7))
 		return
-	var r := TravelRules.activity(Game.run, "fish")
+	_close_dialog()
+	mode = M.BUSY
+	fishing = FishingGame.open(self, String(t.get("pool", "lake")), FishingRules.mods_for(Game.run))
+	fishing.finished.connect(_fish_done.bind(t))
+
+
+func _fish_done(res: Dictionary, t: Dictionary) -> void:
+	fishing = null
+	mode = M.WALK
+	if String(res.outcome) == "left":
+		return
 	if not t.is_empty():
 		Game.use_for_trip(map.map_name + "/" + String(t.id))
 		t.done = true
-	board.float_text(leader().cell, Txt.f("UI_FISH_GOT", int(r.food)) if r.success else Txt.t("UI_FISH_NONE"),
-		Color(0.6, 0.85, 1.0))
+	if String(res.outcome) == "caught":
+		var got := Game.land_fish(res.fish)
+		var line := Txt.f("UI_FISH_GOT_KIND", Txt.t(String(res.fish.name_key)))
+		board.float_text(leader().cell, (Txt.t("UI_FISH_NEW") + " " if got.new else "") + line, Color(0.6, 0.85, 1.0))
+	else:
+		board.float_text(leader().cell, Txt.t("UI_FISH_NONE"), Color(0.6, 0.85, 1.0))
 	_after_change()
+	_refresh_units()
 
 
 # --- character sheets ([USER] 2026-10-30: the dog's, and one per build at the smithy rack) -------------------

@@ -927,3 +927,30 @@ ENEMY_SLIME,GOO BLOB. lorem ipsum
 ENEMY_BAT,FLAP BAT. lorem ipsum
 ENEMY_SPIDER,LEG BUG. lorem ipsum
 ENEMY_OGRE,BIG OGRE. lorem ipsum
+FISH_MINNOW,FISH ONE. small. lorem
+FISH_PERCH,FISH TWO. small. lorem
+FISH_TROUT,FISH THREE. good. lorem
+FISH_PIKE,FISH FOUR. good. lorem
+FISH_KING,FISH FIVE. BIG. lorem ipsum
+GRADE_SMALL,small
+GRADE_GOOD,good
+GRADE_PRIZE,PRIZE
+LOG_FISH,catch %s
+UI_FISH_TITLE,FISH
+UI_FISH_LOOK,SHADOW IN WATER. PICK ONE. CAST. lorem
+UI_FISH_WAIT,WAIT... wait for real dip. lorem
+UI_FISH_NIBBLE,nibble... not yet
+UI_FISH_BITE,DIP! STRIKE!
+UI_FISH_REEL,STAY ON FISH!
+UI_FISH_EARLY,TOO SOON. FISH SCARED. lorem
+UI_FISH_LATE,TOO SLOW. FISH GONE. lorem
+UI_FISH_LOST,FISH GET AWAY. lorem
+UI_FISH_CAUGHT,GOT: %s
+UI_FISH_NEW,NEW FISH!
+UI_FISH_GOT_KIND,%s! into pack
+UI_FISH_LEAVE,LEAVE
+UI_FISH_AGAIN,click = again
+UI_FISH_CLOSE,click = done
+UI_FISH_KEYS_LOOK,"click shadow, or ← → then SPACE / A = cast.   ESC / B = leave"
+UI_FISH_KEYS_STRIKE,"click, SPACE or A = strike on the real dip"
+UI_FISH_KEYS_REEL,"mouse, ← → / A D, or stick = move the marker. Stay on the fish to fill the meter; off it, the meter drains."

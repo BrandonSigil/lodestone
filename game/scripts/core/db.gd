@@ -20,6 +20,7 @@ var levels: Dictionary = {}  # key -> number, from data/levels.csv (see LevelRul
 var combat: Dictionary = {}  # key -> number, from data/combat.csv (see CombatRules.num)
 var growth: Dictionary = {}  # character id -> {stat: % chance a level}, from data/growth.csv (see LevelRules)
 var boons: Dictionary = {}  # id -> data/boons.csv row (kind blessing or setback, effect)
+var fish: Dictionary = {}  # fish id -> data/fish.csv row (grade, shadow size, how it darts, reward); see FishingRules
 var recipes: Dictionary = {}  # recipe id -> data/recipes.csv row (meal, needs, kitchen flag, buff)
 var restore: Array[Dictionary] = []  # village restore ladders, data/restore.csv rows (see RestoreRules)
 var jobs: Dictionary = {}  # job id -> data/jobs.csv row (name_key, class, branch_a, branch_b)
@@ -76,6 +77,9 @@ func reload() -> void:
 	boons.clear()
 	for row in CsvTable.load_rows("res://data/boons.csv"):
 		boons[row.id] = row
+	fish.clear()
+	for row in CsvTable.load_rows("res://data/fish.csv"):
+		fish[row.id] = row
 	recipes.clear()
 	for row in CsvTable.load_rows("res://data/recipes.csv"):
 		recipes[row.id] = row
