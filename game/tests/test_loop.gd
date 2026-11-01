@@ -1463,4 +1463,29 @@ func test_containers() -> void:
 	ok(heap.items.size() >= 1, "and what did not fit stays")
 	view.free()
 	full_view.free()
+	# [USER] 2026-11-01: the container opens as its own window beside the inventory, the dog's saddlebag right next to the pack
+	if not Game.meta.flags.has("met_dog"):
+		Game.meta.flags.append("met_dog")
+	Game.refresh_party()
+	var box := VBoxContainer.new()
+	var shown := ContainerUi.fill(box, chest, "CHEST", func() -> void: pass, func() -> void: pass, "", "7 coins")
+	eq(shown.windows.size(), 2, "two windows: the inventory and the container")
+	ok(shown.areas[1].bag == chest, "the container is the second grid")
+	eq(int(shown.areas[0].click_to), 1, "a click in the pack sends to the container")
+	ok((shown.windows[1].rect as Rect2).position.x >= (shown.windows[0].rect as Rect2).end.x, "the container's window stands right of the inventory")
+	if Game.run.open_courier_bag() != null:
+		ok(shown.areas[2].bag == Game.run.open_courier_bag(), "the saddlebag is the third grid")
+		var pack_r := shown._rect_of(shown.areas[0])
+		var bag_r := shown._rect_of(shown.areas[2])
+		ok(is_equal_approx(bag_r.position.y, pack_r.position.y) and bag_r.position.x > pack_r.end.x, "beside the pack, level with it")
+		ok((shown.windows[0].rect as Rect2).encloses(bag_r), "inside the inventory window")
+	box.free()
+	# the full inventory page (I): PACK and PARTY windows, the belts in PARTY
+	var page := VBoxContainer.new()
+	AdventureMenu.pack(page, func() -> void: pass, func() -> void: pass)
+	var pv: PackView = page.find_children("*", "PackView", true, false)[0]
+	eq(pv.windows.size(), 2, "the full page is two windows")
+	var belt_r := pv._rect_of(pv.areas[pv.areas.size() - 1])
+	ok((pv.windows[1].rect as Rect2).encloses(belt_r), "the belts live in the second window")
+	page.free()
 	_restore(saved)

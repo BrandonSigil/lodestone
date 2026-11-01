@@ -6,6 +6,8 @@ extends Control
 ## outfit and the run's pack.
 ## The run's view also shows each member's belt as its own small grid: drag between them to fill a
 ## belt from the pack. A stack dropped on a stack of the same thing tops it up.
+## Windows ([USER] 2026-11-01, like BG3's bags or WoW's two windows): one view can draw a framed window behind each group
+## of grids (the inventory, the loot or container), so a drag still crosses from one window to the other.
 
 signal changed
 
@@ -40,6 +42,13 @@ var target_gain := Callable()  ## (card index, item id) -> HP that member would 
 var use_on := Callable()  ## (card index, item id) -> bool: one was used on them
 var choosing := ""  ## the item EAT or DRINK picked: the cards show what each would gain; Esc cancels
 const TARGET_SIZE := Vector2(132, 58)
+## Framed windows drawn behind the grids: {"rect": Rect2, "title": String}.
+var windows: Array[Dictionary] = []
+const WINDOW_PAD := 34.0  ## from a window's edge to its grids, clear of the frame's corner leaves
+const WINDOW_TITLE := 46.0  ## room for a window's title plate
+var notes: Array[Dictionary] = []  ## lines of text in a window: {"text", "at" (top-left), "width"}
+const NOTE_LINE := 24.0
+var flash_at := Vector2(-1, -1)  ## where the flash line goes in windows; unset, it sits under everything
 
 
 func _init() -> void:
@@ -79,6 +88,47 @@ func add_area(grid: InventoryGrid, at: Vector2, label := "", portrait: Texture2D
 	_fit_size()
 
 
+## Moves grid k (its label goes with it).
+func move_area(k: int, at: Vector2) -> void:
+	var top := LABEL_H if String(areas[k].label) != "" else 0.0
+	areas[k].at = at + Vector2(0, top)
+	areas[k].face_at = at
+	_fit_size()
+
+
+## A framed window behind some grids, its title on a plate at the top.
+func add_window(r: Rect2, title := "") -> void:
+	windows.append({"rect": r, "title": title})
+	_fit_size()
+
+
+## A real button inside the view (a window's TAKE ALL or CLOSE): it takes its own clicks.
+func add_button(text: String, r: Rect2, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.position = r.position
+	b.size = r.size
+	b.custom_minimum_size = r.size
+	b.add_theme_font_size_override("font_size", 17)
+	b.pressed.connect(cb)
+	add_child(b)
+	return b
+
+
+## A wrapped line of text in the view (a window's note, like the coins taken). Returns how many lines it takes.
+func add_note(text: String, at: Vector2, width: float) -> int:
+	notes.append({"text": text, "at": at, "width": width})
+	queue_redraw()
+	var f := Riso.font()
+	var h := f.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, width, 15).y
+	return maxi(1, ceili(h / f.get_height(15)))
+
+
+## Sizes the view again after windows or cards were moved by hand.
+func refit() -> void:
+	_fit_size()
+
+
 func _rect_of(a: Dictionary) -> Rect2:
 	var g: InventoryGrid = a.bag
 	return Rect2(a.at, Vector2(g.cols, g.rows) * cell)
@@ -92,7 +142,9 @@ func _fit_size() -> void:
 		end = end.max(bin_rect.end)
 	for t in targets:
 		end = end.max((t.rect as Rect2).end)
-	custom_minimum_size = end + Vector2(0, 30)
+	for w in windows:
+		end = end.max((w.rect as Rect2).end)
+	custom_minimum_size = end + (Vector2.ZERO if not windows.is_empty() else Vector2(0, 30))
 	queue_redraw()
 
 
@@ -305,6 +357,11 @@ func _put_down(from: int, i: int, to: int, under: Vector2i) -> bool:
 func _draw() -> void:
 	if bag == null:
 		return
+	for w in windows:
+		_draw_window(w.rect, String(w.title))
+	for n in notes:
+		draw_multiline_string(Riso.font(), n.at + Vector2(0, 15), String(n.text), HORIZONTAL_ALIGNMENT_LEFT, n.width, 15, -1,
+			get_theme_color("font_color", "Label"))
 	var bottom := 0.0
 	for k in areas.size():
 		var a := areas[k]
@@ -330,7 +387,9 @@ func _draw() -> void:
 		item = String((areas[held_area].bag as InventoryGrid).items[held].id)
 	for k in targets.size():
 		bottom = maxf(bottom, _draw_target(k, item))
-	if flash != "":
+	if flash != "" and flash_at.x >= 0.0:  # in windows the note has its own line, on the green
+		Riso.draw_label(self, Txt.t(flash), flash_at, 14, Riso.mix(Riso.RED, Riso.CREAM, 0.45))
+	elif flash != "":
 		Riso.draw_label(self, Txt.t(flash), Vector2(0, bottom + 16), 14, Riso.RED)
 	if held != -1:
 		var it := (areas[held_area].bag as InventoryGrid).items[held]
@@ -346,6 +405,23 @@ func _draw() -> void:
 				draw_rect(cr.grow(-4), Riso.alpha(Riso.INK if ok else Riso.RED, 0.18))
 		draw_item(self, it.id, db, cells, top_left, cell, it.bound != "", 0.85)
 		_draw_count(self, cells, top_left, cell, int(it.get("n", 1)))
+
+
+## A window: the dialogue's own painted frame, its title on the long thin plate at the top.
+func _draw_window(r: Rect2, title: String) -> void:
+	var sb := get_theme_stylebox("panel", "DialogPanel")
+	if sb != null:
+		draw_style_box(sb, r)
+	else:
+		draw_rect(r, Riso.INK)
+	if title == "":
+		return
+	var plate := Rect2(r.position + Vector2(WINDOW_PAD - 4.0, 26.0), Vector2(r.size.x - WINDOW_PAD * 2.0 + 8.0, 34.0))
+	var psb := get_theme_stylebox("panel", "TitlePlate")
+	if psb != null:
+		draw_style_box(psb, plate)
+	var col := get_theme_color("font_color", "MenuTitle")
+	Riso.draw_label(self, title, Vector2(plate.position.x, plate.get_center().y), 19, col, HORIZONTAL_ALIGNMENT_CENTER, plate.size.x)
 
 
 ## A party card: name and HP; while food or a potion is held or picked, what one would heal them, or FULL

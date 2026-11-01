@@ -28,6 +28,8 @@ var _info: Label
 var _log_label: Label
 var _busy := false  ## a box is up: the clock stops
 var _menu_open := false
+var _menu_which := ""  ## the open menu: "pack", "lodestone", ...
+var _menu_close := Callable()
 var _time := 0.0
 var _hover := ""
 var _elites := {}  ## place id -> elite groups still standing on its maps (the red badge)
@@ -354,6 +356,11 @@ func _unhandled_input(event: InputEvent) -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.pressed and not event.is_echo() and event.keycode == KEY_TAB:
 		fast_forward()
+	elif event.pressed and not event.is_echo() and event.keycode == KEY_I:  # [USER] 2026-11-01: I opens and shuts the inventory
+		if _menu_open and _menu_which == "pack":
+			_menu_close.call()
+		else:
+			_open_menu("pack")
 	elif event.pressed and not event.is_echo() and event.keycode == KEY_ESCAPE and _dialog != null:
 		if UiTheme.press_close(_dialog):  # the open box's own close button
 			get_viewport().set_input_as_handled()
@@ -642,7 +649,10 @@ func _open_menu(which: String) -> void:
 		_open_menu(which)
 	var close := func() -> void:
 		_menu_open = false
+		_menu_which = ""
 		_close_dialog()
+	_menu_which = which
+	_menu_close = close
 	if which == "pack":
 		AdventureMenu.pack(box, changed, close)
 	elif which == "restore":
