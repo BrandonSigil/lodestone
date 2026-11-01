@@ -45,6 +45,8 @@ var scale_test := false  ## ...as the scale C test: a knight, a fast rogue and a
 var travel := {"at": "town"}
 var combat_return := ""  ## the scene a won fight goes back to ("" = the trail)
 var _hero: CharacterDef = null
+## The homecoming page waiting for the village to show it (HomecomingRules.summary, plus "headline"); {} when none.
+var homecoming := {}
 
 
 func _ready() -> void:
@@ -222,7 +224,7 @@ func save_meta() -> void:
 static func _fresh_meta() -> Dictionary:
 	return {"flags": [], "runs": 0, "best_distance": 0, "marks": [], "quests": [], "revealed": [],
 		"levels": {}, "pack": {}, "materials": {}, "benched": [], "bookmark": {}, "restore": {}, "tracked": [], "trips": 0,
-		"bonds": {}, "talks_heard": [], "settings": {}}
+		"bonds": {}, "talks_heard": [], "settings": {}, "ledger": {}}
 
 
 ## Saves one option (the options screen) and applies it.
@@ -286,6 +288,8 @@ func start_run(defs: Array, kit: Outfit = null) -> void:
 func ensure_run() -> void:
 	if run == null:
 		start_adventure()
+	if Dictionary(meta.get("ledger", {})).is_empty():
+		meta.ledger = HomecomingRules.snapshot(meta, false)  # what the homecoming page counts from
 
 
 # --- the adventure party (E2E loop) ---------------------------------------------------------
@@ -775,7 +779,7 @@ func save_adventure() -> void:
 ## Lodestone's GO HOME lands the same way). The first wake-up is when the hero learns what the stone does.
 func wake_in_town(fell: bool) -> void:
 	ensure_run()
-	home_again()
+	home_again(true)
 	for m in run.members:
 		m.hp = run.max_hp(m)
 	refill_resources()  # a wake-up in the village refills everything
@@ -784,6 +788,10 @@ func wake_in_town(fell: bool) -> void:
 		pending_lines = [Txt.t("UI_WAKE_FIRST") if set_flag("lodestone_revealed") else Txt.t("UI_WAKE")]
 	else:
 		pending_lines = [Txt.t("UI_WENT_HOME")]
+	if not homecoming.is_empty():
+		homecoming.fell = fell
+		homecoming.headline = "\n".join(pending_lines)  # the page carries the wake-up line
+		pending_lines = []
 	travel = {"at": "town"}
 	explore_memory = {}
 	explore_map = "village"
@@ -794,8 +802,10 @@ func wake_in_town(fell: bool) -> void:
 
 
 ## The party is home (woken in the square, or walked into the village): whoever was sent home rejoins
-## and unpacks, then the materials go to the village's count (meta.materials).
-func home_again() -> void:
+## and unpacks, then the materials go to the village's count (meta.materials). wake: a fall or GO HOME. A return
+## closes the trip's ledger into the homecoming page ([USER] Pitch J); a walk in through the gate shows it only when
+## the trip brought something.
+func home_again(wake := false) -> void:
 	if run == null:
 		return
 	var back := not run.away.is_empty()
@@ -810,11 +820,19 @@ func home_again() -> void:
 		meta.materials[id] = int(meta.materials.get(id, 0)) + int(banked[id])
 	# restore steps paid before this trip are done now ([USER] omr-12)
 	var finished := RestoreRules.finish(Db.restore, meta.restore, int(meta.trips))
+	var ledger: Dictionary = meta.get("ledger", {})
+	var page := not ledger.is_empty() and HomecomingRules.closes(ledger, wake)
 	for r: Dictionary in finished:
 		var out := TrailRules.apply_effects(run, String(r.get("gives", "")))
 		absorb(out.unlocks)
-		pending_lines.append(Txt.f("UI_RESTORE_DONE_LINE", [Txt.t("BUILDING_" + String(r.building).to_upper()), Txt.t(String(r.name_key))]))
+		if not page:
+			pending_lines.append(Txt.f("UI_RESTORE_DONE_LINE", [Txt.t("BUILDING_" + String(r.building).to_upper()), Txt.t(String(r.name_key))]))
 		meta.tracked.erase(String(r.id))
+	if page:
+		var s := HomecomingRules.summary(ledger, meta, banked, finished, wake, Db.levels)
+		homecoming = s if wake or not HomecomingRules.empty(s) else {}
+		meta.ledger = HomecomingRules.snapshot(meta, false)  # a fresh count, for a fall in the village itself
+		save_meta()
 	if back or not banked.is_empty() or not finished.is_empty():
 		save_adventure()  # saves meta too
 		if not run.adventure:
@@ -850,6 +868,7 @@ func used_this_trip(key: String) -> bool:
 ## Out the gate: a new trip. Steps paid before it finish when the party is home again.
 func start_trip() -> void:
 	meta.trips = int(meta.trips) + 1
+	meta.ledger = HomecomingRules.snapshot(meta, true)  # the homecoming page counts the trip from here
 	save_meta()
 
 
