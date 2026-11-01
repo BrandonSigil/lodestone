@@ -22,6 +22,7 @@ Read `docs/context/README.md` first, then `docs/context/current-state.md`. Toget
 
 ## Layout
 - `docs/decisions.md`: every design call, tagged and dated.
+- `docs/feedback/backlog.md`: Brandon's playtest problems, with owner and status. Log new reports there the same turn.
 - `docs/style-bible.md`: Brandon's art rules. Read it before touching shaders or visuals.
 - `docs/systems/*.md`: how each system works now.
 - `docs/context/`: project memory, thread history and published pages exported from the Claude project. Start with its README.
