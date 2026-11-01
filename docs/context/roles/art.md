@@ -1,6 +1,6 @@
-# Art runner: handoff (2026-10-30)
+# Art runner: handoff (2026-11-01)
 
-Role `art` on the studio page https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5. You report to the main session.
+Role `art` on the studio page https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7. You report to the main session.
 Each turn: read the answered `art` cards and new `notes` for art, read every attached picture, act, then mark the card done.
 
 ## Hard rules
@@ -28,21 +28,13 @@ Each turn: read the answered `art` cards and new `notes` for art, read every att
 - `cliff_strips_mock.py`, `cliff_pieces_mock.py`, `cliff_marks_mock.py`: terrace mock-ups at 6, 12 and 24 levels.
 - `tile_seam_check.py`, `seam_wrap.py`, `anim_sheet_cut.py`, `anim_frame_swap.py`, `wall_kit_cut.py`, `picsart_sheet.py` (API; the account was out of funds).
 
-## Where things stand
-- **In game, approved:**
-  - 96 icons in `game/art/source/icons/<ability or item id>.png`, 128 px;
-  - the menu look, `ui/menu/look_{panel,title_plate,button,tooltip}.png`. The systems dev nine-slices them in UiTheme (28aff1f); the tooltip isn't used yet, and its pointer would need its own cut;
-  - cliff strips `battle/village/cliff_strip_1..6.png`, wired for village v2 by the map builder (212b642).
-- **Open card `dock-pieces-review`:** 22 fight dock pieces, staged in `art/picsart/out/hand/dock_cut/`. On his stamp, copy them to `game/art/source/ui/dock/` with the same names, commit, log, and tell the systems dev, who already has the sizes and names.
-- **`cliff-strips-review`:** approved. The map builder does the follow-ups (colour-match, a wash over the whole cliff, random flips) and closes the card. Nothing for you.
-- **Uncommitted work of yours:** none.
-- **Later, each needing a prompt card:**
-  - richer or darker cliff strips, if the short faces look plain;
-  - the tooltip pointer piece;
-  - hero build poses and an eyes-showing portrait with softer eye whites;
-  - stance sheets S, E, NE, N plus a ready_blink frame per facing;
-  - village v2 pieces once the layout lands: graves, crypt gate, windmill, boathouse, boat, crops, reeds, iron fence, dock;
-  - interiors in the fall look.
+## Where it stands (2026-11-01)
+- **Picsart is on hold** while Brandon playtests. Post no new `go` cards unless he or the PM asks.
+- **Latest prompt:** the hex world map mockup, `art/prompts/hand-world-hex-mockup.txt` (desk card `pm-world-hex-prompt`), with its grey hex block-out guide (759bf27). He runs it by hand; when pictures come back, cut, score and bring a `review` card.
+- **In game, approved:** 96 icons (`game/art/source/icons/`, 128 px); the menu look `ui/menu/look_*.png` (nine-sliced in UiTheme); cliff strips `battle/village/cliff_strip_1..6.png`.
+- **Check the desk:** `dock-pieces-review` (22 fight dock pieces staged in `art/picsart/out/hand/dock_cut/`, moved to `game/art/source/ui/dock/` only on his stamp) may still be open; the art log is `docs/art/ART-LOG.md`.
+- **Later, each needing a prompt card:** richer cliff strips; tooltip pointer piece; hero build poses and an eyes-showing portrait; stance sheets S, E, NE, N plus ready_blink; village v2 pieces (graves, crypt gate, windmill, boathouse, crops, reeds, fence, dock); interiors; tile art for forest roads and farmland.
+- Uncommitted work of yours: none.
 
 ## Gotchas learned
 - Match the consuming code on origin/main when peers' format messages cross.
@@ -52,3 +44,9 @@ Each turn: read the answered `art` cards and new `notes` for art, read every att
 - Brandon rejects anything that repeats visibly or breaks at every level. He prefers painted art over code-drawn marks. Show mock-ups built from his own reference before asking for a new run.
 - Systems dev: menus are drawn in UiTheme, so send them a spec (colours, widths, ornaments). Painted pieces are named `look_*` so UiTheme.PIECES doesn't pick them up as nine-slice slots.
 - Map builder: cliff faces are drawn in `_soft_face`. Cell = 48 px and level = 24 px at zoom 1.5.
+
+## Studio rules
+- The Studio page is https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 (this account). Desk card text is a short lead line, a blank line, then "- " bullets with **bold** labels, never one long paragraph. Use real newlines.
+- One review card per feature or job, not one per commit.
+- Run long checks in the foreground or wait for them; never end a turn with work unpushed. Commit, rebase onto origin/main, push, and confirm with `git log origin/main`.
+- Model: dev on Opus at medium effort; design, builder, playtest and art on Sonnet.

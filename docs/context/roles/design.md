@@ -1,7 +1,7 @@
-# Game designer: handoff (2026-10-30)
+# Game designer: handoff (2026-11-01)
 
 ## Job
-Grill Brandon with choice cards on his Studio desk (https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5, `docs/systems/studio.md`). Record answers. Hand approved work to the systems developer (notes, role `dev`) or the map builder (role `builder`). Keep the `combat` roadmap track current. I change no game code; tuning goes to the developer.
+Grill Brandon with choice cards on his Studio desk (`docs/systems/studio.md`). Record answers. Hand approved work to the systems developer (notes, role `dev`) or the map builder (role `builder`). Keep the `combat` roadmap track current. I change no game code; tuning goes to the developer.
 
 ## Standing rules
 - No story, dialogue, names, lore or flavor text. Nameable content stays blank, and player text is caveman placeholders in `game/text/placeholder.csv`.
@@ -10,7 +10,7 @@ Grill Brandon with choice cards on his Studio desk (https://claude.ai/artifact/5
 - Pictures: Python SVG, then `magick -density 96 x.svg x.png && magick x.png -quality 88 x.webp`. Magick drops thin strokes and outline rects, so use filled cells only. Upload with Artifact publish (url + asset:true), then `/_blob/<id>`.
 - Studio DB (ArtifactData): pin every write to an existing doc with `if_version`; a batch fails whole if one doc is unpinned. Notes use fields `role`, `status` (new/seen), `from`, `at`, `title`, `text`. Mark a card done with a one-line `result`.
 - Role status `roles/design`: update `status`, `now`, `next` and `updated` when starting and finishing an item. Take `updated` from `date -u +%Y-%m-%dT%H:%M:%SZ`, never a guess.
-- Shared checkout ~/lodestone, main only. `git fetch` + `git merge --ff-only origin/main`, never stash, reset or pull --rebase. Commit only my files: `git add <file>` then check `git show --stat HEAD`. A failed python edit must not be followed by a commit, because that once swept up another session's unstaged lines (283c84d). Commits end with "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>".
+- Shared checkout ~/lodestone, main only. `git pull --rebase --autostash` (other sessions leave uncommitted edits), never reset or switch branches. Commit only my files: `git add <file>` then check `git show --stat HEAD`. A failed python edit must not be followed by a commit, because that once swept up another session's unstaged lines (283c84d). Commits end with "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>".
 - Edit decisions.md with a Python anchor-insert after a unique existing line (assert count == 1).
 
 ## Measuring rules I set (all [AI])
@@ -19,25 +19,25 @@ Grill Brandon with choice cards on his Studio desk (https://claude.ai/artifact/5
 - Map fights: a non-boss fight losing its first try in more than half the robot runs is a wall.
 - Use 120 fights per row before trusting a gap; at 40 fights, 20% vs 13% was noise.
 
-## State now
-- Nothing open: no design cards on the desk and no new notes. Role status is idle.
-- Lich (crypt throne, `data/classes/lich.tres`): undead, 38 HP, big move `lich_doom` (marked a phase ahead), ice pillars `raise_ice` (1 every 2nd phase, cold 1), threat-weighted AI `threat_ai` 1. At level 5, party first: sword ~43-48%, daggers ~54-58%, bow ~39% (17% ambushed), book ~83%.
-- Map levels (foes by depth): snow pass 1, wolf den 2, crypt 1; bosses skip the roll. The ambusher hides with the snow pass bandits.
-- Clutch tools landed: CARRY (the dog, every party), COMMAND (sword), SHADOW SWAP (daggers, uses the move), stand and watch (bow, free shot if the archer doesn't move), WARD (book). Minion summon `raise_dead` is built but on no boss.
-- Bonds are built; the talk slots `BOND_TALK_<A>_<B>_<n>` wait for Brandon's lines.
-
-## Next step
-Nothing is in flight. When the PM or Brandon says go, pitch the next round as cards, in the order Brandon set:
-1. Caster/support foe, then charger, then guard ([USER] design-foe-roles).
-2. Boss phases with the second boss (minions suit a bigger party), then parts, then an objective ([USER] design-boss-shape).
-3. Village plots, a garden and a pen ([USER] design-village-grows).
-Also still open in combat: actions per turn, counter fairness. Content for Brandon to name: settlers, buildings, blessings and setbacks.
+## Where it stands (2026-11-01)
+- **Done today:** `docs/design/healing-model.md` (Pick A, camp meal picker), `docs/design/bushberry-tavern.md` (recruit flow, kit, tavern menu) and `docs/design/lich-prince.md` (`lich_wins` meta, the yield at win 3, PASS or FIGHT afterwards). Brandon's answers are `[USER]` lines at the tail of `docs/decisions.md`.
+- **In flight:** nothing. Role status is idle. The developer's next job is `dev-lich-prince` (the progress change and the Prince recruit).
+- **Standing design change:** every fight returns each run unless a story beat says otherwise (the Lich is the first beat). Check new designs against it.
+- **When Brandon says go**, pitch the next round as cards in his order: caster/support foe, charger, guard ([USER] design-foe-roles); boss phases ([USER] design-boss-shape); village plots ([USER] design-village-grows). Also open: actions per turn, counter fairness, content for Brandon to name (settlers, buildings, blessings, setbacks).
+- Bonds are built; `BOND_TALK_<A>_<B>_<n>` slots wait for Brandon's lines.
+- Lich numbers (38 HP, `lich_doom`, `raise_ice`, `threat_ai`) and the clutch tools are as of 2026-10-30; the playtester's 2026-11-01 re-measure (card `playtest-outing-retune-result`) is the current table.
 
 ## Pointers into docs/decisions.md (search the card id)
-design-boss-spread, design-world-gate, design-boss-cadence, design-boss-shape, design-foe-scale, design-foe-roles, design-foe-weakness, design-boss-warning, design-boss-retry, design-village-grows, design-village-life, design-lich-tag, design-lich-minions (his ice pillar and clutch quote), design-clutch-tools, design-clutch-tools-2, design-clutch-jobs. The later [AI] lines of 2026-10-30 carry the measured tables.
+design-boss-spread, design-world-gate, design-boss-shape, design-foe-roles, design-village-grows, design-lich-minions, design-clutch-tools, design-healing, design-bb-recruit, design-bb-kit, design-lich-prince. The 2026-10-30 [AI] lines carry the measured tables.
 
 ## Key files
 - `docs/design/core-loop.md`: design summary per theme; the "Bosses, foes and the village" section is current.
 - `game/data/combat.csv`, `abilities.csv`, `tags.csv`, `bonds.csv`, `classes/*.tres`: the knobs.
 - Balance: `godot --headless --path game -s res://tools/explore_balance.gd -- fights level weapon`; robot `-s res://tools/e2e_play.gd -- seed`. The developer and the playtester run these. Ask them for tables instead of running long sims yourself.
 - Scratch Godot scripts need a SceneTree wrapper plus a RefCounted runner loaded at run time, because autoloads like Db can't be named at compile time.
+
+## Studio rules
+- The Studio page is https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 (this account). Desk card text is a short lead line, a blank line, then "- " bullets with **bold** labels, never one long paragraph. Use real newlines.
+- One review card per feature or job, not one per commit.
+- Run long checks in the foreground or wait for them; never end a turn with work unpushed. Commit, rebase onto origin/main, push, and confirm with `git log origin/main`.
+- Model: dev on Opus at medium effort; design, builder, playtest and art on Sonnet.

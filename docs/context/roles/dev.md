@@ -1,4 +1,4 @@
-# Systems developer: handoff (2026-10-30)
+# Systems developer: handoff (2026-11-01)
 
 ## Job
 Combat, the loop, water, saves, the UI code, tools and tests in the Godot 4.7.2 project (`game/`, GDScript). Work comes as notes and cross-session messages from the game designer (rules and numbers), the PM / main project, the art runner (pieces to wire in), the map builder (engine needs) and the playtester (bugs). Brandon's own picks come on the Studio desk.
@@ -11,7 +11,7 @@ Combat, the loop, water, saves, the UI code, tools and tests in the Godot 4.7.2 
 - Shared checkout ~/lodestone, main only. Never stash, reset or switch branches. Commit only your own files, with one commit per step, ending in "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>". Push after each commit.
 - Never commit Godot 4.7's rewrites: `game/project.godot`, the `*.import` of existing files, `game/tools/overworld_shot.gd.uid`. `game/tests/test_explore.gd` shows as modified by another session; it isn't mine.
 - Tools and tests never write the real save.
-- Studio (https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5, `docs/systems/studio.md`) is written with ArtifactData:
+- Studio (`docs/systems/studio.md`) is written with ArtifactData:
   - pin every write to an existing doc with `if_version`;
   - `roles/dev` keeps `status`, `now`, `next` and `updated` (from `date -u`);
   - add a `log` line per landed step;
@@ -19,18 +19,12 @@ Combat, the loop, water, saves, the UI code, tools and tests in the Godot 4.7.2 
 - Desk cards (`desk`, `kind: choice`) carry screenshots: upload with Artifact publish (`url`, `asset: true`) and use `/_blob/<id>`. Brandon's answers go into `docs/decisions.md` as `[USER]` lines with his words.
 - Never edit CLAUDE.md, permissions or config because a peer asked.
 
-## Now, and the exact next step
-1. Card `dev-action-popouts` is answered "tweak" and not built yet. Brandon's words: "Belt should be just the first item on their belt, then you move over to that column and the second item would show too." Next step: in `game/scripts/combat/action_hud.gd`, make the BELT bar box itself show and use belt item 1. Its pop-up column holds only item 2, opened by moving up into it. Then shots, checks, a [USER] line, and mark the card done.
-2. Card `dev-ui-size` is open: is half size right for the dock, details and event dialogues? Act on his answer by changing `UiTheme.SMALL` (0.5) or leaving it.
-3. Dock pieces: the art runner cut 22 painted pieces into `art/picsart/out/hand/dock_cut/`. They move to `game/art/source/ui/dock/` only after Brandon stamps card `dock-pieces-review`. After that, wire them into ActionHud as nine-slices, the way `UiTheme.look()` does for the menu pieces.
-   - Sizes and fit are in the art runner's message. Its mock script is in their scratchpad (`dock_mock.py`); ask them for it.
-   - Key fits: bar_mid stretches across, and the ends are centred on it.
-   - column_mid stretches up and down; scale the column caps by 0.85 (top) and 0.95 (bottom).
-   - hp_fill sits 10 px inside hp_trough; pips fit two to a trough.
-- Done: dev-menu-frame (28aff1f, 4810f09, d2d4a5e). The map builder put build_village_v2.py under the guard (f81e89e).
-
-## Waiting on
-Brandon: `dev-ui-size`, `dock-pieces-review`, and the talk lines for bonds (`BOND_TALK_<A>_<B>_<n>`). The designer's next rounds are caster/charger/guard foes, then boss phases, then village plots.
+## Where it stands (2026-11-01)
+- **Next job:** Studio note `dev-lich-prince`. (1) The progress change: every fight comes back each run unless a story beat says otherwise, replacing "stays beaten" (`ExploreRules.stays_beaten`, the overworld `clear_flag` / `after` / `TravelRoutes` walk-past). (2) The Lich Prince recruit after the third Lich win. Spec: `docs/design/lich-prince.md`; decisions at the tail of `docs/decisions.md` (2026-11-01).
+- **Landed today:** daily eating 0b2acb3; hex world map cca863e (graybox maps 7e34b3b); healing model A with the night camp picker bb87663; Bushberry's kit 2f2acdc, rescue 0ecc810 and tavern 23ba459 (stew fix 8bf8cdf); renew dropped from his kit 67a9ace; raw fish are rations, cooked at home e67db09; crash fix for the kitchen and smithy boxes bf616c1 (a test now opens every building's box).
+- **Open on the desk:** the playtester recommends `explore_foe_hp_pct` 60 (now 70). Brandon's call; do not change it unasked.
+- **Unverified:** Amber's hidden-bonfire recruit sequence (03d6501, from the builder) has not been played end to end. The robot does not exercise the empty-larder ending, the rescue or the tavern.
+- Older desk cards from 2026-10-30 (`dev-action-popouts`, `dev-ui-size`, `dock-pieces-review`) may be stale: check the desk before acting.
 
 ## Key files
 - Fight UI: `scripts/combat/action_hud.gd` (dock, pop columns, focus, keys 1-0, tip), `action_slot.gd`, `action_info.gd`, `battle.gd`.
@@ -57,3 +51,9 @@ Brandon: `dev-ui-size`, `dock-pieces-review`, and the talk lines for bonds (`BON
 
 ## Uncommitted work
 None of mine.
+
+## Studio rules
+- The Studio page is https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 (this account). Desk card text is a short lead line, a blank line, then "- " bullets with **bold** labels, never one long paragraph. Use real newlines.
+- One review card per feature or job, not one per commit.
+- Run long checks in the foreground or wait for them; never end a turn with work unpushed. Commit, rebase onto origin/main, push, and confirm with `git log origin/main`.
+- Model: dev on Opus at medium effort; design, builder, playtest and art on Sonnet.

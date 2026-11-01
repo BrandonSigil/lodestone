@@ -1,6 +1,6 @@
-# Playtester: handoff (2026-10-30)
+# Playtester: handoff (2026-11-01)
 
-Studio role id `playtest`, name "Playtester". Page: https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5. Read the desk (`playtest` cards) and `notes` (`role: "playtest"`, `status: "new"`) at the start of a turn.
+Studio role id `playtest`, name "Playtester". Read the desk (`playtest` cards) and `notes` (`role: "playtest"`, `status: "new"`) at the start of a turn.
 
 ## Job and rules
 - **Milestones only (Brandon, 2026-10-30):** "limit the playtester to some milestones. I dont mind quick screengrabs for things, but let's do less full-sweeps and difficulty checks for now". Full 36-run sweeps and balance/difficulty checks only at a milestone the PM or Brandon names. Between milestones: quick screenshots or a single seed when asked, nothing more.
@@ -24,19 +24,6 @@ Studio role id `playtest`, name "Playtester". Page: https://claude.ai/artifact/5
 - `Cannot convert argument 1 from Object to Object` (`pop_in`) appears in most logs; no effect on results, unknown if new.
 - Studio writes to an existing doc need `if_version`.
 
-## Baseline (clean worktree, scale C on, 48909e0, 2026-10-30)
-- 36 of 36 pass; no script errors, no stalls; no pop_in errors. Fights now: pass_wolves, pass_bandits, den_wolves, den_lone, plaza, cave, tower, throne.
-- Runs with a first-try loss (of 12), sword / daggers / bow: pass_wolves 1/0/0; pass_bandits 0/1/0; den_wolves 0/2/0; den_lone 0/2/4; plaza 0/0/1; tower 2/3/1; throne 11/12/10.
-- Lich tries per run: sword 2.1, daggers 2.7, bow 3.1 (was 2.3 / 2.7 / 2.3). Sim at level 5 (60 fights): sword 42%, daggers 57%, bow 37% (ambushed 27 / 48 / 15). Every other group is 100% in the sim.
-- Ordinary fights are all but unloseable; only the Lich bites. Bow is the hardest weapon on him.
-
-## Outing measurement (dd916d0, check.sh 332 tests 0 failures; 2026-10-30)
-- 108 runs, all pass, no script errors. Robot variants: "noheal" (never uses pack potions/food, 24 seeds per weapon) and "heal" (the stock robot, heals before each fight, 12 seeds). Instrument by printing HP and `Game.member_res` before and after each `_fight` in a scratch copy of `e2e_play_steps.gd`.
-- Lich win rate, attempt 1: about 3% (noheal 2/72, heal 1/36), target 5-10%. Attempt 2 (after one fall): about 21% (noheal 15/70, heal 7/35), target 25-50%. Slightly too hard, both.
-- Arrival at the throne (noheal, first try), HP / resources: sword 41% / 15%, daggers 29% / 55%, bow 31% / 6%. Target about 50% / 25%. Daggers keep their charges; sword and bow are spent.
-- Ceiling (fresh level 5, sim 60 fights): throne win sword 38%, daggers 55%, bow 52%. Beatable.
-- Per-road-fight cost is noisy across seeds (HP 0-40%, resources 2-46%); no reliable average. Mana/charges are what the road spends.
-
 ## Re-measure after the retune (d658ae5, check.sh 395 tests 0 failures; 2026-11-01)
 - explore_foe_hp_pct 70, hex world map, daily camp meals. 108 runs (24 seeds noheal, 12 heal per weapon), all pass, no script errors.
 - Lich attempt 1: noheal 3/72 (4%), heal 1/36 (3%); attempt 2: noheal 15/69 (22%), heal 8/35 (23%). Targets 5-10% and 25-50%.
@@ -44,7 +31,15 @@ Studio role id `playtest`, name "Playtester". Page: https://claude.ai/artifact/5
 - Food is never short (34 left at the throne in noheal); the empty-larder ending, Bushberry's rescue and the tavern are not exercised by the robot. Only 2 non-Lich falls in 108 runs.
 - Recommendation sent: explore_foe_hp_pct 60 (first try under 5%). Sample is small, so 1-2 more wins would move it.
 
-## Open
-- Nothing filed by me is open. Last rule from the game designer: ambusher softens if `pass_bandits` loses over half its first tries (it does not).
-- Clutch tools: WARD only helps if cast after the Lich's mark (wiped at your next phase otherwise); SHADOW SWAP repositions but does not revive; forcing tools in the sim lowers Lich wins. Not played by hand (no window control); CARRY and COMMAND wording untested. Log line has a garbled figure ("14 to 8 hurt, 6 left"): correct is 14 to 6.
-- Snow pass: 12 stray 1-2 cell bits (low). Cemetery stair in village_v2 was checked by data only in one round.
+## Where it stands (2026-11-01)
+- The Lich re-measure at d658ae5 is done (card `playtest-outing-retune-result`, 108 runs): Lich attempt 1 about 4%, attempt 2 about 22%. It recommends `explore_foe_hp_pct` 60 (Brandon's call; the sample is small).
+- Earlier baseline (70%, dd916d0, 2026-10-30): attempt 1 about 3%, attempt 2 about 21%. Ceiling (fresh level 5, sim 60 fights): sword 38%, daggers 55%, bow 52%.
+- Nothing filed by me is open. Milestones only, so nothing is queued. The likely next trigger is the progress change (every fight returns each run, the Lich Prince after win 3): re-measure the Lich loop only when the PM or Brandon names it.
+- Unverified: the empty-larder ending, Bushberry's rescue, the tavern, Amber's recruit and the camp meal picker are not exercised by the robot. Clutch tools (WARD after the Lich's mark, SHADOW SWAP, CARRY and COMMAND wording) were never played by hand.
+- Low: snow pass has 12 stray 1-2 cell bits; the village_v2 cemetery stair was checked by data only.
+
+## Studio rules
+- The Studio page is https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 (this account). Desk card text is a short lead line, a blank line, then "- " bullets with **bold** labels, never one long paragraph. Use real newlines.
+- One review card per feature or job, not one per commit.
+- Run long checks in the foreground or wait for them; never end a turn with work unpushed. Commit, rebase onto origin/main, push, and confirm with `git log origin/main`.
+- Model: dev on Opus at medium effort; design, builder, playtest and art on Sonnet.
