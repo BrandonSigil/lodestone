@@ -796,21 +796,53 @@ func test_the_square_recruits_everyone_with_art() -> void:
 	_restore(saved)
 
 
-func test_the_gate_asks_go_or_edit() -> void:
+func test_the_gate_opens_the_party_picker() -> void:
 	var saved := _fresh_game()
 	Game.take_weapon("sword")  # nobody leaves unarmed (test_no_leaving_town_unarmed)
+	Game.meta.flags.append("has_lodestone")
 	Game.explore_map = "village"
 	Game.explore_entry = Vector2i(-1, -1)
 	var s: Node = load("res://scenes/explore.tscn").instantiate()
 	(Engine.get_main_loop() as SceneTree).root.add_child(s)
-	s._apply_map_fx(["exit"], {})
-	ok(s._gate_open, "the gate asks first")
+	var gate: Dictionary = s.things.filter(func(t: Dictionary) -> bool: return t.id == "gate")[0]
+	s._open_thing(gate)
+	ok(s._gate_open, "backlog X4: walking up to the gate opens the picker straight away")
 	var texts: Array = s._dialog.find_children("*", "Button", true, false).map(func(b: Button) -> String: return b.text)
-	ok(texts.has(Txt.t("UI_GATE_GO")) and texts.has(Txt.t("UI_GATE_PARTY")), "GO (F) and EDIT PARTY (P)")
-	s._party_editor()
-	texts = s._dialog.find_children("*", "Button", true, false).map(func(b: Button) -> String: return b.text)
-	ok(texts.any(func(t: String) -> bool: return t.begins_with(Txt.f("UI_PARTY_IN", Txt.t("CHAR_DOG")))), "the dog is listed, coming")
-	ok(texts.any(func(t: String) -> bool: return t.contains(Txt.t(String(Game.morale_band("dog").name_key)))), "with his morale band")
+	ok(texts.has(Txt.t("UI_GATE_GO")) and texts.has(Txt.t("OPT_STAY")), "GO and STAY on the picker")
+	ok(not texts.has(Txt.t("OPT_GO_ON")), "no GO ON box first")
+	var labels: Array = s._dialog.find_children("*", "Label", true, false).map(func(l: Label) -> String: return l.text)
+	for id in Game.ADVENTURE_ROSTER:
+		ok(labels.has(Txt.t(Db.character(id).name_key)), "every playable character is listed: " + String(id))
+	ok(not Game.in_party("bushberry"))
+	s._pick_toggle("bushberry")  # not met yet: playtest picks meet him on the spot
+	ok(Game.in_party("bushberry"), "a character not met yet joins from the picker")
+	s._pick_toggle("bushberry")
+	ok(not Game.in_party("bushberry"), "and stays home again")
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"
+	_restore(saved)
+
+
+func test_pickups_open_a_loot_window() -> void:
+	var saved := _fresh_game()
+	Game.explore_map = "village"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	var rope: Dictionary = s.things.filter(func(t: Dictionary) -> bool: return t.id == "smithy_rope")[0]
+	s._open_thing(rope)
+	var texts: Array = s._dialog.find_children("*", "Button", true, false).map(func(b: Button) -> String: return b.text)
+	ok(texts.has(Txt.t("UI_BOX_TAKE_ALL")), "backlog X3: the rope barrel opens the loot window")
+	ok(not texts.has(Txt.t("OPT_TAKE")), "no TAKE / LEAVE box")
+	ok(Game.has_flag("got_rope"), "its flag is set on opening")
+	s._close_box()
+	for id: String in Db.explore_events:
+		var ev: Dictionary = Db.explore_events[id]
+		if String(ev.box) != "":
+			ok(not ExploreRules.pickup_loot(ev).items.is_empty(), id + " holds something")
+	eq(TrailRules.gains_text("food:+4;gold:+10;unlock:met_dog;remove"), "%s +4  %s" % [Txt.t(String(Db.items[RunState.FOOD_ITEM].name_key)), Txt.f("UI_GOLD", 10)],
+		"backlog X1: gains by name, never the raw effect")
 	s.free()
 	Game.explore_memory.clear()
 	Game.explore_map = "home"
@@ -1141,7 +1173,7 @@ func test_no_leaving_town_unarmed() -> void:
 	Game.take_weapon("sword")
 	ok(Game.armed())
 	s._apply_map_fx(["exit"], {})
-	ok(s._gate_open, "armed: the gate asks GO / EDIT PARTY")
+	ok(s._gate_open, "armed: the gate opens the party picker")
 	s._close_dialog()
 	s.free()
 	Game.reset_meta()

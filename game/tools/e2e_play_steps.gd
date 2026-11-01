@@ -22,7 +22,7 @@ func play(t: SceneTree) -> void:
 	game.new_game()
 
 	var s: Node = await _explore("home")
-	await _use(s, "home_chest", "OPT_TAKE")
+	await _loot(s, "home_chest")
 	_check(game.run.medicine == 2, "a potion from the hero's chest")
 	await _through(s, "out")
 
@@ -31,8 +31,8 @@ func play(t: SceneTree) -> void:
 	_check(not _offered(s, "gate", "OPT_GO_ON"), "the gate won't let you out without the Lodestone")
 	await _use(s, "weapon_rack", "OPT_TAKE_SWORD")
 	_check(game.weapon_id() == "sword", "the smithy sword is the hero's")
-	await _use(s, "smithy_rope", "OPT_TAKE")
-	await _use(s, "food_barrel", "OPT_TAKE")
+	await _loot(s, "smithy_rope")
+	await _loot(s, "food_barrel")
 	_check(game.run.item_count("rope") == 1 and game.run.food >= 8, "rope and food in the pack")
 	await _use(s, "statue", "OPT_TAKE_STONE")
 	_check(game.has_flag("has_lodestone"), "the Lodestone is taken")
@@ -46,7 +46,7 @@ func play(t: SceneTree) -> void:
 	await _through(s, "out")
 
 	s = await _explore("village")
-	await _use(s, "gate", "OPT_GO_ON")
+	await _gate(s)
 
 	s = await _road("pass")
 	await _press(s, 0)  # GO IN
@@ -57,7 +57,7 @@ func play(t: SceneTree) -> void:
 	_check(_offered(s, "rope_ledge", "OPT_TIE_ROPE"), "the rope opens the ledge")
 	await _use(s, "rope_ledge", "OPT_TIE_ROPE")
 	s = await _explore("snow_pass")
-	await _use(s, "ledge_chest", "OPT_OPEN")
+	await _loot(s, "ledge_chest")
 	await _use(s, "rope_down", "OPT_CLIMB_DOWN")
 	s = await _explore("snow_pass")
 	await _use(s, "snow_secret", "OPT_DIG")
@@ -145,7 +145,7 @@ func play(t: SceneTree) -> void:
 	# The road goes on ([USER] 2026-10-29): from the town gate past the cleared pass, without going in.
 	game.wake_in_town(false)
 	s = await _explore("village")
-	await _use(s, "gate", "OPT_GO_ON")
+	await _gate(s)
 	s = await _road("dwarven_mines")  # the hex tile past the highlands, open once the Lich King is beaten
 	_check(tree.current_scene == s and s.get("_dialog") != null, "arrived past the pass, on the big map")
 	await _press(s, 0)
@@ -237,6 +237,23 @@ func _use(s: Node, id: String, key: String) -> void:
 			await _dismiss(s)
 		else:
 			await _press_text(s, Txt.t("OPT_BACK_OFF"))
+
+
+## A pickup, as a player: walk up and use it, TAKE ALL in the loot window, then close it (backlog X2, X3).
+func _loot(s: Node, id: String) -> void:
+	s.set("mode", 0)  # WALK
+	s.call("_open_thing", _thing(s, id))
+	await _frames(2)
+	_check(await _press_text(s, Txt.t("UI_BOX_TAKE_ALL")), "%s opens a loot window" % id)
+	await _press_text(s, Txt.t("UI_BOX_CLOSE"))
+
+
+## Out the village gate: the party picker opens straight away (backlog X4), then GO.
+func _gate(s: Node) -> void:
+	s.set("mode", 0)  # WALK
+	s.call("_open_thing", _thing(s, "gate"))
+	await _frames(2)
+	_check(await _press_text(s, Txt.t("UI_GATE_GO")), "the gate opens the party picker with GO")
 
 
 func _through(s: Node, id: String) -> void:
@@ -418,7 +435,7 @@ func _road(to: String) -> Node:
 			_check(game.run.meals_eaten > meals, "the party ate at camp on the walk")
 			return s
 		var v := await _fell("a road fight")
-		await _use(v, "gate", "OPT_GO_ON")
+		await _gate(v)
 		s = await _scene("overworld")
 	_check(false, "reached %s in %d tries" % [to, TRIES])
 	return s

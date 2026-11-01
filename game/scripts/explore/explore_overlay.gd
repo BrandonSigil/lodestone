@@ -42,6 +42,8 @@ func _draw() -> void:
 			var who := String(t.get("event", "")).trim_prefix("companion_").trim_prefix("recruit_")
 			if who != "" and not Game.in_party(who):
 				figs[c] = _figure.bind(StringName(who), dim, _time)
+		elif String(t.kind) == "dog":
+			figs[c] = _figure.bind(&"dog", dim, _time)  # the dog waiting in his house: Doggo's own sprite (backlog X1)
 		if dim or lead == null or not scene.walking():
 			continue
 		var near := ExploreRules.dist(lead.cell, c) <= ExploreRules.HINT_RANGE
@@ -96,18 +98,6 @@ func _thing(kind: String, p: Vector2, dim: bool) -> void:
 			draw_line(p, p + Vector2(0, -40), Color(0.35, 0.28, 0.2) * k, 3.0)
 			var wave := sin(_time * 3.0) * 3.0
 			draw_colored_polygon(PackedVector2Array([p + Vector2(1, -40), p + Vector2(24, -34 + wave), p + Vector2(1, -27)]), Color(0.9, 0.85, 0.5) * k)
-		"dog":
-			# The locked-in dog: a small brown body, head and ears, the tail wagging. Placeholder until art.
-			var fur := Color(0.72, 0.5, 0.28) * k
-			var wag := sin(_time * 9.0) * 4.0
-			draw_line(p + Vector2(-12, -10), p + Vector2(-19, -18 + wag), fur.darkened(0.2), 3.0, true)
-			draw_colored_polygon(_oval(p + Vector2(-2, -10), 12.0, 6.5), fur)
-			for lx in [-8.0, -2.0, 4.0, 8.0]:
-				draw_line(p + Vector2(lx, -6), p + Vector2(lx, 0), fur.darkened(0.3), 2.5)
-			draw_circle(p + Vector2(11, -17), 6.0, fur.lightened(0.1))
-			draw_colored_polygon(PackedVector2Array([p + Vector2(7, -21), p + Vector2(9, -30), p + Vector2(12, -22)]), fur.darkened(0.25))
-			draw_colored_polygon(PackedVector2Array([p + Vector2(12, -22), p + Vector2(16, -29), p + Vector2(16, -20)]), fur.darkened(0.25))
-			draw_circle(p + Vector2(16, -16), 1.6, INK)
 		"statue":
 			# The Lodestone in the statue's outstretched hand: a glow that goes once the stone is taken.
 			var glow := 0.55 + 0.45 * sin(_time * 2.5)

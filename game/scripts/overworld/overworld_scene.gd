@@ -225,8 +225,8 @@ func _choose(o: Dictionary) -> void:
 		lines.append("%s  %s" % [Txt.t("CHECK_" + String(o.check).to_upper()), Dice.describe(fx.check)])
 		lines.append(Txt.t("UI_EX_WIN") if fx.success else Txt.t("UI_EX_LOSE"))
 	var shown := String(o.win if fx.success else o.lose)
-	if shown != "" and fx.combat == "":
-		lines.append(shown.replace(";", "  "))
+	if TrailRules.gains_text(shown) != "" and fx.combat == "":
+		lines.append(TrailRules.gains_text(shown))  # by name, never the raw effect string (backlog X1)
 	lines.append_array(boon_lines)
 	if fx.combat != "":
 		var p := leg()

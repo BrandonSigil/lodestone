@@ -56,7 +56,7 @@ var _keys_walking := false  ## the leader is walking on WASD
 var _menu_open := false  ## the pack or the Lodestone menu is the open dialog
 var _menu_which := ""  ## which one: "pack", "lodestone", ...
 var _menu_close := Callable()  ## shuts it (I shuts the pack)
-var _gate_open := false  ## the village gate's GO / EDIT PARTY prompt is up (F and P answer it)
+var _gate_open := false  ## the village gate's party picker is up (F goes)
 ## Deploying: the fight waiting to start, the member being placed and the cells it may take.
 var _pending := {}
 var _placing: CombatUnit = null
@@ -454,9 +454,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		KEY_ENTER:
 			if mode == M.DEPLOY:
 				_begin_battle()
-		KEY_P:
-			if _gate_open:
-				_party_editor()
 		KEY_F:
 			if _gate_open:
 				_gate_go()
@@ -759,7 +756,26 @@ func _open_thing(t: Dictionary) -> void:
 	if t.kind == "container":
 		_open_container(t)
 		return
+	if String(t.event) == "village_gate" and Game.has_flag("has_lodestone"):
+		if not Game.armed():
+			_need_weapon()  # [USER] 2026-10-30: nobody leaves town with bare hands
+		else:
+			_gate_prompt()  # no GO ON / STAY box first (backlog X4): the picker is the gate
+		return
+	var pick := ExploreRules.pickup_loot(Db.explore_events.get(String(t.event), {}))
+	if not pick.is_empty():
+		_open_pickup(t, pick)
+		return
 	open_event(String(t.event), {"thing": t})
+
+
+## A pickup opens the loot window straight away (backlog X2, X3). Its flags are set on the first opening; what is
+## left inside stays while the party is on this map, then the thing is gone (its once flag).
+func _open_pickup(t: Dictionary, pick: Dictionary) -> void:
+	var box_thing := {"id": t.id, "type": pick.type, "items": pick.items, "locked": false, "trapped": false, "cell": t.cell}
+	if not Game.has_flag(_looted_flag(box_thing)) and String(pick.now) != "":
+		Game.absorb(TrailRules.apply_effects(Game.run, String(pick.now)).unlocks)
+	_open_container(box_thing)
 
 
 # --- containers ([USER] 2026-10-31, docs/design/loot-containers.md) ---------------------------------------------------
@@ -933,7 +949,7 @@ func _lasting(t: Dictionary) -> void:
 			TrailRules.apply_effects(Game.run, what)
 			_take_lasting(t)
 			_after_change()
-			_dialog_button(_new_dialog(Txt.f("UI_RARE_FOUND", what.replace(";", "  "))), Txt.t("UI_CONTINUE"), func() -> void:
+			_dialog_button(_new_dialog(Txt.f("UI_RARE_FOUND", TrailRules.gains_text(what))), Txt.t("UI_CONTINUE"), func() -> void:
 				_close_dialog()
 				mode = M.WALK)
 
@@ -1110,10 +1126,10 @@ func choose(o: Dictionary, ctx: Dictionary) -> void:
 		for f: String in out.unlocks:
 			if Txt.has("UI_GOT_" + f.to_upper()):
 				lines.append(Txt.t("UI_GOT_" + f.to_upper()))  # the dog joins, the Lodestone is taken
-		var shown_fx := Array(fx.run.split(";", false)).filter(func(p: String) -> bool:
-			return not p.begins_with("sleep") and not p.begins_with("morale"))  # said in their own lines above
-		if not shown_fx.is_empty():
-			lines.append("  ".join(shown_fx))
+		var gains := TrailRules.gains_text(";".join(Array(fx.run.split(";", false)).filter(func(p: String) -> bool:
+			return not p.begins_with("morale"))))  # what was got, by name (morale has its line above); never raw effects (X1)
+		if gains != "":
+			lines.append(gains)
 	if Game.run.wiped():
 		# A trap took the last one standing: the run ends as a lost fight does.
 		lines.append(Txt.t("UI_DEFEAT"))
@@ -1709,19 +1725,61 @@ func _need_weapon() -> void:
 
 
 ## Leaving the village by the gate ([USER] pc-10: "press F to proceed", "press P to edit party").
+## The village gate (backlog X4): walking up to it opens the party picker straight away, with GO and STAY on it, one
+## step. PLAYTEST: every playable character is on it, met or not ("let me pick from all playable characters here before
+## heading out"); picking one not met yet sets their unlock flag, as the square's line-up does.
 func _gate_prompt() -> void:
 	mode = M.DIALOG
 	_gate_open = true
-	var names: PackedStringArray = []
-	for d in Game.adventure_defs():
-		names.append(Txt.t(d.name_key))
-	var box := _new_dialog(Txt.f("UI_GATE_PROMPT", ", ".join(names)))
+	var box := _new_dialog(Txt.f("UI_GATE_PICK", [Game.adventure_defs().size(), Game.party_max()]))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(row)
+	for id in Game.ADVENTURE_ROSTER:
+		row.add_child(_pick_card(String(id)))
 	_dialog_button(box, Txt.t("UI_GATE_GO"), _gate_go)
-	_dialog_button(box, Txt.t("UI_GATE_PARTY"), _party_editor)
 	_dialog_button(box, Txt.t("OPT_STAY"), func() -> void:
 		_gate_open = false
 		_close_dialog()
 		mode = M.WALK)
+
+
+## One character on the gate's picker: face, name and level, and whether they come. Click to bring or leave them;
+## the hero always comes.
+func _pick_card(id: String) -> Button:
+	var d := Db.character(StringName(id))
+	var met := Game.is_unlocked(d)
+	var going := Game.in_party(id)
+	var card := Button.new()
+	card.custom_minimum_size = Vector2(112, 128)
+	card.toggle_mode = true
+	card.button_pressed = going
+	card.disabled = id == "lead"
+	card.tooltip_text = Txt.t(d.name_key)
+	var col := VBoxContainer.new()
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 2)
+	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(col)
+	var face := AdventureMenu._face(id, d.tint, 56)
+	face.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	col.add_child(face)
+	for line: Array in [[Txt.t(d.name_key), 15, UiTheme.PARCHMENT],
+			[Txt.t("UI_PICK_IN" if going else ("UI_PICK_OUT" if met else "UI_PICK_NEW")), 13, UiTheme.GOLD if going else UiTheme.PARCHMENT_DARK]]:
+		var l := Label.new()
+		l.text = String(line[0])
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.clip_text = true
+		l.add_theme_font_size_override("font_size", int(line[1]))
+		l.add_theme_color_override("font_color", line[2])
+		col.add_child(l)
+	for c in col.find_children("*", "Control", true, false):
+		(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.modulate = Color.WHITE if going else Color(0.7, 0.7, 0.7)
+	card.pressed.connect(func() -> void: _pick_toggle(id))
+	return card
 
 
 func _gate_go() -> void:
@@ -1731,23 +1789,18 @@ func _gate_go() -> void:
 	_finish_map()
 
 
-## Who comes along: every companion the hero has met, in or out, up to the party's four.
-func _party_editor() -> void:
-	_gate_open = false
-	var box := _new_dialog(Txt.f("UI_PARTY_EDIT", [Game.adventure_defs().size(), Game.party_max()]))
-	for d in Game.companions():
-		var id := String(d.id)
-		var going := Game.in_party(id)
-		var label := Txt.f("UI_PARTY_IN" if going else "UI_PARTY_OUT", Txt.t(d.name_key)) \
-			+ Txt.f("UI_PARTY_HEART", [Game.morale_of(id), Txt.t(String(Game.morale_band(id).name_key))])  # who needs a rest
-		_dialog_button(box, label, func() -> void:
-			if Game.in_party(id):
-				Game.dismiss(id)
-			else:
-				Game.invite(id)
-			_after_change()
-			_party_editor())
-	_dialog_button(box, Txt.t("UI_CONTINUE"), _gate_prompt)
+func _pick_toggle(id: String) -> void:
+	if id == "lead":
+		return
+	var d := Db.character(StringName(id))
+	if Game.in_party(id):
+		Game.dismiss(id)
+	else:
+		if not Game.is_unlocked(d):
+			Game.set_flag(d.unlock)  # playtest: met on the spot
+		Game.invite(id)  # stays out when the party is full
+	_after_change()
+	_gate_prompt()
 
 
 ## Out the way out: onto the overworld, standing at the place this map belongs to.

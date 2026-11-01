@@ -661,7 +661,7 @@ static func auto_deploy(grid: CombatGrid, party: Array, how: String, blocked := 
 static func parse_events(rows: Array[Dictionary]) -> Dictionary:
 	var out := {}
 	for row in rows:
-		var ev := {"id": row.id, "text_key": row.text_key, "options": [], "portrait": row.get("portrait", "")}
+		var ev := {"id": row.id, "text_key": row.text_key, "options": [], "portrait": row.get("portrait", ""), "box": row.get("box", "")}
 		for n in range(1, 6):
 			var key: String = row.get("opt%d_key" % n, "")
 			if key == "":
@@ -676,6 +676,24 @@ static func parse_events(rows: Array[Dictionary]) -> Dictionary:
 			})
 		out[ev.id] = ev
 	return out
+
+
+## A pickup (an event with a `box`: the rope barrel, a food cache, the cottage chest) opens as a loot window, not a box of
+## words (backlog X2, X3: "just let me interact with the barrel and have a loot inventory box show up"). Its first option's
+## win, split: "items" (things and coins, into the container's grid) and "now" (flags and the rest, set on the first
+## opening). Map effects (its "remove") are dropped: the thing stays while the party is on the map, like any container.
+static func pickup_loot(ev: Dictionary) -> Dictionary:
+	var items: PackedStringArray = []
+	var now: PackedStringArray = []
+	if String(ev.get("box", "")) == "" or ev.options.is_empty():
+		return {}
+	for part in String(split_effects(String(ev.options[0].win)).run).split(";", false):
+		var key := part.split(":")[0].strip_edges()
+		if key in ["gold", "food", "medicine"] or Db.items.has(key):
+			items.append(part)
+		else:
+			now.append(part)
+	return {"type": String(ev.box), "items": ";".join(items), "now": ";".join(now)}
 
 
 ## "" (anyone), "skill:<check>" (someone has it), "class:<id>", "char:<id>", "item:<id>" (the pack holds one),

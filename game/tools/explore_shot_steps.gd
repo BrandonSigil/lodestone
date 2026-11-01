@@ -260,15 +260,24 @@ func run(s: Node, f: int, step: String) -> bool:
 				_put(s, Vector2i(5, 24))
 			return f == 30
 		"gate":
-			# The village gate's prompt ([USER] pc-10): GO (F) or EDIT PARTY (P); then the party editor.
+			# The village gate (backlog X4): the party picker straight away, every playable character, with GO and STAY.
 			if f == 5:
 				var game: Node = s.get_node("/root/Game")
 				game.save_enabled = false  # a shot never writes the real save
 				game.meta.flags.append_array(["has_lodestone", "met_dog"])
+				game.take_weapon("sword")
 				game.refresh_party()
 				s._after_change()
 				s._apply_map_fx(["exit"], {})
-				s._party_editor()
+			return f == 30
+		"rope":
+			# A pickup opens the loot window straight away (backlog X3: the rope barrel in the smithy yard).
+			if f == 5:
+				s.get_node("/root/Game").save_enabled = false  # a shot never writes the real save
+				for t: Dictionary in s.things:
+					if t.id == "smithy_rope":
+						_put(s, t.cell + Vector2i(1, 0))
+						s._open_thing(t)
 			return f == 30
 		"options":
 			# The options screen off the Lodestone menu (shared menu theme, 2026-10-30).

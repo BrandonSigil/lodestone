@@ -211,6 +211,34 @@ static func resolve_option(run: RunState, opt: Dictionary) -> Dictionary:
 
 
 ## Effects are "key:+n;key:-n" strings from events.csv and encounters.csv.
+## "food:+4;gold:+10;unlock:x" as the player reads it: each thing got by name and count, and the coins. Flags, map
+## effects and the rest say nothing here (their own lines do, when they have one).
+static func gains_text(effects: String) -> String:
+	var parts: PackedStringArray = []
+	for part in effects.split(";", false):
+		var kv := part.split(":")
+		if kv.size() != 2:
+			continue
+		var id := kv[0].strip_edges()
+		var n := int(kv[1])
+		match id:
+			"food": id = RunState.FOOD_ITEM
+			"medicine": id = RunState.MED_ITEM
+			"gold":
+				if n != 0:
+					parts.append(Txt.f("UI_GOLD", n))
+				continue
+			"hp_all", "hp_one":
+				parts.append("%s %+d" % [Txt.t("UI_STAT_HP"), n])
+				continue
+			"morale":
+				parts.append(Txt.f("UI_MORALE_ALL", "%+d" % n))
+				continue
+		if Db.items.has(id) and n != 0:
+			parts.append("%s %s%d" % [Txt.t(String(Db.items[id].name_key)), "+" if n > 0 else "", n])
+	return "  ".join(parts)
+
+
 static func apply_effects(run: RunState, effects: String) -> Dictionary:
 	var out := {"combat": "", "unlocks": [], "weapon": "", "invite": "", "dismiss": "", "blessings": 0, "setbacks": 0, "morale": 0, "sleep": false,
 		"rescue": ""}
