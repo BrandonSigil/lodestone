@@ -286,9 +286,21 @@ func _blocked() -> Dictionary:
 				if u.alive():
 					out[u.cell] = true
 	for t in things:
-		if not t.done and not String(t.kind) in ExploreRules.WALK_ON_KINDS:
+		if not t.done and not String(t.kind) in ExploreRules.WALK_ON_KINDS and _stands_there(t):
 			out[t.cell] = true
 	return out
+
+
+## A thing nobody can see never blocks ([USER] 2026-11-01: "I cant walk forward here theres an invisilbe barrier"):
+## a square spot still waiting on its "when" flag, or a companion's spot while they're in the party.
+func _stands_there(t: Dictionary) -> bool:
+	if String(t.get("when", "")) != "" and not Game.has_flag(t.when):
+		return false
+	if String(t.kind) == "companion":
+		var who := String(t.get("event", "")).trim_prefix("companion_").trim_prefix("recruit_")
+		if who != "" and Game.in_party(who):
+			return false
+	return true
 
 
 func _free_start() -> Vector2i:
