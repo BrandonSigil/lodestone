@@ -181,19 +181,19 @@ func _level_ups(i: int, won: bool) -> void:
 		return
 	var entry: Dictionary = Game.level_ups[i]
 	var id := String(entry.id)
+	if not LevelUpUi.has_pick(id):  # [USER] 2026-11-01: no box for a level alone (the victory screen showed it)
+		_level_ups(i + 1, won)
+		return
 	var panel := PanelContainer.new()
 	panel.theme_type_variation = &"DialogPanel"
 	var box := VBoxContainer.new()
 	panel.add_child(box)
-	var l := Label.new()
-	l.text = LevelUpUi.summary(id, entry)
-	l.add_theme_font_size_override("font_size", 20)
-	box.add_child(l)
+	LevelUpUi.header(box, id, entry)  # LV UP, the new level, the stats gained, then the pick
 	LevelUpUi.picks(box, id, func() -> void:
 		panel.queue_free()
 		_level_ups(i, won))
 	var b := Button.new()
-	b.text = Txt.t("UI_LV_LATER") if int(Game.rank_state(id).pending) > 0 else Txt.t("UI_CONTINUE")
+	b.text = Txt.t("UI_LV_LATER")
 	b.pressed.connect(func() -> void:
 		panel.queue_free()
 		_level_ups(i + 1, won))

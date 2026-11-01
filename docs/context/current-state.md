@@ -4,6 +4,8 @@
 
 > **2026-11-01:** the homecoming page (Pitch J) is built: after a fall, GO HOME or a trip walked home, a page over the square shows what the trip gave and the next goal. How: `docs/systems/homecoming.md`. Its morale section lights up once per-character morale is built.
 
+> **2026-11-01:** windows fit the screen and say less (thread "Polish UI windows and victory screen"): a JRPG victory screen with filling XP bars, the Lodestone menu as member cards, one Level up! screen with the picker, every explore and overworld box shrinks to fit. How: `docs/systems/ui-theme.md`.
+
 > **2026-11-01:** per-character morale is built (design-morale, "build"): kept for good in `meta.morale`, five bands that weaken or boost fights and checks, falls and wins, camp, meals, the hero's bed, and journey days that rest whoever stayed home. How: `docs/systems/morale.md`.
 
 # Background (2026-10-28, refreshed after the E2E loop)

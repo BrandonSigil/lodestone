@@ -21,7 +21,7 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 	_label(box, Txt.t("UI_LODESTONE"), 20)
 	var waiting := func(id: String) -> bool:
 		var rs := Game.rank_state(id)
-		return int(rs.pending) > 0 or (id == "lead" and Game.job_id() != "" and LevelRules.branch_ready(rs, Db.levels))
+		return LevelUpUi.has_pick(id) or (id == "lead" and Game.job_id() != "" and LevelRules.branch_ready(rs, Db.levels))
 	var ids: Array = Game.run.members.map(func(m: Dictionary) -> String: return String(m.def.id))
 	if not ids.has(_focus) or not waiting.call(_focus):
 		_focus = ""  # closed until its NEW TRICK button is pressed: the menu opens short, at full size

@@ -1545,10 +1545,13 @@ func _level_up_flow(i: int) -> void:
 		return
 	var entry: Dictionary = list[i]
 	var id := String(entry.id)
-	var box := _new_dialog(LevelUpUi.summary(id, entry), false, id)
+	if not LevelUpUi.has_pick(id):  # [USER] 2026-11-01: no box for a level alone (the victory screen showed it)
+		_level_up_flow(i + 1)
+		return
+	var box := _new_dialog("", false, id)
+	LevelUpUi.header(box, id, entry)  # LV UP, the new level, the stats gained, then the pick
 	LevelUpUi.picks(box, id, _level_up_flow.bind(i))  # a pick rebuilds this box
-	var waiting := int(Game.rank_state(id).pending) > 0
-	_dialog_button(box, Txt.t("UI_LV_LATER") if waiting else Txt.t("UI_CONTINUE"), _level_up_flow.bind(i + 1))
+	_dialog_button(box, Txt.t("UI_LV_LATER"), _level_up_flow.bind(i + 1))
 
 
 func _end_fight() -> void:
