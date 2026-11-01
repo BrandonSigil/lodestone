@@ -449,7 +449,26 @@ func pick(local: Vector2) -> Vector2i:
 			body_depth = d
 			body = u.cell
 	if body != NONE:
+		# ...except while a piece is choosing (selected), over an empty lit tile when the body's own tile isn't
+		# lit: a piece's head covers the tile behind it, and stepping one tile up must still work (Brandon,
+		# 2026-11-01: "I cant get dogo to just move directly up one tile").
+		if selected != null and not highlights.has(body):
+			var g := _pick_ground(local)
+			if g != NONE and g != body and highlights.has(g) and not _stood_on(g):
+				return g
 		return body
+	return _pick_ground(local)
+
+
+func _stood_on(c: Vector2i) -> bool:
+	for u: CombatUnit in units:
+		if u.shown_hp > 0 and u.cell == c:
+			return true
+	return false
+
+
+## The ground (or deck) cell under a board-local point, ignoring pieces.
+func _pick_ground(local: Vector2) -> Vector2i:
 	# Front-most cells first so taller blocks in front win.
 	var layers := _layers()
 	for i in range(layers.size() - 1, -1, -1):

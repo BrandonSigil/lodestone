@@ -12,7 +12,7 @@ Exported 2026-10-27 (PR #12), refreshed 2026-10-27 11:30 UTC after the night's w
 ## Read order for a fresh Claude session
 1. `CLAUDE.md` (hard rules).
 2. This file, then `current-state.md` below (what's built, how to run it, what's in flight, what's superseded).
-3. `docs/decisions.md` ([USER] beats [AI]).
+3. `docs/decisions.md` ([USER] beats [AI]). Open playtest problems and who owns each: `docs/feedback/backlog.md`.
 4. `threads.md` for what each past thread did and why.
 5. `memory/` for the raw project memory notes, if you need detail.
 

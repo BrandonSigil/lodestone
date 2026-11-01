@@ -8,62 +8,225 @@ const W := 460.0
 const PACK_CELL := 56.0
 
 
+static var _focus := ""  ## the member whose pick or branch shows under the Lodestone menu's cards
+
+
 ## [USER] 2026-10-28: the Lodestone opens from its bottom-bar button at any time: skill ranks waiting, head back
 ## to town ([USER] 2026-10-29: stats roll on their own each level; every 4 levels a rank for one of the
 ## character's own skills). home: false hides GO HOME (in town already, or mid-fight).
+## [USER] 2026-11-01 ("way too much text"): one card per member (face, level, XP / HP / heart bars, the fight stats as
+## icons); a member with a pick or a job branch waiting gets a gem button that opens it under the cards, one member
+## at a time; then blessings, meal and bonds as chips, and the buttons two by two.
 static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, home := true, open_list := Callable(), open_options := Callable()) -> void:
 	_label(box, Txt.t("UI_LODESTONE"), 20)
+	var waiting := func(id: String) -> bool:
+		var rs := Game.rank_state(id)
+		return LevelUpUi.has_pick(id) or (id == "lead" and Game.job_id() != "" and LevelRules.branch_ready(rs, Db.levels))
+	var ids: Array = Game.run.members.map(func(m: Dictionary) -> String: return String(m.def.id))
+	if not ids.has(_focus) or not waiting.call(_focus):
+		_focus = ""  # closed until its NEW TRICK button is pressed: the menu opens short, at full size
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 10)
+	box.add_child(row)
 	for m in Game.run.members:
-		var d: CharacterDef = m.def
-		var id := String(d.id)
-		var s := Game.level_state(id)
-		var u := CombatUnit.from_member(m)  # the stats it fights with: class, levels, ranks, weapon
-		_label(box, Txt.f("UI_LS_MEMBER", [Txt.t(d.name_key), int(s.level), int(s.xp), int(Db.levels.get("xp_per_level", 100)),
-			int(m.hp), u.max_hp, u.damage, u.armor, u.crit, u.magic_power]), 14)
-		var band := Game.morale_band(id)  # per-character morale ([USER] 2026-10-31): the band and what it does
-		_label(box, Txt.f("UI_LS_MORALE", [Game.morale_of(id), Txt.t(String(band.name_key)), MoraleRules.describe(band)]), 13)
-		var rs := Game.rank_state(id)  # the hero's ranks belong to his job
-		if id == "lead" and Game.job_id() != "":
-			var job: Dictionary = Db.jobs[Game.job_id()]
-			var branch := String(rs.get("branch", ""))
-			_label(box, Txt.f("UI_LS_JOB", [Txt.t(String(job.name_key)), int(rs.level),
-				Txt.t(String(job["branch_" + branch])) if branch != "" else ""]), 13)
-			if LevelRules.branch_ready(rs, Db.levels):
-				_label(box, Txt.t("UI_LS_BRANCH"), 13)
-				var brow := HBoxContainer.new()
-				brow.add_theme_constant_override("separation", 6)
-				for which in ["a", "b"]:
-					var bb := Button.new()
-					bb.text = Txt.t(String(job["branch_" + which]))
-					bb.custom_minimum_size = Vector2(200, 30)
-					bb.pressed.connect(func() -> void:
-						Game.choose_branch(which)
-						changed.call())
-					brow.add_child(bb)
-				box.add_child(brow)
-		LevelUpUi.picks(box, id, changed)  # the picks decided later: learn a kit ability or upgrade one
+		var id := String(m.def.id)
+		row.add_child(_member_card(m, waiting.call(id), id == _focus, func() -> void:
+			_focus = "" if _focus == id else id  # pressed again: closes it
+			changed.call()))
+	if _focus != "":
+		_member_choices(box, _focus, changed)
+	var chips := HFlowContainer.new()
+	chips.add_theme_constant_override("h_separation", 8)
+	chips.add_theme_constant_override("v_separation", 6)
 	for id in Game.run.boons:
 		var b: Dictionary = Db.boons[id]
-		_label(box, Txt.f("UI_LS_BLESSING" if b.kind == "blessing" else "UI_LS_SETBACK", Txt.t(String(b.name_key))), 13)
+		chips.add_child(_chip(Txt.f("UI_LS_BLESSING" if b.kind == "blessing" else "UI_LS_SETBACK", Txt.t(String(b.name_key))),
+			Color(0.62, 0.9, 0.5) if b.kind == "blessing" else Color(1.0, 0.55, 0.45)))
 	if not Game.run.meal.is_empty():
-		_label(box, Txt.f("UI_LS_MEAL", [Txt.t(String(Db.recipes.get(String(Game.run.meal.recipe), {}).get("name_key", ""))),
-			int(Game.run.meal.fights)]), 13)
+		chips.add_child(_chip(Txt.f("UI_LS_MEAL", [Txt.t(String(Db.recipes.get(String(Game.run.meal.recipe), {}).get("name_key", ""))),
+			int(Game.run.meal.fights)]), UiTheme.GOLD))
+	if chips.get_child_count() > 0:
+		box.add_child(chips)
 	_bonds(box, not home)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 6)
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(grid)
+	var cell := func(text: String, cb: Callable) -> void:
+		var b := Button.new()
+		b.text = text
+		b.custom_minimum_size = Vector2(BTN_W, 34)
+		b.pressed.connect(cb)
+		grid.add_child(b)
 	if home:
-		_button(box, Txt.t("UI_LS_HOME"), func() -> void:
+		cell.call(Txt.t("UI_LS_HOME"), func() -> void:
 			close.call()
 			Game.wake_in_town(false))
 	if open_list.is_valid():
-		_button(box, Txt.t("UI_LS_RESTORE"), open_list)
+		cell.call(Txt.t("UI_LS_RESTORE"), open_list)
 	if open_options.is_valid():
-		_button(box, Txt.t("UI_OPTIONS"), open_options)
-	_button(box, Txt.t("UI_LS_SAVE_QUIT"), func() -> void:
+		cell.call(Txt.t("UI_OPTIONS"), open_options)
+	cell.call(Txt.t("UI_LS_SAVE_QUIT"), func() -> void:
 		# [USER] omr-4, omr-11: put a bookmark in; Continue on the launch menu comes back right here
 		var tree := Engine.get_main_loop() as SceneTree
 		if tree.current_scene.has_method("bookmark"):
 			tree.current_scene.call("bookmark")
 		tree.quit())
-	_button(box, Txt.t("UI_CLOSE_MENU"), close)
+	cell.call(Txt.t("UI_CLOSE_MENU"), close)
+
+
+const BTN_W := 228.0
+const CARD_W := 210.0
+const STAT_ICONS := [["strength", "damage"], ["shield", "armor"], ["focus", "crit"], ["rare", "magic_power"]]
+
+
+## One member: face and name, LV, the XP, HP and heart bars, the fight stats as icons, and a gem button when a pick waits.
+static func _member_card(m: Dictionary, waiting: bool, open: bool, show: Callable) -> Control:
+	var d: CharacterDef = m.def
+	var id := String(d.id)
+	var s := Game.level_state(id)
+	var u := CombatUnit.from_member(m)  # the stats it fights with: class, levels, ranks, weapon
+	var card := PanelContainer.new()
+	card.theme_type_variation = &"InfoPanel"
+	card.custom_minimum_size.x = CARD_W
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 4)
+	card.add_child(col)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 8)
+	col.add_child(top)
+	top.add_child(_face(id, d.tint, 56))
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override("separation", -2)
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(words)
+	var nm := Label.new()
+	nm.text = Txt.t(d.name_key)
+	nm.add_theme_font_size_override("font_size", 17)
+	nm.clip_text = true
+	words.add_child(nm)
+	var lv := Label.new()
+	lv.text = "%s %d" % [Txt.t("UI_VIC_LV"), int(s.level)]
+	lv.add_theme_font_size_override("font_size", 15)
+	lv.add_theme_color_override("font_color", UiTheme.GOLD)
+	words.add_child(lv)
+	if id == "lead" and Game.job_id() != "":  # the hero's job and its own level
+		var rs := Game.rank_state(id)
+		var job: Dictionary = Db.jobs[Game.job_id()]
+		var branch := String(rs.get("branch", ""))
+		var jl := Label.new()
+		jl.text = "%s %d" % [Txt.t(String(job["branch_" + branch] if branch != "" else job.name_key)), int(rs.level)]
+		jl.add_theme_font_size_override("font_size", 12)
+		jl.add_theme_color_override("font_color", UiTheme.PARCHMENT_DARK)
+		jl.clip_text = true
+		words.add_child(jl)
+	var per := float(maxi(1, int(Db.levels.get("xp_per_level", 100))))
+	_bar(col, "star_guide", VictoryUi.XP_GOLD, float(s.xp) / per, "%d/%d" % [int(s.xp), int(per)])
+	_bar(col, "potion", VictoryUi.HP_RED, float(m.hp) / maxf(1.0, float(u.max_hp)), "%d/%d" % [int(m.hp), u.max_hp])
+	var band := Game.morale_band(id)  # per-character morale ([USER] 2026-10-31): the band and what it does
+	var heart := _bar(col, "heal", VictoryUi.HEART_PINK, float(Game.morale_of(id)) / 100.0, Txt.t(String(band.name_key)))
+	heart.get_parent().tooltip_text = MoraleRules.describe(band)
+	heart.get_parent().mouse_filter = Control.MOUSE_FILTER_PASS
+	var stats := HBoxContainer.new()
+	stats.add_theme_constant_override("separation", 2)
+	stats.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_child(stats)
+	for pair in STAT_ICONS:
+		var v := int(u.get(pair[1]))
+		stats.add_child(_icon(String(pair[0]), 22))
+		var l := Label.new()
+		l.text = ("%d%%" % v) if pair[1] == "crit" else str(v)
+		l.add_theme_font_size_override("font_size", 14)
+		l.custom_minimum_size.x = 26
+		stats.add_child(l)
+	if waiting:
+		var b := Button.new()
+		b.text = Txt.t("UI_VIC_PICK")
+		b.toggle_mode = true
+		b.set_pressed_no_signal(open)
+		b.custom_minimum_size = Vector2(0, 30)
+		b.add_theme_font_size_override("font_size", 14)
+		b.add_theme_color_override("font_color", UiTheme.GOLD)
+		b.pressed.connect(show)
+		col.add_child(b)
+		if open:
+			b.call_deferred("grab_focus")
+	return card
+
+
+## The open member's job branch (when it is ready) and pick.
+static func _member_choices(box: VBoxContainer, id: String, changed: Callable) -> void:
+	var rs := Game.rank_state(id)
+	if id == "lead" and Game.job_id() != "" and LevelRules.branch_ready(rs, Db.levels):
+		var job: Dictionary = Db.jobs[Game.job_id()]
+		_label(box, Txt.t("UI_LS_BRANCH"), 15)
+		var brow := HBoxContainer.new()
+		brow.add_theme_constant_override("separation", 8)
+		brow.alignment = BoxContainer.ALIGNMENT_CENTER
+		for which in ["a", "b"]:
+			var bb := Button.new()
+			bb.text = Txt.t(String(job["branch_" + which]))
+			bb.custom_minimum_size = Vector2(BTN_W, 34)
+			bb.pressed.connect(func() -> void:
+				Game.choose_branch(which)
+				changed.call())
+			brow.add_child(bb)
+		box.add_child(brow)
+	LevelUpUi.picks(box, id, changed)  # the picks decided later: learn a kit ability or upgrade one
+
+
+static func _bar(col: VBoxContainer, icon: String, fill: Color, value: float, text: String) -> UiBar:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 5)
+	col.add_child(h)
+	h.add_child(_icon(icon, 22))
+	var b := UiBar.new()
+	b.fill = fill
+	b.value = clampf(value, 0.0, 1.0)
+	b.text = text
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	h.add_child(b)
+	return b
+
+
+static func _icon(id: String, px: float) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = ActionInfo.icon(id)
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.custom_minimum_size = Vector2(px, px)
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
+
+
+static func _face(id: String, tint: Color, px: float) -> Control:
+	var pf := "res://art/source/portraits/%s.png" % id
+	if ResourceLoader.exists(pf):
+		var t := TextureRect.new()
+		t.texture = load(pf)
+		t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		t.custom_minimum_size = Vector2(px, px)
+		return t
+	var p := PawnIcon.new()
+	p.tint = tint
+	p.custom_minimum_size = Vector2(px * 0.7, px)
+	return p
+
+
+static func _chip(text: String, col: Color) -> Control:
+	var p := PanelContainer.new()
+	p.theme_type_variation = &"InfoPanel"
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 13)
+	l.add_theme_color_override("font_color", col)
+	p.add_child(l)
+	return p
 
 
 ## Every building's restore ladder at once ([USER] omr-5, like Stardew's community center): steps done,
@@ -305,29 +468,51 @@ static func options(box: VBoxContainer, changed: Callable, back: Callable) -> vo
 static func _bonds(box: VBoxContainer, at_home: bool) -> void:
 	var bonds: Dictionary = Game.meta.get("bonds", {})
 	var ids: Array = Game.run.members.map(func(m: Dictionary) -> String: return String(m.def.id))
-	var shown := false
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 8)
+	flow.add_theme_constant_override("v_separation", 6)
 	for i in ids.size():
 		for j in range(i + 1, ids.size()):
 			var k := BondRules.key(ids[i], ids[j])
 			var pts := int(bonds.get(k, 0))
 			if pts <= 0:
 				continue
-			if not shown:
-				_label(box, Txt.t("UI_LS_BONDS"), 15)
-				shown = true
 			var lv := BondRules.level(pts, Db.bonds)
 			var next := int(Db.bonds.get("level_%d" % mini(lv + 1, BondRules.LEVELS), 0))
-			var names := Array(k.split("+")).map(func(id: String) -> String: return Txt.t(Db.character(StringName(id)).name_key) if Db.character(StringName(id)) else id)
-			_label(box, Txt.f("UI_LS_BOND", [names[0], names[1], lv, pts, next]), 13)
-			for n in range(1, lv + 1):
-				var b := _button(box, Txt.f("UI_LS_TALK", n) if at_home else Txt.t("UI_LS_TALK_AWAY"), func() -> void:
+			var pair := k.split("+")
+			var p := PanelContainer.new()
+			p.theme_type_variation = &"InfoPanel"
+			var h := HBoxContainer.new()
+			h.add_theme_constant_override("separation", 4)
+			p.add_child(h)
+			for n in 2:
+				var dd := Db.character(StringName(pair[n]))
+				h.add_child(_face(pair[n], dd.tint if dd else Color.GRAY, 30))
+				if n == 0:
+					h.add_child(_icon("heal", 22))
+			var bar := UiBar.new()
+			bar.fill = VictoryUi.HEART_PINK
+			bar.value = clampf(float(pts) / maxf(1.0, float(next)), 0.0, 1.0)
+			bar.text = "%s %d" % [Txt.t("UI_VIC_LV"), lv]
+			bar.custom_minimum_size = Vector2(90, 18)
+			bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			h.add_child(bar)
+			flow.add_child(p)
+			for n in range(1, lv + 1):  # a talk per level reached; they happen at home
+				var b := Button.new()
+				b.text = Txt.f("UI_LS_TALK", n) if at_home else Txt.t("UI_LS_TALK_AWAY")
+				b.disabled = not at_home
+				b.add_theme_font_size_override("font_size", 13)
+				b.pressed.connect(func() -> void:
 					var heard: Array = Game.meta.get("talks_heard", [])
 					if not heard.has("%s:%d" % [k, n]):
 						heard.append("%s:%d" % [k, n])
 						Game.meta.talks_heard = heard
 						Game.save_meta()
 					_label(box, Txt.t(BondRules.talk_key(k, n)), 13))
-				b.disabled = not at_home
+				flow.add_child(b)
+	if flow.get_child_count() > 0:
+		box.add_child(flow)
 
 
 ## A long name cut to its first word so it fits a belt or a card.

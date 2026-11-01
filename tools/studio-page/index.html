@@ -324,6 +324,7 @@ html.locked { overflow: hidden; }
 .chat-log .empty { margin: auto; text-align: center; color: var(--muted); font-size: 13.5px; max-width: 260px; }
 .msg { max-width: 85%; display: flex; flex-direction: column; gap: 2px; }
 .msg .who { font-size: 12px; color: var(--muted); }
+.msg .re { font-size: 11.5px; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
 .msg .who b { color: var(--ink); font-weight: 600; margin-right: 6px; }
 .msg .bubble { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px 12px 12px 12px; padding: 7px 11px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
 .msg.mine { align-self: flex-end; align-items: flex-end; }
@@ -1181,7 +1182,11 @@ function renderChatHead() {
   $("chat-sub").innerHTML = `<span class="live${live ? "" : " slow"}"></span>Project manager · ${live ? "answers in a minute or two" : "picks this up within the hour"}`;
 }
 function renderChat() {
-  S.chat.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  // Back and forth ([USER] 2026-11-01: "It should be a back and forth based on time"): a reply that names the
+  // message it answers (re: that message's id) sits right after it, not at the bottom by its own time.
+  const byIdChat = Object.fromEntries(S.chat.map((m) => [m.id, m]));
+  const anchor = (m) => (m.re && byIdChat[m.re] ? String(byIdChat[m.re].at) : String(m.at));
+  S.chat.sort((a, b) => anchor(a).localeCompare(anchor(b)) || (a.re ? 1 : 0) - (b.re ? 1 : 0) || String(a.at).localeCompare(String(b.at)));
   const unread = S.chat.filter((m) => m.from !== "brandon" && String(m.at) > chatSeen()).length;
   $("chat-dot").hidden = chatOpen() || !unread; $("chat-dot").textContent = unread > 9 ? "9+" : unread;
   const lastMine = [...S.chat].reverse().find((m) => m.from === "brandon");
@@ -1196,7 +1201,7 @@ function renderChat() {
     const mine = m.from === "brandon";
     const ims = (m.images || []).map((im) => ({ url: im.url, caption: im.caption || "" }));
     const waiting = asks.includes(m);
-    return `<div class="msg${mine ? " mine" : ""}${waiting ? " ask" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Wren" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.text ? `<div class="bubble">${esc(m.text)}</div>` : ""}${shotsHtml(ims)}${waiting ? `<span class="flag">Waiting on you</span>` : ""}</div>`;
+    return `<div class="msg${mine ? " mine" : ""}${waiting ? " ask" : ""}"><span class="who">${mine ? "" : `<b>${esc(m.from === "pm" ? "Wren" : roleName(m.from))}</b>`}${esc(ago(m.at))}</span>${m.re && byIdChat[m.re] ? `<span class="re">↳ ${esc(String(byIdChat[m.re].text || "your picture").slice(0, 60))}</span>` : ""}${m.text ? `<div class="bubble">${esc(m.text)}</div>` : ""}${shotsHtml(ims)}${waiting ? `<span class="flag">Waiting on you</span>` : ""}</div>`;
   }).join("") : `<div class="empty">Talk to Wren, the project manager, here like a teammate: ask what's going on, pass on a decision, or paste a picture.</div>`;
   if (atEnd || S.chatJump) { log.scrollTop = phone ? 0 : log.scrollHeight; S.chatJump = false; }
   markChatSeen();

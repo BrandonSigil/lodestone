@@ -275,6 +275,29 @@ func test_a_click_behind_a_front_wall_finds_the_floor() -> void:
 	b.free()
 
 
+## Brandon's bug (2026-11-01): "I cant get dogo to just move directly up one tile". A piece's head covers the
+## tile behind it on screen; while it's choosing a lit tile there, the click goes to that tile.
+func test_a_lit_tile_behind_a_choosing_piece_takes_the_click() -> void:
+	var g := CombatGrid.flat(6, 6)
+	var b := CombatBoard.new()
+	b.grid = g
+	var u := CombatUnit.new()
+	u.cell = Vector2i(3, 3)
+	u.vis = Vector2(3, 3)
+	u.vis_h = 0.0
+	u.hp = 10
+	u.shown_hp = 10
+	b.units = [u]
+	var at := b.iso(2.5, 2.5, 0.0)  # the middle of (2, 2), straight up from the piece, under its head
+	eq(b.pick(at), Vector2i(3, 3), "nothing chosen: the body wins")
+	b.selected = u
+	b.highlights = {Vector2i(2, 2): Color.BLUE}
+	eq(b.pick(at), Vector2i(2, 2), "moving: the lit tile behind the head")
+	b.highlights[Vector2i(3, 3)] = Color.RED
+	eq(b.pick(at), Vector2i(3, 3), "the piece itself a target: its body still wins")
+	b.free()
+
+
 ## The hero blinks now and then while he stands (the approved blink frames): over his idle pose only, so in a
 ## fight's weapon-drawn ready pose the weapon never flickers away (until there is a ready_blink frame).
 func test_a_standing_hero_blinks_now_and_then() -> void:

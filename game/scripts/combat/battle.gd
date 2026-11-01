@@ -44,6 +44,7 @@ var enemy_speed := 1.0  ## animation speed multiplier for the enemy phase
 var _carry_friend: CombatUnit = null  ## CARRY: the friend picked, now picking where to go
 var _carry_spots := {}  ## CARRY: dest -> set-down cell
 var used := {}  ## piece -> ability ids it has used this fight: an unknown boss's card lists only these
+var bond_ups := []  ## after award_bonds: [[pair key "a+b", level reached], ...] for the victory screen
 var deeds := {}  ## bond pair key -> {"help_up", "teamup"}: what party pieces did for each other this fight (BondRules)
 
 var _ui: CanvasLayer
@@ -408,7 +409,8 @@ func award_bonds() -> PackedStringArray:
 				standing.append(String(u.figure))
 	var bonds: Dictionary = Game.meta.get("bonds", {})
 	var lines: PackedStringArray = []
-	for up in BondRules.award(bonds, ids, standing, deeds, Db.bonds):
+	bond_ups = BondRules.award(bonds, ids, standing, deeds, Db.bonds)
+	for up in bond_ups:
 		var names := Array(String(up[0]).split("+")).map(func(id: String) -> String:
 			var d := Db.character(StringName(id))
 			return Txt.t(d.name_key) if d else id)
