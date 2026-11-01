@@ -979,7 +979,9 @@ func _restore_box(building: String) -> void:
 	if building == "inn":
 		for r: Dictionary in Game.recipes_open():
 			lines.append(Txt.f("UI_RECIPE_LINE", [Txt.t(String(r.name_key)), _needs_text(String(r.needs))]))
-	var dishes := Game.tavern_dishes() if building == "tavern" else [] as Array[Dictionary]
+	var dishes: Array[Dictionary] = []
+	if building == "tavern":
+		dishes = Game.tavern_dishes()
 	if not dishes.is_empty():
 		lines.append(Txt.t("UI_TAVERN_MENU"))
 	box = _new_dialog("\n".join(lines))
