@@ -322,6 +322,22 @@ func run(s: Node, f: int, step: String) -> bool:
 				up.pressed = false
 				Input.parse_input_event(up)
 			return f == 40
+		"pack_big":
+			# The full inventory page with five along (the dog and three more): it must fit above the frame.
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false
+				game.meta.flags.append("met_dog")
+				game.refresh_party()
+				var run: RunState = game.run
+				for d: CharacterDef in Db.roster():
+					if run.members.size() >= 5:
+						break
+					if not run.members.any(func(m: Dictionary) -> bool: return (m.def as CharacterDef).id == d.id):
+						run.join(d)
+				run.food = 30
+				s._open_menu("pack")
+			return f == 30
 		"pack_dog":
 			# The PACK box with the dog along: his saddlebag, with something in it, beside his portrait.
 			if f == 5:

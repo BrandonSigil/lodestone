@@ -67,8 +67,8 @@ static func fill(box: VBoxContainer, container: InventoryGrid, title: String, ch
 		[close_text if close_text != "" else Txt.t("UI_BOX_CLOSE"), close]]
 	windows(view, container, title, buttons, true, note)
 	view.changed.connect(changed)
-	bare(box)
 	box.add_child(view)
+	bare(box, view)
 	return view
 
 
@@ -124,7 +124,11 @@ static func windows(view: PackView, other: InventoryGrid, other_title: String, b
 
 
 ## The two windows bring their own frames: the dialogue holding them goes bare (no panel of its own) and stands centred.
-static func bare(box: Control) -> void:
+## ([USER] 2026-11-01 "Menus spill out of the window"): if the view is taller than the room above the bottom frame, the
+## whole thing shrinks to fit.
+const FRAME_ROOM := 150.0  ## the bottom frame and a margin above it
+
+static func bare(box: Control, view: Control = null) -> void:
 	var n: Node = box.get_parent()
 	while n != null and not n is PanelContainer:
 		n = n.get_parent()
@@ -132,6 +136,13 @@ static func bare(box: Control) -> void:
 		return
 	var panel := n as PanelContainer
 	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	if view != null and panel.is_inside_tree():  # decided now, before the pop-in tween takes the scale as its target
+		var vs := panel.get_viewport_rect().size
+		var room := Vector2(vs.x - 32.0, vs.y - FRAME_ROOM - 16.0)  # a menu stands at the top, 16 down
+		var need := view.get_combined_minimum_size()
+		var k := minf(1.0, minf(room.x / maxf(need.x, 1.0), room.y / maxf(need.y, 1.0)))
+		if k < 1.0:
+			panel.scale = Vector2(k, k)
 	_centre_later(panel)
 
 

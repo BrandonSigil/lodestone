@@ -126,7 +126,7 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	var cell := PACK_CELL
 	var pad := PackView.WINDOW_PAD
 	grid.setup_bag(run.pack, Db.items, run.throw_away, cell)
-	# PACK: the pack, the saddlebag beside it, the bin a bar under them, the help under that
+	# PACK: the pack, the saddlebag beside it, the bin a bar under them
 	var top := Vector2(pad, pad + PackView.WINDOW_TITLE)
 	grid.move_area(0, top + Vector2(0, PackView.LABEL_H))
 	var right := top.x + run.pack.cols * cell
@@ -144,13 +144,7 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	bottom += 14.0 + 34.0
 	grid.flash_at = Vector2(top.x, bottom + 14.0)  # "no room", "who eats?"
 	bottom += 30.0
-	var help := Label.new()
-	help.text = Txt.t("UI_PACK_HELP_RUN")
-	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	help.add_theme_font_size_override("font_size", 12)
-	help.position = Vector2(top.x, bottom)
-	help.custom_minimum_size = Vector2(right - top.x, 0)
-	grid.add_child(help)
+	grid.tooltip_text = Txt.t("UI_PACK_HELP_RUN")  # [USER] 2026-11-01 less text: the how-to waits on hover
 	var left_w := right + pad
 	# PARTY: the belts in a row, one per member (what each can use in a fight), the cards under them, then the rest
 	var ox := left_w + ContainerUi.GAP
@@ -161,11 +155,11 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	for k in run.members.size():
 		var m: Dictionary = run.members[k]
 		var at := Vector2(cx + (k % per_row) * belt_w, y + floorf(float(k) / per_row) * (cell + PackView.LABEL_H + 10.0))
-		grid.add_area(m.belt, at, Txt.f("UI_BELT_OF", Txt.t((m.def as CharacterDef).name_key)))
+		grid.add_area(m.belt, at, _short(Txt.t((m.def as CharacterDef).name_key)))  # the name alone: the window says PARTY, the grid is their belt
 	y += ceilf(float(run.members.size()) / per_row) * (cell + PackView.LABEL_H + 10.0)
 	var cards := []
 	for m in run.members:
-		cards.append({"name": Txt.t((m.def as CharacterDef).name_key), "hp": int(m.hp), "max_hp": run.max_hp(m)})
+		cards.append({"name": _short(Txt.t((m.def as CharacterDef).name_key)), "hp": int(m.hp), "max_hp": run.max_hp(m)})
 	var per_card := PackView.TARGET_SIZE.x + 10.0
 	var card_rows := ceili(cards.size() * per_card / (W + 10.0))
 	var per_card_row := maxi(1, int((W + 10.0) / per_card))
@@ -207,8 +201,6 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	if not store.is_empty():
 		_label(col, Txt.f("UI_VILLAGE_STORE", "  ".join(store)), 13)
 	_label(col, Txt.f("UI_PACK_WEAPON", Txt.t(String(Db.weapons.get(Game.weapon_id(), {}).get("name_key", "")))), 13)
-	if not run.lines.is_empty():
-		_label(col, run.lines[run.lines.size() - 1], 12)
 	if bag != null and not bag.items.is_empty():  # he can take what he carries home at any time, and rejoins when the party is home
 		_button(col, Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
 			run.send_home(courier)
@@ -222,19 +214,18 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	grid.add_window(pack_win, Txt.t("UI_PACK"))
 	grid.add_window(party_win, Txt.t("UI_PARTY"))
 	var fit := func() -> void:
-		var h := maxf(help.position.y + help.size.y, col.position.y + col.size.y) + pad
+		var h := maxf(bottom, col.position.y + maxf(col.size.y, col.get_combined_minimum_size().y)) + pad
 		grid.windows[0].rect = Rect2(pack_win.position, Vector2(pack_win.size.x, h))
 		grid.windows[1].rect = Rect2(party_win.position, Vector2(party_win.size.x, h))
 		grid.refit()
 	col.resized.connect(fit)
-	help.resized.connect(fit)
-	fit.call()
 	grid.changed.connect(func() -> void:
 		Game.save_adventure()
 		if grid.flash == "":  # a refused move keeps the box up so its "no room" stays readable
 			changed.call())
-	ContainerUi.bare(box)
 	box.add_child(grid)
+	fit.call()
+	ContainerUi.bare(box, grid)
 
 
 ## A pickup found no room ([USER] 2026-11-01: the inventory and the loot as two windows): the pack with the dog's saddlebag
@@ -263,8 +254,8 @@ static func _pack_full(box: VBoxContainer, changed: Callable, close: Callable) -
 		Game.save_adventure()
 		if view.flash == "":  # a refused move keeps the box up so its "no room" stays readable
 			changed.call())
-	ContainerUi.bare(box)
 	box.add_child(view)
+	ContainerUi.bare(box, view)
 
 
 ## Options ([USER] 2026-10-30 listed them among the menus that share one look): the fight menu's layout and the
@@ -337,6 +328,11 @@ static func _bonds(box: VBoxContainer, at_home: bool) -> void:
 						Game.save_meta()
 					_label(box, Txt.t(BondRules.talk_key(k, n)), 13))
 				b.disabled = not at_home
+
+
+## A long name cut to its first word so it fits a belt or a card.
+static func _short(name: String) -> String:
+	return name if name.length() <= 12 else name.split(" ", false)[0]
 
 
 static func _label(box: BoxContainer, text: String, font_size: int) -> void:
