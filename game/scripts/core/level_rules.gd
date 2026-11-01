@@ -140,7 +140,7 @@ const WIRED_PARAMS := ["guard_armor", "guard_hit", "taunt_armor", "command_bonus
 	"quick_damage", "quick_crit", "watch_damage", "watch_crit", "watch_stops", "ward_hits",
 	"good_boy_heal", "good_boy_reach", "heart_burn_pct", "burn_damage",
 	"companion_bonus", "rally_move", "rally_damage", "spook_damage", "inspire_damage",
-	"good_shot_damage", "good_shot_crit", "good_shot_again"]
+	"good_shot_damage", "good_shot_crit", "good_shot_again", "branch_soften", "branch_thorns", "glean_hp", "glean_radius"]
 
 
 ## Does step `i` (0-based) of a skill do something: an effect on the ability, or a param the rules read?

@@ -22,6 +22,23 @@ func run(s: Node, _frames: int, _step: String) -> void:
 		if _frames == 6:
 			s.preview.turn(int(_step.substr(4)))
 		return
+	if _step == "bush" and _frames == 4:  # Bushberry's kit: him, the hero hurt beside him, Doggo
+		s.setup.party = [{"id": "bushberry", "cell": s.setup.party[0].cell}, {"id": "lead", "cell": s.setup.party[1].cell},
+			{"id": "dog", "cell": s.setup.party[2].cell}]
+	if _step == "bush" and _frames == 12:  # BRANCH ARMOR on the hero, then his skills shown
+		var b: Battle = s.battle
+		var bush: CombatUnit = null
+		var hero: CombatUnit = null
+		for o: CombatUnit in b.units:
+			if o.team == 0 and o.has_trait(CombatRules.TRAIT_GLEAN):
+				bush = o
+			elif o.team == 0 and hero == null and not o.has_trait(CombatRules.TRAIT_GOOD_BOY):
+				hero = o
+		if bush != null and hero != null:
+			for ev in CombatRules.resolve(RandomNumberGenerator.new(), b.grid, bush, Db.ability("branch_armor"), hero.cell, b.units):
+				b._play(ev)
+			b._select(bush)
+		return
 	if (_step == "bark" or _step == "amber") and _frames == 4:  # Doggo and Amber in the party
 		s.setup.party = [{"id": "dog", "cell": s.setup.party[0].cell}, {"id": "fire_mage", "cell": s.setup.party[1].cell},
 			{"id": "lead", "cell": s.setup.party[2].cell}]

@@ -22,6 +22,7 @@ const STATUS_SLOW := "slow"  ## less move for a phase
 const STATUS_SPOOK := "spook"  ## a hexer's scare: hits for less until the end of the phase it lands in (acts as spooked)
 const STATUS_FOE_WARD := "foe_ward"  ## a warder's ward on a foe: more armor until that side next moves
 const STATUS_BLEED := "bleed"  ## loses a little HP at the start of each of its phases (a ranked bite)
+const STATUS_BRANCH := "branch_armor"  ## Bushberry's BRANCH ARMOR: the next foe hit does branch_soften less (at least 1), the hitter takes branch_thorns; gone at his side's next phase
 const STATUS_WARD := "ward"  ## the book's WARD: the next hit on this piece does 0 and no status; gone at the mage's next phase
 const STATUS_OVERWATCH := "overwatch"  ## the bow's OVERWATCH: the first foe to move into its reach takes a plain shot and stops
 const STATUS_BURN := "burn"  ## Amber's A Heart that Burns: `burn_damage` at the start of each phase for `burn_turns` phases
@@ -36,7 +37,7 @@ const FIELD_CALTROPS := "caltrops"  ## a foe walking onto it stops there, takes 
 const FIELD_FIRE := "fire"  ## burning ground: nobody can walk onto it
 const FIELD_SMOKE := "smoke"  ## nobody can attack from more than 1 tile away into, out of or across it
 ## Cleared when the owner's next phase starts (they protect through the enemy phase).
-const STATUS_UNTIL_OWN_PHASE := [STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT, STATUS_WARD, STATUS_OVERWATCH, STATUS_FOE_WARD]
+const STATUS_UNTIL_OWN_PHASE := [STATUS_BRANCH, STATUS_GUARD, STATUS_VEIL, STATUS_GUIDED, STATUS_TAUNT, STATUS_WARD, STATUS_OVERWATCH, STATUS_FOE_WARD]
 
 ## Combat traits (one per roster character, a few for enemy classes). Ids live in the .tres traits arrays.
 const TRAIT_SHIELD_WALL := &"shield_wall"  ## Lead: allies standing next to them get more armor
@@ -51,6 +52,7 @@ const TRAIT_BLOODIED := &"bloodied"  ## Reaver: more damage and crit the lower i
 const TRAIT_KEEPS_BACK := &"keeps_back"  ## Mender foe: stays 2 or more tiles from heroes, attacks only when cornered
 const TRAIT_CHARGE := &"charge"  ## Rusher and bull: a straight run of 3 or more tiles this phase adds charge_bonus to its hits
 const TRAIT_PACK := &"pack"  ## Wolf: +1 damage on a flanked target
+const TRAIT_GLEAN := &"glean"  ## Bushberry ([USER] 2026-11-01 design-bb-kit): friends next to him heal at the start of their phase; stacks with Good Boy
 const TRAIT_GOOD_BOY := &"good_boy"  ## Doggo ([USER] 2026-10-31 design-goodboy): a friend next to him heals at the start of its phase
 const TRAIT_HEART_BURNS := &"heart_burns"  ## Amber ([USER] 2026-11-01): plain attacks may set the target burning (heart_burn_pct)
 const TRAIT_GOOD_SHOT := &"good_shot"  ## the bow ([USER] 2026-11-01 F5): plain attacks hit harder and crit more; a kill gives another attack
@@ -327,6 +329,10 @@ static func target_cells(grid: CombatGrid, u: CombatUnit, a: Ability, units: Arr
 				var oc := from if o == u else o.cell
 				if in_reach(grid, from, oc, r):
 					out.append(oc)
+			if raises(a):  # MEND stands a downed friend up ([USER] 2026-11-01 design-bb-kit)
+				for o: CombatUnit in units:
+					if o.downed() and o.team == u.team and in_reach(grid, from, o.cell, r):
+						out.append(o.cell)
 		"cell":
 			var ground := a.field == FIELD_TRAP or a.field == FIELD_CALTROPS  # set on an empty tile a foe could walk onto
 			for y in grid.h:
@@ -385,7 +391,7 @@ static func area(grid: CombatGrid, a: Ability, center: Vector2i, from := CombatG
 static func affected_units(grid: CombatGrid, user: CombatUnit, a: Ability, center: Vector2i, units: Array, from: Vector2i) -> Array[CombatUnit]:
 	var out: Array[CombatUnit] = []
 	for c in area(grid, a, center, from):
-		var o: CombatUnit = user if c == from else (occupant(units, c) if a.target == "downed" or a.status == STATUS_LAST_STAND else unit_at(units, c))
+		var o: CombatUnit = user if c == from else (occupant(units, c) if a.target == "downed" or a.status == STATUS_LAST_STAND or raises(a) else unit_at(units, c))
 		if o == null or (o == user and c != from):
 			continue
 		if (a.target == "enemy" or a.kind == "hex") and o.team == user.team:
@@ -687,6 +693,11 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 					t.statuses.erase(STATUS_SLEEP)
 					events.append({"type": "help", "src": h, "unit": t, "amount": n, "by": u})
 			"heal":
+				if t.downed() and raises(a):  # MEND on a downed friend: up again at its heal amount
+					t.hp = mini(t.max_hp, heal_amount(u, a))
+					t.bleed = 0
+					events.append({"type": "revive", "src": u, "unit": t, "amount": t.hp})
+					continue
 				var before := t.hp
 				t.hp = mini(t.max_hp, t.hp + heal_amount(u, a))
 				if a.id == "second_wind":
@@ -706,6 +717,9 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 					t.statuses[a.status] = a.status_turns
 					if a.status == STATUS_WARD:
 						t.ward_hits = 1 + upg(u, "ward_hits")
+					if a.status == STATUS_BRANCH:  # the caster's numbers ride on the friend until the hit comes
+						t.branch_soften = int(num("branch_soften")) + upg(u, "branch_soften")
+						t.branch_thorns = int(num("branch_thorns")) + upg(u, "branch_thorns")
 					events.append_array(_buff(u, a, t))
 					events.append({"type": "status", "src": u, "unit": t, "status": a.status})
 	if u.hiding and a.hostile():
@@ -735,7 +749,16 @@ static func _swing(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, 
 		var w := int(num("wobble"))
 		var crit := rng.randf() < crit_chance(grid, u, t, units, u.cell, a)
 		var dmg := damage(grid, u, t, u.cell, a, units, rng.randi_range(-w, w)) * (int(num("crit_mult")) if crit else 1)
+		var thorns := 0
+		if t.has_status(STATUS_BRANCH) and t.team != u.team:  # BRANCH ARMOR softens this hit and pricks the hitter
+			dmg = maxi(1, dmg - t.branch_soften)
+			thorns = t.branch_thorns
+			t.statuses.erase(STATUS_BRANCH)
 		t.hp = maxi(0, t.hp - dmg)
+		if thorns > 0 and u.alive():
+			var n := mini(thorns, u.hp)  # through armor
+			u.hp -= n
+			events.append({"type": "hit", "src": t, "unit": u, "amount": n, "crit": false})
 		for o: CombatUnit in [u, t]:  # rage builds on every hit dealt or taken
 			if o.res_kind == "rage":
 				o.res = mini(o.res_max, o.res + int(num("rage_per_hit")) + o.rage_bonus)
@@ -874,6 +897,11 @@ static func begin_phase(units: Array, team: int, grid: CombatGrid = null) -> Arr
 		if u.alive() and u.has_trait(TRAIT_DEEP_ROOTS) and u.hp < u.max_hp:
 			u.hp = mini(u.max_hp, u.hp + REGROW)
 			events.append({"type": "heal", "src": u, "unit": u, "amount": REGROW})
+		var gleaner := glean_near(u, units)
+		if gleaner != null and u.hp < u.max_hp:  # Glean: one Bushberry's heal; it stacks with Good Boy
+			var g := mini(int(num("glean_hp")) + upg(gleaner, "glean_hp"), u.max_hp - u.hp)
+			u.hp += g
+			events.append({"type": "heal", "src": gleaner, "unit": u, "amount": g})
 		var boy := good_boy_near(u, units)
 		if boy != null and u.hp < u.max_hp:  # Good Boy: one dog's heal, however many stand near
 			var n := mini(int(num("good_boy_heal")) + upg(boy, "good_boy_heal"), u.max_hp - u.hp)
@@ -890,6 +918,22 @@ static func begin_phase(units: Array, team: int, grid: CombatGrid = null) -> Arr
 					u.res_tick = 0
 					u.res = mini(u.res_max, u.res + 1)
 	return events
+
+
+## Does this heal stand a downed friend up? MEND does while mend_raise is on (data/combat.csv).
+static func raises(a: Ability) -> bool:
+	return a.kind == "heal" and a.id == "mend" and int(num("mend_raise")) > 0
+
+
+## The Glean (a standing Bushberry of u's side, not u) whose reach covers u, or null. Reach: 1 tile, more with upgrades.
+static func glean_near(u: CombatUnit, units: Array) -> CombatUnit:
+	if not u.alive():
+		return null
+	for o: CombatUnit in units:
+		if o != u and o.team == u.team and o.alive() and o.has_trait(TRAIT_GLEAN) \
+				and dist(o.cell, u.cell) <= 1 + upg(o, "glean_radius"):
+			return o
+	return null
 
 
 ## The Good Boy (a standing dog of u's side, not u) whose reach covers u, or null. Reach: 1 tile, more with upgrades.

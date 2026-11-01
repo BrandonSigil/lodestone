@@ -1681,3 +1681,53 @@ func test_good_boy_heals_the_friend_next_to_him() -> void:
 	eq(far.hp, 5 + int(CombatRules.num("good_boy_heal")) + 1, "and reaches 2 tiles")
 	ok(LevelRules.next_useful_rank("good_boy", 0, Db.skill_ranks) == 1, "its first step is offered at level up")
 	ok(LevelRules.next_useful_rank("heart_burns", 0, Db.skill_ranks) == 1, "and Amber's passive's")
+
+
+## Bushberry's kit ([USER] 2026-11-01 design-bb-kit): PULL draws a foe 1 tile in, MEND stands a downed friend up,
+## BRANCH ARMOR softens the next hit and pricks the hitter, and Glean heals friends next to him (with Good Boy too).
+func test_bushberry_kit() -> void:
+	CombatRules.reset_switches()
+	var g := CombatGrid.flat(10, 6)
+	var rng := RandomNumberGenerator.new()
+	var bush := _unit("bush", 0, Vector2i(1, 1), g)
+	eq(bush.res_kind, "mana", "he casts with mana")
+	ok(bush.abilities.any(func(a: Ability) -> bool: return a.id == "tug"), "PULL in his kit")
+	ok(bush.has_trait(CombatRules.TRAIT_GLEAN), "Glean is his passive")
+	# PULL: hits and draws the foe 1 tile toward him
+	var wolf := _unit("wolf", 1, Vector2i(4, 1), g)
+	wolf.max_hp = 99
+	wolf.hp = 99
+	CombatRules.resolve(rng, g, bush, _ab("tug"), wolf.cell, [bush, wolf], false)
+	eq(wolf.cell, Vector2i(3, 1), "pulled 1 tile")
+	ok(wolf.hp < 99, "and hurt")
+	# MEND on a downed friend: up again at its heal amount
+	var hero := _unit("knight", 0, Vector2i(2, 2), g)
+	hero.hp = 0
+	hero.bleed = 3
+	ok(hero.downed(), "the friend is down")
+	ok(CombatRules.target_cells(g, bush, _ab("mend"), [bush, hero], bush.cell).has(hero.cell), "MEND can pick a downed friend")
+	CombatRules.resolve(rng, g, bush, _ab("mend"), hero.cell, [bush, hero])
+	eq(hero.hp, CombatRules.heal_amount(bush, _ab("mend")), "up at mend's heal amount")
+	ok(hero.alive(), "standing")
+	# BRANCH ARMOR: the next foe hit does 3 less (at least 1) and the hitter takes 2; then it's gone
+	CombatRules.resolve(rng, g, bush, _ab("branch_armor"), hero.cell, [bush, hero])
+	ok(hero.has_status(CombatRules.STATUS_BRANCH), "the friend wears it")
+	var brute := _unit("bandit", 1, Vector2i(3, 2), g)
+	hero.max_hp = 99
+	hero.hp = 99
+	var plain := CombatRules.damage(g, brute, hero, brute.cell, null, [brute, hero])
+	var brute_hp := brute.hp
+	CombatRules.resolve(rng, g, brute, brute.abilities[0], hero.cell, [brute, hero], false)
+	ok(99 - hero.hp <= maxi(1, plain + int(CombatRules.num("wobble")) - int(CombatRules.num("branch_soften"))), "the hit is softened")
+	eq(brute.hp, brute_hp - int(CombatRules.num("branch_thorns")), "and the hitter takes the thorns")
+	ok(not hero.has_status(CombatRules.STATUS_BRANCH), "used up")
+	# Glean: a friend next to him heals at the start of his side's phase; with Good Boy too, both heal
+	var dog := _unit("dog", 0, Vector2i(1, 3), g)
+	var friend := _unit("knight", 0, Vector2i(1, 2), g)
+	friend.hp = 1
+	CombatRules.begin_phase([bush, dog, friend], 0, g)
+	eq(friend.hp, 1 + int(CombatRules.num("glean_hp")) + int(CombatRules.num("good_boy_heal")), "Glean and Good Boy stack")
+	var far := _unit("knight", 0, Vector2i(6, 5), g)
+	far.hp = 1
+	CombatRules.begin_phase([bush, far], 0, g)
+	eq(far.hp, 1, "only friends next to him")

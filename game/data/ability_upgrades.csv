@@ -152,3 +152,6 @@ tug,3,res_cost:-1,,Costs 1 less
 branch_armor,1,,branch_soften:+1,The armor softens the hit by 1 more
 branch_armor,2,,branch_thorns:+1,The piece that hit takes 1 more damage
 branch_armor,3,res_cost:-1,,Costs 1 less
+glean,1,,glean_hp:+1,Friends next to you heal 1 more
+glean,2,,glean_radius:+1,Reaches friends 2 tiles away
+glean,3,,glean_hp:+1,Friends nearby heal 1 more
