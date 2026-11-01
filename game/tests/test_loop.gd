@@ -1064,10 +1064,21 @@ func test_fishing_from_any_dock_spot() -> void:
 	ok(TravelRules.can_try(Game.run, "fish"), "a rod in the pack")
 	var fish: Array = ExploreRules.options_for(ev, s._defs(), s._have()).filter(func(o: Dictionary) -> bool: return o.key == "OPT_FISH")
 	eq(fish.size(), 1, "FISH is on offer with the rod")
-	var food_before: int = Game.run.food
 	s.mode = 2
 	s.choose(fish[0], {"thing": spot})
-	ok(Game.run.food >= food_before, "the catch (if any) goes in the pack")
+	ok(s.fishing != null, "FISH opens the fishing minigame ([USER] 2026-11-01)")
+	ok(not spot.done, "nothing used until a line is cast")
+	s.fishing.resolve("left")
+	ok(not spot.done and s.mode == 0, "leaving before the cast: the spot still works")
+	s.mode = 2
+	s.choose(fish[0], {"thing": spot})
+	var row: Dictionary = Db.fish["trout"]
+	var meat_before: int = Game.run.item_count("meat")
+	var ing_before: int = Game.run.item_count("ingredient")
+	s.fishing.resolve("caught", row)
+	eq(Game.run.item_count("meat"), meat_before + 2, "the catch goes in the pack")
+	eq(Game.run.item_count("ingredient"), ing_before + 1, "a good fish brings an ingredient too")
+	ok(Game.has_flag("caught_fish_trout"), "the kind is marked caught")
 	ok(spot.done, "the spot rests")
 	ok(Game.used_this_trip("village_v2/" + String(spot.id)), "for the rest of this trip")
 	Game.start_trip()

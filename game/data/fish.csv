@@ -1,0 +1,6 @@
+id,name_key,grade,size,speed,dart_min,dart_max,reach,fill,drain,strike,weight,spots,reward,note
+minnow,FISH_MINNOW,small,0.55,0.50,0.6,1.3,0.30,0.60,0.28,1.25,40,any,meat:1,[AI] 2026-11-01 fishing prototype: easy; size is the shadow's length and hints the grade
+perch,FISH_PERCH,small,0.70,0.65,0.5,1.1,0.38,0.50,0.30,1.10,30,any,meat:2,
+trout,FISH_TROUT,good,0.95,0.90,0.4,0.9,0.45,0.40,0.32,1.00,18,any,meat:2;ingredient:1,
+pike,FISH_PIKE,good,1.15,1.10,0.3,0.8,0.55,0.34,0.36,0.90,10,lake;road,meat:3;ingredient:1,darts far
+king,FISH_KING,prize,1.50,1.35,0.2,0.6,0.65,0.28,0.40,0.75,3,lake,meat:3;ingredient:2;rare:1,the spot's prize: rare and quick; short strike window
