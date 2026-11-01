@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ClassDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/class_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"prince"
+name_key = "CLASS_PRINCE"
+max_hp = 16
+move = 4
+jump = 1
+attack = 4
+defense = 12
+armor = 2
+resource = "rage"
+resource_max = 5
+resource_every = 0
+damage = 3
+range_min = 1
+range_max = 1
+magic = false
+skills = {"nerve": 2}
+strike = &"frost_blade"
+abilities = Array[StringName]([&"ice_armor", &"cold_snap"])
+traits = Array[StringName]([&"hoarfrost"])

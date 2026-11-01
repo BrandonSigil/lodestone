@@ -12,3 +12,4 @@ knight,70,40,40,0,15,the hero as a knight: HP and armor
 rogue,50,45,15,0,45,the hero as a rogue: crits
 archer,55,50,15,0,35,the hero as an archer
 mage,45,15,10,65,15,the hero as a mage: magic
+lich_prince,70,40,35,0,10,a cold knight: HP and armor; an [AI] proposal

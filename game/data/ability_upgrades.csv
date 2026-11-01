@@ -155,3 +155,15 @@ branch_armor,3,res_cost:-1,,Costs 1 less
 glean,1,,glean_hp:+1,Friends next to you heal 1 more
 glean,2,,glean_radius:+1,Reaches friends 2 tiles away
 glean,3,,glean_hp:+1,Friends nearby heal 1 more
+frost_blade,1,status_turns:+1,,The slow lasts 1 turn longer
+frost_blade,2,crit:+10,,+10% crit chance
+frost_blade,3,power:+1,,Does 1 more damage
+ice_armor,1,res_cost:-1,,Costs 1 less
+ice_armor,2,status_turns:+1,,The ice lasts 1 turn longer
+ice_armor,3,range_max:+1,,Reaches 1 tile further
+cold_snap,1,power:+1,,Does 1 more damage
+cold_snap,2,res_cost:-1,,Costs 1 less
+cold_snap,3,status_turns:+1,,The slow lasts 1 turn longer
+hoarfrost,1,,hoarfrost_turns:+1,The slow lasts 1 turn longer
+hoarfrost,2,,hoarfrost_reach:+1,Slows foes ending their move 1 tile further away
+hoarfrost,3,,hoarfrost_turns:+1,The slow lasts 1 turn longer

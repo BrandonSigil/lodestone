@@ -1071,3 +1071,18 @@ UI_GATE_PICK,PLAYTEST. WHO COME? %d/%d. lorem
 UI_PICK_IN,COME
 UI_PICK_OUT,STAY HOME
 UI_PICK_NEW,NOT MET
+CHAR_LICH_PRINCE,LICH SON
+CLASS_PRINCE,COLD KNIGHT
+UNLOCK_FOUND_LICH_PRINCE,LOCKED: beat big dead guy
+SKILL_FROST_BLADE,FROST BLADE
+SKILL_ICE_ARMOR,ICE ARMOR
+SKILL_COLD_SNAP,COLD SNAP
+TRAIT_HOARFROST,Hoarfrost
+TRAIT_COLD_BLOODED,Cold Blooded
+DESC_FROST_BLADE,"Your regular attack. Hits an adjacent foe for normal damage and slows it: 2 less move for 1 turn."
+DESC_ICE_ARMOR,"Coat a friend 1 to 3 tiles away in ice for 2 turns. They get 2 more armor, and a foe that hits them is slowed: 2 less move for 1 turn."
+DESC_COLD_SNAP,"A burst of cold around you. Every foe on the 4 tiles next to you takes 2 less than your normal damage (less its armor) and is slowed: 2 less move for 1 turn."
+TRAIT_HOARFROST_DESC,"A foe that ends its move next to you is slowed on its next turn: 2 less move for 1 turn."
+TRAIT_COLD_BLOODED_DESC,"Eats no rations and is not healed by food. Camp rest, healing skills and belt items work as usual."
+TAG_ICE_ARMOR,ICE ARMOR
+TAGDESC_ICE_ARMOR,"2 more armor. A foe that hits this piece is slowed: 2 less move for 1 turn."

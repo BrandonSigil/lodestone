@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CharacterDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/character_def.gd" id="1"]
+[ext_resource type="Resource" path="res://data/classes/prince.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"lich_prince"
+name_key = "CHAR_LICH_PRINCE"
+class_def = ExtResource("2")
+off_skills = {}
+perks = Array[StringName]([])
+traits = Array[StringName]([&"cold_blooded"])
+deficiency = &""
+food_per_day = 0
+party_slots = 1
+inventory_slots = 0
+unlock = "found_lich_prince"
+tint = Color(0.6, 0.8, 0.95, 1)

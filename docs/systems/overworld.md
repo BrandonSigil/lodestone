@@ -58,3 +58,4 @@ Each member's level, XP, HP and fighting stats (damage, armor, crit, magic), a s
 
 ## Not yet
 Minigames for hunt, fish and forage; the dog's BARK and sniff; dog art (he draws as the tinted dummy); statue and Lich King art; the other hex tiles (shut until Brandon's answers on their vibes, foes and events); the corgi's PERK UP warning on the road; a way into the crypt's throne room without its locked gate (the player picks or bashes it as before).
+- The Lich Prince (2026-11-01): `lich_prince` is on `Db.ROSTER`, not yet on `Game.ADVENTURE_ROSTER` (no art, no way to meet him yet). The recruit hook is the same as Bushberry's: effects `unlock:found_lich_prince;invite:lich_prince` (a recruit event, `recruit_lich_prince`) or `rescue:lich_prince`; both end in `Game.invite` / `Game.rescued`. His unlock text key `UNLOCK_FOUND_LICH_PRINCE` exists. How he joins (the third win over the Lich) is the senior's.

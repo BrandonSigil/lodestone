@@ -1731,3 +1731,36 @@ func test_bushberry_kit() -> void:
 	far.hp = 1
 	CombatRules.begin_phase([bush, far], 0, g)
 	eq(far.hp, 1, "only friends next to him")
+
+
+## The Lich Prince ([USER] 2026-11-01, docs/design/lich-prince.md; numbers [AI]): a cold knight on rage whose plain attack
+## slows. His passives HOARFROST and ICE ARMOR's retaliation, and COLD SNAP's self-centred hit on foes, wait for the
+## senior's rules (see docs/systems/combat.md); this checks the data that exists.
+func test_lich_prince_kit() -> void:
+	CombatRules.reset_switches()
+	var g := CombatGrid.flat(10, 6)
+	var rng := RandomNumberGenerator.new()
+	var prince := _unit("prince", 0, Vector2i(1, 1), g)
+	eq(prince.res_kind, "rage", "he fights on rage")
+	eq(prince.abilities[0].id, "frost_blade", "his plain attack is FROST BLADE")
+	ok(prince.abilities[0].is_basic(), "and it counts as the basic")
+	ok(prince.abilities.any(func(a: Ability) -> bool: return a.id == "ice_armor"), "ICE ARMOR in his kit")
+	ok(prince.abilities.any(func(a: Ability) -> bool: return a.id == "cold_snap"), "COLD SNAP in his kit")
+	eq(_ab("ice_armor").res_cost, 2, "ICE ARMOR costs 2 rage")
+	eq(_ab("cold_snap").res_cost, 3, "COLD SNAP costs 3 rage")
+	# FROST BLADE: a normal melee hit that slows the foe for a turn
+	var wolf := _unit("wolf", 1, Vector2i(2, 1), g)
+	wolf.max_hp = 99
+	wolf.hp = 99
+	CombatRules.resolve(rng, g, prince, prince.abilities[0], wolf.cell, [prince, wolf], false)
+	ok(wolf.hp < 99, "the hit lands")
+	ok(wolf.has_status(CombatRules.STATUS_SLOW), "and slows the foe")
+	ok(CombatRules.move_left(wolf) < wolf.move, "so it has less move")
+	# the Prince himself: 3 ranks of upgrades for each skill, and the character is on the roster, no rations
+	for skill in ["frost_blade", "ice_armor", "cold_snap", "hoarfrost"]:
+		eq(Db.skill_ranks.get(skill, []).size(), 3, "%s has three upgrade steps" % skill)
+	var d := Db.character(&"lich_prince")
+	ok(d != null and Db.ROSTER.has(&"lich_prince"), "he is on the roster")
+	eq(d.food_per_day, 0, "he eats no rations")
+	ok(d.traits.has(&"cold_blooded"), "Cold Blooded is his passive")
+	ok(d.class_def.traits.has(&"hoarfrost"), "Hoarfrost is his class passive")
