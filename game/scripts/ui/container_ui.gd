@@ -53,35 +53,93 @@ static func split_loot(loot: String) -> Dictionary:
 	return {"items": ";".join(items), "now": ";".join(now)}
 
 
-## Builds the screen in `box`: the pack, the dog's saddlebag when he is along, and the container, with TAKE ALL and CLOSE.
-## `changed` runs after every move (the host saves and redraws its HUD), `close` shuts the box.
-static func fill(box: VBoxContainer, container: InventoryGrid, title: String, changed: Callable, close: Callable, close_text := "") -> PackView:
-	var run := Game.run
-	var cell := 46.0
+## Builds the screen in `box` as two windows side by side ([USER] 2026-11-01, like BG3's bags or WoW's two windows): the
+## inventory (the pack, the dog's saddlebag right beside it) and the container's own window with TAKE ALL and CLOSE. Belts and
+## the party live on the full inventory page (I). `changed` runs after every move (the host saves and redraws its HUD),
+## `close` shuts the box. `note` is a line under the container's grid (coins taken).
+static func fill(box: VBoxContainer, container: InventoryGrid, title: String, changed: Callable, close: Callable, close_text := "", note := "") -> PackView:
 	var view := PackView.new()
-	view.setup_bag(run.pack, Db.items, Callable(), cell)
-	view.label_color = Riso.CREAM
-	var pack_w := run.pack.cols * cell
-	view.add_area(container, Vector2(pack_w + 30.0, 0), title, null, 0)
-	var saddle: InventoryGrid = run.open_courier_bag()
-	if saddle != null:
-		view.add_area(saddle, Vector2(0, run.pack.rows * cell + 16.0), Txt.f("UI_COURIER_BAG", Txt.t((run.courier().def as CharacterDef).name_key)), null, 0)
-	view.areas[0]["click_to"] = 1  # a click on something in the pack puts it into the container
-	view.changed.connect(changed)
-	box.add_child(view)
-	var take := Button.new()
-	take.text = Txt.t("UI_BOX_TAKE_ALL")
-	take.custom_minimum_size = Vector2(460, 44)
-	take.add_theme_font_size_override("font_size", 19)
-	take.pressed.connect(func() -> void:
+	view.setup_bag(Game.run.pack, Db.items, Callable(), CELL)
+	var buttons := [[Txt.t("UI_BOX_TAKE_ALL"), func() -> void:
 		if not view.send_all(1, 0):
 			view.flash = "UI_BOX_FULL"
-			view.queue_redraw())
-	box.add_child(take)
-	var done := Button.new()
-	done.text = close_text if close_text != "" else Txt.t("UI_BOX_CLOSE")
-	done.custom_minimum_size = Vector2(460, 44)
-	done.add_theme_font_size_override("font_size", 19)
-	done.pressed.connect(close)
-	box.add_child(done)
+			view.queue_redraw()],
+		[close_text if close_text != "" else Txt.t("UI_BOX_CLOSE"), close]]
+	windows(view, container, title, buttons, true, note)
+	view.changed.connect(changed)
+	bare(box)
+	box.add_child(view)
 	return view
+
+
+const CELL := 46.0
+const GAP := 18.0  ## between the two windows
+const BUTTON_H := 40.0
+
+
+## Lays out a PackView set up on the pack as two windows: the inventory (pack, the courier's saddlebag beside it, the bin
+## under them if the view has one) and `other` (a container, the loot, or FOUND) in its own window to the right, its
+## buttons ([text, callable] pairs) under its grid. `other` becomes area 1 (a click there sends to the pack), the saddlebag
+## area 2. pack_to_other: a click on something in the pack sends it over.
+static func windows(view: PackView, other: InventoryGrid, other_title: String, buttons: Array, pack_to_other: bool, note := "") -> Array[Button]:
+	var run := Game.run
+	var cell := view.cell
+	var pad := PackView.WINDOW_PAD
+	var top := Vector2(pad, pad + PackView.WINDOW_TITLE)
+	var right := top.x + run.pack.cols * cell
+	var bottom := top.y + PackView.LABEL_H + run.pack.rows * cell
+	view.move_area(0, top + Vector2(0, PackView.LABEL_H))  # level with the saddlebag's grid, under its name
+	view.areas[0]["click_to"] = 1 if pack_to_other else -1
+	var saddle: InventoryGrid = run.open_courier_bag()
+	var saddle_at := Vector2(right + 22.0, top.y)
+	if saddle != null:
+		right = saddle_at.x + maxf(saddle.cols * cell, 112.0)
+		bottom = maxf(bottom, top.y + PackView.LABEL_H + saddle.rows * cell)
+	if view.bin.is_valid():  # THROW AWAY: a thin bar under the grids
+		view.place_bin(Rect2(Vector2(top.x, bottom + 14.0), Vector2(right - top.x, 32.0)), "UI_THROW", "UI_BOUND_THROW")
+		bottom += 46.0
+	view.flash_at = Vector2(top.x, bottom + 14.0)  # a line for "no room" and the like
+	bottom += 26.0
+	var left_w := right + pad
+	# the other window
+	var ox := left_w + GAP
+	var ow := maxf(other.cols * cell, 250.0)
+	view.add_area(other, Vector2(ox + pad, top.y + PackView.LABEL_H), "", null, 0)
+	if saddle != null:
+		var who: CharacterDef = run.courier().def
+		var face_path := "res://art/source/portraits/%s.png" % String(who.id)
+		view.add_area(saddle, saddle_at, Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)), load(face_path) if ResourceLoader.exists(face_path) else null, 0)
+	var y := top.y + PackView.LABEL_H + other.rows * cell + 12.0
+	if note != "":
+		var lines := view.add_note(note, Vector2(ox + pad, y), ow)
+		y += PackView.NOTE_LINE * lines + 8.0
+	var made: Array[Button] = []
+	for b in buttons:
+		made.append(view.add_button(String(b[0]), Rect2(Vector2(ox + pad, y), Vector2(ow, BUTTON_H)), b[1]))
+		y += BUTTON_H + 8.0
+	var h := maxf(bottom, y - 8.0) + pad
+	view.add_window(Rect2(Vector2.ZERO, Vector2(left_w, h)), Txt.t("UI_PACK"))
+	view.add_window(Rect2(Vector2(ox, 0), Vector2(ow + pad * 2.0, h)), other_title)
+	return made
+
+
+## The two windows bring their own frames: the dialogue holding them goes bare (no panel of its own) and stands centred.
+static func bare(box: Control) -> void:
+	var n: Node = box.get_parent()
+	while n != null and not n is PanelContainer:
+		n = n.get_parent()
+	if n == null:
+		return
+	var panel := n as PanelContainer
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	_centre_later(panel)
+
+
+static func _centre_later(panel: Control) -> void:
+	if not panel.is_inside_tree():
+		return
+	await panel.get_tree().process_frame
+	if not is_instance_valid(panel) or not panel.is_inside_tree():
+		return
+	panel.reset_size()
+	panel.position.x = (panel.get_viewport_rect().size.x - panel.size.x * panel.scale.x) * 0.5

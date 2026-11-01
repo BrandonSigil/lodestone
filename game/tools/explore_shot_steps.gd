@@ -259,9 +259,14 @@ func run(s: Node, f: int, step: String) -> bool:
 				s.hud.flash_saved()  # the cue a bookmark shows (saving is off in shots)
 			return f == 30
 		"pack_full":
-			# A pickup with no room: FOUND beside the pack, the dog's saddlebag and THROW AWAY under it.
+			# A pickup with no room, as two windows: the pack with the dog's saddlebag beside it and THROW AWAY under them;
+			# FOUND in its own window.
 			if f == 5:
-				var run: RunState = s.get_node("/root/Game").run
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false  # a shot never writes the real save
+				game.meta.flags.append("met_dog")
+				game.refresh_party()
+				var run: RunState = game.run
 				run.adventure = true
 				run.food = 200
 				run.add_item("rope", 1)
@@ -305,6 +310,17 @@ func run(s: Node, f: int, step: String) -> bool:
 				game.run.food = 20
 				var which := {"box": "crate1", "box_locked": "chest1", "box_trapped": "chest2"}[step] as String
 				s.call("_open_container", _thing(s, which))
+			return f == 40
+		"pack_key", "pack_key2":
+			# I pressed while walking opens the full inventory page; pressed twice (pack_key2) shuts it again.
+			if f == 5 or (f == 15 and step == "pack_key2"):
+				var k := InputEventKey.new()
+				k.keycode = KEY_I
+				k.pressed = true
+				Input.parse_input_event(k)
+				var up := k.duplicate() as InputEventKey
+				up.pressed = false
+				Input.parse_input_event(up)
 			return f == 40
 		"pack_dog":
 			# The PACK box with the dog along: his saddlebag, with something in it, beside his portrait.

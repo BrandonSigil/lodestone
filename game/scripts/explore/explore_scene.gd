@@ -54,6 +54,8 @@ var _log_label: Label
 var _phase: Label
 var _keys_walking := false  ## the leader is walking on WASD
 var _menu_open := false  ## the pack or the Lodestone menu is the open dialog
+var _menu_which := ""  ## which one: "pack", "lodestone", ...
+var _menu_close := Callable()  ## shuts it (I shuts the pack)
 var _gate_open := false  ## the village gate's GO / EDIT PARTY prompt is up (F and P answer it)
 ## Deploying: the fight waiting to start, the member being placed and the cells it may take.
 var _pending := {}
@@ -443,6 +445,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	match event.keycode:
 		KEY_SPACE:
 			follow = true
+		KEY_I:  # [USER] 2026-11-01: I opens and shuts the inventory
+			toggle_pack()
 		KEY_ENTER:
 			if mode == M.DEPLOY:
 				_begin_battle()
@@ -456,6 +460,14 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				var t := nearest_thing()
 				if not t.is_empty():
 					_go_use(t)
+
+
+## The inventory on I: shut if it is the open menu, else open it (only while walking or in another menu).
+func toggle_pack() -> void:
+	if _menu_open and _menu_which == "pack":
+		_menu_close.call()
+	else:
+		_open_menu("pack")
 
 
 ## What F uses: the thing the overlay puts its F hint on (ExploreRules.thing_to_use).
@@ -860,16 +872,16 @@ func _spring_trap(t: Dictionary, state: Dictionary) -> void:
 
 func _box_open(t: Dictionary, state: Dictionary) -> void:
 	Game.set_flag(_looted_flag(t))  # opened for good: left things stay while the party is on this map, then they are gone
-	var text := Txt.t("CONTAINER_" + String(t.type).to_upper())
+	var note := ""
 	if int(state.get("coins", 0)) > 0:
-		text += "\n" + Txt.f("UI_BOX_COINS", int(state.coins))
+		note = Txt.f("UI_BOX_COINS", int(state.coins))
 		Game.run.gold += int(state.coins)
 		state["coins"] = 0
-	var box := _new_dialog(text)
+	var box := _new_dialog("")
 	ContainerUi.fill(box, state.grid, Txt.t("CONTAINER_" + String(t.type).to_upper()), func() -> void:
 		Game.save_adventure()
 		_refresh_hud()
-		_remember(), _close_box)
+		_remember(), _close_box, "", note)
 
 
 ## Lasting map rewards ([USER] omr-10; one-more-run step 6), taken for good. A thing's event says what it holds:
@@ -1505,14 +1517,13 @@ func _loot_flow(items: String, coins: int) -> void:
 	var size := ContainerUi.size_of("pile")
 	var grid := InventoryGrid.create(size.x, size.y)
 	ContainerUi.fill_grid(grid, items)
-	var title := Txt.t("UI_LOOT_TITLE")
-	var box := _new_dialog(title + ("   " + Txt.f("UI_LOOT_COINS", coins) if coins > 0 else ""))
-	ContainerUi.fill(box, grid, title, func() -> void:
+	var box := _new_dialog("")
+	ContainerUi.fill(box, grid, Txt.t("UI_LOOT_TITLE"), func() -> void:
 		Game.save_adventure()
 		_refresh_hud(), func() -> void:
 		if not grid.items.is_empty():
 			_drop_pile(grid)
-		_level_up_flow(0), Txt.t("UI_CONTINUE"))
+		_level_up_flow(0), Txt.t("UI_CONTINUE"), Txt.f("UI_LOOT_COINS", coins) if coins > 0 else "")
 
 
 var _pile_no := 0
@@ -1852,7 +1863,10 @@ func _open_menu(which: String) -> void:
 	var close := func() -> void:
 		_close_dialog()
 		_menu_open = false
+		_menu_which = ""
 		mode = M.WALK
+	_menu_which = which
+	_menu_close = close
 	if which == "pack":
 		AdventureMenu.pack(box, changed, close)
 	elif which == "restore":

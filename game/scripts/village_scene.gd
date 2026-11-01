@@ -77,6 +77,11 @@ func _ready() -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE and panel:
 		_close()
+	elif e is InputEventKey and e.pressed and not e.is_echo() and e.keycode == KEY_I:  # [USER] 2026-11-01: I opens and shuts the inventory
+		if panel and open_id == "pack":
+			_close()
+		else:
+			_open("pack")
 
 
 func _refresh() -> void:

@@ -6,7 +6,6 @@ extends RefCounted
 
 const W := 460.0
 const PACK_CELL := 56.0
-const FULL_CELL := 46.0  ## smaller when FOUND and the courier's bag share the box
 
 
 ## [USER] 2026-10-28: the Lodestone opens from its bottom-bar button at any time: skill ranks waiting, head back
@@ -111,123 +110,161 @@ static func restore_list(box: VBoxContainer, changed: Callable, close: Callable)
 	_button(box, Txt.t("UI_CLOSE_MENU"), close)
 
 
-## What the party carries, with EAT and DRINK for the hurt. The grid is the pack itself: drag to move,
-## R or right-click to turn ([USER] 2026-10-29: rearranging is the little game for the walk). Each member's
-## belt sits under it. When a pickup found no room the box opens on its own, full: the new things wait in
-## FOUND beside the pack until the player repacks, throws something away, or fills the courier's bag and
-## sends them home ([USER] 2026-10-29); LEAVE THE REST leaves whatever is still waiting.
+## The full inventory page (I or the bag button; [USER] 2026-11-01, like BG3's bags): two windows. PACK holds the pack
+## itself (drag to move, R or right-click to turn: [USER] 2026-10-29, rearranging is the little game for the walk), the
+## dog's saddlebag right beside it and THROW AWAY under them. PARTY holds each member's belt, the party cards (EAT and
+## DRINK ask who, [USER] 2026-10-30; a food or potion stack dropped on a card works the same), gold, the weapon and CLOSE.
+## When a pickup found no room the page opens on its own as the pack and FOUND (_pack_full): the new things wait there
+## until the player repacks, throws something away, or fills the courier's bag and sends them home ([USER] 2026-10-29);
+## LEAVE THE REST leaves whatever is still waiting.
 static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void:
 	var run := Game.run
-	var full := run.overfull()
-	_label(box, Txt.t("UI_PACK"), 20)
-	if full:
-		_label(box, Txt.t("UI_PACK_FULL"), 14)
+	if run.overfull():
+		_pack_full(box, changed, close)
+		return
 	var grid := PackView.new()
-	if not full:
-		# EAT and DRINK ask who ([USER] 2026-10-30): the party cards under the belts show what each would
-		# gain; click one (Esc cancels). A food or potion stack dropped on a card works the same.
-		var hurt := TravelRules.most_hurt(run) != {}
-		_use_row(box, Txt.f("UI_PACK_FOOD", run.food), Txt.t("UI_EAT"), run.food > 0 and hurt, func() -> void:
-			grid.choosing = RunState.FOOD_ITEM
-			grid.flash = "UI_WHO_EAT"
-			grid.queue_redraw())
-		_use_row(box, Txt.f("UI_PACK_POTION", run.medicine), Txt.t("UI_DRINK"), run.medicine > 0 and hurt, func() -> void:
-			grid.choosing = RunState.MED_ITEM
-			grid.flash = "UI_WHO_DRINK"
-			grid.queue_redraw())
-		if run.item_count("tonic") > 0:  # mana and charges back, on the walk or at camp
-			var short := run.members.any(func(m: Dictionary) -> bool:
-				var r := Game.member_res(m)
-				return r.kind != "" and int(r.res) < int(r.res_max))
-			_use_row(box, Txt.f("UI_PACK_TONIC", run.item_count("tonic")), Txt.t("UI_DRINK"), short, func() -> void:
-				if Game.tonic_effect():
-					run.add_item("tonic", -1)
-				changed.call())
-		var finds := run.items
-		for id: String in finds:
-			if id != RunState.FOOD_ITEM and id != RunState.MED_ITEM and id != "tonic":
-				_label(box, "%s  x%d" % [Txt.t(String(Db.items[id].name_key)), int(finds[id])], 14)
-	_label(box, Txt.t("UI_PACK_HELP_RUN"), 12)
-	var cell := FULL_CELL if full else PACK_CELL
+	var cell := PACK_CELL
+	var pad := PackView.WINDOW_PAD
 	grid.setup_bag(run.pack, Db.items, run.throw_away, cell)
-	var pack_size := Vector2(RunState.PACK_COLS, RunState.PACK_ROWS) * cell
-	if full:
-		grid.add_area(run.found, Vector2(pack_size.x + 24.0, 0), Txt.t("UI_FOUND"))
-	# the belts in a row under the pack, one per member: what each can use in a fight
-	var belt_w := cell * RunState.BELT_COLS + 24.0
-	var per_row := maxi(1, int(W / belt_w))
-	var y := pack_size.y + 14.0
-	for k in run.members.size():
-		var m: Dictionary = run.members[k]
-		var at := Vector2((k % per_row) * belt_w, y + floorf(float(k) / per_row) * (cell + PackView.LABEL_H + 10.0))
-		grid.add_area(m.belt, at, Txt.f("UI_BELT_OF", Txt.t((m.def as CharacterDef).name_key)))
-	y += ceilf(float(run.members.size()) / per_row) * (cell + PackView.LABEL_H + 10.0)
-	if not full:
-		var cards := []
-		for m in run.members:
-			cards.append({"name": Txt.t((m.def as CharacterDef).name_key), "hp": int(m.hp), "max_hp": run.max_hp(m)})
-		grid.add_targets(cards, Vector2(0, y + 4.0))
-		grid.target_gain = func(k: int, item: String) -> int: return TravelRules.gain(run, item, run.members[k])
-		grid.use_on = func(k: int, item: String) -> bool:
-			if not TravelRules.use_on(run, item, run.members[k]):
-				return false
-			Game.save_adventure()
-			return true
-		y += PackView.TARGET_SIZE.y + 14.0
+	# PACK: the pack, the saddlebag beside it, the bin a bar under them, the help under that
+	var top := Vector2(pad, pad + PackView.WINDOW_TITLE)
+	grid.move_area(0, top + Vector2(0, PackView.LABEL_H))
+	var right := top.x + run.pack.cols * cell
+	var bottom := top.y + PackView.LABEL_H + run.pack.rows * cell
 	var courier := run.courier()
 	var bag: InventoryGrid = run.open_courier_bag()  # the dog's 2 x 2 saddlebag, always here while he is along
-	var bag_label := ""
-	var face: Texture2D = null
 	if bag != null:
-		bag_label = Txt.f("UI_COURIER_BAG", Txt.t((courier.def as CharacterDef).name_key))
-		var face_path := "res://art/source/portraits/%s.png" % String((courier.def as CharacterDef).id)
-		face = load(face_path) if ResourceLoader.exists(face_path) else null
-	if bag != null and full:  # sorting the finds: the bag below the party cards, the bin by it
-		grid.add_area(bag, Vector2(0, y), bag_label, face)
-		grid.place_bin(Rect2(Vector2(bag.cols * cell + 24.0, y + PackView.LABEL_H), Vector2(150, bag.rows * cell)), "UI_THROW", "UI_BOUND_THROW")
-	elif bag != null:  # the saddlebag, his small face on its name, right of the pack, the bin a thin bar under it
-		grid.add_area(bag, Vector2(pack_size.x + 24.0, 0), bag_label, face)
-		var bag_w := maxf(bag.cols * cell, 150.0)
-		grid.place_bin(Rect2(Vector2(pack_size.x + 24.0, PackView.LABEL_H + bag.rows * cell + 12.0), Vector2(bag_w, 28)), "UI_THROW", "UI_BOUND_THROW")
-	elif full:
-		grid.place_bin(Rect2(Vector2(0, y + PackView.LABEL_H), Vector2(150, cell)), "UI_THROW", "UI_BOUND_THROW")
-	else:
-		grid.place_bin(Rect2(Vector2(pack_size.x + 24.0, 0), Vector2(150, pack_size.y)), "UI_THROW", "UI_BOUND_THROW")
-	grid.changed.connect(func() -> void:
+		var who: CharacterDef = courier.def
+		var face_path := "res://art/source/portraits/%s.png" % String(who.id)
+		grid.add_area(bag, Vector2(right + 22.0, top.y), Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)),
+			load(face_path) if ResourceLoader.exists(face_path) else null)
+		right += 22.0 + maxf(bag.cols * cell, 112.0)
+		bottom = maxf(bottom, top.y + PackView.LABEL_H + bag.rows * cell)
+	grid.place_bin(Rect2(Vector2(top.x, bottom + 14.0), Vector2(right - top.x, 34.0)), "UI_THROW", "UI_BOUND_THROW")
+	bottom += 14.0 + 34.0
+	grid.flash_at = Vector2(top.x, bottom + 14.0)  # "no room", "who eats?"
+	bottom += 30.0
+	var help := Label.new()
+	help.text = Txt.t("UI_PACK_HELP_RUN")
+	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	help.add_theme_font_size_override("font_size", 12)
+	help.position = Vector2(top.x, bottom)
+	help.custom_minimum_size = Vector2(right - top.x, 0)
+	grid.add_child(help)
+	var left_w := right + pad
+	# PARTY: the belts in a row, one per member (what each can use in a fight), the cards under them, then the rest
+	var ox := left_w + ContainerUi.GAP
+	var cx := ox + pad
+	var belt_w := cell * RunState.BELT_COLS + 24.0
+	var per_row := maxi(1, int(W / belt_w))
+	var y := top.y
+	for k in run.members.size():
+		var m: Dictionary = run.members[k]
+		var at := Vector2(cx + (k % per_row) * belt_w, y + floorf(float(k) / per_row) * (cell + PackView.LABEL_H + 10.0))
+		grid.add_area(m.belt, at, Txt.f("UI_BELT_OF", Txt.t((m.def as CharacterDef).name_key)))
+	y += ceilf(float(run.members.size()) / per_row) * (cell + PackView.LABEL_H + 10.0)
+	var cards := []
+	for m in run.members:
+		cards.append({"name": Txt.t((m.def as CharacterDef).name_key), "hp": int(m.hp), "max_hp": run.max_hp(m)})
+	var per_card := PackView.TARGET_SIZE.x + 10.0
+	var card_rows := ceili(cards.size() * per_card / (W + 10.0))
+	var per_card_row := maxi(1, int((W + 10.0) / per_card))
+	grid.add_targets(cards, Vector2(cx, y + 4.0))
+	for k in grid.targets.size():  # wrap the cards to the window
+		grid.targets[k].rect = Rect2(Vector2(cx + (k % per_card_row) * per_card, y + 4.0 + floorf(float(k) / per_card_row) * (PackView.TARGET_SIZE.y + 8.0)), PackView.TARGET_SIZE)
+	grid.target_gain = func(k: int, item: String) -> int: return TravelRules.gain(run, item, run.members[k])
+	grid.use_on = func(k: int, item: String) -> bool:
+		if not TravelRules.use_on(run, item, run.members[k]):
+			return false
 		Game.save_adventure()
-		if grid.flash == "":  # a refused move keeps the box up so its "no room" stays readable
+		return true
+	y += card_rows * (PackView.TARGET_SIZE.y + 8.0) + 10.0
+	var col := VBoxContainer.new()  # the read-outs and buttons, a real column inside the window
+	col.add_theme_constant_override("separation", 4)
+	col.position = Vector2(cx, y)
+	grid.add_child(col)
+	var hurt := TravelRules.most_hurt(run) != {}
+	_use_row(col, Txt.f("UI_PACK_FOOD", run.food), Txt.t("UI_EAT"), run.food > 0 and hurt, func() -> void:
+		grid.choosing = RunState.FOOD_ITEM
+		grid.flash = "UI_WHO_EAT"
+		grid.queue_redraw())
+	_use_row(col, Txt.f("UI_PACK_POTION", run.medicine), Txt.t("UI_DRINK"), run.medicine > 0 and hurt, func() -> void:
+		grid.choosing = RunState.MED_ITEM
+		grid.flash = "UI_WHO_DRINK"
+		grid.queue_redraw())
+	if run.item_count("tonic") > 0:  # mana and charges back, on the walk or at camp
+		var short := run.members.any(func(m: Dictionary) -> bool:
+			var r := Game.member_res(m)
+			return r.kind != "" and int(r.res) < int(r.res_max))
+		_use_row(col, Txt.f("UI_PACK_TONIC", run.item_count("tonic")), Txt.t("UI_DRINK"), short, func() -> void:
+			if Game.tonic_effect():
+				run.add_item("tonic", -1)
 			changed.call())
-	box.add_child(grid)
-	if full:
-		if bag != null:
-			var send := _button(box, Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
-				run.send_home(courier)
-				Game.refresh_party()
-				Game.save_adventure()
-				changed.call())
-			send.disabled = bag.items.is_empty()
-		_button(box, Txt.t("UI_LEAVE_REST"), func() -> void:
-			run.leave_found()
-			Game.save_adventure()
-			close.call())
-		return
-	if bag != null and not bag.items.is_empty():  # he can take what he carries home at any time, and rejoins when the party is home
-		_button(box, Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
-			run.send_home(courier)
-			Game.refresh_party()
-			Game.save_adventure()
-			changed.call())
-	_label(box, Txt.f("UI_PACK_GOLD", run.gold), 14)
+	_label(col, Txt.f("UI_PACK_GOLD", run.gold) + "     " + Txt.f("UI_SLOTS_USED", [run.pack.used_cells(), run.pack.capacity()]), 14)
 	var store: PackedStringArray = []
 	for id: String in Game.meta.materials:
 		store.append("%s %d" % [Txt.t(String(Db.items[id].name_key)), int(Game.meta.materials[id])])
 	if not store.is_empty():
-		_label(box, Txt.f("UI_VILLAGE_STORE", "  ".join(store)), 14)
-	_label(box, Txt.f("UI_PACK_WEAPON", Txt.t(String(Db.weapons.get(Game.weapon_id(), {}).get("name_key", "")))), 14)
-	_label(box, Txt.f("UI_SLOTS_USED", [run.pack.used_cells(), run.pack.capacity()]), 12)
+		_label(col, Txt.f("UI_VILLAGE_STORE", "  ".join(store)), 13)
+	_label(col, Txt.f("UI_PACK_WEAPON", Txt.t(String(Db.weapons.get(Game.weapon_id(), {}).get("name_key", "")))), 13)
 	if not run.lines.is_empty():
-		_label(box, run.lines[run.lines.size() - 1], 12)
-	_button(box, Txt.t("UI_CLOSE_MENU"), close)
+		_label(col, run.lines[run.lines.size() - 1], 12)
+	if bag != null and not bag.items.is_empty():  # he can take what he carries home at any time, and rejoins when the party is home
+		_button(col, Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
+			run.send_home(courier)
+			Game.refresh_party()
+			Game.save_adventure()
+			changed.call())
+	_button(col, Txt.t("UI_CLOSE_MENU"), close)
+	# the windows: as tall as the taller of the two once the column knows its height
+	var pack_win := Rect2(Vector2.ZERO, Vector2(left_w, 0))
+	var party_win := Rect2(Vector2(ox, 0), Vector2(W + pad * 2.0, 0))
+	grid.add_window(pack_win, Txt.t("UI_PACK"))
+	grid.add_window(party_win, Txt.t("UI_PARTY"))
+	var fit := func() -> void:
+		var h := maxf(help.position.y + help.size.y, col.position.y + col.size.y) + pad
+		grid.windows[0].rect = Rect2(pack_win.position, Vector2(pack_win.size.x, h))
+		grid.windows[1].rect = Rect2(party_win.position, Vector2(party_win.size.x, h))
+		grid.refit()
+	col.resized.connect(fit)
+	help.resized.connect(fit)
+	fit.call()
+	grid.changed.connect(func() -> void:
+		Game.save_adventure()
+		if grid.flash == "":  # a refused move keeps the box up so its "no room" stays readable
+			changed.call())
+	ContainerUi.bare(box)
+	box.add_child(grid)
+
+
+## A pickup found no room ([USER] 2026-11-01: the inventory and the loot as two windows): the pack with the dog's saddlebag
+## beside it and THROW AWAY under them, and FOUND in its own window with SEND HOME and LEAVE THE REST.
+static func _pack_full(box: VBoxContainer, changed: Callable, close: Callable) -> void:
+	var run := Game.run
+	var view := PackView.new()
+	view.setup_bag(run.pack, Db.items, run.throw_away, ContainerUi.CELL)
+	var courier := run.courier()
+	var bag: InventoryGrid = run.open_courier_bag()
+	var buttons := []
+	if bag != null:
+		buttons.append([Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
+			run.send_home(courier)
+			Game.refresh_party()
+			Game.save_adventure()
+			changed.call()])
+	buttons.append([Txt.t("UI_LEAVE_REST"), func() -> void:
+		run.leave_found()
+		Game.save_adventure()
+		close.call()])
+	var made := ContainerUi.windows(view, run.found, Txt.t("UI_FOUND"), buttons, false, Txt.t("UI_PACK_FULL"))
+	if bag != null:
+		made[0].disabled = bag.items.is_empty()
+	view.changed.connect(func() -> void:
+		Game.save_adventure()
+		if view.flash == "":  # a refused move keeps the box up so its "no room" stays readable
+			changed.call())
+	ContainerUi.bare(box)
+	box.add_child(view)
 
 
 ## Options ([USER] 2026-10-30 listed them among the menus that share one look): the fight menu's layout and the
@@ -302,7 +339,7 @@ static func _bonds(box: VBoxContainer, at_home: bool) -> void:
 				b.disabled = not at_home
 
 
-static func _label(box: VBoxContainer, text: String, font_size: int) -> void:
+static func _label(box: BoxContainer, text: String, font_size: int) -> void:
 	var l := Label.new()
 	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -323,7 +360,7 @@ static func _label(box: VBoxContainer, text: String, font_size: int) -> void:
 	box.add_child(l)
 
 
-static func _button(box: VBoxContainer, text: String, cb: Callable) -> Button:
+static func _button(box: BoxContainer, text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size = Vector2(W, 30)
@@ -332,7 +369,7 @@ static func _button(box: VBoxContainer, text: String, cb: Callable) -> Button:
 	return b
 
 
-static func _use_row(box: VBoxContainer, text: String, verb: String, enabled: bool, cb: Callable) -> void:
+static func _use_row(box: BoxContainer, text: String, verb: String, enabled: bool, cb: Callable) -> void:
 	var row := HBoxContainer.new()
 	var l := Label.new()
 	l.text = text
