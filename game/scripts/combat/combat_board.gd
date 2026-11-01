@@ -44,6 +44,10 @@ const WALL_TOP := Color("6c6d74")  ## walls maps: a wall's top, a step lighter t
 const WALL_SIDE := Color("48484d")  ## and its faces, the dungeon cliff's grey
 const PIECE_HIGH := 6.0  ## a wall-kit piece's graybox stands this many levels over its floor (until the kit's art)
 const PIECE_THIN := 0.14  ## and this deep, in cells, on the edge it shares with the room
+const CUT_LOW := 1.0  ## a kit wall cut away (so it hides nothing behind it, or a piece or the cursor) stands this tall
+const CUT_SHOW := 0.3  ## a cut wall's top stays this many tiles (screen heights) under the middle of the ground behind it
+const GHOST := 0.16  ## alpha of the cut-away part of a wall that covers a piece or the cursor
+const PLUG := Color("2b2b31")  ## shut-in rock on a walls map: a dark block, the dungeon's shadow
 const POST_SIZE := 0.22  ## the post where two back walls meet: this many cells square
 const POST_STRIP := {"village_in": Vector2(0.38, 0.62), "dungeon": Vector2(0.3, 0.7)}  ## the post's texture: only this middle strip (u) wraps it
 const RIM_THIN := 0.45  ## a front edge's stubby wall: this deep in cells (short but thick: [USER] 2026-10-30, dungeon go card)
@@ -117,6 +121,12 @@ var rims := {}  ## floor cells on a walls map's front edge: a stubby wall stands
 var wall_cells := {}  ## the rock a walls map draws as walls; the rest of its rock stays natural (ExploreRules.shape_walls)
 var wall_kit := ""  ## the art set a walls map's back-wall pieces come from ([USER] 2026-10-30); "" = block walls
 var backs := {}  ## back-wall cell -> the directions toward the room it faces (shape_walls with a kit)
+var plugs := {}  ## rock shut in by a walls map's walls -> the level its dark block stands at (shape_walls)
+var _cut := {}  ## (cell, face) -> how tall that kit wall stands (_piece_high)
+var _cut_key := ""
+var _wall_open := {}  ## kit wall cells cut down this frame: they cover a piece, the cursor or a marked cell
+var _wall_open_prev := {}
+var _open_key := 0
 var cull := Rect2()  ## board-local area worth drawing (big maps); empty draws everything
 var show_grid := true  ## cell outlines; off, only real ledges keep their rim (exploration hides the grid)
 ## The soft terrain pass (TerrainShape, docs/design/terrain-engine.md): rounded blocks, cliffs and lips that run
@@ -623,6 +633,10 @@ func _sync_slabs() -> void:
 			_dirty_props[_depth_at(k + Vector2i(grid.props[k].foot) - Vector2i.ONE)] = true
 	for k: Vector2i in _changed(_skirt_fade, _skirt_fade_prev):
 		_dirty_props[_depth_at(k)] = true
+	_find_open_walls()
+	for k: Vector2i in _changed(_wall_open, _wall_open_prev):
+		_dirty_props[_depth_at(k)] = true
+	_wall_open_prev = _wall_open.duplicate()
 	_fade_prev = _fade.duplicate()
 	_skirt_fade_prev = _skirt_fade.duplicate()
 	for d: int in _dirty:
@@ -795,6 +809,8 @@ func _paint(sl: Slab) -> void:
 			for c: Vector2i in _depths[sl.depth]:
 				if not _unseen(c):
 					_draw_ground(c)
+				elif plugs.has(c) and grid.in_bounds(c) and grid.terrain_at(c) == CombatGrid.T.VOID:
+					_plug(c, float(plugs[c]))
 			if not rims.is_empty():  # the row behind's front-edge walls stand in front of its pieces
 				var rows := [sl.depth - 1] if sl.depth < _depths.size() - 1 else [sl.depth - 1, sl.depth]
 				for d: int in rows:
@@ -1152,7 +1168,8 @@ func _tint(t: int) -> Color:
 ## stairs, ledge lines. Falling water, overlays and props are drawn by the LIVE slab.
 func _draw_ground(c: Vector2i) -> void:
 	if _kit_wall(c):
-		return  # nothing under a wall-kit piece: the piece stands on the room's edge (_wall_piece)
+		_plug(c, _surf(c))  # under a wall-kit piece (on the room's edge, _wall_piece): solid dark rock
+		return
 	if _soft():
 		_draw_ground_soft(c)
 		return
@@ -1385,74 +1402,275 @@ func _kit_wall(c: Vector2i) -> bool:
 ## it like a cliff's side (one square = BattleArt.SIDE_TILES cells by SIDE_LEVELS levels): the bottom square is
 ## the cell's piece (plain, now and then worn; a window or doorway placed as a prop spans its cell and the next along
 ## the wall), the upper half of the kit's top square above it (its beam on the wall's top edge), the foot square's
-## footing along the bottom if the kit has one, and at an inside corner only a post. Until the kit's art lands, a
-## graybox plane with a dark window or doorway.
+## footing along the bottom if the kit has one. Until the kit's art lands, a graybox plane with a dark window or doorway.
+## [USER] 2026-11-01 ("these stub walls are broken all over the place", "a wall on the front"): a wall stands only
+## as tall as it can without hiding walkable ground behind it (_piece_high, never under CUT_LOW), and one that
+## covers a piece, the cursor or a marked cell this frame is cut down to CUT_LOW with a faint ghost of the rest
+## (_wall_open). A post stands only where two walls really meet (an inside corner); a corner of rock jutting
+## into the room gets a wall on both its faces.
 func _wall_piece(c: Vector2i) -> void:
-	var faces: Array = backs.get(c, [])
 	var col := Color(0.45, 0.46, 0.52) if fog_on and fog.get(c, 2) == 1 else Color.WHITE
 	var h := _surf(c)
 	var plain := BattleArt.texture("wall_plain", true, wall_kit)
-	if faces.size() > 1:
-		# an inside corner: the walls beside it carry the faces; a post stands where they meet, at its front corner
+	var faces := _wall_faces(c)
+	if faces.is_empty():
+		if not _post_here(c):
+			return  # rock touching the room only at a corner: no lone pillar
 		var post := BattleArt.texture("wall_timber" if wall_kit == "village_in" else "wall_corner", true, wall_kit)
 		var phi := Vector2(c) + Vector2.ONE
 		var plo := phi - Vector2(POST_SIZE, POST_SIZE)
-		_box(plo, phi, h, h + PIECE_HIGH + 0.3, Color(WALL_SIDE, 1.0) * col)
+		var tall := _post_high(c)
+		var low := minf(tall, CUT_LOW) if _wall_open.has(c) else tall
+		_box(plo, phi, h, h + low, Color(WALL_SIDE, 1.0) * col)
 		if post != null:
 			for d2: Vector2i in [front_dir(false), front_dir(true)]:
 				var e2: Array = _side(plo, phi, d2)
 				var lit := _face_light(Vector2(d2))
 				var strip: Vector2 = POST_STRIP.get(wall_kit, Vector2(0.0, 1.0))
-				var m := Color(lit * col.r, lit * col.g, lit * col.b, 1.0)
-				var q := PackedVector2Array([iso(e2[0].x, e2[0].y, h + PIECE_HIGH + 0.3), iso(e2[1].x, e2[1].y, h + PIECE_HIGH + 0.3),
-					iso(e2[1].x, e2[1].y, h), iso(e2[0].x, e2[0].y, h)])
-				_ci.draw_polygon(q, PackedColorArray([m, m, m, m]),
-					PackedVector2Array([Vector2(strip.x, 0.0), Vector2(strip.y, 0.0), Vector2(strip.y, 1.0), Vector2(strip.x, 1.0)]), post)
+				for part in ([[0.0, low, 1.0], [low, tall, GHOST]] if low < tall else [[0.0, tall, 1.0]]):
+					var m := Color(lit * col.r, lit * col.g, lit * col.b, part[2])
+					var v0: float = 1.0 - part[1] / tall
+					var v1: float = 1.0 - part[0] / tall
+					var q := PackedVector2Array([iso(e2[0].x, e2[0].y, h + part[1]), iso(e2[1].x, e2[1].y, h + part[1]),
+						iso(e2[1].x, e2[1].y, h + part[0]), iso(e2[0].x, e2[0].y, h + part[0])])
+					_ci.draw_polygon(q, PackedColorArray([m, m, m, m]),
+						PackedVector2Array([Vector2(strip.x, v0), Vector2(strip.y, v0), Vector2(strip.y, v1), Vector2(strip.x, v1)]), post)
 		return
 	for d: Vector2i in faces:
-		var lo := Vector2(c)
-		var hi := lo + Vector2.ONE
-		if d.x > 0:
-			lo.x = hi.x - PIECE_THIN
-		elif d.x < 0:
-			hi.x = lo.x + PIECE_THIN
-		if d.y > 0:
-			lo.y = hi.y - PIECE_THIN
-		elif d.y < 0:
-			hi.y = lo.y + PIECE_THIN
-		var mod := Color(_face_light(Vector2(d)) * col.r, _face_light(Vector2(d)) * col.g, _face_light(Vector2(d)) * col.b, 1.0)
-		_box(lo, hi, h, h + PIECE_HIGH, Color(WALL_SIDE.lightened(0.25), 1.0) * col)
+		var r := _face_rect(c, d)
+		var lo: Vector2 = r[0]
+		var hi: Vector2 = r[1]
+		var tall := _piece_high(c, d)
+		var low := minf(tall, CUT_LOW) if _wall_open.has(c) else tall
+		var lit := _face_light(Vector2(d))
+		var mod := Color(lit * col.r, lit * col.g, lit * col.b, 1.0)
+		_box(lo, hi, h, h + low, Color(WALL_SIDE.lightened(0.25), 1.0) * col)
 		var e: Array = _side(lo, hi, d)
 		var along := Vector2i(1, 0) if is_equal_approx(e[0].y, e[1].y) else Vector2i(0, 1)
 		var piece := _piece_at(c, along)
-		if plain == null:
-			if piece.kind != "":
-				var hole: Rect2 = Rect2(0.3, 2.6, 0.4, 1.6) if piece.kind == "wall_window" else Rect2(0.25, 0.0, 0.5, 4.0)
-				var u0: float = hole.position.x * 2.0 - float(piece.half)
-				var u1: float = hole.end.x * 2.0 - float(piece.half)
-				if u1 > 0.0 and u0 < 1.0:
-					var pa: Vector2 = e[0].lerp(e[1], clampf(u0, 0.0, 1.0))
-					var pb: Vector2 = e[0].lerp(e[1], clampf(u1, 0.0, 1.0))
-					_ci.draw_colored_polygon(PackedVector2Array([iso(pa.x, pa.y, h + hole.end.y), iso(pb.x, pb.y, h + hole.end.y),
-						iso(pb.x, pb.y, h + hole.position.y), iso(pa.x, pa.y, h + hole.position.y)]), Color(0.12, 0.11, 0.1) * col)
-			continue
-		var top := h + BattleArt.SIDE_LEVELS
+		_face_levels(c, e, h, 0.0, low, piece, plain, mod, col)
+		if low < tall:  # cut away: the rest of the wall as a faint ghost, so the room still reads
+			_face_levels(c, e, h, low, tall, piece, plain, Color(mod, GHOST), Color(col, GHOST))
+
+
+## Levels z0..z1 (over the floor h) of a kit wall's face along e, cut from its full look.
+func _face_levels(c: Vector2i, e: Array, h: float, z0: float, z1: float, piece: Dictionary, plain: Texture2D, mod: Color, col: Color) -> void:
+	var sl := BattleArt.SIDE_LEVELS
+	if plain == null:  # graybox: a plane with a dark window or doorway
+		if piece.kind != "":
+			var hole: Rect2 = Rect2(0.3, 2.6, 0.4, 1.6) if piece.kind == "wall_window" else Rect2(0.25, 0.0, 0.5, 4.0)
+			var u0: float = hole.position.x * 2.0 - float(piece.half)
+			var u1: float = hole.end.x * 2.0 - float(piece.half)
+			var y0 := maxf(hole.position.y, z0)
+			var y1 := minf(hole.end.y, z1)
+			if u1 > 0.0 and u0 < 1.0 and y1 > y0:
+				var pa: Vector2 = e[0].lerp(e[1], clampf(u0, 0.0, 1.0))
+				var pb: Vector2 = e[0].lerp(e[1], clampf(u1, 0.0, 1.0))
+				_ci.draw_colored_polygon(PackedVector2Array([iso(pa.x, pa.y, h + y1), iso(pb.x, pb.y, h + y1),
+					iso(pb.x, pb.y, h + y0), iso(pa.x, pa.y, h + y0)]), Color(0.12, 0.11, 0.1, col.a) * Color(col, 1.0))
+		elif col.a < 1.0:  # a ghost of a graybox wall: its plane only
+			var m := Color(WALL_SIDE.lightened(0.25), col.a)
+			_ci.draw_colored_polygon(PackedVector2Array([iso(e[0].x, e[0].y, h + z1), iso(e[1].x, e[1].y, h + z1),
+				iso(e[1].x, e[1].y, h + z0), iso(e[0].x, e[0].y, h + z0)]), m)
+		return
+	# the bottom square: the cell's piece (a window or doorway: its own square, anchored on the cell it's placed on)
+	var a0 := z0
+	var a1 := minf(z1, sl)
+	if a1 > a0:
 		var tex: Texture2D = BattleArt.texture(String(piece.kind), true, wall_kit) if piece.kind != "" else null
 		if tex != null:
-			# a window or doorway: its own square, anchored on the cell it's placed on
 			var ua: float = 0.5 * float(piece.half)
-			var pts := PackedVector2Array([iso(e[0].x, e[0].y, top), iso(e[1].x, e[1].y, top), iso(e[1].x, e[1].y, h), iso(e[0].x, e[0].y, h)])
-			var uvs := PackedVector2Array([Vector2(ua, 0.0), Vector2(ua + 0.5, 0.0), Vector2(ua + 0.5, 1.0), Vector2(ua, 1.0)])
+			var pts := PackedVector2Array([iso(e[0].x, e[0].y, h + a1), iso(e[1].x, e[1].y, h + a1), iso(e[1].x, e[1].y, h + a0), iso(e[0].x, e[0].y, h + a0)])
+			var uvs := PackedVector2Array([Vector2(ua, 1.0 - a1 / sl), Vector2(ua + 0.5, 1.0 - a1 / sl), Vector2(ua + 0.5, 1.0 - a0 / sl), Vector2(ua, 1.0 - a0 / sl)])
 			_ci.draw_polygon(pts, PackedColorArray([mod, mod, mod, mod]), uvs, tex)
 		else:
 			var worn := BattleArt.texture("wall_worn" if wall_kit == "village_in" else "wall_cracked", true, wall_kit)
-			_kit_band(e[0], e[1], top, h, worn if worn != null and _hash(c) % 5 == 0 else plain, 0.0, 1.0, mod)
-		# the top two levels: the upper half of the kit's top square, its beam or capping on the wall's top edge
+			_kit_band(e[0], e[1], h + a1, h + a0, worn if worn != null and _hash(c) % 5 == 0 else plain, 1.0 - a1 / sl, 1.0 - a0 / sl, mod)
+	# the top two levels: the upper half of the kit's top square, its beam or capping on the wall's top edge
+	var b0 := maxf(z0, sl)
+	var b1 := minf(z1, PIECE_HIGH)
+	if b1 > b0:
 		var cap := BattleArt.texture("wall_top" if wall_kit == "village_in" else "wall_cap", true, wall_kit)
-		_kit_band(e[0], e[1], h + PIECE_HIGH, top, cap if cap != null else plain, 0.0, (PIECE_HIGH - BattleArt.SIDE_LEVELS) / BattleArt.SIDE_LEVELS, mod)
+		_kit_band(e[0], e[1], h + b1, h + b0, cap if cap != null else plain, (PIECE_HIGH - b1) / sl, (PIECE_HIGH - b0) / sl, mod)
+	var f1 := minf(z1, sl * 0.2)
+	if f1 > z0:
 		var foot := BattleArt.texture("wall_foot", true, wall_kit)
 		if foot != null:  # the footing course: the bottom fifth of the foot square
-			_kit_band(e[0], e[1], h + BattleArt.SIDE_LEVELS * 0.2, h, foot, 0.8, 1.0, mod)
+			_kit_band(e[0], e[1], h + f1, h + z0, foot, 1.0 - f1 / sl, 1.0 - z0 / sl, mod)
+	if z0 <= 0.0 and z1 < PIECE_HIGH and col.a >= 1.0:  # cut: the wall's cut top, a line of its capping
+		_ci.draw_line(iso(e[0].x, e[0].y, h + z1), iso(e[1].x, e[1].y, h + z1), Color(WALL_TOP.lightened(0.35), 1.0) * Color(col, 1.0), 2.0, true)
+
+
+## The faces a kit wall cell stands a piece on: the edges it shares with walkable ground toward the camera.
+func _wall_faces(c: Vector2i) -> Array:
+	var out := []
+	for d: Vector2i in backs.get(c, []):
+		if _walkable(c + d):
+			out.append(d)
+	return out
+
+
+## An inside corner: walls on both sides of it, the room diagonally in front. Only there does a post stand.
+func _post_here(c: Vector2i) -> bool:
+	var f0 := front_dir(false)
+	var f1 := front_dir(true)
+	return _kit_wall(c + f0) and _kit_wall(c + f1) and _walkable(c + f0 + f1)
+
+
+## The thin box a kit wall's piece fills on face d of cell c: [lo, hi] in grid units.
+static func _face_rect(c: Vector2i, d: Vector2i) -> Array:
+	var lo := Vector2(c)
+	var hi := lo + Vector2.ONE
+	if d.x > 0:
+		lo.x = hi.x - PIECE_THIN
+	elif d.x < 0:
+		hi.x = lo.x + PIECE_THIN
+	if d.y > 0:
+		lo.y = hi.y - PIECE_THIN
+	elif d.y < 0:
+		hi.y = lo.y + PIECE_THIN
+	return [lo, hi]
+
+
+## How tall a kit wall's face d stands, in levels: PIECE_HIGH, unless that would hide walkable ground behind it
+## (a corridor, a stair, a ledge on a cave map); then just low enough that the middle of every such cell shows,
+## never under CUT_LOW. Cached until the grid changes.
+func _piece_high(c: Vector2i, d: Vector2i) -> float:
+	var key := "%d|%d|%d|%d" % [grid.get_instance_id(), grid.version, rot, backs.size()]
+	if key != _cut_key:
+		_cut_key = key
+		_cut.clear()
+	var k := Vector3i(c.x, c.y, (d.x + 1) * 3 + d.y + 1)
+	if _cut.has(k):
+		return _cut[k]
+	var r := _face_rect(c, d)
+	var e: Array = _side(r[0], r[1], d)
+	var h := _surf(c)
+	var a := iso(e[0].x, e[0].y, h)
+	var b := iso(e[1].x, e[1].y, h)
+	var tall := PIECE_HIGH
+	for dy in range(-10, 11):
+		for dx in range(-10, 11):
+			var g := c + Vector2i(dx, dy)
+			if g == c or not _walkable(g) or Vector2(g - c).dot(Vector2(d)) > 0.0:
+				continue  # not walkable, or on the room's side of the wall
+			var p := cell_top(g)
+			var x0 := minf(a.x, b.x)
+			var x1 := maxf(a.x, b.x)
+			if p.x < x0 - TW * 0.2 or p.x > x1 + TW * 0.2:
+				continue
+			var t := clampf(inverse_lerp(a.x, b.x, p.x), 0.0, 1.0) if not is_equal_approx(a.x, b.x) else 0.5
+			var base_y := lerpf(a.y, b.y, t)
+			var room := (base_y - p.y - TH * CUT_SHOW) / HS
+			if room < tall:
+				tall = room
+	tall = clampf(tall, CUT_LOW, PIECE_HIGH)
+	_cut[k] = tall
+	return tall
+
+
+## A post's height: as tall as the lower of the two walls it joins, a little over.
+func _post_high(c: Vector2i) -> float:
+	var f0 := front_dir(false)
+	var f1 := front_dir(true)
+	var hi := 0.0
+	for pair: Array in [[c + f0, f1], [c + f1, f0]]:
+		var n: Vector2i = pair[0]
+		var fs := _wall_faces(n)
+		hi = maxf(hi, _piece_high(n, fs[0] if not fs.is_empty() else pair[1]))
+	return minf(hi + 0.3, PIECE_HIGH + 0.3)
+
+
+## Shut-in rock on a walls map (plugs) and the ground under a kit wall: a dark block from the world's floor to
+## its level, so no hole to the sky shows through the middle of a dungeon.
+func _plug(c: Vector2i, z: float) -> void:
+	var dim := 1.0
+	if fog_on:  # shown once ground beside it has been seen; dim while that ground is out of sight
+		var best := 0
+		for dy in range(-2, 3):
+			for dx in range(-2, 3):
+				best = maxi(best, int(fog.get(c + Vector2i(dx, dy), 0)))
+		if best == 0:
+			return
+		dim = 0.6 if best == 1 else 1.0
+	var lo := Vector2(c)
+	var hi := lo + Vector2.ONE
+	var foot := minf(_floor(), z)
+	for shade in [false, true]:
+		var fd := front_dir(shade)
+		var n := c + fd
+		if grid.in_bounds(n) and (plugs.has(n) or _kit_wall(n)) and _plug_z(n) >= z:
+			continue  # hidden behind the next block
+		var e: Array = _side(lo, hi, fd)
+		_ci.draw_colored_polygon(PackedVector2Array([iso(e[0].x, e[0].y, z), iso(e[1].x, e[1].y, z), iso(e[1].x, e[1].y, foot), iso(e[0].x, e[0].y, foot)]),
+			Color(PLUG.darkened(0.25 if shade else 0.1) * dim, 1.0))
+	_ci.draw_colored_polygon(PackedVector2Array([iso(lo.x, lo.y, z), iso(hi.x, lo.y, z), iso(hi.x, hi.y, z), iso(lo.x, hi.y, z)]), Color(PLUG * dim, 1.0))
+
+
+func _plug_z(c: Vector2i) -> float:
+	return float(plugs[c]) if plugs.has(c) else _surf(c)
+
+
+## Kit walls that cover a piece, the cursor or a marked cell (deploy ring, move range) this frame: they're cut
+## down (_wall_piece). Only redone when what they could cover changes.
+func _find_open_walls() -> void:
+	if backs.is_empty() or wall_kit == "":
+		if not _wall_open.is_empty():
+			_wall_open.clear()
+		return
+	var marks: Array[Vector2i] = []
+	var boxes: Array[Rect2] = []
+	var cells: Array[Vector2i] = []
+	for u: CombatUnit in units:
+		if u.shown_hp > 0 and not u.hiding:
+			boxes.append(_unit_box(u))
+			cells.append(Vector2i(roundi(u.vis.x), roundi(u.vis.y)))
+	if hover != NONE and grid.in_bounds(hover):
+		marks.append(hover)
+	for dict: Dictionary in [highlights, reach, area]:
+		for m: Vector2i in dict:
+			marks.append(m)
+	var key := hash([boxes, cells, marks, grid.version, rot, backs.size()])
+	if key == _open_key:
+		return
+	_open_key = key
+	for m in marks:
+		var p := cell_top(m)
+		boxes.append(Rect2(p - Vector2(TW * 0.3, TH * 0.6), Vector2(TW * 0.6, TH * 0.9)))
+		cells.append(m)
+	_wall_open.clear()
+	for c: Vector2i in backs:
+		if not _kit_wall(c):
+			continue
+		var faces := _wall_faces(c)
+		var h := _surf(c)
+		var shapes := []
+		if faces.is_empty():
+			if _post_here(c):
+				var phi := Vector2(c) + Vector2.ONE
+				shapes.append([[phi - Vector2(POST_SIZE, POST_SIZE), phi], _post_high(c), front_dir(false) + front_dir(true)])
+		for d: Vector2i in faces:
+			shapes.append([_face_rect(c, d), _piece_high(c, d), d])
+		for s: Array in shapes:
+			var tall: float = s[1]
+			if tall <= CUT_LOW + 0.01:
+				continue
+			var lo: Vector2 = s[0][0]
+			var hi: Vector2 = s[0][1]
+			var face := Rect2(iso(lo.x, lo.y, h + tall), Vector2.ZERO)
+			for q in [iso(hi.x, lo.y, h + tall), iso(lo.x, hi.y, h + tall), iso(hi.x, hi.y, h + tall), iso(lo.x, lo.y, h), iso(hi.x, lo.y, h), iso(lo.x, hi.y, h), iso(hi.x, hi.y, h)]:
+				face = face.expand(q)
+			var d: Vector2i = s[2]
+			for i in boxes.size():
+				if Vector2(cells[i] - c).dot(Vector2(d)) > 0.0 or cells[i] == c:
+					continue  # in the room in front of it
+				if absi(cells[i].x - c.x) > 12 or absi(cells[i].y - c.y) > 12:
+					continue
+				if _overlap(boxes[i], face) > 0.15:
+					_wall_open[c] = true
+					break
+			if _wall_open.has(c):
+				break
 
 
 ## A wall face from a to b, z1 down to z0, wearing rows v0..v1 of a kit square (0 its top, 1 its bottom), with

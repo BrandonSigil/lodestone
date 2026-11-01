@@ -204,7 +204,7 @@ const FENCE_RUN := 3  ## a wall between two floors at least this long (or joinin
 ## stay at the floor's height and the board stands a piece on each, on the edge it shares with the room.
 ## Returns {"walls": rock cells drawn as walls, "rims": front-edge floor cells, "backs": back-wall cell -> the
 ## directions toward the room it faces (two at a corner), "fences": walls between two floors, now
-## CombatGrid.fences}.
+## CombatGrid.fences, "plugs": rock shut in by walls -> the level its dark block stands at}.
 static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := WALL_TALL, kit := false) -> Dictionary:
 	var f0: Vector2i = front[0]
 	var f1: Vector2i = front[1]
@@ -268,6 +268,12 @@ static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := 
 			if _ground(grid, c + d) and (best == c or grid.height_at(c + d) > grid.height_at(best)):
 				best = c + d
 		looks[c] = best
+	# Rock shut in by the walls (a pocket, not the world round the map) is solid dark rock, not a hole to the sky
+	# ([USER] 2026-11-01: "holes everywhere"): the board draws it as a dark block at the lowest floor beside it.
+	var plugs := {}
+	for c in mass:
+		if not world.has(c) and not outdoors.has(grid.zone_at(c)):
+			plugs[c] = _plug_level(c, floors)
 	for c in mass:
 		grid.set_terrain(c, CombatGrid.T.VOID)
 	for c: Vector2i in heights:
@@ -281,7 +287,21 @@ static func shape_walls(grid: CombatGrid, front: Array, outdoors := [], tall := 
 		grid.set_terrain(c, grid.terrain_at(from))
 		grid.set_height(c, grid.height_at(from))
 		rims[c] = true
-	return {"walls": heights, "rims": rims, "backs": backs, "fences": grid.fences}
+	return {"walls": heights, "rims": rims, "backs": backs, "fences": grid.fences, "plugs": plugs}
+
+
+## A shut-in rock cell's level: the lowest floor of the walls nearest it (rings out to 4), so it never stands
+## taller than the ground round it.
+static func _plug_level(c: Vector2i, floors: Dictionary) -> int:
+	for r in range(1, 5):
+		var low := 1 << 20
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if maxi(absi(dx), absi(dy)) == r and floors.has(c + Vector2i(dx, dy)):
+					low = mini(low, int(floors[c + Vector2i(dx, dy)]))
+		if low < (1 << 20):
+			return low
+	return 0
 
 
 ## Fence cells in runs (4-neighbour) shorter than `run` that touch no wall cell.

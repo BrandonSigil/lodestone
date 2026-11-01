@@ -762,6 +762,72 @@ func test_wall_kit_back_walls_face_the_room() -> void:
 	eq(plain.height_at(Vector2i(2, 0)), 1 + ExploreRules.WALL_TALL, "and the block walls stand as before")
 
 
+## Brandon's bugs (2026-11-01, the wolf den): "holes everywhere, these stub walls are broken all over the place",
+## "I think these are stairs but I cant see because theres a wall on the front", "cant place my character where I
+## want to because the wall is visually infront of it". A kit wall stands only as tall as it can without hiding
+## ground behind it, cuts down while it covers a piece, posts stand only at inside corners, and rock shut in by
+## walls is a dark block, not a hole.
+func test_kit_walls_never_hide_the_ground_behind_them() -> void:
+	var g := CombatGrid.flat(9, 9)
+	var b := CombatBoard.new()
+	b.grid = g
+	b.walls = true
+	b.wall_kit = "dungeon"
+	var f := b.front_dir(false)
+	var side := Vector2i(absi(f.y), absi(f.x))
+	var line := func(k: int) -> Array:  # the cells k steps along f from the back edge, across the board
+		var out := []
+		for i in 9:
+			out.append(side * i + f * k if f.x + f.y > 0 else side * i + f * (k - 8))
+		return out
+	for c: Vector2i in line.call(4):
+		g.set_terrain(c, CombatGrid.T.ROCK)
+		b.wall_cells[c] = 0
+		b.backs[c] = [f]
+	var mid: Vector2i = line.call(4)[4]
+	ok(b._piece_high(mid, f) < CombatBoard.PIECE_HIGH, "ground right behind it: the wall is cut low")
+	ok(b._piece_high(mid, f) >= CombatBoard.CUT_LOW, "but never below a stub")
+	for k in 4:
+		for c: Vector2i in line.call(k):
+			g.set_terrain(c, CombatGrid.T.VOID)
+	eq(b._piece_high(mid, f), CombatBoard.PIECE_HIGH, "nothing walkable behind: full height")
+	# a piece behind a wall still standing full height (walking past, or out of reach of the static cut) cuts it down
+	var u := CombatUnit.new()
+	u.vis = Vector2(mid - (f + side) * 2)  # straight behind it on screen
+	u.cell = mid - (f + side) * 2
+	u.shown_hp = 5
+	b.units = [u]
+	b._find_open_walls()
+	ok(b._wall_open.has(mid), "a wall in front of a piece cuts away")
+	var front := CombatUnit.new()
+	front.vis = Vector2(mid + f + side)
+	front.cell = mid + f + side
+	front.shown_hp = 5
+	b.units = [front]
+	b._find_open_walls()
+	ok(b._wall_open.is_empty(), "a piece in the room in front leaves it standing")
+	# no lone pillar where rock only touches the room at a corner
+	var lone := Vector2i(1, 1)
+	ok(not b._post_here(lone), "no post without walls on both sides")
+	b.free()
+
+
+func test_rock_shut_in_by_walls_is_a_dark_block() -> void:
+	# a 9x9 room ring round a 3x3 core of rock: the core touches no ground and is shut in, so it's a plug
+	var g := CombatGrid.flat(11, 11)
+	for y in 11:
+		for x in 11:
+			var c := Vector2i(x, y)
+			var ring := x >= 1 and x <= 9 and y >= 1 and y <= 9 and not (x >= 3 and x <= 7 and y >= 3 and y <= 7)
+			if not ring:
+				g.set_terrain(c, CombatGrid.T.ROCK)
+	var shaped := ExploreRules.shape_walls(g, [Vector2i(0, 1), Vector2i(1, 0)], [], ExploreRules.WALL_TALL, true)
+	ok((shaped.plugs as Dictionary).has(Vector2i(5, 5)), "the core is shut in: a dark block")
+	eq(g.terrain_at(Vector2i(5, 5)), CombatGrid.T.VOID, "still void for walking and sight")
+	ok(not (shaped.plugs as Dictionary).has(Vector2i(0, 0)) or g.terrain_at(Vector2i(0, 0)) != CombatGrid.T.VOID,
+		"the rock round the map's edge is the world, not a plug")
+
+
 ## A map can have more than one ground look ([USER] 2026-10-30): the Ground tool paints a material, ground and tile set
 ## per cell, so one map can run from snow into a castle, and it saves and loads.
 func test_ground_materials_are_per_cell() -> void:
