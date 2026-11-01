@@ -183,12 +183,26 @@ func _ready() -> void:
 		if not g.is_empty() and g.state != "gone":
 			start_fight(g, String(f.get("how", "party")))
 			return
-	if not Game.pending_lines.is_empty():
+	if not Game.homecoming.is_empty():
+		_show_homecoming()
+	elif not Game.pending_lines.is_empty():
 		_show_pending()
 	elif lead:
 		check_groups(true)  # stepping in beside a group: the party gets the first look, not an ambush
 		_refresh_units()
 	bookmark.call_deferred()
+
+
+## The homecoming page ([USER] Pitch J): what the trip gave and the next goal, after a fall, GO HOME or a trip walked
+## home. The square waits under it; OK closes it and shows any lines still waiting.
+func _show_homecoming() -> void:
+	var page := HomecomingUi.make(Game.homecoming)
+	Game.homecoming = {}
+	mode = M.DIALOG
+	page.done.connect(func() -> void:
+		mode = M.WALK
+		_show_pending())
+	_ui.add_child(page)
 
 
 ## Lines left for this screen (waking in the square after a fall, GO HOME).
