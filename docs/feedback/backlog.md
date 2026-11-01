@@ -29,13 +29,13 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | # | Problem (his words) | Owner | Status |
 | --- | --- | --- | --- |
 | U1 | "The launcher menu doesnt fit on my desktop" | Studio PM thread | done (#85) |
-| U2 | "Let's beef up our UI windows, they feel really clunky either too small or too large, they have way too much text instead of just letting the player understand the menus intuitively" | Polish UI (#96, #97); the rest: Systems developer (first account) | in progress |
-| U3 | "Menus spill out of the window" (pack and party cards ran off the bottom) | Rework inventory into BG3-style windows; other windows: Polish UI, then Systems developer (first account) | inventory done (#91), victory and Lodestone menu done (#96), rest in progress |
+| U2 | "Let's beef up our UI windows, they feel really clunky either too small or too large, they have way too much text instead of just letting the player understand the menus intuitively" | Polish UI (#96, #97); the rest: Systems developer (first account) | done (#96, #97, e84199a) |
+| U3 | "Menus spill out of the window" (pack and party cards ran off the bottom) | Rework inventory into BG3-style windows; other windows: Polish UI, then Systems developer (first account) | done (#91, #96, e84199a) |
 | U4 | "Look at battle victory menus and beef up this report. Lots of JRPGs do it ... less text, more intuitive sharing of informations" | Polish UI windows and victory screen | done (#96) |
 | U5 | "Currently stuck because you cant close this menu and its too tall to see the close at the bottom" (Lodestone party sheet) | Polish UI windows and victory screen | done (#96) |
-| U6 | "We've got icons! We should use em!" | Studio PM thread (pack); Polish UI (other screens), then Systems developer (first account) | pack done (#89), victory done (#96), rest in progress |
+| U6 | "We've got icons! We should use em!" | Studio PM thread (pack); Polish UI (other screens), then Systems developer (first account) | done (#89, #96, e84199a) |
 | U7 | "Let esc close out windows in game too" | Studio PM thread | done (#88, containers #91) |
-| U8 | "Less text labels in general in the UI. Just a doggo pic will do" (2026-11-01, desk card dev-dogpack-review: drop the DOG PACK label, show only his picture) | Systems developer (first account) | in progress |
+| U8 | "Less text labels in general in the UI. Just a doggo pic will do" (2026-11-01, desk card dev-dogpack-review: drop the DOG PACK label, show only his picture) | Systems developer (first account) | done (e84199a) |
 
 ### Inventory
 | # | Problem (his words) | Owner | Status |
