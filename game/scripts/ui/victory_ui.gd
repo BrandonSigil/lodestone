@@ -1,18 +1,21 @@
 class_name VictoryUi
 extends PanelContainer
-## The fight's victory screen ([USER] 2026-11-01: "Look at battle victory menus and beef up this report. Lots of
-## JRPGs do it ... less text, more intuitive sharing of informations"). A dimmed screen over the board with, top to
-## bottom: the WIN plate; a row of icon chips (XP each, foes down, coins, every loot item); one card per party piece
-## (portrait, level, an XP bar that fills and rolls over into LV UP with the stats gained as icons, HP and heart bars);
-## the bonds that grew; the buttons. Numbers and icons, no sentences: every word left is a key in placeholder.csv.
+## The fight's victory screen ([USER] 2026-11-01: "Look at battle victory menus and beef up this report"), one screen
+## since X7 ("Make the party display smaller and move it to the left of the screen, then show the loot earned in a box
+## that fits the size of whatever the loot is, with your inventory under it"). A dimmed screen over the board: the WIN
+## plate on top; down the left one small card per party piece (portrait, level, labelled bars: EXP that fills and rolls
+## over into LV UP with the stats gained, HP, the job's resource, morale); on the right "EXP: N" and the gold as words,
+## the loot window (sized to the loot) with the pack under it to drag into (r.loot_grid; r.changed runs after a move);
+## the bonds that grew; the buttons. Every word is a key in placeholder.csv.
 ##
 ## The host fills a report (see `report`) and passes the buttons; a key or a click on the dim skips the bars to the
 ## end, and a second one presses the first button. It scales down to fit any window.
 
 const ICONS := "res://art/source/icons/"
 const STAT_ICON := {"hp": "potion", "damage": "strength", "armor": "shield", "magic": "rare", "crit": "focus"}
-const CARD_W := 232.0
-const FACE := 112.0
+const CARD_W := 210.0
+const FACE := 60.0
+const LOOT_CELL := 40.0  ## the loot and pack grids' cell size here
 const FILL_TIME := 1.1  ## seconds an XP bar takes to fill (a level up rolls it over and goes on)
 const STAGGER := 0.18  ## each card starts this much after the one before
 const XP_GOLD := Color(0.98, 0.8, 0.32)
@@ -60,6 +63,7 @@ static func report(before: Dictionary, pieces: Array, fight: Dictionary) -> Dict
 		members.append({"id": id, "name": Txt.t(d.name_key), "tint": d.tint, "hp": maxi(1, u.hp), "max_hp": top,
 			"lv0": int(was.lv), "xp0": int(was.xp), "lv1": int(now.level), "xp1": int(now.xp),
 			"stats": gained, "heart0": int(was.heart), "heart1": Game.morale_of(id),
+			"res_kind": u.res_kind, "res": u.res, "res_max": u.res_max,
 			"pick": int(Game.rank_state(id).pending) > 0})
 	var out := fight.duplicate()
 	out.members = members
@@ -87,8 +91,16 @@ func _ready() -> void:
 	_page.alignment = BoxContainer.ALIGNMENT_CENTER
 	_holder.add_child(_page)
 	_title()
-	_chips()
-	_party()
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 28)
+	body.alignment = BoxContainer.ALIGNMENT_CENTER
+	_page.add_child(body)
+	_party(body)
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override("separation", 12)
+	body.add_child(right)
+	_summary(right)
+	_loot(right)
 	_bonds()
 	var end := String(r.get("end_text", ""))
 	if end != "":
@@ -152,27 +164,30 @@ func _title() -> void:
 	_page.add_child(plate)
 
 
-## XP each, foes down, coins, then every loot item as its own icon and count.
-func _chips() -> void:
-	var row := HFlowContainer.new()
-	row.alignment = FlowContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("h_separation", 10)
-	row.add_theme_constant_override("v_separation", 8)
-	row.custom_minimum_size.x = 4 * (CARD_W + 16)
-	_page.add_child(row)
-	# each chip names itself on hover, like the pack's icons ([USER] 2026-11-01 "What do these icons mean?")
-	row.add_child(_chip("star_guide", "+%d" % int(r.get("xp", 0)), XP_GOLD, Txt.t("UI_WIN_XP_TIP")))
-	if int(r.get("downed", 0)) > 0:
-		row.add_child(_chip("knock_out", "%d" % int(r.downed), UiTheme.PARCHMENT, Txt.t("UI_WIN_DOWNED_TIP")))
+## The fight's take as plain words ([USER] 2026-11-01 X7: "the stars are XP? Just say "EXP:"", "I dont care how many foes
+## were knocked out either"): EXP and the gold. The loot's things wait in the loot window under it.
+func _summary(col: VBoxContainer) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 22)
+	col.add_child(row)
+	var xp := _label(Txt.f("UI_VIC_EXP", int(r.get("xp", 0))), 24)
+	xp.add_theme_color_override("font_color", XP_GOLD)
+	row.add_child(xp)
 	if int(r.get("coins", 0)) > 0:
-		row.add_child(_chip("gold", "+%d" % int(r.coins), XP_GOLD, Txt.t("UI_PACK_GOLD_TIP")))
-	for part in String(r.get("loot", "")).split(";", false):
-		var kv := part.split(":")
-		var id := kv[0].strip_edges()
-		id = {"food": RunState.FOOD_ITEM, "medicine": RunState.MED_ITEM}.get(id, id)
-		var item: Dictionary = Db.items.get(id, {})
-		var tip := Txt.t(String(item.name_key)) if item.has("name_key") else id
-		row.add_child(_chip(id if _icon(id) != null else "sack", "x%d" % (int(kv[1]) if kv.size() > 1 else 1), UiTheme.PARCHMENT, tip))
+		row.add_child(_chip("gold", Txt.f("UI_VIC_GOLD", int(r.coins)), XP_GOLD, Txt.t("UI_PACK_GOLD_TIP")))
+
+
+## The loot window, sized to the loot, with the pack under it to drag things into (ContainerUi.stacked).
+func _loot(col: VBoxContainer) -> void:
+	var grid: InventoryGrid = r.get("loot_grid")
+	if grid == null or grid.items.is_empty() or Game.run == null:
+		return
+	var view := PackView.new()
+	view.setup_bag(Game.run.pack, Db.items, Callable(), LOOT_CELL)
+	ContainerUi.stacked(view, grid, Txt.t("UI_LOOT_TITLE"))
+	if r.get("changed") is Callable and (r.changed as Callable).is_valid():
+		view.changed.connect(r.changed)
+	col.add_child(view)
 
 
 func _chip(icon: String, text: String, col := UiTheme.PARCHMENT, tip := "") -> Control:
@@ -190,11 +205,10 @@ func _chip(icon: String, text: String, col := UiTheme.PARCHMENT, tip := "") -> C
 	return p
 
 
-func _party() -> void:
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 16)
-	_page.add_child(row)
+func _party(into: Control) -> void:
+	var row := VBoxContainer.new()  # down the left, small ([USER] 2026-11-01 X7)
+	row.add_theme_constant_override("separation", 8)
+	into.add_child(row)
 	for m: Dictionary in r.get("members", []):
 		row.add_child(_card(m))
 
@@ -251,7 +265,7 @@ func _card(m: Dictionary) -> Control:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 6)
 	col.add_child(top)
-	var nm := _label(String(m.name), 20)
+	var nm := _label(String(m.name), 17)
 	nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	nm.clip_text = true
 	top.add_child(nm)
@@ -259,16 +273,22 @@ func _card(m: Dictionary) -> Control:
 	lv_tag.add_theme_color_override("font_color", UiTheme.PARCHMENT_DARK)
 	lv_tag.size_flags_vertical = Control.SIZE_SHRINK_END
 	top.add_child(lv_tag)
-	var lv := _label(str(int(m.lv0)), 26)
+	var lv := _label(str(int(m.lv0)), 22)
 	lv.add_theme_color_override("font_color", XP_GOLD)
 	top.add_child(lv)
 	# the bars: XP (fills), HP, heart (moves)
 	var per := float(maxi(1, int(Db.levels.get("xp_per_level", 100))))
-	var xp := _bar_row(col, "star_guide", XP_GOLD, float(m.xp0) / per, "+%d" % int(r.get("xp", 0)))
+	# each bar says what it is in small plain words ([USER] 2026-11-01 X7: "Which bar is health? Which bar is Energy?")
+	var xp := _bar_row(col, Txt.t("UI_VIC_BAR_EXP"), XP_GOLD, float(m.xp0) / per, "+%d" % int(r.get("xp", 0)))
 	xp.text_color = XP_GOLD
-	var hp := _bar_row(col, "potion", HP_RED, float(m.hp) / maxf(1.0, float(m.max_hp)), "%d/%d" % [int(m.hp), int(m.max_hp)])
+	var hp := _bar_row(col, Txt.t("UI_VIC_BAR_HP"), HP_RED, float(m.hp) / maxf(1.0, float(m.max_hp)), "%d/%d" % [int(m.hp), int(m.max_hp)])
+	var rk := String(m.get("res_kind", ""))
+	if rk != "":  # the job's resource: mana, rage or charges ("I want to see their energy levels too")
+		var res := _bar_row(col, Txt.t("RES_" + rk.to_upper()) if Txt.has("RES_" + rk.to_upper()) else rk.to_upper(),
+			FrameHud.RES_COLORS.get(rk, Color.WHITE), float(m.res) / maxf(1.0, float(m.res_max)), "%d/%d" % [int(m.res), int(m.res_max)])
+		res.text_color = UiTheme.PARCHMENT
 	var dh := int(m.heart1) - int(m.heart0)
-	var heart := _bar_row(col, "heal", HEART_PINK, float(m.heart0) / 100.0,
+	var heart := _bar_row(col, Txt.t("UI_VIC_BAR_HEART"), HEART_PINK, float(m.heart0) / 100.0,
 		("+%d" % dh if dh > 0 else str(dh)) if dh != 0 else "")
 	heart.text_color = UP_GREEN if dh > 0 else DOWN_RED
 	hp.text_color = UiTheme.PARCHMENT
@@ -303,11 +323,14 @@ func _card(m: Dictionary) -> Control:
 	return card
 
 
-func _bar_row(col: VBoxContainer, icon: String, fill: Color, value: float, text: String) -> UiBar:
+func _bar_row(col: VBoxContainer, label: String, fill: Color, value: float, text: String) -> UiBar:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 6)
 	col.add_child(h)
-	h.add_child(_tex(icon, 26))
+	var l := _label(label, 12)
+	l.add_theme_color_override("font_color", UiTheme.PARCHMENT_DARK)
+	l.custom_minimum_size.x = 54.0
+	h.add_child(l)
 	var b := UiBar.new()
 	b.fill = fill
 	b.value = clampf(value, 0.0, 1.0)

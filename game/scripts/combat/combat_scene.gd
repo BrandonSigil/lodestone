@@ -132,11 +132,23 @@ func _on_finished(won: bool) -> void:
 	battle.award_bonds()
 	var rep := VictoryUi.report(before, mine, {"title": "UI_ESCAPED" if battle.outcome.how == "exit" else "UI_VICTORY",
 		"xp": xp, "downed": downed, "coins": coins, "loot": loot_items, "bonds": battle.bond_ups})
+	# one screen ([USER] 2026-11-01 X7): the loot and the pack on the victory screen; what is left goes to the pack,
+	# then FOUND, then is lost, on CONTINUE (a road fight is left behind)
+	var grid: InventoryGrid = null
+	if loot_items != "":
+		grid = ContainerUi.fitted_grid(loot_items)
+		rep.loot_grid = grid
+		rep.changed = func() -> void:
+			Game.save_adventure()
+			_refresh_hud()
 	hud.root.add_child(VictoryUi.make(rep, [[Txt.t("UI_CONTINUE"), func() -> void:
 		for n in hud.root.get_children():
 			if n is VictoryUi:
 				n.queue_free()
-		go_on.call()]]))
+		if grid != null:
+			for it in grid.items:
+				Game.run.add_item(String(it.id), int(it.get("n", 1)))  # the pack, then FOUND, then lost
+		_level_ups(0, won)]]))
 
 
 ## The loot as one shared grid, then the level-ups. What does not fit goes to the FOUND box, and past that is lost

@@ -1567,7 +1567,19 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 			[Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.LAUNCH)]])
 		mode = M.OVER
 		return
-	_victory(rep, [[Txt.t("UI_CONTINUE"), _loot_flow.bind(loot_items, loot_coins)]])
+	# one screen ([USER] 2026-11-01 X7): the loot window and the pack sit on the victory screen itself; what is left in
+	# the loot stays on the map as a pile on CONTINUE
+	var grid: InventoryGrid = null
+	if loot_items != "":
+		grid = ContainerUi.fitted_grid(loot_items)
+		rep.loot_grid = grid
+		rep.changed = func() -> void:
+			Game.save_adventure()
+			_refresh_hud()
+	_victory(rep, [[Txt.t("UI_CONTINUE"), func() -> void:
+		if grid != null and not grid.items.is_empty():
+			_drop_pile(grid)
+		_level_up_flow(0)]])
 
 
 ## A companion on the foes' side ([USER] 2026-11-01: "Bushberry flights alongside the ogre and uses all his abilities
