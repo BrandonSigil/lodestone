@@ -65,3 +65,6 @@ Asked for by Brandon on 2026-11-01. This comes from what we know about these gam
 - How many casts per spot: one (as now), or a few "worms" like Club Penguin, where a snapped line costs one?
 - Should every try give something (a small fish or a log entry, as in Radical Fishing), or can a try come back empty?
 - Do we want a slow fishing skill that grows, like the Neopets daily cast, or only gear and the party?
+
+## Brandon's call (2026-11-01) [USER]
+Build Look, Strike, Reel, with Reel as a horizontal bar instead of the dice steps: the fish darts left and right along the bar, the player steers a marker with the mouse, keys or a controller to stay on the target with finesse, and the rod animates, pulling left and right to match. Look and Strike stay as proposed above. Still open: how many casts per spot, whether a try can come back empty, and whether there's a fishing skill.
