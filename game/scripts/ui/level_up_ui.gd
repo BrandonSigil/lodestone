@@ -18,35 +18,17 @@ static func _member(id: String) -> Dictionary:
 	return {}
 
 
-## The header and the stat lines for a member that just levelled: "LEAD LEVEL 3!", "HP 18 to 20".
-static func summary(id: String, entry: Dictionary) -> String:
-	var m := _member(id)
-	if m.is_empty():
-		return ""
-	var lines: PackedStringArray = []
-	var levels: Array = entry.get("levels", [])
-	var name := Txt.t((m.def as CharacterDef).name_key)
-	lines.append(Txt.f("UI_LEVEL_UP", [name, int(levels[levels.size() - 1])]) if not levels.is_empty() else name)
-	var u := CombatUnit.from_member(m)
-	var now := {"hp": u.max_hp, "damage": u.damage, "armor": u.armor, "magic": u.magic_power, "crit": u.crit}
-	var stats: Dictionary = entry.get("stats", {})
-	var gains: PackedStringArray = []
-	for k in LevelRules.STATS:
-		if stats.has(k):
-			gains.append(Txt.f("UI_LV_STAT", [Txt.t("UI_STAT_" + k.to_upper()), int(now[k]) - int(stats[k]), int(now[k])]))
-	if not gains.is_empty():
-		lines.append("   ".join(gains))  # one line: "HP 15 to 19   CRIT 8 to 10"
-	return "\n".join(lines)
+## Is a pick waiting for this member, with something to pick?
+static func has_pick(id: String) -> bool:
+	return not _options(id).is_empty()
 
 
-## The pick ([USER] 2026-10-31, a mix of BG3 and a MOBA's skill screen): the choices as big ability icons in a row; the one
-## selected (a click, or the arrows or a stick moving the focus onto it) shows what it does, its numbers now and a preview
-## of the next rank, and the Pick Skill button confirms. Pressing a selected icon again with the keyboard or a pad confirms
-## too. A click spends the pick and calls `refresh` (the screen rebuilds); `box` is where it goes.
-static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
+## What a waiting pick offers: kit abilities to learn, known ones (and traits, GUARD) to grow, and locked kit slots to
+## fill the row up to MIN_CHOICES. Empty when no pick waits or there is nothing real to choose.
+static func _options(id: String) -> Array[Dictionary]:
 	var m := _member(id)
 	if m.is_empty() or int(Game.rank_state(id).pending) <= 0:
-		return
+		return []
 	var u := CombatUnit.from_member(m)
 	var ranks: Dictionary = Game.rank_state(id).ranks
 	var options: Array[Dictionary] = []  # {"id", "ability" (null for a trait), "learn", "have", "next", "locked"}
@@ -73,6 +55,77 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
 		if options.size() >= MIN_CHOICES:
 			break
 		options.append({"id": aid, "ability": Db.ability(aid), "learn": true, "have": 0, "next": 0, "locked": true})
+	if options.all(func(o: Dictionary) -> bool: return o.locked):
+		return []
+	return options
+
+
+## The head of the level-up screen ([USER] 2026-11-01: "Make that the heading of the skill pick menu "Level up!" then the
+## number they just reached, then a summary of the cool things they gained +3 HP, then the ability upgrade selector"):
+## the LV UP plate with the new level, then the stats gained as icons.
+static func header(box: VBoxContainer, id: String, entry: Dictionary) -> void:
+	var m := _member(id)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	box.add_child(row)
+	var plate := PanelContainer.new()
+	plate.theme_type_variation = &"TitlePlate"
+	var t := Label.new()
+	t.theme_type_variation = &"MenuTitle"
+	t.text = Txt.t("UI_VIC_LV_UP")
+	t.add_theme_font_size_override("font_size", 30)
+	plate.add_child(t)
+	row.add_child(plate)
+	var levels: Array = entry.get("levels", [])
+	var lv := Label.new()
+	lv.text = "%s %d" % [Txt.t("UI_VIC_LV"), int(levels[levels.size() - 1]) if not levels.is_empty() else int(Game.level_state(id).level)]
+	lv.add_theme_font_size_override("font_size", 30)
+	lv.add_theme_color_override("font_color", VictoryUi.XP_GOLD)
+	lv.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(lv)
+	if not m.is_empty():
+		var nm := Label.new()
+		nm.text = Txt.t((m.def as CharacterDef).name_key)
+		nm.add_theme_font_size_override("font_size", 20)
+		nm.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(nm)
+	var stats: Dictionary = entry.get("stats", {})
+	var gains := HBoxContainer.new()
+	gains.add_theme_constant_override("separation", 12)
+	for k in LevelRules.STATS:
+		if int(stats.get(k, 0)) <= 0:
+			continue
+		var g := HBoxContainer.new()
+		g.add_theme_constant_override("separation", 3)
+		g.tooltip_text = Txt.t("UI_STAT_" + k.to_upper())
+		g.mouse_filter = Control.MOUSE_FILTER_PASS
+		var icon := TextureRect.new()
+		icon.texture = ActionInfo.icon(String(VictoryUi.STAT_ICON[k]))
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.custom_minimum_size = Vector2(34, 34)
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		g.add_child(icon)
+		var l := Label.new()
+		l.text = "+%d" % int(stats[k])
+		l.add_theme_font_size_override("font_size", 22)
+		l.add_theme_color_override("font_color", VictoryUi.UP_GREEN)
+		g.add_child(l)
+		gains.add_child(g)
+	if gains.get_child_count() > 0:
+		box.add_child(gains)
+
+
+## The pick ([USER] 2026-10-31, a mix of BG3 and a MOBA's skill screen): the choices as big ability icons in a row; the one
+## selected (a click, or the arrows or a stick moving the focus onto it) shows what it does, its numbers now and a preview
+## of the next rank, and the Pick Skill button confirms. Pressing a selected icon again with the keyboard or a pad confirms
+## too. A click spends the pick and calls `refresh` (the screen rebuilds); `box` is where it goes.
+static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
+	var options := _options(id)
+	if options.is_empty():  # nothing to learn or grow: no empty row and no greyed button (playtest 2026-11-01, Bushberry)
+		return
+	var u := CombatUnit.from_member(_member(id))
+	var ranks: Dictionary = Game.rank_state(id).ranks
 	var label := Label.new()
 	label.text = Txt.f("UI_LV_PICK", int(Game.rank_state(id).pending))
 	label.add_theme_font_size_override("font_size", 18)
