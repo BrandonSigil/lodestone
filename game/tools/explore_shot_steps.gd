@@ -50,6 +50,21 @@ func run(s: Node, f: int, step: String) -> bool:
 			else:
 				s._go_use(_thing(s, step.substr(4)))
 		return f == 90
+	if step.begins_with("deployat:"):
+		# deployat:<x>,<y>:<group index> - any map: the lead (with the dog along) stands at x,y and that group's
+		# fight starts, so the deploy ring shows (walls in front of it cut away).
+		var parts := step.substr(9).split(":")
+		if f == 5:
+			var game: Node = s.get_node("/root/Game")
+			game.save_enabled = false
+			if not game.meta.flags.has("met_dog"):
+				game.meta.flags.append("met_dog")
+			game.refresh_party()
+			s._refresh_party_units() if s.has_method("_refresh_party_units") else null
+			var xy := parts[0].split(",")
+			_put(s, Vector2i(int(xy[0]), int(xy[1])))
+			s.start_fight(s.groups[int(parts[1]) if parts.size() > 1 else 0], "party")
+		return f == 20
 	if step.begins_with("sheet:") or step.begins_with("rack:"):
 		# sheet:<member> - that member's character sheet (the dog met first); rack:<page> - the smithy rack's
 		# sheets turned to that page (0 sword, 1 daggers, 2 bow, 3 the book).

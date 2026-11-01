@@ -152,6 +152,7 @@ func _ready() -> void:
 		board.rims = shaped.rims
 		board.wall_kit = map.wall_kit
 		board.backs = shaped.backs
+		board.plugs = shaped.plugs
 
 	hud = FrameHud.new()
 	add_child(hud)
