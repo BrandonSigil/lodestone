@@ -299,22 +299,19 @@ func test_village_things_reachable() -> void:
 
 ## No stranded ground: every walkable cell of the town can be walked to from the cottage door on jump 1
 ## (stairs are the only way up a two-level step).
+## Known leftovers in Brandon's village (he edits it in the maker; not ours to change): (2,8) is a grass cell boxed in by
+## woods and the river, reachable only by wading, which fights no longer allow ([USER] 2026-11-01). Flagged to him.
+const KNOWN_POCKETS := [Vector2i(2, 8)]
+
+
 func test_village_ground_all_reachable() -> void:
 	var g := ExploreMap.load_named("village").grid
 	var start: Vector2i = ExploreMap.load_named("village").start[0]
-	var seen := {start: true}
-	var todo: Array[Vector2i] = [start]
-	while not todo.is_empty():
-		var c: Vector2i = todo.pop_back()
-		for d in CombatRules.DIRS:
-			var n: Vector2i = c + d
-			if not seen.has(n) and g.passable(n) and g.can_step(c, n, 1):
-				seen[n] = true
-				todo.append(n)
+	var seen := ExploreRules.reach(g, [start], 1)  # walking, bridges included (water never takes a step)
 	var lost: Array[Vector2i] = []
 	for y in g.h:
 		for x in g.w:
-			if g.passable(Vector2i(x, y)) and not seen.has(Vector2i(x, y)):
+			if g.walkable(Vector2i(x, y)) and not seen.has(Vector2i(x, y)) and not KNOWN_POCKETS.has(Vector2i(x, y)):
 				lost.append(Vector2i(x, y))
 	eq(lost.size(), 0, "village ground nobody can reach: %s" % str(lost.slice(0, 8)))
 

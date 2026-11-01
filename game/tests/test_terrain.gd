@@ -131,7 +131,7 @@ func test_drifts_stay_under_their_depth() -> void:
 
 
 func test_stairs_climb_along_their_flight() -> void:
-	# A flight down a trench along x (6, then stairs 5 5 4 4, then water at 2), walls at 6 either side, and one
+	# A flight down a trench along x (6, then stairs 5 5 4 4, then a road at 2), walls at 6 either side, and one
 	# low forest cell beside the third step: that step still climbs along the flight, not across it.
 	var g := _flat(7, 5)
 	for x in 7:
@@ -142,7 +142,7 @@ func test_stairs_climb_along_their_flight() -> void:
 		g.set_height(Vector2i(i + 1, 2), steps[i])
 		g.set_terrain(Vector2i(i + 1, 2), T.STAIRS)
 	g.set_height(Vector2i(5, 2), 2)
-	g.set_terrain(Vector2i(5, 2), T.WATER)
+	g.set_terrain(Vector2i(5, 2), T.ROAD)  # the flight's foot (water no longer takes a step, [USER] 2026-11-01)
 	g.set_height(Vector2i(3, 1), 3)
 	g.set_terrain(Vector2i(3, 1), T.FOREST)
 	for i in 4:

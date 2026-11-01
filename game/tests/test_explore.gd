@@ -456,7 +456,8 @@ func test_no_walking_into_water() -> void:
 	ok(g.walkable(CombatGrid.deck_of(Vector2i(2, 0))), "a bridge deck over the water is walkable")
 	var u := CombatUnit.enemy(load("res://data/classes/bandit.tres"))
 	u.place(Vector2i(1, 1), 0)
-	ok(CombatRules.reachable(g, u, [u]).cost.has(Vector2i(2, 1)), "in a fight a piece can still wade in")
+	ok(not CombatRules.reachable(g, u, [u]).cost.has(Vector2i(2, 1)), "nor in a fight: no wading ([USER] 2026-11-01)")
+	ok(CombatRules.reachable(g, u, [u]).cost.has(Vector2i(2, 2)), "the ford still crosses")
 
 
 ## [USER] 2026-10-30: trees are obstructed terrain. Walking goes round a wood; in a fight it is still cover.

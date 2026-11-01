@@ -808,22 +808,48 @@ static func cross_river(grid: CombatGrid, count := 2) -> int:
 				best = pair
 		if best.is_empty():
 			break
-		var a: Vector2i = best[0]
-		var b: Vector2i = best[1]
-		var step := Vector2i(signi(b.x - a.x), signi(b.y - a.y))
-		var ha := grid.height_at(a)
-		var hb := grid.height_at(b)
-		if absi(ha - hb) <= 1:
-			n += (bridge_span(grid, a, b).cells as Array).size()
-		else:
-			var c := a + step
-			var j := 1
-			while c != b:  # a ford: the water steps from one bank's height to the other's, a level a cell
-				grid.set_height(c, ha + signi(hb - ha) * mini(j, absi(hb - ha) - 1))
-				n += 1
-				c += step
-				j += 1
-		laid.append((a + b) / 2)
+		n += _lay_crossing(grid, best)
+		laid.append((best[0] + best[1]) / 2)
+	# Water blocks the way in fights ([USER] 2026-11-01), so banks facing each other near the middle must not be a long
+	# walk apart: one that still is gets a crossing of its own.
+	for extra in CROSS_EXTRA:
+		var near: Array = []
+		var near_d := INF
+		for pair: Array in river_crossings(grid):
+			var mid := Vector2(pair[0] + pair[1]) * 0.5
+			var d := mid.distance_to(centre)
+			if d <= CROSS_NEAR and int(pair[2]) > CROSS_WALK and d < near_d:
+				near_d = d
+				near = pair
+		if near.is_empty():
+			break
+		n += _lay_crossing(grid, near)
+		laid.append((near[0] + near[1]) / 2)
+	return n
+
+
+const CROSS_NEAR := 6.0  ## banks within this of the middle must cross within CROSS_WALK steps
+const CROSS_EXTRA := 2  ## at most this many extra crossings for them (a bridge, or a ford where the banks differ)
+
+
+## A bridge (banks within a level) or a ford (stepping stones, a level a cell) between a and b. Returns the cells it laid.
+static func _lay_crossing(grid: CombatGrid, pair: Array) -> int:
+	var a: Vector2i = pair[0]
+	var b: Vector2i = pair[1]
+	var step := Vector2i(signi(b.x - a.x), signi(b.y - a.y))
+	var ha := grid.height_at(a)
+	var hb := grid.height_at(b)
+	if absi(ha - hb) <= 1:
+		return (bridge_span(grid, a, b).cells as Array).size()
+	var n := 0
+	var c := a + step
+	var j := 1
+	while c != b:  # a ford: stepping stones from one bank's height to the other's, a level a cell (water blocks)
+		grid.set_height(c, ha + signi(hb - ha) * mini(j, absi(hb - ha) - 1))
+		grid.set_terrain(c, T.STONE)
+		n += 1
+		c += step
+		j += 1
 	return n
 
 
@@ -887,9 +913,10 @@ static func road(grid: CombatGrid, a: Vector2i, b: Vector2i, jump := 1) -> Array
 			break
 		for d: Vector2i in CombatRules.DIRS:
 			var nb := c + d
-			if not grid.passable(nb) or not grid.can_step(c, nb, jump):
+			var bridged := grid.in_bounds(nb) and grid.terrain_at(nb) == T.WATER and grid.has_deck(nb)  # over the water on a bridge
+			if not bridged and (not grid.passable(nb) or not grid.can_step(c, nb, jump)):
 				continue
-			var step := 1 + (6 if grid.terrain_at(nb) == T.WATER else 0) + (2 if grid.terrain_at(nb) == T.FOREST else 0)
+			var step := 1 + (2 if grid.terrain_at(nb) == T.FOREST else 0)
 			var nc: int = cost[c] + step
 			if not cost.has(nb) or nc < cost[nb]:
 				cost[nb] = nc

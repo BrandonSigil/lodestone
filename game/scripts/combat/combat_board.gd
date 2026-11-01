@@ -509,6 +509,15 @@ func pick(local: Vector2) -> Vector2i:
 			if g != NONE and g != body and highlights.has(g) and not _stood_on(g):
 				return g
 		return body
+	if not highlights.is_empty():
+		# A lit tile (a move or a target) behind a cliff still takes the click ([USER] 2026-11-01: "so much of the battle
+		# happened back behind cliffs where you couldnt click or interact"): lit tiles first, front-most first.
+		var layers := _layers()
+		for i in range(layers.size() - 1, -1, -1):
+			for c: Vector2i in layers[i]:
+				var p := CombatGrid.deck_of(c) if grid.has_deck(c) and highlights.has(CombatGrid.deck_of(c)) else c
+				if highlights.has(p) and not hidden(c) and Geometry2D.is_point_in_polygon(local, _diamond(p, _surf(p))):
+					return p
 	return _pick_ground(local)
 
 

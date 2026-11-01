@@ -8,7 +8,9 @@ extends RefCounted
 enum T { GRASS, FOREST, WATER, ROCK, ROAD, STONE, STAIRS, RUIN, VOID }
 
 const BLOCKED := 999
-const STEP_COST := {T.GRASS: 1, T.FOREST: 2, T.WATER: 3, T.ROCK: BLOCKED, T.ROAD: 1, T.STONE: 1, T.STAIRS: 1, T.RUIN: BLOCKED, T.VOID: BLOCKED}
+## River water blocks the way in fights too ([USER] 2026-11-01: "walking ontop of the river (which shouldnt be allowed)"):
+## only bridges (decks) and fords (stepping stones, MapOps.cross_river) cross it.
+const STEP_COST := {T.GRASS: 1, T.FOREST: 2, T.WATER: BLOCKED, T.ROCK: BLOCKED, T.ROAD: 1, T.STONE: 1, T.STAIRS: 1, T.RUIN: BLOCKED, T.VOID: BLOCKED}
 const COVER := {T.GRASS: 0, T.FOREST: 2, T.WATER: -2, T.ROCK: 0, T.ROAD: 0, T.STONE: 0, T.STAIRS: 0, T.RUIN: 0, T.VOID: 0}
 ## How far above the ground each terrain blocks sight (trees and boulders block a little, ruins a lot).
 const SIGHT_BLOCK := {T.GRASS: 0.0, T.FOREST: 0.8, T.WATER: 0.0, T.ROCK: 1.0, T.ROAD: 0.0, T.STONE: 0.0, T.STAIRS: 0.0, T.RUIN: 2.0, T.VOID: 0.0}
