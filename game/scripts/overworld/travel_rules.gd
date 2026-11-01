@@ -45,9 +45,16 @@ static func days_between(t0: float, t1: float) -> int:
 	return maxi(0, int(floor(t1 / DAY_SECONDS)) - int(floor(t0 / DAY_SECONDS)))
 
 
-## What one piece of food heals: the meat's heal column, plus or minus a blessing or setback, never below 1.
-static func food_heal(run: RunState) -> int:
-	return maxi(1, int(Db.items.get(RunState.FOOD_ITEM, {}).get("heal", 2)) + run.food_heal_extra)
+## What one piece of this food heals (meat by default): its heal column, plus or minus a blessing or setback, never
+## below 1. Caught fish are food too, a bigger grade healing more (data/items.csv).
+static func food_heal(run: RunState, item := RunState.FOOD_ITEM) -> int:
+	return maxi(1, int(Db.items.get(item, {}).get("heal", 0)) + run.food_heal_extra)
+
+
+## Food that heals when eaten: kind food with a heal value (meat, the fish grades). Shop food turns into meat at the gate.
+static func is_food(item: String) -> bool:
+	var row: Dictionary = Db.items.get(item, {})
+	return String(row.get("kind", "")) == "food" and int(row.get("heal", 0)) > 0
 
 
 ## The living member missing the most HP, or {} when nobody is hurt.
@@ -61,13 +68,13 @@ static func most_hurt(run: RunState) -> Dictionary:
 
 ## EAT from the pack: one food heals member m a little ([USER] 2026-10-30: the player picks who; with no m,
 ## the most hurt, for callers that don't ask).
-static func eat_one(run: RunState, m: Dictionary = {}) -> bool:
+static func eat_one(run: RunState, m: Dictionary = {}, item := RunState.FOOD_ITEM) -> bool:
 	if m.is_empty():
 		m = most_hurt(run)
-	if run.food <= 0 or m.is_empty() or gain(run, RunState.FOOD_ITEM, m) <= 0:
+	if run.item_count(item) <= 0 or m.is_empty() or gain(run, item, m) <= 0:
 		return false
-	var heal := food_heal(run)
-	run.food -= 1
+	var heal := food_heal(run, item)
+	run.add_item(item, -1)
 	run.heal_member(m, heal)
 	run.note(Txt.f("LOG_SNACK", [Txt.t((m.def as CharacterDef).name_key), heal]))
 	return true
@@ -77,7 +84,7 @@ static func eat_one(run: RunState, m: Dictionary = {}) -> bool:
 static func gain(run: RunState, item: String, m: Dictionary) -> int:
 	if int(m.hp) <= 0:
 		return 0
-	var amount := food_heal(run) if item == RunState.FOOD_ITEM else (TrailRules.potion_heal(run) if item == RunState.MED_ITEM else 0)
+	var amount := food_heal(run, item) if is_food(item) else (TrailRules.potion_heal(run) if item == RunState.MED_ITEM else 0)
 	return mini(amount, run.max_hp(m) - int(m.hp))
 
 
@@ -85,8 +92,8 @@ static func gain(run: RunState, item: String, m: Dictionary) -> int:
 static func use_on(run: RunState, item: String, m: Dictionary) -> bool:
 	if gain(run, item, m) <= 0:
 		return false
-	if item == RunState.FOOD_ITEM:
-		return eat_one(run, m)
+	if is_food(item):
+		return eat_one(run, m, item)
 	if item == RunState.MED_ITEM and run.medicine > 0:
 		TrailRules.heal(run, m)
 		return true

@@ -122,8 +122,30 @@ func test_landing_a_fish_fills_the_pack() -> void:
 	_db()
 	var run := RunState.create([Db.character(&"lead")], 1)
 	var got := FishingRules.land(run, Db.fish["king"])
-	eq(got, {"meat": 3, "ingredient": 2, "rare": 1}, "the prize's reward")
+	eq(got, {"fish_prize": 1, "ingredient": 2, "rare": 1}, "the prize's reward")
 	eq(run.item_count("rare"), 1, "in the pack")
+
+
+## Fish are food that heals ([USER] 2026-10-31 food as healing; PM 2026-11-01): a bigger grade heals more.
+func test_fish_heal_by_grade() -> void:
+	_db()
+	var heals: Array[int] = []
+	for grade in ["small", "good", "prize"]:
+		var item: String = "fish_" + String(grade)
+		ok(TravelRules.is_food(item), item + " is food that heals")
+		heals.append(TravelRules.food_heal(RunState.new(), item))
+		eq(ActionInfo.icon(item), ActionInfo.icon("fish"), item + " borrows the fish icon")
+	ok(heals[0] < heals[1] and heals[1] < heals[2], "a bigger grade heals more")
+	ok(heals[0] > TravelRules.food_heal(RunState.new()), "even a small fish beats a piece of meat")
+	for id: String in Db.fish:  # every catch gives a fish
+		ok(FishingRules.reward(Db.fish[id]).keys().any(func(k: String) -> bool: return k.begins_with("fish_")), id + " gives a fish")
+	var run := RunState.create([Db.character(&"lead")], 1)
+	FishingRules.land(run, Db.fish["trout"])
+	var lead: Dictionary = run.members[0]
+	lead.hp = 1
+	ok(TravelRules.use_on(run, "fish_good", lead), "a fish dropped on a card: they eat it")
+	eq(int(lead.hp), 1 + heals[1])
+	eq(run.item_count("fish_good"), 0, "and it is gone")
 
 
 ## The minigame on screen: it opens over a scene, runs its beats, and reports once.

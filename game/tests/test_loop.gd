@@ -1078,10 +1078,10 @@ func test_fishing_from_any_dock_spot() -> void:
 	s.mode = 2
 	s.choose(fish[0], {"thing": spot})
 	var row: Dictionary = Db.fish["trout"]
-	var meat_before: int = Game.run.item_count("meat")
+	var fish_before: int = Game.run.item_count("fish_good")
 	var ing_before: int = Game.run.item_count("ingredient")
 	s.fishing.resolve("caught", row)
-	eq(Game.run.item_count("meat"), meat_before + 2, "the catch goes in the pack")
+	eq(Game.run.item_count("fish_good"), fish_before + 1, "the catch goes in the pack: a good fish, food that heals")
 	eq(Game.run.item_count("ingredient"), ing_before + 1, "a good fish brings an ingredient too")
 	ok(Game.has_flag("caught_fish_trout"), "the kind is marked caught")
 	ok(spot.done, "the spot rests")

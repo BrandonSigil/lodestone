@@ -104,11 +104,15 @@ static func icon_for(a: Ability) -> Texture2D:
 static var _icons := {}  ## id -> Texture2D or null, loaded once (loading mid-draw gives a blank texture)
 
 
-## The icon's file when the art runner's sheet has one (named by ability or item id), else null: graybox.
+## The icon's file when the art runner's sheet has one (named by ability or item id), else for an item the icon its
+## `icon` column borrows (the three fish grades share fish.png), else null: graybox.
 static func icon(id: String) -> Texture2D:
 	if id == "":
 		return null
 	if not _icons.has(id):
 		var p := ICON_DIR + id + ".png"
 		_icons[id] = load(p) if ResourceLoader.exists(p) else null
+		var borrow := String(Db.items.get(id, {}).get("icon", "")) if _icons[id] == null else ""
+		if borrow != "" and borrow != id:
+			_icons[id] = icon(borrow)
 	return _icons[id]

@@ -152,7 +152,7 @@ UI_TAKES_SLOTS,take %d friend slot
 UI_TAKES_PACK,book take %d pack space
 UI_STATUS_TAB,GOLD %d · DEATHS %d · BEST %d
 UI_PACK_HELP,drag thing. R or right click = turn. drop on SELL = sell.
-UI_PACK_HELP_RUN,drag thing. R or right click = turn. thing on belt = use in fight. meat or potion on friend = they eat.
+UI_PACK_HELP_RUN,drag thing. R or right click = turn. thing on belt = use in fight. food or potion on friend = they eat.
 UI_BELT_OF,%s BELT
 UI_PACK_FULL,PACK FULL. NEW THING NO FIT. lorem ipsum.
 UI_FOUND,NEW THING
@@ -1031,3 +1031,6 @@ DESC_TUG,"A bolt that hits one foe for 1 less than your spell damage, plus or mi
 DESC_BRANCH_ARMOR,"Wrap a friend in brittle bark. The next hit on them does 3 less damage (at least 1), and the piece that hit them takes 2 damage. Lasts until it is used or your next turn."
 TRAIT_GLEAN_DESC,Friends standing next to you heal 1 HP at the start of each of their turns.
 TAGDESC_BRANCH_ARMOR,"The next hit does 3 less damage, and the attacker takes 2 damage."
+ITEM_FISH_SMALL,SMALL FISH
+ITEM_FISH_GOOD,GOOD FISH
+ITEM_FISH_PRIZE,BIG FISH

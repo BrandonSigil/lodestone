@@ -307,6 +307,24 @@ func run(s: Node, f: int, step: String) -> bool:
 					if b.text == Txt.t("UI_EAT"):
 						b.pressed.emit()
 			return f == 30
+		"fish":
+			# caught fish in the PACK box: each grade its own EAT row, the prize fish's EAT pressed (the hero hurt)
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false
+				var run: RunState = game.run
+				run.food = 4
+				run.add_item("fish_small", 2)
+				run.add_item("fish_good", 1)
+				run.add_item("fish_prize", 1)
+				run.members[0].hp = run.max_hp(run.members[0]) - 12
+				s._refresh_hud()
+				s._open_menu("pack")
+			if f == 20:  # the last EAT is the prize fish's
+				var eats: Array = s._dialog.find_children("*", "Button", true, false).filter(func(b: Button) -> bool: return b.text == Txt.t("UI_EAT"))
+				if not eats.is_empty():
+					(eats.back() as Button).pressed.emit()
+			return f == 30
 		"loot":
 			# the after-fight loot grid: food, potions and a rope in one shared grid, coins counted beside it
 			if f == 5:

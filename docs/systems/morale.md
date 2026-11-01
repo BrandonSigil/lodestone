@@ -57,5 +57,6 @@ character at home gets X morale". Built 2026-11-01 from the proposal in `docs/de
   heals the meat's `heal` column in `data/items.csv` (2 HP) when someone eats it (EAT, or a stack dropped on a party
   card). A camp REST is free and gives the camp morale, mana and charges, and `camp_hp_pct` of max HP. A cooked meal
   (good food) heals its recipe's `heal` column and gives its `morale` column, on top of its buff for the next fights.
-  Small Belly and Bad Food now make each food heal 1 more or 1 less. The numbers are [AI] proposals on the desk.
+  Small Belly and Bad Food now make each food heal 1 more or 1 less. Caught fish are food too, by grade: 3, 6 or 12 HP
+  (`docs/systems/fishing.md`). The numbers are [AI] proposals on the desk.
 - How the tavern restores morale ([USER] Pitch G) is open.

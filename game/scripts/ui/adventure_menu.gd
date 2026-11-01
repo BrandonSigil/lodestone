@@ -355,10 +355,15 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	col.position = Vector2(cx, y)
 	grid.add_child(col)
 	var hurt := TravelRules.most_hurt(run) != {}
-	_use_row(col, "meat", run.food, Txt.t("UI_PACK_FOOD_TIP"), Txt.t("UI_EAT"), run.food > 0 and hurt, func() -> void:
-		grid.choosing = RunState.FOOD_ITEM
-		grid.flash = "UI_WHO_EAT"
-		grid.queue_redraw())
+	for food: String in Db.items:  # each food that heals: meat always, then any caught fish carried
+		if not TravelRules.is_food(food) or (food != RunState.FOOD_ITEM and run.item_count(food) <= 0):
+			continue
+		var tip := Txt.t("UI_PACK_FOOD_TIP") if food == RunState.FOOD_ITEM else Txt.t(String(Db.items[food].name_key))
+		_use_row(col, food, run.item_count(food), tip,
+			Txt.t("UI_EAT"), run.item_count(food) > 0 and hurt, func() -> void:
+				grid.choosing = food
+				grid.flash = "UI_WHO_EAT"
+				grid.queue_redraw(), TravelRules.food_heal(run, food))
 	_use_row(col, "potion", run.medicine, Txt.t("UI_PACK_POTION_TIP"), Txt.t("UI_DRINK"), run.medicine > 0 and hurt, func() -> void:
 		grid.choosing = RunState.MED_ITEM
 		grid.flash = "UI_WHO_DRINK"
@@ -597,10 +602,18 @@ static func _button(box: BoxContainer, text: String, cb: Callable) -> Button:
 
 
 ## A thing's picture and how many, its name on hover; the button that uses one at the end of the row.
-static func _use_row(box: BoxContainer, icon: String, n: int, tip: String, verb: String, enabled: bool, cb: Callable) -> void:
+## `heal` > 0: what one heals, in green after the count (the fish grades look alike, the number tells them apart).
+static func _use_row(box: BoxContainer, icon: String, n: int, tip: String, verb: String, enabled: bool, cb: Callable, heal := 0) -> void:
 	var row := HBoxContainer.new()
 	var c := _count(icon, str(n), tip)
 	c.custom_minimum_size = Vector2(W - 110, 0)
+	if heal > 0:
+		var g := Label.new()
+		g.text = "   " + Txt.f("UI_GAIN_HP", heal)
+		g.add_theme_font_size_override("font_size", 13)
+		g.add_theme_color_override("font_color", Color(0.62, 0.9, 0.5))
+		g.mouse_filter = Control.MOUSE_FILTER_PASS
+		c.add_child(g)
 	row.add_child(c)
 	var b := Button.new()
 	b.text = verb
