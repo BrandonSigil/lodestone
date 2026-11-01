@@ -24,7 +24,7 @@ Resource: mana (a mender's numbers, 3 move). Abilities, each with three upgrade 
 - **tug** (new, in `abilities.csv`): ranged, 2-4 (scaled), 3 mana, 1 less than his spell damage, **pulls the foe 1 cell toward him** (`push:-1`). Steps: damage, reach, cost.
 - **mend:** heals 4 plus magic, range 2, and **can raise a downed friend** at its heal amount (`mend_raise`), so no far_aid.
 - **Branch Armor** (his name; replaces ward for him): 4 mana, a friend within 3. The next hit on them does 3 less damage (at least 1) and the piece that hit them takes 2 damage (`branch_soften`, `branch_thorns`). Lasts until used or his next turn; does not stack. Steps: softens 1 more, hurts 1 more, costs 1 less.
-- **renew:** heals over time at range 2; kept as the fourth ability. It does not clash with Glean.
+- **renew:** dropped from his kit ([USER] 2026-11-01: "We don't need renew n now though right? That'd be 5 abilities?"); the mender job keeps it.
 - **Passive Glean** (his name): friends standing next to him heal 1 HP at the start of each of their turns (`glean_hp`). Upgrade steps (+1 HP, a 2-tile radius, +1 HP) wait until the trait is on his class, because the data test requires a class trait to exist first.
 - Older passives stay: `bushberry_ration` (a ration each journey day), `flammable` (fire +2 damage taken), `deep_roots` (cannot be pushed).
 **Glean and Good Boy:** they stack. A friend next to both heals 1 from each at the start of its turn, 2 in all. Each source heals once a turn.

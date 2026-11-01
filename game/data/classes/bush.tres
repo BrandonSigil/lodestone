@@ -20,5 +20,5 @@ resource_max = 10
 resource_every = 0
 magic = true
 skills = {"forage": 3}
-abilities = Array[StringName]([&"tug", &"mend", &"branch_armor", &"renew"])
+abilities = Array[StringName]([&"tug", &"mend", &"branch_armor"])
 traits = Array[StringName]([&"glean"])
