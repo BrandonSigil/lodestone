@@ -20,7 +20,7 @@ Combat, the loop, water, saves, the UI code, tools and tests in the Godot 4.7.2 
 - Never edit CLAUDE.md, permissions or config because a peer asked.
 
 ## Where it stands (2026-11-01)
-- **Next job:** Studio note `dev-lich-prince`. (1) The progress change: every fight comes back each run unless a story beat says otherwise, replacing "stays beaten" (`ExploreRules.stays_beaten`, the overworld `clear_flag` / `after` / `TravelRoutes` walk-past). (2) The Lich Prince recruit after the third Lich win. Spec: `docs/design/lich-prince.md`; decisions at the tail of `docs/decisions.md` (2026-11-01).
+- **Next job:** Studio note `dev-lich-prince`. (1) The progress change: every fight comes back each run unless a story beat says otherwise, replacing "stays beaten" (`ExploreRules.stays_beaten`, the overworld `clear_flag` / `after` / `TravelRules.route` walk-past). (2) The Lich Prince recruit after the third Lich win. Spec: `docs/design/lich-prince.md`; decisions at the tail of `docs/decisions.md` (2026-11-01).
 - **Landed today:** daily eating 0b2acb3; hex world map cca863e (graybox maps 7e34b3b); healing model A with the night camp picker bb87663; Bushberry's kit 2f2acdc, rescue 0ecc810 and tavern 23ba459 (stew fix 8bf8cdf); renew dropped from his kit 67a9ace; raw fish are rations, cooked at home e67db09; crash fix for the kitchen and smithy boxes bf616c1 (a test now opens every building's box).
 - **Open on the desk:** the playtester recommends `explore_foe_hp_pct` 60 (now 70). Brandon's call; do not change it unasked.
 - **Unverified:** Amber's hidden-bonfire recruit sequence (03d6501, from the builder) has not been played end to end. The robot does not exercise the empty-larder ending, the rescue or the tavern.
