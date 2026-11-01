@@ -56,6 +56,10 @@ func run(s: Node, _frames: int, _step: String) -> void:
 				hb.preview_move()
 				break
 		return
+	if _step == "nepo" and _frames == 110:  # the foes' turn: chilled again at its start, slowed as they move
+		var eb: Battle = s.battle
+		eb.end_player_phase()
+		return
 	if _step == "nepo" and _frames == 12:  # NEPO BABY: the hand rises among the foes (a clip: record from here)
 		var nb: Battle = s.battle
 		var prince: CombatUnit = null

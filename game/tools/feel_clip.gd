@@ -34,43 +34,59 @@ func _process(_delta: float) -> bool:
 			_highlight()
 		"takeall":
 			_takeall()
-	if _f >= 900 or (_done_at > 0 and _f >= _done_at):
+	if _f >= 1500 or (_done_at > 0 and _f >= _done_at):
 		quit()
 	return false
 
 
-## The aim glides to a fish's shadow, the cast flies, a fish comes and bites, the strike lands, then the reel: the
-## marker is steered after the fish (as a player holding left or right would) until it is caught.
+## A whole cast at a player's pace ([USER] 2026-11-01 "Can these clips be longer? this only hows the aim part"): the aim
+## glides over the pool to a fish's shadow, the cast, the bobber waits until a fish notices on its own (a recast if none
+## does), the nibbles and the real bite, the strike, HOOKED!, then the reel steered a little late (as a player chasing the
+## fish would), and the catch card held a few seconds.
 func _fishing() -> void:
 	var g: Object = current_scene.get("game")
 	if g == null:
 		return
-	var state := int(g.get("state"))  # FishingGame.S: LOOK 0, CAST 1, STRIKE 2, REEL 3, RESULT 4, WAIT 5, COME 6
+	var state := int(g.get("state"))  # FishingGame.S: LOOK 0, CAST 1, STRIKE 2, REEL 3, RESULT 4, WAIT 5, COME 6, HOOKED 7, SWIM_OFF 8
 	var shadows: Array = g.get("_shadows")
-	if _f >= 5 and _f <= 50 and state == 0:
+	if state == 0 and not shadows.is_empty():
+		if _aim_from < 0:
+			_aim_from = _f
+		var k := float(_f - _aim_from)
+		var big: Dictionary = shadows[0]  # the biggest fish in the pond: a longer fight on the reel
+		for sh: Dictionary in shadows:
+			if float(sh.fish.get("size", 1.0)) > float(big.fish.get("size", 1.0)):
+				big = sh
+		var to: Vector2 = (big.home as Vector2) + Vector2(0.03, 0.02)
 		g.set("_use_mouse", false)
-		var to: Vector2 = (shadows[0].home as Vector2) + Vector2(0.03, 0.02)
-		g.set("_aim", Vector2(0.5, 0.85).lerp(to, smoothstep(5.0, 50.0, float(_f))))
-	if _f == 58 and state == 0:
-		g.call("_cast_aimed")
-	if state == 5:  # the bobber sits: a fish nearby turns to it (a real player waits a moment longer)
-		for i in 20:
-			if int(g.get("state")) == 5:
-				g.call("_notice")
+		var wander := Vector2(0.25 + 0.5 * sin(k / 40.0), 0.6 + 0.15 * cos(k / 33.0))  # looks over the pool first
+		g.set("_aim", wander.lerp(to, smoothstep(90.0, 150.0, k)))
+		if k >= 165.0:
+			g.call("_cast_aimed")
+			_aim_from = -1
 	if state == 2:
 		var plan: Dictionary = g.get("_plan")
-		if float(g.get("_phase_t")) >= float(plan.bite) + 0.12:
+		if float(g.get("_phase_t")) >= float(plan.bite) + 0.15:
 			g.call("_strike_now")
-	if state == 3:
+	if state == 3:  # chase the fish, a beat late and only once it has drifted off the marker
 		var r: Dictionary = g.get("_reel")
-		var right := float(r.marker) < float(r.fish)
-		Input.action_release("ui_left" if right else "ui_right")
-		Input.action_press("ui_right" if right else "ui_left")
-	elif _f > 60:
+		var off := float(r.fish) - float(r.marker)
+		if _f % 20 == 0:  # a slow, sloppy player reacts in fits: the fish pulls away from the marker now and then
+			_steer = 0 if absf(off) < 0.18 else (1 if off > 0.0 else -1)
 		Input.action_release("ui_left")
 		Input.action_release("ui_right")
+		if _steer != 0:
+			Input.action_press("ui_right" if _steer > 0 else "ui_left")
+	elif _steer != 0:
+		Input.action_release("ui_left")
+		Input.action_release("ui_right")
+		_steer = 0
 	if state == 4 and _done_at < 0:
-		_done_at = _f + 60
+		_done_at = _f + 105
+
+
+var _aim_from := -1
+var _steer := 0
 
 
 ## Walks the hero (held WASD, as a player would) along the tavern's back wall and back: the "!" bubbles over things,
