@@ -14,7 +14,8 @@ signal changed
 const CELL := 72.0
 const SELL_SIZE := Vector2(150, 110)
 const LABEL_H := 20.0  ## room above a labeled grid for its name
-const FACE := 18.0  ## a small face before a grid's name
+const FACE_ROW := 40.0  ## room above a grid whose only name is a picture ([USER] 2026-11-01: "Just a doggo pic will do")
+const FACE := 34.0  ## that picture's side
 ## Kinds Riso.draw_item_icon draws an icon for. Every other kind (gear, material, meal, tonic...) shows its name instead,
 ## so nothing in the pack is a blank square (Brandon's bug, 2026-11-01: a tonic looked like an empty slot).
 const ICON_KINDS := ["food", "crate", "med", "herb", "book"]
@@ -36,7 +37,7 @@ var mouse := Vector2.ZERO
 var flash := ""  ## text key shown under the grids after a refused action
 var label_color := Riso.CREAM  ## grid names; the run's box is dark
 ## Party cards ([USER] 2026-10-30: pick who eats or drinks): drop a food or potion stack on one, or after EAT
-## or DRINK click one. {"rect": Rect2, "name": String, "hp": int, "max_hp": int}.
+## or DRINK click one. {"rect": Rect2, "name": String, "hp": int, "max_hp": int, "face": Texture2D or null}.
 var targets: Array[Dictionary] = []
 var target_gain := Callable()  ## (card index, item id) -> HP that member would gain from one
 var use_on := Callable()  ## (card index, item id) -> bool: one was used on them
@@ -79,19 +80,23 @@ func place_bin(r: Rect2, key: String, refused: String) -> void:
 	_fit_size()
 
 
-## Another grid in the same view, its top-left at `at` (a label takes LABEL_H above it). With a `portrait`, a small face
-## stands in front of the label (the dog's, on his saddlebag's name): the same helper holds a container's or a loot
-## grid, with or without a face.
+## Another grid in the same view, its top-left at `at`. A `label` takes LABEL_H above it; a `portrait` instead takes
+## FACE_ROW for a picture with no words (the dog's face on his saddlebag, a member's on their belt). The same helper
+## holds a container's or a loot grid, with or without a name.
 func add_area(grid: InventoryGrid, at: Vector2, label := "", portrait: Texture2D = null, click_to := -1) -> void:
-	var top := LABEL_H if label != "" else 0.0
-	areas.append({"bag": grid, "at": at + Vector2(0, top), "label": label, "portrait": portrait, "face_at": at, "click_to": click_to})
+	areas.append({"bag": grid, "at": at + Vector2(0, head_room(label, portrait)), "label": label, "portrait": portrait,
+		"face_at": at, "click_to": click_to})
 	_fit_size()
 
 
-## Moves grid k (its label goes with it).
+## The room above a grid for its name: a picture's row, a label's line, or none.
+static func head_room(label: String, portrait: Texture2D) -> float:
+	return FACE_ROW if portrait != null else (LABEL_H if label != "" else 0.0)
+
+
+## Moves grid k (its name goes with it).
 func move_area(k: int, at: Vector2) -> void:
-	var top := LABEL_H if String(areas[k].label) != "" else 0.0
-	areas[k].at = at + Vector2(0, top)
+	areas[k].at = at + Vector2(0, head_room(String(areas[k].label), areas[k].get("portrait")))
 	areas[k].face_at = at
 	_fit_size()
 
@@ -116,8 +121,8 @@ func add_button(text: String, r: Rect2, cb: Callable) -> Button:
 
 
 ## A wrapped line of text in the view (a window's note, like the coins taken). Returns how many lines it takes.
-func add_note(text: String, at: Vector2, width: float) -> int:
-	notes.append({"text": text, "at": at, "width": width})
+func add_note(text: String, at: Vector2, width: float, icon: Texture2D = null) -> int:
+	notes.append({"text": text, "at": at, "width": width, "icon": icon})
 	queue_redraw()
 	var f := Riso.font()
 	var h := f.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, width, 15).y
@@ -359,21 +364,21 @@ func _draw() -> void:
 		return
 	for w in windows:
 		_draw_window(w.rect, String(w.title))
-	for n in notes:
-		draw_multiline_string(Riso.font(), n.at + Vector2(0, 15), String(n.text), HORIZONTAL_ALIGNMENT_LEFT, n.width, 15, -1,
+	for n in notes:  # a line of text, after its icon when it has one (the gold a fight or a box gave)
+		var nx := 0.0
+		if n.get("icon") != null:
+			draw_texture_rect(n.icon, Rect2(n.at + Vector2(0, -3), Vector2(24, 24)), false)
+			nx = 30.0
+		draw_multiline_string(Riso.font(), n.at + Vector2(nx, 15), String(n.text), HORIZONTAL_ALIGNMENT_LEFT, n.width - nx, 15, -1,
 			get_theme_color("font_color", "Label"))
 	var bottom := 0.0
 	for k in areas.size():
 		var a := areas[k]
 		draw_bag(self, a.bag, db, a.at, cell, true, held if k == held_area else -1)
-		var label_x := 0.0
-		if a.get("portrait") != null:  # a small face before the label
-			var face := Rect2(a.face_at, Vector2(FACE, FACE))
-			draw_texture_rect(a.portrait, face, false)
-			draw_rect(face, label_color, false, 1.0)
-			label_x = FACE + 6.0
-		if a.label != "":
-			Riso.draw_label(self, a.label, a.at - Vector2(-label_x, LABEL_H * 0.55), 13, label_color)
+		if a.get("portrait") != null:  # the picture is the grid's name: no words
+			_draw_face(a.portrait, Rect2(a.face_at, Vector2(FACE, FACE)))
+		elif a.label != "":
+			Riso.draw_label(self, a.label, a.at - Vector2(0, LABEL_H * 0.55), 13, label_color)
 		bottom = maxf(bottom, _rect_of(a).end.y)
 	var sr := _bin_rect()
 	if bin.is_valid():
@@ -424,8 +429,8 @@ func _draw_window(r: Rect2, title: String) -> void:
 	Riso.draw_label(self, title, Vector2(plate.position.x, plate.get_center().y), 19, col, HORIZONTAL_ALIGNMENT_CENTER, plate.size.x)
 
 
-## A party card: name and HP; while food or a potion is held or picked, what one would heal them, or FULL
-## (greyed) when it can't. Returns its bottom.
+## A party card: their face and an HP bar ([USER] 2026-11-01, fewer words: the name only when there is no face); while
+## food or a potion is held or picked, what one would heal them, or FULL (greyed) when it can't. Returns its bottom.
 func _draw_target(k: int, item: String) -> float:
 	var c: Dictionary = targets[k]
 	var r: Rect2 = c.rect
@@ -435,12 +440,33 @@ func _draw_target(k: int, item: String) -> float:
 	draw_rect(r, Riso.mix(Riso.PAPER, Riso.INK, 0.12 if over else 0.0) if item == "" or live else Riso.alpha(Riso.PAPER, 0.4))
 	draw_rect(r, Riso.INK if live else Riso.alpha(Riso.INK, 0.4), false, 3.0 if live else 1.5)
 	var ink := Riso.INK if item == "" or live else Riso.alpha(Riso.INK, 0.45)
-	Riso.draw_label(self, String(c.name), r.position + Vector2(8, 18), 13, ink)
-	Riso.draw_label(self, "%d/%d" % [int(c.hp), int(c.max_hp)], r.position + Vector2(8, 40), 13, ink)
+	var a := 1.0 if item == "" or live else 0.45
+	var left := 8.0
+	var face: Texture2D = c.get("face")
+	if face != null:
+		_draw_face(face, Rect2(r.position + Vector2(6, 6), Vector2(r.size.y - 12, r.size.y - 12)), a)
+		left = r.size.y
+	else:
+		Riso.draw_label(self, String(c.name), r.position + Vector2(left, 14), 12, ink)
+	var bar_y := (r.size.y - 16.0) * 0.5 - (8.0 if item != "" else 0.0)  # mid-card; up a little for the +HP line
+	var bar := Rect2(r.position + Vector2(left, bar_y if face != null else 22.0), Vector2(r.size.x - left - 8, 16))
+	var hp := clampf(float(c.hp) / maxf(1.0, float(c.max_hp)), 0.0, 1.0)
+	draw_rect(bar, Riso.alpha(Riso.INK, 0.75 * a))
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * hp, bar.size.y)), Riso.alpha(VictoryUi.HP_RED, a))
+	Riso.draw_label(self, "%d/%d" % [int(c.hp), int(c.max_hp)], Vector2(bar.position.x, bar.get_center().y), 11,
+		Riso.alpha(Riso.CREAM, a), HORIZONTAL_ALIGNMENT_CENTER, bar.size.x)
 	if item != "":
-		Riso.draw_label(self, Txt.f("UI_GAIN_HP", g) if g > 0 else Txt.t("UI_FULL_HP"), r.position + Vector2(r.size.x - 62, 40), 13,
-			Riso.mix(Riso.INK, Color(0.2, 0.55, 0.25), 0.8) if g > 0 else ink)
+		Riso.draw_label(self, Txt.f("UI_GAIN_HP", g) if g > 0 else Txt.t("UI_FULL_HP"), Vector2(bar.position.x, r.end.y - 14), 13,
+			Riso.mix(Riso.INK, Color(0.2, 0.55, 0.25), 0.8) if g > 0 else ink, HORIZONTAL_ALIGNMENT_CENTER, bar.size.x)
 	return r.end.y
+
+
+## A face filling a square, cropped not stretched, with a thin rule round it.
+func _draw_face(tex: Texture2D, r: Rect2, a := 1.0) -> void:
+	var ts := tex.get_size()
+	var side := minf(ts.x, ts.y)
+	draw_texture_rect_region(tex, r, Rect2((ts - Vector2(side, side)) * Vector2(0.5, 0.0), Vector2(side, side)), Color(1, 1, 1, a))
+	draw_rect(r, Riso.alpha(label_color, 0.8 * a), false, 1.5)
 
 
 func _dashed_rect(r: Rect2, col: Color) -> void:

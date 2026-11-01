@@ -1,17 +1,17 @@
-id,kind,name_key,effect,note
-sharp_eyes,blessing,BOON_SHARP_EYES,attack:+2,+10% crit (an attack bonus is crit chance)
-strong_arms,blessing,BOON_STRONG_ARMS,damage:+1,
-tough_skin,blessing,BOON_TOUGH_SKIN,defense:+1,+1 armor
-light_feet,blessing,BOON_LIGHT_FEET,move:+1,
-hearty,blessing,BOON_HEARTY,hp:+4,
-hot_blood,blessing,BOON_HOT_BLOOD,rage_per_hit:+1,rage builds faster
-lucky_strike,blessing,BOON_LUCKY_STRIKE,crit_heal:+1,a crit heals the striker 1
-clear_mind,blessing,BOON_CLEAR_MIND,start_res:+2,start fights with 2 more mana or rage or charges
-small_belly,blessing,BOON_SMALL_BELLY,food:-1,each meal on the road costs 1 food less
-star_touch,blessing,BOON_STAR_TOUCH,magic_power:+1,
-spoiled_food,setback,BOON_SPOILED_FOOD,food:+1,food spoils faster: each meal costs 1 more
-sore_back,setback,BOON_SORE_BACK,defense:-1,-1 armor
-foggy_head,setback,BOON_FOGGY_HEAD,start_res:-2,start fights with less mana or rage or charges
-weak_grip,setback,BOON_WEAK_GRIP,damage:-1,
-limp,setback,BOON_LIMP,move:-1,
-bad_luck,setback,BOON_BAD_LUCK,attack:-2,-10% crit
+id,kind,name_key,effect,note,icon,short
+sharp_eyes,blessing,BOON_SHARP_EYES,attack:+2,+10% crit (an attack bonus is crit chance),focus,+10%
+strong_arms,blessing,BOON_STRONG_ARMS,damage:+1,,strength,+1
+tough_skin,blessing,BOON_TOUGH_SKIN,defense:+1,+1 armor,shield,+1
+light_feet,blessing,BOON_LIGHT_FEET,move:+1,,dash,+1
+hearty,blessing,BOON_HEARTY,hp:+4,,potion,+4
+hot_blood,blessing,BOON_HOT_BLOOD,rage_per_hit:+1,rage builds faster,fire,+1
+lucky_strike,blessing,BOON_LUCKY_STRIKE,crit_heal:+1,a crit heals the striker 1,heal,+1
+clear_mind,blessing,BOON_CLEAR_MIND,start_res:+2,start fights with 2 more mana or rage or charges,light,+2
+small_belly,blessing,BOON_SMALL_BELLY,food:-1,each meal on the road costs 1 food less,meat,-1
+star_touch,blessing,BOON_STAR_TOUCH,magic_power:+1,,rare,+1
+spoiled_food,setback,BOON_SPOILED_FOOD,food:+1,food spoils faster: each meal costs 1 more,meat,+1
+sore_back,setback,BOON_SORE_BACK,defense:-1,-1 armor,shield,-1
+foggy_head,setback,BOON_FOGGY_HEAD,start_res:-2,start fights with less mana or rage or charges,light,-2
+weak_grip,setback,BOON_WEAK_GRIP,damage:-1,,strength,-1
+limp,setback,BOON_LIMP,move:-1,,dash,-1
+bad_luck,setback,BOON_BAD_LUCK,attack:-2,-10% crit,focus,-10%

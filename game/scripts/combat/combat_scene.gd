@@ -158,7 +158,7 @@ func _loot_panel(items: String, coins: int, won: bool) -> void:
 		for it in grid.items:
 			Game.run.add_item(String(it.id), int(it.get("n", 1)))  # the pack, then FOUND, then lost
 		panel.queue_free()
-		_level_ups(0, won), Txt.t("UI_CONTINUE"), Txt.f("UI_LOOT_COINS", coins) if coins > 0 else "")
+		_level_ups(0, won), Txt.t("UI_CONTINUE"), coins)
 	_place_panel(panel)
 
 

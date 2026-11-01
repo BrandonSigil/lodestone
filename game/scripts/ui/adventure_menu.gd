@@ -39,13 +39,14 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 	var chips := HFlowContainer.new()
 	chips.add_theme_constant_override("h_separation", 8)
 	chips.add_theme_constant_override("v_separation", 6)
-	for id in Game.run.boons:
+	for id in Game.run.boons:  # [USER] 2026-11-01 fewer words: the stat's icon and the change, the whole line on hover
 		var b: Dictionary = Db.boons[id]
-		chips.add_child(_chip(Txt.f("UI_LS_BLESSING" if b.kind == "blessing" else "UI_LS_SETBACK", Txt.t(String(b.name_key))),
-			Color(0.62, 0.9, 0.5) if b.kind == "blessing" else Color(1.0, 0.55, 0.45)))
-	if not Game.run.meal.is_empty():
-		chips.add_child(_chip(Txt.f("UI_LS_MEAL", [Txt.t(String(Db.recipes.get(String(Game.run.meal.recipe), {}).get("name_key", ""))),
-			int(Game.run.meal.fights)]), UiTheme.GOLD))
+		chips.add_child(_chip(String(b.get("short", "")), Color(0.62, 0.9, 0.5) if b.kind == "blessing" else Color(1.0, 0.55, 0.45),
+			String(b.get("icon", "")), Txt.f("UI_LS_BLESSING" if b.kind == "blessing" else "UI_LS_SETBACK", Txt.t(String(b.name_key)))))
+	if not Game.run.meal.is_empty():  # the meal's picture and the fights it still lasts
+		var rec: Dictionary = Db.recipes.get(String(Game.run.meal.recipe), {})
+		chips.add_child(_chip(str(int(Game.run.meal.fights)), UiTheme.GOLD, String(rec.get("meal", "")),
+			Txt.f("UI_LS_MEAL", [Txt.t(String(rec.get("name_key", ""))), int(Game.run.meal.fights)])))
 	if chips.get_child_count() > 0:
 		box.add_child(chips)
 	_bonds(box, not home)
@@ -218,14 +219,25 @@ static func _face(id: String, tint: Color, px: float) -> Control:
 	return p
 
 
-static func _chip(text: String, col: Color) -> Control:
+## A chip: an icon and a short word or number in `col`, the full line on hover; the full line itself when the icon is
+## missing.
+static func _chip(text: String, col: Color, icon := "", tip := "") -> Control:
 	var p := PanelContainer.new()
 	p.theme_type_variation = &"InfoPanel"
+	p.tooltip_text = tip
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 4)
+	h.mouse_filter = Control.MOUSE_FILTER_PASS
+	p.add_child(h)
+	var has_icon := ActionInfo.icon(icon) != null
+	if has_icon:
+		h.add_child(_icon(icon, 24))
 	var l := Label.new()
-	l.text = text
-	l.add_theme_font_size_override("font_size", 13)
+	l.text = text if has_icon or tip == "" else tip
+	l.add_theme_font_size_override("font_size", 14 if has_icon else 13)
 	l.add_theme_color_override("font_color", col)
-	p.add_child(l)
+	l.mouse_filter = Control.MOUSE_FILTER_PASS
+	h.add_child(l)
 	return p
 
 
@@ -291,18 +303,17 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	grid.setup_bag(run.pack, Db.items, run.throw_away, cell)
 	# PACK: the pack, the saddlebag beside it, the bin a bar under them
 	var top := Vector2(pad, pad + PackView.WINDOW_TITLE)
-	grid.move_area(0, top + Vector2(0, PackView.LABEL_H))
-	var right := top.x + run.pack.cols * cell
-	var bottom := top.y + PackView.LABEL_H + run.pack.rows * cell
 	var courier := run.courier()
 	var bag: InventoryGrid = run.open_courier_bag()  # the dog's 2 x 2 saddlebag, always here while he is along
+	var head := PackView.FACE_ROW if bag != null else 0.0  # his picture over it, no words ([USER] 2026-11-01)
+	grid.move_area(0, top + Vector2(0, head))
+	var right := top.x + run.pack.cols * cell
+	var bottom := top.y + head + run.pack.rows * cell
 	if bag != null:
 		var who: CharacterDef = courier.def
-		var face_path := "res://art/source/portraits/%s.png" % String(who.id)
-		grid.add_area(bag, Vector2(right + 22.0, top.y), Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)),
-			load(face_path) if ResourceLoader.exists(face_path) else null)
-		right += 22.0 + maxf(bag.cols * cell, 112.0)
-		bottom = maxf(bottom, top.y + PackView.LABEL_H + bag.rows * cell)
+		grid.add_area(bag, Vector2(right + 22.0, top.y), Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)), ContainerUi.face_of(String(who.id)))
+		right += 22.0 + bag.cols * cell
+		bottom = maxf(bottom, top.y + head + bag.rows * cell)
 	grid.place_bin(Rect2(Vector2(top.x, bottom + 14.0), Vector2(right - top.x, 34.0)), "UI_THROW", "UI_BOUND_THROW")
 	bottom += 14.0 + 34.0
 	grid.flash_at = Vector2(top.x, bottom + 14.0)  # "no room", "who eats?"
@@ -315,14 +326,17 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	var belt_w := cell * RunState.BELT_COLS + 24.0
 	var per_row := maxi(1, int(W / belt_w))
 	var y := top.y
-	for k in run.members.size():
+	for k in run.members.size():  # each belt under its owner's face; the name only where there is no face yet
 		var m: Dictionary = run.members[k]
-		var at := Vector2(cx + (k % per_row) * belt_w, y + floorf(float(k) / per_row) * (cell + PackView.LABEL_H + 10.0))
-		grid.add_area(m.belt, at, _short(Txt.t((m.def as CharacterDef).name_key)))  # the name alone: the window says PARTY, the grid is their belt
-	y += ceilf(float(run.members.size()) / per_row) * (cell + PackView.LABEL_H + 10.0)
+		var face := ContainerUi.face_of(String((m.def as CharacterDef).id))
+		var row_h := cell + PackView.FACE_ROW + 10.0
+		var at := Vector2(cx + (k % per_row) * belt_w, y + floorf(float(k) / per_row) * row_h)
+		grid.add_area(m.belt, at, _short(Txt.t((m.def as CharacterDef).name_key)), face)
+	y += ceilf(float(run.members.size()) / per_row) * (cell + PackView.FACE_ROW + 10.0)
 	var cards := []
 	for m in run.members:
-		cards.append({"name": _short(Txt.t((m.def as CharacterDef).name_key)), "hp": int(m.hp), "max_hp": run.max_hp(m)})
+		cards.append({"name": _short(Txt.t((m.def as CharacterDef).name_key)), "hp": int(m.hp), "max_hp": run.max_hp(m),
+			"face": ContainerUi.face_of(String((m.def as CharacterDef).id))})
 	var per_card := PackView.TARGET_SIZE.x + 10.0
 	var card_rows := ceili(cards.size() * per_card / (W + 10.0))
 	var per_card_row := maxi(1, int((W + 10.0) / per_card))
@@ -341,11 +355,11 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	col.position = Vector2(cx, y)
 	grid.add_child(col)
 	var hurt := TravelRules.most_hurt(run) != {}
-	_use_row(col, Txt.f("UI_PACK_FOOD", run.food), Txt.t("UI_EAT"), run.food > 0 and hurt, func() -> void:
+	_use_row(col, "meat", run.food, Txt.t("UI_PACK_FOOD_TIP"), Txt.t("UI_EAT"), run.food > 0 and hurt, func() -> void:
 		grid.choosing = RunState.FOOD_ITEM
 		grid.flash = "UI_WHO_EAT"
 		grid.queue_redraw())
-	_use_row(col, Txt.f("UI_PACK_POTION", run.medicine), Txt.t("UI_DRINK"), run.medicine > 0 and hurt, func() -> void:
+	_use_row(col, "potion", run.medicine, Txt.t("UI_PACK_POTION_TIP"), Txt.t("UI_DRINK"), run.medicine > 0 and hurt, func() -> void:
 		grid.choosing = RunState.MED_ITEM
 		grid.flash = "UI_WHO_DRINK"
 		grid.queue_redraw())
@@ -353,17 +367,31 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 		var short := run.members.any(func(m: Dictionary) -> bool:
 			var r := Game.member_res(m)
 			return r.kind != "" and int(r.res) < int(r.res_max))
-		_use_row(col, Txt.f("UI_PACK_TONIC", run.item_count("tonic")), Txt.t("UI_DRINK"), short, func() -> void:
+		_use_row(col, "tonic", run.item_count("tonic"), Txt.t("ITEM_TONIC"), Txt.t("UI_DRINK"), short, func() -> void:
 			if Game.tonic_effect():
 				run.add_item("tonic", -1)
 			changed.call())
-	_label(col, Txt.f("UI_PACK_GOLD", run.gold) + "     " + Txt.f("UI_SLOTS_USED", [run.pack.used_cells(), run.pack.capacity()]), 14)
-	var store: PackedStringArray = []
-	for id: String in Game.meta.materials:
-		store.append("%s %d" % [Txt.t(String(Db.items[id].name_key)), int(Game.meta.materials[id])])
-	if not store.is_empty():
-		_label(col, Txt.f("UI_VILLAGE_STORE", "  ".join(store)), 13)
-	_label(col, Txt.f("UI_PACK_WEAPON", Txt.t(String(Db.weapons.get(Game.weapon_id(), {}).get("name_key", "")))), 13)
+	var counts := HFlowContainer.new()  # [USER] 2026-11-01 "We've got icons! We should use em!": a picture and a number
+	counts.add_theme_constant_override("h_separation", 14)
+	counts.add_theme_constant_override("v_separation", 4)
+	counts.custom_minimum_size.x = W
+	col.add_child(counts)
+	counts.add_child(_count("gold", str(run.gold), Txt.t("UI_PACK_GOLD_TIP")))
+	counts.add_child(_count("backpack", "%d/%d" % [run.pack.used_cells(), run.pack.capacity()], Txt.t("UI_PACK_SLOTS_TIP")))
+	var weapon := Db.weapons.get(Game.weapon_id(), {}) as Dictionary
+	if not weapon.is_empty() and Game.weapon_id() != "none":  # bare hands need no line
+		counts.add_child(_count(String(weapon.get("icon", "")), Txt.t(String(weapon.name_key)), Txt.t("UI_PACK_WEAPON_TIP")))
+	if not Game.meta.materials.is_empty():  # the village pile: each material's icon and count
+		var pile := HFlowContainer.new()
+		pile.add_theme_constant_override("h_separation", 10)
+		pile.add_theme_constant_override("v_separation", 4)
+		pile.custom_minimum_size.x = W
+		pile.tooltip_text = Txt.t("UI_VILLAGE_STORE_TIP")
+		pile.mouse_filter = Control.MOUSE_FILTER_PASS
+		col.add_child(pile)
+		pile.add_child(_icon("crate", 22))
+		for id: String in Game.meta.materials:
+			pile.add_child(_count(id, str(int(Game.meta.materials[id])), Txt.t(String(Db.items[id].name_key))))
 	if bag != null and not bag.items.is_empty():  # he can take what he carries home at any time, and rejoins when the party is home
 		_button(col, Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
 			run.send_home(courier)
@@ -410,7 +438,8 @@ static func _pack_full(box: VBoxContainer, changed: Callable, close: Callable) -
 		run.leave_found()
 		Game.save_adventure()
 		close.call()])
-	var made := ContainerUi.windows(view, run.found, Txt.t("UI_FOUND"), buttons, false, Txt.t("UI_PACK_FULL"))
+	var made := ContainerUi.windows(view, run.found, Txt.t("UI_FOUND"), buttons, false)
+	view.tooltip_text = Txt.t("UI_PACK_FULL")  # [USER] 2026-11-01 fewer words: the window's title says it, the line waits on hover
 	if bag != null:
 		made[0].disabled = bag.items.is_empty()
 	view.changed.connect(func() -> void:
@@ -541,6 +570,23 @@ static func _label(box: BoxContainer, text: String, font_size: int) -> void:
 	box.add_child(l)
 
 
+## A small picture and a number (or a word), with what it is on hover; the word itself when there is no picture yet.
+static func _count(icon: String, text: String, tip: String) -> Control:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 4)
+	h.tooltip_text = tip
+	h.mouse_filter = Control.MOUSE_FILTER_PASS
+	var tex := ActionInfo.icon(icon)
+	if tex != null:
+		h.add_child(_icon(icon, 24))
+	var l := Label.new()
+	l.text = text if tex != null else "%s %s" % [tip, text]
+	l.add_theme_font_size_override("font_size", 14)
+	l.mouse_filter = Control.MOUSE_FILTER_PASS
+	h.add_child(l)
+	return h
+
+
 static func _button(box: BoxContainer, text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
@@ -550,13 +596,12 @@ static func _button(box: BoxContainer, text: String, cb: Callable) -> Button:
 	return b
 
 
-static func _use_row(box: BoxContainer, text: String, verb: String, enabled: bool, cb: Callable) -> void:
+## A thing's picture and how many, its name on hover; the button that uses one at the end of the row.
+static func _use_row(box: BoxContainer, icon: String, n: int, tip: String, verb: String, enabled: bool, cb: Callable) -> void:
 	var row := HBoxContainer.new()
-	var l := Label.new()
-	l.text = text
-	l.custom_minimum_size = Vector2(W - 110, 0)
-	l.add_theme_font_size_override("font_size", 14)
-	row.add_child(l)
+	var c := _count(icon, str(n), tip)
+	c.custom_minimum_size = Vector2(W - 110, 0)
+	row.add_child(c)
 	var b := Button.new()
 	b.text = verb
 	b.custom_minimum_size = Vector2(100, 28)

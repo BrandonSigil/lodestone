@@ -56,8 +56,8 @@ static func split_loot(loot: String) -> Dictionary:
 ## Builds the screen in `box` as two windows side by side ([USER] 2026-11-01, like BG3's bags or WoW's two windows): the
 ## inventory (the pack, the dog's saddlebag right beside it) and the container's own window with TAKE ALL and CLOSE. Belts and
 ## the party live on the full inventory page (I). `changed` runs after every move (the host saves and redraws its HUD),
-## `close` shuts the box. `note` is a line under the container's grid (coins taken).
-static func fill(box: VBoxContainer, container: InventoryGrid, title: String, changed: Callable, close: Callable, close_text := "", note := "") -> PackView:
+## `close` shuts the box. `coins`: the gold it gave, a gold icon and +N under the container's grid.
+static func fill(box: VBoxContainer, container: InventoryGrid, title: String, changed: Callable, close: Callable, close_text := "", coins := 0) -> PackView:
 	var view := PackView.new()
 	view.setup_bag(Game.run.pack, Db.items, Callable(), CELL)
 	var buttons := [[Txt.t("UI_BOX_TAKE_ALL"), func() -> void:
@@ -65,7 +65,7 @@ static func fill(box: VBoxContainer, container: InventoryGrid, title: String, ch
 			view.flash = "UI_BOX_FULL"
 			view.queue_redraw()],
 		[close_text if close_text != "" else Txt.t("UI_BOX_CLOSE"), close]]
-	windows(view, container, title, buttons, true, note)
+	windows(view, container, title, buttons, true, "+%d" % coins if coins > 0 else "", ActionInfo.icon("gold"))
 	view.changed.connect(changed)
 	box.add_child(view)
 	bare(box, view)
@@ -81,20 +81,21 @@ const BUTTON_H := 40.0
 ## under them if the view has one) and `other` (a container, the loot, or FOUND) in its own window to the right, its
 ## buttons ([text, callable] pairs) under its grid. `other` becomes area 1 (a click there sends to the pack), the saddlebag
 ## area 2. pack_to_other: a click on something in the pack sends it over.
-static func windows(view: PackView, other: InventoryGrid, other_title: String, buttons: Array, pack_to_other: bool, note := "") -> Array[Button]:
+static func windows(view: PackView, other: InventoryGrid, other_title: String, buttons: Array, pack_to_other: bool, note := "", note_icon: Texture2D = null) -> Array[Button]:
 	var run := Game.run
 	var cell := view.cell
 	var pad := PackView.WINDOW_PAD
 	var top := Vector2(pad, pad + PackView.WINDOW_TITLE)
 	var right := top.x + run.pack.cols * cell
-	var bottom := top.y + PackView.LABEL_H + run.pack.rows * cell
-	view.move_area(0, top + Vector2(0, PackView.LABEL_H))  # level with the saddlebag's grid, under its name
-	view.areas[0]["click_to"] = 1 if pack_to_other else -1
 	var saddle: InventoryGrid = run.open_courier_bag()
+	var head := PackView.FACE_ROW if saddle != null else 0.0  # the dog's picture over his saddlebag, no words
+	var bottom := top.y + head + run.pack.rows * cell
+	view.move_area(0, top + Vector2(0, head))  # level with the saddlebag's grid, under his picture
+	view.areas[0]["click_to"] = 1 if pack_to_other else -1
 	var saddle_at := Vector2(right + 22.0, top.y)
 	if saddle != null:
-		right = saddle_at.x + maxf(saddle.cols * cell, 112.0)
-		bottom = maxf(bottom, top.y + PackView.LABEL_H + saddle.rows * cell)
+		right = saddle_at.x + saddle.cols * cell
+		bottom = maxf(bottom, top.y + head + saddle.rows * cell)
 	if view.bin.is_valid():  # THROW AWAY: a thin bar under the grids
 		view.place_bin(Rect2(Vector2(top.x, bottom + 14.0), Vector2(right - top.x, 32.0)), "UI_THROW", "UI_BOUND_THROW")
 		bottom += 46.0
@@ -104,14 +105,13 @@ static func windows(view: PackView, other: InventoryGrid, other_title: String, b
 	# the other window
 	var ox := left_w + GAP
 	var ow := maxf(other.cols * cell, 250.0)
-	view.add_area(other, Vector2(ox + pad, top.y + PackView.LABEL_H), "", null, 0)
+	view.add_area(other, Vector2(ox + pad, top.y + head), "", null, 0)
 	if saddle != null:
 		var who: CharacterDef = run.courier().def
-		var face_path := "res://art/source/portraits/%s.png" % String(who.id)
-		view.add_area(saddle, saddle_at, Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)), load(face_path) if ResourceLoader.exists(face_path) else null, 0)
-	var y := top.y + PackView.LABEL_H + other.rows * cell + 12.0
+		view.add_area(saddle, saddle_at, Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)), face_of(String(who.id)), 0)
+	var y := top.y + head + other.rows * cell + 12.0
 	if note != "":
-		var lines := view.add_note(note, Vector2(ox + pad, y), ow)
+		var lines := view.add_note(note, Vector2(ox + pad, y), ow, note_icon)
 		y += PackView.NOTE_LINE * lines + 8.0
 	var made: Array[Button] = []
 	for b in buttons:
@@ -154,3 +154,9 @@ static func _centre_later(panel: Control) -> void:
 		return
 	panel.reset_size()
 	panel.position.x = (panel.get_viewport_rect().size.x - panel.size.x * panel.scale.x) * 0.5
+
+
+## A character's portrait (art/source/portraits/<id>.png), or null before Brandon has drawn one.
+static func face_of(id: String) -> Texture2D:
+	var pf := "res://art/source/portraits/%s.png" % id
+	return load(pf) if ResourceLoader.exists(pf) else null

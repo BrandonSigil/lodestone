@@ -621,8 +621,9 @@ func _refresh_side() -> void:
 		var then: Array = Game.travel.get("then", [])
 		var goal := String(then.back()) if not then.is_empty() else String(Game.travel.to)
 		_info.text = Txt.f("UI_OW_WALKING", [Txt.t(_node(goal).name_key), int(100.0 * float(Game.travel.t) / float(lp.seconds))])
-	else:
-		_info.text = Txt.f("UI_OW_AT", Txt.t(_node(String(Game.travel.get("at", "town"))).name_key))
+	else:  # [USER] 2026-11-01 fewer words: the map marks where the party stands and GO IN names it, so no line here
+		_info.text = ""
+	_info.visible = _info.text != ""
 	_log_label.text = "\n".join(Game.run.lines.slice(-8))
 
 

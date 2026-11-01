@@ -876,16 +876,15 @@ func _spring_trap(t: Dictionary, state: Dictionary) -> void:
 
 func _box_open(t: Dictionary, state: Dictionary) -> void:
 	Game.set_flag(_looted_flag(t))  # opened for good: left things stay while the party is on this map, then they are gone
-	var note := ""
-	if int(state.get("coins", 0)) > 0:
-		note = Txt.f("UI_BOX_COINS", int(state.coins))
-		Game.run.gold += int(state.coins)
+	var coins := int(state.get("coins", 0))
+	if coins > 0:
+		Game.run.gold += coins
 		state["coins"] = 0
 	var box := _new_dialog("")
 	ContainerUi.fill(box, state.grid, Txt.t("CONTAINER_" + String(t.type).to_upper()), func() -> void:
 		Game.save_adventure()
 		_refresh_hud()
-		_remember(), _close_box, "", note)
+		_remember(), _close_box, "", coins)
 
 
 ## Lasting map rewards ([USER] omr-10; one-more-run step 6), taken for good. A thing's event says what it holds:
@@ -1517,7 +1516,7 @@ func _loot_flow(items: String, coins: int) -> void:
 		_refresh_hud(), func() -> void:
 		if not grid.items.is_empty():
 			_drop_pile(grid)
-		_level_up_flow(0), Txt.t("UI_CONTINUE"), Txt.f("UI_LOOT_COINS", coins) if coins > 0 else "")
+		_level_up_flow(0), Txt.t("UI_CONTINUE"), coins)
 
 
 var _pile_no := 0
