@@ -108,7 +108,7 @@ static func fill(box: VBoxContainer, container: InventoryGrid, title: String, ch
 	if close_text != "":
 		buttons.append([close_text, close])
 	var note := str(waiting) if waiting > 0 else ("+%d" % coins if coins > 0 else "")
-	windows(view, container, title, buttons, true, note, ActionInfo.icon("gold"), close if close_text == "" else Callable())
+	windows(view, container, title, buttons, true, note, ActionInfo.icon("gold"), close)  # an X on every frame, OK or not
 	if waiting > 0:  # the box's own coin line (not the party's gold line under the pack, which windows() adds after it)
 		for n: Dictionary in view.notes:
 			if n != view.gold_note and String(n.text) == note:
@@ -162,7 +162,9 @@ static func windows(view: PackView, other: InventoryGrid, other_title: String, b
 	# its button need beyond that, and as tall as its own grid, note and button, not the pack's height
 	var ox := left_w + GAP
 	var title_w := Riso.font().get_string_size(other_title, HORIZONTAL_ALIGNMENT_LEFT, -1, 19).x + 24.0
-	var ow := maxf(other.cols * cell, maxf(title_w + (X_SIZE if x_close.is_valid() else 0.0), MIN_BUTTON_W - pad))
+	var ow := maxf(other.cols * cell, maxf(title_w + 32.0 + (X_SIZE if x_close.is_valid() else 0.0), MIN_BUTTON_W - pad))
+	for b in buttons:  # as wide as its widest button's words, so none runs past the frame
+		ow = maxf(ow, Riso.font().get_string_size(String(b[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17).x + 36.0)
 	view.add_area(other, Vector2(ox + pad, top.y + head), "", null, 0)
 	if saddle != null:
 		var who: CharacterDef = run.courier().def

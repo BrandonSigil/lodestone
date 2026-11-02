@@ -474,8 +474,9 @@ func _draw() -> void:
 		item = String((areas[held_area].bag as InventoryGrid).items[held].id)
 	for k in targets.size():
 		bottom = maxf(bottom, _draw_target(k, item))
+	var prompt := flash.begins_with("UI_WHO_")  # "who eats?" asks, it isn't a refusal: cream, not red
 	if flash != "" and flash_at.x >= 0.0:  # in windows the note has its own line, on the green
-		Riso.draw_label(self, Txt.t(flash), flash_at, 14, Riso.mix(Riso.RED, Riso.CREAM, 0.45))
+		Riso.draw_label(self, Txt.t(flash), flash_at, 14, MenuKit.TEXT if prompt else Riso.mix(Riso.RED, Riso.CREAM, 0.45))
 	elif flash != "":
 		Riso.draw_label(self, Txt.t(flash), Vector2(0, bottom + 16), 14, Riso.RED)
 	if held != -1:
@@ -532,7 +533,8 @@ func _draw_window(r: Rect2, title: String) -> void:
 		draw_rect(r, Riso.INK)
 	if title == "":
 		return
-	var plate := Rect2(r.position + Vector2(WINDOW_PAD - 4.0, 26.0), Vector2(r.size.x - WINDOW_PAD * 2.0 + 8.0, 34.0))
+	var inset := WINDOW_PAD + 16.0  # the plate stops short of the round X on the top right corner
+	var plate := Rect2(r.position + Vector2(inset, 26.0), Vector2(r.size.x - inset * 2.0, 34.0))
 	var psb := get_theme_stylebox("panel", "TitlePlate")
 	if psb != null:
 		draw_style_box(psb, plate)
@@ -559,18 +561,19 @@ func _draw_target(k: int, item: String) -> float:
 	if face != null:
 		_draw_face(face, Rect2(r.position + Vector2(6, 6), Vector2(r.size.y - 12, r.size.y - 12)), a)
 		left = r.size.y
-	else:
-		Riso.draw_label(self, String(c.name), r.position + Vector2(left, 14), 12, ink)
-	var bar_y := (r.size.y - 16.0) * 0.5 - (8.0 if item != "" else 0.0)  # mid-card; up a little for the +HP line
-	var bar := Rect2(r.position + Vector2(left, bar_y if face != null else 22.0), Vector2(r.size.x - left - 8, 16))
+	# the name and HP number on one line, a thin HP bar under them (the kit's bars), what one would heal under that
+	var w := r.size.x - left - 10.0
+	var f := get_theme_default_font()
+	draw_string(f, r.position + Vector2(left, 20), String(c.name), HORIZONTAL_ALIGNMENT_LEFT, w, 13, ink)
+	draw_string(f, r.position + Vector2(left, 20), "%d/%d" % [int(c.hp), int(c.max_hp)], HORIZONTAL_ALIGNMENT_RIGHT, w, 12, Color(ink, 0.85 * a))
+	var bar := Rect2(r.position + Vector2(left, 28), Vector2(w, 7))
 	var hp := clampf(float(c.hp) / maxf(1.0, float(c.max_hp)), 0.0, 1.0)
-	draw_rect(bar, Riso.alpha(Riso.INK, 0.75 * a))
-	draw_rect(Rect2(bar.position, Vector2(bar.size.x * hp, bar.size.y)), Riso.alpha(VictoryUi.HP_RED, a))
-	Riso.draw_label(self, "%d/%d" % [int(c.hp), int(c.max_hp)], Vector2(bar.position.x, bar.get_center().y), 11,
-		Riso.alpha(Riso.CREAM, a), HORIZONTAL_ALIGNMENT_CENTER, bar.size.x)
+	draw_style_box(MenuKit.flat(Color(MenuKit.INSET, 0.9 * a), Color(MenuKit.RIM, 0.5 * a), 1.0, 4, 0.0, 0.0), bar)
+	if hp > 0.0:
+		draw_style_box(MenuKit.flat(Color(VictoryUi.HP_RED, a), Color(0, 0, 0, 0), 0.0, 4, 0.0, 0.0), Rect2(bar.position, Vector2(bar.size.x * hp, bar.size.y)))
 	if item != "":
-		Riso.draw_label(self, Txt.f("UI_GAIN_HP", g) if g > 0 else Txt.t("UI_FULL_HP"), Vector2(bar.position.x, r.end.y - 14), 13,
-			VictoryUi.UP_GREEN if g > 0 else ink, HORIZONTAL_ALIGNMENT_CENTER, bar.size.x)
+		draw_string(f, r.position + Vector2(left, r.size.y - 8), Txt.f("UI_GAIN_HP", g) if g > 0 else Txt.t("UI_FULL_HP"),
+			HORIZONTAL_ALIGNMENT_LEFT, w, 12, VictoryUi.UP_GREEN if g > 0 else ink)
 	return r.end.y
 
 

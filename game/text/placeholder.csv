@@ -655,8 +655,8 @@ UI_SHEET_COST,COST %d
 OPT_FISH,FISH
 UI_FISH_GOT,CAUGHT! +%d MEAT.
 UI_FISH_NONE,NO BITE.
-UI_WHO_EAT,WHO EATS? Click a friend. ESC = cancel.
-UI_WHO_DRINK,WHO DRINKS? Click a friend. ESC = cancel.
+UI_WHO_EAT,Who eats? Click their card (Esc cancels).
+UI_WHO_DRINK,Who drinks? Click their card (Esc cancels).
 UI_GAIN_HP,+%d HP
 UI_FULL_HP,FULL
 UI_NO_GAIN,ALREADY FULL.
@@ -1117,7 +1117,7 @@ UI_TAVERN_SIT,"Eat here: %s for %s (%d gold, +%d morale)"
 UI_TAVERN_SIT_HEAD,Sit down and eat. A dish eaten here gives double morale.
 UI_CAST,CAST
 LOG_ROAD_HEAL,%s heal %s. +%d HP
-UI_WHO_HEAL,WHO IS HEALED? Click a friend. ESC = cancel.
+UI_WHO_HEAL,Who gets healed? Click their card (Esc cancels).
 TAG_BRANCH_ARMOR,BARK SKIN
 UI_RESCUE_JOIN,%s is free and joins your party.
 UI_RESCUE_HOME,"%s is free, but the party is full. They head home."

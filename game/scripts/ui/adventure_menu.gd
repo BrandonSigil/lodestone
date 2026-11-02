@@ -6,6 +6,8 @@ extends RefCounted
 
 const W := 460.0
 const PACK_CELL := 56.0
+const USE_W := 150.0  ## a use row's chip and heal line, before its EAT / DRINK / CAST button
+const PARTY_CARD := Vector2(190, 58)  ## a member's card in the pack's PARTY window, their belt beside it
 
 
 static var _focus := ""  ## the member whose pick or branch shows under the Lodestone menu's cards
@@ -322,36 +324,28 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	bottom += 30.0
 	grid.tooltip_text = Txt.t("UI_PACK_HELP_RUN")  # [USER] 2026-11-01 less text: the how-to waits on hover
 	var left_w := right + pad
-	# PARTY: the belts in a row, one per member (what each can use in a fight), the cards under them, then the rest
+	# PARTY: a row per member, their card (face, name, HP) with their belt beside it (what each can use in a fight); drop
+	# food or a potion on a card, or EAT / DRINK then click one. Then the rest.
 	var ox := left_w + ContainerUi.GAP
 	var cx := ox + pad
-	var belt_w := cell * RunState.BELT_COLS + 24.0
-	var per_row := maxi(1, int(W / belt_w))
 	var y := top.y
-	for k in run.members.size():  # each belt under its owner's face; the name only where there is no face yet
-		var m: Dictionary = run.members[k]
-		var face := ContainerUi.face_of(String((m.def as CharacterDef).id))
-		var row_h := cell + PackView.FACE_ROW + 10.0
-		var at := Vector2(cx + (k % per_row) * belt_w, y + floorf(float(k) / per_row) * row_h)
-		grid.add_area(m.belt, at, _short(Txt.t((m.def as CharacterDef).name_key)), face)
-	y += ceilf(float(run.members.size()) / per_row) * (cell + PackView.FACE_ROW + 10.0)
 	var cards := []
-	for m in run.members:
+	var row_h := maxf(PARTY_CARD.y, cell) + 10.0
+	for k in run.members.size():
+		var m: Dictionary = run.members[k]
 		cards.append({"name": _short(Txt.t((m.def as CharacterDef).name_key)), "hp": int(m.hp), "max_hp": run.max_hp(m),
 			"face": ContainerUi.face_of(String((m.def as CharacterDef).id))})
-	var per_card := PackView.TARGET_SIZE.x + 10.0
-	var card_rows := ceili(cards.size() * per_card / (W + 10.0))
-	var per_card_row := maxi(1, int((W + 10.0) / per_card))
-	grid.add_targets(cards, Vector2(cx, y + 4.0))
-	for k in grid.targets.size():  # wrap the cards to the window
-		grid.targets[k].rect = Rect2(Vector2(cx + (k % per_card_row) * per_card, y + 4.0 + floorf(float(k) / per_card_row) * (PackView.TARGET_SIZE.y + 8.0)), PackView.TARGET_SIZE)
+		grid.add_area(m.belt, Vector2(cx + PARTY_CARD.x + 14.0, y + k * row_h + (PARTY_CARD.y - cell) * 0.5), "", null)
+	grid.add_targets(cards, Vector2(cx, y))
+	for k in grid.targets.size():
+		grid.targets[k].rect = Rect2(Vector2(cx, y + k * row_h), PARTY_CARD)
 	grid.target_gain = func(k: int, item: String) -> int: return TravelRules.gain(run, item, run.members[k])
 	grid.use_on = func(k: int, item: String) -> bool:
 		if not TravelRules.use_on(run, item, run.members[k]):
 			return false
 		Game.save_adventure()
 		return true
-	y += card_rows * (PackView.TARGET_SIZE.y + 8.0) + 10.0
+	y += run.members.size() * row_h + 6.0
 	var col := VBoxContainer.new()  # the read-outs and buttons, a real column inside the window
 	col.add_theme_constant_override("separation", 4)
 	col.position = Vector2(cx, y)
@@ -393,11 +387,11 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	counts.add_theme_constant_override("v_separation", 4)
 	counts.custom_minimum_size.x = W
 	col.add_child(counts)
-	counts.add_child(_count("gold", str(run.gold), Txt.t("UI_PACK_GOLD_TIP")))
-	counts.add_child(_count("backpack", "%d/%d" % [run.pack.used_cells(), run.pack.capacity()], Txt.t("UI_PACK_SLOTS_TIP")))
+	counts.add_child(MenuKit.chip(str(run.gold), "gold", MenuKit.TEXT, Txt.t("UI_PACK_GOLD_TIP"), 14))
+	counts.add_child(MenuKit.chip("%d/%d" % [run.pack.used_cells(), run.pack.capacity()], "backpack", MenuKit.TEXT, Txt.t("UI_PACK_SLOTS_TIP"), 14))
 	var weapon := Db.weapons.get(Game.weapon_id(), {}) as Dictionary
 	if not weapon.is_empty() and Game.weapon_id() != "none":  # bare hands need no line
-		counts.add_child(_count(String(weapon.get("icon", "")), Txt.t(String(weapon.name_key)), Txt.t("UI_PACK_WEAPON_TIP")))
+		counts.add_child(MenuKit.chip(Txt.t(String(weapon.name_key)), String(weapon.get("icon", "")), MenuKit.TEXT, Txt.t("UI_PACK_WEAPON_TIP"), 14))
 	if not Game.meta.materials.is_empty():  # the village pile: each material's icon and count
 		var pile := HFlowContainer.new()
 		pile.add_theme_constant_override("h_separation", 10)
@@ -406,16 +400,15 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 		pile.tooltip_text = Txt.t("UI_VILLAGE_STORE_TIP")
 		pile.mouse_filter = Control.MOUSE_FILTER_PASS
 		col.add_child(pile)
-		pile.add_child(_icon("crate", 22))
-		for id: String in Game.meta.materials:
-			pile.add_child(_count(id, str(int(Game.meta.materials[id])), Txt.t(String(Db.items[id].name_key))))
+		for id: String in Game.meta.materials:  # each material at home as a kit chip, its name on hover
+			pile.add_child(MenuKit.chip(str(int(Game.meta.materials[id])), id, MenuKit.TEXT, Txt.t(String(Db.items[id].name_key)), 14))
 	if bag != null and not bag.items.is_empty():  # he can take what he carries home at any time, and rejoins when the party is home
 		_button(col, Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
 			run.send_home(courier)
 			Game.refresh_party()
 			Game.save_adventure()
 			changed.call())
-	_button(col, Txt.t("UI_CLOSE_MENU"), close)
+	# no CLOSE: each window's X (and Esc) closes ([USER] 2026-11-02, fewer words)
 	# the windows: as tall as the taller of the two once the column knows its height
 	var pack_win := Rect2(Vector2.ZERO, Vector2(left_w, 0))
 	var party_win := Rect2(Vector2(ox, 0), Vector2(W + pad * 2.0, 0))
@@ -619,11 +612,14 @@ static func _button(box: BoxContainer, text: String, cb: Callable) -> Button:
 ## `heal` > 0: what one heals, in green after the count (the fish grades look alike, the number tells them apart).
 static func _use_row(box: BoxContainer, icon: String, n: int, tip: String, verb: String, enabled: bool, cb: Callable, heal := 0) -> void:
 	var row := HBoxContainer.new()
-	var c := _count(icon, str(n), tip)
-	c.custom_minimum_size = Vector2(W - 110, 0)
+	var c := HBoxContainer.new()  # the thing as a kit chip (its picture and how many), what one heals beside it
+	c.add_theme_constant_override("separation", 8)
+	c.custom_minimum_size = Vector2(USE_W, 0)  # the button right after it, by the thing it uses
+	c.add_child(MenuKit.chip(str(n), icon, MenuKit.TEXT, tip, 14))
 	if heal > 0:
 		var g := Label.new()
-		g.text = "   " + Txt.f("UI_GAIN_HP", heal)
+		g.text = Txt.f("UI_GAIN_HP", heal)
+		g.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		g.add_theme_font_size_override("font_size", 13)
 		g.add_theme_color_override("font_color", Color(0.62, 0.9, 0.5))
 		g.mouse_filter = Control.MOUSE_FILTER_PASS
