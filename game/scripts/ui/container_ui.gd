@@ -311,9 +311,8 @@ static func bare(box: Control, view: Control = null) -> void:
 		var vs := panel.get_viewport_rect().size
 		var room := Vector2(vs.x - 32.0, vs.y - FRAME_ROOM - 16.0)  # a menu stands at the top, 16 down
 		var need := view.get_combined_minimum_size()
-		var k := minf(1.0, minf(room.x / maxf(need.x, 1.0), room.y / maxf(need.y, 1.0)))
-		if k < 1.0:
-			panel.scale = Vector2(k, k)
+		var k := minf(UiTheme.KIT_SCALE, minf(room.x / maxf(need.x, 1.0), room.y / maxf(need.y, 1.0)))
+		panel.scale = Vector2(k, k)
 	_centre_later(panel)
 
 

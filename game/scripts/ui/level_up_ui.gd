@@ -113,7 +113,7 @@ class Screen extends PanelContainer:
 	func _room() -> Rect2:
 		return area.call() if area.is_valid() else get_viewport_rect()
 
-	func _fit() -> void:
+	func _fit() -> void:  # full size at most: its text was already made smaller by hand (X20), not shrunk again
 		if not is_instance_valid(_win):
 			return
 		_win.reset_size()

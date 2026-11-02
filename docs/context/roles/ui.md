@@ -23,6 +23,7 @@ Found from shots of a first trip (2026-11-02):
 7. The launch menu is the dev scene list (parchment); not a player screen yet.
 Already on the kit: every dialogue prompt (elite, boosts, chests), HOME AGAIN, win, level up, fishing (Systems' X19).
 
+- The whole kit smaller (X20's "things are just too big everywhere", card `ui-kit-size-review`, waiting): every kit window and dialogue stands at `UiTheme.KIT_SCALE` (0.9) at most; level up stays at full size (its text was cut by hand). At 0.85 the look check found text too small (9 to 12 px on the Lodestone cards and win stats), so 0.9 is the middle; Brandon picks.
+
 ## Open asks
-- Brandon's "Text feels huge right now, things are just too big everywhere": only level up is smaller so far. A whole-UI size pass is offered on the level-up card.
 - Fishing polish waits on the fishing card (Systems pushed X19 as a full screen in ebb0694; approved).

@@ -50,6 +50,9 @@ func _ready() -> void:
 	# an X at its top right (OK's continue), and the page scrolls when it runs past the window ([USER] 2026-11-01 X11)
 	var w := MenuKit.window(title, func() -> Rect2: return get_viewport_rect().grow_individual(-20.0, -20.0, -20.0, -FRAME_ROOM), close, 40)
 	center.add_child(w.root)
+	center.sort_children.connect(func() -> void:  # the kit's size ([USER] 2026-11-02: "things are just too big"); a
+		w.root.pivot_offset = w.root.size * 0.5  # container resets its child's scale on each layout, so set it after
+		w.root.scale = Vector2.ONE * UiTheme.KIT_SCALE)
 	var page: VBoxContainer = w.body
 	var line := String(s.get("headline", ""))
 	if line != "":

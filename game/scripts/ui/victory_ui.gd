@@ -159,7 +159,7 @@ func _fit() -> void:
 	_win.reset_size()
 	var room := _room()
 	var free := room.size - Vector2(32, 32)
-	var k := minf(1.0, minf(free.x / maxf(1.0, _win.size.x), free.y / maxf(1.0, _win.size.y)))
+	var k := minf(UiTheme.KIT_SCALE, minf(free.x / maxf(1.0, _win.size.x), free.y / maxf(1.0, _win.size.y)))
 	_win.scale = Vector2(k, k)
 	_win.position = (room.position + (room.size - _win.size * k) * 0.5).floor()
 	_holder.queue_redraw()

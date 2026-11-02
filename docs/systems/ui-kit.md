@@ -17,6 +17,9 @@
   - A thin themed scrollbar.
   - Drawn glyphs (`@talk`, `@plus`, `@leave`, `@dot`) where no icon art exists yet.
 
+## Size
+- [USER] 2026-11-02 X20: "Text feels huge right now, things are just too big everywhere". Every kit window and dialogue stands at `UiTheme.KIT_SCALE` (0.9) at most: the win screen, HOME AGAIN, every dialogue on the diamond, the menus at the top (Lodestone, options, pack and loot windows). They still shrink further to fit their room. Text, slots, bars and buttons come down together, so nothing changes shape. Level up is the exception: its text was cut by hand to 11 to 16 px, so it stands at full size (the look check found it too small at 85%). The fight dock keeps its own size and option (`UiTheme.small()`). HOME AGAIN sits in a container, which resets a child's scale on each layout, so it sets its scale after `sort_children`.
+
 ## Structure
 - `UiTheme.frame_window(panel, content, area, close, title)`: every framed window. The X floats on the top right corner, beside the gem (`X_RIGHT`, `X_TOP`). An optional call line is centred at the top. The content scrolls once it passes the room. The fit is a small node on the scroll (`_Fit`), so its deferred calls die with the window.
 - `MenuKit.window(title, area, close, px, scroll_room)`: a big window. The title plate straddles the top rim, and the X sits at the top right. `foot` is under the scroll, so the primary button never scrolls away and sits clear of the corner leaves. Used by HOME AGAIN and the win screen.

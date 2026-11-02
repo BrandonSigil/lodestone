@@ -232,7 +232,7 @@ static func pop_in_later(c: Control) -> void:
 ## centred across, its top at the area's top (`top`) or standing on its foot, and scaled down from `base` whenever it
 ## would spill over. Runs again each time the box changes size (a menu rebuilt, a detail filled in). `area` returns
 ## the Rect2 the box may use.
-static func keep_inside(c: Control, area: Callable, base := 1.0, top := true) -> void:
+static func keep_inside(c: Control, area: Callable, base := KIT_SCALE, top := true) -> void:
 	var fit := func() -> void:
 		if not is_instance_valid(c) or not c.is_inside_tree():
 			return
@@ -251,12 +251,16 @@ static func keep_inside(c: Control, area: Callable, base := 1.0, top := true) ->
 
 
 const FIT_MARGIN := 12.0
+## How big the kit's windows and dialogues stand at most ([USER] 2026-11-02 X20: "Text feels huge right now, things are
+## just too big everywhere"): every window that fits itself to its room grows to this, not to full size, so text, slots,
+## bars and buttons all come down together.
+const KIT_SCALE := 0.9
 
 
 ## The one standard place for dialogue and action prompts ([USER] 2026-11-01: "let's put all dialogue/actions/ right above
 ## the diamond. I'd like to have a standard place for these things so players arent looking around"): centred, its bottom
 ## right on the bottom frame's diamond. `area` gives the play area clear of the frame (FrameHud.clear_rect).
-static func at_diamond(c: Control, area: Callable, base := 1.0) -> void:
+static func at_diamond(c: Control, area: Callable, base := KIT_SCALE) -> void:
 	keep_inside(c, func() -> Rect2: return (area.call() as Rect2).grow_individual(0, 0, 0, -DIAMOND_GAP), base, false)
 
 

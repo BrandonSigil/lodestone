@@ -1474,7 +1474,7 @@ func _new_dialog(text: String, top := false, portrait := "") -> VBoxContainer:
 	var box := MenuKit.dialogue(_dialog, text, _dialog_area, portrait)
 	_ui.add_child(_dialog)
 	if top:  # a menu stands at the top
-		UiTheme.keep_inside(_dialog, _dialog_area, 1.0, true)
+		UiTheme.keep_inside(_dialog, _dialog_area, UiTheme.KIT_SCALE, true)
 	else:  # dialogue and actions: the standard place, right above the diamond (shrinks to fit when it must)
 		MenuKit.pointer(_dialog.get_child(0))
 		UiTheme.at_diamond(_dialog, _dialog_area)
