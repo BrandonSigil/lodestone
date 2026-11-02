@@ -23,6 +23,12 @@ func run(args: PackedStringArray) -> void:
 			level_offset = int(kv[1])
 		elif kv[0] == "foe_hp":
 			foe_hp = int(kv[1])
+		elif kv[0] == "boss_hp":
+			boss_hp = int(kv[1])
+		elif kv[0] == "boss_dmg":
+			boss_dmg = int(kv[1])
+		elif kv[0] == "boss_armor":
+			boss_armor = int(kv[1])
 		elif Db.levels.has(kv[0]):
 			Db.levels[kv[0]] = float(kv[1])
 		else:
@@ -39,7 +45,10 @@ func run(args: PackedStringArray) -> void:
 	print("## gap %d tiles %s, %d runs a weapon" % [gap, " ".join(label), runs])
 	print("| weapon | Lich try 1 win (runs) | try 2 win (runs) | try 3 win (runs) | HP on first arrival | resources on first arrival | level | falls before the throne a run |")
 	print("| --- | --- | --- | --- | --- | --- | --- | --- |")
+	var only := OS.get_environment("SIM_WEAPON")
 	for weapon in ["sword", "daggers", "bow"]:
+		if only != "" and weapon != only:
+			continue
 		var tries := [0, 0, 0]  # runs that stood at the throne for the 1st, 2nd and 3rd time
 		var wins := [0, 0, 0]
 		var hp_sum := 0.0
@@ -74,6 +83,9 @@ func run(args: PackedStringArray) -> void:
 
 
 var foe_hp := 100  ## `foe_hp=80`: the road's foes (not a boss) at this % of their HP
+var boss_hp := 100  ## `boss_hp=120`: a boss group's leader at this % of its HP (to try a number before writing it in its .tres)
+var boss_dmg := 0  ## `boss_dmg=1`: and this much more damage
+var boss_armor := 0  ## `boss_armor=1`: and this much more armor
 var level_offset := 0  ## `lvl=-1`: the sim's party a level behind, to match the outing robot's baseline
 
 func _level(xp: int) -> int:
@@ -152,7 +164,14 @@ func _fight(m: ExploreMap, g: Dictionary, party: Array, state: Array, seed_i: in
 		var mods := ExploreRules.depth_mods(m.map_name, depth, String(g.id), g.units.find(e), cls)
 		if not bool(g.get("boss", false)) and foe_hp != 100:
 			mods["hp_pct"] = foe_hp
+		if bool(g.get("boss", false)) and g.units.find(e) == 0:
+			mods["hp_pct"] = int(mods.get("hp_pct", 100)) * boss_hp / 100
+			mods["damage"] = int(mods.get("damage", 0)) + boss_dmg
 		var u := CombatUnit.enemy(cls, mods)
+		if bool(g.get("boss", false)) and g.units.find(e) == 0:
+			u.armor += boss_armor  # armor only (the "defense" mod also moves his AI's stance)
+		if OS.get_environment("SIM_DEBUG") != "" and bool(g.get("boss", false)):
+			print("boss ", e.id, " hp ", u.max_hp, " mods ", mods)
 		u.place(e.cell, grid.height_at(e.cell))
 		u.summon_cells = g.get("summon", [] as Array[Vector2i])
 		for c in g.get("exit", []):
@@ -197,6 +216,9 @@ func _fight(m: ExploreMap, g: Dictionary, party: Array, state: Array, seed_i: in
 				winner = w
 				break
 	var foes := enemies.filter(func(u: CombatUnit) -> bool: return not u.alive()).size()
+	if OS.get_environment("SIM_DEBUG") != "" and bool(g.get("boss", false)):
+		print("throne end: winner ", winner, " rounds ", rounds, " lich hp ", (enemies[0] as CombatUnit).hp, " party ", party.map(func(u: CombatUnit) -> String: return "%s %d" % [u.figure, u.hp]),
+			" units ", units.filter(func(u: CombatUnit) -> bool: return u.team == 1 and u.alive()).size())
 	for i in party.size():
 		var u: CombatUnit = party[i]
 		var s: Dictionary = state[i]
