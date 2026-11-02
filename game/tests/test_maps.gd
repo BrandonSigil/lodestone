@@ -1052,7 +1052,7 @@ func test_forest_plots_make_fights() -> void:
 	ok(all.size() >= 5, "five or more starter forest plots, drafts too (%d)" % all.size())
 	ok(MapPlot.list("forest", false).size() >= 5 and MapPlot.list("forest", false).size() < all.size(),
 		"road fights use the finished forest plots only, five or more (%d of %d)" % [MapPlot.list("forest", false).size(), all.size()])
-	ok(MapPlot.list("snow", false).size() >= 2, "two or more finished snow plots (%d)" % MapPlot.list("snow", false).size())
+	ok(MapPlot.list("snow", false).size() >= 3, "three or more finished snow plots (%d)" % MapPlot.list("snow", false).size())
 	for region in ["forest", "snow"]:
 		for p in MapPlot.list(region):
 			eq(MapPlot.problems(p), [] as Array[String], "%s is well formed" % p.id)

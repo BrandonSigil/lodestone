@@ -53,10 +53,16 @@ Brandon to tinker with, and every one of them failed the look check.
   road curves round a lake under a bluff), falls (a river steps down the slope in falls between the starts, one bridge;
   ice_bridge's plan mirrored).
 - **forest, drafts:** hollow, rocky_pass, fork (a road looping round a knoll), gorge (a deep river gorge).
-- **snow, finished (2):** ice_bridge (frozen falls between the starts, one bridge), frozen_lake (lakeshore's plan
-  mirrored, on a frozen lake).
-- **snow, drafts:** cliff_road (a road on a cliff ledge above a snowfield), zigzag (long zigzags up a slope),
-  snow_switchback (switchback's plan mirrored).
+- **snow, finished (3):** ice_bridge (frozen falls between the starts, one bridge), frozen_lake (lakeshore's plan
+  mirrored, on a frozen lake), cliff_road (2026-11-02, reworked from its draft: the road on a ledge under a high cliff,
+  a two-cell frozen fall from the cliff to a pond in the snowfield, the road over it on one bridge; ground the road
+  can't reach was cut so nothing is sealed into rock heaps).
+- **snow, drafts:** zigzag (reworked 2026-11-02 to climb from a frozen lake, still failing: the lake isn't tied to the
+  climb, the foes' shelf doesn't read as the top), snow_switchback (switchback's plan mirrored).
+- Tried and dropped 2026-11-02: the forest bend and bridge_crossing mirrored into snow. In the snow look the bend's road
+  and shoulder stop reading, and the crossing's river barely shows.
+- The map look check works best scoped: give the checker an approved plot of the same region as the reference and ask
+  it to judge the layout, since the block terrain look is the renderer's and shared by every plot.
 - What passed every time: water with one clear job (falls, a lake, one bridge) and an open winding road. What failed:
   terraces that read as stacked slabs, low knolls, thin hidden rivers. A plot whose feature hides behind high ground
   when mirrored top to bottom pins `"flip": false`.

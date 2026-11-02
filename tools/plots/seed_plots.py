@@ -411,21 +411,21 @@ def gorge():
 
 @plot
 def zigzag():
-    p = Plot("zigzag", "The road climbs a snowy slope in long zigzags to the foes' shelf; a goat path cuts straight up.", region="snow", flip=False)
-    path = [(0, 15), (14, 15), (14, 11), (5, 11), (5, 7), (16, 7), (16, 3), (20, 3)]
-    p.corridor(path, 1.5, 3)
-    p.island([(18, 3, 2.6, 2.6)], 13, jag=0)
-    p.spurs([((2, 15), (1, 12)), ((12, 11), (13, 8)), ((7, 7), (6, 4)), ((9, 15), (9, 17)), ((3, 11), (2, 9)), ((12, 7), (12, 4))])
-    p.terraces(lambda x, y: 0 if y >= 13 else (1 if y >= 9 else (2 if y >= 5 else 3)))
-    p.keep_starts(range(13, 18), right=False)
-    p.keep_starts(range(1, 6), left=False)
+    p = Plot("zigzag", "The road climbs from a frozen lake's shore in two long bends to the foes' shelf under the peaks; a stair is the steep short cut.", region="snow", flip=False)
+    path = [(0, 14), (11, 14), (11, 9), (4, 9), (4, 5), (20, 5)]
+    p.corridor(path, 1.6, 3)
+    p.island([(16.5, 13.5, 3.6, 2.6), (17, 4.5, 3.2, 2.2), (8, 2.2, 3.0, 1.6)], 13, jag=0)
+    p.spurs([((2, 14), (1, 11)), ((8, 9), (8, 12)), ((14, 5), (14, 8)), ((7, 14), (7, 17)), ((1, 9), (0, 7))])
+    p.terraces(lambda x, y: 0 if y >= 12 else (1 if y >= 7 else (2 if y >= 3.5 else 3)))
+    p.lake(16.5, 14, 3.0, 2.0)  # the frozen lake at the foot of the climb
+    p.keep_starts(range(13, 17), right=False)
+    p.keep_starts(range(3, 7), left=False)
     p.road(path)
-    p.road([(10, 15), (10, 7)])  # the goat path straight up the slope
-    p.stair([(3, 12), (17, 8)])
-    p.rocks([(7, 13), (12, 9), (8, 5), (2, 16)])
-    p.woods([(1, 13), (13, 13), (3, 9), (14, 5), (6, 5)])
-    p.cut([(19, 6), (20, 6), (6, 4), (12, 4), (1, 12)])
-    p.draft = True  # failed the look check on 2026-11-01 (read as a slab with trails on it)
+    p.road([(11, 9), (11, 5)])  # the steep short cut up the slope
+    p.stair([(2, 11), (16, 8), (8, 3)])
+    p.rocks([(6, 12), (13, 10), (9, 6), (18, 11)])
+    p.woods([(1, 12), (13, 15), (2, 7), (15, 3), (6, 3), (19, 16)])
+    p.draft = True  # failed the look check on 2026-11-02 (the lake isn't tied to the climb; the foes' shelf doesn't read as the top)
     return p
 
 
@@ -451,21 +451,25 @@ def ice_bridge():
 
 @plot
 def cliff_road():
-    p = Plot("cliff_road", "The road runs along a ledge cut into a high cliff; the snowfield below has its own way up at each end.", region="snow", flip=False)
+    p = Plot("cliff_road", "The road runs along a ledge under a high cliff; a frozen fall drops from the cliff to a pond in the snowfield, and the road crosses it on one bridge.", "crossing", region="snow", flip=False)
     road = [(0, 7), (6, 6), (14, 6), (20, 8)]
-    p.corridor(road, 1.2, 5)
-    p.island([(10, 2.6, 6.5, 2.2)], 15, jag=0)
-    p.corridor([(2, 10), (8, 11), (13, 11), (18, 10)], 1.2, 25)
-    p.island([(5, 14, 3, 2.2), (15, 14, 3, 2.2)], 35, jag=0)
+    fall = [(12, 0), (12, 6), (11, 12)]
+    p.corridor(road, 1.4, 5)
+    p.island([(5, 2.6, 4.2, 2.0), (16.5, 2.8, 3.6, 2.0)], 15, jag=0)  # two cliff tops, the fall between them
+    p.corridor(fall, 1.8, 9)
+    p.island([(11, 12.8, 5.2, 1.9), (17, 11.5, 2.8, 2.2)], 35, jag=0)  # the snowfield round the pond, up to the foes' ledge
+    p.spurs([((19, 10), (20, 14))])
     p.terraces(lambda x, y: (lambda dy: 3 if dy < -1.5 else (2 if dy < 1.5 else (1 if dy < 4.6 else 0)))(y - path_y(road, x)))
     for y in range(6, 10):  # the foes' start: the end of the ledge, flush with it
         for x in (W - 2, W - 1):
             p.lv[y][x] = "2"
+    p.river(fall, 1)
+    p.river([(x + 1, y) for (x, y) in fall], 1)  # two cells wide, so the fall reads from afar
+    p.lake(11.5, 13.6, 3.4, 1.6)  # the pond the fall feeds
     p.road(road)
-    p.stair([(10, 4), (4, 4), (16, 5), (17, 9), (6, 11), (14, 11), (3, 9)])
-    p.rocks([(8, 2), (12, 3), (10, 15)])
-    p.woods([(5, 15), (6, 15), (15, 15), (9, 11), (13, 2)])
-    p.draft = True  # failed the look check on 2026-11-01 (read as one long slab)
+    p.stair([(4, 4), (17, 4), (17, 9), (14, 11), (8, 11)])
+    p.rocks([(8, 2), (15, 2), (18, 13)])
+    p.woods([(2, 2), (3, 2), (19, 3), (6, 15), (16, 15), (9, 8)])
     return p
 
 
