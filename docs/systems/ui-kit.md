@@ -38,3 +38,6 @@
 - **Everywhere else**: pack and loot windows (`PackView`) use dark kit slots, kit party cards, a dark dashed-red THROW AWAY, a gold TAKE ALL and the round X. The Lodestone menu, level up, the gate picker, village work, options and the character sheet pick up the dark felt and kit buttons through the theme.
 - Loot windows (`ContainerUi.fitted_grid`) prefer a shape wider than tall, so a drop never becomes a one-cell column.
 - A box on the diamond keeps `UiTheme.DIAMOND_GAP` (14 px) above the frame for its point.
+- **Level up** (`LevelUpUi.open`, a `LevelUpUi.Screen`; [USER] 2026-11-02 on dev-x17-review: "Level up is still so ugly"): one kit window, LEVEL UP! on its plate, the X and Esc as Decide later. Left: the character's card (round portrait, name, "Level 1 to 2", stats gained as chips, thin HP / energy / Morale / EXP bars). Right: the choices as kit cards three across (icon, name, a New skill / Upgrade to rank N / Coming later tag), the first selected and lit gold, its full rules in the detail card under them, Decide later (quiet) and the gold LEARN / UPGRADE named for the pick in the foot. Explore and road fights both open it; the Lodestone menu's decided-later picks use the same cards (`LevelUpUi.picks`).
+- `UiBar` keeps a fixed number column (as wide as "000/000"), so a stack of bars ends at one edge.
+

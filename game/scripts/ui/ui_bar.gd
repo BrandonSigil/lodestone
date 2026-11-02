@@ -31,7 +31,8 @@ func _init() -> void:
 ## A thin rounded bar with its number beside it on the right, on the window's felt where it always reads.
 func _draw() -> void:
 	var font := get_theme_default_font()
-	var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, TEXT_PX).x + 8.0 if text != "" else 0.0
+	# a fixed number column (as wide as "000/000"), so bars in a stack end at the same place whatever their numbers
+	var tw := maxf(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, TEXT_PX).x, font.get_string_size("000/000", HORIZONTAL_ALIGNMENT_LEFT, -1, TEXT_PX).x) + 8.0 if text != "" else 0.0
 	var th := minf(THICK, size.y)
 	var rr := Rect2(0, roundf((size.y - th) * 0.5), maxf(10.0, size.x - tw), th)
 	var track := StyleBoxFlat.new()
@@ -48,6 +49,7 @@ func _draw() -> void:
 		draw_style_box(f, Rect2(rr.position + Vector2(1, 1), Vector2(w, th - 2)))
 		draw_rect(Rect2(rr.position + Vector2(3, 2), Vector2(maxf(0.0, w - 4), (th - 2) * 0.3)), Color(1, 1, 1, 0.22))
 	if text != "":
-		var pos := Vector2(size.x - tw + 8.0, size.y * 0.5 + TEXT_PX * 0.36)
+		var nw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, TEXT_PX).x
+		var pos := Vector2(size.x - nw, size.y * 0.5 + TEXT_PX * 0.36)  # right-aligned in its column
 		draw_string_outline(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, TEXT_PX, 4, Color(0.02, 0.05, 0.04, 0.8))
 		draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, TEXT_PX, text_color)

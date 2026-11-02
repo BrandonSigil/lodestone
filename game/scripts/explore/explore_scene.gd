@@ -1816,10 +1816,13 @@ func _level_up_flow(i: int) -> void:
 	if not LevelUpUi.has_pick(id):  # [USER] 2026-11-01: no box for a level alone (the victory screen showed it)
 		_level_up_flow(i + 1)
 		return
-	var box := _new_dialog("", false, id)
-	LevelUpUi.header(box, id, entry)  # LV UP, the new level, the stats gained, then the pick
-	LevelUpUi.picks(box, id, _level_up_flow.bind(i))  # a pick rebuilds this box
-	_dialog_button(box, Txt.t("UI_LV_LATER"), _level_up_flow.bind(i + 1))
+	if _dialog:
+		_dialog.queue_free()
+	if battle != null:
+		battle.hide_ui()
+	# one kit window (LevelUpUi.open): a pick rebuilds it for the next pick, Decide later moves on
+	_dialog = LevelUpUi.open(id, entry, _level_up_flow.bind(i), _level_up_flow.bind(i + 1), _dialog_area)
+	_ui.add_child(_dialog)
 
 
 ## The ids of the party pieces that fought this fight.

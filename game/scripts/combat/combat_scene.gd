@@ -196,18 +196,10 @@ func _level_ups(i: int, won: bool) -> void:
 	if not LevelUpUi.has_pick(id):  # [USER] 2026-11-01: no box for a level alone (the victory screen showed it)
 		_level_ups(i + 1, won)
 		return
-	var panel := PanelContainer.new()
-	panel.theme_type_variation = &"DialogPanel"
-	var box := VBoxContainer.new()
-	panel.add_child(box)
-	LevelUpUi.header(box, id, entry)  # LV UP, the new level, the stats gained, then the pick
-	LevelUpUi.picks(box, id, func() -> void:
-		panel.queue_free()
-		_level_ups(i, won))
-	var b := Button.new()
-	b.text = Txt.t("UI_LV_LATER")
-	b.pressed.connect(func() -> void:
-		panel.queue_free()
-		_level_ups(i + 1, won))
-	box.add_child(b)
-	_place_panel(panel)
+	var hold := {}  # the window, for its own buttons to close it (a lambda captures values, not the variable)
+	hold.sc = LevelUpUi.open(id, entry, func() -> void:
+		(hold.sc as Control).queue_free()
+		_level_ups(i, won), func() -> void:
+		(hold.sc as Control).queue_free()
+		_level_ups(i + 1, won), hud.clear_rect)  # one kit window (LevelUpUi.open)
+	hud.root.add_child(hold.sc)

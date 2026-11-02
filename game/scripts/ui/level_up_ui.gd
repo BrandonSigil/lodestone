@@ -70,92 +70,154 @@ static func _options(id: String) -> Array[Dictionary]:
 	return options
 
 
-## The head of the level-up screen ([USER] 2026-11-01: "Make that the heading of the skill pick menu "Level up!" then the
-## number they just reached, then a summary of the cool things they gained +3 HP, then the ability upgrade selector"):
-## the LV UP plate with the new level, then the stats gained as icons.
-static func header(box: VBoxContainer, id: String, entry: Dictionary) -> void:
+## The level-up screen as one kit window ([USER] 2026-11-02 on dev-x17-review: "Level up is still so ugly"; the round 2
+## mockups' look): the LEVEL UP plate on its rim, the X at its top right (Decide later). On the left a card for the
+## character: round portrait, name, the level reached, the stats gained as chips, thin HP / energy / Morale / EXP bars.
+## On the right the pick: the choices as kit cards (icon, name, New or Rank n to n+1, one line of what it does), the
+## selected one lit gold, its rules under them in a detail card (what it does, its numbers now, what this pick adds,
+## the next rank), and at the foot Decide later and the gold LEARN or UPGRADE. `done` runs after a pick (the host
+## rebuilds or moves on); `later` on Decide later, the X and Esc.
+class Screen extends PanelContainer:
+	var id := ""
+	var entry := {}
+	var done := Callable()
+	var later := Callable()
+	var area := Callable()
+	var _win: Control
+
+	func _ready() -> void:
+		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		var dim := StyleBoxFlat.new()
+		dim.bg_color = Color(0.02, 0.05, 0.05, 0.6)
+		add_theme_stylebox_override("panel", dim)
+		var holder := Control.new()
+		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(holder)
+		var w := MenuKit.window(Txt.t("UI_LV_TITLE"), _room, _later, 40)
+		_win = w.root
+		holder.add_child(_win)
+		var body := HBoxContainer.new()
+		body.add_theme_constant_override("separation", 18)
+		w.body.add_child(body)
+		LevelUpUi.who_card(body, id, entry)
+		var right := VBoxContainer.new()
+		right.add_theme_constant_override("separation", 10)
+		body.add_child(right)
+		LevelUpUi.picks(right, id, done, w.foot, _later)
+		_win.resized.connect(_fit)
+		holder.resized.connect(_fit)
+		_fit.call_deferred()
+		UiTheme.fade_in(self)
+
+	func _room() -> Rect2:
+		return area.call() if area.is_valid() else get_viewport_rect()
+
+	func _fit() -> void:
+		if not is_instance_valid(_win):
+			return
+		_win.reset_size()
+		var r := _room()
+		var k := minf(1.0, minf((r.size.x - 32.0) / maxf(1.0, _win.size.x), (r.size.y - 24.0) / maxf(1.0, _win.size.y)))
+		_win.scale = Vector2(k, k)
+		_win.position = (r.position + (r.size - _win.size * k) * 0.5).floor()
+
+	func _later() -> void:
+		if later.is_valid():
+			later.call()
+
+	func _unhandled_key_input(event: InputEvent) -> void:
+		if event.is_pressed() and not event.is_echo() and event.is_action("ui_cancel"):
+			get_viewport().set_input_as_handled()
+			_later()
+
+
+## The level-up window for a member (host adds it to its UI layer). area: the room it may use.
+static func open(id: String, entry: Dictionary, done: Callable, later: Callable, area := Callable()) -> Screen:
+	var sc := Screen.new()
+	sc.id = id
+	sc.entry = entry
+	sc.done = done
+	sc.later = later
+	sc.area = area
+	return sc
+
+
+## The character's card: round portrait, name, the level reached, the stats gained as chips, the thin bars.
+static func who_card(parent: Control, id: String, entry: Dictionary) -> void:
 	var m := _member(id)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
-	box.add_child(row)
-	var plate := PanelContainer.new()
-	plate.theme_type_variation = &"TitlePlate"
-	var t := Label.new()
-	t.theme_type_variation = &"MenuTitle"
-	t.text = Txt.t("UI_VIC_LV_UP")
-	t.add_theme_font_size_override("font_size", 30)
-	plate.add_child(t)
-	row.add_child(plate)
-	var levels: Array = entry.get("levels", [])
-	var lv := Label.new()
-	lv.text = "%s %d" % [Txt.t("UI_VIC_LV"), int(levels[levels.size() - 1]) if not levels.is_empty() else int(Game.level_state(id).level)]
-	lv.add_theme_font_size_override("font_size", 30)
-	lv.add_theme_color_override("font_color", VictoryUi.XP_GOLD)
-	lv.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	row.add_child(lv)
+	var v := MenuKit.card(parent)
+	v.get_parent().custom_minimum_size.x = 250
+	v.alignment = BoxContainer.ALIGNMENT_BEGIN
+	var pic := MenuKit.portrait(id, 120, true)
+	pic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(pic)
 	if not m.is_empty():
-		var nm := Label.new()
-		nm.text = Txt.t((m.def as CharacterDef).name_key)
-		nm.add_theme_font_size_override("font_size", 20)
-		nm.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		row.add_child(nm)
+		var nm := MenuKit.label(Txt.t((m.def as CharacterDef).name_key), 22)
+		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(nm)
+	var levels: Array = entry.get("levels", [])
+	var now := int(levels[levels.size() - 1]) if not levels.is_empty() else int(Game.level_state(id).level)
+	var was := int(levels[0]) - 1 if not levels.is_empty() else now - 1
+	var lv := MenuKit.chip(Txt.f("UI_LV_REACHED", [maxi(1, was), now]), "star_guide", VictoryUi.XP_GOLD, "", 18)
+	lv.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(lv)
 	var stats: Dictionary = entry.get("stats", {})
-	var gains := HBoxContainer.new()
-	gains.add_theme_constant_override("separation", 12)
+	var gains := HFlowContainer.new()
+	gains.alignment = FlowContainer.ALIGNMENT_CENTER
+	gains.add_theme_constant_override("h_separation", 6)
+	gains.add_theme_constant_override("v_separation", 6)
 	for k in LevelRules.STATS:
-		if int(stats.get(k, 0)) <= 0:
-			continue
-		var g := HBoxContainer.new()
-		g.add_theme_constant_override("separation", 3)
-		g.tooltip_text = Txt.t("UI_STAT_" + k.to_upper())
-		g.mouse_filter = Control.MOUSE_FILTER_PASS
-		var icon := TextureRect.new()
-		icon.texture = ActionInfo.icon(String(VictoryUi.STAT_ICON[k]))
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.custom_minimum_size = Vector2(34, 34)
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		g.add_child(icon)
-		var l := Label.new()
-		l.text = "+%d" % int(stats[k])
-		l.add_theme_font_size_override("font_size", 22)
-		l.add_theme_color_override("font_color", VictoryUi.UP_GREEN)
-		g.add_child(l)
-		gains.add_child(g)
+		if int(stats.get(k, 0)) > 0:
+			gains.add_child(MenuKit.chip("+%d %s" % [int(stats[k]), Txt.t("UI_STAT_" + k.to_upper())], String(VictoryUi.STAT_ICON[k]),
+				VictoryUi.UP_GREEN, "", 15))
 	if gains.get_child_count() > 0:
-		box.add_child(gains)
+		v.add_child(gains)
+	if m.is_empty():
+		return
+	var u := CombatUnit.from_member(m)
+	var bars := VBoxContainer.new()
+	bars.add_theme_constant_override("separation", 2)
+	v.add_child(bars)
+	MenuKit.bar_row(bars, Txt.t("UI_VIC_BAR_HP"), VictoryUi.HP_RED, float(m.hp) / maxf(1.0, float(u.max_hp)), "%d/%d" % [int(m.hp), u.max_hp], 76)
+	if u.res_kind != "":
+		MenuKit.bar_row(bars, Txt.t("RES_" + u.res_kind.to_upper()) if Txt.has("RES_" + u.res_kind.to_upper()) else u.res_kind.to_upper(),
+			FrameHud.RES_COLORS.get(u.res_kind, Color.WHITE), float(u.res) / maxf(1.0, float(u.res_max)), "%d/%d" % [u.res, u.res_max], 76)
+	MenuKit.bar_row(bars, Txt.t("UI_VIC_BAR_HEART"), VictoryUi.HEART_PINK, float(Game.morale_of(id)) / 100.0, str(Game.morale_of(id)), 76)
+	var per := float(maxi(1, int(Db.levels.get("xp_per_level", 100))))
+	var s := Game.level_state(id)
+	MenuKit.bar_row(bars, Txt.t("UI_VIC_BAR_EXP"), VictoryUi.XP_GOLD, float(s.xp) / per, "%d/%d" % [int(s.xp), int(per)], 76)
 
 
-## The pick ([USER] 2026-10-31, a mix of BG3 and a MOBA's skill screen): the choices as big ability icons in a row; the one
-## selected (a click, or the arrows or a stick moving the focus onto it) shows what it does, its numbers now and a preview
-## of the next rank, and the Pick Skill button confirms. Pressing a selected icon again with the keyboard or a pad confirms
-## too. A click spends the pick and calls `refresh` (the screen rebuilds); `box` is where it goes.
-static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
+## Kept for hosts that still draw their own head (none now): the window's who_card replaces it.
+static func header(box: VBoxContainer, id: String, entry: Dictionary) -> void:
+	who_card(box, id, entry)
+
+
+## The pick ([USER] 2026-10-31, a mix of BG3 and a MOBA's skill screen) as kit cards: two across, each its icon, name, a
+## New or Rank n to n+1 tag and one line of what it does; the selected one lit gold, its full rules in the detail card
+## under them; LEARN / UPGRADE (gold) confirms. foot: the window's foot for the buttons (else `box`); later: Decide
+## later's call (none: no such button, the Lodestone menu has its own way out). A pick spends it and calls `refresh`.
+static func picks(box: VBoxContainer, id: String, refresh: Callable, foot: Control = null, later := Callable()) -> void:
 	var options := _options(id)
 	if options.is_empty():  # nothing to learn or grow: no empty row and no greyed button (playtest 2026-11-01, Bushberry)
 		return
 	var u := CombatUnit.from_member(_member(id))
 	var ranks: Dictionary = Game.rank_state(id).ranks
-	var label := Label.new()
-	label.text = Txt.f("UI_LV_PICK", int(Game.rank_state(id).pending))
-	label.add_theme_font_size_override("font_size", 18)
-	box.add_child(label)
-	var row := HFlowContainer.new()
-	row.add_theme_constant_override("h_separation", 10)
-	row.add_theme_constant_override("v_separation", 10)
-	box.add_child(row)
-	var detail := VBoxContainer.new()
+	var head := MenuKit.heading_row(Txt.f("UI_LV_PICK", int(Game.rank_state(id).pending)), true)
+	box.add_child(head)
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
+	box.add_child(grid)
+	var detail := MenuKit.card(box)
+	detail.get_parent().custom_minimum_size = Vector2(CARD_W * 3 + 20, 0)
 	detail.add_theme_constant_override("separation", 4)
-	detail.custom_minimum_size = Vector2(460, 150)
-	box.add_child(detail)
-	var pick := Button.new()
-	pick.theme_type_variation = &"PrimaryButton"  # the one to press (the menu kit)
-	pick.text = Txt.t("UI_LV_PICK_SKILL")
+	var pick := MenuKit.primary(Txt.t("UI_LV_PICK_SKILL"), Callable(), 20, 260.0)
 	pick.disabled = true
-	pick.custom_minimum_size = Vector2(460, 48)
-	pick.add_theme_font_size_override("font_size", 20)
 	var state := {"chosen": -1}
-	var buttons: Array[Button] = []
+	var cards: Array[Button] = []
 	var confirm := func() -> void:
 		var i: int = state.chosen
 		if i < 0 or options[i].locked:
@@ -168,42 +230,119 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
 		refresh.call()
 	var choose := func(i: int) -> void:
 		state.chosen = i
-		for k in buttons.size():
-			buttons[k].set_pressed_no_signal(k == i)
+		for k in cards.size():
+			cards[k].set_pressed_no_signal(k == i)
 		_detail(detail, u, options[i], ranks)
-		pick.disabled = bool(options[i].locked)
+		var o2: Dictionary = options[i]
+		pick.disabled = bool(o2.locked)
+		pick.text = Txt.t("UI_LV_LOCKED_BTN") if o2.locked else Txt.f("UI_LV_LEARN" if o2.learn else "UI_LV_UPGRADE_BTN", _name(o2))
 	for i in options.size():
 		var o: Dictionary = options[i]
-		var b := Button.new()
-		b.toggle_mode = true
-		b.custom_minimum_size = Vector2(84, 84)
-		b.tooltip_text = _name(o)
-		b.focus_mode = Control.FOCUS_ALL
-		var tex := ActionInfo.icon_for(o.ability) if o.ability != null else ActionInfo.trait_icon(String(o.id))
-		if tex != null:
-			b.icon = tex
-			b.expand_icon = true
-			b.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			b.add_theme_constant_override("icon_max_width", 64)
-		else:
-			b.text = _name(o)
-			b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			b.add_theme_font_size_override("font_size", 12)
-		_slot_style(b)
-		if o.locked:
-			b.modulate = Color(0.55, 0.55, 0.6)  # in the kit, not in the game yet
-		b.pressed.connect(func() -> void:
+		var c := _card(o)
+		c.pressed.connect(func() -> void:
 			if state.chosen == i and Input.is_action_just_pressed("ui_accept"):
-				confirm.call()  # a second press of the selected icon from the keyboard or a pad confirms
+				confirm.call()  # a second press of the selected card from the keyboard or a pad confirms
 			else:
 				choose.call(i))
-		b.focus_entered.connect(func() -> void: choose.call(i))  # moving along the row previews each
-		row.add_child(b)
-		buttons.append(b)
+		c.focus_entered.connect(func() -> void: choose.call(i))  # moving along the cards previews each
+		grid.add_child(c)
+		cards.append(c)
 	pick.pressed.connect(confirm)
-	box.add_child(pick)
-	if not buttons.is_empty():
-		buttons[0].call_deferred("grab_focus")
+	var at: Control = foot if foot != null else box
+	if later.is_valid():
+		var gap := Control.new()
+		gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		at.add_child(gap)
+		var lb := Button.new()
+		lb.theme_type_variation = &"QuietButton"
+		lb.text = Txt.t("UI_LV_LATER")
+		lb.tooltip_text = Txt.t("UI_LV_LATER_TIP")
+		lb.custom_minimum_size = Vector2(190, 52)
+		lb.add_theme_font_size_override("font_size", 18)
+		lb.pressed.connect(later)
+		at.add_child(lb)
+	at.add_child(pick)
+	if not cards.is_empty():
+		choose.call(0)
+		cards[0].call_deferred("grab_focus")
+
+
+const CARD_W := 228.0
+
+
+## One choice as a kit card: its icon, its name, a tag (New, Rank 1 to 2, Coming later) and one line of what it does.
+static func _card(o: Dictionary) -> Button:
+	var b := Button.new()
+	b.toggle_mode = true
+	b.focus_mode = Control.FOCUS_ALL
+	b.custom_minimum_size = Vector2(CARD_W, 72)
+	b.tooltip_text = _desc(o)
+	for n in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
+		var sb: StyleBox = MenuKit.flat(MenuKit.CARD, MenuKit.RIM_DIM, 1.0, 10, 10.0, 8.0)
+		if n == "hover":
+			sb = MenuKit.flat(MenuKit.BTN_HOVER, MenuKit.RIM, 1.5, 10, 10.0, 8.0)
+		elif n in ["pressed", "hover_pressed"]:
+			var lit := MenuKit.flat(MenuKit.BTN_HOVER, MenuKit.GOLD, 2.0, 10, 10.0, 8.0)
+			lit.shadow_color = Color(MenuKit.GOLD, 0.3)
+			lit.shadow_size = 6
+			sb = lit
+		elif n == "focus":
+			sb = StyleBoxEmpty.new()
+		b.add_theme_stylebox_override(n, sb)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	row.offset_left = 10
+	row.offset_right = -10
+	row.offset_top = 8
+	row.offset_bottom = -8
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	b.add_child(row)
+	var slot := PanelContainer.new()
+	slot.theme_type_variation = &"KitSlot"
+	slot.custom_minimum_size = Vector2(52, 52)
+	slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(slot)
+	var tex: Texture2D = ActionInfo.icon_for(o.ability) if o.ability != null else ActionInfo.trait_icon(String(o.id))
+	var ic: Control
+	if tex != null:
+		var t := TextureRect.new()
+		t.texture = tex
+		t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		t.custom_minimum_size = Vector2(42, 42)
+		ic = t
+	else:
+		ic = MenuKit.icon_rect("@dot", 40)
+	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot.add_child(ic)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 2)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(col)
+	var nm := MenuKit.label(_name(o), 16)
+	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	nm.custom_minimum_size.x = CARD_W - 84
+	col.add_child(nm)
+	var tag_text := Txt.t("UI_LV_TAG_LOCKED") if o.locked else (Txt.t("UI_LV_TAG_NEW") if o.learn else Txt.f("UI_LV_TAG_RANK", int(o.next)))
+	var tag := MenuKit.chip(tag_text, "", Color(0.75, 0.75, 0.75) if o.locked else (VictoryUi.UP_GREEN if o.learn else VictoryUi.XP_GOLD), "", 13)
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tag.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	col.add_child(tag)
+	if o.locked:
+		b.modulate = Color(1, 1, 1, 0.6)
+	return b
+
+
+## The first sentence of what an option does (the card's one line; the detail card has it all).
+static func _short(o: Dictionary) -> String:
+	var d := _desc(o).split("\n")[0]
+	var stop := d.find(". ")
+	return d.substr(0, stop + 1) if stop > 0 else d
 
 
 ## The detail panel of the selected option: what it is, what it does, its numbers now, what this pick adds, and the next rank.
@@ -213,9 +352,7 @@ static func _detail(detail: VBoxContainer, u: CombatUnit, o: Dictionary, ranks: 
 		c.queue_free()
 	var a: Ability = o.ability
 	var have: int = o.have
-	var title := Label.new()
-	title.text = _name(o) + "   " + (Txt.t("UI_LV_NEW") if o.learn else Txt.f("UI_LV_RANK_OF", [have, LevelRules.max_rank(String(o.id), Db.skill_ranks)]))
-	title.add_theme_font_size_override("font_size", 22)
+	var title := MenuKit.label(_name(o) + "   " + (Txt.t("UI_LV_NEW") if o.learn else Txt.f("UI_LV_RANK_OF", [have, LevelRules.max_rank(String(o.id), Db.skill_ranks)])), 20, MenuKit.GOLD)
 	detail.add_child(title)
 	_line(detail, _desc(o), 16)
 	if o.locked:
@@ -248,7 +385,7 @@ static func _line(box: VBoxContainer, text: String, size: int, color := Color(0.
 	var l := Label.new()
 	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.custom_minimum_size = Vector2(460, 0)
+	l.custom_minimum_size = Vector2(CARD_W * 3 - 10, 0)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	box.add_child(l)

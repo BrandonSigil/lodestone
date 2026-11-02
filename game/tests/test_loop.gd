@@ -1666,17 +1666,20 @@ func test_level_up_picks() -> void:
 	_restore(saved)
 
 
-## The pick screen's body: ability icons in a row, a detail panel and a Pick Skill button that waits for a choice.
+## The pick screen's body (the kit window, [USER] 2026-11-02): the choices as cards, the first selected with its rules in
+## the detail card, and the gold LEARN button named for it; Decide later when the host gives one.
 func test_level_up_pick_body() -> void:
 	var saved := _fresh_game()
 	Game.take_weapon("sword")
 	Game.award_xp(100)
 	var box := VBoxContainer.new()
-	LevelUpUi.picks(box, "lead", func() -> void: pass)
+	LevelUpUi.picks(box, "lead", func() -> void: pass, null, func() -> void: pass)
 	var buttons := box.find_children("*", "Button", true, false)
-	var pick: Button = buttons.filter(func(b: Node) -> bool: return (b as Button).text == Txt.t("UI_LV_PICK_SKILL"))[0]
-	ok(pick.disabled, "Pick Skill waits for a choice")
-	ok(buttons.size() >= 4, "the options are icon buttons in a row, plus Pick Skill")
+	var cards := buttons.filter(func(b: Node) -> bool: return (b as Button).toggle_mode)
+	ok(cards.size() >= 4, "the options are cards")
+	ok((cards[0] as Button).button_pressed, "the first is selected")
+	ok(buttons.any(func(b: Node) -> bool: return (b as Button).text.begins_with(Txt.f("UI_LV_LEARN", "").strip_edges())), "LEARN names the pick")
+	ok(buttons.any(func(b: Node) -> bool: return (b as Button).text == Txt.t("UI_LV_LATER")), "and Decide later")
 	box.free()
 	_restore(saved)
 

@@ -878,7 +878,15 @@ TAGDESC_BURN,"Loses 1 HP at the start of each of its turns while it burns, throu
 TAGDESC_COLD,"Loses 1 HP at the end of its turn for each ice pillar next to it, at most 2."
 TAGDESC_ELITE,"Elite: 150% HP, 1 more damage, 1 more armor, and pays 150% XP."
 UI_LV_STAT,%s %d to %d
-UI_LV_PICK,Pick one (%d waiting):
+UI_LV_PICK,Choose a skill (%d to pick)
+UI_LV_TITLE,LEVEL UP!
+UI_LV_REACHED,Level %d to %d
+UI_LV_TAG_NEW,New skill
+UI_LV_TAG_RANK,Upgrade to rank %d
+UI_LV_TAG_LOCKED,Coming later
+UI_LV_UPGRADE_BTN,Upgrade %s
+UI_LV_LOCKED_BTN,Not available yet
+UI_LV_LATER_TIP,"Keep the pick for later: choose it any time from the Lodestone menu."
 UI_LV_LEARN,Learn %s
 UI_LV_UPGRADE,Upgrade %s (step %d of %d)
 UI_LV_LATER,Decide later
