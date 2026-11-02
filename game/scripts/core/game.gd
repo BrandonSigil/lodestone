@@ -33,6 +33,7 @@ var outfit: Outfit = null
 var village_party: Array[StringName] = []
 var explore_map := "home"  ## which data/explore map the explore scene opens (the hero's home starts the village)
 var explore_entry := Vector2i(-1, -1)  ## where the leader arrives through a door; (-1, -1) = the map's start
+var explore_from := ""  ## the map the party just stepped out of through a door ("" after a load or a journey)
 ## Explore maps the party walked out of and may walk back into: map -> {"seen": cells, "done": thing ids}.
 var explore_memory := {}
 var maker_map := ""  ## the map file the map maker reopens (it comes back here after a play test)

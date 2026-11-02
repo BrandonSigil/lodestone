@@ -398,6 +398,7 @@ func _night_box(picks: Dictionary, then: Callable) -> void:
 	acts.add_theme_constant_override("separation", 8)
 	box.add_child(acts)
 	var eat := Button.new()
+	eat.theme_type_variation = &"PrimaryButton"  # the one to press (the menu kit)
 	eat.text = Txt.t("UI_CAMP_EAT")
 	eat.custom_minimum_size = Vector2(140, 34)
 	eat.pressed.connect(func() -> void:

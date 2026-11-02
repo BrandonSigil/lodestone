@@ -221,6 +221,14 @@ func run(s: Node, f: int, step: String) -> bool:
 					s.board.fog[Vector2i(x, y)] = 2
 		return f == 40
 	match step:
+		"nudge":
+			# the lodestone nudge (X17): the first step out of home into the village; the shot is with the beam up
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false
+				game.meta.flags.erase("seen_lodestone_nudge")
+				s._lodestone_nudge()
+			return f > 20 and s.nudging() and s._beam != null and s._beam.modulate.a > 0.99  # the beam fully up
 		"start":
 			return f == 20
 		"elite":

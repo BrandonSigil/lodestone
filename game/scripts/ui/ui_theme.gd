@@ -289,7 +289,7 @@ static func has_close(box: Control) -> bool:
 ## else the box's own close-type button (press_close: CLOSE, BACK, OK, CONTINUE, LEAVE...); it greys out while the box
 ## offers no way out (a real choice). Returns the X.
 const FRAME_X := 34.0
-const FRAME_ROOM_MARGIN := 140.0  ## the panel's own frame and header, kept clear inside the room
+const FRAME_ROOM_MARGIN := 96.0  ## the panel's own frame and header, kept clear inside the room
 const X_RIGHT := 76.0  ## the X's left edge this far in from the frame's outer right edge: beside the corner gem
 const X_TOP := 16.0  ## and its top this far down from the outer top: level with the gem
 

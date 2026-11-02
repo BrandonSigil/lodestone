@@ -67,6 +67,8 @@ func _ready() -> void:
 	Game.ensure_run()
 	Game.refresh_party()
 	map = ExploreMap.load_named(Game.explore_map)
+	_came_from = Game.explore_from  # the door the party came through (the lodestone nudge asks)
+	Game.explore_from = ""
 	if map.map_name == "village":
 		Game.home_again()
 	grid = map.grid
@@ -197,7 +199,154 @@ func _ready() -> void:
 	elif lead:
 		check_groups(true)  # stepping in beside a group: the party gets the first look, not an ambush
 		_refresh_units()
+		if _nudge_due():
+			_lodestone_nudge.call_deferred()
 	bookmark.call_deferred()
+
+
+# --- the lodestone nudge ([USER] 2026-11-02 X17) --------------------------------------------------------
+
+## "We should nudge people to the lodestone in the center of town, maybe when they walk out of their home the first time
+## the camera pans over to the lodestone with a beam of light on it": the first step out of the hero's home into the
+## village, once ever (meta flag NUDGE_FLAG), the camera glides to the lodestone, a beam of light stands on it a moment,
+## and the camera glides back. A click or any key skips it.
+const NUDGE_FLAG := "seen_lodestone_nudge"
+const NUDGE_GO := 1.1  ## seconds the glide over takes (and NUDGE_BACK the glide back)
+const NUDGE_HOLD := 1.8  ## seconds the beam stands
+const NUDGE_BACK := 0.9
+var _nudge: Tween
+var _beam: Node2D
+var _came_from := ""  ## the map the party stepped out of to get here
+
+
+func _nudge_due() -> bool:
+	return map.map_name == "village" and _came_from == "home" and not Game.has_flag(NUDGE_FLAG) \
+		and not _lodestone().is_empty()
+
+
+func _lodestone() -> Dictionary:
+	for t in things:
+		if String(t.get("event", "")) == "statue_lodestone":
+			return t
+	return {}
+
+
+func _lodestone_nudge() -> void:
+	var stone := _lodestone()
+	if stone.is_empty() or mode != M.WALK or _dialog != null:
+		return
+	Game.set_flag(NUDGE_FLAG)  # once ever, even if skipped
+	mode = M.DIALOG  # no walking or clicks while it plays
+	follow = false
+	var cell: Vector2i = stone.cell
+	var at := Vector2(cell) + Vector2(0.5, 0.5)
+	var h := grid.height_at(cell)
+	var lift := 0.0  # pixels above the ground point: the statue's top
+	var best := 5.0  # the statue itself (its prop by the use spot): the beam stands on its top, the camera on its middle
+	for anchor: Vector2i in grid.props:
+		var p: Dictionary = grid.props[anchor]
+		var foot: Vector2i = p.get("foot", Vector2i.ONE)
+		var mid := Vector2(anchor) + Vector2(foot) * 0.5
+		var d := mid.distance_to(Vector2(cell) + Vector2(0.5, 0.5))
+		if String(p.get("sprite", "")).contains("statue") and d < best:
+			best = d
+			at = mid
+			h = grid.height_at(anchor)
+			lift = float(p.get("tall", 0.0)) * CombatBoard.TW * 0.7
+	_beam = _Beam.new()
+	_beam.position = board.iso(at.x, at.y, h) + Vector2(0, -lift)
+	_beam.modulate.a = 0.0
+	board.add_child(_beam)
+	var back := Vector2(leader().vis) + Vector2(0.5, 0.5)
+	var back_h := leader().vis_h
+	_nudge = create_tween()
+	var aim_h := h + (lift + 50.0) / CombatBoard.HS  # the stone below the middle of the screen, the beam above it
+	_nudge.tween_property(self, "focus", at, NUDGE_GO).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_nudge.parallel().tween_property(self, "focus_h", aim_h, NUDGE_GO).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_nudge.tween_property(_beam, "modulate:a", 1.0, 0.35)
+	_nudge.tween_interval(NUDGE_HOLD)
+	_nudge.tween_property(_beam, "modulate:a", 0.0, 0.45)
+	_nudge.tween_property(self, "focus", back, NUDGE_BACK).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_nudge.parallel().tween_property(self, "focus_h", back_h, NUDGE_BACK).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_nudge.tween_callback(_end_nudge)
+
+
+## The nudge done or skipped: the beam goes, the camera follows the leader again and the party can walk.
+func _end_nudge() -> void:
+	if _nudge != null and _nudge.is_valid():
+		_nudge.kill()
+	_nudge = null
+	if is_instance_valid(_beam):
+		_beam.queue_free()
+	_beam = null
+	follow = true
+	if mode == M.DIALOG and _dialog == null:
+		mode = M.WALK
+
+
+func nudging() -> bool:
+	return _nudge != null
+
+
+## A soft column of light standing on a point (the lodestone nudge): warm at the foot, fading up into the sky, with a glow
+## pooled on the ground and motes drifting up it. Drawn added onto the world, so it lights what it falls on.
+class _Beam extends Node2D:
+	const TALL := 250.0  ## short enough that its stepped top ends inside the screen
+	const ACCENT := Color("ffcf4a")  ## home's accent ink (style bible R8: the Lodestone glow)
+	const LIGHT := Color("fbf1d8")
+	var t := 0.0
+
+	func _ready() -> void:
+		z_index = 50
+
+	func _process(delta: float) -> void:
+		t += delta
+		queue_redraw()
+
+	## Flat translucent planes in the style bible's way (R2: no gradients; F1: hand-cut edges; R4: stamped marks): a wide
+	## pale band and a narrow brighter one, their tops stepped off in three flat bands, flat pools stacked on the
+	## plinth where it stands, and a few warm star stamps rising.
+	func _draw() -> void:
+		var breathe := 0.92 + 0.08 * sin(t * 2.0)
+		_pool(120.0, Color(ACCENT, 0.12 * breathe))  # the light on the square round it
+		_pool(70.0, Color(ACCENT, 0.3 * breathe))
+		_band(46.0, 58.0, Color(ACCENT.darkened(0.08), 0.62 * breathe), 3)
+		_band(26.0, 32.0, Color(ACCENT.lightened(0.3), 0.6 * breathe), 7)
+		_band(11.0, 13.0, Color(LIGHT, 0.85 * breathe), 11)
+		_pool(34.0, Color(LIGHT, 0.45 * breathe))  # where it lands
+		for i in 8:  # cream star stamps rising up it
+			var f := fmod(t * 0.28 + i / 8.0, 1.0)
+			var x := sin(i * 2.1 + t * 1.2) * 30.0
+			var a := minf(1.0, f * 5.0) * (1.0 - f * 0.7)
+			_star(Vector2(x, -16.0 - f * TALL * 0.8), 9.0 - f * 3.0, Color(LIGHT, a))
+
+	## A flat band, straight-sided, its top cut into three flat steps of fainter light: a clear stepped cap.
+	func _band(w0: float, w1: float, col: Color, _seed: int) -> void:
+		var steps := [[0.0, 0.7, 1.0], [0.7, 0.86, 0.6], [0.86, 1.0, 0.3]]
+		for st in steps:
+			var y0: float = -TALL * st[0]
+			var y1: float = -TALL * st[1]
+			var wa := lerpf(w0, w1, -y0 / TALL)
+			var wb := lerpf(w0, w1, -y1 / TALL)
+			draw_colored_polygon(PackedVector2Array([Vector2(-wa, y0), Vector2(wa, y0), Vector2(wb, y1), Vector2(-wb, y1)]),
+				Color(col, col.a * float(st[2])))
+
+
+	## A flat pool on the ground's iso plane, its rim a little uneven (hand cut).
+	func _pool(r: float, col: Color) -> void:
+		var pts := PackedVector2Array()
+		for i in 36:
+			var ang := TAU * i / 36.0
+			var rr := r * (1.0 + sin(i * 1.7) * 0.03)
+			pts.append(Vector2(cos(ang) * rr, sin(ang) * rr * 0.5))
+		draw_colored_polygon(pts, col)
+
+	func _star(c: Vector2, r: float, col: Color) -> void:
+		var pts := PackedVector2Array()
+		for i in 8:
+			var rr := r if i % 2 == 0 else r * 0.38
+			pts.append(c + Vector2.from_angle(TAU * i / 8.0 - PI / 2.0) * rr)
+		draw_colored_polygon(pts, col)
 
 
 ## The homecoming page ([USER] Pitch J): what the trip gave and the next goal, after a fall, GO HOME or a trip walked
@@ -330,7 +479,7 @@ func _process(delta: float) -> void:
 		_open_menu("pack")  # a pickup found no room: the player decides before walking on
 	var pan := Vector2.ZERO
 	_wasd(delta)
-	if get_viewport().gui_get_focus_owner() == null:  # the arrows move along a focused menu (the fight's dock) instead
+	if get_viewport().gui_get_focus_owner() == null and _nudge == null:  # the arrows move along a focused menu (the fight's dock) instead
 		if Input.is_key_pressed(KEY_LEFT):
 			pan.x -= 1
 		if Input.is_key_pressed(KEY_RIGHT):
@@ -445,6 +594,10 @@ func _apply_camera() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _nudge != null and event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
+		_end_nudge()  # a click skips the lodestone nudge
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -460,6 +613,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event.pressed or event.is_echo():
+		return
+	if _nudge != null:  # any key skips the lodestone nudge
+		_end_nudge()
+		get_viewport().set_input_as_handled()
 		return
 	match event.keycode:
 		KEY_ESCAPE:  # closes the open box through its own close button (UiTheme.press_close)
@@ -1089,6 +1246,7 @@ func _letter_terrain(letter: String) -> int:
 func _travel(t: Dictionary) -> void:
 	_remember()
 	mode = M.OVER
+	Game.explore_from = map.map_name
 	Game.explore_map = String(t.to)
 	Game.explore_entry = t.at
 	Game.go(Game.EXPLORE)

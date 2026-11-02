@@ -149,6 +149,7 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable) -> void:
 	detail.custom_minimum_size = Vector2(460, 150)
 	box.add_child(detail)
 	var pick := Button.new()
+	pick.theme_type_variation = &"PrimaryButton"  # the one to press (the menu kit)
 	pick.text = Txt.t("UI_LV_PICK_SKILL")
 	pick.disabled = true
 	pick.custom_minimum_size = Vector2(460, 48)

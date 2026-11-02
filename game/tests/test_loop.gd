@@ -902,6 +902,27 @@ func test_the_gate_opens_the_party_picker() -> void:
 	_restore(saved)
 
 
+func test_lodestone_nudge_once() -> void:
+	var saved := _fresh_game()
+	Game.explore_map = "village"
+	Game.explore_entry = Vector2i(-1, -1)
+	Game.explore_from = "home"
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	(Engine.get_main_loop() as SceneTree).root.add_child(s)
+	ok(s._nudge_due(), "X17: the first step out of home into the village nudges to the lodestone")
+	s._lodestone_nudge()
+	ok(s.nudging(), "the camera goes over to the lodestone")
+	ok(Game.has_flag(s.NUDGE_FLAG), "once ever: saved in meta at once")
+	s._end_nudge()
+	ok(not s.nudging() and s.follow, "skipped: the camera follows the leader again")
+	ok(not s._nudge_due(), "never again")
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"
+	Game.explore_from = ""
+	_restore(saved)
+
+
 func test_pickups_open_a_loot_window() -> void:
 	var saved := _fresh_game()
 	Game.explore_map = "village"
