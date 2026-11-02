@@ -1,5 +1,7 @@
 # Current state
 
+> **Paused 2026-11-02 (read first):** Brandon paused all Lodestone work: "sleep until I nudge you again". Every decision is in `docs/decisions.md` and every lane's work is on main; nothing is in flight and the Studio desk is clear. On his nudge, the PM restarts from `docs/context/roles/pm.md` (section "Where it stands") and the lanes from `docs/systems/studio.md` ("Three lanes"). Next jobs when work resumes: the pack and loot rebuild (UI lane; the FOUND ITEMS layout failed its look check) and tuning the Lich's second try (Systems).
+
 > **Handoff 2026-10-31 (read first):** Brandon paused system work so another Claude account can continue. What is open on the Studio desk, the notes between roles, and where each role stands are in `docs/context/studio-snapshot/README.md`. Each role restarts from `docs/context/roles/<role>.md`. The rest of this file is older background.
 
 > **2026-11-01:** the homecoming page (Pitch J) is built: after a fall, GO HOME or a trip walked home, a page over the square shows what the trip gave and the next goal. How: `docs/systems/homecoming.md`. Its morale section lights up once per-character morale is built.

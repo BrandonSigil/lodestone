@@ -1,5 +1,9 @@
 # Project manager (the pinned "Lodestone — main project" conversation)
 
+## Paused (2026-11-02 ~20:00 UTC)
+
+Brandon: "Let's pause all work on Lodestone for now, make sure all decisions and updates are in our Github Repo, and sleep until I nudge you again". The PM, UI and Content lanes were told to push, drop their watches and go idle; the desk is clear (ui-loot-pile-review and ui-menus-centred-review answered yes and logged). On his nudge: pull, read this file and `docs/context/current-state.md`, then restart lanes fresh. Open next jobs: the pack and loot rebuild (UI) and the Lich second-try tune (Systems).
+
 ## Where it stands (second account, 2026-11-02 ~17:45 UTC; read this first)
 - **Studio for this account:** https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 (the URL under "Studio" below is the first account's). **Word Swap:** https://claude.ai/artifact/8N6JE8v7QGYGpJJhusHraj (`docs/systems/word-swap.md`; you put his sent lines into the game).
 - **Arm both watches first.** A watch with auto-replies arms only on a publish (or a link Brandon types to you). So read each page with Artifact `read` and publish the saved file back to its `url` unchanged. Then Studio chats, desk answers and Word Swap sends wake you.
