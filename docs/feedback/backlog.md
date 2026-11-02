@@ -100,6 +100,7 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | X15 | "Fishing is still very fast ... it doesnt need to be so lightning fast from one part to another" | PM (pace), Systems developer (beats) | done (4425bd3, 24c2147, evening round) |
 | X16 | "multiple times I've found a aparty member, picked my class, then ran out to the road and died immediately because I dont have rations." (new players starve on the first trip) | Game designer (bumpers, with the morale-is-hunger loop); Systems developer (build) | built (c25aa69, Brandon picked the tavern ward); review card dev-morale-hunger-review |
 | X17 | "We should nudge people to the lodestone in the center of town, maybe when they walk out of their home the first time the camera pans over to the lodestone with a beam of light on it or something." | Systems developer | done (2026-11-02, card dev-x17-review) |
+| X18 | "Lodestone is great. Level up is still so ugly. How did this pass the vibe check?" (the level-up box shown on dev-x17-review; it had only been made to fit, never restyled or look-checked) | Systems developer | queued (next, before fishing) |
 
 ## Older standing asks still open
 - Food as healing with no hunger ([USER] 2026-10-31 morale call; `docs/systems/morale.md` says not built, the road still eats every day). Owner: Systems developer (first account), done (2026-11-01, "Food heals, nobody hungers" commit); the numbers are on the desk as dev-food-review.
