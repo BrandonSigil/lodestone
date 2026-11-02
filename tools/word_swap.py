@@ -70,8 +70,8 @@ def usage(keys):
 # Story and dialogue stay Brandon's ([USER] 2026-11-02); names go with them. Everything else is game text we write.
 SPEECH = ("TALK_", "BOND_", "MAYOR_", "QUEST_", "SHOP_", "TEAM_")
 NAMES = ("CHAR_", "ENEMY_", "WN_", "VIL_", "BUILDING_", "GAME_TITLE", "MAP_TITLE")
-EVENT_TABLES = [("events.csv", "Road events (old trail)"), ("travel_events.csv", "Road events"),
-                ("explore_events.csv", "Exploring")]
+# events.csv is the shelved trail (only trail_scene reads it), so it stays off the page: only scenes that play.
+EVENT_TABLES = [("travel_events.csv", "Road events"), ("explore_events.csv", "Exploring")]
 CHECK_WORDS = {"sneak": "Sneak", "nerve": "Nerve", "persuade": "Talk", "tame": "Animals", "masonry": "Masonry",
                "wayfind": "Wayfinding", "forage": "Forage"}
 EFFECT_WORDS = {
