@@ -704,3 +704,4 @@ Next I think the hero's skills and doggos skills need some consideration. What t
 - [USER] 2026-11-02 Fishing as a full screen (dev-fishing-screen-review): "Yes, keep it" (ebb0694, X19). (Brandon)
 - [USER] 2026-11-02 Win screen tidy (ui-win-screen-review): "Yes, keep it" (81787f2, loot and pack panels tidied; the open look-check notes stay for the UI sweep). (Brandon)
 - [USER] 2026-11-02 Two more forest plots, a pass and a fork (content-plots-forest-review): "Yes, keep it" (31dee29). (Brandon)
+- [USER] 2026-11-02 A fourth snow plot, the climb from the frozen lake (content-plots-snow-review): "Yes, keep it" (31dee29). (Brandon)
