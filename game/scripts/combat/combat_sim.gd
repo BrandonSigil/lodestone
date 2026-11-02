@@ -8,6 +8,11 @@ const MAX_ROUNDS := 40
 ## Runs one AI turn for unit u: move, then act or guard. Returns the plan plus the events.
 static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	var plan := EnemyAi.plan(grid, u, units)
+	if OS.get_environment("SIM_TRACE") != "":  # tools: each turn's choice, to compare two fights
+		var tgt := CombatRules.unit_at(units, plan.aim) if plan.ability != null else null
+		print("    t%d %s %d/%d -> %s on %s  (score %.1f)" % [u.team, u.figure, u.hp, u.max_hp,
+			(plan.ability as Ability).id if plan.ability != null else ("guard" if plan.guard else "wait"),
+			String(tgt.figure) if tgt != null else "-", float(plan.get("score", 0.0))])
 	var stop := CombatRules.walk_stop(grid, u, plan.path, units)  # a foe on OVERWATCH, or a trap, stops the walk
 	if not stop.is_empty():
 		plan.move = stop.cell

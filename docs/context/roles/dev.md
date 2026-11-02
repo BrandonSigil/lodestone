@@ -63,6 +63,11 @@ Combat, the loop, water, saves, the UI code, tools and tests in the Godot 4.7.2 
 - `MenuKit` (`game/scripts/ui/menu_kit.gd`, `docs/systems/ui-kit.md`) is the menu kit from Brandon's round 2 mockups. Build new screens from it: `MenuKit.window` for a big window, `MenuKit.dialogue` and `answer` for any prompt, plus `card`, `chip`, `slot`, `portrait`, `bar_row` and `primary`. Never put bright green on a button.
 - The look check fails on the scene behind a window (graybox cubes, the HUD's empty bar, the "!" pill) and on the painted frame unless the brief scopes it out. Give the checker the approved mockup and say what is out of scope. Shots set up to match a mockup's case: `explore_shot` `win4` (four members, a fuller loot), `open:gate` crypt (a locked door with odds), `open:sq_dog` village (portrait with INVITE), `homecoming_shot full`.
 
+## Systems lane (2026-11-02)
+- Brandon picked three lanes (docs/systems/studio.md). This role is now **Systems**: rules, data numbers, morale, food, combat, balance and their tests. Screen work goes to the UI lane, and maps, plots, events and game text go to the Content lane.
+- Open: the Lich flip (docs/design/outing-tuning.md, "Why one armor flips the sword"). The party AI's AID score versus STRIKE decides the throne fight. This waits on Brandon's answer to dev-balance-run-review before anything is tuned. Tools: `tools/outing_sim.gd` with `boss_hp=`, `boss_armor=`, `boss_dmg=`, `SIM_WEAPON=`, `SIM_DEBUG=1`, and `SIM_TRACE=1` (each AI turn). In zsh pass variants as `${=v}`.
+- Done today: the menu kit, the snow cliff road, X17 the lodestone nudge, morale is hunger, level up and fishing on the kit, X19 fishing as a full screen.
+
 ## Uncommitted work
 None of mine.
 
