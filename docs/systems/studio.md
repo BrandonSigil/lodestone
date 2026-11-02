@@ -70,6 +70,16 @@ The PM goes by Wren in the chat (Brandon asked it to pick a name and to be femal
 - **Roadmap**: one `roadmap` doc per track. When a role finishes or starts a step, it flips that item's `status` and adds the commit as `ref`; new approved build orders become new items. The project manager keeps tracks and order tidy.
 - **Launch game**: the page calls the local MCP tool `host:lodestone` / `launch_game` through the Claude app (`tools/launcher/lodestone_mcp.py`, standard-library Python; register it once with `python3 tools/launcher/install_mcp.py` and restart the Claude app). It only works with the page open in the Claude app on the Mac. Otherwise the window's "Ask the project manager" button writes a `requests` doc with `kind: "launch"`; the desk watch launches the game and marks it `done` with `done_at` and a one-line `result`. A web page can't open `lodestone://` links from the artifact frame, so the Launch button no longer uses them; `tools/launcher/build_launcher.sh` still builds a Dock/Spotlight Lodestone Launcher app.
 
+## Three lanes (Brandon, 2026-11-02, picked "Three lanes" on pm-org-sweep)
+Since 2026-11-01 one systems developer posted half of all desk cards and work queued behind it while the other roles sat idle. Now three builders run side by side, each owning its own files so they never collide:
+- **Systems** (Opus, medium): rules and data. `game/scripts/core`, the rules scripts, `game/data` numbers, morale, food, combat, balance runs, and the tests for them.
+- **UI** (Opus, medium): every screen and menu on the menu kit. `game/scripts/ui`, `UiTheme`, the menu kit, and the screenshot tools. Its references are `docs/art/references/menus/` and `docs/design/menus-research.md`.
+- **Content** (Sonnet): plots, maps, events and game text. `game/data/plots`, explore maps (never Brandon's uncommitted ones), the event tables, `game/text/placeholder.csv` (game text only, never story or dialogue), and `tools/explore`.
+- **Shared files** like `placeholder.csv` and `decisions.md` take line-level edits only: pull with rebase right before each commit, and commit only your own paths.
+- **Starting them:** a new session can only start on a message Brandon types into the PM's Claude window (Studio messages and desk answers can't start one). So each day he types one line there ("start the team"), and the PM opens the lanes that have work queued, from their handoff notes. Lanes retire at the end of the day.
+- **The PM routes** each desk answer and chat ask to its lane, instead of everything to one developer.
+- **Look check cap:** at most 5 rounds on one screen. After that, post the card with the reviewer's last notes written plainly and let Brandon judge.
+
 ## Keeping usage low (Brandon, 2026-10-30)
 Every step a session takes re-reads its whole memory, so a long session is expensive even when it only says "still waiting". The rules:
 - **Sonnet by default.** Roles run on Sonnet; switch a role to Opus only for a hard engine or design problem, then back.
