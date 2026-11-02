@@ -2,7 +2,7 @@
 
 The standing instructions set in Brandon's Claude project, copied 2026-10-27.
 
-> For now, threads may push and merge to BrandonSigil/lodestone without asking Brandon first (granted 2026-10-26, to iterate fast; PR process tightens later). Never write story or copy; use caveman placeholders.
+> For now, threads may push and merge to BrandonSigil/lodestone without asking Brandon first (granted 2026-10-26, to iterate fast; PR process tightens later). Never write story or dialogue; use caveman placeholders for those. (Updated 2026-11-02: game text such as abilities, tips, menus and screens is ours to write in clear, helpful English.)
 
 ## Roles (from the project brief)
 - Brandon: story designer, writer and art director. He decides story, copy, names, lore and the final look.
