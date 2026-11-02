@@ -46,16 +46,25 @@ var _new_kind := false
 var _blob: PackedVector2Array = []  ## the pool's outline, pool coords
 var _pads: Array[Vector3] = []  ## lily pads: x, y (pool coords), radius (pool widths)
 var _done := false
+var room := Callable()  ## the play area it fills
+var bar := Callable()  ## where its Leave goes
+var _tips: Control  ## the first-time how-to, while it is up
+const TIPS_FLAG := "seen_fishing_tips"
 
 
 ## Open the minigame over `parent` on its own canvas layer. spot picks the fish pool (data/fish.csv spots). `pond` is the
 ## list of fish ids left in it (Game.pond; this takes fish out of it): null gives a fresh pond that is not kept.
-static func open(parent: Node, spot_id := "lake", party_mods := {}, seed_value := 0, pond: Variant = null) -> FishingGame:
+## room: the play area it fills (the host's FrameHud.clear_rect, so the party frame stays in view under it); bar: where
+## its Leave goes (FrameHud.bar_rect, the frame's long bar). Without them it fills the screen and Leave sits bottom left.
+static func open(parent: Node, spot_id := "lake", party_mods := {}, seed_value := 0, pond: Variant = null,
+		room := Callable(), bar := Callable()) -> FishingGame:
 	var layer := CanvasLayer.new()
 	layer.layer = 20
 	parent.add_child(layer)
 	var g := FishingGame.new()
 	g.spot = spot_id
+	g.room = room
+	g.bar = bar
 	g.mods = party_mods
 	g._pond_in = pond
 	if seed_value != 0:
@@ -87,36 +96,56 @@ func _ready() -> void:
 		_pads.append(Vector3(r.randf_range(0.15, 0.85), r.randf_range(0.2, 0.75), r.randf_range(0.03, 0.045)))
 	_mouse = get_viewport_rect().size * 0.5
 	resized.connect(queue_redraw)
+	if not Game.has_flag(TIPS_FLAG):
+		_show_tips.call_deferred()
+
+
+## The first time anyone fishes ([USER] 2026-11-02 X19: "The first time someone fishes an explainer when can pop up, teach
+## them what to do. Then go away"): the how-to in the one dialogue screen, once ever (meta flag TIPS_FLAG).
+func _show_tips() -> void:
+	var panel := PanelContainer.new()
+	var box := MenuKit.dialogue(panel, Txt.t("UI_FISH_TIPS_HEAD"), _panel)
+	for k in ["UI_FISH_TIP_AIM", "UI_FISH_TIP_STRIKE", "UI_FISH_TIP_REEL"]:
+		var l := MenuKit.label(Txt.t(k), 18)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.custom_minimum_size.x = MenuKit.DIALOG_W
+		box.add_child(l)
+	var ok := MenuKit.primary(Txt.t("UI_FISH_TIPS_OK"), func() -> void:
+		Game.set_flag(TIPS_FLAG)
+		UiTheme.pop_out(_tips)
+		_tips = null, 20, MenuKit.DIALOG_W)
+	box.add_child(ok)
+	_tips = panel
+	add_child(panel)
+	UiTheme.keep_inside(panel, _panel, 1.0, false)
+	ok.grab_focus.call_deferred()
 
 
 # --- layout -----------------------------------------------------------------------------------------
 
+## The whole play area ([USER] 2026-11-02 X19: "Fishing shouldnt be a menu. It should be the whole screen with our regular
+## party frame at the bottom").
 func _panel() -> Rect2:
-	var w := minf(size.x - 32.0, 980.0)
-	var h := minf(size.y - 60.0, 610.0)
-	return Rect2((size - Vector2(w, h)) * 0.5, Vector2(w, h))
+	return room.call() if room.is_valid() else Rect2(Vector2.ZERO, size)
 
 
 func _pool() -> Rect2:
 	var p := _panel()
-	return Rect2(p.position + Vector2(44, 96), Vector2(p.size.x - 88, p.size.y * 0.5))
+	return Rect2(p.position + Vector2(p.size.x * 0.04, p.size.y * 0.05), Vector2(p.size.x * 0.92, p.size.y * 0.64))
 
 
 func _bar() -> Rect2:
 	var p := _panel()
 	var pool := _pool()
-	return Rect2(Vector2(p.position.x + 70, pool.end.y + 48), Vector2(p.size.x - 140, 30))
+	return Rect2(Vector2(p.position.x + p.size.x * 0.2, pool.end.y + 50), Vector2(p.size.x * 0.6, 34))
 
 
+## Leave, in the bottom frame's long bar (the one action fishing needs there), else bottom left.
 func _leave_rect() -> Rect2:
-	var p := _panel()
-	return Rect2(p.end.x - 250, p.position.y + 46, 130, 38)
-
-
-## The round X at the window's top right corner (the menu kit): LEAVE at Look, close on a result.
-func _x_rect() -> Rect2:
-	var p := _panel()
-	return Rect2(p.end.x - 70, p.position.y + 18, UiTheme.FRAME_X, UiTheme.FRAME_X)
+	var b: Rect2 = bar.call() if bar.is_valid() else Rect2()
+	if b.size.x > 10.0:  # the whole long bar: Leave is what the bar holds while fishing
+		return Rect2(b.position.x, b.get_center().y - 18.0, b.size.x, 36)
+	return Rect2(16, size.y - 54, 150, 38)
 
 
 func _to_screen(pc: Vector2) -> Vector2:
@@ -208,6 +237,17 @@ func _end(outcome: String) -> void:
 ## End now with this outcome (tests, and callers that skip the minigame).
 func resolve(outcome: String, fish := {}) -> void:
 	result = {"outcome": outcome, "fish": fish}
+	_finish()
+
+
+## Leave after the cast: an idle bobber is reeled in and the party goes (as before the cast, nothing lost); a fish that
+## noticed or is on the line is lost (it counts as a try).
+func _leave_now() -> void:
+	if state == S.WAIT or state == S.CAST:
+		result = {"outcome": "left", "fish": {}}
+		_finish()
+		return
+	_end("lost")
 	_finish()
 
 
@@ -312,7 +352,7 @@ func _burst(at: Vector2, n: int) -> void:
 # --- input --------------------------------------------------------------------------------------
 
 func _input(event: InputEvent) -> void:
-	if _done:
+	if _done or _tips != null:  # the how-to takes its own clicks and keys while it is up
 		return
 	if event is InputEventKey and (event as InputEventKey).keycode >= KEY_F1 and (event as InputEventKey).keycode <= KEY_F12:
 		return  # F7 and friends still work
@@ -325,13 +365,18 @@ func _input(event: InputEvent) -> void:
 			and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
 		_mouse = (event as InputEventMouseButton).position
 		_use_mouse = true
-		_press(true)
+		if state != S.LOOK and state != S.RESULT and _leave_rect().has_point(_mouse):
+			_leave_now()
+		else:
+			_press(true)
 	elif event.is_action_pressed("ui_cancel"):
 		if state == S.LOOK:
 			result = {"outcome": "left", "fish": {}}
 			_finish()
 		elif state == S.RESULT:
 			_finish()
+		else:
+			_leave_now()
 	elif event.is_action_pressed("ui_accept"):
 		_press(false)
 	get_viewport().set_input_as_handled()
@@ -340,7 +385,7 @@ func _input(event: InputEvent) -> void:
 func _press(by_mouse: bool) -> void:
 	match state:
 		S.LOOK:
-			if by_mouse and (_leave_rect().has_point(_mouse) or _x_rect().has_point(_mouse)):
+			if by_mouse and _leave_rect().has_point(_mouse):
 				result = {"outcome": "left", "fish": {}}
 				_finish()
 				return
@@ -364,79 +409,29 @@ func _result_hold() -> float:
 # --- drawing ------------------------------------------------------------------------------------
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.02, 0.05, 0.05, 0.6))
 	var p := _panel()
-	draw_style_box(UiTheme.look("look_panel.png", 110, 110, 0.45, 0.0, 0.0, Color.WHITE, true), p)  # the kit's window, as every dialogue
+	draw_rect(p, GRASS)  # the bank all round the pond, to the edges of the play area
 	var font := get_theme_default_font()
-	# the title on the bright plate, straddling the top rim; what to do now under it
-	var title := Txt.t("UI_FISH_TITLE")
-	var tw := font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x
-	var plate := Rect2(Vector2(p.get_center().x - maxf(tw + 170.0, 300.0) * 0.5, p.position.y - 22), Vector2(maxf(tw + 170.0, 300.0), 54))
-	draw_style_box(UiTheme.look("look_title_plate.png", 88, 0, 0.3, 30.0, 8.0), plate)
-	draw_string_outline(font, Vector2(plate.position.x, plate.get_center().y + 10), title, HORIZONTAL_ALIGNMENT_CENTER, plate.size.x, 28, 4, Color(0.02, 0.1, 0.08, 0.9))
-	draw_string(font, Vector2(plate.position.x, plate.get_center().y + 10), title, HORIZONTAL_ALIGNMENT_CENTER, plate.size.x, 28, MenuKit.TEXT)
-	_draw_x(_x_rect())
-	if state == S.LOOK:
+	if state != S.RESULT:  # Leave in the bottom frame, in every beat (Esc and B too)
 		var lr := _leave_rect()
 		var lit := lr.has_point(_mouse)
-		draw_style_box(MenuKit.flat(MenuKit.BTN_HOVER if lit else MenuKit.BTN, MenuKit.GOLD if lit else MenuKit.RIM, 1.5, 14, 0, 0), lr)
-		draw_string(font, lr.position + Vector2(0, 25), Txt.t("UI_FISH_LEAVE"), HORIZONTAL_ALIGNMENT_CENTER, lr.size.x, 17, MenuKit.TEXT_QUIET)
+		# the frame's own look: its deep teal, a cream keyline, gold when lit
+		draw_style_box(MenuKit.flat(Color("0b3b3a") if not lit else Color("135250"), MenuKit.GOLD if lit else Color(0.93, 0.92, 0.86), 2.0, 18, 0, 0), lr)
+		var ic := Vector2(lr.get_center().x - 34, lr.get_center().y)
+		for k in [-1.0, 1.0]:  # two footprints, the kit's way-out glyph
+			var foot := PackedVector2Array()
+			for i in 16:
+				foot.append(ic + Vector2(k * 4.5, k * 3.0) + Vector2.from_angle(TAU * i / 16.0) * Vector2(3.0, 5.5))
+			draw_colored_polygon(foot, MenuKit.TEXT)
+		draw_string(font, Vector2(ic.x + 18, lr.position.y + 24), Txt.t("UI_FISH_LEAVE"), HORIZONTAL_ALIGNMENT_LEFT, -1, 18, MenuKit.TEXT)
 	_draw_pool()
 	_draw_angler()
-	var head := p.position + Vector2(44, 70)  # what to do now, over the pool's aim ring
-	draw_string_outline(font, head, _headline(), HORIZONTAL_ALIGNMENT_LEFT, p.size.x - 260, 19, 6, Color(MenuKit.FELT, 1.0))
-	draw_string(font, head, _headline(), HORIZONTAL_ALIGNMENT_LEFT, p.size.x - 260, 19, MenuKit.TEXT)
 	if state == S.REEL or ((state == S.RESULT or state == S.SWIM_OFF) and not _reel.is_empty()):
 		_draw_bar()
-	var keys := "UI_FISH_KEYS_LOOK"
-	if state == S.STRIKE or state == S.CAST or state == S.COME:
-		keys = "UI_FISH_KEYS_STRIKE"
-	elif state == S.WAIT:
-		keys = "UI_FISH_KEYS_WAIT"
-	elif state == S.REEL:
-		keys = "UI_FISH_KEYS_REEL"
-	elif state == S.RESULT:
-		keys = "UI_FISH_CLOSE" if _phase_t > _result_hold() else ""
-	elif state == S.HOOKED or state == S.SWIM_OFF:
-		keys = ""
-	if keys != "":  # the key hints as kit chips, one per "|" part, in a row under the pool (or the reel bar)
-		var parts := Txt.t(keys).split("|", false)
-		var widths: Array[float] = []
-		var total := 0.0
-		for part in parts:
-			var wpx := font.get_string_size(part, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x + 28.0
-			widths.append(wpx)
-			total += wpx + 10.0
-		var x0 := p.get_center().x - (total - 10.0) * 0.5
-		var y0 := p.end.y - 64.0 if _bar_shown() else _pool().end.y + 56.0
-		for k in parts.size():
-			var cr := Rect2(x0, y0, widths[k], 30)
-			draw_style_box(MenuKit.flat(MenuKit.INSET, MenuKit.RIM, 1.0, 15, 0, 0), cr)
-			draw_string(font, cr.position + Vector2(0, 21), parts[k], HORIZONTAL_ALIGNMENT_CENTER, cr.size.x, 15, MenuKit.TEXT)
-			x0 += widths[k] + 10.0
 	for s in _splash:
 		draw_circle(s.p, float(s.r), Riso.alpha(Riso.CREAM, clampf(float(s.life) * 2.0, 0.0, 1.0)))
 	if state == S.RESULT:
 		_draw_result()
-
-
-func _bar_shown() -> bool:
-	return state == S.REEL or ((state == S.RESULT or state == S.SWIM_OFF) and not _reel.is_empty())
-
-
-## The kit's round X, drawn (this screen paints itself): blue disc, white ring and cross, gold under the mouse.
-func _draw_x(r: Rect2) -> void:
-	var c := r.get_center()
-	var rad := r.size.x * 0.5 - 1.0
-	var lit := r.has_point(_mouse)
-	if lit:
-		draw_circle(c, rad + 4.0, Color(MenuKit.GOLD, 0.25))
-	draw_circle(c, rad, Color(0.02, 0.06, 0.08))
-	draw_circle(c, rad - 1.5, MenuKit.X_BLUE.lightened(0.12 if lit else 0.0))
-	draw_arc(c, rad - 2.5, 0.0, TAU, 40, MenuKit.GOLD if lit else Color(0.95, 0.96, 0.95), 2.0, true)
-	var k := rad * 0.36
-	draw_line(c + Vector2(-k, -k), c + Vector2(k, k), Color(0.97, 0.97, 0.95), 3.0, true)
-	draw_line(c + Vector2(-k, k), c + Vector2(k, -k), Color(0.97, 0.97, 0.95), 3.0, true)
 
 
 func _headline() -> String:
@@ -648,38 +643,34 @@ func _draw_angler() -> void:
 func _draw_bar() -> void:
 	var bar := _bar()
 	var track := StyleBoxFlat.new()
-	track.bg_color = Color(0.13, 0.32, 0.36, 0.95)
-	track.border_color = Color(0.85, 0.9, 0.92)
+	track.bg_color = Color("0b3b3a")  # the frame's teal and its cream keyline
+	track.border_color = Color(0.93, 0.92, 0.86)
+	track.set_border_width_all(3)
 	track.set_border_width_all(2)
 	track.set_corner_radius_all(15)
 	draw_style_box(track, bar)
-	for i in range(1, 10):
-		var x := bar.position.x + bar.size.x * i / 10.0
-		draw_line(Vector2(x, bar.position.y + 8), Vector2(x, bar.end.y - 8), Color(MenuKit.TEXT, 0.25), 2.0)
 	var half := float(_reel.half)
 	var m := float(_reel.marker)
 	var on := bool(_reel.on)
 	var mr := Rect2(bar.position.x + bar.size.x * (m - half), bar.position.y - 6, bar.size.x * half * 2.0, bar.size.y + 12)
 	var mk := StyleBoxFlat.new()
-	mk.bg_color = Color(MenuKit.GOLD, 0.45) if on else Color(0.85, 0.9, 0.92, 0.15)
-	mk.border_color = MenuKit.GOLD if on else Color(0.85, 0.9, 0.92)
-	mk.set_border_width_all(3)
+	mk.bg_color = Color(MenuKit.GOLD, 0.5) if on else Color(MenuKit.GOLD, 0.14)  # gold on the fish, dim gold off it
+	mk.border_color = MenuKit.GOLD if on else Color(MenuKit.GOLD, 0.55)
+	mk.set_border_width_all(2)
 	mk.set_corner_radius_all(8)
 	draw_style_box(mk, mr)
 	var fx := bar.position.x + bar.size.x * float(_reel.fish)
 	var dir := Vector2.RIGHT if float(_reel.target) >= float(_reel.fish) else Vector2.LEFT
-	_draw_fish(Vector2(fx, bar.get_center().y), dir, 34.0, Color("8fb3d9"))
-	# the catch meter, labelled: how close the fish is to caught
-	var font := get_theme_default_font()
-	draw_string(font, Vector2(bar.position.x, bar.end.y + 34), Txt.t("UI_FISH_METER"), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, MenuKit.TEXT)
-	var meter := Rect2(bar.position.x + 64, bar.end.y + 20, bar.size.x - 64, 16)
-	var mb := MenuKit.flat(Color(0.13, 0.32, 0.36, 0.95), Color(0.85, 0.9, 0.92, 0.7), 1.0, 8, 0, 0)
+	_draw_fish(Vector2(fx, bar.get_center().y), dir, 38.0, Color("ff9e7a"))  # the fish, warm against the teal and the gold
+	# the catch meter: how close the fish is to caught
+	var meter := Rect2(bar.position.x + 40, bar.end.y + 12, bar.size.x - 80, 18)
+	var mb := MenuKit.flat(Color("0b3b3a"), Color(0.93, 0.92, 0.86), 2.0, 9, 0, 0)
 	draw_style_box(mb, meter)
-	var fill := Rect2(meter.position, Vector2(meter.size.x * float(_reel.catch), meter.size.y))
+	var fill := Rect2(meter.position + Vector2(3, 3), Vector2((meter.size.x - 6) * float(_reel.catch), meter.size.y - 6))
 	if fill.size.x > 1.0:
 		var fb := StyleBoxFlat.new()
-		fb.bg_color = MenuKit.GOLD if on else Color(MenuKit.GOLD, 0.6)
-		fb.set_corner_radius_all(8)
+		fb.bg_color = MenuKit.GOLD
+		fb.set_corner_radius_all(6)
 		draw_style_box(fb, fill)
 
 

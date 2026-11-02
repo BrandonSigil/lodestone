@@ -1884,7 +1884,8 @@ func _fish(t: Dictionary) -> void:
 	_close_dialog()
 	mode = M.BUSY
 	var pool := String(t.get("pool", "lake"))  # each spot is its own pond: a few fish that run out (FI2), kept in the save
-	fishing = FishingGame.open(self, pool, FishingRules.mods_for(Game.run), 0, Game.pond(map.map_name + "/" + String(t.get("id", pool)), pool))
+	fishing = FishingGame.open(self, pool, FishingRules.mods_for(Game.run), 0, Game.pond(map.map_name + "/" + String(t.get("id", pool)), pool),
+		hud.clear_rect, hud.bar_rect)  # the whole play area, the party frame under it ([USER] 2026-11-02 X19)
 	fishing.finished.connect(_fish_done.bind(t))
 
 

@@ -411,6 +411,29 @@ func run(s: Node, f: int, step: String) -> bool:
 					if b.text == Txt.t("UI_CAST"):
 						b.pressed.emit()
 			return f == 30
+		"fishing", "fishing_tips", "fishing_reel":
+			# the fishing screen in play (X19): the whole play area, the party frame under it; fishing_tips: the first time,
+			# with its how-to; fishing_reel: a fish on, the reel bar
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false
+				game.run.add_item("rod", 1)
+				if step != "fishing_tips":
+					game.meta.flags.append("seen_fishing_tips")
+				var spot := {}
+				for t: Dictionary in s.things:
+					if String(t.get("event", "")).contains("fish") or t.has("pool"):
+						spot = t
+				s._fish(spot)
+			if step == "fishing_reel" and is_instance_valid(s) and s.fishing != null and f == 30:
+				var g: Object = s.fishing
+				g.set("_hook", 0)
+				g.set("_reel", FishingRules.reel_start((g.get("_shadows") as Array)[0].fish, g.get("mods")))
+				g.set("state", 3)  # S.REEL
+				var r: Dictionary = g.get("_reel")
+				r.marker = clampf(float(r.fish) - 0.1, 0.11, 0.89)
+				r.catch = 0.55
+			return f == 60
 		"fish":
 			# caught fish in the PACK box: each grade its own EAT row, the prize fish's EAT pressed (the hero hurt)
 			if f == 5:

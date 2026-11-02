@@ -450,6 +450,14 @@ func set_tools(entries: Array) -> void:
 		tools_box.add_child(b)
 
 
+## The long bar of the leaf frame on screen (where a full-screen mode puts its own actions: fishing's Leave), or an empty
+## rect with no leaf frame.
+func bar_rect() -> Rect2:
+	if leaf_goals == null:
+		return Rect2()
+	return Rect2(leaf_goals.global_position, leaf_goals.size)
+
+
 ## Tracked village goals in the frame's long bar (up to two lines; nothing tracked leaves it bare).
 func set_goals(lines: PackedStringArray) -> void:
 	if leaf_goals != null:

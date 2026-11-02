@@ -980,7 +980,12 @@ UI_FISH_LOST,THE FISH GOT AWAY.
 UI_FISH_CAUGHT,GOT: %s
 UI_FISH_NEW,NEW FISH!
 UI_FISH_GOT_KIND,%s! into pack
-UI_FISH_LEAVE,LEAVE
+UI_FISH_LEAVE,Leave
+UI_FISH_TIPS_HEAD,How to fish
+UI_FISH_TIP_AIM,"Aim near a fish shadow with the mouse, the arrows or a stick, then cast with a click, SPACE or A. A fish near the bobber may come to look."
+UI_FISH_TIP_STRIKE,"Small dips are nibbles. Strike on the real dip: click, SPACE or A."
+UI_FISH_TIP_REEL,"Then keep the fish inside the marker: hold left or right to pull it, let go and it drifts back. Stay on the fish until the meter under the bar fills."
+UI_FISH_TIPS_OK,Got it
 UI_FISH_METER,Catch
 UI_FISH_AGAIN,click = again
 UI_FISH_CLOSE,Done: click

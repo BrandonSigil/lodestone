@@ -292,7 +292,8 @@ func _go_fish() -> void:
 		_say(Txt.t("UI_OW_NO_ROD"))
 		return
 	_busy = true
-	fishing = FishingGame.open(self, "road", FishingRules.mods_for(Game.run), 0, Game.pond("road/" + String(Game.travel.get("at", Game.travel.get("to", "road"))), "road"))
+	fishing = FishingGame.open(self, "road", FishingRules.mods_for(Game.run), 0, Game.pond("road/" + String(Game.travel.get("at", Game.travel.get("to", "road"))), "road"),
+		hud.clear_rect, hud.bar_rect)  # the whole play area, the party frame under it ([USER] 2026-11-02 X19)
 	fishing.finished.connect(func(res: Dictionary) -> void:
 		fishing = null
 		_busy = false
