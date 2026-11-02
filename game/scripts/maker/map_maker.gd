@@ -785,8 +785,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			if tool == "region":
 				region_shift(-1)
 		KEY_DELETE, KEY_BACKSPACE:
+			# One branch for both: a match takes only its first hit, so a second Del branch never ran.
 			if tool == "region":
 				region_cut()
+			else:
+				_delete_selected()
 		KEY_H:
 			hide_ui = not hide_ui
 			_root.visible = not hide_ui
@@ -805,8 +808,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_turn_item()
 		KEY_M:
 			_mirror_item()
-		KEY_DELETE, KEY_BACKSPACE:
-			_delete_selected()
 		KEY_ESCAPE:
 			if _keys_panel != null and _keys_panel.visible:
 				_keys_panel.visible = false

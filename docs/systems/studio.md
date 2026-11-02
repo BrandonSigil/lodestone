@@ -80,6 +80,7 @@ Since 2026-11-01 one systems developer posted half of all desk cards and work qu
 - **Shared files** like `placeholder.csv` and `decisions.md` take line-level edits only: pull with rebase right before each commit, and commit only your own paths.
 - **Starting them:** a new session can only start on a message Brandon types into the PM's Claude window (Studio messages and desk answers can't start one). So each day he types one line there ("start the team"), and the PM opens the lanes that have work queued, from their handoff notes. Lanes retire at the end of the day.
 - **The PM routes** each desk answer and chat ask to its lane, instead of everything to one developer.
+- **Spare Brandon's Mac** (2026-11-02: "It sounds like my macbook is about to take off"): he plays and edits on the same machine. Run at most 6 headless Godot runs at a time across all lanes (sims, tests), and only one windowed screenshot run per lane at a time. Queue the rest.
 - **Look check cap:** at most 5 rounds on one screen. After that, post the card with the reviewer's last notes written plainly and let Brandon judge.
 
 ## Keeping usage low (Brandon, 2026-10-30)
