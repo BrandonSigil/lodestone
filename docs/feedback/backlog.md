@@ -98,6 +98,8 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | X13 | "I want to always be on a selected cahracter" | Systems developer | done (evening round) |
 | X14 | "these windows should fit the size. there shouldnt be all this green space" (loot windows) | Systems developer | done (evening round) |
 | X15 | "Fishing is still very fast ... it doesnt need to be so lightning fast from one part to another" | PM (pace), Systems developer (beats) | done (4425bd3, 24c2147, evening round) |
+| X16 | "multiple times I've found a aparty member, picked my class, then ran out to the road and died immediately because I dont have rations." (new players starve on the first trip) | Game designer (bumpers, with the morale-is-hunger loop); Systems developer (build) | design card coming |
+| X17 | "We should nudge people to the lodestone in the center of town, maybe when they walk out of their home the first time the camera pans over to the lodestone with a beam of light on it or something." | Systems developer | queued (after the snow plots) |
 
 ## Older standing asks still open
 - Food as healing with no hunger ([USER] 2026-10-31 morale call; `docs/systems/morale.md` says not built, the road still eats every day). Owner: Systems developer (first account), done (2026-11-01, "Food heals, nobody hungers" commit); the numbers are on the desk as dev-food-review.
