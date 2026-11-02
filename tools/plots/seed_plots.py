@@ -333,20 +333,19 @@ def rocky_pass():
     p = Plot("rocky_pass", "Two high rock shoulders, one each side, bend the road into a narrow dogleg pass; ledges on each shoulder look down on it.")
     p.corridor([(0, 8), (7, 8), (9, 10), (13, 10), (20, 10)], 1.5, 6)
     p.island([(6, 3.5, 4.5, 3.2), (14, 15, 4.5, 3.0)], 16, jag=0)
-    p.spurs([((3, 4), (0, 2)), ((9, 2), (12, 0)), ((17, 15), (20, 17)), ((11, 16), (8, 17)), ((13, 7), (16, 5)), ((7, 12), (4, 14))])
-    p.terraces(lambda x, y: 3 if math.hypot((x - 6) / 4.5, (y - 3.5) / 3.2) < 0.7 or math.hypot((x - 14) / 4.5, (y - 15) / 3.0) < 0.7 else (2 if y < 6 or y > 12 else 1))
+    p.spurs([((9, 2), (12, 0)), ((11, 16), (8, 17))])
+    p.terraces(lambda x, y: 3 if math.hypot((x - 6) / 4.5, (y - 3.5) / 3.2) < 1.0 or math.hypot((x - 14) / 4.5, (y - 15) / 3.0) < 1.0 else (2 if y < 6 or y > 12 else 1))
     p.keep_starts(range(6, 11))
     p.road([(0, 8), (7, 8), (7, 10), (20, 10)])
     p.stair([(4, 6), (14, 12), (6, 2), (14, 13), (2, 6), (17, 12)])
-    p.rocks([(8, 6), (12, 12), (16, 8), (3, 10)])
-    p.woods([(9, 4), (11, 14), (15, 6), (5, 12)])
-    p.draft = True  # failed the look check on 2026-11-01 (read as a box / a maze): a start for Brandon to tinker with
+    p.rocks([(5, 4), (8, 3), (13, 15), (16, 15), (10, 16)])
+    p.woods([(9, 4), (11, 14), (7, 3), (14, 15)])
     return p
 
 
 @plot
 def fork():
-    p = Plot("fork", "The road forks round a tall wooded knoll and joins again; the knoll looks down on both branches.")
+    p = Plot("fork", "The road forks round a wooded knoll and joins again; the knoll has a bare summit that looks down on both branches.")
     north = [(4, 9), (4, 4), (16, 4), (16, 9)]
     south = [(4, 9), (4, 14), (16, 14), (16, 9)]
     for path in ([(0, 9), (4, 9)], north, south, [(16, 9), (20, 9)]):
@@ -354,15 +353,14 @@ def fork():
     p.island([(10, 9, 6.2, 5.0)], 17, jag=0)
     p.spurs([((10, 3), (10, 0)), ((10, 15), (10, 17)), ((4, 6), (1, 3)), ((16, 12), (19, 15)), ((6, 3), (6, 0)), ((14, 3), (14, 0)), ((6, 15), (6, 17)), ((14, 15), (14, 17))])
     knoll = lambda x, y: math.hypot((x - 10) / 5.0, (y - 9) / 3.8)
-    p.terraces(lambda x, y: 3 if knoll(x, y) < 0.22 else (2 if knoll(x, y) < 0.5 else (1 if knoll(x, y) < 1.0 or y < 3 or y > 15 else 0)))
+    p.terraces(lambda x, y: 3 if knoll(x, y) < 0.3 else (2 if knoll(x, y) < 0.62 else (1 if knoll(x, y) < 1.0 else 0)))
     p.keep_starts(range(8, 11))
     p.road([(0, 9), (4, 9), (4, 4), (16, 4), (16, 9), (20, 9)])
     p.road([(4, 9), (4, 14), (16, 14), (16, 9)])
-    p.stair([(10, 5), (10, 7), (10, 8), (10, 13), (10, 11), (10, 10), (5, 9), (15, 9), (10, 3), (10, 15), (6, 3), (14, 3), (6, 15), (14, 15)])
-    p.rocks([(2, 8), (18, 10), (8, 4), (12, 14), (1, 3), (19, 15)])
+    p.stair([(10, 5), (10, 13), (10, 7), (10, 11), (5, 9), (15, 9), (7, 9), (13, 9)])
+    p.rocks([(2, 8), (18, 10), (1, 3), (19, 15)])
     p.cut([(6, 6), (6, 12), (14, 12), (14, 6), (7, 5), (13, 5), (7, 13), (13, 13), (6, 7), (14, 11), (6, 11), (14, 7)])
-    p.woods([(9, 9), (11, 9), (8, 10), (12, 8), (2, 4), (18, 14), (10, 1), (10, 17)])
-    p.draft = True  # failed the look check on 2026-11-01 (the knoll reads too low, a ring road on a slab)
+    p.woods([(7, 8), (13, 10), (2, 4), (18, 14), (10, 1), (10, 17)])
     return p
 
 
@@ -414,18 +412,17 @@ def zigzag():
     p = Plot("zigzag", "The road climbs from a frozen lake's shore in two long bends to the foes' shelf under the peaks; a stair is the steep short cut.", region="snow", flip=False)
     path = [(0, 14), (11, 14), (11, 9), (4, 9), (4, 5), (20, 5)]
     p.corridor(path, 1.6, 3)
-    p.island([(16.5, 13.5, 3.6, 2.6), (17, 4.5, 3.2, 2.2), (8, 2.2, 3.0, 1.6)], 13, jag=0)
-    p.spurs([((2, 14), (1, 11)), ((8, 9), (8, 12)), ((14, 5), (14, 8)), ((7, 14), (7, 17)), ((1, 9), (0, 7))])
+    p.island([(6, 16.2, 5.6, 2.4), (17, 4.5, 3.2, 2.2), (8, 2.2, 3.0, 1.6)], 13, jag=0)
+    p.spurs([((8, 9), (8, 12)), ((14, 5), (14, 8)), ((13, 14), (16, 16))])
     p.terraces(lambda x, y: 0 if y >= 12 else (1 if y >= 7 else (2 if y >= 3.5 else 3)))
-    p.lake(16.5, 14, 3.0, 2.0)  # the frozen lake at the foot of the climb
+    p.lake(5.5, 16.4, 4.2, 1.9)  # the frozen lake the road runs along at the foot of the climb
     p.keep_starts(range(13, 17), right=False)
     p.keep_starts(range(3, 7), left=False)
     p.road(path)
     p.road([(11, 9), (11, 5)])  # the steep short cut up the slope
     p.stair([(2, 11), (16, 8), (8, 3)])
-    p.rocks([(6, 12), (13, 10), (9, 6), (18, 11)])
-    p.woods([(1, 12), (13, 15), (2, 7), (15, 3), (6, 3), (19, 16)])
-    p.draft = True  # failed the look check on 2026-11-02 (the lake isn't tied to the climb; the foes' shelf doesn't read as the top)
+    p.rocks([(13, 12), (9, 6), (18, 11)])
+    p.woods([(1, 12), (2, 7), (15, 3), (6, 3), (14, 16)])
     return p
 
 

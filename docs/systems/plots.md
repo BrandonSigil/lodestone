@@ -48,12 +48,12 @@ wind like an explore map, so the standard bar (fill 0.45, edge 1.8) fails every 
 ## The plots (2026-11-01)
 Road fights use each region's finished plots; drafts (`"draft": true`, "(draft)" in the plot maker) are starts for
 Brandon to tinker with, and every one of them failed the look check.
-- **forest, finished (5):** bend (the road bends under a high shoulder; the flank river follows the bend), bridge_crossing
+- **forest, finished (7):** (2026-11-02 content lane: rocky_pass, a sunken dogleg pass between two high wooded shoulders, and fork, a road forking round a stepped knoll with stairs to a small peak) bend (the road bends under a high shoulder; the flank river follows the bend), bridge_crossing
   (a river between the starts, one bridge on the road), switchback (the road zigzags up three terraces), lakeshore (the
   road curves round a lake under a bluff), falls (a river steps down the slope in falls between the starts, one bridge;
   ice_bridge's plan mirrored).
-- **forest, drafts:** hollow, rocky_pass, fork (a road looping round a knoll), gorge (a deep river gorge).
-- **snow, finished (3):** ice_bridge (frozen falls between the starts, one bridge), frozen_lake (lakeshore's plan
+- **forest, drafts:** hollow (the sunken clearing doesn't read; sealed rock heaps), gorge (a deep river gorge, thin and hidden).
+- **snow, finished (4):** zigzag (2026-11-02 content lane: the road runs along a frozen lake, then climbs in bends to the foes' shelf), ice_bridge (frozen falls between the starts, one bridge), frozen_lake (lakeshore's plan
   mirrored, on a frozen lake), cliff_road (2026-11-02, reworked from its draft: the road on a ledge under a high cliff,
   a two-cell frozen fall from the cliff to a pond in the snowfield, the road over it on one bridge; ground the road
   can't reach was cut so nothing is sealed into rock heaps).
@@ -75,3 +75,8 @@ Brandon to tinker with, and every one of them failed the look check.
 
 ## Deploy across bridges (2026-11-01)
 `CombatGrid.main_ground` now walks over bridge decks (`places_next`), listing only ground cells. Before, a bridge joining the two starts was not walked, so the far bank fell out of the main ground and the foes deployed next to the party (seen on bridge_crossing). Test: `test_forest_plots_make_fights` checks the foes start on their own edge.
+
+## Plot QA tools (2026-11-02, content lane)
+- `godot --headless --path game -s res://tools/plot_qa.gd -- forest/fork snow/zigzag [--seeds=12] [--dump]`: every seed of each plot through MapQA (box bar included), plus **rock cells per seed**. A good plot draws all of its own rocks and nothing else: more means the plot leaves ground cut off and `seal_unreachable` turned it into the orange pillar heaps (diagonal spurs were the usual cause; keep spurs orthogonal or stair-linked). `--dump` prints seed 0 as heights.
+- `tools/godot.sh --path game -s res://tools/plot_shot.gd -- out.png forest/fork 1 [rot]`: the plot as a battle map (`MapPlot.build`) with its region's tiles.
+- MapQA passing says nothing about the look: all drafts passed it. The look check is a fresh Sonnet reviewer given a 2-seed sheet, `docs/style-bible.md` and an approved plot as the reference.
