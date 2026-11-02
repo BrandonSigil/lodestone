@@ -338,9 +338,13 @@ func run(s: Node, f: int, step: String) -> bool:
 				s.get_node("/root/Game").save_enabled = false  # a shot never writes the real save
 				s._open_menu("options")
 			return f == 30
-		"lodestone":
-			# The Lodestone menu with a skill rank waiting for the dog (rolled stats show in each line).
+		"lodestone", "lodestone_pick":
+			# The Lodestone menu with a skill rank waiting for the dog (rolled stats show in each line); lodestone_pick: with
+			# the dog's waiting pick open under the cards (his NEW TRICK button pressed).
 			if f == 5:
+				if step == "lodestone_pick":
+					var menu: Script = load("res://scripts/ui/adventure_menu.gd")
+					menu.set("_focus", "dog")
 				var game: Node = s.get_node("/root/Game")
 				game.save_enabled = false  # a shot never writes the real save
 				game.take_weapon("sword")
@@ -597,13 +601,18 @@ func run(s: Node, f: int, step: String) -> bool:
 				if int(parts[2]) < row.size():
 					row[int(parts[2])].grab_focus()
 			return f == 150  # past the hover delay at any frame rate
-		"levelup", "levelup_dog":
-			# the level-up screen: the hero (sword) or the dog gets XP for a level, then the screen opens
+		"levelup", "levelup_dog", "levelup_ranked":
+			# the level-up screen: the hero (sword) or the dog gets XP for a level, then the screen opens (levelup_ranked: the
+			# dog with ranks already bought, so the tracks show gold)
 			if f == 5:
 				var game: Node = s.get_node("/root/Game")
 				game.save_enabled = false  # a shot never writes the real save
 				game.take_weapon("sword")
 				game.meta.flags.append("met_dog")
+				if step == "levelup_ranked":
+					var st: Dictionary = game.level_state("dog")
+					st.ranks = {"bite": 2, "bark": 1, "good_boy": 1}
+					game.meta.levels["dog"] = st
 				game.refresh_party()
 				game.award_xp(100 if step == "levelup" else 200)
 				s.call("_rebuild_party")

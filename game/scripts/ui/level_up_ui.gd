@@ -94,7 +94,7 @@ class Screen extends PanelContainer:
 		var holder := Control.new()
 		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(holder)
-		var w := MenuKit.window(Txt.t("UI_LV_TITLE"), _room, _later, 40)
+		var w := MenuKit.window(Txt.t("UI_LV_TITLE"), _room, _later, 34)
 		_win = w.root
 		holder.add_child(_win)
 		var body := HBoxContainer.new()
@@ -147,19 +147,19 @@ static func open(id: String, entry: Dictionary, done: Callable, later: Callable,
 static func who_card(parent: Control, id: String, entry: Dictionary) -> void:
 	var m := _member(id)
 	var v := MenuKit.card(parent)
-	v.get_parent().custom_minimum_size.x = 250
-	v.alignment = BoxContainer.ALIGNMENT_BEGIN
-	var pic := MenuKit.portrait(id, 120, true)
+	v.get_parent().custom_minimum_size.x = 210
+	v.alignment = BoxContainer.ALIGNMENT_CENTER  # with no stats gained it's shorter: centred, not top-heavy
+	var pic := MenuKit.portrait(id, 92, true)
 	pic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(pic)
 	if not m.is_empty():
-		var nm := MenuKit.label(Txt.t((m.def as CharacterDef).name_key), 22)
+		var nm := MenuKit.label(Txt.t((m.def as CharacterDef).name_key), 18)
 		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(nm)
 	var levels: Array = entry.get("levels", [])
 	var now := int(levels[levels.size() - 1]) if not levels.is_empty() else int(Game.level_state(id).level)
 	var was := int(levels[0]) - 1 if not levels.is_empty() else now - 1
-	var lv := MenuKit.chip(Txt.f("UI_LV_REACHED", [maxi(1, was), now]), "star_guide", VictoryUi.XP_GOLD, "", 18)
+	var lv := MenuKit.chip(Txt.f("UI_LV_REACHED", [maxi(1, was), now]), "star_guide", VictoryUi.XP_GOLD, "", 14)
 	lv.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(lv)
 	var stats: Dictionary = entry.get("stats", {})
@@ -170,7 +170,7 @@ static func who_card(parent: Control, id: String, entry: Dictionary) -> void:
 	for k in LevelRules.STATS:
 		if int(stats.get(k, 0)) > 0:
 			gains.add_child(MenuKit.chip("+%d %s" % [int(stats[k]), Txt.t("UI_STAT_" + k.to_upper())], String(VictoryUi.STAT_ICON[k]),
-				VictoryUi.UP_GREEN, "", 15))
+				VictoryUi.UP_GREEN, "", 13))
 	if gains.get_child_count() > 0:
 		v.add_child(gains)
 	if m.is_empty():
@@ -179,14 +179,28 @@ static func who_card(parent: Control, id: String, entry: Dictionary) -> void:
 	var bars := VBoxContainer.new()
 	bars.add_theme_constant_override("separation", 2)
 	v.add_child(bars)
-	MenuKit.bar_row(bars, Txt.t("UI_VIC_BAR_HP"), VictoryUi.HP_RED, float(m.hp) / maxf(1.0, float(u.max_hp)), "%d/%d" % [int(m.hp), u.max_hp], 76)
+	MenuKit.bar_row(bars, Txt.t("UI_VIC_BAR_HP"), VictoryUi.HP_RED, float(m.hp) / maxf(1.0, float(u.max_hp)), "%d/%d" % [int(m.hp), u.max_hp], 64)
 	if u.res_kind != "":
 		MenuKit.bar_row(bars, Txt.t("RES_" + u.res_kind.to_upper()) if Txt.has("RES_" + u.res_kind.to_upper()) else u.res_kind.to_upper(),
-			FrameHud.RES_COLORS.get(u.res_kind, Color.WHITE), float(u.res) / maxf(1.0, float(u.res_max)), "%d/%d" % [u.res, u.res_max], 76)
-	MenuKit.bar_row(bars, Txt.t("UI_VIC_BAR_HEART"), VictoryUi.HEART_PINK, float(Game.morale_of(id)) / 100.0, str(Game.morale_of(id)), 76)
+			FrameHud.RES_COLORS.get(u.res_kind, Color.WHITE), float(u.res) / maxf(1.0, float(u.res_max)), "%d/%d" % [u.res, u.res_max], 64)
+	MenuKit.bar_row(bars, Txt.t("UI_VIC_BAR_HEART"), VictoryUi.HEART_PINK, float(Game.morale_of(id)) / 100.0, str(Game.morale_of(id)), 64)
 	var per := float(maxi(1, int(Db.levels.get("xp_per_level", 100))))
 	var s := Game.level_state(id)
-	MenuKit.bar_row(bars, Txt.t("UI_VIC_BAR_EXP"), VictoryUi.XP_GOLD, float(s.xp) / per, "%d/%d" % [int(s.xp), int(per)], 76)
+	MenuKit.bar_row(bars, Txt.t("UI_VIC_BAR_EXP"), VictoryUi.XP_GOLD, float(s.xp) / per, "%d/%d" % [int(s.xp), int(per)], 64)
+	# where the character stands now: damage, armor, crit and move, each an icon and its number (a gain this level in green)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 6)
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(grid)
+	for st: Array in [["damage", u.damage, "strength"], ["armor", u.armor, "shield"], ["crit", u.crit, "focus"], ["move", u.move, "@leave"]]:
+		var k := String(st[0])
+		var up := int(stats.get(k, 0)) > 0
+		var c := MenuKit.chip("%s %d%s" % [Txt.t("UI_STAT_" + k.to_upper()), int(st[1]), "%" if k == "crit" else ""], String(st[2]),
+			VictoryUi.UP_GREEN if up else MenuKit.TEXT, "", 13)
+		c.custom_minimum_size.x = 92
+		grid.add_child(c)
 
 
 ## Kept for hosts that still draw their own head (none now): the window's who_card replaces it.
@@ -194,33 +208,45 @@ static func header(box: VBoxContainer, id: String, entry: Dictionary) -> void:
 	who_card(box, id, entry)
 
 
-## The pick ([USER] 2026-10-31, a mix of BG3 and a MOBA's skill screen) as kit cards: two across, each its icon, name, a
-## New or Rank n to n+1 tag and one line of what it does; the selected one lit gold, its full rules in the detail card
-## under them; LEARN / UPGRADE (gold) confirms. foot: the window's foot for the buttons (else `box`); later: Decide
-## later's call (none: no such button, the Lodestone menu has its own way out). A pick spends it and calls `refresh`.
+## The pick as the character's skill board ([USER] 2026-11-02 X20: "You should see the characters 4 abilities verticall
+## with horizontal upgrade nodes so you can see how much youve invested in each skill"; his references: Starsector's skill
+## rows, a MOBA's skill path). One row per skill, stacked: its icon, name and a small tag, then its rank track (the first
+## node, a circle, is learning it; each diamond after is a rank), the owned nodes gold and the node this pick buys lit
+## green. Skills already at their last rank show too, so the whole investment reads at a glance. The selected row is lit
+## gold and its rules show in the strip under the rows; LEARN / UPGRADE (gold) confirms. foot: the window's foot for the
+## buttons (else `box`); later: Decide later's call (none: no such button, the Lodestone menu has its own way out). A pick
+## spends it and calls `refresh`.
 static func picks(box: VBoxContainer, id: String, refresh: Callable, foot: Control = null, later := Callable()) -> void:
 	var options := _options(id)
 	if options.is_empty():  # nothing to learn or grow: no empty row and no greyed button (playtest 2026-11-01, Bushberry)
 		return
 	var u := CombatUnit.from_member(_member(id))
 	var ranks: Dictionary = Game.rank_state(id).ranks
-	var head := MenuKit.heading_row(Txt.f("UI_LV_PICK", int(Game.rank_state(id).pending)), true)
+	for a: Ability in u.abilities:  # the known skills with nothing left to buy, as rows too (all gold)
+		if not options.any(func(o: Dictionary) -> bool: return o.id == a.id) and LevelRules.max_rank(a.id, Db.skill_ranks) > 0:
+			var have := int(ranks.get(a.id, 0))
+			options.append({"id": a.id, "ability": a, "learn": false, "have": have, "next": 0, "locked": false, "maxed": true})
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 10)
 	box.add_child(head)
-	var grid := GridContainer.new()
-	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
-	box.add_child(grid)
+	var hl := MenuKit.label(Txt.t("UI_LV_SKILLS"), 15, MenuKit.TEXT_DIM)
+	hl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(hl)
+	head.add_child(MenuKit.chip(Txt.f("UI_LV_POINTS", int(Game.rank_state(id).pending)), "star_guide", VictoryUi.XP_GOLD, "", 13))
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 6)
+	box.add_child(list)
 	var detail := MenuKit.card(box)
-	detail.get_parent().custom_minimum_size = Vector2(CARD_W * 3 + 20, 0)
-	detail.add_theme_constant_override("separation", 4)
-	var pick := MenuKit.primary(Txt.t("UI_LV_PICK_SKILL"), Callable(), 20, 260.0)
+	detail.get_parent().custom_minimum_size = Vector2(ROW_W, DETAIL_H)
+	detail.add_theme_constant_override("separation", 3)
+	var pick := MenuKit.primary(Txt.t("UI_LV_PICK_SKILL"), Callable(), 16, 210.0)
+	pick.custom_minimum_size.y = 42
 	pick.disabled = true
 	var state := {"chosen": -1}
-	var cards: Array[Button] = []
+	var rows: Array[Button] = []
 	var confirm := func() -> void:
 		var i: int = state.chosen
-		if i < 0 or options[i].locked:
+		if i < 0 or options[i].locked or options[i].get("maxed", false):
 			return
 		var o: Dictionary = options[i]
 		if o.learn:
@@ -230,23 +256,24 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable, foot: Contr
 		refresh.call()
 	var choose := func(i: int) -> void:
 		state.chosen = i
-		for k in cards.size():
-			cards[k].set_pressed_no_signal(k == i)
+		for k in rows.size():
+			rows[k].set_pressed_no_signal(k == i)
+			(rows[k].get_meta("nodes") as _Nodes).lit = k == i
 		_detail(detail, u, options[i], ranks)
 		var o2: Dictionary = options[i]
-		pick.disabled = bool(o2.locked)
-		pick.text = Txt.t("UI_LV_LOCKED_BTN") if o2.locked else Txt.f("UI_LV_LEARN" if o2.learn else "UI_LV_UPGRADE_BTN", _name(o2))
+		pick.disabled = bool(o2.locked) or bool(o2.get("maxed", false))
+		pick.text = Txt.t("UI_LV_LOCKED_BTN") if o2.locked else (Txt.t("UI_LV_TAG_MAX") if o2.get("maxed", false) \
+			else Txt.f("UI_LV_LEARN" if o2.learn else "UI_LV_UPGRADE_BTN", _name(o2)))
 	for i in options.size():
-		var o: Dictionary = options[i]
-		var c := _card(o)
-		c.pressed.connect(func() -> void:
+		var r := _row(options[i])
+		r.pressed.connect(func() -> void:
 			if state.chosen == i and Input.is_action_just_pressed("ui_accept"):
-				confirm.call()  # a second press of the selected card from the keyboard or a pad confirms
+				confirm.call()  # a second press of the selected row from the keyboard or a pad confirms
 			else:
 				choose.call(i))
-		c.focus_entered.connect(func() -> void: choose.call(i))  # moving along the cards previews each
-		grid.add_child(c)
-		cards.append(c)
+		r.focus_entered.connect(func() -> void: choose.call(i))  # moving along the rows previews each
+		list.add_child(r)
+		rows.append(r)
 	pick.pressed.connect(confirm)
 	var at: Control = foot if foot != null else box
 	if later.is_valid():
@@ -257,32 +284,35 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable, foot: Contr
 		lb.theme_type_variation = &"QuietButton"
 		lb.text = Txt.t("UI_LV_LATER")
 		lb.tooltip_text = Txt.t("UI_LV_LATER_TIP")
-		lb.custom_minimum_size = Vector2(190, 52)
-		lb.add_theme_font_size_override("font_size", 18)
+		lb.custom_minimum_size = Vector2(150, 42)
+		lb.add_theme_font_size_override("font_size", 15)
 		lb.pressed.connect(later)
 		at.add_child(lb)
 	at.add_child(pick)
-	if not cards.is_empty():
+	if not rows.is_empty():
 		choose.call(0)
-		cards[0].call_deferred("grab_focus")
+		rows[0].call_deferred("grab_focus")
 
 
-const CARD_W := 228.0
+const ROW_W := 520.0  ## a skill row (and the detail strip under the rows)
+const ROW_H := 50.0
+const DETAIL_H := 112.0  ## the detail strip keeps one height, so the window doesn't jump as the pick moves
 
 
-## One choice as a kit card: its icon, its name, a tag (New, Rank 1 to 2, Coming later) and one line of what it does.
-static func _card(o: Dictionary) -> Button:
+## One skill as a row: its icon, name and tag (New skill, Rank n of m, Max rank, Coming later), then its rank track.
+static func _row(o: Dictionary) -> Button:
 	var b := Button.new()
 	b.toggle_mode = true
 	b.focus_mode = Control.FOCUS_ALL
-	b.custom_minimum_size = Vector2(CARD_W, 72)
+	b.custom_minimum_size = Vector2(ROW_W, ROW_H)
 	b.tooltip_text = _desc(o)
 	for n in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
-		var sb: StyleBox = MenuKit.flat(MenuKit.CARD, MenuKit.RIM_DIM, 1.0, 10, 10.0, 8.0)
+		var sb: StyleBox = MenuKit.flat(MenuKit.CARD, MenuKit.RIM_DIM, 1.0, 8, 8.0, 5.0)
 		if n == "hover":
-			sb = MenuKit.flat(MenuKit.BTN_HOVER, MenuKit.RIM, 1.5, 10, 10.0, 8.0)
+			sb = MenuKit.flat(MenuKit.BTN_HOVER, MenuKit.RIM, 1.5, 8, 8.0, 5.0)
 		elif n in ["pressed", "hover_pressed"]:
-			var lit := MenuKit.flat(MenuKit.BTN_HOVER, MenuKit.GOLD, 2.0, 10, 10.0, 8.0)
+			var lit := MenuKit.flat(Color(0.09, 0.27, 0.22, 0.97), MenuKit.GOLD, 1.5, 8, 8.0, 5.0)
+			lit.border_width_left = 5  # a gold accent bar on the picked row's left edge
 			lit.shadow_color = Color(MenuKit.GOLD, 0.3)
 			lit.shadow_size = 6
 			sb = lit
@@ -292,15 +322,15 @@ static func _card(o: Dictionary) -> Button:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 10
-	row.offset_right = -10
-	row.offset_top = 8
-	row.offset_bottom = -8
+	row.offset_left = 7
+	row.offset_right = -12
+	row.offset_top = 5
+	row.offset_bottom = -5
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(row)
 	var slot := PanelContainer.new()
 	slot.theme_type_variation = &"KitSlot"
-	slot.custom_minimum_size = Vector2(52, 52)
+	slot.custom_minimum_size = Vector2(40, 40)
 	slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(slot)
@@ -311,31 +341,106 @@ static func _card(o: Dictionary) -> Button:
 		t.texture = tex
 		t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		t.custom_minimum_size = Vector2(42, 42)
+		t.custom_minimum_size = Vector2(32, 32)
 		ic = t
 	else:
-		ic = MenuKit.icon_rect("@dot", 40)
+		ic = MenuKit.icon_rect("@dot", 30)
 	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(ic)
+	var badge: Control = null
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 2)
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 0)
+	col.custom_minimum_size.x = 170
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(col)
-	var nm := MenuKit.label(_name(o), 16)
+	var nm := MenuKit.label(_name(o).to_upper(), 16)
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	nm.custom_minimum_size.x = CARD_W - 84
 	col.add_child(nm)
-	var tag_text := Txt.t("UI_LV_TAG_LOCKED") if o.locked else (Txt.t("UI_LV_TAG_NEW") if o.learn else Txt.f("UI_LV_TAG_RANK", int(o.next)))
-	var tag := MenuKit.chip(tag_text, "", Color(0.75, 0.75, 0.75) if o.locked else (VictoryUi.UP_GREEN if o.learn else VictoryUi.XP_GOLD), "", 13)
-	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tag.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	col.add_child(tag)
+	var top := LevelRules.max_rank(String(o.id), Db.skill_ranks)
+	var tag_text := Txt.t("UI_LV_TAG_LOCKED") if o.locked else (Txt.t("UI_LV_TAG_NEW") if o.learn \
+		else (Txt.t("UI_LV_TAG_MAX") if o.get("maxed", false) else Txt.f("UI_LV_RANK_OF", [int(o.have), top])))
+	if o.learn and not o.locked:  # a skill not known yet: a green NEW SKILL pill (lit when its row is picked)
+		var bp := PanelContainer.new()
+		bp.add_theme_stylebox_override("panel", MenuKit.flat(Color(0.05, 0.2, 0.1, 0.95), VictoryUi.UP_GREEN, 1.0, 5, 5.0, 0.0))
+		bp.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		bp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var bl := MenuKit.label(tag_text.to_upper(), 11, VictoryUi.UP_GREEN)
+		bl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bp.add_child(bl)
+		col.add_child(bp)
+		badge = bp
+	else:
+		var tag := MenuKit.label(tag_text, 12, Color(0.75, 0.75, 0.75) if o.locked else Color(0.86, 0.88, 0.82))
+		tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		col.add_child(tag)
+	var nodes := _Nodes.new()
+	nodes.total = top
+	nodes.owned = 0 if o.learn else int(o.have)
+	nodes.buys = nodes.owned if o.learn or int(o.next) <= 0 else int(o.next)
+	nodes.badge = badge
+	nodes.locked = bool(o.locked)
+	nodes.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nodes.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	nodes.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(nodes)
+	b.set_meta("nodes", nodes)
 	if o.locked:
-		b.modulate = Color(1, 1, 1, 0.6)
+		b.modulate = Color(1, 1, 1, 0.55)
 	return b
+
+
+## A skill's rank track: a diamond per rank, joined by a thin line. Owned ranks are solid gold; the rank this pick buys is
+## green, filled and glowing (with a "+1") when the row is selected; the rest are dim. Left-aligned after the name column,
+## so every row's track starts at one edge. A skill not known yet has no rank to buy: its NEW SKILL pill lights instead.
+class _Nodes extends Control:
+	const STEP := 50.0
+	const R := 13.0
+	var total := 1
+	var owned := 0
+	var buys := 0  ## owned plus what this pick adds
+	var locked := false
+	var badge: Control = null  ## the NEW SKILL pill, lit with the row
+	var lit := false:
+		set(v):
+			lit = v
+			if badge != null:
+				badge.modulate = Color(1.25, 1.25, 1.25) if v else Color(1, 1, 1, 0.75)
+			queue_redraw()
+
+	func _get_minimum_size() -> Vector2:
+		return Vector2(STEP * maxf(1.0, total), 24.0)
+
+	func _draw() -> void:
+		var y := size.y * 0.5
+		var x0 := R + 6.0  # left-aligned after the name column, so the track sits by its skill
+		var dim := Color(MenuKit.RIM, 0.75)
+		var green := VictoryUi.UP_GREEN
+		if total > 1:
+			draw_line(Vector2(x0, y), Vector2(x0 + STEP * (total - 1), y), dim, 1.5, true)
+			if owned > 1:
+				draw_line(Vector2(x0, y), Vector2(x0 + STEP * (owned - 1), y), Color(MenuKit.GOLD, 0.8), 2.0, true)
+		for i in total:
+			var c := Vector2(x0 + STEP * i, y)
+			var col := dim
+			var fill := false
+			if i < owned:
+				col = MenuKit.GOLD
+				fill = true
+			elif i < buys and not locked:
+				col = green
+				fill = lit
+				if lit:
+					draw_circle(c, R + 6.0, Color(green, 0.2))
+					if i == owned:  # "+1" over the rank this pick buys
+						var f := get_theme_default_font()
+						draw_string(f, c + Vector2(R + 4.0, -R + 6.0), "+1", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, green)
+			var pts := PackedVector2Array()
+			pts = PackedVector2Array([c + Vector2(0, -R), c + Vector2(R, 0), c + Vector2(0, R), c + Vector2(-R, 0)])
+			draw_colored_polygon(pts, col if fill else Color(0.16, 0.26, 0.25, 0.9))  # a later rank: a dim filled diamond
+			pts.append(pts[0])
+			draw_polyline(pts, col, 2.0, true)
 
 
 ## The first sentence of what an option does (the card's one line; the detail card has it all).
@@ -352,40 +457,48 @@ static func _detail(detail: VBoxContainer, u: CombatUnit, o: Dictionary, ranks: 
 		c.queue_free()
 	var a: Ability = o.ability
 	var have: int = o.have
-	var title := MenuKit.label(_name(o) + "   " + (Txt.t("UI_LV_NEW") if o.learn else Txt.f("UI_LV_RANK_OF", [have, LevelRules.max_rank(String(o.id), Db.skill_ranks)])), 20, MenuKit.GOLD)
+	var title := MenuKit.label(_name(o), 16, MenuKit.GOLD)
 	detail.add_child(title)
-	_line(detail, _desc(o), 16)
+	_line(detail, _desc(o), 13)
 	if o.locked:
-		_line(detail, Txt.t("UI_LV_LOCKED"), 16, Color(1.0, 0.8, 0.6))
+		_line(detail, Txt.t("UI_LV_LOCKED"), 13, Color(1.0, 0.8, 0.6))
 		return
 	if a == null and o.learn:  # a trait to learn: what it does
 		return
-	if a != null:
-		_line(detail, Txt.f("UI_LV_NOW", _numbers(u, LevelRules.ranked(a, have, Db.skill_ranks))), 16)
+	if a != null:  # its numbers now, as chips
+		var chips := HFlowContainer.new()
+		chips.add_theme_constant_override("h_separation", 6)
+		chips.add_theme_constant_override("v_separation", 4)
+		for part in _number_parts(u, LevelRules.ranked(a, have, Db.skill_ranks)):
+			chips.add_child(MenuKit.chip(part, "", MenuKit.TEXT, "", 12))
+		if chips.get_child_count() > 0:
+			detail.add_child(chips)
 	var steps: Array = Db.upgrade_steps.get(String(o.id), [])
 	if o.learn:
 		var first := LevelRules.next_useful_rank(String(o.id), 0, Db.skill_ranks)
 		if first > 0:
-			_line(detail, Txt.f("UI_LV_THEN", String((steps[first - 1] as Dictionary).text)), 15, Color(0.75, 0.9, 0.8))
+			_line(detail, Txt.f("UI_LV_THEN", String((steps[first - 1] as Dictionary).text)), 13, Color(0.75, 0.9, 0.8))
 		return
 	var nxt: int = o.next
+	if nxt <= 0:  # at its last rank: nothing more to buy
+		_line(detail, Txt.t("UI_LV_LAST"), 13, Color(0.75, 0.9, 0.8))
+		return
 	var step: Dictionary = steps[nxt - 1]
 	var change := _change(u, a, have, nxt, String(step.effect)) if a != null else ""
-	_line(detail, Txt.f("UI_LV_THIS", String(step.text)) + ("  (" + change + ")" if change != "" else ""), 16, Color(1.0, 0.92, 0.6))
+	_line(detail, Txt.f("UI_LV_THIS", String(step.text)) + ("  (" + change + ")" if change != "" else ""), 13, Color(1.0, 0.92, 0.6))
 	var after := LevelRules.next_useful_rank(String(o.id), nxt, Db.skill_ranks)
 	if after > 0:
-		var s2: Dictionary = steps[after - 1]
-		var c2 := _change(u, a, nxt, after, String(s2.effect)) if a != null else ""
-		_line(detail, Txt.f("UI_LV_NEXT", String(s2.text)) + ("  (" + c2 + ")" if c2 != "" else ""), 15, Color(0.75, 0.9, 0.8))
+		var s2: Dictionary = steps[after - 1]  # what comes after, in words only (its numbers show once it's the pick)
+		_line(detail, Txt.f("UI_LV_NEXT", String(s2.text)), 12, Color(0.75, 0.9, 0.8, 0.7))
 	else:
-		_line(detail, Txt.t("UI_LV_LAST"), 15, Color(0.75, 0.9, 0.8))
+		_line(detail, Txt.t("UI_LV_LAST"), 13, Color(0.75, 0.9, 0.8))
 
 
 static func _line(box: VBoxContainer, text: String, size: int, color := Color(0.93, 0.9, 0.82)) -> void:
 	var l := Label.new()
 	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.custom_minimum_size = Vector2(CARD_W * 3 - 10, 0)
+	l.custom_minimum_size = Vector2(ROW_W - 28, 0)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	box.add_child(l)
@@ -410,6 +523,10 @@ static func _desc(o: Dictionary) -> String:
 
 ## "Damage 5, reach 1 to 3, costs 2, shoves 1": the ability's numbers on this piece.
 static func _numbers(u: CombatUnit, a: Ability) -> String:
+	return ", ".join(_number_parts(u, a))
+
+
+static func _number_parts(u: CombatUnit, a: Ability) -> PackedStringArray:
 	var parts: PackedStringArray = []
 	if a.kind == "attack":
 		parts.append("%s %d" % [Txt.t("UI_STAT_DAMAGE"), u.damage + a.power])
@@ -427,7 +544,7 @@ static func _numbers(u: CombatUnit, a: Ability) -> String:
 		parts.append("%s %d" % [LABELS["status_turns"], a.status_turns])
 	if a.cooldown > 0:
 		parts.append("%s %d" % [LABELS["cooldown"], a.cooldown])
-	return ", ".join(parts)
+	return parts
 
 
 ## The icon slot's frame: a dark square with a cream rim, lit blue when selected (the dock's boxes, as StyleBoxes).

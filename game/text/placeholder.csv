@@ -402,6 +402,7 @@ UI_STAT_DAMAGE,DMG
 UI_STAT_ARMOR,ARMOR
 UI_STAT_MAGIC,MAGIC
 UI_STAT_CRIT,CRIT
+UI_STAT_MOVE,MOVE
 TAG_BLEED,BLEED
 TAG_POISON,POISON
 TAG_BURN,BURNING
@@ -900,6 +901,9 @@ UI_LV_THEN,Then it can grow: %s
 UI_LV_THIS,This pick: %s
 UI_LV_NEXT,Next rank: %s
 UI_LV_LAST,This is its last rank.
+UI_LV_SKILLS,Skills
+UI_LV_POINTS,%d to spend
+UI_LV_TAG_MAX,Max rank
 UI_LV_HEALING,Healing
 UI_LV_REACH_OF,reach %d to %d
 UI_LV_LOCKED,"Not in the game yet: this ability is in the kit but its effect is still being built, so it cannot be picked."
