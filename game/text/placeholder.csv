@@ -933,7 +933,7 @@ MOD_GUARD_HIT,GUARD HIT
 MOD_COMMANDED,COMMANDED
 MOD_WATCH,WATCH
 MOD_TAUNT,TAUNT
-DESC_GUARD,"Guard: until your next turn you take 2 less damage from every hit, and a foe that walks away from you takes a free hit."
+DESC_GUARD,"Guard: until your next turn you have +2 armor. A foe that starts its turn next to you can only attack you, and a foe that walks away from you takes a free hit."
 TRAIT_BLOODIED,BLOODIED
 TRAIT_BLOODIED_DESC,"The more hurt you are, the harder you hit: under half HP +1 damage, under a quarter +2, and +10% crit chance."
 TRAIT_QUICK_HANDS,QUICK HANDS
@@ -969,7 +969,7 @@ UI_FISH_NIBBLE,nibble... not yet
 UI_FISH_EMPTY,NO FISH LEFT HERE.
 UI_FISH_NOTHING,NOTHING YET. KEEP WAITING.
 UI_FISH_NOTICED,A FISH IS COMING TO THE BOBBER.
-UI_FISH_KEYS_WAIT,"click / SPACE / A = pull the line in and aim again (nothing lost)"
+UI_FISH_KEYS_WAIT,"Reel in and aim again: click, SPACE or A (nothing lost)"
 UI_FISH_BITE,DIP! STRIKE!
 UI_FISH_HOOKED,HOOKED!
 UI_FISH_GOT_AWAY,THE FISH SWAM OFF.
@@ -981,11 +981,12 @@ UI_FISH_CAUGHT,GOT: %s
 UI_FISH_NEW,NEW FISH!
 UI_FISH_GOT_KIND,%s! into pack
 UI_FISH_LEAVE,LEAVE
+UI_FISH_METER,Catch
 UI_FISH_AGAIN,click = again
-UI_FISH_CLOSE,click = done
-UI_FISH_KEYS_LOOK,"point (or arrows / stick) to aim, click / SPACE / A = cast.   A fish near the bobber may notice.   ESC / B = leave"
-UI_FISH_KEYS_STRIKE,"click, SPACE or A = strike on the real dip"
-UI_FISH_KEYS_REEL,"hold ← / → (or A D, stick, mouse) to pull the marker; let go and it springs back to the middle. Stay on the fish."
+UI_FISH_CLOSE,Done: click
+UI_FISH_KEYS_LOOK,"Aim: mouse, arrows or stick|Cast: click, SPACE or A|Leave: ESC or B"
+UI_FISH_KEYS_STRIKE,"Strike on the real dip: click, SPACE or A"
+UI_FISH_KEYS_REEL,"Pull the marker: hold ← / →, A / D or the stick|Let go: it drifts back to the middle|Keep the fish inside it"
 UI_HC_TITLE_HOME,BACK HOME!
 UI_HC_TITLE_FELL,DEFEATED. BACK HOME.
 UI_HC_MATERIALS,ITEMS BROUGHT HOME

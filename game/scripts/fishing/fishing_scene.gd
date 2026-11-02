@@ -9,7 +9,6 @@ var pond: Array = []  ## practice fish: a pond that runs out and fills again, ne
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	theme = RisoTheme.make()
 	resized.connect(queue_redraw)
 	_again()
 

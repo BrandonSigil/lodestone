@@ -43,6 +43,8 @@ func _process(_delta: float) -> bool:
 		g.set("_phase_t", float(plan.bite) + 0.15)
 		if _step != "bite":
 			g.call("_strike_now")
+	if _frames == 60 and int(g.get("state")) == 7:  # past the HOOKED! beat to the reel bar
+		g.set("_phase_t", 99.0)
 	if _frames >= 80 and _step == "reel":
 		var r: Dictionary = g.get("_reel")
 		r.t = 6.0

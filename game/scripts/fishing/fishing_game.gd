@@ -93,24 +93,30 @@ func _ready() -> void:
 
 func _panel() -> Rect2:
 	var w := minf(size.x - 32.0, 980.0)
-	var h := minf(size.y - 32.0, 660.0)
+	var h := minf(size.y - 60.0, 610.0)
 	return Rect2((size - Vector2(w, h)) * 0.5, Vector2(w, h))
 
 
 func _pool() -> Rect2:
 	var p := _panel()
-	return Rect2(p.position + Vector2(28, 70), Vector2(p.size.x - 56, p.size.y * 0.58))
+	return Rect2(p.position + Vector2(44, 96), Vector2(p.size.x - 88, p.size.y * 0.5))
 
 
 func _bar() -> Rect2:
 	var p := _panel()
 	var pool := _pool()
-	return Rect2(Vector2(p.position.x + 70, pool.end.y + 58), Vector2(p.size.x - 140, 30))
+	return Rect2(Vector2(p.position.x + 70, pool.end.y + 48), Vector2(p.size.x - 140, 30))
 
 
 func _leave_rect() -> Rect2:
 	var p := _panel()
-	return Rect2(p.end.x - 120, p.position.y + 16, 100, 34)
+	return Rect2(p.end.x - 250, p.position.y + 46, 130, 38)
+
+
+## The round X at the window's top right corner (the menu kit): LEAVE at Look, close on a result.
+func _x_rect() -> Rect2:
+	var p := _panel()
+	return Rect2(p.end.x - 70, p.position.y + 18, UiTheme.FRAME_X, UiTheme.FRAME_X)
 
 
 func _to_screen(pc: Vector2) -> Vector2:
@@ -334,7 +340,7 @@ func _input(event: InputEvent) -> void:
 func _press(by_mouse: bool) -> void:
 	match state:
 		S.LOOK:
-			if by_mouse and _leave_rect().has_point(_mouse):
+			if by_mouse and (_leave_rect().has_point(_mouse) or _x_rect().has_point(_mouse)):
 				result = {"outcome": "left", "fish": {}}
 				_finish()
 				return
@@ -358,28 +364,28 @@ func _result_hold() -> float:
 # --- drawing ------------------------------------------------------------------------------------
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.08, 0.06, 0.1, 0.6))
+	draw_rect(Rect2(Vector2.ZERO, size), Color(0.02, 0.05, 0.05, 0.6))
 	var p := _panel()
-	var box := StyleBoxFlat.new()
-	box.bg_color = Riso.PAPER
-	box.border_color = Riso.GOLD_DARK
-	box.set_border_width_all(4)
-	box.set_corner_radius_all(16)
-	draw_style_box(box, p)
-	var font := Riso.font()
-	draw_string(font, p.position + Vector2(28, 40), Txt.t("UI_FISH_TITLE"), HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Riso.INK)
-	draw_string(font, p.position + Vector2(120, 40), _headline(), HORIZONTAL_ALIGNMENT_LEFT, p.size.x - 270, 18, Riso.INK)
+	draw_style_box(UiTheme.look("look_panel.png", 110, 110, 0.45, 0.0, 0.0, Color.WHITE, true), p)  # the kit's window, as every dialogue
+	var font := get_theme_default_font()
+	# the title on the bright plate, straddling the top rim; what to do now under it
+	var title := Txt.t("UI_FISH_TITLE")
+	var tw := font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 28).x
+	var plate := Rect2(Vector2(p.get_center().x - maxf(tw + 170.0, 300.0) * 0.5, p.position.y - 22), Vector2(maxf(tw + 170.0, 300.0), 54))
+	draw_style_box(UiTheme.look("look_title_plate.png", 88, 0, 0.3, 30.0, 8.0), plate)
+	draw_string_outline(font, Vector2(plate.position.x, plate.get_center().y + 10), title, HORIZONTAL_ALIGNMENT_CENTER, plate.size.x, 28, 4, Color(0.02, 0.1, 0.08, 0.9))
+	draw_string(font, Vector2(plate.position.x, plate.get_center().y + 10), title, HORIZONTAL_ALIGNMENT_CENTER, plate.size.x, 28, MenuKit.TEXT)
+	_draw_x(_x_rect())
 	if state == S.LOOK:
 		var lr := _leave_rect()
-		var lb := StyleBoxFlat.new()
-		lb.bg_color = Riso.CREAM
-		lb.border_color = Riso.INK
-		lb.set_border_width_all(2)
-		lb.set_corner_radius_all(8)
-		draw_style_box(lb, lr)
-		draw_string(font, lr.position + Vector2(0, 23), Txt.t("UI_FISH_LEAVE"), HORIZONTAL_ALIGNMENT_CENTER, lr.size.x, 16, Riso.INK)
+		var lit := lr.has_point(_mouse)
+		draw_style_box(MenuKit.flat(MenuKit.BTN_HOVER if lit else MenuKit.BTN, MenuKit.GOLD if lit else MenuKit.RIM, 1.5, 14, 0, 0), lr)
+		draw_string(font, lr.position + Vector2(0, 25), Txt.t("UI_FISH_LEAVE"), HORIZONTAL_ALIGNMENT_CENTER, lr.size.x, 17, MenuKit.TEXT_QUIET)
 	_draw_pool()
 	_draw_angler()
+	var head := p.position + Vector2(44, 70)  # what to do now, over the pool's aim ring
+	draw_string_outline(font, head, _headline(), HORIZONTAL_ALIGNMENT_LEFT, p.size.x - 260, 19, 6, Color(MenuKit.FELT, 1.0))
+	draw_string(font, head, _headline(), HORIZONTAL_ALIGNMENT_LEFT, p.size.x - 260, 19, MenuKit.TEXT)
 	if state == S.REEL or ((state == S.RESULT or state == S.SWIM_OFF) and not _reel.is_empty()):
 		_draw_bar()
 	var keys := "UI_FISH_KEYS_LOOK"
@@ -393,11 +399,44 @@ func _draw() -> void:
 		keys = "UI_FISH_CLOSE" if _phase_t > _result_hold() else ""
 	elif state == S.HOOKED or state == S.SWIM_OFF:
 		keys = ""
-	draw_string(font, Vector2(p.position.x + 28, p.end.y - 20), Txt.t(keys) if keys != "" else "", HORIZONTAL_ALIGNMENT_CENTER, p.size.x - 56, 14, Riso.alpha(Riso.INK, 0.75))
+	if keys != "":  # the key hints as kit chips, one per "|" part, in a row under the pool (or the reel bar)
+		var parts := Txt.t(keys).split("|", false)
+		var widths: Array[float] = []
+		var total := 0.0
+		for part in parts:
+			var wpx := font.get_string_size(part, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x + 28.0
+			widths.append(wpx)
+			total += wpx + 10.0
+		var x0 := p.get_center().x - (total - 10.0) * 0.5
+		var y0 := p.end.y - 64.0 if _bar_shown() else _pool().end.y + 56.0
+		for k in parts.size():
+			var cr := Rect2(x0, y0, widths[k], 30)
+			draw_style_box(MenuKit.flat(MenuKit.INSET, MenuKit.RIM, 1.0, 15, 0, 0), cr)
+			draw_string(font, cr.position + Vector2(0, 21), parts[k], HORIZONTAL_ALIGNMENT_CENTER, cr.size.x, 15, MenuKit.TEXT)
+			x0 += widths[k] + 10.0
 	for s in _splash:
 		draw_circle(s.p, float(s.r), Riso.alpha(Riso.CREAM, clampf(float(s.life) * 2.0, 0.0, 1.0)))
 	if state == S.RESULT:
 		_draw_result()
+
+
+func _bar_shown() -> bool:
+	return state == S.REEL or ((state == S.RESULT or state == S.SWIM_OFF) and not _reel.is_empty())
+
+
+## The kit's round X, drawn (this screen paints itself): blue disc, white ring and cross, gold under the mouse.
+func _draw_x(r: Rect2) -> void:
+	var c := r.get_center()
+	var rad := r.size.x * 0.5 - 1.0
+	var lit := r.has_point(_mouse)
+	if lit:
+		draw_circle(c, rad + 4.0, Color(MenuKit.GOLD, 0.25))
+	draw_circle(c, rad, Color(0.02, 0.06, 0.08))
+	draw_circle(c, rad - 1.5, MenuKit.X_BLUE.lightened(0.12 if lit else 0.0))
+	draw_arc(c, rad - 2.5, 0.0, TAU, 40, MenuKit.GOLD if lit else Color(0.95, 0.96, 0.95), 2.0, true)
+	var k := rad * 0.36
+	draw_line(c + Vector2(-k, -k), c + Vector2(k, k), Color(0.97, 0.97, 0.95), 3.0, true)
+	draw_line(c + Vector2(-k, k), c + Vector2(k, -k), Color(0.97, 0.97, 0.95), 3.0, true)
 
 
 func _headline() -> String:
@@ -482,7 +521,8 @@ func _draw_pool() -> void:
 		_draw_fish(at, Vector2.RIGHT.rotated(sin(_t * 22.0) * 0.6), hl, Riso.alpha(SHADOW, 0.8))
 		var a := fmod(_phase_t * 2.0, 1.0)
 		draw_arc(at, hl * 0.6 + a * 30.0, 0, TAU, 24, Riso.alpha(Riso.CREAM, 0.8 * (1.0 - a)), 3.0)
-		draw_string(Riso.font(), at + Vector2(-60, -hl - 10), Txt.t("UI_FISH_HOOKED"), HORIZONTAL_ALIGNMENT_CENTER, 120, 22, Riso.RED)
+		draw_string_outline(Riso.font(), at + Vector2(-60, -hl - 10), Txt.t("UI_FISH_HOOKED"), HORIZONTAL_ALIGNMENT_CENTER, 120, 22, 6, Color(0.05, 0.1, 0.15, 0.9))
+		draw_string(Riso.font(), at + Vector2(-60, -hl - 10), Txt.t("UI_FISH_HOOKED"), HORIZONTAL_ALIGNMENT_CENTER, 120, 22, MenuKit.GOLD)
 	if state == S.SWIM_OFF and _hook >= 0:  # it got away: it darts off and fades under the surface
 		var sl := float(_shadows[_hook].fish.get("size", 1.0)) * pool.size.x * 0.07
 		var k := clampf(_phase_t / maxf(0.01, FishingRules.tune("fish_lost_beat", 1.0)), 0.0, 1.0)
@@ -608,66 +648,62 @@ func _draw_angler() -> void:
 func _draw_bar() -> void:
 	var bar := _bar()
 	var track := StyleBoxFlat.new()
-	track.bg_color = Riso.mix(WATER, Riso.CREAM, 0.35)
-	track.border_color = Riso.INK
+	track.bg_color = Color(0.13, 0.32, 0.36, 0.95)
+	track.border_color = Color(0.85, 0.9, 0.92)
 	track.set_border_width_all(2)
 	track.set_corner_radius_all(15)
 	draw_style_box(track, bar)
 	for i in range(1, 10):
 		var x := bar.position.x + bar.size.x * i / 10.0
-		draw_line(Vector2(x, bar.position.y + 8), Vector2(x, bar.end.y - 8), Riso.alpha(Riso.INK, 0.15), 2.0)
+		draw_line(Vector2(x, bar.position.y + 8), Vector2(x, bar.end.y - 8), Color(MenuKit.TEXT, 0.25), 2.0)
 	var half := float(_reel.half)
 	var m := float(_reel.marker)
 	var on := bool(_reel.on)
 	var mr := Rect2(bar.position.x + bar.size.x * (m - half), bar.position.y - 6, bar.size.x * half * 2.0, bar.size.y + 12)
 	var mk := StyleBoxFlat.new()
-	mk.bg_color = Riso.alpha(Riso.OCHRE, 0.6) if on else Riso.alpha(Riso.RED, 0.3)
-	mk.border_color = Riso.INK
+	mk.bg_color = Color(MenuKit.GOLD, 0.45) if on else Color(0.85, 0.9, 0.92, 0.15)
+	mk.border_color = MenuKit.GOLD if on else Color(0.85, 0.9, 0.92)
 	mk.set_border_width_all(3)
 	mk.set_corner_radius_all(8)
 	draw_style_box(mk, mr)
 	var fx := bar.position.x + bar.size.x * float(_reel.fish)
 	var dir := Vector2.RIGHT if float(_reel.target) >= float(_reel.fish) else Vector2.LEFT
-	_draw_fish(Vector2(fx, bar.get_center().y), dir, 34.0, Riso.INDIGO)
-	# the catch meter
-	var meter := Rect2(bar.position.x, bar.end.y + 16, bar.size.x, 12)
-	var mb := StyleBoxFlat.new()
-	mb.bg_color = Riso.alpha(Riso.INK, 0.12)
-	mb.set_corner_radius_all(6)
+	_draw_fish(Vector2(fx, bar.get_center().y), dir, 34.0, Color("8fb3d9"))
+	# the catch meter, labelled: how close the fish is to caught
+	var font := get_theme_default_font()
+	draw_string(font, Vector2(bar.position.x, bar.end.y + 34), Txt.t("UI_FISH_METER"), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, MenuKit.TEXT)
+	var meter := Rect2(bar.position.x + 64, bar.end.y + 20, bar.size.x - 64, 16)
+	var mb := MenuKit.flat(Color(0.13, 0.32, 0.36, 0.95), Color(0.85, 0.9, 0.92, 0.7), 1.0, 8, 0, 0)
 	draw_style_box(mb, meter)
 	var fill := Rect2(meter.position, Vector2(meter.size.x * float(_reel.catch), meter.size.y))
 	if fill.size.x > 1.0:
 		var fb := StyleBoxFlat.new()
-		fb.bg_color = Riso.GOLD_DARK if on else Riso.alpha(Riso.GOLD_DARK, 0.6)
-		fb.set_corner_radius_all(6)
+		fb.bg_color = MenuKit.GOLD if on else Color(MenuKit.GOLD, 0.6)
+		fb.set_corner_radius_all(8)
 		draw_style_box(fb, fill)
 
 
 func _draw_result() -> void:
 	var pool := _pool()
 	var c := pool.get_center() + Vector2(0, -10)
-	var font := Riso.font()
+	var font := get_theme_default_font()
 	var o := String(result.get("outcome", ""))
-	var card := StyleBoxFlat.new()
-	card.bg_color = Riso.alpha(Riso.PAPER, 0.94)
-	card.border_color = Riso.GOLD_DARK
-	card.set_border_width_all(3)
-	card.set_corner_radius_all(14)
 	var cr := Rect2(c - Vector2(230, 90), Vector2(460, 180))
+	var card := MenuKit.flat(Color(MenuKit.FELT, 0.96), MenuKit.GOLD if o == "caught" else MenuKit.RIM, 2.0, 14, 0, 0)
 	draw_style_box(card, cr)
 	if o == "caught":
 		var row: Dictionary = result.fish
 		var len := 60.0 + float(row.get("size", 1.0)) * 40.0
 		var hold := c + Vector2(0, -26 + sin(_phase_t * 4.0) * 3.0)
-		_draw_fish(hold, Vector2.RIGHT.rotated(-0.25), len, Riso.INDIGO)
-		draw_string(font, c + Vector2(-220, 44), Txt.f("UI_FISH_CAUGHT", Txt.t(String(row.name_key))), HORIZONTAL_ALIGNMENT_CENTER, 440, 20, Riso.INK)
+		_draw_fish(hold, Vector2.RIGHT.rotated(-0.25), len, Color("8fb3d9"))
+		draw_string(font, c + Vector2(-220, 44), Txt.f("UI_FISH_CAUGHT", Txt.t(String(row.name_key))), HORIZONTAL_ALIGNMENT_CENTER, 440, 21, MenuKit.TEXT)
 		var grade := Txt.t("GRADE_" + String(row.get("grade", "small")).to_upper())
-		draw_string(font, c + Vector2(-220, 70), grade, HORIZONTAL_ALIGNMENT_CENTER, 440, 16, Riso.RED if String(row.grade) == "prize" else Riso.INK)
+		draw_string(font, c + Vector2(-220, 70), grade, HORIZONTAL_ALIGNMENT_CENTER, 440, 16, MenuKit.GOLD if String(row.grade) == "prize" else MenuKit.TEXT_DIM)
 		if _new_kind:
-			draw_string(font, cr.position + Vector2(14, 28), Txt.t("UI_FISH_NEW"), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Riso.RED)
+			draw_string(font, cr.position + Vector2(16, 30), Txt.t("UI_FISH_NEW"), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, MenuKit.GOLD)
 	else:
 		var key: String = {"lost": "UI_FISH_LOST", "early": "UI_FISH_EARLY", "late": "UI_FISH_LATE"}.get(o, "UI_FISH_LOST")
-		draw_string(font, c + Vector2(-220, 8), Txt.t(String(key)), HORIZONTAL_ALIGNMENT_CENTER, 440, 22, Riso.INK)
+		draw_string(font, c + Vector2(-220, 8), Txt.t(String(key)), HORIZONTAL_ALIGNMENT_CENTER, 440, 22, MenuKit.TEXT)
 
 
 ## A flat fish: an oval body and a tail fin, nose along dir.
