@@ -1,0 +1,260 @@
+<title>Lodestone Word Swap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the Studio's leaf band with the filters, then one long list of lines; each line is its old words over a field for new ones. */
+:root {
+  --paper: #eef1ea; --sheet: #fbfcf8; --ink: #1d2721; --muted: #5d6a61; --rule: #cfd8cc;
+  --leaf: #2d5640; --leaf-ink: #f1f5ee; --leaf-soft: #dfe9df;
+  --gem: #2f6fb5; --gem-soft: #dbe7f5; --amber: #c7801c; --amber-soft: #f6e6c9;
+  --ok: #3f8a4f; --ok-soft: #dcefdc; --bad: #b2463a; --bad-soft: #f5dcd8;
+  --display: "Young Serif", Georgia, "Times New Roman", serif;
+  --body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #141b17; --sheet: #1b2420; --ink: #e5ece6; --muted: #9aa89f; --rule: #2e3a33;
+    --leaf: #1f3d2d; --leaf-ink: #e6efe7; --leaf-soft: #23352b;
+    --gem: #6ea3e0; --gem-soft: #1d2d42; --amber: #e3a54a; --amber-soft: #3a2e1a;
+    --ok: #79c08a; --ok-soft: #1e3324; --bad: #e07e72; --bad-soft: #3d221f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #141b17; --sheet: #1b2420; --ink: #e5ece6; --muted: #9aa89f; --rule: #2e3a33;
+  --leaf: #1f3d2d; --leaf-ink: #e6efe7; --leaf-soft: #23352b;
+  --gem: #6ea3e0; --gem-soft: #1d2d42; --amber: #e3a54a; --amber-soft: #3a2e1a;
+  --ok: #79c08a; --ok-soft: #1e3324; --bad: #e07e72; --bad-soft: #3d221f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+button, textarea, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--gem); outline-offset: 2px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--leaf); }
+
+.band { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--leaf); color: var(--leaf-ink);
+  padding-block: 14px 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 10px; }
+.head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0; letter-spacing: .01em; }
+.tally { font-size: 13px; opacity: .85; font-variant-numeric: tabular-nums; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid color-mix(in srgb, var(--leaf-ink) 35%, transparent); background: transparent; color: var(--leaf-ink);
+  border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 500; }
+.chip[aria-pressed="true"] { background: var(--leaf-ink); color: var(--leaf); border-color: var(--leaf-ink); }
+.chip b { font-weight: 600; font-variant-numeric: tabular-nums; margin-left: 4px; opacity: .75; }
+.find { flex: 1 1 220px; min-width: 0; display: flex; gap: 8px; }
+.find input, .find select { min-width: 0; border: 0; border-radius: 8px; padding: 7px 10px; background: var(--sheet); color: var(--ink); font-size: 14px; }
+.find input { flex: 1 1 auto; }
+.find select { flex: 0 1 180px; }
+
+main { padding-block: 18px 120px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.list { max-width: 900px; margin: 0 auto; display: grid; gap: 10px; }
+.line { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
+.line.sent { border-color: var(--amber); }
+.line.done { border-color: var(--ok); }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: 12px; color: var(--muted); }
+.key { font-family: var(--mono); font-size: 11.5px; letter-spacing: .02em; }
+.sec { text-transform: uppercase; letter-spacing: .06em; font-weight: 600; font-size: 11px; color: var(--leaf); }
+:root[data-theme="dark"] .sec { color: var(--ok); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sec { color: var(--ok); } }
+.state { margin-left: auto; font-weight: 600; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; }
+.sent .state { background: var(--amber-soft); color: var(--amber); }
+.done .state { background: var(--ok-soft); color: var(--ok); }
+.old { font-size: 16px; overflow-wrap: anywhere; }
+.old mark { background: var(--amber-soft); color: inherit; border-radius: 3px; padding: 0 2px; }
+.mk { font-family: var(--mono); font-size: .9em; background: var(--gem-soft); color: var(--gem); border-radius: 4px; padding: 0 3px; }
+.newrow { display: flex; gap: 8px; align-items: flex-end; }
+.newrow textarea { flex: 1 1 auto; min-width: 0; resize: none; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper);
+  padding: 7px 10px; font-size: 15px; line-height: 1.4; min-height: 38px; overflow: hidden; }
+.newrow textarea::placeholder { color: var(--muted); }
+.send { border: 0; border-radius: 8px; background: var(--leaf); color: var(--leaf-ink); padding: 8px 16px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+.send:disabled { opacity: .45; cursor: default; }
+.hint { font-size: 12.5px; color: var(--muted); }
+.hint.bad { color: var(--bad); }
+.yours { font-size: 13.5px; color: var(--muted); }
+.yours q { color: var(--ink); quotes: "“" "”"; }
+.empty, .more { max-width: 900px; margin: 0 auto; text-align: center; color: var(--muted); padding: 30px 0; }
+.more button { border: 1px solid var(--rule); background: var(--sheet); border-radius: 8px; padding: 8px 18px; }
+
+.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--sheet); border-top: 1px solid var(--rule);
+  padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.bar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.bar p { margin: 0; flex: 1 1 200px; font-size: 14px; }
+.notice { max-width: 900px; margin: 0 auto 12px; background: var(--amber-soft); border-radius: 8px; padding: 10px 14px; font-size: 14px; }
+@media (prefers-reduced-motion: no-preference) { .line { transition: border-color .2s; } }
+</style>
+
+<header class="band">
+  <div class="wrap">
+    <div class="head"><h1>Word Swap</h1><span class="tally" id="tally">Loading the lines…</span></div>
+    <div class="tools">
+      <div class="chips" id="chips" role="group" aria-label="Which lines"></div>
+      <div class="find">
+        <input id="q" type="search" placeholder="Find words or a key, e.g. lorem" aria-label="Find">
+        <select id="sec" aria-label="Section"><option value="">Every section</option></select>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="notice" id="offline" hidden>This view can't save. Open the page in Claude while signed in to send lines.</div>
+  <div class="list" id="list"></div>
+  <div class="more" id="more" hidden><button id="more-btn" type="button">Show more</button></div>
+  <div class="empty" id="empty" hidden>No lines match. Clear the search or pick another filter.</div>
+</main>
+
+<div class="bar" id="bar" hidden>
+  <div class="wrap"><p id="bar-text"></p><button class="send" id="bar-send" type="button">Tell the team</button></div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const MARK = /%(?:[-+ 0#]*\d*(?:\.\d+)?[sdif])/g;
+const marks = (s) => (String(s).match(MARK) || []).slice().sort();
+const S = { rows: [], swaps: {}, filter: "todo", q: "", sec: "", shown: 120, db: null, comments: null, wake: "off", told: 0, thread: null };
+const FILTERS = [
+  ["todo", "Placeholders", (r) => !r.r],
+  ["lorem", "Lorem ipsum", (r) => r.l],
+  ["rules", "Rules text", (r) => r.r],
+  ["sent", "Sent", (r) => !!S.swaps[r.k]],
+  ["all", "All", () => true],
+];
+
+function hi(text) {
+  let h = esc(text).replace(/(lorem|ipsum)/gi, "<mark>$1</mark>");
+  return h.replace(/%(?:[-+ 0#]*\d*(?:\.\d+)?[sdif])/g, (m) => `<span class="mk">${m}</span>`);
+}
+function matches(r) {
+  if (!FILTERS.find((f) => f[0] === S.filter)[2](r)) return false;
+  if (S.sec && r.s !== S.sec) return false;
+  if (!S.q) return true;
+  const q = S.q.toLowerCase(), sw = S.swaps[r.k];
+  return r.t.toLowerCase().includes(q) || r.k.toLowerCase().includes(q) || (sw && String(sw.new).toLowerCase().includes(q));
+}
+function lineHtml(r) {
+  const sw = S.swaps[r.k], st = sw ? sw.status : "";
+  const cls = st === "applied" ? " done" : st === "sent" ? " sent" : "";
+  const where = r.u.length ? `<span>in ${esc(r.u.join(", "))}</span>` : "";
+  const tag = st === "sent" ? `<span class="state">Sent, waiting</span>` : st === "applied" ? `<span class="state">In the game</span>` : "";
+  const yours = st === "sent" ? `<div class="yours">Yours: <q>${esc(sw.new)}</q></div>` : "";
+  const keep = r.f.length ? `<div class="hint" data-hint>Keep ${r.f.map((m) => `<span class="mk">${esc(m)}</span>`).join(" ")}: the game puts a ${r.f.some((m) => m.endsWith("s")) ? "word or number" : "number"} there.</div>` : `<div class="hint" data-hint hidden></div>`;
+  return `<article class="line${cls}" data-k="${esc(r.k)}">
+    <div class="meta"><span class="sec">${esc(r.s)}</span><span class="key">${esc(r.k)}</span>${where}${tag}</div>
+    <div class="old">${hi(r.t)}</div>${yours}
+    <div class="newrow"><textarea id="new-${esc(r.k)}" rows="1" placeholder="${st === "sent" ? "Change your line" : "Your words"}" aria-label="New words for ${esc(r.k)}"></textarea>
+    <button class="send" type="button" disabled>Send</button></div>${keep}
+  </article>`;
+}
+function render() {
+  const hits = S.rows.filter(matches);
+  $("list").innerHTML = hits.slice(0, S.shown).map(lineHtml).join("");
+  $("more").hidden = hits.length <= S.shown;
+  $("empty").hidden = hits.length > 0;
+  renderChips();
+}
+function renderChips() {
+  $("chips").innerHTML = FILTERS.map(([id, label, fn]) =>
+    `<button class="chip" type="button" data-f="${id}" aria-pressed="${S.filter === id}">${label}<b>${S.rows.filter(fn).length}</b></button>`).join("");
+  const sent = Object.values(S.swaps).filter((s) => s.status === "sent").length;
+  const done = Object.values(S.swaps).filter((s) => s.status === "applied").length;
+  $("tally").textContent = `${S.rows.length} lines · ${sent} sent and waiting · ${done} in the game`;
+  renderBar();
+}
+function renderBar() {
+  const waiting = Object.values(S.swaps).filter((s) => s.status === "sent").length;
+  const fresh = waiting - S.told;
+  $("bar").hidden = !(fresh > 0 && S.wake === "available");
+  $("bar-text").textContent = `${fresh} new ${fresh === 1 ? "line" : "lines"} saved. Tell the team, and they go into the game.`;
+}
+
+function check(art) {
+  const r = S.rows.find((x) => x.k === art.dataset.k), ta = art.querySelector("textarea"), btn = art.querySelector(".send"), hint = art.querySelector("[data-hint]");
+  ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px";
+  const v = ta.value.trim();
+  const ok = v && marks(v).join() === marks(r.t).join();
+  btn.disabled = !ok || !S.db;
+  if (v && !ok && r.f.length) { hint.hidden = false; hint.classList.add("bad"); }
+  else if (v && marks(v).length && !r.f.length) { hint.hidden = false; hint.classList.add("bad"); hint.textContent = "Take out the % mark: this line has no number slot."; }
+  else { hint.classList.remove("bad"); hint.hidden = !r.f.length; }
+}
+async function send(art) {
+  const r = S.rows.find((x) => x.k === art.dataset.k), ta = art.querySelector("textarea"), btn = art.querySelector(".send");
+  const v = ta.value.replace(/\s+/g, " ").trim();
+  if (!v || !S.db) return;
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const doc = { key: r.k, old: r.t, new: v, at: new Date().toISOString(), status: "sent" };
+    await S.db.collection("swaps").doc(r.k).set(doc);
+    S.swaps[r.k] = doc; ta.value = ""; btn.textContent = "Send";
+    art.outerHTML = lineHtml(r); renderChips(); queueWake();
+  } catch (e) {
+    btn.textContent = "Send"; btn.disabled = false;
+    const hint = art.querySelector("[data-hint]"); hint.hidden = false; hint.classList.add("bad");
+    hint.textContent = e && e.code === "permission_denied" ? "This view can't save. Open the page signed in as an editor." : "That didn't save. Try Send again.";
+  }
+}
+
+// Sending wakes the team's Claude with one comment. On a computer it goes by itself a few seconds after the last
+// line; on a phone (the Claude app leaves the page on every send) it waits for the "Tell the team" button.
+const coarse = () => matchMedia("(pointer: coarse)").matches;
+let wakeTimer = null;
+function queueWake() { renderBar(); if (coarse()) return; clearTimeout(wakeTimer); wakeTimer = setTimeout(wake, 12000); }
+async function wake() {
+  const waiting = Object.values(S.swaps).filter((s) => s.status === "sent").length;
+  const fresh = waiting - S.told;
+  if (fresh <= 0 || S.wake !== "available") return;
+  const text = `Word swap from Brandon: ${waiting} ${waiting === 1 ? "line" : "lines"} sent and waiting in the swaps collection. Apply them to game/text/placeholder.csv.`;
+  try {
+    if (S.thread) await S.comments.sendToClaude({ threadId: S.thread, text });
+    else S.thread = (await S.comments.sendToClaude({ anchor: await S.comments.anchorFor($("tally")), text })).threadId;
+    S.told = waiting; renderBar();
+  } catch (e) {
+    if (e && e.code === "not_found") { S.thread = null; }
+    if (e && e.code === "claude_unavailable") { S.wake = "no_session"; renderBar(); }
+  }
+}
+
+$("chips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (!b) return; S.filter = b.dataset.f; S.shown = 120; render(); });
+$("q").addEventListener("input", () => { S.q = $("q").value.trim(); S.shown = 120; render(); });
+$("sec").addEventListener("change", () => { S.sec = $("sec").value; S.shown = 120; render(); });
+$("more-btn").addEventListener("click", () => { S.shown += 200; render(); });
+$("list").addEventListener("input", (e) => { if (e.target.tagName === "TEXTAREA") check(e.target.closest(".line")); });
+$("list").addEventListener("click", (e) => { const b = e.target.closest(".send"); if (b && !b.disabled) send(b.closest(".line")); });
+$("list").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey && e.target.tagName === "TEXTAREA") { e.preventDefault(); const art = e.target.closest(".line"); if (!art.querySelector(".send").disabled) send(art); }
+});
+$("bar-send").addEventListener("click", wake);
+
+(async function start() {
+  try {
+    S.rows = (await (await fetch("rows.json")).json()).rows;
+  } catch { $("tally").textContent = "The list of lines didn't load. Reload the page."; return; }
+  const secs = [...new Set(S.rows.map((r) => r.s))].sort();
+  $("sec").innerHTML += secs.map((s) => `<option>${esc(s)}</option>`).join("");
+  render();
+  const claude = window.claude;
+  if (!claude || !claude.use) { $("offline").hidden = false; return; }
+  claude.use("comments").then(async (c) => {
+    S.comments = c;
+    try { S.wake = c ? await c.canSendToClaude() : "off"; } catch { S.wake = "off"; }
+    renderBar();
+  });
+  S.db = await claude.use("db");
+  if (!S.db) { $("offline").hidden = false; return; }
+  S.db.collection("swaps").onSnapshot((snap) => {
+    S.swaps = {};
+    snap.docs.forEach((d) => { const v = d.data(); if (v && v.key) S.swaps[v.key] = v; });
+    // Keep what he's typing: only redraw rows nobody is editing.
+    const typing = document.activeElement && document.activeElement.tagName === "TEXTAREA" && document.activeElement.value;
+    if (typing) renderChips(); else render();
+  }, () => { $("offline").hidden = false; });
+})();
+</script>
