@@ -79,6 +79,23 @@ main { padding-block: 18px 120px; padding-left: max(16px, env(safe-area-inset-le
 .hint.bad { color: var(--bad); }
 .yours { font-size: 13.5px; color: var(--muted); }
 .yours q { color: var(--ink); quotes: "“" "”"; }
+.talk { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.talk > .meta { font-size: 12px; }
+.talk .line { border-radius: 8px; padding: 10px 12px; background: var(--paper); }
+.talk .line.prompt .old { font-size: 17px; }
+.opts { display: grid; gap: 8px; padding-left: 14px; border-left: 2px solid var(--leaf-soft); }
+.line.opt .old { font-size: 15px; }
+.does { font-size: 13px; color: var(--muted); }
+.does b { font-weight: 600; color: var(--amber); }
+.need { color: var(--gem); font-weight: 500; }
+.add summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--leaf); }
+:root[data-theme="dark"] .add summary { color: var(--ok); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .add summary { color: var(--ok); } }
+.addrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.addrow input { flex: 1 1 200px; min-width: 0; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); padding: 7px 10px; font-size: 15px; }
+.asks { margin: 0; padding-left: 18px; font-size: 13.5px; color: var(--muted); display: grid; gap: 4px; }
+.asks q { color: var(--ink); }
+.asks .state { background: var(--amber-soft); color: var(--amber); }
 .empty, .more { max-width: 900px; margin: 0 auto; text-align: center; color: var(--muted); padding: 30px 0; }
 .more button { border: 1px solid var(--rule); background: var(--sheet); border-radius: 8px; padding: 8px 18px; }
 
@@ -119,11 +136,14 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const MARK = /%(?:[-+ 0#]*\d*(?:\.\d+)?[sdif])/g;
 const marks = (s) => (String(s).match(MARK) || []).slice().sort();
-const S = { rows: [], swaps: {}, filter: "todo", q: "", sec: "", shown: 120, db: null, comments: null, wake: "off", told: 0, thread: null };
+const S = { rows: [], talks: [], byKey: {}, swaps: {}, asks: {}, filter: "talk", q: "", sec: "", shown: 120, uid: 0, db: null, comments: null, wake: "off", told: 0, thread: null };
+// Story and dialogue are Brandon's; game text is ours ([USER] 2026-11-02). "talk" draws dialogue cards, the rest draw lines.
 const FILTERS = [
-  ["todo", "Placeholders", (r) => !r.r],
+  ["talk", "Dialogue", (r) => false],
+  ["story", "Story lines", (r) => r.g === "story" && !S.talkKeys.has(r.k)],
+  ["name", "Names", (r) => r.g === "name"],
+  ["game", "Game text", (r) => r.g === "game"],
   ["lorem", "Lorem ipsum", (r) => r.l],
-  ["rules", "Rules text", (r) => r.r],
   ["sent", "Sent", (r) => !!S.swaps[r.k]],
   ["all", "All", () => true],
 ];
@@ -139,37 +159,92 @@ function matches(r) {
   const q = S.q.toLowerCase(), sw = S.swaps[r.k];
   return r.t.toLowerCase().includes(q) || r.k.toLowerCase().includes(q) || (sw && String(sw.new).toLowerCase().includes(q));
 }
-function lineHtml(r) {
+function talkMatches(d) {
+  if (!S.q) return true;
+  const q = S.q.toLowerCase(), keys = [d.k, ...d.o.map((o) => o.k)];
+  return d.id.toLowerCase().includes(q) || keys.some((k) => {
+    const r = S.byKey[k], sw = S.swaps[k];
+    return k.toLowerCase().includes(q) || (r && r.t.toLowerCase().includes(q)) || (sw && String(sw.new).toLowerCase().includes(q));
+  });
+}
+function talkHtml(d) {
+  const prompt = S.byKey[d.k];
+  const opts = d.o.map((o) => {
+    const r = S.byKey[o.k];
+    if (!r) return "";
+    const shared = (S.optUses[o.k] || 0) > 1 ? ` · <b>shared by ${S.optUses[o.k]} dialogues</b>` : "";
+    return lineHtml(r, `<div class="does">${o.need ? `<span class="need">${esc(o.need)}</span> · ` : ""}${esc(o.does)}${shared}</div>`, "opt");
+  }).join("");
+  const asks = Object.values(S.asks).filter((a) => a.event === d.id);
+  const askList = asks.length ? `<ul class="asks">${asks.map((a) => `<li><q>${esc(a.text)}</q>${a.what ? ` → ${esc(a.what)}` : ""} <span class="state">${a.status === "done" ? "In the game" : "Sent, waiting"}</span></li>`).join("")}</ul>` : "";
+  return `<section class="talk" data-ev="${esc(d.id)}">
+    <div class="meta"><span class="sec">${esc(d.where)}</span><span class="key">${esc(d.id)}</span>${d.p ? "<span>shows a portrait</span>" : ""}${d.box ? `<span>on a ${esc(d.box)}</span>` : ""}</div>
+    ${prompt ? lineHtml(prompt, "", "prompt") : ""}
+    <div class="opts">${opts}</div>${askList}
+    <details class="add"><summary>Add a response</summary>
+      <div class="addrow"><input id="ask-${esc(d.id)}" type="text" placeholder="What the player says" aria-label="New response for ${esc(d.id)}">
+      <input id="what-${esc(d.id)}" type="text" placeholder="What it should do (optional)" aria-label="What the new response does">
+      <button class="send" type="button" data-ask>Send</button></div>
+    </details>
+  </section>`;
+}
+function lineHtml(r, extra = "", kind = "") {
   const sw = S.swaps[r.k], st = sw ? sw.status : "";
-  const cls = st === "applied" ? " done" : st === "sent" ? " sent" : "";
-  const where = r.u.length ? `<span>in ${esc(r.u.join(", "))}</span>` : "";
+  const cls = (st === "applied" ? " done" : st === "sent" ? " sent" : "") + (kind ? " " + kind : "");
+  const where = kind ? "" : r.u.length ? `<span>in ${esc(r.u.join(", "))}</span>` : "";
   const tag = st === "sent" ? `<span class="state">Sent, waiting</span>` : st === "applied" ? `<span class="state">In the game</span>` : "";
   const yours = st === "sent" ? `<div class="yours">Yours: <q>${esc(sw.new)}</q></div>` : "";
   const keep = r.f.length ? `<div class="hint" data-hint>Keep ${r.f.map((m) => `<span class="mk">${esc(m)}</span>`).join(" ")}: the game puts a ${r.f.some((m) => m.endsWith("s")) ? "word or number" : "number"} there.</div>` : `<div class="hint" data-hint hidden></div>`;
+  const label = kind === "prompt" ? "Prompt" : kind === "opt" ? "Response" : esc(r.s);
   return `<article class="line${cls}" data-k="${esc(r.k)}">
-    <div class="meta"><span class="sec">${esc(r.s)}</span><span class="key">${esc(r.k)}</span>${where}${tag}</div>
-    <div class="old">${hi(r.t)}</div>${yours}
-    <div class="newrow"><textarea id="new-${esc(r.k)}" rows="1" placeholder="${st === "sent" ? "Change your line" : "Your words"}" aria-label="New words for ${esc(r.k)}"></textarea>
+    <div class="meta"><span class="sec">${label}</span><span class="key">${esc(r.k)}</span>${where}${tag}</div>
+    <div class="old">${hi(r.t)}</div>${extra}${yours}
+    <div class="newrow"><textarea id="new-${esc(r.k)}-${S.uid++}" rows="1" placeholder="${st === "sent" ? "Change your line" : "Your words"}" aria-label="New words for ${esc(r.k)}"></textarea>
     <button class="send" type="button" disabled>Send</button></div>${keep}
   </article>`;
 }
 function render() {
+  $("sec").hidden = S.filter === "talk";
+  if (S.filter === "talk") {
+    const talks = S.talks.filter(talkMatches);
+    $("list").innerHTML = talks.slice(0, S.shown).map(talkHtml).join("");
+    $("more").hidden = talks.length <= S.shown;
+    $("empty").hidden = talks.length > 0;
+    renderChips();
+    return;
+  }
   const hits = S.rows.filter(matches);
-  $("list").innerHTML = hits.slice(0, S.shown).map(lineHtml).join("");
+  $("list").innerHTML = hits.slice(0, S.shown).map((r) => lineHtml(r)).join("");
   $("more").hidden = hits.length <= S.shown;
   $("empty").hidden = hits.length > 0;
   renderChips();
 }
 function renderChips() {
   $("chips").innerHTML = FILTERS.map(([id, label, fn]) =>
-    `<button class="chip" type="button" data-f="${id}" aria-pressed="${S.filter === id}">${label}<b>${S.rows.filter(fn).length}</b></button>`).join("");
+    `<button class="chip" type="button" data-f="${id}" aria-pressed="${S.filter === id}">${label}<b>${id === "talk" ? S.talks.length : S.rows.filter(fn).length}</b></button>`).join("");
   const sent = Object.values(S.swaps).filter((s) => s.status === "sent").length;
   const done = Object.values(S.swaps).filter((s) => s.status === "applied").length;
   $("tally").textContent = `${S.rows.length} lines · ${sent} sent and waiting · ${done} in the game`;
   renderBar();
 }
+const pending = () => Object.values(S.swaps).filter((s) => s.status === "sent").length + Object.values(S.asks).filter((a) => a.status === "sent").length;
+async function sendAsk(section) {
+  const id = section.dataset.ev, text = $("ask-" + id).value.trim(), what = $("what-" + id).value.trim();
+  const btn = section.querySelector("[data-ask]");
+  if (!text || !S.db) return;
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const doc = { event: id, text, what, at: new Date().toISOString(), status: "sent" };
+    const ref = await S.db.collection("asks").add(doc);
+    S.asks[ref.id] = doc;
+    section.outerHTML = talkHtml(S.talks.find((d) => d.id === id));
+    renderChips(); queueWake();
+  } catch {
+    btn.disabled = false; btn.textContent = "Try again";
+  }
+}
 function renderBar() {
-  const waiting = Object.values(S.swaps).filter((s) => s.status === "sent").length;
+  const waiting = pending();
   const fresh = waiting - S.told;
   $("bar").hidden = !(fresh > 0 && S.wake === "available");
   $("bar-text").textContent = `${fresh} new ${fresh === 1 ? "line" : "lines"} saved. Tell the team, and they go into the game.`;
@@ -194,7 +269,10 @@ async function send(art) {
     const doc = { key: r.k, old: r.t, new: v, at: new Date().toISOString(), status: "sent" };
     await S.db.collection("swaps").doc(r.k).set(doc);
     S.swaps[r.k] = doc; ta.value = ""; btn.textContent = "Send";
-    art.outerHTML = lineHtml(r); renderChips(); queueWake();
+    const talk = art.closest(".talk");
+    if (talk) talk.outerHTML = talkHtml(S.talks.find((d) => d.id === talk.dataset.ev));
+    else art.outerHTML = lineHtml(r);
+    renderChips(); queueWake();
   } catch (e) {
     btn.textContent = "Send"; btn.disabled = false;
     const hint = art.querySelector("[data-hint]"); hint.hidden = false; hint.classList.add("bad");
@@ -208,10 +286,11 @@ const coarse = () => matchMedia("(pointer: coarse)").matches;
 let wakeTimer = null;
 function queueWake() { renderBar(); if (coarse()) return; clearTimeout(wakeTimer); wakeTimer = setTimeout(wake, 12000); }
 async function wake() {
-  const waiting = Object.values(S.swaps).filter((s) => s.status === "sent").length;
+  const waiting = pending();
   const fresh = waiting - S.told;
   if (fresh <= 0 || S.wake !== "available") return;
-  const text = `Word swap from Brandon: ${waiting} ${waiting === 1 ? "line" : "lines"} sent and waiting in the swaps collection. Apply them to game/text/placeholder.csv.`;
+  const nAsk = Object.values(S.asks).filter((a) => a.status === "sent").length;
+  const text = `Word swap from Brandon: ${waiting - nAsk} ${waiting - nAsk === 1 ? "line" : "lines"} waiting in swaps` + (nAsk ? ` and ${nAsk} new ${nAsk === 1 ? "response" : "responses"} waiting in asks` : "") + ". Put them into the game (docs/systems/word-swap.md).";
   try {
     if (S.thread) await S.comments.sendToClaude({ threadId: S.thread, text });
     else S.thread = (await S.comments.sendToClaude({ anchor: await S.comments.anchorFor($("tally")), text })).threadId;
@@ -227,7 +306,11 @@ $("q").addEventListener("input", () => { S.q = $("q").value.trim(); S.shown = 12
 $("sec").addEventListener("change", () => { S.sec = $("sec").value; S.shown = 120; render(); });
 $("more-btn").addEventListener("click", () => { S.shown += 200; render(); });
 $("list").addEventListener("input", (e) => { if (e.target.tagName === "TEXTAREA") check(e.target.closest(".line")); });
-$("list").addEventListener("click", (e) => { const b = e.target.closest(".send"); if (b && !b.disabled) send(b.closest(".line")); });
+$("list").addEventListener("click", (e) => {
+  const b = e.target.closest(".send");
+  if (!b || b.disabled) return;
+  if (b.hasAttribute("data-ask")) sendAsk(b.closest(".talk")); else send(b.closest(".line"));
+});
 $("list").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey && e.target.tagName === "TEXTAREA") { e.preventDefault(); const art = e.target.closest(".line"); if (!art.querySelector(".send").disabled) send(art); }
 });
@@ -235,8 +318,13 @@ $("bar-send").addEventListener("click", wake);
 
 (async function start() {
   try {
-    S.rows = (await (await fetch("rows.json")).json()).rows;
+    const data = await (await fetch("rows.json")).json();
+    S.rows = data.rows; S.talks = data.talks || [];
   } catch { $("tally").textContent = "The list of lines didn't load. Reload the page."; return; }
+  S.rows.forEach((r) => { S.byKey[r.k] = r; });
+  S.talkKeys = new Set(S.talks.flatMap((d) => [d.k, ...d.o.map((o) => o.k)]));
+  S.optUses = {};
+  S.talks.forEach((d) => d.o.forEach((o) => { S.optUses[o.k] = (S.optUses[o.k] || 0) + 1; }));
   const secs = [...new Set(S.rows.map((r) => r.s))].sort();
   $("sec").innerHTML += secs.map((s) => `<option>${esc(s)}</option>`).join("");
   render();
@@ -256,5 +344,11 @@ $("bar-send").addEventListener("click", wake);
     const typing = document.activeElement && document.activeElement.tagName === "TEXTAREA" && document.activeElement.value;
     if (typing) renderChips(); else render();
   }, () => { $("offline").hidden = false; });
+  S.db.collection("asks").onSnapshot((snap) => {
+    S.asks = {};
+    snap.docs.forEach((d) => { const v = d.data(); if (v && v.event) S.asks[d.id] = v; });
+    const typing = document.activeElement && /TEXTAREA|INPUT/.test(document.activeElement.tagName) && document.activeElement.value;
+    if (typing) renderChips(); else render();
+  });
 })();
 </script>

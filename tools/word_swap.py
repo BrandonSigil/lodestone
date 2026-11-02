@@ -67,20 +67,107 @@ def usage(keys):
     return found
 
 
+# Story and dialogue stay Brandon's ([USER] 2026-11-02); names go with them. Everything else is game text we write.
+SPEECH = ("TALK_", "BOND_", "MAYOR_", "QUEST_", "SHOP_", "TEAM_")
+NAMES = ("CHAR_", "ENEMY_", "WN_", "VIL_", "BUILDING_", "GAME_TITLE", "MAP_TITLE")
+EVENT_TABLES = [("events.csv", "Road events (old trail)"), ("travel_events.csv", "Road events"),
+                ("explore_events.csv", "Exploring")]
+CHECK_WORDS = {"sneak": "Sneak", "nerve": "Nerve", "persuade": "Talk", "tame": "Animals", "masonry": "Masonry",
+               "wayfind": "Wayfinding", "forage": "Forage"}
+EFFECT_WORDS = {
+    "open": "opens it", "noise": "makes noise", "remove": "it's used up", "ambushed": "foes get the first move",
+    "dismiss": "closes the box", "sneak_attack": "you start the fight with a sneak hit", "exit": "leaves the map",
+    "pacify": "the foes calm down", "reveal": "shows something hidden", "sleep": "everyone rests",
+    "pass": "you get through", "fight": "a fight starts",
+}
+
+
+def effect_words(spec):
+    out = []
+    for tok in filter(None, (spec or "").split(";")):
+        name, _, val = tok.partition(":")
+        if name in EFFECT_WORDS:
+            out.append(EFFECT_WORDS[name])
+        elif name in ("food", "gold", "medicine", "wood", "metal", "rope", "herb", "fish", "ingredient", "rare"):
+            out.append(f"{val} {name}")
+        elif name == "hp_one":
+            out.append(f"one member {val} HP")
+        elif name == "hp_all":
+            out.append(f"everyone {val} HP")
+        elif name == "morale":
+            out.append(f"everyone {val} morale")
+        elif name == "combat":
+            out.append(f"a fight ({val.replace('_', ' ')})")
+        elif name == "dist":
+            out.append(f"{val} road distance")
+        elif name == "day":
+            out.append(f"{val} day")
+        elif name in ("unlock", "flag"):
+            out.append(f"remembers {val.replace('_', ' ')}")
+        elif name in ("invite", "rescue"):
+            out.append(f"{name}s {val.replace('_', ' ')}")
+        else:
+            out.append(tok.replace("_", " "))
+    return ", ".join(out)
+
+
+def need_words(spec):
+    out = []
+    for tok in filter(None, (spec or "").split(";")):
+        name, _, val = tok.partition(":")
+        val = val.replace("_", " ")
+        out.append({"skill": f"needs someone with {val}", "class": f"needs a {val}", "item": f"needs a {val}",
+                    "noitem": f"only without a {val}", "flag": f"only after {val}", "noflag": f"only before {val}",
+                    "party": f"only with {val} in the party", "noparty": f"only without {val} in the party",
+                    "talk": "only once talking is earned"}.get(name, tok))
+    return ", ".join(out)
+
+
+def dialogues():
+    out = []
+    for fname, where in EVENT_TABLES:
+        for r in csv.DictReader((ROOT / "game/data" / fname).open(newline="", encoding="utf-8")):
+            opts = []
+            for i in range(1, 6):
+                key = r.get(f"opt{i}_key")
+                if not key:
+                    continue
+                check, dc = r.get(f"opt{i}_check") or "none", r.get(f"opt{i}_dc") or "0"
+                roll = "" if check in ("none", "fight") else f"roll {CHECK_WORDS.get(check, check)} against {dc}"
+                win, lose = effect_words(r.get(f"opt{i}_win")), effect_words(r.get(f"opt{i}_lose"))
+                does = (f"{roll}. Pass: {win or 'nothing'}. Fail: {lose or 'nothing'}" if roll
+                        else (win or "nothing happens"))
+                opts.append({"k": key, "need": need_words(r.get(f"opt{i}_need")), "does": does})
+            out.append({"id": r["id"], "where": where, "k": r["text_key"], "o": opts,
+                        "p": bool(r.get("portrait")), "box": r.get("box") or ""})
+    return out
+
+
+def group(key, story_keys):
+    if key in story_keys or key.startswith(SPEECH):
+        return "story"
+    if key.startswith(NAMES):
+        return "name"
+    return "game"
+
+
 def export():
     _, rows = read_rows()
     used = usage([k for _, k, _ in rows])
+    talks = dialogues()
+    story_keys = {d["k"] for d in talks} | {o["k"] for d in talks for o in d["o"]}
     data = []
     for _, k, t in rows:
         prefix = "TAGDESC" if k.startswith("TAGDESC_") else k.split("_")[0]
         data.append({
             "k": k, "t": t, "s": SECTIONS.get(prefix, "Other"),
-            "u": used[k][:3], "r": is_rules(k),
+            "u": used[k][:3], "r": is_rules(k), "g": group(k, story_keys),
             "l": bool(re.search(r"lorem|ipsum", t, re.I)), "f": FORMAT.findall(t),
         })
     ROWS.parent.mkdir(parents=True, exist_ok=True)
-    ROWS.write_text(json.dumps({"rows": data}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    print(f"{len(data)} lines -> {ROWS.relative_to(ROOT)}")
+    ROWS.write_text(json.dumps({"rows": data, "talks": talks}, ensure_ascii=False, separators=(",", ":")),
+                    encoding="utf-8")
+    print(f"{len(data)} lines, {len(talks)} dialogues -> {ROWS.relative_to(ROOT)}")
 
 
 def csv_line(key, text):
