@@ -13,7 +13,8 @@ extends Control
 signal done
 
 const COL_W := 300.0  ## a card's width
-const COL_H := 318.0  ## the three cards' height: four rows of friends and SHOW ALL fit whole, the rest scroll
+const BAR_LABEL := 64.0  ## room for a bar's name
+const COL_H := 380.0  ## the three cards' height: four rows of friends and SHOW ALL fit whole, the rest scroll
 const COL_H_SHORT := 236.0  ## the same with a second row of cards on the page (a fall's boss card): three rows fit
 const ROWS := 4  ## rows a card shows before SHOW ALL
 const FACE := 44.0
@@ -102,7 +103,7 @@ func _card(parent: Control, key: String) -> VBoxContainer:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(scroll)
 	var rows := VBoxContainer.new()
-	rows.add_theme_constant_override("separation", 6)
+	rows.add_theme_constant_override("separation", 4)
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(rows)
 	return rows
@@ -211,19 +212,12 @@ func _morale_row(box: VBoxContainer, r: Dictionary) -> Control:
 	var line := _row(box, String(r.id))
 	line.tooltip_text = "%s   %s" % [_name(String(r.id)), Txt.t(String(band.get("name_key", "")))]
 	line.mouse_filter = Control.MOUSE_FILTER_PASS
-	var heart := MenuKit.icon_rect("heal", 28)
-	heart.modulate = Color.WHITE if d >= 0 else Color(0.7, 0.7, 0.75)
-	heart.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	line.add_child(heart)
-	var bar := UiBar.new()  # where the heart stands now, out of 100
-	bar.fill = VictoryUi.HEART_PINK
-	bar.value = clampf(float(r.to) / 100.0, 0.0, 1.0)
-	bar.tooltip_text = "%d/100" % int(r.to)
-	bar.mouse_filter = Control.MOUSE_FILTER_STOP
-	bar.custom_minimum_size = Vector2(80, 16)
-	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	line.add_child(bar)
+	var bars := VBoxContainer.new()  # HP, mana or rage, Morale, thin and labelled ([USER] 2026-11-02)
+	bars.add_theme_constant_override("separation", 2)
+	bars.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bars.alignment = BoxContainer.ALIGNMENT_CENTER
+	line.add_child(bars)
+	_vitals(bars, String(r.id))
 	line.add_child(MenuKit.chip("+%d" % d if d > 0 else str(d), "", VictoryUi.UP_GREEN if d > 0 else VictoryUi.DOWN_RED, "", 17))
 	return line
 
@@ -336,6 +330,22 @@ func _goal(foot: HBoxContainer) -> void:
 
 
 # --- pieces ------------------------------------------------------------------------------------
+
+## A member's thin HP, energy and Morale bars ([USER] 2026-11-02: "they need Morale too as a bar ... all the HP/Mana/Morale
+## bars can be overall thinner"), from the run's member when there is one.
+func _vitals(col: VBoxContainer, id: String) -> void:
+	var m: Dictionary = {}
+	if Game.run != null:
+		for mm: Dictionary in Game.run.members:
+			if String((mm.def as CharacterDef).id) == id:
+				m = mm
+	if not m.is_empty():
+		var u := CombatUnit.from_member(m)
+		MenuKit.bar_row(col, Txt.t("UI_VIC_BAR_HP"), VictoryUi.HP_RED, float(m.hp) / maxf(1.0, float(u.max_hp)), "%d/%d" % [int(m.hp), u.max_hp], BAR_LABEL)
+		if u.res_kind != "":
+			MenuKit.bar_row(col, Txt.t("RES_" + u.res_kind.to_upper()) if Txt.has("RES_" + u.res_kind.to_upper()) else u.res_kind.to_upper(),
+				FrameHud.RES_COLORS.get(u.res_kind, Color.WHITE), float(u.res) / maxf(1.0, float(u.res_max)), "%d/%d" % [u.res, u.res_max], BAR_LABEL)
+	MenuKit.bar_row(col, Txt.t("UI_VIC_BAR_HEART"), VictoryUi.HEART_PINK, float(Game.morale_of(id)) / 100.0, str(Game.morale_of(id)), BAR_LABEL)
 
 ## A row that starts with a round face (party, friends).
 func _row(box: VBoxContainer, id: String) -> HBoxContainer:

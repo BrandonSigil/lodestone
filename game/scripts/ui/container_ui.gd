@@ -264,15 +264,13 @@ static func _beside(view: PackView, other: InventoryGrid, other_title: String, p
 	view.gold_note = view.notes.back()
 	view.flash_at = Vector2(top.x + 90.0, bottom + 8.0)
 	bottom += PackView.NOTE_LINE + 8.0
-	var h := maxf(oh, bottom + pad)
+	var h := maxf(maxf(oh, bottom + pad), pad + PackView.WINDOW_TITLE + other.rows * cell + 14.0 + BUTTON_H + 12.0)
 	view.add_window(Rect2(Vector2(x0, 0), Vector2(right + pad - x0, h)), Txt.t("UI_PACK"))
-	# the loot: centred across and down in the room between its heading and TAKE ALL
-	var room_top := pad + PackView.WINDOW_TITLE
-	var room_h := h - BUTTON_H * 0.5 - 8.0 - room_top
-	view.move_area(1, Vector2(pad + (ow - other.cols * cell) * 0.5, room_top + maxf(0.0, (room_h - other.rows * cell) * 0.5)))
+	# the loot: centred across, right under its heading, TAKE ALL right under it
+	view.move_area(1, Vector2(pad + (ow - other.cols * cell) * 0.5, pad + PackView.WINDOW_TITLE))
 	view.add_window(Rect2(Vector2.ZERO, Vector2(ow + pad * 2.0, h)), other_title)
 	var bw := minf(ow + pad * 2.0 - 16.0, 200.0)
-	view.add_button(Txt.t("UI_BOX_TAKE_ALL"), Rect2(Vector2((ow + pad * 2.0 - bw) * 0.5, h - BUTTON_H - 10.0), Vector2(bw, BUTTON_H)), func() -> void:
+	view.add_button(Txt.t("UI_BOX_TAKE_ALL"), Rect2(Vector2((ow + pad * 2.0 - bw) * 0.5, pad + PackView.WINDOW_TITLE + other.rows * cell + 14.0), Vector2(bw, BUTTON_H)), func() -> void:
 		if not view.send_all(1, 0):
 			view.flash = "UI_BOX_FULL"
 			view.queue_redraw())

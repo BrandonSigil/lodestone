@@ -574,7 +574,7 @@ static var _slot: StyleBoxFlat
 
 static func _slot_box() -> StyleBoxFlat:
 	if _slot == null:
-		_slot = MenuKit.flat(MenuKit.INSET, MenuKit.RIM_DIM, 1.0, 6, 0.0, 0.0)
+		_slot = MenuKit.flat(Color(0.07, 0.21, 0.19, 0.95), Color(0.72, 0.84, 0.88, 0.75), 1.5, 6, 0.0, 0.0)  # a lifted slot with a clear rim
 	return _slot
 
 
@@ -587,7 +587,13 @@ static func _draw_count(ci: CanvasItem, cells: Array[Vector2i], top_left: Vector
 		if c.y > last.y or (c.y == last.y and c.x > last.x):
 			last = c
 	var corner := top_left + (Vector2(last) + Vector2(1, 1)) * cell
-	Riso.draw_label(ci, str(n), corner - Vector2(cell * 0.12, cell * 0.26), maxi(9, int(cell * 0.26)), Riso.INK, HORIZONTAL_ALIGNMENT_RIGHT)
+	# light with a dark outline, so it reads on any tile (the menu kit's slot counts)
+	var font := Riso.font()
+	var px := maxi(12, int(cell * 0.36))
+	var w := font.get_string_size(str(n), HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
+	var at := corner - Vector2(cell * 0.1 + w, cell * 0.12)
+	ci.draw_string_outline(font, at, str(n), HORIZONTAL_ALIGNMENT_LEFT, -1, px, 7, Color(0.02, 0.06, 0.05, 1.0))
+	ci.draw_string(font, at, str(n), HORIZONTAL_ALIGNMENT_LEFT, -1, px, MenuKit.TEXT)
 
 
 ## One item: its cells as one flat plane with an ink keyline round the outside, icon at the middle.

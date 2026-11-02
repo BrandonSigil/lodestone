@@ -127,6 +127,8 @@ static func _member_card(m: Dictionary, waiting: bool, open: bool, show: Callabl
 	var per := float(maxi(1, int(Db.levels.get("xp_per_level", 100))))
 	_bar(col, "star_guide", VictoryUi.XP_GOLD, float(s.xp) / per, "%d/%d" % [int(s.xp), int(per)])
 	_bar(col, "potion", VictoryUi.HP_RED, float(m.hp) / maxf(1.0, float(u.max_hp)), "%d/%d" % [int(m.hp), u.max_hp])
+	if u.res_kind != "":  # mana, rage or charges ([USER] 2026-11-02: HP, mana and Morale bars on every character)
+		_bar(col, "rare", FrameHud.RES_COLORS.get(u.res_kind, Color.WHITE), float(u.res) / maxf(1.0, float(u.res_max)), "%d/%d" % [u.res, u.res_max])
 	var band := Game.morale_band(id)  # per-character morale ([USER] 2026-10-31): the band and what it does
 	var heart := _bar(col, "heal", VictoryUi.HEART_PINK, float(Game.morale_of(id)) / 100.0, Txt.t(String(band.name_key)))
 	heart.get_parent().tooltip_text = MoraleRules.describe(band)

@@ -15,11 +15,11 @@ extends PanelContainer
 
 const ICONS := "res://art/source/icons/"
 const STAT_ICON := {"hp": "potion", "damage": "strength", "armor": "shield", "magic": "rare", "crit": "focus"}
-const CARD_W := 236.0
-const FACE := 76.0
-const LOOT_CELL := 62.0  ## the loot and pack grids' cell size here
+const CARD_W := 246.0
+const FACE := 60.0
+const LOOT_CELL := 70.0  ## the loot and pack grids' cell size here
 const FILL_TIME := 1.1  ## seconds an XP bar takes to fill (a level up rolls it over and goes on)
-const BAR_LABEL := 76.0  ## room for a bar's name (CHARGES, MORALE)
+const BAR_LABEL := 88.0  ## room for a bar's name (CHARGES, MORALE)
 const MIN_SCALE := 0.8  ## the smallest the window shrinks to before its inside scrolls
 const STAGGER := 0.18  ## each card starts this much after the one before
 const XP_GOLD := Color(0.98, 0.8, 0.32)
@@ -120,10 +120,19 @@ func _ready() -> void:
 		var l := _label(end, 20)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_page.add_child(l)
-	_summary(_foot)  # EXP and GOLD in the foot, left of the buttons: the window stays short enough to show full size
+	# the foot goes under the loot and the pack, level with the party cards' foot (the window's own foot stays empty)
+	_foot.get_parent().visible = false
+	var push := Control.new()
+	push.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right.add_child(push)
+	_foot = HBoxContainer.new()
+	_foot.alignment = BoxContainer.ALIGNMENT_END
+	_foot.add_theme_constant_override("separation", 12)
+	right.add_child(_foot)
 	var gap := Control.new()
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_foot.add_child(gap)
+	_summary(_foot)  # EXP and GOLD in the foot beside the buttons: the window stays short enough to show full size
 	_buttons()
 	_win.resized.connect(_fit)
 	_holder.resized.connect(_fit)
@@ -200,12 +209,13 @@ func _loot(col: VBoxContainer) -> void:
 	var grid: InventoryGrid = r.get("loot_grid")
 	if grid == null or grid.items.is_empty() or Game.run == null:
 		return
+	# a loot grid at least three across and as tall as the pack, so its card reads as slots, not a cluster in felt
+	grid.cols = maxi(grid.cols, 3)
+	grid.rows = maxi(grid.rows, Game.run.pack.rows)  # level with the pack
 	var view := PackView.new()
 	view.sections = true  # LOOT and PACK as sections of this one window (mockup D)
 	view.setup_bag(Game.run.pack, Db.items, Callable(), LOOT_CELL)
 	ContainerUi.stacked(view, grid, Txt.t("UI_LOOT_TITLE"))
-	view.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	view.resized.connect(view.stretch_sections)
 	if r.get("changed") is Callable and (r.changed as Callable).is_valid():
 		view.changed.connect(r.changed)
 	col.add_child(view)
@@ -213,8 +223,8 @@ func _loot(col: VBoxContainer) -> void:
 
 func _party(into: Control) -> void:
 	var members: Array = r.get("members", [])
-	var grid := GridContainer.new()  # two across for three or four (three past four pieces), as in mockup D
-	grid.columns = 1 if members.size() <= 2 else (2 if members.size() <= 4 else 3)  # two stand one over the other
+	var grid := GridContainer.new()
+	grid.columns = 1 if members.size() <= 2 else (2 if members.size() <= 4 else 3)  # two across past two, as in mockup D
 	grid.add_theme_constant_override("h_separation", 12)
 	grid.add_theme_constant_override("v_separation", 12)
 	into.add_child(grid)
@@ -250,15 +260,16 @@ func _card(m: Dictionary) -> Control:
 		badge.pivot_offset = badge.size * 0.5
 		badge.position = Vector2((face.size.x - badge.size.x) * 0.5, FACE - badge.size.y * 0.55))
 	# the level as a chip on the face's corner; the name under the face
-	var lvc := MenuKit.chip("%s %d" % [Txt.t("UI_VIC_LV"), int(m.lv0)], "", XP_GOLD, "", 15)
-	face.add_child(lvc)
-	lvc.resized.connect(func() -> void: lvc.position = Vector2(pic.position.x + FACE - lvc.size.x * 0.6, FACE - lvc.size.y + 4))
-	var lv: Label = lvc.get_child(0).get_child(0)
+	var top := HBoxContainer.new()  # the name, and the level as a chip beside it (clear of the face)
+	top.alignment = BoxContainer.ALIGNMENT_CENTER
+	top.add_theme_constant_override("separation", 8)
+	col.add_child(top)
 	var nm := _label(String(m.name), 17)
-	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	nm.clip_text = true
-	col.add_child(nm)
+	nm.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(nm)
+	var lvc := MenuKit.chip("%s %d" % [Txt.t("UI_VIC_LV"), int(m.lv0)], "", XP_GOLD, "", 15)
+	top.add_child(lvc)
+	var lv: Label = lvc.get_child(0).get_child(0)
 	# the bars, each named in small plain words ([USER] 2026-11-01 X7: "Which bar is health? Which bar is Energy?")
 	var hp := MenuKit.bar_row(col, Txt.t("UI_VIC_BAR_HP"), HP_RED, float(m.hp) / maxf(1.0, float(m.max_hp)), "%d/%d" % [int(m.hp), int(m.max_hp)], BAR_LABEL)
 	hp.text_color = UiTheme.PARCHMENT
@@ -270,11 +281,10 @@ func _card(m: Dictionary) -> Control:
 	var per := float(maxi(1, int(Db.levels.get("xp_per_level", 100))))
 	var xp := MenuKit.bar_row(col, Txt.t("UI_VIC_BAR_EXP"), XP_GOLD, float(m.xp0) / per, "%d/%d" % [int(m.xp1), int(per)], BAR_LABEL)  # where it stands; the gain is the EXP chip
 	xp.text_color = UiTheme.PARCHMENT
-	var dh := int(m.heart1) - int(m.heart0)
-	var heart: UiBar = null
-	if dh != 0:  # the heart only when it moved: show only what changed (menus research)
-		heart = MenuKit.bar_row(col, Txt.t("UI_VIC_BAR_HEART"), HEART_PINK, float(m.heart0) / 100.0, "+%d" % dh if dh > 0 else str(dh), BAR_LABEL)
-		heart.text_color = UP_GREEN if dh > 0 else DOWN_RED
+	var dh := int(m.heart1) - int(m.heart0)  # Morale always ([USER] 2026-11-02: "they need Morale too as a bar")
+	var heart := MenuKit.bar_row(col, Txt.t("UI_VIC_BAR_HEART"), HEART_PINK, float(m.heart0) / 100.0,
+		str(int(m.heart1)) + ("  +%d" % dh if dh > 0 else ("  %d" % dh if dh < 0 else "")), BAR_LABEL)
+	heart.text_color = UP_GREEN if dh > 0 else (DOWN_RED if dh < 0 else UiTheme.PARCHMENT)
 	# the stats a level gave, as icons, and a gem when a new trick waits (shown when the bar rolls over)
 	var gains := HBoxContainer.new()
 	gains.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -364,6 +374,12 @@ func _buttons() -> void:
 		row.add_child(btn)
 		if _first == null:
 			_first = btn
+	var clear := Control.new()  # clear of the frame's corner leaves (the round 2 CONTINUE flag)
+	clear.custom_minimum_size = Vector2(30, 0)
+	row.add_child(clear)
+	var under := Control.new()
+	under.custom_minimum_size = Vector2(0, 10)
+	row.get_parent().add_child(under)
 	if _first != null:
 		_first.grab_focus.call_deferred()
 
@@ -385,8 +401,7 @@ func _play() -> void:
 		var at := 0.25 + i * STAGGER
 		_tween.tween_method(_show_xp.bind(c), from, to, FILL_TIME).set_delay(at) \
 			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		if c.heart != null:
-			_tween.tween_property(c.heart, "value", clampf(float(m.heart1) / 100.0, 0.0, 1.0), FILL_TIME * 0.7).set_delay(at)
+		_tween.tween_property(c.heart, "value", clampf(float(m.heart1) / 100.0, 0.0, 1.0), FILL_TIME * 0.7).set_delay(at)
 
 
 func _show_xp(t: float, c: Dictionary) -> void:

@@ -12,7 +12,7 @@
   - `KitSlot`: an item slot.
   - `KitHeading`: a section heading. `heading_row` adds rules either side.
   - `portrait(id, px, round)`: round or square, with a graybox head-and-shoulders until art exists.
-  - `bar_row`: label outside, number centred on the bar.
+  - `UiBar` and `bar_row`: a thin bar (10 px, [USER] 2026-11-02 "all the HP/Mana/Morale bars can be overall thinner"), its number beside it on the right, the label outside on the left. Every character's bars in the menus show HP, mana or rage, and Morale (the Lodestone cards gained the resource bar).
   - `XButton`: the round blue X.
   - A thin themed scrollbar.
   - Drawn glyphs (`@talk`, `@plus`, `@leave`, `@dot`) where no icon art exists yet.
@@ -29,10 +29,10 @@
   - The conditional options rule is unchanged: an option shows only when its condition holds.
 
 ## Screens
-- **HOME AGAIN** (`HomecomingUi`, mockup C): three cards, BROUGHT HOME (slots and +N chips), PARTY (face, level, XP bar, +XP) and HEART (face, heart, a morale bar out of 100, ±N; then bond pairs). Bars carry no numbers here (they show on hover); PARTY's XP bars wear each member's own tint, as in mockup C. Four rows show, then SHOW ALL (`UI_HC_SHOW_ALL`). Each card scrolls with whole rows in view (the clipped fourth row flag). The journey days show on the heading's hover. A boss card, knowledge and restored steps form a second row; on a fall it leads, and the cards get shorter (`COL_H_SHORT`). The foot holds NEXT GOAL chips ("2/3" with the item's icon) and the gold OK button. Shot: `homecoming_shot.gd` with `full`, `home` or `fell`.
+- **HOME AGAIN** (`HomecomingUi`, mockup C): three cards, BROUGHT HOME (slots and +N chips), PARTY (face, level, XP bar in the member's tint, +XP) and HEART (face, then thin HP, energy and Morale bars from the run's member, then ±N; then bond pairs). Bars carry no numbers here (they show on hover); PARTY's XP bars wear each member's own tint, as in mockup C. Four rows show, then SHOW ALL (`UI_HC_SHOW_ALL`). Each card scrolls with whole rows in view (the clipped fourth row flag). The journey days show on the heading's hover. A boss card, knowledge and restored steps form a second row; on a fall it leads, and the cards get shorter (`COL_H_SHORT`). The foot holds NEXT GOAL chips ("2/3" with the item's icon) and the gold OK button. Shot: `homecoming_shot.gd` with `full`, `home` or `fell`.
 - **Win** (`VictoryUi`, mockup D): one big window in the play area above the bottom frame, which stays in view (the "no bottom frame" flag). The dim covers only that area, and the fight's own buttons and side panel are put away (`Battle.hide_ui`).
-  - Left: the party cards. Two cards stack; three or four go two across. Each card has a round face with an LV chip, the name, and HP, resource, EXP (value/100) and heart bars (the heart only when it moved).
-  - Right: EXP and GOLD chips, then LOOT and PACK as sections of the window (`PackView.sections`), sharing one edge, with TAKE ALL in gold.
+  - Left: the party cards. Two cards stack; three or four go two across. Each card has a round face with an LV chip, the name, and HP, resource, EXP (value/100) and Morale bars (Morale always, with its change).
+  - Right: LOOT and PACK side by side as sections of the window (`PackView.sections`, `ContainerUi._beside`). The cards stand as tall as the party column (`PackView.stretch_sections`), with the grids centred in them, TAKE ALL in gold at the loot card's foot, and stack counts light with a dark outline. EXP and GOLD chips sit in the foot, left of the buttons. Side by side, the window fits 1280x720 at near full size with four members (about 55 px cells); stacked, it shrank to about 80%.
   - The window shrinks to 85% before its inside scrolls.
   - The repeated-party-card flag was a mockup slip: each card is its own member.
 - **Everywhere else**: pack and loot windows (`PackView`) use dark kit slots, kit party cards, a dark dashed-red THROW AWAY, a gold TAKE ALL and the round X. The Lodestone menu, level up, the gate picker, village work, options and the character sheet pick up the dark felt and kit buttons through the theme.

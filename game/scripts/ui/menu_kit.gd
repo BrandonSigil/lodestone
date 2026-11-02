@@ -358,14 +358,14 @@ static func bar_row(parent: Control, text: String, fill: Color, value: float, nu
 	h.add_theme_constant_override("separation", 8)
 	parent.add_child(h)
 	if text != "":
-		var l := label(text, 15, TEXT_DIM)
+		var l := label(text, 15, TEXT)
 		l.custom_minimum_size.x = label_w
 		h.add_child(l)
 	var b := UiBar.new()
 	b.fill = fill
 	b.value = clampf(value, 0.0, 1.0)
 	b.text = number
-	b.custom_minimum_size = Vector2(110, 22)
+	b.custom_minimum_size = Vector2(130, 16)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(b)

@@ -48,6 +48,11 @@ func _process(_delta: float) -> bool:
 			g.homecoming.bonds = [{"key": "dog+lead", "from": 8, "to": 11}]
 			g.homecoming.knowledge = {}
 			g.homecoming.restored = []
+		if _full:
+			for id in ["fire_mage", "lich_prince"]:  # met and along (the gate picker's playtest join)
+				var d: Resource = root.get_node("Db").character(StringName(id))
+				g.set_flag(d.unlock)
+				g.invite(id)
 		g.explore_map = "village"
 		g.explore_entry = g.SQUARE
 		change_scene_to_file("res://scenes/explore.tscn")
