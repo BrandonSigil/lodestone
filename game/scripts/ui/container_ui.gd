@@ -227,11 +227,14 @@ static func stacked(view: PackView, other: InventoryGrid, other_title: String) -
 	var right := top.x + run.pack.cols * cell
 	var bottom := top.y + head + run.pack.rows * cell
 	if saddle != null:
-		var at := Vector2(right + 22.0, top.y)
+		var at := Vector2(right + PackView.FACE + 26.0, top.y)
 		var who: CharacterDef = run.courier().def
 		view.add_area(saddle, at, Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)), face_of(String(who.id)), 0)
+		var sk := view.areas.size() - 1
+		view.areas[sk].at = at  # the grid at the top, its picture to its left
+		view.areas[sk].face_at = at - Vector2(PackView.FACE + 10.0, 0)
 		right = at.x + saddle.cols * cell
-		bottom = maxf(bottom, top.y + head + saddle.rows * cell)
+		bottom = maxf(bottom, top.y + saddle.rows * cell)
 	view.add_note(str(run.gold), Vector2(top.x, bottom + 8.0), right - top.x, ActionInfo.icon("gold"))
 	view.gold_note = view.notes.back()
 	view.flash_at = Vector2(top.x + 90.0, bottom + 8.0)
@@ -247,7 +250,7 @@ static func _beside(view: PackView, other: InventoryGrid, other_title: String, p
 	var cell := view.cell
 	view.add_area(other, Vector2.ZERO, "", null, 0)  # area 1, the loot (TAKE ALL sends 1 to 0); placed below
 	var saddle: InventoryGrid = run.open_courier_bag()
-	var head := PackView.FACE_ROW if saddle != null else 0.0
+	var head := 0.0  # the saddlebag's picture stands beside its grid, so every grid starts right under the heading
 	var x0 := ow + pad * 2.0 + GAP
 	var top := Vector2(x0 + pad, pad + PackView.WINDOW_TITLE)
 	var right := top.x + run.pack.cols * cell
@@ -255,11 +258,14 @@ static func _beside(view: PackView, other: InventoryGrid, other_title: String, p
 	view.move_area(0, top + Vector2(0, head))
 	view.areas[0]["click_to"] = 1
 	if saddle != null:
-		var at := Vector2(right + 22.0, top.y)
+		var at := Vector2(right + PackView.FACE + 26.0, top.y)
 		var who: CharacterDef = run.courier().def
 		view.add_area(saddle, at, Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)), face_of(String(who.id)), 0)
+		var sk := view.areas.size() - 1
+		view.areas[sk].at = at  # the grid at the top, its picture to its left
+		view.areas[sk].face_at = at - Vector2(PackView.FACE + 10.0, 0)
 		right = at.x + saddle.cols * cell
-		bottom = maxf(bottom, top.y + head + saddle.rows * cell)
+		bottom = maxf(bottom, top.y + saddle.rows * cell)
 	view.add_note(str(run.gold), Vector2(top.x, bottom + 8.0), right - top.x, ActionInfo.icon("gold"))
 	view.gold_note = view.notes.back()
 	view.flash_at = Vector2(top.x + 90.0, bottom + 8.0)
