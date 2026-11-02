@@ -4,7 +4,7 @@ extends SceneTree
 ## the book hero's mana and the dog's charges half spent), carry_camp (the same with MAKE CAMP open: rest and tonic),
 ## pack (I pressed: the inventory page, the dog along), map (the hex world map at home, nothing open), walk (halfway
 ## along the leg to forest roads), arrive (at forest roads), night (the night's camp picker: the dog along, the hero
-## hurt, meat, a ration, a fish and a stew in the pack).
+## hurt, meat, a ration, a fish and a stew in the pack), hungry (one portion for two: the camp's hunger warning).
 
 var _frames := 0
 var _out := ""
@@ -57,6 +57,18 @@ func _process(_delta: float) -> bool:
 		run.call("add_item", "meal_stew", 1)
 		var members: Array = run.get("members")
 		members[0]["hp"] = 7
+		s.call("_start_leg", "pass")
+		game.get("travel")["stops"] = []
+		game.get("travel")["t"] = 29.0
+		s.call("_advance_to", 30.5)
+	if _frames == 5 and _step == "hungry":  # morale is hunger: one ration for a party of two, past the free nights
+		var game: Node = root.get_node("Game")
+		game.get("meta")["flags"].append("met_dog")
+		game.get("meta")["trips"] = 5
+		game.call("refresh_party")
+		var run: Object = game.get("run")
+		run.set("food", 1)
+		game.get("meta")["morale"]["dog"] = 0  # the dog Spent: the SPENT tag on his row
 		s.call("_start_leg", "pass")
 		game.get("travel")["stops"] = []
 		game.get("travel")["t"] = 29.0

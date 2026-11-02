@@ -1063,13 +1063,40 @@ ITEM_FISH_PRIZE,BIG FISH
 LOG_ATE,camp. ate %d food
 LOG_STARVE,NO FOOD AT CAMP. lorem
 UI_LARDER_EMPTY,NO FOOD. BELLY EMPTY. STONE PULL BACK HOME. lorem
-UI_CAMP_NIGHT,NIGHT. CAMP. WHO EAT WHAT? lorem
+UI_CAMP_NIGHT,Night camp: choose what each one eats
 UI_CAMP_EAT,EAT
 UI_CAMP_SAME,SAME AS LAST NIGHT
 UI_CAMP_TEAM,BIG MEAL FOR ALL:
-UI_CAMP_NO_EAT,NO NEED EAT
-UI_CAMP_HUNGRY,NOT ENOUGH FOOD FOR ALL. TRIP OVER. lorem
+UI_CAMP_NO_EAT,Needs no food
 UI_CAMP_GO_HOME,GO HOME
+UI_CAMP_SKIP,Go hungry
+UI_CAMP_WARN,Not enough food: %d will go hungry tonight.
+UI_CAMP_WARN_FREE,"Not enough food: %d will go hungry tonight, but your first night out is free: no morale lost."
+UI_HUNGER_FREE,%s went hungry. First night out: no morale lost.
+UI_SPENT_NOW,%s is Spent (0 morale): sits out fights until a rest or a full meal.
+UI_SPENT_LIFTED,%s ate and is back on their feet (morale 10).
+UI_SPENT_TAG,SPENT
+UI_SPENT_TIP,"Spent: 0 morale. Sits out fights and earns no XP, but still walks and eats. A camp rest or a full meal brings them back to 10 morale."
+UI_ALL_SPENT,"Everyone was Spent, so the party was carried home. You kept your loot."
+LOG_HUNGRY,"Ate %d portions, %d went hungry."
+UI_GATE_FOOD_WARN,"You have food for %d days with this party. Each day without food costs 15 morale. Leave anyway?"
+UI_GATE_FOOD_NONE,"Your pack has no food for this party. Each day without food costs 15 morale. Leave anyway?"
+UI_GATE_DAYS_CHIP,%d days of food
+UI_GATE_COST_CHIP,%d morale each hungry day
+UI_CAMP_HUNGRY_TAG,Hungry
+UI_SPENT_HUNGRY,"Spent, hungry"
+UI_CAMP_HUNGRY_TIP,"Goes to bed hungry with these picks and loses morale. Pick food for someone else to change who."
+UI_CAMP_STOCK,In the pack:
+UI_CAMP_STOCK_NONE,No food left
+UI_CAMP_FEEDS,Feeds
+UI_CAMP_NONE_LEFT,None left for this one tonight: the others eat it first.
+UI_CAMP_SAME_TIP,Available after your first night at camp.
+UI_CAMP_SAME_ON,Pick the same food as last night.
+UI_GATE_FOOD_GO,Go anyway
+UI_GATE_FOOD_BACK,Back
+UI_GATE_STARTER,"First trip: %d rations added to your pack for free."
+UI_TAVERN_SIT,"Eat here: %s for %s (%d gold, +%d morale)"
+UI_TAVERN_SIT_HEAD,Sit down and eat. A dish eaten here gives double morale.
 UI_CAST,CAST
 LOG_ROAD_HEAL,%s heal %s. +%d HP
 UI_WHO_HEAL,WHO HEAL? CLICK FRIEND. ESC = NO.

@@ -37,6 +37,35 @@ character at home gets X morale". Built 2026-11-01 from the proposal in `docs/de
 - **Doggo's Good Boy:** while he's in the party, every member's morale losses are 20% smaller, rounded toward zero
   (-5 is -4, -15 is -12).
 
+## Morale is hunger ([USER] 2026-11-02, built from `docs/design/morale-hunger.md`, option C)
+- **The night's meal** (`TravelRules.camp_meal` returns who was short; `Game.camp_hunger` applies it): a fed night
+  holds morale (`fed` 0); a member who eats nothing loses `unfed` (-15), and a short meal its share, rounded up
+  (`MoraleRules.hunger_loss`; 1 of 2 portions: -8). Doggo's Good Boy softens it. Members who eat nothing (the Lich
+  Prince, Bushberry's `food_per_day` 0) never lose morale to hunger.
+- **The camp screen** warns "Not enough food: N will go hungry tonight" (`TravelRules.hungry_with`) and every row has
+  GO HUNGRY (`TravelRules.SKIP`), so the player chooses who eats.
+- **Spent** (`spent_at` 0): a Spent member sits out every fight (explore `start_fight` and road fights deploy only
+  `Game.fit_members`) and earns no XP (`Game.award_xp(xp, ids that fought)`), but still walks and eats. A camp REST or a
+  full meal (a fed night, a team meal, a dish at the tavern) lifts them to `spent_lift` (10), Broken, and they fight
+  again. The camp row shows a SPENT chip with the rules on hover. A fight under way never removes anyone.
+- **The loss:** everyone Spent, at a camp or after a fight (`Game.all_spent`): the party is carried home as in a fall
+  (`Game.party_spent`, line `UI_ALL_SPENT`): loot kept, nobody hurt, not a death, no more morale lost. `no_food` and
+  `Game.larder_empty` are gone.
+- **The tavern ward:** at the rebuilt tavern's counter, EAT HERE pays a dish for one character (in the party or home):
+  they gain `sitdown_mult` (2) times its recipe's morale (stew +20 for 10 gold), and a Spent one is back on their feet
+  (`Game.sit_down`, `sitdown_morale`). Plain food (rations, jerky) gives no morale there.
+- **New-player bumpers:**
+  1. Before the first trip, GO at the gate tops the pack up to `first_trip_food` (12) portions with free rations, once
+     (`Game.starter_food`, flag `starter_food`), and says so.
+  2. GO with under `gate_warn_days` (3) days of food for the party picked asks "Go anyway / Back" (`TravelRules.food_days`).
+  3. On each of the first `grace_trips` (3) trips the first `grace_nights` (1) nights' hunger costs nothing
+     (`MoraleRules.grace`, `meta.trip_nights`), and the warning says so.
+  4. A companion joining for the first time brings `join_food` (4) portions as rations (`Game.join_food`, flag
+     `joined_<id>`).
+- **A new player who skips the food barrel:** the gate adds 3 rations (15 portions; the hero and Doggo eat 2 a day, so
+  7 nights), the first night is free anyway, and an empty pack later only costs morale, so the first trip can't end
+  at the first camp. From 70 morale a member who never eats lasts 5 nights before Spent.
+
 ## Where it shows
 - After a fight, the summary lists each change ("LEAD HEART -4").
 - The Lodestone menu: each member's morale, band and what the band does.
@@ -59,9 +88,8 @@ character at home gets X morale". Built 2026-11-01 from the proposal in `docs/de
   (`heal` / `food` in `data/items.csv`: meat 2; plain rations, sacks, jerky and raw fish 0, cooked at home instead), so meat for a hurt
   member is the healing choice. A food item with several portions keeps what's left once opened (`RunState.opened`).
   A cooked meal in the pack is a TEAM MEAL: it feeds everyone that night, heals each its recipe's `heal`, gives its
-  `morale` and its buff for the next fights (`Game.team_meal`). If the pack can't feed everyone the camp warns and the
-  journey is over (`Game.larder_empty`): home as in a fall, nobody hurt, loot kept, not a death, -10 morale
-  (`no_food`), and the day doesn't pass. MAKE CAMP (once a leg) is the free REST: half HP, all mana and charges, +10
+  `morale` and its buff for the next fights (`Game.team_meal`). An empty or short pack no longer ends the journey:
+  see "Morale is hunger" below. MAKE CAMP (once a leg) is the free REST: half HP, all mana and charges, +10
   morale. Support heals (mend, renew, patch: a member's `heal` abilities paid with mana or charges) can be cast out of
   a fight from the PARTY window (CAST, then a party card), at their cost and with their fight amount
   (`TravelRules.road_heals`, `cast_on`); mana trickles back on the road and refills at REST. In a fight nothing

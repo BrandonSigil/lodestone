@@ -89,12 +89,16 @@ static func meal_heals(run: RunState, picks: Dictionary) -> Dictionary:
 	return out
 
 
-## Eat tonight's meal with these picks (member id -> food kind). False, and nothing eaten, when the pack can't feed
-## everyone: the journey is over (Game.larder_empty). The picks are kept for SAME AS LAST NIGHT.
-static func camp_meal(run: RunState, picks: Dictionary) -> bool:
-	if not can_feed(run):
-		run.note(Txt.t("LOG_STARVE"))
-		return false
+## The pick that sends a member to bed hungry ([USER] 2026-11-02 morale is hunger: "you choose who eats").
+const SKIP := "skip"
+
+
+## Eat tonight's meal with these picks (member id -> food kind, or SKIP). Each member eats their share of the kind
+## picked, then of the rest of the larder, plain food first; what the pack can't cover, or a SKIP, goes hungry.
+## Returns member id -> portions missing (only members short of their share); Game.camp_hunger turns those into
+## morale. The picks are kept for SAME AS LAST NIGHT.
+static func camp_meal(run: RunState, picks: Dictionary) -> Dictionary:
+	var missed := {}
 	var total := 0
 	var share := shares(run)
 	for m in run.alive():
@@ -103,27 +107,66 @@ static func camp_meal(run: RunState, picks: Dictionary) -> bool:
 		if need <= 0:
 			continue
 		var heal := 0.0
-		var kinds: Array[String] = [String(picks.get(id, ""))]
-		kinds.append_array(run.larder())
+		var kinds: Array[String] = []
+		if String(picks.get(id, "")) != SKIP:
+			kinds.append(String(picks.get(id, "")))
+			kinds.append_array(run.larder())
+		var left := need
 		for kind in kinds:
-			if need <= 0:
+			if left <= 0:
 				break
 			if kind == "":
 				continue
-			var got := run.take_portions(kind, need)
-			need -= got
+			var got := run.take_portions(kind, left)
+			left -= got
 			heal += got * RunState.heal_per_portion(kind)
-		total += int(share[id])
+		total += need - left
+		if left > 0:
+			missed[id] = left
 		if roundi(heal) > 0:
 			run.heal_member(m, roundi(heal))
 	run.last_picks = picks.duplicate()
 	run.meals_eaten += 1
-	run.note(Txt.f("LOG_ATE", total))
-	return true
+	run.note(Txt.f("LOG_ATE", total) if missed.is_empty() else Txt.f("LOG_HUNGRY", [total, missed.size()]))
+	return missed
+
+
+## Who goes hungry tonight with these picks, before eating: member id -> portions missing (the camp's warning).
+static func hungry_with(run: RunState, picks: Dictionary) -> Dictionary:
+	var out := {}
+	var share := shares(run)
+	var have := {}
+	for kind in run.larder():
+		have[kind] = run.portions_of(kind)
+	for m in run.alive():
+		var id := String((m.def as CharacterDef).id)
+		var need := int(share.get(id, 0))
+		if need <= 0:
+			continue
+		var left := need
+		if String(picks.get(id, "")) != SKIP:
+			var kinds: Array = [String(picks.get(id, ""))] + run.larder()
+			for kind: String in kinds:
+				if left <= 0:
+					break
+				var got := mini(left, int(have.get(kind, 0)))
+				have[kind] = int(have.get(kind, 0)) - got
+				left -= got
+		if left > 0:
+			out[id] = left
+	return out
+
+
+## How many days of food the pack holds for this party (portions over what they eat a day; 99 if nobody eats).
+static func food_days(run: RunState) -> int:
+	var need := 0
+	for id: String in shares(run):
+		need += int(shares(run)[id])
+	return 99 if need <= 0 else run.portions() / need
 
 
 ## The night's meal with the picks the camp screen opens with (tests and callers that don't ask).
-static func eat(run: RunState) -> bool:
+static func eat(run: RunState) -> Dictionary:
 	return camp_meal(run, default_picks(run))
 
 

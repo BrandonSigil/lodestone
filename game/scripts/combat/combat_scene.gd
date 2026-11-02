@@ -40,7 +40,8 @@ func _ready() -> void:
 
 	var units: Array = []
 	var spots := grid.deploy_cells(0)
-	for m in Game.run.alive():
+	var fit := Game.fit_members()  # the Spent sit it out ([USER] 2026-11-02 morale is hunger)
+	for m in (fit if not fit.is_empty() else Game.run.alive()):
 		if spots.is_empty():
 			break
 		var u := CombatUnit.from_member(m)
@@ -122,7 +123,7 @@ func _on_finished(won: bool) -> void:
 	var downed := battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 1 and not u.alive()).size()
 	var foes := battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 1).size()
 	var xp := LevelRules.fight_xp(foes, false, Db.levels)
-	Game.award_xp(xp)
+	Game.award_xp(xp, mine.map(func(u: CombatUnit) -> String: return String(u.figure)))  # only who fought
 	battle.award_bonds()
 	var rep := VictoryUi.report(before, mine, {"title": "UI_ESCAPED" if battle.outcome.how == "exit" else "UI_VICTORY",
 		"xp": xp, "downed": downed, "coins": coins, "loot": loot_items, "bonds": battle.bond_ups})

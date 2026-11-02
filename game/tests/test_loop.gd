@@ -125,21 +125,22 @@ func test_daily_meal_at_camp() -> void:
 	var picks := TravelRules.default_picks(r)
 	eq(picks, {"lead": "ration", "dog": "ration"}, "the picker opens on plain food")
 	r.members[0].hp = 1
-	ok(TravelRules.camp_meal(r, picks), "the night's meal")
+	eq(TravelRules.camp_meal(r, picks), {}, "the night's meal: nobody short")
 	eq(int(r.members[0].hp), 1, "plain food only feeds")
 	eq(r.item_count("ration"), 0, "the ration was opened")
 	eq(r.portions_of("ration"), int(Db.items.ration.food) - 2, "and what's left of it keeps")
 	eq(r.meals_eaten, 1)
 	picks.lead = "meat"
 	eq(TravelRules.meal_heals(r, picks).lead, 2, "meat heals a portion's worth")
-	ok(TravelRules.camp_meal(r, picks))
+	eq(TravelRules.camp_meal(r, picks), {})
 	eq(int(r.members[0].hp), 3, "meat for a hurt member is the healing choice")
 	eq(TravelRules.default_picks(r), {"lead": "meat", "dog": "ration"}, "SAME AS LAST NIGHT")
 	eq(r.food, 2)
 	r.opened.clear()
 	r.food = 0
 	ok(not TravelRules.can_feed(r), "an empty larder can't feed the party")
-	ok(not TravelRules.camp_meal(r, picks), "no meal")
+	eq(TravelRules.hungry_with(r, picks), {"lead": 1, "dog": 1}, "the camp warns who goes hungry")
+	eq(TravelRules.camp_meal(r, picks), {"lead": 1, "dog": 1}, "the meal still happens: both go hungry")
 	eq(TravelRules.food_heal(r), int(Db.items.meat.heal), "meat eaten on purpose still heals its heal column")
 
 
@@ -184,28 +185,75 @@ func test_support_heals_on_the_road() -> void:
 	_restore(saved)
 
 
-## An empty larder ends the journey: home like a fall, nobody hurt, everyone loses morale, not a death.
-func test_larder_empty_ends_the_journey() -> void:
+## [USER] 2026-11-02 morale is hunger (docs/design/morale-hunger.md): an unfed night costs morale instead of ending the
+## trip; you choose who eats; at 0 a member is Spent (no fights, no XP); everyone Spent carries the party home.
+func test_morale_is_hunger() -> void:
 	var saved := _fresh_game()
 	var kept := {"travel": Game.travel.duplicate(true), "map": Game.explore_map, "entry": Game.explore_entry,
 		"memory": Game.explore_memory.duplicate(true), "back": Game.combat_return}
 	Game.run.adventure = true
-	Game.run.members[0].hp = 3
+	Game.meta.flags.append("met_dog")
+	Game.refresh_party()
+	Game.meta.trips = 5  # past the first trips' free nights
+	Game.run.food = 0
+	Game.run.opened.clear()
+	for k in Game.run.items.keys():
+		if String(Db.items[k].kind) == "food":
+			Game.run.add_item(k, -Game.run.item_count(k))
+	Game.meta.morale["lead"] = 50
+	Game.meta.morale["dog"] = 50
+	var picks := {"lead": TravelRules.SKIP, "dog": TravelRules.SKIP}
+	Game.camp_hunger(TravelRules.camp_meal(Game.run, picks))
+	ok(Game.morale_of("lead") < 50, "an unfed night costs morale")
+	eq(Game.morale_of("dog"), 50 + int(round(Db.morale.unfed * (100 - int(Db.morale.dog_soften_pct)) / 100.0)), "Good Boy softens it")
+	ok(Game.homecoming.is_empty() and Game.pending_lines.is_empty(), "the trip goes on: nobody is carried home")
+	eq(MoraleRules.hunger_loss(1, 2, Db.morale), -ceili(absf(Db.morale.unfed) / 2.0), "a short meal costs its share, rounded up")
+	Game.meta.morale["lead"] = 0
+	ok(Game.spent("lead"), "at 0 a member is Spent")
+	ok(not Game.fit_members().any(func(m: Dictionary) -> bool: return String(m.def.id) == "lead"), "and sits out fights")
+	ok(not Game.all_spent(), "one Spent is not a loss")
+	Game.run.add_item("ration", 2)
+	Game.camp_hunger(TravelRules.camp_meal(Game.run, TravelRules.default_picks(Game.run)))
+	eq(Game.morale_of("lead"), int(Db.morale.spent_lift), "a full meal lifts a Spent member to 10")
+	Game.meta.morale["lead"] = 0
+	Game.meta.morale["dog"] = 0
+	Game.refresh_party()
+	ok(Game.all_spent(), "everyone Spent")
 	var deaths := int(Game.meta.runs)
-	var heart := Game.morale_of("lead")
-	Game.larder_empty()
+	Game.party_spent()
 	eq(String(Game.travel.get("at", "")), "town", "carried home")
 	eq(int(Game.meta.runs), deaths, "not counted as a death")
-	eq(Game.morale_of("lead"), maxi(0, heart + int(Db.morale.no_food)), "everyone loses morale")
 	var said := "\n".join(Game.pending_lines) + String(Game.homecoming.get("headline", ""))
-	ok(said.contains(Txt.t("UI_LARDER_EMPTY")), "the wake-up says why")
-	Game.pending_lines = []  # the wake-up's leftovers would open a dialog in the next test's scene
+	ok(said.contains(Txt.t("UI_ALL_SPENT")), "the wake-up says why")
+	Game.pending_lines = []
 	Game.homecoming = {}
 	Game.travel = kept.travel
 	Game.explore_map = kept.map
 	Game.explore_entry = kept.entry
 	Game.explore_memory = kept.memory
 	Game.combat_return = kept.back
+	_restore(saved)
+
+
+## The new-player bumpers (docs/design/morale-hunger.md): free rations before the first trip, the first night of the first
+## trips free, and a new companion brings food.
+func test_new_player_bumpers() -> void:
+	var saved := _fresh_game()
+	Game.meta.trips = 0
+	Game.run.food = 0
+	for k in Game.run.items.keys():
+		if String(Db.items[k].kind) == "food":
+			Game.run.add_item(k, -Game.run.item_count(k))
+	ok(Game.starter_food() > 0, "the first trip's free rations")
+	ok(Game.run.portions() >= int(Db.levels.first_trip_food), "topped up to %d portions" % int(Db.levels.first_trip_food))
+	eq(Game.starter_food(), 0, "once")
+	ok(MoraleRules.grace(1, 0, Db.morale), "the first night of the first trip is free")
+	ok(not MoraleRules.grace(1, 1, Db.morale), "the second is not")
+	ok(not MoraleRules.grace(int(Db.morale.grace_trips) + 1, 0, Db.morale), "past the first trips, no grace")
+	var before := Game.run.portions()
+	Game.meta.flags.append("met_dog")
+	Game.invite("dog")
+	ok(Game.run.portions() >= before + int(Db.levels.join_food), "a new companion brings food")
 	_restore(saved)
 
 

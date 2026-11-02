@@ -47,3 +47,6 @@ fish_settle,0.8,"Cast: seconds the bobber settles after it lands, before a fish 
 fish_hooked_beat,1.0,"Strike: seconds of HOOKED! after a good strike, before the reel bar ([USER] 2026-11-01 calm beats). [AI]"
 fish_catch_beat,1.5,"Catch: seconds the caught fish shows before a click closes it ([USER] 2026-11-01 calm beats). [AI]"
 fish_lost_beat,1.0,"Lost: seconds a fish that got away swims off before its card ([USER] 2026-11-01 calm beats). [AI]"
+first_trip_food,12,"new-player bumper: on the first trip, the gate tops the pack up to this many food portions with free rations"
+gate_warn_days,3,"new-player bumper: leaving with less than this many days of food for the party asks first"
+join_food,4,"new-player bumper: a companion joining for the first time brings this many food portions"

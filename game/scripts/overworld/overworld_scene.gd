@@ -312,7 +312,8 @@ func _go_fish() -> void:
 ## they each eat or use a team Feast item if you have one"). Each member gets a row with the food kinds in the pack;
 ## their portions come from the kind picked (meat heals, plain food only feeds; the row shows the HP it gives). A cooked
 ## meal feeds everyone instead (TEAM MEAL). The picks open as last night's (SAME AS LAST NIGHT puts them back). If the
-## pack can't feed everyone the camp says so and the journey is over (Game.larder_empty): the day doesn't pass. then:
+## pack can't feed everyone the camp warns who goes hungry and a row's GO HUNGRY chooses who does (Game.camp_hunger:
+## morale is hunger, [USER] 2026-11-02); everyone Spent carries the party home (Game.party_spent). then:
 ## what the clock reached on the way (the arrival or an encounter), run once the nights are eaten.
 func _night(then := Callable()) -> void:
 	_busy = true
@@ -321,13 +322,31 @@ func _night(then := Callable()) -> void:
 
 func _night_box(picks: Dictionary, then: Callable) -> void:
 	var run := Game.run
-	if not TravelRules.can_feed(run):
-		var hungry := _new_dialog(Txt.t("UI_CAMP_HUNGRY"))
-		_button(hungry, Txt.t("UI_CAMP_GO_HOME"), func() -> void:
-			_close_dialog()
-			Game.larder_empty())
-		return
 	var box := _new_dialog(Txt.t("UI_CAMP_NIGHT"))
+	# [USER] 2026-11-02 morale is hunger: an empty pack no longer ends the trip; the camp warns who goes hungry and the
+	# player chooses who eats (GO HUNGRY on a row)
+	var hungry := TravelRules.hungry_with(run, picks)
+	if not hungry.is_empty():
+		var nights: Dictionary = Game.meta.get("trip_nights", {})
+		var free := MoraleRules.grace(int(Game.meta.trips), int(nights.get(str(int(Game.meta.trips)), 0)), Db.morale)
+		var warn := HBoxContainer.new()
+		warn.add_theme_constant_override("separation", 8)
+		box.add_child(warn)
+		warn.add_child(MenuKit.icon_rect("ration", 34))
+		var wl := MenuKit.label(Txt.f("UI_CAMP_WARN_FREE" if free else "UI_CAMP_WARN", hungry.size()), 18,
+			MenuKit.TEXT if free else Color(1.0, 0.72, 0.55))
+		warn.add_child(wl)
+		if not free:  # the cost at a glance, as on the gate's warning
+			warn.add_child(MenuKit.chip(Txt.f("UI_GATE_COST_CHIP", int(Db.morale.get("unfed", -15))), "heal", Color(1.0, 0.72, 0.55),
+				Txt.t("UI_SPENT_TIP"), 15))
+	var stock := HBoxContainer.new()  # what the pack holds tonight, once (the rows then show what each pick heals)
+	stock.add_theme_constant_override("separation", 8)
+	box.add_child(stock)
+	stock.add_child(MenuKit.label(Txt.t("UI_CAMP_STOCK"), 15, MenuKit.TEXT_DIM))
+	for kind in run.larder():
+		stock.add_child(MenuKit.chip(str(run.portions_of(kind)), kind, MenuKit.TEXT, Txt.t(String(Db.items[kind].name_key)), 15))
+	if run.larder().is_empty():
+		stock.add_child(MenuKit.label(Txt.t("UI_CAMP_STOCK_NONE"), 15, Color(1.0, 0.72, 0.55)))
 	var share := TravelRules.shares(run)
 	var heals := TravelRules.meal_heals(run, picks)
 	for m in run.alive():
@@ -342,17 +361,34 @@ func _night_box(picks: Dictionary, then: Callable) -> void:
 		face.custom_minimum_size = Vector2(36, 36)
 		face.tooltip_text = Txt.t((m.def as CharacterDef).name_key)
 		row.add_child(face)
+		var who := VBoxContainer.new()  # the name over the HP
+		who.add_theme_constant_override("separation", 0)
+		who.custom_minimum_size.x = 104
+		who.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_child(who)
+		who.add_child(MenuKit.label(Txt.t((m.def as CharacterDef).name_key), 15))
 		var hp := Label.new()
 		var gain := mini(int(heals.get(id, 0)), run.max_hp(m) - int(m.hp))
-		hp.text = "%d/%d%s" % [int(m.hp), run.max_hp(m), ("  " + Txt.f("UI_GAIN_HP", gain)) if gain > 0 else ""]
-		hp.custom_minimum_size.x = 104
-		hp.add_theme_font_size_override("font_size", 14)
-		row.add_child(hp)
+		hp.text = "%s %d/%d%s" % [Txt.t("UI_VIC_BAR_HP"), int(m.hp), run.max_hp(m), ("  " + Txt.f("UI_GAIN_HP", gain)) if gain > 0 else ""]
+		hp.add_theme_font_size_override("font_size", 13)
+		hp.add_theme_color_override("font_color", MenuKit.TEXT_DIM)
+		who.add_child(hp)
 		if int(share.get(id, 0)) <= 0:
 			var none := Label.new()
 			none.text = Txt.t("UI_CAMP_NO_EAT")
 			row.add_child(none)
 			continue
+		var push := Control.new()  # the choices to the right: the rows fill the window
+		push.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(push)
+		var tag := CenterContainer.new()  # a fixed slot, so every row's food buttons line up
+		tag.custom_minimum_size = Vector2(130, 0)
+		row.add_child(tag)
+		if Game.spent(id):
+			tag.add_child(MenuKit.chip(Txt.t("UI_SPENT_HUNGRY" if hungry.has(id) else "UI_SPENT_TAG"), "", Color(1.0, 0.6, 0.5),
+				Txt.t("UI_SPENT_TIP"), 14))
+		elif hungry.has(id):  # this one goes hungry with these picks (the warning's count)
+			tag.add_child(MenuKit.chip(Txt.t("UI_CAMP_HUNGRY_TAG"), "", Color(1.0, 0.72, 0.55), Txt.t("UI_CAMP_HUNGRY_TIP"), 14))
 		for kind in run.larder():  # one button per food kind: its icon, the portions left, what one portion heals
 			var b := Button.new()
 			b.toggle_mode = true
@@ -360,20 +396,41 @@ func _night_box(picks: Dictionary, then: Callable) -> void:
 			b.icon = ActionInfo.icon(kind)
 			b.add_theme_constant_override("icon_max_width", 26)
 			b.custom_minimum_size = Vector2(104, 36)
-			if String(picks.get(id, "")) == kind:  # the pick stands out
+			if String(picks.get(id, "")) == kind and hungry.has(id):  # picked, but none left for this one tonight
+				b.modulate = Color(1, 1, 1, 0.55)
+				b.tooltip_text = Txt.t("UI_CAMP_NONE_LEFT")
+			elif String(picks.get(id, "")) == kind:  # the pick stands out
 				b.add_theme_color_override("font_color", UiTheme.GOLD)
 				b.add_theme_color_override("font_pressed_color", UiTheme.GOLD)
 				b.modulate = Color(1.15, 1.15, 1.0)
 			else:
 				b.modulate = Color(1, 1, 1, 0.7)
 			var hpp := RunState.heal_per_portion(kind)
-			b.text = "%d%s" % [run.portions_of(kind), (" +%d" % roundi(hpp * int(share[id]))) if hpp > 0.0 else ""]
-			b.tooltip_text = Txt.t(String(Db.items[kind].name_key))
+			b.text = Txt.f("UI_GAIN_HP", roundi(hpp * int(share[id]))) if hpp > 0.0 else Txt.t("UI_CAMP_FEEDS")
+			if b.tooltip_text == "":
+				b.tooltip_text = Txt.t(String(Db.items[kind].name_key))
 			b.add_theme_font_size_override("font_size", 13)
 			b.pressed.connect(func() -> void:
 				picks[id] = kind
 				_night_box(picks, then))
 			row.add_child(b)
+		var skip := Button.new()  # this member goes to bed hungry, leaving the food for the others
+		skip.toggle_mode = true
+		skip.text = Txt.t("UI_CAMP_SKIP")
+		skip.set_pressed_no_signal(String(picks.get(id, "")) == TravelRules.SKIP)
+		skip.custom_minimum_size = Vector2(104, 36)
+		skip.add_theme_font_size_override("font_size", 13)
+		skip.theme_type_variation = &"QuietButton"
+		if String(picks.get(id, "")) == TravelRules.SKIP:  # picked: it stands out like a food pick
+			skip.add_theme_color_override("font_color", UiTheme.GOLD)
+			skip.add_theme_color_override("font_pressed_color", UiTheme.GOLD)
+			skip.theme_type_variation = &"PrimaryButton"
+		elif hungry.has(id):
+			skip.add_theme_color_override("font_color", Color(1.0, 0.72, 0.55))
+		skip.pressed.connect(func() -> void:
+			picks[id] = TravelRules.SKIP
+			_night_box(picks, then))
+		row.add_child(skip)
 	var meals := run.items.keys().filter(func(k: String) -> bool: return String(Db.items[k].kind) == "meal")
 	if not meals.is_empty():  # a cooked meal feeds the whole party tonight: heal, morale and its buff
 		var team := HBoxContainer.new()
@@ -402,15 +459,22 @@ func _night_box(picks: Dictionary, then: Callable) -> void:
 	eat.text = Txt.t("UI_CAMP_EAT")
 	eat.custom_minimum_size = Vector2(140, 34)
 	eat.pressed.connect(func() -> void:
-		if TravelRules.camp_meal(run, picks):
-			_end_night(then)
-		else:
-			_night_box(picks, then))
+		var lines := Game.camp_hunger(TravelRules.camp_meal(run, picks))
+		for l in lines:
+			run.note(l)
+		if not lines.is_empty():
+			_say(lines[lines.size() - 1])
+		if Game.all_spent():  # everyone at 0: the party is carried home ([USER] 2026-11-02)
+			_close_dialog()
+			Game.party_spent()
+			return
+		_end_night(then))
 	acts.add_child(eat)
 	var same := Button.new()
 	same.text = Txt.t("UI_CAMP_SAME")
 	same.custom_minimum_size = Vector2(200, 34)
 	same.disabled = run.last_picks.is_empty()
+	same.tooltip_text = Txt.t("UI_CAMP_SAME_TIP" if same.disabled else "UI_CAMP_SAME_ON")
 	same.pressed.connect(func() -> void: _night_box(TravelRules.default_picks(run), then))
 	acts.add_child(same)
 

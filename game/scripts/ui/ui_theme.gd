@@ -269,7 +269,7 @@ const DIAMOND_GAP := 14.0  ## room under a box on the diamond for its point, cle
 ## close-type button (CLOSE, BACK, OK, CANCEL, LEAVE...), the last one if there are several. A box with none
 ## (a real choice, or the full pack whose way out throws things away) stays open. True if it pressed one.
 const ESC_KEYS := ["UI_CLOSE_MENU", "UI_CLOSE", "UI_BOX_CLOSE", "UI_OPT_BACK", "UI_CONTINUE", "UI_CANCEL", "UI_STAY_MAP", "OPT_LEAVE",
-	"OPT_BACK_OFF", "OPT_STAY", "UI_HC_OK", "UI_BOX_LEAVE"]
+	"OPT_BACK_OFF", "OPT_STAY", "UI_HC_OK", "UI_BOX_LEAVE", "UI_GATE_FOOD_BACK"]
 
 
 ## Does the box have a close-type button to press (press_close would do something)?

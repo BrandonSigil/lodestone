@@ -396,6 +396,7 @@ func rescued(id: String) -> bool:
 	var d := Db.character(StringName(id))
 	var name := Txt.t(d.name_key) if d != null else id
 	if in_party(id):
+		join_food(id)
 		counts.emit(Txt.f("UI_RESCUE_JOIN", name))
 		return true
 	if not meta.benched.has(id):
@@ -409,11 +410,13 @@ func rescued(id: String) -> bool:
 func invite(id: String) -> bool:
 	if in_party(id):
 		refresh_party()  # just unlocked (the square's recruit events set the flag first): bring them into the run
+		join_food(id)
 		return true
 	if adventure_defs().size() >= party_max():
 		return false
 	meta.benched.erase(id)
 	refresh_party()
+	join_food(id)  # a new mouth brings lunch (new-player bumper)
 	save_adventure()
 	save_meta()
 	return true
@@ -539,7 +542,7 @@ func camp_rest() -> bool:
 		if (m.def as CharacterDef).deficiency == &"gloomy":
 			gain += int(Db.morale.get("gloomy_camp", -2))
 		MoraleRules.change(meta.morale, String((m.def as CharacterDef).id), gain, Db.morale)
-	refresh_party()
+	lift_all_spent()  # a rest gets a Spent member back on their feet (spent_lift)
 	return true
 
 
@@ -653,7 +656,8 @@ func level_state(id: String) -> Dictionary:
 
 ## XP for everyone in the party; each level rolls their stats from data/growth.csv. Returns the log lines
 ## (who reached which level and what went up, ranks waiting).
-func award_xp(amount: int) -> PackedStringArray:
+## only: the ids that fought (a Spent member who sat it out earns none); empty = everyone.
+func award_xp(amount: int, only: Array = []) -> PackedStringArray:
 	var lines: PackedStringArray = []
 	level_ups = []
 	if run == null:
@@ -661,6 +665,8 @@ func award_xp(amount: int) -> PackedStringArray:
 	for m in run.members:
 		var d: CharacterDef = m.def
 		var id := String(d.id)
+		if not only.is_empty() and not only.has(id):
+			continue
 		var s := level_state(id)
 		var job := job_id() if id == "lead" else ""
 		var odds: Dictionary = Db.growth.get(job if Db.growth.has(job) else id, {})
@@ -810,13 +816,98 @@ func save_adventure() -> void:
 	save_meta()
 
 
-## The pack can't feed the party at camp: the journey is over ([USER] 2026-11-01 "no food= journeys over"). As in a fall
-## the party is carried home, nobody hurt and the loot kept, but everyone loses morale (morale.csv no_food) and it is
-## not counted as a death.
-func larder_empty() -> void:
+# --- morale is hunger ([USER] 2026-11-02, docs/design/morale-hunger.md: option C, the tavern ward) ----------------
+
+## The night's meal for morale: each member short of their share loses MoraleRules.hunger_loss (Doggo softens it);
+## a fed member who was Spent is lifted to spent_lift. The first nights of the first trips are free (grace). Returns
+## the lines to show. After it, if everyone is Spent the party is carried home (party_spent).
+func camp_hunger(missed: Dictionary) -> PackedStringArray:
+	var lines: PackedStringArray = []
+	if run == null:
+		return lines
+	var nights: Dictionary = meta.get("trip_nights", {})
+	var key := str(int(meta.trips))
+	var free := MoraleRules.grace(int(meta.trips), int(nights.get(key, 0)), Db.morale)
+	nights[key] = int(nights.get(key, 0)) + 1
+	meta["trip_nights"] = {key: nights[key]}  # only this trip's count is kept
+	var dog := _dog_along()
+	for m in run.alive():
+		var d: CharacterDef = m.def
+		var id := String(d.id)
+		if not TravelRules.eats_food(m) or d.food_per_day <= 0:
+			continue
+		if missed.has(id):
+			if free:
+				lines.append(Txt.f("UI_HUNGER_FREE", Txt.t(d.name_key)))
+				continue
+			var n := MoraleRules.change(meta.morale, id, MoraleRules.hunger_loss(int(missed[id]), d.food_per_day, Db.morale), Db.morale, dog)
+			if n != 0:
+				lines.append(Txt.f("UI_MORALE_CHANGE", [Txt.t(d.name_key), str(n)]))
+			if MoraleRules.spent(meta.morale, id, Db.morale):
+				lines.append(Txt.f("UI_SPENT_NOW", Txt.t(d.name_key)))
+		elif MoraleRules.lift_spent(meta.morale, id, Db.morale) > 0:
+			lines.append(Txt.f("UI_SPENT_LIFTED", Txt.t(d.name_key)))
+	refresh_party()
+	save_meta()
+	return lines
+
+
+## Spent ([USER] 2026-11-02): at 0 morale a member can't fight and earns no XP; they still walk and eat.
+func spent(id: String) -> bool:
+	return MoraleRules.spent(meta.morale, id, Db.morale)
+
+
+## The members who may fight now: alive and not Spent.
+func fit_members() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if run == null:
+		return out
+	for m in run.alive():
+		if not spent(String((m.def as CharacterDef).id)):
+			out.append(m)
+	return out
+
+
+## Everyone in the party Spent (and on a trip): a loss.
+func all_spent() -> bool:
+	return run != null and run.adventure and not run.alive().is_empty() and fit_members().is_empty()
+
+
+## A rest lifts every Spent member to spent_lift (camp REST, the bed at home).
+func lift_all_spent() -> void:
+	if run == null:
+		return
 	for m in run.members:
-		MoraleRules.change(meta.morale, String((m.def as CharacterDef).id), int(Db.morale.get("no_food", -10)), Db.morale)
-	wake_in_town(false, "UI_LARDER_EMPTY")
+		MoraleRules.lift_spent(meta.morale, String((m.def as CharacterDef).id), Db.morale)
+	refresh_party()
+
+
+## Everyone Spent: the party is carried home as in a fall ([USER] 2026-11-02: "When everyone hits 0 you "lose" and go
+## back to town"): loot kept, nobody hurt, not counted as a death, and no more morale lost (they are already at 0).
+func party_spent() -> void:
+	wake_in_town(false, "UI_ALL_SPENT")
+
+
+## New-player bumper 1: before the first trip the gate tops the pack up to first_trip_food portions with free rations,
+## once. Returns the rations added.
+func starter_food() -> int:
+	if run == null or int(meta.trips) != 0 or has_flag("starter_food"):
+		return 0
+	set_flag("starter_food")
+	var want := int(Db.levels.get("first_trip_food", 12)) - run.portions()
+	var per := maxi(1, int(Db.items.get("ration", {}).get("food", 1)))
+	var n := ceili(float(maxi(0, want)) / float(per))
+	if n > 0:
+		run.add_item("ration", n)
+	return n
+
+
+## New-player bumper 4: a companion joining for the first time brings join_food portions (as rations).
+func join_food(id: String) -> void:
+	if run == null or id == "lead" or not set_flag("joined_" + id):
+		return
+	var per := maxi(1, int(Db.items.get("ration", {}).get("food", 1)))
+	run.add_item("ration", ceili(float(int(Db.levels.get("join_food", 4))) / float(per)))
 
 
 ## Wake in the village square, everyone at full HP ([USER] 2026-10-28: a wipe costs nothing; the
@@ -1097,6 +1188,33 @@ func buy_dish(item: String) -> bool:
 	return false
 
 
+## The tavern ward ([USER] 2026-11-02 morale is hunger, option C): a dish eaten at the counter gives one character
+## sitdown_mult times its recipe's morale (stew +10 -> +20), and gets a Spent one back on their feet. The morale a dish
+## gives there (0: not a dish to sit down to).
+func sitdown_morale(item: String) -> int:
+	var r := recipe_of(item)
+	return 0 if r.is_empty() else int(r.get("morale", 0)) * int(Db.morale.get("sitdown_mult", 2))
+
+
+## Pay for a dish eaten at the counter by one character (in the party or at home). False if it isn't sold, gives no
+## morale, or there isn't enough gold.
+func sit_down(item: String, id: String) -> bool:
+	var gain := sitdown_morale(item)
+	if gain <= 0:
+		return false
+	for row in tavern_dishes():
+		if String(row.item) == item and run.gold >= int(row.price):
+			run.gold -= int(row.price)
+			_seed_hearts()
+			MoraleRules.change(meta.morale, id, gain, Db.morale)
+			MoraleRules.lift_spent(meta.morale, id, Db.morale)
+			refresh_party()
+			save_adventure()
+			save_meta()
+			return true
+	return false
+
+
 func locked_text(building: String) -> String:
 	var first := RestoreRules.opened_by(Db.restore, building)
 	return Txt.f("UI_RESTORE_NEEDS_FIRST", Txt.t(String(first.name_key))) if not first.is_empty() else Txt.t("UI_RESTORE_LOCKED")
@@ -1203,6 +1321,7 @@ func team_meal(meal_item: String) -> bool:
 	if not eat_meal(meal_item):
 		return false
 	run.meals_eaten += 1
+	camp_hunger({})  # everyone fed: the night counts, and the Spent are lifted
 	return true
 
 
@@ -1336,6 +1455,9 @@ func take_combat_setup() -> Dictionary:
 func end_combat(won: bool) -> void:
 	if not won:
 		recall()
+		return
+	if all_spent():  # everyone at 0 morale after the fight: carried home ([USER] 2026-11-02)
+		party_spent()
 		return
 	for m in run.members:
 		m.hp = maxi(1, m.hp)  # downed members get back up after a win

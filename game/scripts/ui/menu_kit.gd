@@ -45,10 +45,10 @@ const OPTION_ICONS := {
 	"OPT_READ_MARKS": "scroll", "OPT_TAKE_BOOK": "books", "OPT_TIE_ROPE": "rope", "OPT_CLIMB_DOWN": "rope",
 	"OPT_FEED_FLAME": "fire", "OPT_HIDE_LIGHT": "smoke", "OPT_TAKE_STONE": "rare", "OPT_STONE_CALLS": "rare",
 	"OPT_FIX_STONE": "rare", "OPT_MOON_OPEN": "moonbeam", "OPT_PASS": "dash", "OPT_GO_ON": "dash", "OPT_PUSH_ON": "dash",
-	"OPT_FORD": "water", "OPT_AROUND": "dash",
+	"OPT_FORD": "water", "OPT_AROUND": "dash", "UI_GATE_GO": "dash", "UI_GATE_FOOD_GO": "dash", "UI_GATE_FOOD_BACK": "@leave",
 }
 ## quiet options: the way out, dimmer and always last
-const QUIET_KEYS := ["OPT_LEAVE", "OPT_BACK_OFF", "OPT_STAY", "UI_BOX_LEAVE", "UI_BOX_CLOSE", "OPT_RUN"]
+const QUIET_KEYS := ["OPT_LEAVE", "OPT_BACK_OFF", "OPT_STAY", "UI_BOX_LEAVE", "UI_BOX_CLOSE", "OPT_RUN", "UI_GATE_FOOD_BACK"]
 
 
 # --- the styles (theme type variations) ------------------------------------------------------------

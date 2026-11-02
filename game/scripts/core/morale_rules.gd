@@ -110,3 +110,34 @@ static func describe(b: Dictionary) -> String:
 	if int(b.get("check", 0)) != 0:
 		parts.append(Txt.f("MORALE_FX_CHECK", "%+d" % int(b.check)))
 	return ", ".join(parts) if not parts.is_empty() else Txt.t("MORALE_FX_NONE")
+
+
+# --- morale is hunger ([USER] 2026-11-02, docs/design/morale-hunger.md, option C) --------------------------------
+
+## What a night's meal costs a member: nothing fed, unfed (-15) with nothing, and a short meal its share of that,
+## rounded up toward the full cost (2 portions needed, 1 eaten: -8). need 0 (a member who never eats): nothing.
+static func hunger_loss(missing: int, need: int, nums: Dictionary) -> int:
+	if need <= 0 or missing <= 0:
+		return int(nums.get("fed", 0))
+	var full := int(nums.get("unfed", -15))
+	return -ceili(absf(full) * float(mini(missing, need)) / float(need)) if full < 0 else 0
+
+
+## Spent: at or below spent_at a member sits out fights and earns no XP; they still walk and eat.
+static func spent(hearts: Dictionary, id: String, nums: Dictionary) -> bool:
+	return of(hearts, id, nums) <= int(nums.get("spent_at", 0))
+
+
+## A rest or a full meal for a Spent member: up to spent_lift (10), so they fight again. Returns the change.
+static func lift_spent(hearts: Dictionary, id: String, nums: Dictionary) -> int:
+	if not spent(hearts, id, nums):
+		return 0
+	var was := of(hearts, id, nums)
+	hearts[id] = maxi(was, int(nums.get("spent_lift", 10)))
+	return int(hearts[id]) - was
+
+
+## Is tonight free of hunger (the new-player grace): trip number (1 for the first) and the nights already eaten on it.
+static func grace(trip: int, nights_before: int, nums: Dictionary) -> bool:
+	return trip >= 1 and trip <= int(nums.get("grace_trips", 3)) and nights_before < int(nums.get("grace_nights", 1))
+

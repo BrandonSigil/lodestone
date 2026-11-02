@@ -217,6 +217,7 @@ const NUDGE_BACK := 0.9
 var _nudge: Tween
 var _beam: Node2D
 var _came_from := ""  ## the map the party stepped out of to get here
+var _gate_asked := false  ## the gate's food warning has been shown for this GO
 
 
 func _nudge_due() -> bool:
@@ -1191,6 +1192,22 @@ func _restore_box(building: String) -> void:
 			_refresh_hud()
 			_restore_box(building))
 		b.disabled = Game.run.gold < int(d.price)
+	for d: Dictionary in dishes:  # the tavern ward ([USER] 2026-11-02): sit down and eat here, double the dish's morale
+		var item := String(d.item)
+		var gain := Game.sitdown_morale(item)
+		if gain <= 0:
+			continue
+		for cid: String in ["lead"] + Game.companions().map(func(c: CharacterDef) -> String: return String(c.id)):
+			if Game.morale_of(cid) >= int(Db.morale.get("max", 100)):
+				continue
+			var who := Txt.t(Db.character(StringName(cid)).name_key)
+			var b := _dialog_button(box, Txt.f("UI_TAVERN_SIT", [Txt.t(String(Db.items[item].name_key)), who, int(d.price), gain]),
+				func() -> void:
+					Game.sit_down(item, cid)
+					_refresh_hud()
+					_restore_box(building),
+				"%d" % Game.morale_of(cid), Txt.t("UI_TAVERN_SIT_HEAD"))
+			b.disabled = Game.run.gold < int(d.price)
 	if building == "inn":
 		# [USER] omr-9: the chef's recipes, made at home into a meal to carry and cook at camp
 		for r: Dictionary in Game.recipes_open():
@@ -1512,7 +1529,10 @@ func start_fight(g: Dictionary, how: String) -> void:
 				enemies.append(u)
 				if how == "sneak" and f == g:
 					u.statuses[CombatRules.STATUS_SLEEP] = 1
-	_pending = {"how": how, "foes": foes, "enemies": enemies, "spots": ExploreRules.auto_deploy(grid, party, how, _blocked())}
+	var fit := party.filter(func(u: CombatUnit) -> bool: return not Game.spent(String(u.figure)))  # the Spent sit it out
+	if fit.is_empty():
+		fit = [leader()]  # never a fight with nobody (a loss carries everyone Spent home before one can start)
+	_pending = {"how": how, "foes": foes, "enemies": enemies, "spots": ExploreRules.auto_deploy(grid, fit, how, _blocked())}
 	mode = M.DEPLOY
 	board.highlights = {}
 	board.show_grid = true  # the grid is for fights only
@@ -1682,7 +1702,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		* int(Db.levels.get("xp_minion", 0))
 	if elite:
 		xp = xp * int(CombatRules.num("elite_xp_pct")) / 100  # better rewards; loot waits on the one-more-run theme
-	Game.award_xp(xp)
+	Game.award_xp(xp, _fighter_ids())  # a Spent member who sat it out earns none
 	battle.award_bonds()
 	_sync_party_hp()
 	_refresh_hud()
@@ -1802,7 +1822,16 @@ func _level_up_flow(i: int) -> void:
 	_dialog_button(box, Txt.t("UI_LV_LATER"), _level_up_flow.bind(i + 1))
 
 
+## The ids of the party pieces that fought this fight.
+func _fighter_ids() -> Array:
+	return battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 0 and not u.member.is_empty()) \
+		.map(func(u: CombatUnit) -> String: return String(u.figure))
+
+
 func _end_fight() -> void:
+	if Game.all_spent():  # everyone at 0 morale after the fight: the party is carried home ([USER] 2026-11-02)
+		Game.party_spent()
+		return
 	_close_dialog()
 	if battle:
 		battle.queue_free()
@@ -1997,7 +2026,32 @@ func _pick_card(id: String) -> Button:
 	return card
 
 
+## GO at the gate. The new-player bumpers first ([USER] 2026-11-02, docs/design/morale-hunger.md): the first trip's free
+## rations, and a warning when the pack holds under gate_warn_days of food for the party picked (GO ANYWAY / BACK).
 func _gate_go() -> void:
+	var added := Game.starter_food()
+	var days := TravelRules.food_days(Game.run)
+	var short := days < int(Db.levels.get("gate_warn_days", 3))
+	if (added > 0 or short) and not _gate_asked:
+		_gate_asked = true
+		var lines: PackedStringArray = []
+		if added > 0:
+			lines.append(Txt.f("UI_GATE_STARTER", added))
+		if short:
+			lines.append(Txt.t("UI_GATE_FOOD_NONE") if days <= 0 else Txt.f("UI_GATE_FOOD_WARN", days))
+		var box := _new_dialog("\n".join(lines))
+		var chips := HBoxContainer.new()  # the numbers at a glance: days of food, and what a hungry day costs
+		chips.alignment = BoxContainer.ALIGNMENT_CENTER
+		chips.add_theme_constant_override("separation", 12)
+		box.add_child(chips)
+		chips.add_child(MenuKit.chip(Txt.f("UI_GATE_DAYS_CHIP", days), "ration", MenuKit.TEXT if not short else Color(1.0, 0.72, 0.55), "", 17))
+		chips.add_child(MenuKit.chip(Txt.f("UI_GATE_COST_CHIP", int(Db.morale.get("unfed", -15))), "heal", Color(1.0, 0.72, 0.55), "", 17))
+		_dialog_button(box, Txt.t("UI_GATE_FOOD_GO" if short else "UI_GATE_GO"), _gate_go)
+		_dialog_button(box, Txt.t("UI_GATE_FOOD_BACK"), func() -> void:
+			_gate_asked = false
+			_gate_prompt())
+		return
+	_gate_asked = false
 	_gate_open = false
 	_close_dialog()
 	Game.start_trip()

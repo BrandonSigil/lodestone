@@ -303,6 +303,26 @@ func run(s: Node, f: int, step: String) -> bool:
 				s._after_change()
 				s._apply_map_fx(["exit"], {})
 			return f == 30
+		"gate_food", "gate_first":
+			# the gate's bumpers: GO with a near-empty pack (gate_food: past the first trip) or before the first trip
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false
+				game.meta.flags.append_array(["has_lodestone", "met_dog"])
+				game.take_weapon("sword")
+				game.refresh_party()
+				game.run.food = 1
+				for k in game.run.items.keys():
+					if String(Db.items[k].kind) == "food":
+						game.run.add_item(k, -game.run.item_count(k))
+				if step == "gate_food":
+					game.meta.trips = 3
+					game.meta.flags.append("starter_food")
+				s._after_change()
+				s._apply_map_fx(["exit"], {})
+			if f == 12:
+				s._gate_go()
+			return f == 40
 		"rope":
 			# A pickup opens the loot window straight away (backlog X3: the rope barrel in the smithy yard).
 			if f == 5:
