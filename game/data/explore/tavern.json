@@ -1,426 +1,426 @@
 {
- "name": "tavern",
- "art_set": "village_in",
- "strangeness": 0.0,
- "view": 0,
- "walls": true,
- "wall_kit": "village_in",
- "turn": false,
- "fog": true,
- "grid": {
-  "w": 12,
-  "h": 11,
-  "terrain": [
-   "rrrrrrrrrrrr",
-   "rsssssssssss",
-   "rsssssssssss",
-   "rsssssssssss",
-   "rsssssssssss",
-   "rsssssssssss",
-   "rsssssssssss",
-   "rsssssssssss",
-   "rsssssssssss",
-   "rsssssssssss",
-   "rsssssssssss"
-  ],
-  "heights": [
-   "333333333333",
-   "311111111111",
-   "311111111111",
-   "311111111111",
-   "311111111111",
-   "311111111111",
-   "311111111111",
-   "311111111111",
-   "311111111111",
-   "311111111111",
-   "311111111111"
-  ],
-  "props": [
-   {
-    "sprite": "wall_window",
-    "cell": [
-     6,
-     0
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.0,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "wall_window",
-    "cell": [
-     9,
-     0
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.0,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "wall_window",
-    "cell": [
-     0,
-     5
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.0,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "wall_door",
-    "cell": [
-     0,
-     8
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.0,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bar",
-    "cell": [
-     2,
-     2
-    ],
-    "foot": [
-     2,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bar",
-    "cell": [
-     4,
-     2
-    ],
-    "foot": [
-     2,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_ale_barrel",
-    "cell": [
-     1,
-     1
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_ale_barrel",
-    "cell": [
-     7,
-     1
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.8,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_jar_shelf",
-    "cell": [
-     4,
-     1
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.55,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_hearth",
-    "cell": [
-     10,
-     3
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.95,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_long_table",
-    "cell": [
-     3,
-     5
-    ],
-    "foot": [
-     2,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_long_table",
-    "cell": [
-     7,
-     5
-    ],
-    "foot": [
-     2,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_long_table",
-    "cell": [
-     7,
-     8
-    ],
-    "foot": [
-     2,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stool",
-    "cell": [
-     3,
-     6
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stool",
-    "cell": [
-     4,
-     4
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stool",
-    "cell": [
-     7,
-     4
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stool",
-    "cell": [
-     8,
-     6
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stool",
-    "cell": [
-     7,
-     7
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_stool",
-    "cell": [
-     9,
-     8
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.5,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_broken_chair",
-    "cell": [
-     5,
-     8
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.75,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "village/prop_barrel",
-    "cell": [
-     10,
-     9
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   }
-  ]
- },
- "start": [
-  [
-   3,
-   9
-  ]
- ],
- "groups": [],
- "things": [
-  {
-   "id": "out",
-   "kind": "enter",
-   "event": "",
-   "cell": [
-    3,
-    10
-   ],
-   "to": "village",
-   "at": [
-    31,
-    22
-   ]
-  },
-  {
-   "id": "chef",
-   "kind": "settler",
-   "event": "settler_chef",
-   "cell": [
-    9,
-    3
-   ],
-   "once": "settler_chef"
-  },
-  {
-   "id": "barrel1",
-   "kind": "container",
-   "type": "barrel",
-   "event": "",
-   "cell": [
-    2,
-    3
-   ],
-   "items": "meat:6;potion:1;gold:8"
-  },
-  {
-   "id": "crate1",
-   "kind": "container",
-   "type": "crate",
-   "event": "",
-   "cell": [
-    3,
-    3
-   ],
-   "items": "meat:8;rope:1;tonic:1"
-  },
-  {
-   "id": "chest1",
-   "kind": "container",
-   "type": "chest",
-   "event": "",
-   "cell": [
-    5,
-    2
-   ],
-   "items": "potion:2;rope:1;tonic:2;gold:25",
-   "locked": true,
-   "trapped": true,
-   "key": "key_tavern"
-  },
-  {
-   "id": "chest2",
-   "kind": "container",
-   "type": "chest",
-   "event": "",
-   "cell": [
-    7,
-    2
-   ],
-   "items": "meat:10;potion:1;gold:12",
-   "trapped": true
-  },
-  {
-   "id": "counter",
-   "kind": "restore",
-   "event": "tavern",
-   "cell": [
-    6,
-    3
-   ]
-  }
- ]
+	"art_set": "village_in",
+	"fog": true,
+	"grid": {
+		"h": 11,
+		"heights": [
+			"333333333333",
+			"311111111111",
+			"311111111111",
+			"311111111111",
+			"311111111111",
+			"311111111111",
+			"311111111111",
+			"311111111111",
+			"311111111111",
+			"311111111111",
+			"311111111111"
+		],
+		"props": [
+			{
+				"cell": [
+					6,
+					0
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "wall_window",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					9,
+					0
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "wall_window",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					0,
+					5
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "wall_window",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					2,
+					2
+				],
+				"foot": [
+					2,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_bar",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					2
+				],
+				"foot": [
+					2,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_bar",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					1,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_ale_barrel",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_ale_barrel",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_jar_shelf",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					10,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_hearth",
+				"tall": 0.95,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					5
+				],
+				"foot": [
+					2,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_long_table",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					5
+				],
+				"foot": [
+					2,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_long_table",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					8
+				],
+				"foot": [
+					2,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_long_table",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stool",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stool",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stool",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stool",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					7
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stool",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					9,
+					8
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_stool",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					5,
+					8
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_broken_chair",
+				"tall": 0.75,
+				"walk": false
+			},
+			{
+				"cell": [
+					10,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_barrel",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 3.0,
+				"sprite": "wall_door",
+				"tall": 0.0,
+				"walk": false
+			}
+		],
+		"terrain": [
+			"rrrrrrrrrrrr",
+			"rsssssssssss",
+			"rsssssssssss",
+			"rsssssssssss",
+			"rsssssssssss",
+			"rsssssssssss",
+			"rsssssssssss",
+			"rsssssssssss",
+			"rsssssssssss",
+			"rsssssssssss",
+			"rsssssssssss"
+		],
+		"w": 12
+	},
+	"groups": [],
+	"name": "tavern",
+	"start": [
+		[
+			3.0,
+			9.0
+		]
+	],
+	"strangeness": 0.0,
+	"things": [
+		{
+			"at": [
+				31.0,
+				22.0
+			],
+			"cell": [
+				3.0,
+				10.0
+			],
+			"event": "",
+			"id": "out",
+			"kind": "enter",
+			"to": "village"
+		},
+		{
+			"cell": [
+				9.0,
+				3.0
+			],
+			"event": "settler_chef",
+			"id": "chef",
+			"kind": "settler",
+			"once": "settler_chef"
+		},
+		{
+			"cell": [
+				2.0,
+				3.0
+			],
+			"event": "",
+			"id": "barrel1",
+			"items": "meat:6;potion:1;gold:8",
+			"kind": "container",
+			"type": "barrel"
+		},
+		{
+			"cell": [
+				3.0,
+				3.0
+			],
+			"event": "",
+			"id": "crate1",
+			"items": "meat:8;rope:1;tonic:1",
+			"kind": "container",
+			"type": "crate"
+		},
+		{
+			"cell": [
+				5.0,
+				2.0
+			],
+			"event": "",
+			"id": "chest1",
+			"items": "potion:2;rope:1;tonic:2;gold:25",
+			"key": "key_tavern",
+			"kind": "container",
+			"locked": true,
+			"trapped": true,
+			"type": "chest"
+		},
+		{
+			"cell": [
+				7.0,
+				2.0
+			],
+			"event": "",
+			"id": "chest2",
+			"items": "meat:10;potion:1;gold:12",
+			"kind": "container",
+			"trapped": true,
+			"type": "chest"
+		},
+		{
+			"cell": [
+				6.0,
+				3.0
+			],
+			"event": "tavern",
+			"id": "counter",
+			"kind": "restore"
+		}
+	],
+	"turn": false,
+	"view": 0,
+	"wall_kit": "village_in",
+	"walls": true
 }

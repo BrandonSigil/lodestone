@@ -1,370 +1,370 @@
 {
- "art_set": "snow",
- "fog": true,
- "grid": {
-  "h": 38,
-  "heights": [
-   "00000000000000000000000000000000000000",
-   "00000000000888800004000000000000000000",
-   "00000000008aa8876544000000000000000000",
-   "00000000088aa8800004440000000000000000",
-   "00000000800aa8880000000000000000000000",
-   "00000008800888880000000000000000000000",
-   "0000008888aaa8886006600000000044400000",
-   "0000088888aaa8666666654322000224400000",
-   "00008888888886776676600002000222200000",
-   "00000888888666766666600000000000000000",
-   "00000888886666666666600000000000000000",
-   "00008888886666666666400000000000000000",
-   "00007088876666666666444000000000000000",
-   "00006088876666666664444440000000000000",
-   "00005000676666666654444440000000000000",
-   "00004006766688866654466640000009000005",
-   "00003006666688866444566644567899000005",
-   "00033006666666644446664444000009990555",
-   "00033006666664444446664442220000000050",
-   "00033006666644444444442422442220000040",
-   "00033307000888844444422222442220000030",
-   "00000008000888844443322244442200000020",
-   "00000009000888844422222244422000000010",
-   "0000000a000888844222222224221000000000",
-   "0000000b000888842222232222221000000000",
-   "000000bb000444442222222222200000000000",
-   "000000bb000444422222222222200000000000",
-   "000000bbb00504400022224440000000000000",
-   "000000bbb00600000022224440000220000000",
-   "00000000b00700002446222222220220000000",
-   "00000000b00800002444222222220220000000",
-   "00000000000900000000000000000000000000",
-   "00000000009900002000000000000000000000",
-   "00000000009900000000000000000000000000",
-   "00000000000000000000000000000000000000",
-   "00000000000090000333000000000000000000",
-   "0000000000bbb0000003321000000000000000",
-   "0000000000bbb0000003000000000000000000"
-  ],
-  "props": [
-   {
-    "cell": [
-     13,
-     10
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "sight": 1.0,
-    "sprite": "prop_pine_3",
-    "tall": 1.4,
-    "walk": false
-   },
-   {
-    "cell": [
-     8,
-     14
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "sight": 1.0,
-    "sprite": "prop_pine_4",
-    "tall": 1.4,
-    "walk": false
-   },
-   {
-    "cell": [
-     24,
-     26
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "sight": 0.5,
-    "sprite": "prop_bush_2",
-    "tall": 0.6,
-    "walk": false
-   },
-   {
-    "cell": [
-     24,
-     19
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "sight": 0.5,
-    "sprite": "prop_boulder_2",
-    "tall": 0.6,
-    "walk": false
-   },
-   {
-    "cell": [
-     16,
-     25
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "sight": 0.5,
-    "sprite": "prop_bush",
-    "tall": 0.6,
-    "walk": false
-   },
-   {
-    "blob": true,
-    "cell": [
-     21,
-     18
-    ],
-    "foot": [
-     2,
-     1
-    ],
-    "name": "cave_mouth",
-    "sight": 1.0,
-    "sprite": "ph_cave_mouth",
-    "tall": 0.5,
-    "walk": false
-   },
-   {
-    "cell": [
-     13,
-     23
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "sight": 0.5,
-    "sprite": "prop_crate",
-    "tall": 0.6,
-    "walk": false
-   },
-   {
-    "blob": true,
-    "cell": [
-     7,
-     7
-    ],
-    "foot": [
-     2,
-     1
-    ],
-    "name": "crypt_door",
-    "sight": 2.0,
-    "sprite": "ph_crypt_door",
-    "tall": 1.2,
-    "walk": false
-   }
-  ],
-  "terrain": [
-   "......................................",
-   "...........ffff....g..................",
-   "...........rrfgdtttg..................",
-   ".........ffrrww....gg.................",
-   "...........rrwwf......................",
-   ".......gg..gggww......................",
-   ".......gfrrrrggwg..gg..........rr.....",
-   ".....ggffgrrrffwwgfggdtttg...grrr.....",
-   ".....gfsssgggfrrwgrgg....g...gggg.....",
-   ".....fggssfgrrrggwwgf.................",
-   ".....ggggdgggfggggwwf.................",
-   "....ggrggdfgfggggggww.................",
-   "....d.ggttggfgggggggwwf...............",
-   "....t.fgttdggggggggggwwwf.............",
-   "....t...frddddddgttgfffww.............",
-   "....t..frrggrrrddttggrrrw......g.....g",
-   "....t..frgggrrrggdggrrrrggttttdg.....g",
-   "...gg..ggrgggffggdgrrrgggf.....gg..ggg",
-   "...gg..ggfgggggggdgrrrfgffff........d.",
-   "...gg..ggggggggggdfgggddfgrrgwf.....t.",
-   "...ggg.t...gsggggdgttgggggrrgwf.....t.",
-   ".......t...sggggfddttgggrrrrgwwf....t.",
-   ".......t...gggsgfggdggggrrfgggwf....t.",
-   ".......t...ggsggfggddddgrrgttgwwwwwwff",
-   ".......d...gsggggggggrdddddttgwwwwwwff",
-   "......gg...fggggfggggggggggdgggwwwwwff",
-   "......gg...gffggggggggggfggdgggwwwwwf.",
-   "......ggg..t.ff...ggggrrrggdddddwf....",
-   "......ggg..t......grfgrrrggggrrdwf....",
-   "........g..t....frrfgggggrrrgrrdwwf...",
-   "........g..t....frrrgggggrrrgrrddwf...",
-   "...........d...........ggggggggggw....",
-   "...........g...........gggggggggg.....",
-   "..........gg..........frgggg..g.......",
-   "......................fffggg..g.......",
-   "............g....ggg....gg............",
-   "..........rrr......gdttggg............",
-   "..........rrr......g.................."
-  ],
-  "w": 38
- },
- "groups": [
-  {
-   "event": "spot_beasts",
-   "id": "pass_wolves",
-   "loot": "food:+6",
-   "sight": 4.0,
-   "units": [
-    {
-     "cell": [
-      20.0,
-      24.0
-     ],
-     "id": "wolf"
-    },
-    {
-     "cell": [
-      19.0,
-      25.0
-     ],
-     "id": "wolf"
-    }
-   ]
-  },
-  {
-   "event": "spot_people",
-   "goals": "leader",
-   "id": "pass_bandits",
-   "loot": "food:+4;gold:+8",
-   "sight": 5.0,
-   "units": [
-    {
-     "cell": [
-      13.0,
-      12.0
-     ],
-     "id": "bandit"
-    },
-    {
-     "cell": [
-      10.0,
-      13.0
-     ],
-     "id": "bandit_archer",
-     "leader": true
-    },
-    {
-     "id": "ambusher",
-     "cell": [
-      7,
-      15
-     ],
-     "hidden": true
-    }
-   ]
-  }
- ],
- "level": 1.0,
- "name": "snow_pass",
- "start": [
-  [
-   31.0,
-   30.0
-  ]
- ],
- "strangeness": 0.1,
- "things": [
-  {
-   "cell": [
-    32.0,
-    30.0
-   ],
-   "event": "exit",
-   "id": "pass_exit",
-   "kind": "exit"
-  },
-  {
-   "at": [
-    6.0,
-    25.0
-   ],
-   "cell": [
-    22.0,
-    19.0
-   ],
-   "event": "",
-   "id": "den_mouth",
-   "kind": "enter",
-   "to": "wolf_den"
-  },
-  {
-   "cell": [
-    25.0,
-    34.0
-   ],
-   "event": "pass_cache",
-   "id": "pass_cache",
-   "kind": "chest",
-   "once": "got_pass_cache"
-  },
-  {
-   "at": [
-    14.0,
-    24.0
-   ],
-   "cell": [
-    15.0,
-    24.0
-   ],
-   "event": "rope_climb",
-   "id": "rope_ledge",
-   "kind": "climb",
-   "to": "snow_pass"
-  },
-  {
-   "cell": [
-    12.0,
-    23.0
-   ],
-   "event": "ledge_chest",
-   "id": "ledge_chest",
-   "kind": "chest",
-   "once": "got_ledge_chest"
-  },
-  {
-   "at": [
-    16.0,
-    24.0
-   ],
-   "cell": [
-    14.0,
-    23.0
-   ],
-   "event": "rope_down",
-   "id": "rope_down",
-   "kind": "climb",
-   "to": "snow_pass"
-  },
-  {
-   "cell": [
-    17.0,
-    8.0
-   ],
-   "event": "snow_secret",
-   "id": "snow_secret",
-   "kind": "hidden",
-   "once": "got_snow_secret"
-  },
-  {
-   "at": [
-    10.0,
-    55.0
-   ],
-   "cell": [
-    8.0,
-    8.0
-   ],
-   "event": "",
-   "id": "crypt_stair",
-   "kind": "enter",
-   "to": "crypt"
-  }
- ],
- "turn": false,
- "view": 0.0
+	"art_set": "snow",
+	"fog": true,
+	"grid": {
+		"h": 38,
+		"heights": [
+			"00000000000000000000000000000000000000",
+			"00000000000888800004000000000000000000",
+			"00000000008aa8876544000000000000000000",
+			"00000000088aa8800004440000000000000000",
+			"00000000800aa8880000000000000000000000",
+			"00000008800888880000000000000000000000",
+			"0000008888aaa8886006600000000044400000",
+			"0000088888aaa8666666654322000224400000",
+			"00008888888886776676600002000222200000",
+			"00000888888666766666600000000000000000",
+			"00000888886666666666600000000000000000",
+			"00008888886666666666400000000000000000",
+			"00007088876666666666444000000000000000",
+			"00006088876666666664444440000000000000",
+			"00005000676666666654444440000000000000",
+			"00004006766688866654466640000009000005",
+			"00003006666688866444566644567899000004",
+			"00033006666666644446664444000009990555",
+			"00033006666664444446664442220000000050",
+			"00033006666644444444442422442220000040",
+			"00033307000888844444422222442220000030",
+			"00000008000888844443322244442200000020",
+			"00000009000888844422222244422000000010",
+			"0000000a000888844222222224221000000000",
+			"0000000b000888842222232222221000000000",
+			"000000bb000444442222222222200000000000",
+			"000000bb000444422222222222200000000000",
+			"000000bbb00504400022224440000000000000",
+			"000000bbb00600000022224440000220000000",
+			"00000000b00700002446222222220220000000",
+			"00000000b00800002444222222220220000000",
+			"00000000000900000000000000000000000000",
+			"00000000009900002000000000000000000000",
+			"00000000009900000000000000000000000000",
+			"00000000000000000000000000000000000000",
+			"00000000000090000333000000000000000000",
+			"0000000000bbb0000003321000000000000000",
+			"0000000000bbb0000003000000000000000000"
+		],
+		"props": [
+			{
+				"cell": [
+					13,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_pine_3",
+				"tall": 1.4,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					14
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_pine_4",
+				"tall": 1.4,
+				"walk": false
+			},
+			{
+				"cell": [
+					24,
+					26
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush_2",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					24,
+					19
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_boulder_2",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					25
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"blob": true,
+				"cell": [
+					21,
+					18
+				],
+				"foot": [
+					2,
+					1
+				],
+				"name": "cave_mouth",
+				"sight": 1.0,
+				"sprite": "ph_cave_mouth",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					13,
+					23
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_crate",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"blob": true,
+				"cell": [
+					7,
+					7
+				],
+				"foot": [
+					2,
+					1
+				],
+				"name": "crypt_door",
+				"sight": 2.0,
+				"sprite": "ph_crypt_door",
+				"tall": 1.2,
+				"walk": false
+			}
+		],
+		"terrain": [
+			"......................................",
+			"...........ffff....g..................",
+			"...........rrfgdtttg..................",
+			".........ffrrww....gg.................",
+			"...........rrwwf......................",
+			".......gg..gggww......................",
+			".......gfrrrrggwg..gg..........rr.....",
+			".....ggffgrrrffwwgfggdtttg...grrr.....",
+			".....gfsssgggfrrwgrgg....g...gggg.....",
+			".....fggssfgrrrggwwgf.................",
+			".....ggggdgggfggggwwf.................",
+			"....ggrggdfgfggggggww.................",
+			"....d.ggttggfgggggggwwf...............",
+			"....t.fgttdggggggggggwwwf.............",
+			"....t...frddddddgttgfffww.............",
+			"....t..frrggrrrddttggrrrw......g.....g",
+			"....t..frgggrrrggdggrrrrggttttdg.....g",
+			"...gg..ggrgggffggdgrrrgggf.....gg..ggg",
+			"...gg..ggfgggggggdgrrrfgffff........d.",
+			"...gg..ggggggggggdfgggddfgrrgwf.....t.",
+			"...ggg.t...gsggggdgttgggggrrgwf.....t.",
+			".......t...sggggfddttgggrrrrgwwf....t.",
+			".......t...gggsgfggdggggrrfgggwf....t.",
+			".......t...ggsggfggddddgrrgttgwwwwwwff",
+			".......d...gsggggggggrdddddttgwwwwwwff",
+			"......gg...fggggfggggggggggdgggwwwwwff",
+			"......gg...gffggggggggggfggdgggwwwwwf.",
+			"......ggg..t.ff...ggggrrrggdddddwf....",
+			"......ggg..t......grfgrrrggggrrdwf....",
+			"........g..t....frrfgggggrrrgrrdwwf...",
+			"........g..t....frrrgggggrrrgrrddwf...",
+			"...........d...........ggggggggggw....",
+			"...........g...........gggggggggg.....",
+			"..........gg..........frgggg..g.......",
+			"......................fffggg..g.......",
+			"............g....ggg....gg............",
+			"..........rrr......gdttggg............",
+			"..........rrr......g.................."
+		],
+		"w": 38
+	},
+	"groups": [
+		{
+			"event": "spot_beasts",
+			"id": "pass_wolves",
+			"loot": "food:+6",
+			"sight": 4.0,
+			"units": [
+				{
+					"cell": [
+						20.0,
+						24.0
+					],
+					"id": "wolf"
+				},
+				{
+					"cell": [
+						19.0,
+						25.0
+					],
+					"id": "wolf"
+				}
+			]
+		},
+		{
+			"event": "spot_people",
+			"goals": "leader",
+			"id": "pass_bandits",
+			"loot": "food:+4;gold:+8",
+			"sight": 5.0,
+			"units": [
+				{
+					"cell": [
+						13.0,
+						12.0
+					],
+					"id": "bandit"
+				},
+				{
+					"cell": [
+						10.0,
+						13.0
+					],
+					"id": "bandit_archer",
+					"leader": true
+				},
+				{
+					"cell": [
+						7.0,
+						15.0
+					],
+					"hidden": true,
+					"id": "ambusher"
+				}
+			]
+		}
+	],
+	"level": 1.0,
+	"name": "snow_pass",
+	"start": [
+		[
+			31.0,
+			30.0
+		]
+	],
+	"strangeness": 0.1,
+	"things": [
+		{
+			"cell": [
+				32.0,
+				30.0
+			],
+			"event": "exit",
+			"id": "pass_exit",
+			"kind": "exit"
+		},
+		{
+			"at": [
+				6.0,
+				25.0
+			],
+			"cell": [
+				22.0,
+				19.0
+			],
+			"event": "",
+			"id": "den_mouth",
+			"kind": "enter",
+			"to": "wolf_den"
+		},
+		{
+			"cell": [
+				25.0,
+				34.0
+			],
+			"event": "pass_cache",
+			"id": "pass_cache",
+			"kind": "chest",
+			"once": "got_pass_cache"
+		},
+		{
+			"at": [
+				14.0,
+				24.0
+			],
+			"cell": [
+				15.0,
+				24.0
+			],
+			"event": "rope_climb",
+			"id": "rope_ledge",
+			"kind": "climb",
+			"to": "snow_pass"
+		},
+		{
+			"cell": [
+				12.0,
+				23.0
+			],
+			"event": "ledge_chest",
+			"id": "ledge_chest",
+			"kind": "chest",
+			"once": "got_ledge_chest"
+		},
+		{
+			"at": [
+				16.0,
+				24.0
+			],
+			"cell": [
+				14.0,
+				23.0
+			],
+			"event": "rope_down",
+			"id": "rope_down",
+			"kind": "climb",
+			"to": "snow_pass"
+		},
+		{
+			"cell": [
+				17.0,
+				8.0
+			],
+			"event": "snow_secret",
+			"id": "snow_secret",
+			"kind": "hidden",
+			"once": "got_snow_secret"
+		},
+		{
+			"at": [
+				10.0,
+				55.0
+			],
+			"cell": [
+				8.0,
+				8.0
+			],
+			"event": "",
+			"id": "crypt_stair",
+			"kind": "enter",
+			"to": "crypt"
+		}
+	],
+	"turn": false,
+	"view": 0
 }

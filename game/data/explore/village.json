@@ -1030,34 +1030,6 @@
 			},
 			{
 				"cell": [
-					29,
-					23
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "prop_bench",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					30,
-					22
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "prop_lamp",
-				"tall": 1.5,
-				"walk": false
-			},
-			{
-				"cell": [
 					36,
 					22
 				],
@@ -1748,8 +1720,8 @@
 		},
 		{
 			"cell": [
-				9,
-				14
+				9.0,
+				14.0
 			],
 			"event": "settler_smith",
 			"id": "smith",
