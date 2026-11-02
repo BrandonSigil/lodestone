@@ -239,7 +239,7 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable, foot: Contr
 	var detail := MenuKit.card(box)
 	detail.get_parent().custom_minimum_size = Vector2(ROW_W, DETAIL_H)
 	detail.add_theme_constant_override("separation", 3)
-	var pick := MenuKit.primary(Txt.t("UI_LV_PICK_SKILL"), Callable(), 16, 210.0)
+	var pick := MenuKit.primary(Txt.t("UI_LV_LEARN_SKILL"), Callable(), 16, 210.0)
 	pick.custom_minimum_size.y = 42
 	pick.disabled = true
 	var state := {"chosen": -1}
@@ -262,8 +262,7 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable, foot: Contr
 		_detail(detail, u, options[i], ranks)
 		var o2: Dictionary = options[i]
 		pick.disabled = bool(o2.locked) or bool(o2.get("maxed", false))
-		pick.text = Txt.t("UI_LV_LOCKED_BTN") if o2.locked else (Txt.t("UI_LV_TAG_MAX") if o2.get("maxed", false) \
-			else Txt.f("UI_LV_LEARN" if o2.learn else "UI_LV_UPGRADE_BTN", _name(o2)))
+		pick.text = Txt.t("UI_LV_LEARN_SKILL")  # one word for every pick ([USER] 2026-11-02: "just say "Learn Skill"")
 	for i in options.size():
 		var r := _row(options[i])
 		r.pressed.connect(func() -> void:
@@ -294,6 +293,7 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable, foot: Contr
 		rows[0].call_deferred("grab_focus")
 
 
+const SHOWN_RANKS := 5  ## every skill's track shows five ranks ([USER] 2026-11-02); ranks past its data draw as not built yet
 const ROW_W := 520.0  ## a skill row (and the detail strip under the rows)
 const ROW_H := 50.0
 const DETAIL_H := 112.0  ## the detail strip keeps one height, so the window doesn't jump as the pick moves
@@ -360,7 +360,7 @@ static func _row(o: Dictionary) -> Button:
 	col.add_child(nm)
 	var top := LevelRules.max_rank(String(o.id), Db.skill_ranks)
 	var tag_text := Txt.t("UI_LV_TAG_LOCKED") if o.locked else (Txt.t("UI_LV_TAG_NEW") if o.learn \
-		else (Txt.t("UI_LV_TAG_MAX") if o.get("maxed", false) else Txt.f("UI_LV_RANK_OF", [int(o.have), top])))
+		else (Txt.t("UI_LV_TAG_MAX") if o.get("maxed", false) else Txt.f("UI_LV_RANK_N", int(o.have))))
 	if o.learn and not o.locked:  # a skill not known yet: a green NEW SKILL pill (lit when its row is picked)
 		var bp := PanelContainer.new()
 		bp.add_theme_stylebox_override("panel", MenuKit.flat(Color(0.05, 0.2, 0.1, 0.95), VictoryUi.UP_GREEN, 1.0, 5, 5.0, 0.0))
@@ -376,7 +376,8 @@ static func _row(o: Dictionary) -> Button:
 		tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		col.add_child(tag)
 	var nodes := _Nodes.new()
-	nodes.total = top
+	nodes.total = maxi(SHOWN_RANKS, top)
+	nodes.built = top
 	nodes.owned = 0 if o.learn else int(o.have)
 	nodes.buys = nodes.owned if o.learn or int(o.next) <= 0 else int(o.next)
 	nodes.badge = badge
@@ -400,6 +401,7 @@ class _Nodes extends Control:
 	var total := 1
 	var owned := 0
 	var buys := 0  ## owned plus what this pick adds
+	var built := 0  ## ranks that exist in ability_upgrades.csv; the rest draw as faint dashed outlines (not in the game yet)
 	var locked := false
 	var badge: Control = null  ## the NEW SKILL pill, lit with the row
 	var lit := false:
@@ -418,7 +420,10 @@ class _Nodes extends Control:
 		var dim := Color(MenuKit.RIM, 0.75)
 		var green := VictoryUi.UP_GREEN
 		if total > 1:
-			draw_line(Vector2(x0, y), Vector2(x0 + STEP * (total - 1), y), dim, 1.5, true)
+			var last := maxi(0, mini(built, total) - 1)
+			draw_line(Vector2(x0, y), Vector2(x0 + STEP * last, y), dim, 1.5, true)
+			if last < total - 1:  # on to the ranks not built yet, dashed
+				draw_dashed_line(Vector2(x0 + STEP * last, y), Vector2(x0 + STEP * (total - 1), y), Color(MenuKit.TEXT, 0.35), 1.5, 5.0)
 			if owned > 1:
 				draw_line(Vector2(x0, y), Vector2(x0 + STEP * (owned - 1), y), Color(MenuKit.GOLD, 0.8), 2.0, true)
 		for i in total:
@@ -433,11 +438,15 @@ class _Nodes extends Control:
 				fill = lit
 				if lit:
 					draw_circle(c, R + 6.0, Color(green, 0.2))
-					if i == owned:  # "+1" over the rank this pick buys
+					if i == owned:  # "+1" beside the rank this pick buys
 						var f := get_theme_default_font()
-						draw_string(f, c + Vector2(R + 4.0, -R + 6.0), "+1", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, green)
+						draw_string(f, c + Vector2(R + 3.0, -R + 3.0), "+1", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, green)
 			var pts := PackedVector2Array()
 			pts = PackedVector2Array([c + Vector2(0, -R), c + Vector2(R, 0), c + Vector2(0, R), c + Vector2(-R, 0)])
+			if i >= built:  # a rank not in the game yet: a faint dashed outline
+				for e in 4:
+					draw_dashed_line(pts[e], pts[(e + 1) % 4], Color(MenuKit.TEXT, 0.42), 2.0, 4.0)
+				continue
 			draw_colored_polygon(pts, col if fill else Color(0.16, 0.26, 0.25, 0.9))  # a later rank: a dim filled diamond
 			pts.append(pts[0])
 			draw_polyline(pts, col, 2.0, true)
@@ -480,8 +489,7 @@ static func _detail(detail: VBoxContainer, u: CombatUnit, o: Dictionary, ranks: 
 			_line(detail, Txt.f("UI_LV_THEN", String((steps[first - 1] as Dictionary).text)), 13, Color(0.75, 0.9, 0.8))
 		return
 	var nxt: int = o.next
-	if nxt <= 0:  # at its last rank: nothing more to buy
-		_line(detail, Txt.t("UI_LV_LAST"), 13, Color(0.75, 0.9, 0.8))
+	if nxt <= 0:  # at its last rank: the track shows it, no words ([USER] 2026-11-02)
 		return
 	var step: Dictionary = steps[nxt - 1]
 	var change := _change(u, a, have, nxt, String(step.effect)) if a != null else ""
@@ -490,8 +498,6 @@ static func _detail(detail: VBoxContainer, u: CombatUnit, o: Dictionary, ranks: 
 	if after > 0:
 		var s2: Dictionary = steps[after - 1]  # what comes after, in words only (its numbers show once it's the pick)
 		_line(detail, Txt.f("UI_LV_NEXT", String(s2.text)), 12, Color(0.75, 0.9, 0.8, 0.7))
-	else:
-		_line(detail, Txt.t("UI_LV_LAST"), 13, Color(0.75, 0.9, 0.8))
 
 
 static func _line(box: VBoxContainer, text: String, size: int, color := Color(0.93, 0.9, 0.82)) -> void:

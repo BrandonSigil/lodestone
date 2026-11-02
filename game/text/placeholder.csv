@@ -904,6 +904,8 @@ UI_LV_LAST,This is its last rank.
 UI_LV_SKILLS,Skills
 UI_LV_POINTS,%d to spend
 UI_LV_TAG_MAX,Max rank
+UI_LV_LEARN_SKILL,Learn Skill
+UI_LV_RANK_N,Rank %d
 UI_LV_HEALING,Healing
 UI_LV_REACH_OF,reach %d to %d
 UI_LV_LOCKED,"Not in the game yet: this ability is in the kit but its effect is still being built, so it cannot be picked."
