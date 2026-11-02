@@ -3,6 +3,8 @@
 # On a Mac the run uses a private focus-free copy of Godot (tools/nofocus/setup.sh builds it in
 # ~/.lodestone/nofocus): it is marked background-only and a small library stops it activating itself,
 # so it never becomes the front app, never moves his windows and never takes his keyboard or mouse.
+# Its windows are invisible and click-through too (alpha 0, set in nofocus.m), so nothing shows on his screen;
+# set LODESTONE_SHOW_WINDOWS=1 to see them while debugging a shot script.
 # Brandon (2026-10-30): "there has to be another way to grab a screenshot then making my windows fly
 # around constantly and unfocus my mouse". If the focus-free copy can't be built, the run is refused.
 # Every run goes through tools/mem_guard.sh: over GODOT_MEM_CAP_MB (default 6144) it is killed, not left to fill the Mac.

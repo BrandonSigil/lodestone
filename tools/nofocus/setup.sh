@@ -7,7 +7,8 @@ SRC="$(cd "$(dirname "$0")" && pwd)"
 APP="${GODOT_APP:-/Applications/Godot.app}"
 OUT="$HOME/.lodestone/nofocus"
 mkdir -p "$OUT"
-ver="$("$APP/Contents/MacOS/Godot" --version 2>/dev/null | head -1)"
+# The stamp covers Godot's version and our own sources, so a change to nofocus.m rebuilds the copy.
+ver="$("$APP/Contents/MacOS/Godot" --version 2>/dev/null | head -1) $(cat "$SRC/nofocus.m" "$SRC/launch.c" | shasum | cut -c1-12)"
 if [ -f "$OUT/version" ] && [ "$(cat "$OUT/version")" = "$ver" ] && [ -x "$OUT/launch" ] && [ -f "$OUT/nofocus.dylib" ] && [ -d "$OUT/Godot.app" ]; then exit 0; fi
 rm -rf "$OUT/Godot.app"
 cp -R "$APP" "$OUT/Godot.app"
