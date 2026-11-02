@@ -96,6 +96,8 @@ main { padding-block: 18px 120px; padding-left: max(16px, env(safe-area-inset-le
 .asks { margin: 0; padding-left: 18px; font-size: 13.5px; color: var(--muted); display: grid; gap: 4px; }
 .asks q { color: var(--ink); }
 .asks .state { background: var(--amber-soft); color: var(--amber); }
+.talkfoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; border-top: 1px solid var(--rule); padding-top: 10px; }
+.talkfoot .hint { flex: 1 1 200px; }
 .empty, .more { max-width: 900px; margin: 0 auto; text-align: center; color: var(--muted); padding: 30px 0; }
 .more button { border: 1px solid var(--rule); background: var(--sheet); border-radius: 8px; padding: 8px 18px; }
 
@@ -173,23 +175,29 @@ function talkHtml(d) {
     const r = S.byKey[o.k];
     if (!r) return "";
     const shared = (S.optUses[o.k] || 0) > 1 ? ` · <b>shared by ${S.optUses[o.k]} dialogues</b>` : "";
-    return lineHtml(r, `<div class="does">${o.need ? `<span class="need">${esc(o.need)}</span> · ` : ""}${esc(o.does)}${shared}</div>`, "opt");
+    return lineHtml(r, `<div class="does">${o.need ? `<span class="need">${esc(o.need)}</span> · ` : ""}${esc(o.does)}${shared}</div>`, "opt", d.id);
   }).join("");
+  const ak = d.id + "|+ask", wk = d.id + "|+what";
   const asks = Object.values(S.asks).filter((a) => a.event === d.id);
   const askList = asks.length ? `<ul class="asks">${asks.map((a) => `<li><q>${esc(a.text)}</q>${a.what ? ` → ${esc(a.what)}` : ""} <span class="state">${a.status === "done" ? "In the game" : "Sent, waiting"}</span></li>`).join("")}</ul>` : "";
   return `<section class="talk" data-ev="${esc(d.id)}">
     <div class="meta"><span class="sec">${esc(d.where)}</span><span class="key">${esc(d.id)}</span>${d.p ? "<span>shows a portrait</span>" : ""}${d.box ? `<span>on a ${esc(d.box)}</span>` : ""}</div>
-    ${prompt ? lineHtml(prompt, "", "prompt") : ""}
+    ${prompt ? lineHtml(prompt, "", "prompt", d.id) : ""}
     <div class="opts">${opts}</div>${askList}
-    <details class="add"><summary>Add a response</summary>
-      <div class="addrow"><input id="ask-${esc(d.id)}" type="text" placeholder="What the player says" aria-label="New response for ${esc(d.id)}">
-      <input id="what-${esc(d.id)}" type="text" placeholder="What it should do (optional)" aria-label="What the new response does">
-      <button class="send" type="button" data-ask>Send</button></div>
+    <details class="add"${S.drafts[ak] || S.drafts[wk] ? " open" : ""}><summary>Add a response</summary>
+      <div class="addrow"><input id="ask-${esc(d.id)}" data-draft="${esc(ak)}" type="text" placeholder="What the player says" aria-label="New response for ${esc(d.id)}" value="${esc(S.drafts[ak] || "")}">
+      <input id="what-${esc(d.id)}" data-draft="${esc(wk)}" type="text" placeholder="What it should do (optional)" aria-label="What the new response does" value="${esc(S.drafts[wk] || "")}"></div>
     </details>
+    <div class="talkfoot"><span class="hint" data-talk-hint>Fill in any lines, then send them all together.</span>
+      <button class="send" type="button" data-talk>Send this dialogue</button></div>
   </section>`;
 }
-function lineHtml(r, extra = "", kind = "") {
-  const sw = S.swaps[r.k], st = sw ? sw.status : "";
+// Every field keeps its draft in this browser, so a redraw (a send, a live update) never loses typing.
+// Brandon, 2026-11-02, after a send cleared his other responses: "Have just 1 send per scenario."
+S.drafts = (() => { try { return JSON.parse(localStorage.getItem("ws-drafts") || "{}"); } catch { return {}; } })();
+function saveDrafts() { try { localStorage.setItem("ws-drafts", JSON.stringify(S.drafts)); } catch {} }
+function lineHtml(r, extra = "", kind = "", ev = "") {
+  const sw = S.swaps[r.k], st = sw ? sw.status : "", dk = ev + "|" + r.k;
   const cls = (st === "applied" ? " done" : st === "sent" ? " sent" : "") + (kind ? " " + kind : "");
   const where = kind ? "" : r.u.length ? `<span>in ${esc(r.u.join(", "))}</span>` : "";
   const tag = st === "sent" ? `<span class="state">Sent, waiting</span>` : st === "applied" ? `<span class="state">In the game</span>` : "";
@@ -199,8 +207,8 @@ function lineHtml(r, extra = "", kind = "") {
   return `<article class="line${cls}" data-k="${esc(r.k)}">
     <div class="meta"><span class="sec">${label}</span><span class="key">${esc(r.k)}</span>${where}${tag}</div>
     <div class="old">${hi(r.t)}</div>${extra}${yours}
-    <div class="newrow"><textarea id="new-${esc(r.k)}-${S.uid++}" rows="1" placeholder="${st === "sent" ? "Change your line" : "Your words"}" aria-label="New words for ${esc(r.k)}"></textarea>
-    <button class="send" type="button" disabled>Send</button></div>${keep}
+    <div class="newrow"><textarea id="new-${esc(dk)}" data-draft="${esc(dk)}" rows="1" placeholder="${st === "sent" ? "Change your line" : "Your words"}" aria-label="New words for ${esc(r.k)}">${esc(S.drafts[dk] || "")}</textarea>
+    ${ev ? "" : `<button class="send" type="button" disabled>Send</button>`}</div>${keep}
   </article>`;
 }
 function render() {
@@ -208,6 +216,7 @@ function render() {
   if (S.filter === "talk") {
     const talks = S.talks.filter(talkMatches);
     $("list").innerHTML = talks.slice(0, S.shown).map(talkHtml).join("");
+    $("list").querySelectorAll(".line").forEach((art) => { if (art.querySelector("textarea").value) check(art); });
     $("more").hidden = talks.length <= S.shown;
     $("empty").hidden = talks.length > 0;
     renderChips();
@@ -228,19 +237,34 @@ function renderChips() {
   renderBar();
 }
 const pending = () => Object.values(S.swaps).filter((s) => s.status === "sent").length + Object.values(S.asks).filter((a) => a.status === "sent").length;
-async function sendAsk(section) {
-  const id = section.dataset.ev, text = $("ask-" + id).value.trim(), what = $("what-" + id).value.trim();
-  const btn = section.querySelector("[data-ask]");
-  if (!text || !S.db) return;
+// One send per dialogue: every filled field in the card (prompt, responses, a new response) goes together.
+async function sendTalk(section) {
+  const id = section.dataset.ev, btn = section.querySelector("[data-talk]"), hint = section.querySelector("[data-talk-hint]");
+  const lines = [...section.querySelectorAll(".line")].map((art) => ({ art, r: S.byKey[art.dataset.k], v: art.querySelector("textarea").value.replace(/\s+/g, " ").trim() })).filter((x) => x.v);
+  const text = $("ask-" + id).value.trim(), what = $("what-" + id).value.trim();
+  const bad = lines.filter((x) => marks(x.v).join() !== marks(x.r.t).join());
+  if (bad.length) { hint.classList.add("bad"); hint.textContent = `Keep the % marks in ${bad.map((x) => x.r.k).join(", ")}: the game fills a number or word in there.`; return; }
+  if (!lines.length && !text) { hint.classList.add("bad"); hint.textContent = "Nothing to send yet: fill in a line first."; return; }
+  if (!S.db) return;
   btn.disabled = true; btn.textContent = "Saving…";
   try {
-    const doc = { event: id, text, what, at: new Date().toISOString(), status: "sent" };
-    const ref = await S.db.collection("asks").add(doc);
-    S.asks[ref.id] = doc;
+    const at = new Date().toISOString();
+    for (const x of lines) {
+      const doc = { key: x.r.k, old: x.r.t, new: x.v, at, status: "sent", dialogue: id };
+      await S.db.collection("swaps").doc(x.r.k).set(doc);
+      S.swaps[x.r.k] = doc; delete S.drafts[id + "|" + x.r.k];
+    }
+    if (text) {
+      const doc = { event: id, text, what, at, status: "sent" };
+      const ref = await S.db.collection("asks").add(doc);
+      S.asks[ref.id] = doc; delete S.drafts[id + "|+ask"]; delete S.drafts[id + "|+what"];
+    }
+    saveDrafts();
     section.outerHTML = talkHtml(S.talks.find((d) => d.id === id));
     renderChips(); queueWake();
   } catch {
     btn.disabled = false; btn.textContent = "Try again";
+    hint.classList.add("bad"); hint.textContent = "That didn't save. Your words are still here; try again.";
   }
 }
 function renderBar() {
@@ -255,7 +279,7 @@ function check(art) {
   ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px";
   const v = ta.value.trim();
   const ok = v && marks(v).join() === marks(r.t).join();
-  btn.disabled = !ok || !S.db;
+  if (btn) btn.disabled = !ok || !S.db;
   if (v && !ok && r.f.length) { hint.hidden = false; hint.classList.add("bad"); }
   else if (v && marks(v).length && !r.f.length) { hint.hidden = false; hint.classList.add("bad"); hint.textContent = "Take out the % mark: this line has no number slot."; }
   else { hint.classList.remove("bad"); hint.hidden = !r.f.length; }
@@ -269,9 +293,8 @@ async function send(art) {
     const doc = { key: r.k, old: r.t, new: v, at: new Date().toISOString(), status: "sent" };
     await S.db.collection("swaps").doc(r.k).set(doc);
     S.swaps[r.k] = doc; ta.value = ""; btn.textContent = "Send";
-    const talk = art.closest(".talk");
-    if (talk) talk.outerHTML = talkHtml(S.talks.find((d) => d.id === talk.dataset.ev));
-    else art.outerHTML = lineHtml(r);
+    delete S.drafts["|" + r.k]; saveDrafts();
+    art.outerHTML = lineHtml(r);
     renderChips(); queueWake();
   } catch (e) {
     btn.textContent = "Send"; btn.disabled = false;
@@ -305,14 +328,22 @@ $("chips").addEventListener("click", (e) => { const b = e.target.closest(".chip"
 $("q").addEventListener("input", () => { S.q = $("q").value.trim(); S.shown = 120; render(); });
 $("sec").addEventListener("change", () => { S.sec = $("sec").value; S.shown = 120; render(); });
 $("more-btn").addEventListener("click", () => { S.shown += 200; render(); });
-$("list").addEventListener("input", (e) => { if (e.target.tagName === "TEXTAREA") check(e.target.closest(".line")); });
+$("list").addEventListener("input", (e) => {
+  const dk = e.target.dataset && e.target.dataset.draft;
+  if (dk !== undefined) { if (e.target.value) S.drafts[dk] = e.target.value; else delete S.drafts[dk]; saveDrafts(); }
+  if (e.target.tagName === "TEXTAREA") check(e.target.closest(".line"));
+});
 $("list").addEventListener("click", (e) => {
   const b = e.target.closest(".send");
   if (!b || b.disabled) return;
-  if (b.hasAttribute("data-ask")) sendAsk(b.closest(".talk")); else send(b.closest(".line"));
+  if (b.hasAttribute("data-talk")) sendTalk(b.closest(".talk")); else send(b.closest(".line"));
 });
 $("list").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey && e.target.tagName === "TEXTAREA") { e.preventDefault(); const art = e.target.closest(".line"); if (!art.querySelector(".send").disabled) send(art); }
+  if (e.key !== "Enter" || e.shiftKey || e.target.tagName !== "TEXTAREA") return;
+  e.preventDefault();
+  if (e.target.closest(".talk")) return;  // dialogue cards send all at once with their own button
+  const art = e.target.closest(".line"), btn = art.querySelector(".send");
+  if (btn && !btn.disabled) send(art);
 });
 $("bar-send").addEventListener("click", wake);
 

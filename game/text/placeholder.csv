@@ -91,7 +91,7 @@ CHECK_HEAL,HEAL
 EV_BANDITS,BANDIT COME. lorem ipsum ipsum.
 EV_RIVER,BIG RIVER. ox scared. lorem ipsum.
 EV_BUSH,BUSH WITH BERRY. it move? lorem.
-EV_WOLVES,WOLF HOWL. lorem ipsum.
+EV_WOLVES,Your party hears wolves howling in the distance. Something seems to have riled them up. You begin to see pairs of eyes watch you through the trees.
 EV_RUIN,OLD STONE HOUSE. lorem ipsum.
 EV_TRADER,MAN WITH CART. lorem ipsum.
 EV_STARS,STARS BRIGHT. lorem ipsum.
