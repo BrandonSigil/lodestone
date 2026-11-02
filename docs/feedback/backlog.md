@@ -98,7 +98,7 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | X13 | "I want to always be on a selected cahracter" | Systems developer | done (evening round) |
 | X14 | "these windows should fit the size. there shouldnt be all this green space" (loot windows) | Systems developer | done (evening round) |
 | X15 | "Fishing is still very fast ... it doesnt need to be so lightning fast from one part to another" | PM (pace), Systems developer (beats) | done (4425bd3, 24c2147, evening round) |
-| X16 | "multiple times I've found a aparty member, picked my class, then ran out to the road and died immediately because I dont have rations." (new players starve on the first trip) | Game designer (bumpers, with the morale-is-hunger loop); Systems developer (build) | design card coming |
+| X16 | "multiple times I've found a aparty member, picked my class, then ran out to the road and died immediately because I dont have rations." (new players starve on the first trip) | Game designer (bumpers, with the morale-is-hunger loop); Systems developer (build) | built (c25aa69, Brandon picked the tavern ward); review card dev-morale-hunger-review |
 | X17 | "We should nudge people to the lodestone in the center of town, maybe when they walk out of their home the first time the camera pans over to the lodestone with a beam of light on it or something." | Systems developer | done (2026-11-02, card dev-x17-review) |
 
 ## Older standing asks still open
