@@ -6,7 +6,7 @@ extends Control
 ## foes on the right (red). Right, the preview: the map this plot makes for a seed (re-roll it), drawn flat, with what
 ## QA says about it, and Open in map maker to look at it in 3D. Top: pick a plot, New, Save, Undo, back to the maker.
 
-const REGION := "forest"
+const REGIONS := ["forest", "snow"]  ## the road-fight regions (overworld_paths.csv art_set) with plot folders
 const BRUSHES := [["0", "Low ground"], ["1", "Terrace 1"], ["2", "Terrace 2"], ["3", "High ground"], [".", "Outside"]]
 const MARKS := [["d", "Road"], ["w", "River"], ["b", "Bridge"], ["s", "Stairs"], ["r", "Rock"], ["t", "Woods"], [" ", "Clear mark"]]
 const LEVEL_COL := {"0": Color("#56733d"), "1": Color("#7f9e55"), "2": Color("#a9c47a"), "3": Color("#d6e8b0"), ".": Color("#1d2326")}
@@ -16,6 +16,7 @@ const PARTY_TINT := Color(0.3, 0.55, 1.0, 0.3)
 const FOE_TINT := Color(1.0, 0.35, 0.3, 0.3)
 const CHECKS := {"reach": "Every cell reachable", "deploy": "Room for both sides", "crossings": "Bridges and fords", "route": "Short enough walk"}
 
+var region := "forest"
 var plot := {}
 var path := ""
 var brush := "1"
@@ -25,6 +26,7 @@ var _preview: CombatGrid = null
 var _checks: VBoxContainer
 var _seed_label: Label
 var _picker: OptionButton
+var _regions: OptionButton
 var _job: OptionButton
 var _note: TextEdit
 var _draft: CheckBox
@@ -66,11 +68,17 @@ func _ready() -> void:
 	body.add_child(_canvas)
 	var right := _card(_preview_panel())
 	body.add_child(right)
-	var plots := MapPlot.list(REGION)
+	_open_region(region)
+
+
+## Show a region's plots: open its first, or start a new one when it has none.
+func _open_region(r: String) -> void:
+	region = r
+	var plots := MapPlot.list(region)
 	if plots.is_empty():
 		_new_plot()
 	else:
-		_open(MapPlot.DIR + REGION + "/" + String(plots[0].id) + ".json")
+		_open(MapPlot.DIR + region + "/" + String(plots[0].id) + ".json")
 
 
 ## Esc goes back to the map maker, as the X does.
@@ -95,8 +103,16 @@ func _top_bar() -> Control:
 	bar.add_theme_constant_override("separation", 6)
 	bar.add_child(MakerUI.label("Plot maker", 17, MakerUI.ACCENT, true))
 	bar.add_child(MakerUI.spacer(10))
+	var regions := OptionButton.new()
+	_regions = regions
+	regions.tooltip_text = "Which region's plots: forest roads or snowy roads"
+	regions.focus_mode = Control.FOCUS_NONE
+	for r in REGIONS:
+		regions.add_item(String(r).capitalize())
+	regions.item_selected.connect(func(i: int) -> void: _open_region(REGIONS[i]))
+	bar.add_child(regions)
 	_picker = OptionButton.new()
-	_picker.tooltip_text = "Which forest plot to edit"
+	_picker.tooltip_text = "Which plot to edit"
 	_picker.custom_minimum_size.x = 170
 	_picker.item_selected.connect(func(i: int) -> void: _open(String(_picker.get_item_metadata(i))))
 	bar.add_child(_picker)
@@ -279,7 +295,7 @@ func _open(p: String) -> void:
 
 
 func _new_plot() -> void:
-	var n := MapPlot.list(REGION).size() + 1
+	var n := MapPlot.list(region).size() + 1
 	var id := "plot_%d" % n
 	var rows: Array = []
 	var marks: Array = []
@@ -287,8 +303,8 @@ func _new_plot() -> void:
 		rows.append(".".repeat(MapGen.FIGHT_W) if y < 3 or y > MapGen.FIGHT_H - 4 else "1".repeat(MapGen.FIGHT_W))
 		marks.append(" ".repeat(MapGen.FIGHT_W))
 	marks[MapGen.FIGHT_H / 2] = "d".repeat(MapGen.FIGHT_W)
-	plot = {"id": id, "region": REGION, "river": "", "note": "", "levels": rows, "marks": marks}
-	path = MapPlot.DIR + REGION + "/" + id + ".json"
+	plot = {"id": id, "region": region, "river": "", "note": "", "levels": rows, "marks": marks}
+	path = MapPlot.DIR + region + "/" + id + ".json"
 	_undo.clear()
 	_fill_picker()
 	_job.select(0)
@@ -297,18 +313,19 @@ func _new_plot() -> void:
 
 
 func _fill_picker() -> void:
+	_regions.select(maxi(0, REGIONS.find(region)))
 	_picker.clear()
 	var i := 0
-	for p in MapPlot.list(REGION):
+	for p in MapPlot.list(region):
 		_picker.add_item(String(p.id) + ("  (draft)" if bool(p.get("draft", false)) else ""))
-		_picker.set_item_metadata(i, MapPlot.DIR + REGION + "/" + String(p.id) + ".json")
-		if MapPlot.DIR + REGION + "/" + String(p.id) + ".json" == path:
+		_picker.set_item_metadata(i, MapPlot.DIR + region + "/" + String(p.id) + ".json")
+		if MapPlot.DIR + region + "/" + String(p.id) + ".json" == path:
 			_picker.select(i)
 		i += 1
 
 
 func _save() -> void:
-	DirAccess.make_dir_recursive_absolute(MapPlot.DIR + REGION)
+	DirAccess.make_dir_recursive_absolute(MapPlot.DIR + region)
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	f.store_string(JSON.stringify(plot, " ") + "\n")
 	f.close()
@@ -357,9 +374,9 @@ func _rebuild() -> void:
 		c.queue_free()
 	for p in MapPlot.problems(plot):
 		_checks.add_child(_check_row(false, "Plot: " + p))
-	_preview = MapPlot.build(plot, _seed, "forest")
+	_preview = MapPlot.build(plot, _seed, region)
 	_seed_label.text = "  seed %d" % _seed
-	var doc := MapDoc.create("battle", "plot_preview", _preview, "forest")
+	var doc := MapDoc.create("battle", "plot_preview", _preview, region)
 	for c in MapQA.run(doc.grid, "battle", doc.data):
 		if CHECKS.has(c.id):
 			_checks.add_child(_check_row(c.level == "ok", CHECKS[c.id] if c.level == "ok" else String(c.summary)))
@@ -389,7 +406,7 @@ func _check_row(ok: bool, text: String) -> Control:
 
 ## The preview map in the maker (saved in user://, never in the project, so it stays a scratch copy).
 func _open_in_maker() -> void:
-	var doc := MapDoc.create("battle", "plot_preview", _preview, "forest")
+	var doc := MapDoc.create("battle", "plot_preview", _preview, region)
 	DirAccess.make_dir_recursive_absolute(MapDoc.USER_DIRS.battle)
 	var p: String = MapDoc.USER_DIRS.battle + "plot_preview.json"
 	var f := FileAccess.open(p, FileAccess.WRITE)

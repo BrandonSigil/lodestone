@@ -5,7 +5,7 @@ extends RefCounted
 ## skeleton of a fight map, a flat sketch in two layers of characters, one row per map row:
 ##   levels  "." outside the map, "0" to "3" the terrace each cell stands on (low to high)
 ##   marks   " " plain ground, "d" road, "w" river water, "b" bridge over the water (a straight run, banks at both ends),
-##           "s" stairs (a climb between two terraces), "r" rock outcrop, "t" woods
+##           "s" stairs (a climb between two terraces; a straight run of them is one flight), "r" rock outcrop, "t" woods
 ## plus "draft" (true: road fights skip it while it is being drawn), "river" (its job: "flank" runs along one side, "crossing" cuts between the starts and has the one bridge, "" none)
 ## and a designer "note". The party starts on the low-x side, the foes on the high-x side (CombatGrid.deploy_cells).
 ## `build` turns a plot and a seed into an ordinary map: the sketch fixes the outline, terraces, road, river and climbs;
@@ -60,8 +60,9 @@ static func mark_at(plot: Dictionary, c: Vector2i) -> String:
 	return String(rows[c.y])[c.x]
 
 
-## The map a plot makes for this seed.
-static func build(plot: Dictionary, seed_value: int, look_id := "forest") -> CombatGrid:
+## The map a plot makes for this seed. join false skips MapOps.link and the seal (to see what a plot leaves cut off:
+## a piece link has to join gets stair decks, which read as stray bridges).
+static func build(plot: Dictionary, seed_value: int, look_id := "forest", join := true) -> CombatGrid:
 	var size := size_of(plot)
 	var g := CombatGrid.flat(size.x, size.y)
 	var rng := RandomNumberGenerator.new()
@@ -113,13 +114,12 @@ static func build(plot: Dictionary, seed_value: int, look_id := "forest") -> Com
 						g.set_height(c, ground + 1)
 					elif woods.get_noise_2d(x, y) > woods_share and x >= CombatGrid.DEPLOY_COLS and x < size.x - CombatGrid.DEPLOY_COLS:
 						g.set_terrain(c, T.FOREST)
-	for c in stairs:
-		if not MapOps.stairs(g, c):
-			g.set_terrain(c, T.GRASS)
+	_lay_stairs(g, stairs)
 	_lay_bridges(g, bridges)
 	MapOps.flatten_dead_stairs(g)
-	MapOps.link(g, seed_value + 5, 1, false)
-	MapOps.seal_unreachable(g)
+	if join:
+		MapOps.link(g, seed_value + 5, 1, false)
+		MapOps.seal_unreachable(g)
 	g.look = {"id": look_id}
 	return g
 
@@ -131,6 +131,46 @@ static func _quiet(plot: Dictionary, c: Vector2i) -> bool:
 		if level_at(plot, c + d) != lv or mark_at(plot, c + d) != " ":
 			return false
 	return true
+
+
+## A lone "s" cell is a stair between the ground on its two sides; a straight run of two or more is one flight from
+## the cell before it to the cell after it, stepping evenly, so a climb over two terraces is drawn as two stairs.
+static func _lay_stairs(g: CombatGrid, cells: Array[Vector2i]) -> void:
+	var left := {}
+	for c in cells:
+		left[c] = true
+	for c in cells:
+		if not left.has(c):
+			continue
+		var laid := false
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+			if not left.has(c + d) and not left.has(c - d):
+				continue
+			var a := c
+			while left.has(a - d):
+				a -= d
+			var b := a
+			while left.has(b + d):
+				b += d
+			var q := a
+			while true:
+				left.erase(q)
+				if q == b:
+					break
+				q += d
+			var lo := a - d
+			var hi := b + d
+			if g.height_at(lo) > g.height_at(hi):
+				var t := lo
+				lo = hi
+				hi = t
+			MapOps.flight(g, lo, hi)
+			laid = true
+			break
+		if not laid:
+			left.erase(c)
+			if not MapOps.stairs(g, c):
+				g.set_terrain(c, T.GRASS)
 
 
 ## Each straight run of "b" cells becomes one bridge between the dry cells at its two ends.
