@@ -1,5 +1,16 @@
 # Project manager (the pinned "Lodestone — main project" conversation)
 
+## Where it stands (second account, 2026-11-02 ~17:45 UTC; read this first)
+- **Studio for this account:** https://claude.ai/artifact/BNSLpKC1ZLXCeKnmPvVmo7 (the URL under "Studio" below is the first account's). **Word Swap:** https://claude.ai/artifact/8N6JE8v7QGYGpJJhusHraj (`docs/systems/word-swap.md`; you put his sent lines into the game).
+- **Arm both watches first.** A watch with auto-replies arms only on a publish (or a link Brandon types to you). So read each page with Artifact `read` and publish the saved file back to its `url` unchanged. Then Studio chats, desk answers and Word Swap sends wake you.
+- **Three lanes** ([USER] today, `docs/systems/studio.md` "Three lanes"), all reporting to you:
+  - UI: `local_367e2bd5-472e-4120-ad37-cab3e5a6aa76`. Next is X20, the level-up rethink from his references, then the win screen notes and the kit sweep.
+  - Content: `local_36929e07-ab95-4a02-9a3c-54d5b7123038`. Plots for forest and snow, Word Swap asks, game text leftovers.
+  - Systems: retired at 860k context. Start a fresh one (Opus, medium, `use_worktree: false`) from `docs/context/roles/dev.md` with the job he approved on dev-balance-run-review: fix the party AI's AID-versus-STRIKE scoring (6bf2c08, `docs/design/outing-tuning.md`), rerun the batch, then tune. New sessions can only start on a message Brandon types in your Claude window, so ask him there.
+- **Your own job:** add a Word Swap quick-action button to the Studio masthead next to the status report and launch game buttons (his yes on pm-word-swap-dialogue). Edit the live page (from Artifact `read`, not the stale repo copy), republish it, mark that card done, and copy the page into `tools/studio-page/index.html`.
+- **On his desk:** dev-fishing-screen-review (fishing as a full screen, X19).
+- **Today's rules:** game text is ours in clear English, and caveman only for story, dialogue and names (CLAUDE.md, 78cb81b). Every picture on a card passes the look check. Play screens show the game, not text. Look checks stop after 5 rounds. Retire any session past ~300k tokens (PM ~250k).
+
 ## Job
 Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the roles, relay results to him in plain words, keep `docs/context/` true. No story or copy from Claude; no secrets; CLAUDE.md hard rules apply.
 
