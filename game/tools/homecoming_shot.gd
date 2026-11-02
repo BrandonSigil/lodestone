@@ -6,12 +6,14 @@ extends SceneTree
 var _frames := 0
 var _out := ""
 var _fell := true
+var _full := false
 
 
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
 	_out = args[0] if args.size() > 0 else "user://homecoming.png"
 	_fell = args.size() < 2 or args[1] == "fell"
+	_full = args.size() > 1 and args[1] == "full"
 
 
 func _process(_delta: float) -> bool:
@@ -35,6 +37,17 @@ func _process(_delta: float) -> bool:
 			"cards": ["lich"] if _fell else [],
 			"knowledge": {"got": 1, "beaten": 2} if not _fell else {"got": 1},
 			"restored": ["smithy_1"] if not _fell else []}
+		if _full:  # the round 2 mockup C's case: four in the party, more than four hearts moved
+			g.homecoming.materials = {"meat": 3, "potion": 3, "rope": 3, "wood": 3, "metal": 3, "herb": 3}
+			g.homecoming.levels = [{"id": "lead", "from": 2, "to": 3, "xp": 130, "xp_now": 30, "xp_per": 100},
+				{"id": "dog", "from": 3, "to": 3, "xp": 130, "xp_now": 60, "xp_per": 100},
+				{"id": "fire_mage", "from": 3, "to": 3, "xp": 130, "xp_now": 72, "xp_per": 100},
+				{"id": "lich_prince", "from": 3, "to": 3, "xp": 130, "xp_now": 45, "xp_per": 100}]
+			g.homecoming.morale = [{"id": "lead", "from": 50, "to": 56}, {"id": "dog", "from": 60, "to": 66},
+				{"id": "fire_mage", "from": 40, "to": 46}, {"id": "lich_prince", "from": 30, "to": 36}, {"id": "bushberry", "from": 50, "to": 53}]
+			g.homecoming.bonds = [{"key": "dog+lead", "from": 8, "to": 11}]
+			g.homecoming.knowledge = {}
+			g.homecoming.restored = []
 		g.explore_map = "village"
 		g.explore_entry = g.SQUARE
 		change_scene_to_file("res://scenes/explore.tscn")

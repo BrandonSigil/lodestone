@@ -558,7 +558,7 @@ func run(s: Node, f: int, step: String) -> bool:
 				s.call("_rebuild_party")
 				s.call("_level_up_flow", 0 if step == "levelup" else 1)
 			return f == 40
-		"win", "win_lv", "win_mid":
+		"win", "win_lv", "win_mid", "win4":
 			# the victory screen: a crypt fight won at once (win_lv: the hero and the dog a step from a level; win_mid:
 			# the bars still filling)
 			if f == 5:
@@ -567,6 +567,11 @@ func run(s: Node, f: int, step: String) -> bool:
 				game.take_weapon("sword")
 				game.meta.flags.append("met_dog")
 				game.refresh_party()
+				if step == "win4":  # mockup D's case: four in the party, some things in the pack
+					for id in ["fire_mage", "lich_prince"]:
+						s.call("_pick_toggle", id)  # the gate picker's playtest join: met on the spot
+					for it in [["potion", 4], ["herb", 3], ["rope", 1], ["wood", 3]]:
+						game.run.add_item(it[0], it[1])
 				if step == "win_lv":
 					for id in ["lead", "dog"]:
 						var ls: Dictionary = game.level_state(id)
@@ -574,6 +579,8 @@ func run(s: Node, f: int, step: String) -> bool:
 						ls.level = 2 if id == "lead" else 1  # the hero to an odd level (stats roll), the dog to an even (a pick)
 						game.meta.levels[id] = ls
 				s.call("_rebuild_party")
+				if step == "win4":
+					s.groups[0].def["loot"] = "food:+6;potion:2;rope:1;herb:2;gold:+40"
 				s.grid.set_terrain(Vector2i(26, 18), CombatGrid.T.ROAD)
 				_thing(s, "gate").done = true
 				_put(s, Vector2i(25, 13))

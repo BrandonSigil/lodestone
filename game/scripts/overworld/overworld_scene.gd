@@ -996,37 +996,22 @@ func _new_dialog(text: String) -> VBoxContainer:
 	if _dialog:
 		_dialog.queue_free()
 	_dialog = PanelContainer.new()
-	_dialog.theme_type_variation = &"DialogPanel"
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
-	UiTheme.frame_window(_dialog, box, hud.clear_rect)  # an X at its top right; scrolls past the room ([USER] 2026-11-01 X11)
-	if text != "":
-		var l := Label.new()
-		l.text = text
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size = Vector2(420, 0)
-		l.add_theme_font_size_override("font_size", 16)
-		box.add_child(l)
+	var box := MenuKit.dialogue(_dialog, text, hud.clear_rect)  # the one dialogue screen ([USER] 2026-11-01)
 	_ui.add_child(_dialog)
-	var k := 1.0 if _menu_open else UiTheme.small()  # [USER] 2026-10-30: event dialogues about half size
-	# event dialogues stand right above the diamond, menus at the top ([USER] 2026-11-01: one standard place)
+	# event dialogues stand right above the diamond, menus at the top ([USER] 2026-11-01: one standard place); the same
+	# size as on the explore maps, so it is the exact same screen
 	if _menu_open:
-		UiTheme.keep_inside(_dialog, hud.clear_rect, k)  # never spills off the screen; shrinks to fit when it must
+		UiTheme.keep_inside(_dialog, hud.clear_rect, 1.0)  # never spills off the screen; shrinks to fit when it must
 	else:
-		UiTheme.at_diamond(_dialog, hud.clear_rect, k)
+		MenuKit.pointer(_dialog.get_child(0))
+		UiTheme.at_diamond(_dialog, hud.clear_rect, 1.0)
 	if fresh:
 		UiTheme.pop_in_later(_dialog)
 	return box
 
 
 func _button(box: VBoxContainer, text: String, cb: Callable) -> void:
-	var b := Button.new()
-	b.text = text
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.custom_minimum_size = Vector2(420, 30)
-	b.add_theme_font_size_override("font_size", 14)
-	b.pressed.connect(cb)
-	box.add_child(b)
+	MenuKit.answer(box, text, cb)
 
 
 func _close_dialog() -> void:

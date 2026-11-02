@@ -102,6 +102,14 @@ func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0
 	_build_ui()
 
 
+## The fight's own buttons and read-outs put away (the win screen is up over the board).
+func hide_ui() -> void:
+	if _ui != null:
+		_ui.visible = false
+	if _hud != null:
+		_hud.visible = false
+
+
 func _build_ui() -> void:
 	_ui = CanvasLayer.new()
 	_ui.layer = 3

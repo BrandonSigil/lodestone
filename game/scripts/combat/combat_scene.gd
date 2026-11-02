@@ -109,21 +109,15 @@ func _on_finished(won: bool) -> void:
 	_refresh_hud()
 	var go_on := func() -> void: _loot_panel(loot_items, coins, won)
 	if not won or not Game.run.adventure:
-		var panel := PanelContainer.new()
-		panel.theme_type_variation = &"DialogPanel"
-		var box := VBoxContainer.new()
-		panel.add_child(box)
-		var l := Label.new()
-		l.text = Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT")
-		l.add_theme_font_size_override("font_size", 28)
-		box.add_child(l)
-		var b := Button.new()
-		b.text = Txt.t("UI_CONTINUE")
-		b.pressed.connect(func() -> void:
+		var panel := PanelContainer.new()  # the one dialogue screen (MenuKit.dialogue), on the diamond
+		var box := MenuKit.dialogue(panel, Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT"), hud.clear_rect)
+		var b := MenuKit.primary(Txt.t("UI_CONTINUE"), func() -> void:
 			panel.queue_free()
-			go_on.call())
+			go_on.call(), 22, MenuKit.DIALOG_W)
 		box.add_child(b)
-		_place_panel(panel)
+		hud.root.add_child(panel)
+		MenuKit.pointer(panel.get_child(0))
+		UiTheme.at_diamond(panel, hud.clear_rect)
 		return
 	var downed := battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 1 and not u.alive()).size()
 	var foes := battle.units.filter(func(u: CombatUnit) -> bool: return u.team == 1).size()
@@ -141,6 +135,8 @@ func _on_finished(won: bool) -> void:
 		rep.changed = func() -> void:
 			Game.save_adventure()
 			_refresh_hud()
+	battle.hide_ui()  # nothing of the fight's own over the win screen
+	hud.clear_side()
 	hud.root.add_child(VictoryUi.make(rep, [[Txt.t("UI_CONTINUE"), func() -> void:
 		for n in hud.root.get_children():
 			if n is VictoryUi:
@@ -148,7 +144,7 @@ func _on_finished(won: bool) -> void:
 		if grid != null:
 			for it in grid.items:
 				Game.run.add_item(String(it.id), int(it.get("n", 1)))  # the pack, then FOUND, then lost
-		_level_ups(0, won)]]))
+		_level_ups(0, won)]], hud.clear_rect))
 
 
 ## The loot as one shared grid, then the level-ups. What does not fit goes to the FOUND box, and past that is lost

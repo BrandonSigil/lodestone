@@ -47,6 +47,7 @@ const TARGET_SIZE := Vector2(132, 58)
 var windows: Array[Dictionary] = []
 const WINDOW_PAD := 34.0  ## from a window's edge to its grids, clear of the frame's corner leaves
 const WINDOW_TITLE := 46.0  ## room for a window's title plate
+var sections := false  ## windows drawn as the kit's section cards (inside a bigger window: the win screen)
 var notes: Array[Dictionary] = []  ## lines of text in a window: {"text", "at" (top-left), "width"}
 const NOTE_LINE := 24.0
 var gold_note := {}  ## in windows: the party's gold under the pack, kept current when coins come over (one of `notes`)
@@ -110,7 +111,9 @@ func add_window(r: Rect2, title := "") -> void:
 
 ## A real button inside the view (a window's TAKE ALL or CLOSE): it takes its own clicks.
 func add_button(text: String, r: Rect2, cb: Callable) -> Button:
-	var b := Button.new()
+	var b: Button = MenuKit.XButton.new() if text == "X" else Button.new()  # the kit's round X; TAKE ALL is the one to press
+	if text == Txt.t("UI_BOX_TAKE_ALL"):
+		b.theme_type_variation = &"PrimaryButton"
 	b.text = text
 	b.position = r.position
 	b.size = r.size
@@ -128,6 +131,52 @@ func add_note(text: String, at: Vector2, width: float, icon: Texture2D = null) -
 	var f := Riso.font()
 	var h := f.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, width, 15).y
 	return maxi(1, ceili(h / f.get_height(15)))
+
+
+## As sections (the win screen): the section cards stand as tall as the view (the party column beside them), the loot
+## (area 1) centred in its card and TAKE ALL at the card's foot. Runs when the view is given its height.
+func stretch_sections() -> void:
+	if not sections or windows.size() < 2 or areas.size() < 2:
+		return
+	var h := size.y
+	for w in windows:
+		var r: Rect2 = w.rect
+		w.rect = Rect2(r.position, Vector2(r.size.x, maxf(r.size.y, h - r.position.y)))
+	var take: Button = null
+	for b in get_children():
+		if b is Button and (b as Button).text == Txt.t("UI_BOX_TAKE_ALL"):
+			take = b
+	var foot := h - 10.0
+	if take != null:
+		take.position.y = h - take.size.y - 14.0
+		foot = take.position.y
+	var loot: Dictionary = areas[1]
+	var g: InventoryGrid = loot.bag
+	var top := WINDOW_TITLE + 20.0
+	var y := top + maxf(0.0, (foot - top - g.rows * cell) * 0.5)
+	if absf(float((loot.at as Vector2).y) - y) > 0.5:
+		move_area(1, Vector2((loot.at as Vector2).x, y))
+	# the pack's grids (area 0, the saddlebag after the loot) and its gold line, down to the middle of their card
+	if not has_meta("pack_home"):
+		var home := {"faces": [], "note": (gold_note.get("at", Vector2.ZERO) as Vector2) if not gold_note.is_empty() else Vector2.ZERO}
+		for k in areas.size():
+			home.faces.append(areas[k].face_at)
+		set_meta("pack_home", home)
+	var home: Dictionary = get_meta("pack_home")
+	var low := 0.0
+	for k in areas.size():
+		if k != 1:
+			low = maxf(low, _rect_of(areas[k]).end.y - (float((areas[k].face_at as Vector2).y) - float((home.faces[k] as Vector2).y)))
+	if not gold_note.is_empty():
+		low = maxf(low, float((home.note as Vector2).y) + NOTE_LINE)
+	var dy := maxf(0.0, (h - 16.0 - low) * 0.5)
+	for k in areas.size():
+		if k != 1:
+			move_area(k, (home.faces[k] as Vector2) + Vector2(0, dy))
+	if not gold_note.is_empty():
+		gold_note.at = (home.note as Vector2) + Vector2(0, dy)
+		flash_at.y = gold_note.at.y
+	queue_redraw()
 
 
 ## Sizes the view again after windows or cards were moved by hand.
@@ -384,9 +433,10 @@ func _draw() -> void:
 	var sr := _bin_rect()
 	if bin.is_valid():
 		var over := held != -1 and sr.has_point(mouse)
-		draw_rect(sr, Riso.mix(Riso.PAPER, Riso.RED, 0.25 if over else 0.08))
-		_dashed_rect(sr, Riso.RED)
-		Riso.draw_label(self, Txt.t(bin_key), Vector2(sr.position.x + 4, sr.get_center().y), 18, Riso.RED, HORIZONTAL_ALIGNMENT_CENTER, sr.size.x - 8)
+		var bin_red := Color(0.95, 0.45, 0.38)  # the bin: a dark kit plate with a dashed red rim
+		draw_style_box(MenuKit.flat(Color(0.18, 0.05, 0.04, 0.85) if over else MenuKit.INSET, Color(0, 0, 0, 0), 0.0, 8, 0.0, 0.0), sr)
+		_dashed_rect(sr, bin_red)
+		Riso.draw_label(self, Txt.t(bin_key), Vector2(sr.position.x + 4, sr.get_center().y), 18, bin_red, HORIZONTAL_ALIGNMENT_CENTER, sr.size.x - 8)
 		bottom = maxf(bottom, sr.end.y)
 	var item := choosing
 	if held != -1:
@@ -413,8 +463,21 @@ func _draw() -> void:
 		_draw_count(self, cells, top_left, cell, int(it.get("n", 1)))
 
 
-## A window: the dialogue's own painted frame, its title on the long thin plate at the top.
+## A window: the dialogue's own painted frame, its title on the long thin plate at the top. As `sections` (the win
+## screen, inside its one big window), a kit section card instead: a flat card, its heading between two thin rules.
 func _draw_window(r: Rect2, title: String) -> void:
+	if sections:
+		draw_style_box(get_theme_stylebox("panel", "KitCard"), r.grow_individual(-8, 0, -8, 0))
+		if title != "":
+			var f := get_theme_default_font()
+			var tw := f.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, MenuKit.HEAD).x
+			var cy := r.position.y + 30.0
+			var cx := r.get_center().x
+			draw_string(f, Vector2(cx - tw * 0.5, cy + MenuKit.HEAD * 0.36), title, HORIZONTAL_ALIGNMENT_LEFT, -1, MenuKit.HEAD, MenuKit.TEXT)
+			var rule := Color(MenuKit.TEXT, 0.55)
+			draw_line(Vector2(r.position.x + 30.0, cy), Vector2(cx - tw * 0.5 - 12.0, cy), rule, 1.5, true)
+			draw_line(Vector2(cx + tw * 0.5 + 12.0, cy), Vector2(r.end.x - 30.0, cy), rule, 1.5, true)
+		return
 	var sb := get_theme_stylebox("panel", "DialogPanel")
 	if sb != null:
 		draw_style_box(sb, r)
@@ -438,9 +501,11 @@ func _draw_target(k: int, item: String) -> float:
 	var g := _gain(k, item) if item != "" else 0
 	var live := item != "" and g > 0
 	var over := live and r.has_point(mouse)
-	draw_rect(r, Riso.mix(Riso.PAPER, Riso.INK, 0.12 if over else 0.0) if item == "" or live else Riso.alpha(Riso.PAPER, 0.4))
-	draw_rect(r, Riso.INK if live else Riso.alpha(Riso.INK, 0.4), false, 3.0 if live else 1.5)
-	var ink := Riso.INK if item == "" or live else Riso.alpha(Riso.INK, 0.45)
+	# a kit card: dark with a thin rim, gold while it can take what is held (the menu kit)
+	var card := MenuKit.flat(MenuKit.BTN_HOVER if over else MenuKit.INSET, MenuKit.GOLD if live else MenuKit.RIM_DIM, 2.0 if live else 1.0, 8, 0.0, 0.0)
+	card.bg_color.a *= 1.0 if item == "" or live else 0.5
+	draw_style_box(card, r)
+	var ink := MenuKit.TEXT if item == "" or live else Color(MenuKit.TEXT, 0.45)
 	var a := 1.0 if item == "" or live else 0.45
 	var left := 8.0
 	var face: Texture2D = c.get("face")
@@ -458,7 +523,7 @@ func _draw_target(k: int, item: String) -> float:
 		Riso.alpha(Riso.CREAM, a), HORIZONTAL_ALIGNMENT_CENTER, bar.size.x)
 	if item != "":
 		Riso.draw_label(self, Txt.f("UI_GAIN_HP", g) if g > 0 else Txt.t("UI_FULL_HP"), Vector2(bar.position.x, r.end.y - 14), 13,
-			Riso.mix(Riso.INK, Color(0.2, 0.55, 0.25), 0.8) if g > 0 else ink, HORIZONTAL_ALIGNMENT_CENTER, bar.size.x)
+			VictoryUi.UP_GREEN if g > 0 else ink, HORIZONTAL_ALIGNMENT_CENTER, bar.size.x)
 	return r.end.y
 
 
@@ -491,9 +556,10 @@ static func draw_bag(ci: CanvasItem, bag: InventoryGrid, db: Dictionary, origin:
 	for y in bag.rows:
 		for x in bag.cols:
 			var r := Rect2(origin + Vector2(x, y) * cell, Vector2(cell, cell))
-			ci.draw_rect(r.grow(-2), Riso.mix(Riso.PAPER, Riso.GOLD, 0.18))
-			if slots_dashed:
-				ci.draw_rect(r.grow(-2), Riso.GOLD_DARK, false, 1.5)
+			if slots_dashed:  # a pack or loot window: the kit's dark item slot (the menu kit, round 2 mockups)
+				ci.draw_style_box(_slot_box(), r.grow(-2))
+			else:
+				ci.draw_rect(r.grow(-2), Riso.mix(Riso.PAPER, Riso.GOLD, 0.18))
 	for i in bag.items.size():
 		if i == skip:
 			continue
@@ -502,6 +568,14 @@ static func draw_bag(ci: CanvasItem, bag: InventoryGrid, db: Dictionary, origin:
 		var top_left := origin + Vector2(it.pos as Vector2i) * cell
 		draw_item(ci, it.id, db, cells, top_left, cell, it.bound != "")
 		_draw_count(ci, cells, top_left, cell, int(it.get("n", 1)))
+
+
+static var _slot: StyleBoxFlat
+
+static func _slot_box() -> StyleBoxFlat:
+	if _slot == null:
+		_slot = MenuKit.flat(MenuKit.INSET, MenuKit.RIM_DIM, 1.0, 6, 0.0, 0.0)
+	return _slot
 
 
 ## A stack's count in the corner of its last cell. Single things show none.

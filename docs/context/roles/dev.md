@@ -59,6 +59,10 @@ Combat, the loop, water, saves, the UI code, tools and tests in the Godot 4.7.2 
 - Deck places are `y + CombatGrid.DECK`: go through `grid.ground()` and `places_next()`.
 - More in `docs/context/current-state.md` (Gotchas).
 
+## Menu kit (2026-11-02)
+- `MenuKit` (`game/scripts/ui/menu_kit.gd`, `docs/systems/ui-kit.md`) is the menu kit from Brandon's round 2 mockups. Build new screens from it: `MenuKit.window` for a big window, `MenuKit.dialogue` and `answer` for any prompt, plus `card`, `chip`, `slot`, `portrait`, `bar_row` and `primary`. Never put bright green on a button.
+- The look check fails on the scene behind a window (graybox cubes, the HUD's empty bar, the "!" pill) and on the painted frame unless the brief scopes it out. Give the checker the approved mockup and say what is out of scope. Shots set up to match a mockup's case: `explore_shot` `win4` (four members, a fuller loot), `open:gate` crypt (a locked door with odds), `open:sq_dog` village (portrait with INVITE), `homecoming_shot full`.
+
 ## Uncommitted work
 None of mine.
 

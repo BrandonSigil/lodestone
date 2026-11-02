@@ -870,7 +870,7 @@ func _box_locked(t: Dictionary, state: Dictionary) -> void:
 			state.unlocked = true
 			_open_container(t))
 	if ExploreRules.need_met("skill:sneak", _defs(), _have()) and not state.tried:
-		_dialog_button(box, Txt.f("UI_EX_CHANCE_SHORT", [Txt.t("UI_BOX_PICK"), int(round(Dice.chance(TrailRules.party_bonus(Game.run, "sneak"), int(Db.levels.lock_dc)) * 100))]),
+		_dialog_button(box, Txt.t("UI_BOX_PICK"),
 			func() -> void:
 				state.tried = true
 				var r := TrailRules.roll(Game.run, "sneak", int(Db.levels.lock_dc))
@@ -881,14 +881,15 @@ func _box_locked(t: Dictionary, state: Dictionary) -> void:
 					_dialog_button(ok, Txt.t("UI_CONTINUE"), func() -> void: _open_container(t))
 				else:
 					var no := _new_dialog(Txt.t("UI_BOX_PICK_FAILED"))
-					_dialog_button(no, Txt.t("UI_BOX_CLOSE"), _close_box))
+					_dialog_button(no, Txt.t("UI_BOX_CLOSE"), _close_box),
+			"%d%%" % int(round(Dice.chance(TrailRules.party_bonus(Game.run, "sneak"), int(Db.levels.lock_dc)) * 100)))
 	_dialog_button(box, Txt.t("UI_BOX_LEAVE"), _close_box)
 
 
 func _box_trapped(t: Dictionary, state: Dictionary) -> void:
 	var box := _new_dialog(Txt.t("UI_BOX_TRAPPED"))
 	if ExploreRules.need_met("skill:sneak", _defs(), _have()):
-		_dialog_button(box, Txt.f("UI_EX_CHANCE_SHORT", [Txt.t("UI_BOX_DISARM"), int(round(Dice.chance(TrailRules.party_bonus(Game.run, "sneak"), int(Db.levels.disarm_dc)) * 100))]),
+		_dialog_button(box, Txt.t("UI_BOX_DISARM"),
 			func() -> void:
 				var r := TrailRules.roll(Game.run, "sneak", int(Db.levels.disarm_dc))
 				_log("%s  %s" % [Txt.t("CHECK_SNEAK"), Dice.describe(r)])
@@ -897,7 +898,8 @@ func _box_trapped(t: Dictionary, state: Dictionary) -> void:
 					var ok := _new_dialog(Txt.t("UI_BOX_DISARMED"))
 					_dialog_button(ok, Txt.t("UI_CONTINUE"), func() -> void: _open_container(t))
 				else:
-					_spring_trap(t, state))
+					_spring_trap(t, state),
+			"%d%%" % int(round(Dice.chance(TrailRules.party_bonus(Game.run, "sneak"), int(Db.levels.disarm_dc)) * 100)))
 	_dialog_button(box, Txt.t("UI_BOX_OPEN_ANYWAY"), func() -> void: _spring_trap(t, state))
 	_dialog_button(box, Txt.t("UI_BOX_LEAVE"), _close_box)
 
@@ -1109,13 +1111,15 @@ func open_event(id: String, ctx: Dictionary) -> void:
 	var tw := String(ctx.get("group", {}).get("def", {}).get("talk_when", ""))
 	have["talk_ok"] = tw != "" and Game.has_flag(tw)  # TALK only when the group's data says what earns it (X9)
 	for o: Dictionary in ExploreRules.options_for(ev, _defs(), have):
-		var label := Txt.t(o.key)
-		if o.check != "none":
+		var odds := ""
+		var tip := ""
+		if o.check != "none":  # the odds on the option (research: "put odds on the button"), who rolls on hover
 			var who: Dictionary = TrailRules.best_member(Game.run, o.check)
 			var bonus := TrailRules.party_bonus(Game.run, o.check)
-			label += "      " + Txt.f("UI_EX_CHANCE", [Txt.t((who.def as CharacterDef).name_key), Txt.t("CHECK_" + String(o.check).to_upper()),
+			odds = "%d%%" % int(round(Dice.chance(bonus, o.dc) * 100))
+			tip = Txt.f("UI_EX_CHANCE", [Txt.t((who.def as CharacterDef).name_key), Txt.t("CHECK_" + String(o.check).to_upper()),
 				bonus, int(round(Dice.chance(bonus, o.dc) * 100))])
-		_dialog_button(box, label, choose.bind(o, ctx))
+		_dialog_button(box, Txt.t(o.key), choose.bind(o, ctx), odds, tip)
 	for o: Dictionary in ExploreRules.options_short(ev, _defs(), have):  # short of things: shown, greyed
 		_dialog_button(box, Txt.t(o.key), Callable()).disabled = true
 	var leave := box.get_children().filter(func(c: Node) -> bool: return c is Button and (c as Button).text == Txt.t("OPT_LEAVE"))
@@ -1280,49 +1284,25 @@ func _sync_party_hp() -> void:
 		u.shown_hp = u.hp
 
 
-## The event and dialogue box ([USER] 2026-10-31: "a lot larger", with a portrait beside the text when it helps): wide,
-## big text, buttons to match, a square portrait (art/source/portraits/<name>.png) on the left when one is named.
-## The page scales with the window like the rest of the HUD, so it fits at any size.
-const DIALOG_TEXT_W := 460.0
-const DIALOG_PORTRAIT := 200.0
-
-
+## The dialogue call/response screen ([USER] 2026-11-01: "the same screen for "This chest is locked" "I have the key!!!"
+## "Use lockpick" "Smash it". Or when you meet a character it should be the exact same screen", with "a "has-portrait"
+## element"; the round 2 mockups A and B): one window for every event, prompt and talk. A short call line stands centred
+## at the top (mockup A); longer words sit under it as body text; with a portrait (art/source/portraits/<name>.png) the
+## speaker's framed face is on the left and the words and options on its right (mockup B). Options are full-width rows
+## with an icon and an odds chip (MenuKit.option); the way out is quiet and last. It stands on the diamond with a point
+## aimed at it. The page scales with the window like the rest of the HUD, so it fits at any size.
 func _new_dialog(text: String, top := false, portrait := "") -> VBoxContainer:
 	var fresh := _dialog == null  # a menu opening animates; one rebuilt in place does not
 	if _dialog:
 		_dialog.queue_free()
 	_dialog = PanelContainer.new()
-	_dialog.theme_type_variation = &"DialogPanel"
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
-	_dialog.set_meta("frame_x", UiTheme.frame_window(_dialog, row, _dialog_area))  # an X at its top right; scrolls past the room
-	var path := "res://art/source/portraits/%s.png" % portrait
-	if portrait != "" and ResourceLoader.exists(path):
-		var face := TextureRect.new()
-		face.texture = load(path)
-		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		face.custom_minimum_size = Vector2(DIALOG_PORTRAIT, DIALOG_PORTRAIT)
-		face.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-		face.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(face)
-	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 8)
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(box)
-	var l := Label.new()
-	l.text = text
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.custom_minimum_size = Vector2(DIALOG_TEXT_W, 0)
-	l.add_theme_font_size_override("font_size", 22)
-	box.add_child(l)
+	var box := MenuKit.dialogue(_dialog, text, _dialog_area, portrait)
 	_ui.add_child(_dialog)
 	if top:  # a menu stands at the top
 		UiTheme.keep_inside(_dialog, _dialog_area, 1.0, true)
 	else:  # dialogue and actions: the standard place, right above the diamond (shrinks to fit when it must)
+		MenuKit.pointer(_dialog.get_child(0))
 		UiTheme.at_diamond(_dialog, _dialog_area)
-	if text == "":
-		l.queue_free()
 	if fresh:
 		UiTheme.pop_in_later(_dialog)
 	return box
@@ -1333,16 +1313,9 @@ func _dialog_area() -> Rect2:
 	return hud.clear_rect()
 
 
-func _dialog_button(box: VBoxContainer, text: String, cb: Callable) -> Button:
-	var b := Button.new()
-	b.text = text
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.custom_minimum_size = Vector2(DIALOG_TEXT_W, 44)
-	b.add_theme_font_size_override("font_size", 19)
-	if cb.is_valid():
-		b.pressed.connect(cb)
-	box.add_child(b)
-	return b
+## An option row on the open box (MenuKit.answer).
+func _dialog_button(box: VBoxContainer, text: String, cb: Callable, chip := "", tip := "") -> Button:
+	return MenuKit.answer(box, text, cb, chip, tip)
 
 
 func _close_dialog() -> void:
@@ -1611,7 +1584,10 @@ func _pass_boss(g: Dictionary) -> void:
 func _victory(rep: Dictionary, btns: Array) -> void:
 	if _dialog:
 		_dialog.queue_free()
-	_dialog = VictoryUi.make(rep, btns)
+	if battle != null:
+		battle.hide_ui()  # nothing of the fight's own over the win screen
+	hud.clear_side()
+	_dialog = VictoryUi.make(rep, btns, _dialog_area)
 	_ui.add_child(_dialog)
 
 

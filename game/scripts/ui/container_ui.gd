@@ -48,7 +48,11 @@ static func fitted_grid(items: String) -> InventoryGrid:
 	for rows in range(1, 9):
 		for cols in range(1, LOOT_COLS + 1):
 			sizes.append(Vector2i(cols, rows))
-	sizes.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.x * a.y < b.x * b.y or (a.x * a.y == b.x * b.y and a.x > b.x))
+	# a window wider than tall first (never a one-cell column of loot), then the smallest, then the widest
+	sizes.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		if (a.x >= a.y) != (b.x >= b.y):
+			return a.x >= a.y
+		return a.x * a.y < b.x * b.y or (a.x * a.y == b.x * b.y and a.x > b.x))
 	for sz: Vector2i in sizes:
 		var g := InventoryGrid.create(sz.x, sz.y)
 		var left := [0]
@@ -195,13 +199,18 @@ static func windows(view: PackView, other: InventoryGrid, other_title: String, b
 ## with your inventory under it so that yo ucan drag stuff into it"): `other` in its own window on top, sized to its grid,
 ## TAKE ALL across its bottom edge; the pack (the courier's saddlebag beside it) in a window under it, the party's gold
 ## under the pack. `other` is area 1 (a click there sends to the pack), the saddlebag area 2.
+const SECTION_PAD := 20.0
+
 static func stacked(view: PackView, other: InventoryGrid, other_title: String) -> void:
 	var run := Game.run
 	var cell := view.cell
-	var pad := PackView.WINDOW_PAD
+	var pad := PackView.WINDOW_PAD if not view.sections else SECTION_PAD  # inside a bigger window: no corner leaves to clear
 	var title_w := Riso.font().get_string_size(other_title, HORIZONTAL_ALIGNMENT_LEFT, -1, 19).x + 24.0
 	var ow := maxf(other.cols * cell, maxf(title_w, MIN_BUTTON_W - pad))
 	var oh := PackView.WINDOW_TITLE + pad + other.rows * cell + 8.0 + BUTTON_H * 0.5
+	if view.sections:
+		_beside(view, other, other_title, pad, ow, oh)
+		return
 	view.add_area(other, Vector2(pad, pad + PackView.WINDOW_TITLE), "", null, 0)
 	view.add_window(Rect2(Vector2.ZERO, Vector2(ow + pad * 2.0, oh)), other_title)
 	var bw := minf(ow + pad * 2.0 - 16.0, 200.0)
@@ -229,6 +238,45 @@ static func stacked(view: PackView, other: InventoryGrid, other_title: String) -
 	bottom += PackView.NOTE_LINE + 8.0
 	view.add_window(Rect2(Vector2(0, y0), Vector2(right + pad, bottom + pad - y0)), Txt.t("UI_PACK"))
 	view.custom_minimum_size = Vector2(maxf(right + pad, ow + pad * 2.0), bottom + pad)
+
+
+## As sections of one big window (the win screen, mockup D): the loot and the pack side by side, the same height, so the
+## window stays short enough to show at full size; the loot centred in its section, TAKE ALL across its foot.
+static func _beside(view: PackView, other: InventoryGrid, other_title: String, pad: float, ow: float, oh: float) -> void:
+	var run := Game.run
+	var cell := view.cell
+	view.add_area(other, Vector2.ZERO, "", null, 0)  # area 1, the loot (TAKE ALL sends 1 to 0); placed below
+	var saddle: InventoryGrid = run.open_courier_bag()
+	var head := PackView.FACE_ROW if saddle != null else 0.0
+	var x0 := ow + pad * 2.0 + GAP
+	var top := Vector2(x0 + pad, pad + PackView.WINDOW_TITLE)
+	var right := top.x + run.pack.cols * cell
+	var bottom := top.y + head + run.pack.rows * cell
+	view.move_area(0, top + Vector2(0, head))
+	view.areas[0]["click_to"] = 1
+	if saddle != null:
+		var at := Vector2(right + 22.0, top.y)
+		var who: CharacterDef = run.courier().def
+		view.add_area(saddle, at, Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)), face_of(String(who.id)), 0)
+		right = at.x + saddle.cols * cell
+		bottom = maxf(bottom, top.y + head + saddle.rows * cell)
+	view.add_note(str(run.gold), Vector2(top.x, bottom + 8.0), right - top.x, ActionInfo.icon("gold"))
+	view.gold_note = view.notes.back()
+	view.flash_at = Vector2(top.x + 90.0, bottom + 8.0)
+	bottom += PackView.NOTE_LINE + 8.0
+	var h := maxf(oh, bottom + pad)
+	view.add_window(Rect2(Vector2(x0, 0), Vector2(right + pad - x0, h)), Txt.t("UI_PACK"))
+	# the loot: centred across and down in the room between its heading and TAKE ALL
+	var room_top := pad + PackView.WINDOW_TITLE
+	var room_h := h - BUTTON_H * 0.5 - 8.0 - room_top
+	view.move_area(1, Vector2(pad + (ow - other.cols * cell) * 0.5, room_top + maxf(0.0, (room_h - other.rows * cell) * 0.5)))
+	view.add_window(Rect2(Vector2.ZERO, Vector2(ow + pad * 2.0, h)), other_title)
+	var bw := minf(ow + pad * 2.0 - 16.0, 200.0)
+	view.add_button(Txt.t("UI_BOX_TAKE_ALL"), Rect2(Vector2((ow + pad * 2.0 - bw) * 0.5, h - BUTTON_H - 10.0), Vector2(bw, BUTTON_H)), func() -> void:
+		if not view.send_all(1, 0):
+			view.flash = "UI_BOX_FULL"
+			view.queue_redraw())
+	view.custom_minimum_size = Vector2(right + pad, h)
 
 
 ## The two windows bring their own frames: the dialogue holding them goes bare (no panel of its own) and stands centred.
