@@ -1067,7 +1067,7 @@ func _new_dialog(text: String) -> VBoxContainer:
 	# event dialogues stand right above the diamond, menus at the top ([USER] 2026-11-01: one standard place); the same
 	# size as on the explore maps, so it is the exact same screen
 	if _menu_open:
-		UiTheme.keep_inside(_dialog, hud.clear_rect)  # never spills off the screen; shrinks to fit when it must
+		UiTheme.centre_menu(_dialog, hud.clear_rect)  # the middle of the play area; shrinks to fit when it must
 	else:
 		MenuKit.pointer(_dialog.get_child(0))
 		UiTheme.at_diamond(_dialog, hud.clear_rect)

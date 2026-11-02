@@ -446,11 +446,12 @@ static func _pack_full(box: VBoxContainer, changed: Callable, close: Callable) -
 			Game.refresh_party()
 			Game.save_adventure()
 			changed.call()])
-	buttons.append([Txt.t("UI_LEAVE_REST"), func() -> void:
-		run.leave_found()
+	var drop := func() -> void:  # LEAVE REST HERE and the X ([USER] 2026-11-02: closing leaves the items on the ground,
+		run.leave_found()  # where an explore map keeps them as a pile until the party leaves: RunState.on_left_found)
 		Game.save_adventure()
-		close.call()])
-	var made := ContainerUi.windows(view, run.found, Txt.t("UI_FOUND"), buttons, false)
+		close.call()
+	buttons.append([Txt.t("UI_LEAVE_REST"), drop])
+	var made := ContainerUi.windows(view, run.found, Txt.t("UI_FOUND"), buttons, false, "", null, drop)
 	view.tooltip_text = Txt.t("UI_PACK_FULL")  # [USER] 2026-11-01 fewer words: the window's title says it, the line waits on hover
 	if bag != null:
 		made[0].disabled = bag.items.is_empty()

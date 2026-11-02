@@ -40,7 +40,15 @@ func _draw() -> void:
 		var dim := state == 1
 		if not dim and not NO_MARK_KINDS.has(String(t.kind)):
 			can_use[c] = true
-		_thing(String(t.kind), p, dim, not dim and use.get("id") == t.id and use.cell == t.cell, not board.grid.prop_at(c).is_empty())
+		var pile := String(t.kind) == "container" and String(t.get("type", "")) == "pile"
+		var foe := String(t.get("body", "")) if pile else ""  # the main foe's class id (ExploreScene._main_foe_down)
+		if foe != "":  # loot left after a fight: the main foe lies where it fell ([USER] 2026-11-02)
+			figs[c] = _figure.bind(StringName(foe), dim, _time, true)
+			low[c] = true
+		else:
+			_thing(String(t.kind), p, dim, not dim and use.get("id") == t.id and use.cell == t.cell, not board.grid.prop_at(c).is_empty())
+		if pile and not dim:  # loot on the ground sparkles; an opened chest with things left in it doesn't
+			_sparkles(p + Vector2(0, -10))
 		if String(t.kind) == "companion":
 			# a companion stands at home while benched ([USER] pc-10: walk up to invite them)
 			# (recruit_<id>: the playtest line-up in the square, 2026-10-31: everyone with art waits there)
@@ -111,6 +119,20 @@ func _figure(ci: CanvasItem, p: Vector2, who: StringName, dim: bool, time: float
 	var tone := Color(0.55, 0.55, 0.55) if dim else (Color(0.78, 0.78, 0.8) if fallen and not lying else Color.WHITE)
 	ci.draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, tone)
 	ci.draw_set_transform(Vector2.ZERO)
+
+
+## Loot on the ground: a few small four-point stars that wink in turn, cream and gold. Graybox until art.
+func _sparkles(p: Vector2) -> void:
+	for i in 5:
+		var o: Vector2 = [Vector2(-16, -6), Vector2(11, -18), Vector2(18, 2), Vector2(-5, -26), Vector2(2, 4)][i]
+		var a := clampf(0.25 + sin(_time * 3.2 + i * 1.3), 0.0, 1.0)
+		if a <= 0.05:
+			continue
+		var r := 3.0 + 5.0 * a
+		var col := Color(1.0, 0.93, 0.6, a) if i % 2 == 0 else Color(1.0, 1.0, 0.9, a)
+		draw_colored_polygon(PackedVector2Array([p + o + Vector2(0, -r), p + o + Vector2(r * 0.28, -r * 0.28), p + o + Vector2(r, 0),
+			p + o + Vector2(r * 0.28, r * 0.28), p + o + Vector2(0, r), p + o + Vector2(-r * 0.28, r * 0.28), p + o + Vector2(-r, 0),
+			p + o + Vector2(-r * 0.28, -r * 0.28)]), col)
 
 
 const FALLEN_TURN := -PI * 0.5  ## a fallen companion lies on his side: the standing figure turned a quarter

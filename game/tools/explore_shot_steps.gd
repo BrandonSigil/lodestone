@@ -362,9 +362,23 @@ func run(s: Node, f: int, step: String) -> bool:
 				s._open_menu("lodestone")
 				s.hud.flash_saved()  # the cue a bookmark shows (saving is off in shots)
 			return f == 30
-		"pack_full":
+		"pile_body":
+			# Loot left after a fight ([USER] 2026-11-02): the main foe lying where it fell, sparkles on it; beside it,
+			# things set down from FOUND ITEMS (a pile with no foe), sparkling too.
+			if f == 5:
+				var game: Node = s.get_node("/root/Game")
+				game.save_enabled = false
+				var c: Vector2i = s.leader().cell
+				for k in 2:
+					var g := InventoryGrid.create(3, 3)
+					ContainerUi.fill_grid(g, "potion:2;rope:1")
+					var t: Dictionary = s.call("_pile_thing", "pile_shot_%d" % k, c + (Vector2i(2, 1) if k == 0 else Vector2i(-1, 2)), "dummy" if k == 0 else "")
+					s.things.append(t)
+					s._boxes[String(t.id)] = {"grid": g, "unlocked": true, "disarmed": true, "tried": false, "spent": false}
+			return f == 40
+		"pack_full", "found_left":
 			# A pickup with no room, as two windows: the pack with the dog's saddlebag beside it and THROW AWAY under them;
-			# FOUND in its own window.
+			# FOUND in its own window (found_left: then its X, the things set down where the party stands).
 			if f == 5:
 				var game: Node = s.get_node("/root/Game")
 				game.save_enabled = false  # a shot never writes the real save
@@ -376,6 +390,11 @@ func run(s: Node, f: int, step: String) -> bool:
 				run.add_item("rope", 1)
 				run.add_item("potion", 2)
 				run.add_item("tonic", 1)  # a kind with no icon: it must show its name, not a blank slot
+			if step == "found_left":
+				if f == 30:
+					(s.get_node("/root/Game").get("run") as RunState).leave_found()
+					(s.get("_menu_close") as Callable).call()
+				return f == 60
 			return f == 30
 		"eat":
 			# EAT pressed in the PACK box: the party cards show who would gain what (the dog met, the hero hurt).
@@ -618,9 +637,9 @@ func run(s: Node, f: int, step: String) -> bool:
 				s.call("_rebuild_party")
 				s.call("_level_up_flow", 0 if step == "levelup" else 1)
 			return f == 40
-		"win", "win_lv", "win_mid", "win4":
+		"win", "win_lv", "win_mid", "win4", "win_pile":
 			# the victory screen: a crypt fight won at once (win_lv: the hero and the dog a step from a level; win_mid:
-			# the bars still filling)
+			# the bars still filling; win_pile: CONTINUE pressed with the loot left, the main foe lying on the map with it)
 			if f == 5:
 				var game: Node = s.get_node("/root/Game")
 				game.save_enabled = false  # a shot never writes the real save
@@ -639,7 +658,7 @@ func run(s: Node, f: int, step: String) -> bool:
 						ls.level = 2 if id == "lead" else 1  # the hero to an odd level (stats roll), the dog to an even (a pick)
 						game.meta.levels[id] = ls
 				s.call("_rebuild_party")
-				if step == "win4":
+				if step == "win4" or step == "win_pile":
 					s.groups[0].def["loot"] = "food:+6;potion:2;rope:1;herb:2;gold:+40"
 				s.grid.set_terrain(Vector2i(26, 18), CombatGrid.T.ROAD)
 				_thing(s, "gate").done = true
@@ -656,6 +675,19 @@ func run(s: Node, f: int, step: String) -> bool:
 					elif u.hp > 3:
 						u.hp -= 3  # a scratch or two to show on the HP bars
 				b._check_end()
+			if step == "win_pile":
+				if f == 158:  # the foe's cell in sight, so the loot stays on its body
+					for u: CombatUnit in s.battle.units:
+						if u.team == 1:
+							s.board.fog[u.cell] = 2
+				if f == 160:
+					s._dialog.call("_press_first")  # the bars filled: CONTINUE, the loot stays on the map
+				if f == 170:  # walk up beside it and look
+					for t in s.things:
+						if String(t.id).begins_with("pile_"):
+							_put(s, t.cell + Vector2i(-1, -1))
+							s.call("_reveal_around", [t.cell], 3)
+				return f == 230
 			return f == (40 if step == "win_mid" else 160)
 		"deploy", "fight":
 			if f == 5:

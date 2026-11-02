@@ -304,12 +304,16 @@ static func bare(box: Control, view: Control = null) -> void:
 	if n == null:
 		return
 	var panel := n as PanelContainer
+	panel.set_meta("menu", true)  # windows, not a prompt: the middle of the play area, wherever the host put the box
+	for c in panel.get_child(0).get_children() if panel.get_child_count() > 0 else []:
+		if c is MenuKit._Pointer:  # and no point down at the diamond
+			c.queue_free()
 	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	if panel.has_meta("frame_x"):  # its windows carry their own X's
 		(panel.get_meta("frame_x") as Control).visible = false
 	if view != null and panel.is_inside_tree():  # decided now, before the pop-in tween takes the scale as its target
 		var vs := panel.get_viewport_rect().size
-		var room := Vector2(vs.x - 32.0, vs.y - FRAME_ROOM - 16.0)  # a menu stands at the top, 16 down
+		var room := Vector2(vs.x - 32.0, vs.y - FRAME_ROOM - 16.0)  # a menu stands in the middle of the play area
 		var need := view.get_combined_minimum_size()
 		var k := minf(UiTheme.KIT_SCALE, minf(room.x / maxf(need.x, 1.0), room.y / maxf(need.y, 1.0)))
 		panel.scale = Vector2(k, k)
@@ -322,8 +326,11 @@ static func _centre_later(panel: Control) -> void:
 	await panel.get_tree().process_frame
 	if not is_instance_valid(panel) or not panel.is_inside_tree():
 		return
+	if panel.has_meta("fit_k"):  # kept inside the play area by the host (UiTheme.keep_inside): it places it
+		return
 	panel.reset_size()
-	panel.position.x = (panel.get_viewport_rect().size.x - panel.size.x * panel.scale.x) * 0.5
+	var vs := panel.get_viewport_rect().size  # the middle of the play area above the bottom frame ([USER] 2026-11-02)
+	panel.position = ((Vector2(vs.x, vs.y - FRAME_ROOM + 16.0) - panel.size * panel.scale) * 0.5).floor()
 
 
 ## A character's portrait (art/source/portraits/<id>.png), or null before Brandon has drawn one.

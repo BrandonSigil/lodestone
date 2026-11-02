@@ -232,7 +232,7 @@ static func pop_in_later(c: Control) -> void:
 ## centred across, its top at the area's top (`top`) or standing on its foot, and scaled down from `base` whenever it
 ## would spill over. Runs again each time the box changes size (a menu rebuilt, a detail filled in). `area` returns
 ## the Rect2 the box may use.
-static func keep_inside(c: Control, area: Callable, base := KIT_SCALE, top := true) -> void:
+static func keep_inside(c: Control, area: Callable, base := KIT_SCALE, top := true, centred := false) -> void:
 	var fit := func() -> void:
 		if not is_instance_valid(c) or not c.is_inside_tree():
 			return
@@ -245,7 +245,10 @@ static func keep_inside(c: Control, area: Callable, base := KIT_SCALE, top := tr
 		c.set_meta("fit_k", k)  # pop_in grows to this even when the box changes size while it opens
 		c.scale = Vector2(k, k)
 		c.position.x = roundf(r.get_center().x - c.size.x * k * 0.5)
-		c.position.y = roundf(r.position.y + FIT_MARGIN if top else r.end.y - FIT_MARGIN - c.size.y * k)
+		if centred or c.has_meta("menu"):  # a menu (ContainerUi.bare marks its paired windows) always sits in the middle
+			c.position.y = roundf(r.get_center().y - c.size.y * k * 0.5)
+		else:
+			c.position.y = roundf(r.position.y + FIT_MARGIN if top else r.end.y - FIT_MARGIN - c.size.y * k)
 	c.resized.connect(fit)
 	fit.call()
 
@@ -255,6 +258,12 @@ const FIT_MARGIN := 12.0
 ## just too big everywhere"): every window that fits itself to its room grows to this, not to full size, so text, slots,
 ## bars and buttons all come down together.
 const KIT_SCALE := 0.9
+
+
+## The one standard place for menus ([USER] 2026-11-02: "make sure that Menus have a reliable location. Like total center
+## of the play screen (besides the combat taskbar UI)"): centred both ways in the play area above the bottom frame.
+static func centre_menu(c: Control, area: Callable, base := KIT_SCALE) -> void:
+	keep_inside(c, area, base, true, true)
 
 
 ## The one standard place for dialogue and action prompts ([USER] 2026-11-01: "let's put all dialogue/actions/ right above
