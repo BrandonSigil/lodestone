@@ -17,9 +17,13 @@ const ICONS := "res://art/source/icons/"
 const STAT_ICON := {"hp": "potion", "damage": "strength", "armor": "shield", "magic": "rare", "crit": "focus"}
 const CARD_W := 246.0
 const FACE := 60.0
-const LOOT_CELL := 70.0  ## the loot and pack grids' cell size here
+const LOOT_CELL := 70.0  ## the loot and pack grids' cell size here, unless _cell fits them to the party column
+const CELL_MIN := 56.0
+const CELL_MAX := 84.0
 const FILL_TIME := 1.1  ## seconds an XP bar takes to fill (a level up rolls it over and goes on)
 const BAR_LABEL := 88.0  ## room for a bar's name (CHARGES, MORALE)
+const FOOT_H := 48.0  ## the foot row's chips and buttons
+const CARD_PAD := 16.0  ## a party card's inner margin left and right
 const MIN_SCALE := 0.8  ## the smallest the window shrinks to before its inside scrolls
 const STAGGER := 0.18  ## each card starts this much after the one before
 const XP_GOLD := Color(0.98, 0.8, 0.32)
@@ -120,19 +124,19 @@ func _ready() -> void:
 		var l := _label(end, 20)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_page.add_child(l)
-	# the foot goes under the loot and the pack, level with the party cards' foot (the window's own foot stays empty)
+	# the foot goes under the loot and the pack, level with the party cards' foot (the window's own foot stays empty):
+	# EXP and GOLD then the buttons, on its right
 	_foot.get_parent().visible = false
-	var push := Control.new()
+	var push := Control.new()  # the foot row level with the party column's foot
 	push.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(push)
 	_foot = HBoxContainer.new()
-	_foot.alignment = BoxContainer.ALIGNMENT_END
 	_foot.add_theme_constant_override("separation", 12)
 	right.add_child(_foot)
 	var gap := Control.new()
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_foot.add_child(gap)
-	_summary(_foot)  # EXP and GOLD in the foot beside the buttons: the window stays short enough to show full size
+	_summary(_foot)  # the take beside the button that takes it, at the button's height
 	_buttons()
 	_win.resized.connect(_fit)
 	_holder.resized.connect(_fit)
@@ -195,13 +199,15 @@ func _skip_or_go() -> void:
 ## were knocked out either"): EXP and the gold. The loot's things wait in the loot window under it.
 func _summary(col: Control) -> void:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	row.add_theme_constant_override("separation", 10)
 	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	col.add_child(row)
-	row.add_child(MenuKit.chip(Txt.f("UI_VIC_EXP", int(r.get("xp", 0))), "star_guide", XP_GOLD, "", 18))
+	var chips := [MenuKit.chip(Txt.f("UI_VIC_EXP", int(r.get("xp", 0))), "star_guide", XP_GOLD, "", 18)]
 	if int(r.get("coins", 0)) > 0:
-		row.add_child(MenuKit.chip(Txt.f("UI_VIC_GOLD", int(r.coins)), "gold", XP_GOLD, Txt.t("UI_PACK_GOLD_TIP"), 18))
+		chips.append(MenuKit.chip(Txt.f("UI_VIC_GOLD", int(r.coins)), "gold", XP_GOLD, Txt.t("UI_PACK_GOLD_TIP"), 18))
+	for c: Control in chips:
+		c.custom_minimum_size.y = FOOT_H  # one height across the foot row
+		row.add_child(c)
 
 
 ## The loot window, sized to the loot, with the pack under it to drag things into (ContainerUi.stacked).
@@ -214,11 +220,23 @@ func _loot(col: VBoxContainer) -> void:
 	grid.rows = maxi(grid.rows, Game.run.pack.rows)  # level with the pack
 	var view := PackView.new()
 	view.sections = true  # LOOT and PACK as sections of this one window (mockup D)
-	view.setup_bag(Game.run.pack, Db.items, Callable(), LOOT_CELL)
+	view.setup_bag(Game.run.pack, Db.items, Callable(), _cell(col, grid.rows))
 	ContainerUi.stacked(view, grid, Txt.t("UI_LOOT_TITLE"))
 	if r.get("changed") is Callable and (r.changed as Callable).is_valid():
 		view.changed.connect(r.changed)
 	col.add_child(view)
+	view.stretch_sections()  # the grids under their headings, one foot row under them
+
+
+## The loot and pack cells sized so their grids fill the party column's height: no dead felt between the grids and the
+## card's foot row (look check, 2026-11-02). Between CELL_MIN and CELL_MAX; LOOT_CELL when the column isn't laid out.
+func _cell(col: Control, rows: int) -> float:
+	var left := col.get_parent().get_child(0) as Control  # the party column, built first
+	var h := left.get_combined_minimum_size().y if left != null else 0.0
+	if h <= 0.0 or rows <= 0:
+		return LOOT_CELL
+	var chrome := PackView.WINDOW_TITLE + 8.0 + PackView.NOTE_CHIP_H + 4.0  # heading, foot row, a hair of room
+	return clampf(floorf((h - FOOT_H - 12.0 - chrome) / rows), CELL_MIN, CELL_MAX)
 
 
 func _party(into: Control) -> void:
@@ -235,6 +253,12 @@ func _party(into: Control) -> void:
 func _card(m: Dictionary) -> Control:
 	var card := PanelContainer.new()
 	card.theme_type_variation = &"KitCard"
+	var sb := card.get_theme_stylebox("panel", "KitCard")
+	if sb != null:  # a little more room inside than the kit's default card
+		sb = sb.duplicate()
+		sb.content_margin_left = maxf(sb.content_margin_left, CARD_PAD)
+		sb.content_margin_right = maxf(sb.content_margin_right, CARD_PAD)
+		card.add_theme_stylebox_override("panel", sb)
 	card.custom_minimum_size.x = CARD_W
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 6)
@@ -366,16 +390,17 @@ func _buttons() -> void:
 	var row := _foot
 	for b: Array in buttons:
 		var btn := MenuKit.primary(String(b[0]), b[1], 21, 210.0) if _first == null else Button.new()
+		btn.custom_minimum_size.y = FOOT_H
 		if _first != null:
 			btn.text = String(b[0])
-			btn.custom_minimum_size = Vector2(210, 52)
+			btn.custom_minimum_size = Vector2(210, FOOT_H)
 			btn.add_theme_font_size_override("font_size", 20)
 			btn.pressed.connect(b[1])
 		row.add_child(btn)
 		if _first == null:
 			_first = btn
-	var clear := Control.new()  # clear of the frame's corner leaves (the round 2 CONTINUE flag)
-	clear.custom_minimum_size = Vector2(30, 0)
+	var clear := Control.new()  # level with the pack card's right edge (its card is inset 8 px), clear of the corner leaves
+	clear.custom_minimum_size = Vector2(8, 0)
 	row.add_child(clear)
 	var under := Control.new()
 	under.custom_minimum_size = Vector2(0, 10)

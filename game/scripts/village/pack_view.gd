@@ -52,6 +52,8 @@ var notes: Array[Dictionary] = []  ## lines of text in a window: {"text", "at" (
 const NOTE_LINE := 24.0
 var gold_note := {}  ## in windows: the party's gold under the pack, kept current when coins come over (one of `notes`)
 var flash_at := Vector2(-1, -1)  ## where the flash line goes in windows; unset, it sits under everything
+var saddle_inset := false  ## as sections: the dog's saddlebag (the grid with a round face) stands in its own inset
+const INSET_PAD := 12.0
 
 
 func _init() -> void:
@@ -100,7 +102,25 @@ static func head_room(label: String, portrait: Texture2D) -> float:
 func move_area(k: int, at: Vector2) -> void:
 	areas[k].at = at + Vector2(0, head_room(String(areas[k].label), areas[k].get("portrait")))
 	areas[k].face_at = at
+	_place_face(k)
 	_fit_size()
+
+
+## Grid k's picture as the kit's round portrait (the win screen's saddlebag) instead of the small square one.
+func round_face(k: int, id: String, px: float) -> void:
+	var p := MenuKit.portrait(id, px, true)
+	p.size = Vector2(px, px)
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.tooltip_text = String(areas[k].label)
+	add_child(p)
+	areas[k]["face_node"] = p
+	_place_face(k)
+
+
+func _place_face(k: int) -> void:
+	var p: Control = areas[k].get("face_node")
+	if p != null:
+		p.position = areas[k].face_at
 
 
 ## A framed window behind some grids, its title on a plate at the top.
@@ -133,49 +153,48 @@ func add_note(text: String, at: Vector2, width: float, icon: Texture2D = null) -
 	return maxi(1, ceili(h / f.get_height(15)))
 
 
-## As sections (the win screen): the section cards stand as tall as the view (the party column beside them), the loot
-## (area 1) centred in its card and TAKE ALL at the card's foot. Runs when the view is given its height.
+## As sections (the win screen): every grid starts right under its card's heading, and one foot row sits under the
+## tallest grid, holding TAKE ALL under the loot and the party's gold chip under the pack. The cards end just under it,
+## all the same height, so no card holds dead felt (look check, 2026-11-02).
 func stretch_sections() -> void:
 	if not sections or windows.size() < 2 or areas.size() < 2:
 		return
-	var h := size.y
-	for w in windows:
-		var r: Rect2 = w.rect
-		w.rect = Rect2(r.position, Vector2(r.size.x, maxf(r.size.y, h - r.position.y)))
-	var take: Button = null
-	for b in get_children():
-		if b is Button and (b as Button).text == Txt.t("UI_BOX_TAKE_ALL"):
-			take = b
-	var foot := h - 10.0
-	if take != null:
-		take.position.y = h - take.size.y - 14.0
-		foot = take.position.y
+	var top := WINDOW_TITLE + 8.0
 	var loot: Dictionary = areas[1]
-	var g: InventoryGrid = loot.bag
-	var top := WINDOW_TITLE + 20.0
-	var y := top + maxf(0.0, (foot - top - g.rows * cell) * 0.5)
-	if absf(float((loot.at as Vector2).y) - y) > 0.5:
-		move_area(1, Vector2((loot.at as Vector2).x, y))
-	# the pack's grids (area 0, the saddlebag after the loot) and its gold line, down to the middle of their card
-	if not has_meta("pack_home"):
-		var home := {"faces": [], "note": (gold_note.get("at", Vector2.ZERO) as Vector2) if not gold_note.is_empty() else Vector2.ZERO}
+	if absf(float((loot.at as Vector2).y) - top) > 0.5:
+		move_area(1, Vector2((loot.at as Vector2).x, top))
+	# the pack's grids (area 0, the saddlebag after the loot) as one block, its top under the heading
+	var gt := INF
+	for k in areas.size():
+		if k != 1:
+			gt = minf(gt, float((areas[0].at as Vector2).y))  # the pack grid leads; the saddlebag inset is as tall
+	var dy := roundf(top - gt)
+	if absf(dy) > 0.5:
 		for k in areas.size():
-			home.faces.append(areas[k].face_at)
-		set_meta("pack_home", home)
-	var home: Dictionary = get_meta("pack_home")
+			if k != 1:
+				areas[k].at = (areas[k].at as Vector2) + Vector2(0, dy)
+				areas[k].face_at = (areas[k].face_at as Vector2) + Vector2(0, dy)
+				_place_face(k)
 	var low := 0.0
 	for k in areas.size():
-		if k != 1:
-			low = maxf(low, _rect_of(areas[k]).end.y - (float((areas[k].face_at as Vector2).y) - float((home.faces[k] as Vector2).y)))
+		low = maxf(low, _rect_of(areas[k]).end.y)
+	var foot := low + 16.0
+	var mid := foot + NOTE_CHIP_H * 0.5  # the foot row's centre line
+	for b in get_children():
+		if b is Button and (b as Button).text == Txt.t("UI_BOX_TAKE_ALL"):
+			(b as Button).position.y = roundf(mid - (b as Button).size.y * 0.5)
+	var h := foot + NOTE_CHIP_H + 16.0
+	for w in windows:
+		var r: Rect2 = w.rect
+		w.rect = Rect2(r.position, Vector2(r.size.x, h - r.position.y))
 	if not gold_note.is_empty():
-		low = maxf(low, float((home.note as Vector2).y) + NOTE_LINE)
-	var dy := maxf(0.0, (h - 16.0 - low) * 0.5)
-	for k in areas.size():
-		if k != 1:
-			move_area(k, (home.faces[k] as Vector2) + Vector2(0, dy))
-	if not gold_note.is_empty():
-		gold_note.at = (home.note as Vector2) + Vector2(0, dy)
-		flash_at.y = gold_note.at.y
+		var card: Rect2 = windows[0].rect  # the pack's card: the chip centred across it, as TAKE ALL is in the loot's
+		var cw := get_theme_default_font().get_string_size(String(gold_note.text), HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x + 62.0
+		gold_note.at = Vector2(roundf(card.get_center().x - cw * 0.5), roundf(mid - NOTE_CHIP_H * 0.5))
+		flash_at = Vector2(gold_note.at.x + cw + 14.0, mid)
+	var want := Vector2(custom_minimum_size.x, h)
+	if not custom_minimum_size.is_equal_approx(want):
+		custom_minimum_size = want
 	queue_redraw()
 
 
@@ -415,17 +434,29 @@ func _draw() -> void:
 	for w in windows:
 		_draw_window(w.rect, String(w.title))
 	for n in notes:  # a line of text, after its icon when it has one (the gold a fight or a box gave)
+		if n.get("chip", false):
+			_draw_chip_note(n)
+			continue
 		var nx := 0.0
 		if n.get("icon") != null:
 			draw_texture_rect(n.icon, Rect2(n.at + Vector2(0, -3), Vector2(24, 24)), false)
 			nx = 30.0
 		draw_multiline_string(Riso.font(), n.at + Vector2(nx, 15), String(n.text), HORIZONTAL_ALIGNMENT_LEFT, n.width - nx, 15, -1,
 			get_theme_color("font_color", "Label"))
+	if saddle_inset and areas.size() > 0:  # as tall as the pack grid, holding the dog's face and his bag
+		var r0 := _rect_of(areas[0])
+		for a in areas:
+			if a.has("face_node"):
+				var g := _rect_of(a)
+				var box := Rect2(Vector2(g.position.x - INSET_PAD, r0.position.y), Vector2(g.size.x + INSET_PAD * 2.0, r0.size.y))
+				draw_style_box(MenuKit.flat(Color(MenuKit.INSET, 0.55), Color(MenuKit.TEXT, 0.16), 1.0, 10, 0.0, 0.0), box)
 	var bottom := 0.0
 	for k in areas.size():
 		var a := areas[k]
 		draw_bag(self, a.bag, db, a.at, cell, true, held if k == held_area else -1)
-		if a.get("portrait") != null:  # the picture is the grid's name: no words
+		if a.has("face_node"):
+			pass  # its round portrait is a child control
+		elif a.get("portrait") != null:  # the picture is the grid's name: no words
 			_draw_face(a.portrait, Rect2(a.face_at, Vector2(FACE, FACE)))
 		elif a.label != "":
 			Riso.draw_label(self, a.label, a.at - Vector2(0, LABEL_H * 0.55), 13, label_color)
@@ -461,6 +492,22 @@ func _draw() -> void:
 				draw_rect(cr.grow(-4), Riso.alpha(Riso.INK if ok else Riso.RED, 0.18))
 		draw_item(self, it.id, db, cells, top_left, cell, it.bound != "", 0.85)
 		_draw_count(self, cells, top_left, cell, int(it.get("n", 1)))
+
+
+const NOTE_CHIP_H := 38.0  ## a note drawn as a kit chip (the party's gold on the win screen)
+
+## A note as a kit chip: its icon, then its words, in a dark pill.
+func _draw_chip_note(n: Dictionary) -> void:
+	var f := get_theme_default_font()
+	var px := 18
+	var tw := f.get_string_size(String(n.text), HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
+	var r := Rect2(n.at, Vector2(tw + 62.0, NOTE_CHIP_H))
+	var sb := get_theme_stylebox("panel", "KitChip")
+	if sb != null:
+		draw_style_box(sb, r)
+	if n.get("icon") != null:
+		draw_texture_rect(n.icon, Rect2(r.position + Vector2(12, (NOTE_CHIP_H - 24.0) * 0.5), Vector2(24, 24)), false)
+	draw_string(f, Vector2(r.position.x + 44.0, r.get_center().y + px * 0.36), String(n.text), HORIZONTAL_ALIGNMENT_LEFT, -1, px, MenuKit.TEXT)
 
 
 ## A window: the dialogue's own painted frame, its title on the long thin plate at the top. As `sections` (the win

@@ -200,6 +200,8 @@ static func windows(view: PackView, other: InventoryGrid, other_title: String, b
 ## TAKE ALL across its bottom edge; the pack (the courier's saddlebag beside it) in a window under it, the party's gold
 ## under the pack. `other` is area 1 (a click there sends to the pack), the saddlebag area 2.
 const SECTION_PAD := 20.0
+const SADDLE_GAP := 34.0  ## between the pack and the dog's saddlebag on the win screen (room for his bag's inset)
+const SADDLE_FACE := 46.0  ## the dog's round face over his saddlebag there
 
 static func stacked(view: PackView, other: InventoryGrid, other_title: String) -> void:
 	var run := Game.run
@@ -250,27 +252,32 @@ static func _beside(view: PackView, other: InventoryGrid, other_title: String, p
 	var cell := view.cell
 	view.add_area(other, Vector2.ZERO, "", null, 0)  # area 1, the loot (TAKE ALL sends 1 to 0); placed below
 	var saddle: InventoryGrid = run.open_courier_bag()
-	var head := 0.0  # the saddlebag's picture stands beside its grid, so every grid starts right under the heading
 	var x0 := ow + pad * 2.0 + GAP
 	var top := Vector2(x0 + pad, pad + PackView.WINDOW_TITLE)
 	var right := top.x + run.pack.cols * cell
-	var bottom := top.y + head + run.pack.rows * cell
-	view.move_area(0, top + Vector2(0, head))
+	var bottom := top.y + run.pack.rows * cell
+	view.move_area(0, top)
 	view.areas[0]["click_to"] = 1
-	if saddle != null:
-		var at := Vector2(right + PackView.FACE + 26.0, top.y)
+	if saddle != null:  # the dog's bag beside the pack in its own inset, his round face over it, the pair centred
+		var block := SADDLE_FACE + 8.0 + saddle.rows * cell
+		var gy := top.y + maxf(0.0, (run.pack.rows * cell - block) * 0.5) + SADDLE_FACE + 8.0
+		var at := Vector2(right + SADDLE_GAP, gy)
 		var who: CharacterDef = run.courier().def
 		view.add_area(saddle, at, Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)), face_of(String(who.id)), 0)
 		var sk := view.areas.size() - 1
-		view.areas[sk].at = at  # the grid at the top, its picture to its left
-		view.areas[sk].face_at = at - Vector2(PackView.FACE + 10.0, 0)
-		right = at.x + saddle.cols * cell
-		bottom = maxf(bottom, top.y + saddle.rows * cell)
-	view.add_note(str(run.gold), Vector2(top.x, bottom + 8.0), right - top.x, ActionInfo.icon("gold"))
+		view.areas[sk].at = at
+		view.areas[sk].face_at = at + Vector2((saddle.cols * cell - SADDLE_FACE) * 0.5, -SADDLE_FACE - 8.0)
+		view.round_face(sk, String(who.id), SADDLE_FACE)
+		view.saddle_inset = true
+		right = at.x + saddle.cols * cell + PackView.INSET_PAD  # the inset's own margin inside the card
+		bottom = maxf(bottom, gy + saddle.rows * cell)
+	# the party's gold as a chip at the card's foot, level with TAKE ALL (stretch_sections puts it there)
+	view.add_note(str(run.gold), Vector2(top.x, bottom + 14.0), right - top.x, ActionInfo.icon("gold"))
 	view.gold_note = view.notes.back()
-	view.flash_at = Vector2(top.x + 90.0, bottom + 8.0)
-	bottom += PackView.NOTE_LINE + 8.0
-	var h := maxf(maxf(oh, bottom + pad), pad + PackView.WINDOW_TITLE + other.rows * cell + 14.0 + BUTTON_H + 12.0)
+	view.gold_note["chip"] = true
+	view.flash_at = Vector2(top.x + 120.0, bottom + 24.0)
+	bottom += 14.0 + BUTTON_H
+	var h := maxf(maxf(oh, bottom + 14.0), pad + PackView.WINDOW_TITLE + other.rows * cell + 14.0 + BUTTON_H + 12.0)
 	view.add_window(Rect2(Vector2(x0, 0), Vector2(right + pad - x0, h)), Txt.t("UI_PACK"))
 	# the loot: centred across, right under its heading, TAKE ALL right under it
 	view.move_area(1, Vector2(pad + (ow - other.cols * cell) * 0.5, pad + PackView.WINDOW_TITLE))
