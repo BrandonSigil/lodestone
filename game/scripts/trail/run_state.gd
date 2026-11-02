@@ -29,6 +29,7 @@ var opened := {}  ## food kind -> portions left in an item already opened at cam
 var last_picks := {}  ## member id -> the food kind they ate last night (the camp picker's SAME AS LAST NIGHT)
 var meals_eaten := 0  ## camp meals this run
 var on_pickup := Callable()  ## (id, n) after something is added to the pack: Game says when it counts toward a goal
+var on_left_found := Callable()  ## (grid) FOUND left on the ground of the map the party is on (ExploreScene): it stays there until the party leaves
 var away: Array[Dictionary] = []  ## members sent home with a bag: {"member": Dictionary, "bag": InventoryGrid}
 ## What the party carries in the pack and on its belts, id -> count (gear bound to a member left out).
 ## Read-only: change it with add_item.
@@ -197,11 +198,17 @@ func send_home(m: Dictionary) -> void:
 	note(Txt.f("LOG_SENT_HOME", Txt.t((m.def as CharacterDef).name_key)))
 
 
-## Anything still in FOUND stays where the party stands, for good. (The saddlebag is part of the inventory: it stays.)
+## Anything still in FOUND is left where the party stands. On an explore map it lies there as a pile the player can
+## reopen after freeing room, until the party leaves the map ([USER] 2026-11-02, ui-found-items-close); anywhere
+## else it is gone. (The saddlebag is part of the inventory: it stays.)
 func leave_found() -> void:
 	var n := 0
 	for it in found.items:
 		n += int(it.get("n", 1))
+	if n > 0 and on_left_found.is_valid():
+		var ground := InventoryGrid.create(FOUND_COLS, FOUND_ROWS)
+		ground.items = found.items.duplicate(true)
+		on_left_found.call(ground)
 	found.items.clear()
 	if n > 0:
 		note(Txt.f("LOG_LEFT_BEHIND", n))

@@ -71,6 +71,8 @@ func _ready() -> void:
 	Game.explore_from = ""
 	if map.map_name == "village":
 		Game.home_again()
+	Game.run.on_left_found = func(g: InventoryGrid) -> void: _drop_pile(g)  # FOUND closed: it waits on the ground here
+	tree_exiting.connect(func() -> void: Game.run.on_left_found = Callable())
 	grid = map.grid
 	board = CombatBoard.new()
 	board.grid = grid
@@ -144,7 +146,7 @@ func _ready() -> void:
 			g["relented"] = true
 	var done_before: Array = memory.get("done", [])
 	for p: Dictionary in memory.get("piles", []):  # what fights left on the floor of this map, while the party is still on it
-		things.append(_pile_thing(String(p.id), Vector2i(int(p.cell[0]), int(p.cell[1]))))
+		things.append(_pile_thing(String(p.id), Vector2i(int(p.cell[0]), int(p.cell[1])), String(p.get("body", ""))))
 	for t in map.things:
 		var copy := t.duplicate()
 		copy["done"] = done_before.has(t.id) or _once_done(t)
@@ -1649,6 +1651,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		mode = M.OVER
 		return
 	var loot_items := ""  # what the group's loot gives in food, medicine and things: the shared loot grid
+	var body := _main_foe_down(foes)  # a boss or leader down: the loot lies on him ([USER] 2026-11-02)
 	var loot_coins := 0
 	var downed := 0
 	var standing := 0
@@ -1732,7 +1735,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 			_refresh_hud()
 	_victory(rep, [[Txt.t("UI_CONTINUE"), func() -> void:
 		if grid != null and not grid.items.is_empty():
-			_drop_pile(grid)
+			_drop_pile(grid, body)
 		_level_up_flow(0)]])
 
 
@@ -1790,18 +1793,52 @@ func _loot_flow(items: String, coins: int) -> void:
 var _pile_no := 0
 
 
-## What a fight's loot left behind: a pile container where the leader stands (kept in the map's memory while the party is here).
-func _drop_pile(grid: InventoryGrid) -> void:
+## What a fight's loot or FOUND left behind: a pile container, kept in the map's memory while the party is here. It lies
+## on the main foe's body when `body` has one ({"cls", "cell"} from _main_foe_down), else where the leader stands.
+func _drop_pile(grid: InventoryGrid, body := {}) -> void:
 	_pile_no += 1
-	var t := _pile_thing("pile_%d_%d" % [Time.get_ticks_msec(), _pile_no], leader().cell)
+	var at: Vector2i = body.get("cell", leader().cell)
+	var t := _pile_thing("pile_%d_%d" % [Time.get_ticks_msec(), _pile_no], at, String(body.get("cls", "")))
 	things.append(t)
 	_boxes[String(t.id)] = {"grid": grid, "unlocked": true, "disarmed": true, "tried": false, "spent": false}
 	_remember()
 
 
-func _pile_thing(id: String, cell: Vector2i) -> Dictionary:
+## `body`: the class id of the main foe the pile lies on ("" for a plain pile), so the board draws him down there.
+func _pile_thing(id: String, cell: Vector2i, body := "") -> Dictionary:
 	return {"id": id, "kind": "container", "type": "pile", "event": "", "cell": cell, "floor": "s", "to": "", "at": Vector2i(-1, -1),
-		"once": "", "when": "", "items": "", "locked": false, "trapped": false, "key": "", "done": false}
+		"once": "", "when": "", "items": "", "locked": false, "trapped": false, "key": "", "done": false, "body": body}
+
+
+## The main foe of the beaten groups who went down (a boss first, else a group's leader) as {"cls", "cell"}; {} if none.
+func _main_foe_down(foes: Array) -> Dictionary:
+	var pick: CombatUnit = null
+	for f: Dictionary in foes:
+		for u: CombatUnit in f.units:
+			if u.alive() or not (u.boss or u.leader):
+				continue
+			if pick == null or (u.boss and not pick.boss):
+				pick = u
+	return {} if pick == null else {"cls": String(pick.cls.id), "cell": pick.cell}
+
+
+## Hook for the board and HUD: what is left on this map right now, one entry per pile or opened container that still
+## holds something: {"id", "type" ("pile", "chest" ...), "cell", "count" (items), "body" (main foe's class id or "")}.
+## Piles (fight loot, FOUND) get loot sparkles, a pile with a body shows him down; an opened chest shows as it is.
+func left_here() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var kept: Dictionary = Game.explore_memory.get(map.map_name, {}).get("containers", {})
+	for t in things:
+		if t.kind != "container" or not (_boxes.has(String(t.id)) or kept.has(String(t.id))):
+			continue  # never opened: not left, just there
+		var g: InventoryGrid = _box_of(t).grid
+		if g.items.is_empty():
+			continue
+		var n := 0
+		for it in g.items:
+			n += int(it.get("n", 1))
+		out.append({"id": String(t.id), "type": String(t.type), "cell": t.cell, "count": n, "body": String(t.get("body", ""))})
+	return out
 
 
 ## The level-up screen ([USER] 2026-10-31): after the fight, one box for each member that levelled, its stat gains and,
@@ -2102,7 +2139,7 @@ func _remember() -> void:
 	var piles := []
 	for t in things:
 		if String(t.id).begins_with("pile_"):
-			piles.append({"id": t.id, "cell": [t.cell.x, t.cell.y]})
+			piles.append({"id": t.id, "cell": [t.cell.x, t.cell.y], "body": String(t.get("body", ""))})
 	Game.explore_memory[map.map_name] = {"seen": seen.duplicate(), "done": done, "groups": settled, "containers": boxes, "piles": piles}
 
 

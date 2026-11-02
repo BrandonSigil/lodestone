@@ -13,7 +13,9 @@ Game designer, 2026-10-31. Approved by Brandon on `design-loot-present` (`[USER]
 ## Leftovers (Brandon's rule)
 What you leave in a container or pile stays while you are on that map, even after you clear it, so you can go back to room A. Leaving the map (the gate, a wake-up, GO HOME) ends it: the leftovers are gone and are not refilled. Items you took stay taken (the lasting-reward flags `got_<map>_<thing>` are unchanged). Open question for him: a half-emptied container refilling on a new visit; do not build refills.
 - Road fights: the valley is left on CONTINUE, so what does not fit goes to the FOUND box (4 x 2, as today) and anything past that is lost. `[AI]`.
-- The old FOUND overflow on pickups that are not containers is unchanged.
+- FOUND ITEMS (a pickup with no room) on an explore map: closing it or LEAVE THE REST lays what is left on the ground as a pile where the party stands, so the player can use potions or food to free room and reopen it; it goes when the party leaves the map ([USER] 2026-11-02, ui-found-items-close; `RunState.on_left_found`, set by `ExploreScene`). Off an explore map (the overworld) LEAVE THE REST still leaves it for good.
+- A beaten group's loot pile lies on its main foe's body (a boss first, else the group's leader, `ExploreScene._main_foe_down`), with the body's class id on the pile (`body`), so the board can draw him down there with loot sparkles. Other piles lie where the party stands.
+- Hook for the board and HUD: `ExploreScene.left_here()` lists every pile and opened container on the map that still holds something: `{id, type, cell, count, body}`. Piles get sparkles; an opened chest with things left shows as it is, no sparkles ([USER] 2026-11-02).
 
 ## After-fight summary
 Shown when a fight is won, before control returns. Uses only what is tracked today.

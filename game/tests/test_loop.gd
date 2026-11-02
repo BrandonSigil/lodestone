@@ -603,6 +603,54 @@ func test_settled_groups_stay_settled() -> void:
 	Game.explore_map = "home"
 
 
+## [USER] 2026-11-02 (ui-found-items-close): FOUND left behind waits on the map's ground as a pile the player can reopen,
+## through a door and back, until the party leaves the map; a main foe's loot lies on his body.
+func test_left_loot_stays_on_the_map() -> void:
+	_db()
+	Game.save_enabled = false
+	Game.reset_meta()
+	Game.run = null
+	var tree := Engine.get_main_loop() as SceneTree
+	Game.explore_memory.clear()
+	Game.explore_map = "snow_pass"
+	Game.explore_entry = Vector2i(-1, -1)
+	var s: Node = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	Game.run.found.put("rope", RunState.shape_of("rope"), 2, RunState.stack_of("rope"))
+	Game.run.leave_found()
+	ok(not Game.run.overfull(), "FOUND is empty: nothing keeps the pack screen open")
+	var left: Array[Dictionary] = s.left_here()
+	eq(left.size(), 1, "one pile on the ground")
+	eq([left[0].type, left[0].count, left[0].body], ["pile", 2, ""], "the two ropes, no body")
+	var lich := CombatUnit.enemy(Db.class_def("lich"))
+	lich.boss = true
+	lich.hp = 0
+	lich.cell = Vector2i(3, 4)
+	var grunt := CombatUnit.enemy(Db.class_def("bandit"))
+	grunt.hp = 0
+	var body: Dictionary = s._main_foe_down([{"units": [grunt, lich]}])
+	eq(body, {"cls": "lich", "cell": Vector2i(3, 4)}, "the boss is the main foe down")
+	var loot := InventoryGrid.create(4, 4)
+	loot.put("potion", RunState.shape_of("potion"), 1, RunState.stack_of("potion"))
+	s._drop_pile(loot, body)
+	s.free()
+	ok(not Game.run.on_left_found.is_valid(), "off the map, FOUND no longer lands there")
+	s = load("res://scenes/explore.tscn").instantiate()  # back through a door: same visit
+	tree.root.add_child(s)
+	left = s.left_here()
+	eq(left.size(), 2, "both piles are still there")
+	var on_him := left.filter(func(l: Dictionary) -> bool: return l.body == "lich")
+	ok(on_him.size() == 1 and on_him[0].cell == Vector2i(3, 4), "the loot lies on the Lich")
+	s.free()
+	Game.explore_memory.clear()  # the party left the map (_finish_map)
+	s = load("res://scenes/explore.tscn").instantiate()
+	tree.root.add_child(s)
+	ok(s.left_here().is_empty(), "a new visit: what was left is gone")
+	s.free()
+	Game.explore_memory.clear()
+	Game.explore_map = "home"
+
+
 ## Playtester bug 01 (2026-10-29): a second start_fight while a fight was on made a second Battle, and the
 ## first one played on with no owner, throwing script errors when it ended. One fight at a time.
 func test_one_fight_at_a_time() -> void:
