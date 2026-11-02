@@ -698,6 +698,24 @@ func test_the_ai_helps_a_teammate_up() -> void:
 	ok(p.ability != null and p.ability.kind == "revive" and p.aim == knight.cell, "the party AI picks AID")
 
 
+func test_aid_is_worth_what_the_friend_does_and_less_each_time() -> void:
+	# The Lich flip (docs/design/outing-tuning.md): AID was a flat score, so one point of a boss's armor decided
+	# between striking and helping up a dog he downs every phase.
+	var g := CombatGrid.flat(6, 3)
+	var knight := _unit("knight", 0, Vector2i(1, 1), g)
+	var bandit := _unit("bandit", 1, Vector2i(2, 1), g)
+	var units := [knight, _unit("hunter", 0, Vector2i(3, 1), g), bandit]
+	knight.hp = 0
+	knight.bleed = 2
+	var first := EnemyAi.revive_worth(g, knight, units)
+	ok(first > EnemyAi.REVIVE_SCORE, "worth more than the base when the friend can hit someone once up")
+	bandit.armor += 3
+	ok(EnemyAi.revive_worth(g, knight, units) < first, "a foe's armor lowers AID with the friend's hit, as it lowers STRIKE")
+	bandit.armor -= 3
+	knight.raised = 1
+	ok(absf(EnemyAi.revive_worth(g, knight, units) - first * 0.5) < 0.01, "helped up once already: half")
+
+
 # --- helping strikes ([USER] c15, c19, combat build step 4) --------------------------------------
 
 func test_a_corner_pair_teams_up() -> void:

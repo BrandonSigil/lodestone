@@ -65,7 +65,7 @@ Combat, the loop, water, saves, the UI code, tools and tests in the Godot 4.7.2 
 
 ## Systems lane (2026-11-02)
 - Brandon picked three lanes (docs/systems/studio.md). This role is now **Systems**: rules, data numbers, morale, food, combat, balance and their tests. Screen work goes to the UI lane, and maps, plots, events and game text go to the Content lane.
-- Open: the Lich flip (docs/design/outing-tuning.md, "Why one armor flips the sword"). The party AI's AID score versus STRIKE decides the throne fight. This waits on Brandon's answer to dev-balance-run-review before anything is tuned. Tools: `tools/outing_sim.gd` with `boss_hp=`, `boss_armor=`, `boss_dmg=`, `SIM_WEAPON=`, `SIM_DEBUG=1`, and `SIM_TRACE=1` (each AI turn). In zsh pass variants as `${=v}`.
+- Done: the Lich flip. AID is now worth what the friend does once up, halved for each AID it already had this fight (`EnemyAi.revive_worth`, `CombatUnit.raised`); the Lich is HP 42, armor 1, damage 7 for 6 / 8 / 7% first-try wins (docs/design/outing-tuning.md, "AI fix and Lich tuning"). Card `dev-lich-ai-fix` is on the desk. Next if he says yes: the second try is 79 to 93% against 25 to 50%, so tune what a fall gives back. Tools: `tools/outing_sim.gd` with `boss_hp=` (%), `boss_armor=` and `boss_dmg=` (both added to his numbers), `SIM_WEAPON=`, `SIM_DEBUG=1`, `SIM_TRACE=1` (each AI turn). In zsh pass variants as `${=v}`. 60 runs a build is ±4 points; confirm close steps at 200 (about 12 minutes, 8 runs in parallel is fine on this Mac).
 - Done today: the menu kit, the snow cliff road, X17 the lodestone nudge, morale is hunger, level up and fishing on the kit, X19 fishing as a full screen.
 
 ## Uncommitted work

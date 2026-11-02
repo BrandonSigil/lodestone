@@ -722,6 +722,7 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 				if t.downed() and raises(a):  # MEND on a downed friend: up again at its heal amount
 					t.hp = mini(t.max_hp, heal_amount(u, a))
 					t.bleed = 0
+					t.raised += 1
 					events.append({"type": "revive", "src": u, "unit": t, "amount": t.hp})
 					continue
 				var before := t.hp
@@ -733,6 +734,7 @@ static func resolve(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit,
 				if t.downed():
 					t.hp = aid_hp(t)
 					t.bleed = 0
+					t.raised += 1
 					events.append({"type": "revive", "src": u, "unit": t, "amount": t.hp})
 			"knockout":
 				if t.downed():

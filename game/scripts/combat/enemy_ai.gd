@@ -7,7 +7,7 @@ const KILL_BONUS := 15.0
 const HEIGHT_PULL := 1.5
 const COUNTER_FEAR := 3.0  ## how much it dislikes eating a counterattack (damage taken counts less than damage dealt)
 const GUARD_SCORE := 4.0  ## guard when hurt and nothing better to do
-const REVIVE_SCORE := 40.0  ## helping a downed teammate up beats most hits
+const REVIVE_SCORE := 12.0  ## AID's base worth: a friend back on the board; on top comes what it will do once up (revive_worth)
 const KNOCKOUT_SCORE := 12.0  ## a downed foe kept down for the fight: about a solid hit's worth
 const COST_WEIGHT := 0.4  ## how much a point of mana, rage or charge weighs against a skill's worth
 const TAUNT_RANGE := 5
@@ -284,7 +284,7 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 			"heal":
 				s += e.heal * 6.0 if t.team == u.team else -e.heal * 6.0
 			"revive":
-				s += REVIVE_SCORE if t.team == u.team else 0.0
+				s += revive_worth(grid, t, units) if t.team == u.team else 0.0
 			"knockout":
 				s += KNOCKOUT_SCORE if t.team != u.team else 0.0
 			"buff":
@@ -296,6 +296,36 @@ static func score(grid: CombatGrid, u: CombatUnit, a: Ability, aim: Vector2i, un
 	if a.res_cost > 0:
 		s += 2.0 - a.res_cost * COST_WEIGHT  # spend the job's resource when a skill is good, not only strikes
 	return s
+
+
+## What AID on downed friend `t` is worth, on the attack score's scale (10 a point of damage): the base, plus the
+## best hit t can make once up, twice over if no foe can down it again before its next phase. Each earlier AID on t
+## this fight halves it, so a piece that is knocked down every phase is not helped up forever while the boss
+## wins the race (the Lich flip, docs/design/outing-tuning.md). Strike and AID now move together with a foe's armor.
+static func revive_worth(grid: CombatGrid, t: CombatUnit, units: Array) -> float:
+	var up := CombatRules.aid_hp(t)
+	var hit := 0.0
+	var again := false
+	for f: CombatUnit in units:
+		if not f.alive() or f.team == t.team or f.has_trait(CombatRules.TRAIT_STRUCTURE):
+			continue
+		var d := CombatRules.dist(t.cell, f.cell)
+		if d <= t.move + CombatRules.ability_range(t, null).y:
+			hit = maxf(hit, CombatRules.expected_damage(grid, t, f, t.cell, null, units))
+		if not again and d <= f.move + _best_reach(f):
+			for a: Ability in f.abilities:
+				if a.kind == "attack" and CombatRules.usable(f, a) and CombatRules.damage_range(grid, f, t, f.cell, a, units).y >= up:
+					again = true
+					break
+	return (REVIVE_SCORE + hit * 10.0 * (1.0 if again else 2.0)) * pow(0.5, t.raised)
+
+
+static func _best_reach(f: CombatUnit) -> int:
+	var r := CombatRules.ability_range(f, null).y
+	for a: Ability in f.abilities:
+		if a.hostile():
+			r = maxi(r, CombatRules.ability_range(f, a).y)
+	return r
 
 
 ## What ending the move on `cell` costs in free hits from guards u walks away from, on the attack score's

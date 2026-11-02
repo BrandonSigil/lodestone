@@ -23,6 +23,7 @@ var hp := 1:
 					m.crumbled = true
 					m.hp = 0
 var bleed := 0  ## own phases left to be helped up while downed; 0 = standing, or out for the fight
+var raised := 0  ## times helped up this fight (the party AI values each new AID on the same piece less)
 var tint := Color.GRAY
 var deficiency: StringName = &""
 var skills: Dictionary = {}

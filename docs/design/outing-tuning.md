@@ -91,3 +91,32 @@ What it shows: daggers and bow beat the Lich on the first try about 9 times in 1
 
 **Why one armor flips the sword (found 2026-11-02, `SIM_TRACE=1` prints every AI turn's choice and score).** In the throne fight the Lich opens on Doggo and downs him. Each turn the sword hero then weighs STRIKE on the Lich against AID (stand Doggo back up). AID's score stays put (about 62); STRIKE's falls with the Lich's armor (about 68 at armor 2, 56 at armor 3). At armor 2 the hero strikes every turn, Doggo stays down, and the Lich wins the damage race (2%). At armor 3 the hero revives every turn instead; the Lich spends every turn re-downing Doggo with FIREBOLT while Doggo's bites and a fresh hero wear him down (87%). So the win rate hangs on a scoring threshold between two choices, not on how strong anyone is. The fix belongs in the party AI's AID scoring (how much a revive is worth against a boss's damage race), and the balance table should be rerun once that is settled; then the Lich's numbers can be tuned.
 
+
+## AI fix and Lich tuning, 2026-11-02 (Systems lane)
+**The fix.** AID was a flat 40 (about 62 with the move terms) whatever the friend would do once up, so it beat STRIKE exactly when a foe's armor pushed STRIKE under it. Now AID is worth what the friend does: a base of 12, plus the friend's best hit on the attack scale, doubled if no foe can knock it down again before its next phase, and halved for each AID it already had this fight (`EnemyAi.revive_worth`, `CombatUnit.raised`). The traced throne fight now plays the same at armor 2, 4 and 5: the hero helps Doggo up once, then strikes.
+
+**The batch after the fix** (`tools/outing_sim.gd -- 60 8 foe_hp=70`, every variant in one go; `boss_armor` and `boss_dmg` add to his numbers). Try 1 / try 2:
+
+| variant (Lich) | sword | daggers | bow |
+| --- | --- | --- | --- |
+| as shipped (38 HP, armor 2, damage 6) | 7% / 98% | 13% / 75% | 3% / 91% |
+| armor +1 | 0% / 85% | 2% / 46% | 0% / 47% |
+| armor +2 | 0% / 33% | 0% / 17% | 0% / 7% |
+| HP 110% | 2% / 95% | 8% / 65% | 0% / 85% |
+| HP 125% | 0% / 85% | 2% / 53% | 0% / 70% |
+| HP 150% | 0% / 52% | 0% / 38% | 0% / 42% |
+| HP 175% | 0% / 27% | 0% / 23% | 0% / 23% |
+| HP 200% | 0% / 12% | 0% / 7% | 0% / 5% |
+| armor +1, HP 125% | 0% / 42% | 0% / 28% | 0% / 22% |
+| damage +1 | 3% / 88% | 3% / 64% | 0% / 78% |
+| damage +2 | 2% / 66% | 2% / 42% | 0% / 67% |
+| damage +1, HP 125% | 0% / 62% | 0% / 37% | 0% / 50% |
+| damage +1, HP 150% | 0% / 18% | 0% / 20% | 0% / 27% |
+| road foes 80% | 13% / 94% | 7% / 71% | 2% / 97% |
+| road foes 80%, HP 125% | 2% / 71% | 0% / 48% | 0% / 78% |
+
+Every row now moves smoothly with the number: no more 2% to 87% jumps. Close steps at 200 runs a build (try 1): as shipped 6 / 11 / 2; HP 95% 10 / 13 / 3; HP 105% 3 / 10 / 2; armor 1 and HP 125% 6 / 11 / 5; armor 1 and HP 130% 5 / 10 / 4; armor 0 and HP 150% 9 / 13 / 14; **armor 1, HP 110%, damage +1: 6 / 8 / 7.**
+
+**Landed:** the Lich (`data/classes/lich.tres`) is HP 42 (was 38), armor 1 (was 2), damage 7 (was 6). Confirmed at 200 runs a build on the written data: sword 6%, daggers 8%, bow 7% on the first try, all inside 5 to 10%. Less armor and more HP means every hit counts against him (the bow's and daggers' small hits most), and one more damage keeps the race short.
+
+**Still open:** the second try is far over its 25 to 50% target (sword 93%, daggers 79%, bow 91%). A fall sends the party home with its levels and his card learned, and that alone nearly wins it. That is the next tuning job (how much a fall gives back), not the Lich's numbers.
