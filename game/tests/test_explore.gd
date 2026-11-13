@@ -319,6 +319,77 @@ func test_free_walk_slides_and_rounds_corners() -> void:
 	ok(is_equal_approx(p.y, 1.9), "a one-level step is fine: %s" % p)
 
 
+## Walking feel (2026-11-13): the screen vectors of one grid step on x and y with the camera unturned.
+const EX := Vector2(32, 16)
+const EY := Vector2(-32, 16)
+
+
+func test_two_keys_walk_straight_along_the_grid() -> void:
+	var w := ExploreRules.key_dir(Vector2(0, -1), EX, EY)
+	ok(w.is_equal_approx(Vector2(-1, -1).normalized()), "W walks straight up the screen (a grid diagonal): %s" % w)
+	var wd := ExploreRules.key_dir(Vector2(1, -1), EX, EY)
+	ok(wd.is_equal_approx(Vector2(0, -1)), "W+D walks straight along a street, not into its wall: %s" % wd)
+	var sa := ExploreRules.key_dir(Vector2(-1, 1), EX, EY)
+	ok(sa.is_equal_approx(Vector2(0, 1)), "S+A the other way: %s" % sa)
+	var turned := ExploreRules.key_dir(Vector2(1, -1), Vector2(32, -16), EX)  # a quarter turn of the camera
+	ok(is_equal_approx(absf(turned.x) + absf(turned.y), 1.0), "still a straight grid line after a turn: %s" % turned)
+
+
+func test_up_and_down_dont_crawl() -> void:
+	var across := ExploreRules.key_dir(Vector2(1, 0), EX, EY)
+	var up := ExploreRules.key_dir(Vector2(0, -1), EX, EY)
+	var px_across := (EX * across.x + EY * across.y).length() * ExploreRules.walk_speed(across, EX, EY)
+	var px_up := (EX * up.x + EY * up.y).length() * ExploreRules.walk_speed(up, EX, EY)
+	ok(is_equal_approx(px_up / px_across, 0.75), "up the screen is 3/4 of across, not 1/2: %.2f" % (px_up / px_across))
+	ok(is_equal_approx(ExploreRules.walk_speed(across, EX, EY), ExploreRules.WALK_SPEED), "across is WALK_SPEED")
+
+
+func test_walking_eases_in_and_out() -> void:
+	var top := Vector2(ExploreRules.WALK_SPEED, 0)
+	var v := Vector2.ZERO
+	var t := 0.0
+	while v != top and t < 1.0:
+		v = ExploreRules.ease_vel(v, top, 1.0 / 120.0)
+		t += 1.0 / 120.0
+	ok(t >= ExploreRules.START_TIME - 0.01 and t <= ExploreRules.START_TIME + 0.01, "full speed after START_TIME: %.3f" % t)
+	t = 0.0
+	while v != Vector2.ZERO and t < 1.0:
+		v = ExploreRules.ease_vel(v, Vector2.ZERO, 1.0 / 120.0)
+		t += 1.0 / 120.0
+	ok(t <= ExploreRules.STOP_TIME + 0.01, "stops within STOP_TIME: %.3f" % t)
+
+
+func test_facing_follows_the_real_move() -> void:
+	eq(ExploreRules.face_of(Vector2(0.3, 0.0), Vector2i(1, -1)), Vector2i(1, 0), "faces where it goes, not the key")
+	eq(ExploreRules.face_of(Vector2(1.0, 0.45), Vector2i(1, 0)), Vector2i(1, 0), "a slant within 30 degrees keeps the facing")
+	eq(ExploreRules.face_of(Vector2(1.0, 0.9), Vector2i(1, 0)), Vector2i(1, 1), "a real turn changes it")
+
+
+func test_feet_walk_up_a_step() -> void:
+	var g := CombatGrid.flat(4, 3)
+	g.set_height(Vector2i(2, 1), 1)
+	var at := Vector2i(1, 1)
+	eq(ExploreRules.ground_h(g, at, Vector2(1.5, 1.5), 1), 0.0, "the middle of a cell is its own height")
+	var near := ExploreRules.ground_h(g, at, Vector2(1.999, 1.5), 1)
+	var over := ExploreRules.ground_h(g, Vector2i(2, 1), Vector2(2.001, 1.5), 1)
+	ok(absf(near - 0.5) < 0.01 and absf(over - 0.5) < 0.01, "both sides of the edge meet halfway: %.3f %.3f" % [near, over])
+	var half := ExploreRules.ground_h(g, at, Vector2(1.875, 1.5), 1)
+	ok(half > 0.0 and half < 0.5, "it rises over the last bit of the cell: %.3f" % half)
+	g.set_height(Vector2i(2, 1), 3)
+	eq(ExploreRules.ground_h(g, at, Vector2(1.95, 1.5), 1), 0.0, "a cliff it can't climb doesn't pull the feet up")
+
+
+func test_eases_into_a_doorway_one_lane_over() -> void:
+	# A wall along x = 3 with a one-cell gap at y = 2; the walker is in the lane beside it (y = 1), near the gap.
+	var g := CombatGrid.flat(6, 5)
+	for y in [0, 1, 3, 4]:
+		g.set_terrain(Vector2i(3, y), CombatGrid.T.ROCK)
+	var p := Vector2(2.7, 1.95)
+	for i in 30:
+		p = ExploreRules.slide(g, p, Vector2(0.08, 0.0), ExploreRules.BODY, 1)
+	ok(p.x > 3.5, "slips through the gap instead of sticking on its post: %s" % p)
+
+
 func test_walk_paths_take_diagonals() -> void:
 	var g := CombatGrid.flat(8, 8)
 	var p := ExploreRules.find_path(g, Vector2i(0, 0), Vector2i(5, 5), 1, {}, {}, true)

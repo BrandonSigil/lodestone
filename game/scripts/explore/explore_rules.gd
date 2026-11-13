@@ -492,8 +492,84 @@ static func _open(grid: CombatGrid, c: Vector2i, blocked: Dictionary, known: Dic
 
 # --- free walking (WASD) ------------------------------------------------------------
 
-const WALK_SPEED := 5.0  ## cells a second, on keys and along clicked paths
+## How walking feels (Brandon, 2026-11-13: "not getting clipped on things, my character moves the way I expect
+## them too, they move at a pace that's reasonable"). Tuning knobs; docs/systems/explore.md "Walking feel".
+const WALK_SPEED := 4.5  ## cells a second across the screen (A/D); up and down get UPDOWN_BOOST on top
+const UPDOWN_BOOST := 0.5  ## extra grid speed going up or down the screen: the flat 2:1 view halves it there, this brings it to 3/4
+const START_TIME := 0.07  ## seconds from standing to full speed on keys
+const STOP_TIME := 0.05  ## seconds from full speed to standing (and to turn right round)
+const STEP_BLEND := 0.25  ## the feet ease up or down a step over this much of a cell on each side of its edge
+const CORNER_REACH := 0.6  ## a corner this close to the body's lane is eased round (a doorway one lane over too)
 const BODY := 0.26  ## the leader's half-width in cells: what bumps into walls on keys
+
+
+## A screen move as the same move across the grid, given the screen vectors of one grid step along x (`ex`) and
+## y (`ey`) at the current camera turn.
+static func screen_to_grid(d: Vector2, ex: Vector2, ey: Vector2) -> Vector2:
+	var det := ex.x * ey.y - ey.x * ex.y
+	return Vector2((d.x * ey.y - ey.x * d.y) / det, (ex.x * d.y - ex.y * d.x) / det)
+
+
+## The grid direction held keys walk (`want`: x from A/D, y from W/S, each -1, 0 or 1), length 1. One key walks
+## straight up, down or across the screen (a grid diagonal); two keys add up to a straight grid line, the way
+## streets, walls and doorways run, so W+D walks down a street instead of 18 degrees into its wall.
+static func key_dir(want: Vector2, ex: Vector2, ey: Vector2) -> Vector2:
+	var g := Vector2.ZERO
+	if want.x != 0.0:
+		g += screen_to_grid(Vector2(signf(want.x), 0.0), ex, ey).normalized()
+	if want.y != 0.0:
+		g += screen_to_grid(Vector2(0.0, signf(want.y)), ex, ey).normalized()
+	return g.normalized()
+
+
+## Walking speed in grid cells a second along grid direction `dir`: WALK_SPEED across the screen, more going up
+## or down it so the walker doesn't crawl there (screen speed up/down is 3/4 of across instead of 1/2).
+static func walk_speed(dir: Vector2, ex: Vector2, ey: Vector2) -> float:
+	var s := (ex * dir.x + ey * dir.y).normalized()
+	return WALK_SPEED * (1.0 + UPDOWN_BOOST * s.y * s.y)
+
+
+## Ease a walking velocity toward `target` (both grid cells a second): quick to start, quicker to stop or turn round.
+static func ease_vel(vel: Vector2, target: Vector2, delta: float) -> Vector2:
+	var rate := WALK_SPEED / START_TIME
+	if target == Vector2.ZERO or vel.dot(target) < 0.0:
+		rate = WALK_SPEED / STOP_TIME
+	return vel.move_toward(target, rate * delta)
+
+
+## The way a walker faces when moving by `move`: one of the eight grid directions. It keeps `facing` while the
+## move stays within 30 degrees of it, so sliding along a wall at a slant doesn't flicker between two facings.
+static func face_of(move: Vector2, facing: Vector2i) -> Vector2i:
+	var n := move.normalized()
+	if facing != Vector2i.ZERO and n.dot(Vector2(facing).normalized()) > 0.866:
+		return facing
+	return Vector2i(roundi(n.x), roundi(n.y))
+
+
+## The height the walker's feet stand at, at `pos` (cell units) on place `at`: the place's height, easing toward a
+## neighbour's over the last STEP_BLEND of the cell, so a step or stair is walked up instead of popped. Both sides
+## of an edge meet at the halfway height, so the feet never jump. Only neighbours the walker can step onto count.
+static func ground_h(grid: CombatGrid, at: Vector2i, pos: Vector2, jump: int) -> float:
+	var h := float(grid.height_at(at))
+	var g := CombatGrid.ground(at)
+	var out := h
+	for axis in 2:
+		var f := clampf(pos[axis] - g[axis], 0.0, 1.0)
+		var side := Vector2i.ZERO
+		var edge := 0.0
+		if f > 1.0 - STEP_BLEND:
+			side[axis] = 1
+			edge = 1.0 - f
+		elif f < STEP_BLEND:
+			side[axis] = -1
+			edge = f
+		else:
+			continue
+		var n := grid.step_place(at, g + side, jump)
+		if n == CombatGrid.NO_PLACE or n == at:
+			continue
+		out += (grid.height_at(n) - h) * 0.5 * (1.0 - edge / STEP_BLEND)
+	return out
 
 
 ## WASD walking is free, not cell by cell: move a body of half-width `body` from `pos` by `move` (cell units,
@@ -516,10 +592,8 @@ static func slide(grid: CombatGrid, pos: Vector2, move: Vector2, body: float, ju
 			p = q
 			continue
 		var side := 1 - axis
-		var lane := floorf(p[side]) + 0.5
-		var straight := q
-		straight[side] = lane
-		if absf(p[side] - lane) > 0.01 and body_fits(grid, from, straight, body, jump, blocked):
+		var lane := _open_lane(grid, from, p, q, side, body, jump, blocked)
+		if not is_nan(lane):
 			p[side] = move_toward(p[side], lane, absf(d))  # a corner, not a wall: ease round it
 			continue
 		for i in 4:  # a wall: close up to it
@@ -529,6 +603,22 @@ static func slide(grid: CombatGrid, pos: Vector2, move: Vector2, body: float, ju
 			if body_fits(grid, from, q, body, jump, blocked):
 				p = q
 	return p
+
+
+## The middle of the nearest lane (its own, or the one beside it on the near side) within CORNER_REACH that the
+## blocked move `p` -> `q` would fit through straight; NAN when there is none (a wall, not a corner).
+static func _open_lane(grid: CombatGrid, from: Vector2i, p: Vector2, q: Vector2, side: int, body: float, jump: int, blocked: Dictionary) -> float:
+	var own := floorf(p[side]) + 0.5
+	var next := own + (1.0 if p[side] > own else -1.0)
+	for lane in [own, next]:
+		var off := absf(p[side] - lane)
+		if off <= 0.01 or off > CORNER_REACH:
+			continue
+		var straight := q
+		straight[side] = lane
+		if body_fits(grid, from, straight, body, jump, blocked):
+			return lane
+	return NAN
 
 
 ## Does a body centred on `q` touch only cells it may stand in, coming from place `from`?

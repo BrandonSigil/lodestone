@@ -51,6 +51,7 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | M3 | "This map is a MESS, holes everywhere, these stub walls are broken all over the place." (wolf den) | Fix broken walls and see-through walls | done (#99) |
 | M4 | "I think these are stairs but I cant see because theres a wall on the front" | Fix broken walls and see-through walls | done (#99) |
 | M5 | "cant place my character where I want to because the wall is visually infront of it" (deploy) | Fix broken walls and see-through walls | done (#99) |
+| M6 | "Movement still feels a little wonky ... not getting clipped on things, my character moves the way I expect them too, they move at a pace that's reasonable" (WASD on explore maps) | Movement feel thread | built, waiting on his feel test (2026-11-13) |
 
 ### Map maker
 | # | Problem (his words) | Owner | Status |

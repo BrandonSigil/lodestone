@@ -12,7 +12,7 @@ extends Node2D
 
 enum M { WALK, BUSY, DIALOG, DEPLOY, FIGHT, OVER }
 
-const CLIMB_RATE := 10.0  ## levels a second the leader's feet follow the ground on keys
+const CLIMB_RATE := 20.0  ## levels a second the leader's feet can follow the ground on keys (ExploreRules.ground_h eases steps)
 const ZOOM_START := 1.35  ## [USER] 2026-10-29: close in; what's on screen is what the party gets
 const ZOOM_MIN := 1.0
 const ZOOM_MAX := 1.8
@@ -53,6 +53,8 @@ var _info: Label
 var _log_label: Label
 var _phase: Label
 var _keys_walking := false  ## the leader is walking on WASD
+var _vel := Vector2.ZERO  ## the leader's velocity on keys, grid cells a second (eases in and out)
+var _walk_anim := false  ## the walk animation is playing on keys (it idles while held against a wall)
 var _menu_open := false  ## the pack or the Lodestone menu is the open dialog
 var _menu_which := ""  ## which one: "pack", "lodestone", ...
 var _menu_close := Callable()  ## shuts it (I shuts the pack)
@@ -519,16 +521,20 @@ func _on_rotated() -> void:
 
 ## A screen move (pixels at zoom 1) as the same move across the grid at the current camera turn.
 func _screen_to_grid(d: Vector2) -> Vector2:
+	var ax := _axes()
+	return ExploreRules.screen_to_grid(d, ax[0], ax[1])
+
+
+## The screen vectors of one grid step along x and along y at the current camera turn.
+func _axes() -> Array[Vector2]:
 	var o := board.iso(0.0, 0.0, 0.0)
-	var ex := board.iso(1.0, 0.0, 0.0) - o
-	var ey := board.iso(0.0, 1.0, 0.0) - o
-	var det := ex.x * ey.y - ey.x * ex.y
-	return Vector2((d.x * ey.y - ey.x * d.y) / det, (ex.x * d.y - ex.y * d.x) / det)
+	return [board.iso(1.0, 0.0, 0.0) - o, board.iso(0.0, 1.0, 0.0) - o]
 
 
-## WASD walks the leader freely toward the held screen direction (W = up the screen), sliding along walls
-## and easing round corners (ExploreRules.slide). Crossing into a new cell checks sight and enemies, as a
-## step along a clicked path does.
+## WASD walks the leader freely (ExploreRules: key_dir, walk_speed, ease_vel, slide, face_of, ground_h): one key
+## walks straight up, down or across the screen, two keys walk straight along the grid (streets and doorways).
+## It eases in and out, slides along walls and round corners, faces and animates by where it really goes, and
+## walks up steps instead of popping. Crossing into a new cell checks sight and enemies, as a clicked path does.
 func _wasd(delta: float) -> void:
 	var want := Vector2.ZERO
 	if mode == M.WALK:
@@ -541,36 +547,61 @@ func _wasd(delta: float) -> void:
 		if Input.is_key_pressed(KEY_D):
 			want.x += 1
 	var lead := leader()
-	if want == Vector2.ZERO or lead == null:
-		if _keys_walking:
-			_keys_walking = false
-			if lead:
-				board.play_anim(lead, "idle")
+	if mode != M.WALK or lead == null:
+		_vel = Vector2.ZERO
+	if (want == Vector2.ZERO and _vel == Vector2.ZERO) or lead == null:
+		_stop_keys()
 		return
 	if _stepping:
-		_walk_token += 1  # keys take over from a clicked path once its current step lands
+		_vel = Vector2.ZERO
+		if want != Vector2.ZERO:
+			_walk_token += 1  # keys take over from a clicked path once its current step lands
 		return
 	walking_now = false
 	if not _keys_walking:
 		_keys_walking = true
+		_walk_anim = false
 		_walk_token += 1
-		board.play_anim(lead, "walk")
 		board.highlights = {}
 	follow = true
-	var dir := _screen_to_grid(want).normalized()
+	var ax := _axes()
+	var target := Vector2.ZERO
+	if want != Vector2.ZERO:
+		var dir := ExploreRules.key_dir(want, ax[0], ax[1])
+		target = dir * ExploreRules.walk_speed(dir, ax[0], ax[1])
+	_vel = ExploreRules.ease_vel(_vel, target, delta)
 	var at := lead.vis + Vector2(0.5, 0.5)
-	var to := ExploreRules.slide(grid, at, dir * ExploreRules.WALK_SPEED * delta, ExploreRules.BODY, lead.jump, _blocked(), lead.cell)
-	lead.facing = Vector2i(roundi(dir.x), roundi(dir.y))
+	var to := ExploreRules.slide(grid, at, _vel * delta, ExploreRules.BODY, lead.jump, _blocked(), lead.cell)
+	var moved := to - at
+	var speed := moved.length() / delta if delta > 0.0 else 0.0  # what really happened, after walls and corners
+	if speed > ExploreRules.WALK_SPEED * 0.25:
+		lead.facing = ExploreRules.face_of(moved, lead.facing)
+		if not _walk_anim:
+			_walk_anim = true
+			board.play_anim(lead, "walk")
+	elif speed < ExploreRules.WALK_SPEED * 0.1 and _walk_anim:
+		_walk_anim = false  # held against a wall: stand, don't walk on the spot
+		board.play_anim(lead, "idle")
 	lead.vis = to - Vector2(0.5, 0.5)
 	var cell := grid.step_place(lead.cell, Vector2i(to.floor()), lead.jump)
 	if cell == CombatGrid.NO_PLACE:
 		cell = Vector2i(to.floor())
-	lead.vis_h = move_toward(lead.vis_h, float(grid.height_at(cell)), CLIMB_RATE * delta)
+	lead.vis_h = move_toward(lead.vis_h, ExploreRules.ground_h(grid, cell, to, lead.jump), CLIMB_RATE * delta)
 	if cell != lead.cell:
 		lead.cell = cell
 		if _after_step():
-			_keys_walking = false
-			board.play_anim(leader(), "idle")
+			_vel = Vector2.ZERO
+			_stop_keys()
+
+
+## Keys let go (or something stopped the walk): the leader stands.
+func _stop_keys() -> void:
+	if not _keys_walking:
+		return
+	_keys_walking = false
+	_walk_anim = false
+	if leader() != null:
+		board.play_anim(leader(), "idle")
 
 
 ## Weather falls over the whole map in board pixels (the corners at the grid's tallest), so it stays put as the camera moves.
@@ -823,10 +854,12 @@ func _glide(u: CombatUnit, to: Vector2i, spare: float) -> float:
 	var rise := absf(to_h - from_h)
 	if to != u.cell:
 		u.facing = CombatGrid.ground(to) - CombatGrid.ground(u.cell)
+	var ax := _axes()
+	var speed := ExploreRules.walk_speed((dest - from).normalized(), ax[0], ax[1])
 	var gone := spare
 	while gone < length:
 		await get_tree().process_frame
-		gone += get_process_delta_time() * ExploreRules.WALK_SPEED
+		gone += get_process_delta_time() * speed
 		var t := minf(1.0, gone / length)
 		u.vis = from.lerp(dest, t)
 		u.vis_h = lerpf(from_h, to_h, t)
