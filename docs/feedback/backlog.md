@@ -6,6 +6,12 @@ How to use it: when you start on an item, put your thread in **Owner**; when it 
 
 Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#PR)`.
 
+## 2026-11-13 Brandon's playtest (first road fight)
+
+| # | Problem | Owner | Status |
+| --- | --- | --- | --- |
+| P22 | Damage too low in the first wolf fight: "Damage is SO LOW right now, it feels like I had 4-5 turns of smacking 1 wolf for 1 or 2 damage, and it wasnt a fun tactical choice, just us trading blows until someone fell" (his screenshot: the lead and the dog by two grey wolves on an early grass map) | Claude (damage tuning session) | in progress (branch `claude/damage-tuning-e47b23`; numbers and the fix in `docs/systems/combat.md` under "Damage tuning") |
+
 ## 2026-11-13 new-player playtest (Claude, as a first-time player; Brandon approved all fixes)
 How each was fixed: `docs/systems/player-path.md`.
 
