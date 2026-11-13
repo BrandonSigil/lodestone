@@ -15,6 +15,20 @@ Read `docs/context/README.md` first, then `docs/context/current-state.md`. Toget
 - After a change, run `tools/check.sh` (headless import, unit tests, scene smoke runs) and fix every error.
 - Any Godot run that opens a window (the `game/tools/*_shot.gd` screenshot scripts) goes through `tools/godot.sh <args>`, never the bare binary. It runs a private focus-free copy of Godot (built by `tools/nofocus/setup.sh`) that can never become the front app, so Brandon's windows, keyboard and mouse are never touched. Never run a windowed Godot any other way. Headless runs can use either.
 
+## Playtest builds at every major milestone
+Brandon, 2026-11-13: build the Mac and Windows copies "at regular major milestones". A major milestone is any of these:
+- a numbered milestone (M1, M2...) lands;
+- a feature or fix batch Brandon approved is merged to main;
+- before anything goes to friends and family testers.
+
+When one lands:
+1. `tools/check.sh` passes.
+2. Run `tools/export/build.sh all`. It writes `build/mac/Lodestone.zip` and `build/windows/Lodestone.exe`. Headless Godot needs the Bash sandbox off.
+3. Smoke-test the Mac build: unzip it to a scratch folder and run `Lodestone.app/Contents/MacOS/Lodestone --headless --quit-after 300`. It must print only the version line. Any `ERROR` blocks the build, most often a data CSV not imported as "keep".
+4. If you built in a worktree, copy both files into `~/lodestone/build/`, which is gitignored. Tell Brandon where they are and what changed since the last build. Never commit builds.
+
+Details are in `docs/systems/player-path.md` under "Feedback notes and builds".
+
 ## Lodestone Studio (Brandon's home base page)
 - Decisions Brandon owes go on his desk at https://claude.ai/artifact/5NsBvyRP81zBRgAFCANTP5 as cards with screenshots (pick one, or Neither with a why). Picsart batches get a "go" card before the run and a "review" card after, each picture scored against the References wall, for his stamp.
 - At the start of a turn, read answered cards and new notes for your role; mark them done when you've acted. Keep your role's status and log current.
