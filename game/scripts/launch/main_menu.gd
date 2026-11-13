@@ -1,13 +1,16 @@
 class_name MainMenu
 extends Control
-## The player's front door (the game's main scene): the painted world map drifting behind the title, then CONTINUE,
-## NEW GAME, OPTIONS and QUIT. A small DEV TOOLS button (debug builds and Brandon's machines only, Game.dev_available)
+## The player's front door (the game's main scene): Brandon's title painting (the logo is painted in, so the menu draws
+## no title of its own) drifting slowly, with CONTINUE, NEW GAME, OPTIONS and QUIT down the dark trees on the left. A small DEV TOOLS button (debug builds and Brandon's machines only, Game.dev_available)
 ## opens the old launch page with every tool on it; anything started from there runs in dev mode.
 ## Brandon 2026-11-13: "there should be a main menu player path, with ... the Dev Tools menu that if you click it opens
 ## all of our other tools we currently have on that main launch page".
 
-const BACKDROP := "res://art/source/world/world_map_v1.png"
+const BACKDROP := "res://art/source/ui/menu/title_screen.webp"  ## Brandon 2026-11-13: "Make this the menu screen"
 const DRIFT_SECONDS := 60.0  ## one slow pan across the painting and back
+const DRIFT := 0.04  ## how much wider than the screen the painting is drawn, for the pan
+const COLUMN_X := 0.065  ## the buttons' left edge, as a share of the width: over the dark trees, clear of the logo
+const COLUMN_Y := 0.47  ## the buttons' middle, as a share of the height: above the standing stone
 
 var _art: TextureRect
 var _column: VBoxContainer
@@ -22,18 +25,17 @@ func _ready() -> void:
 	Sfx.music("menu")
 	_art = TextureRect.new()
 	_art.texture = load(BACKDROP) as Texture2D
-	_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_art.stretch_mode = TextureRect.STRETCH_SCALE  # sized in _process: covers the screen, pinned to the top (the logo)
 	_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_art)
-	var shade := TextureRect.new()  # a soft dark vignette, so the buttons read over the painting
+	var shade := TextureRect.new()  # a soft shade down the left only, so the buttons read and the painting stays clear
 	var g := GradientTexture2D.new()
-	g.fill = GradientTexture2D.FILL_RADIAL
-	g.fill_from = Vector2(0.5, 0.45)
-	g.fill_to = Vector2(1.15, 1.1)
+	g.fill_from = Vector2(0, 0)
+	g.fill_to = Vector2(0.42, 0)
 	g.gradient = Gradient.new()
-	g.gradient.set_color(0, Color(0.02, 0.06, 0.07, 0.25))
-	g.gradient.set_color(1, Color(0.02, 0.05, 0.06, 0.8))
+	g.gradient.set_color(0, Color(0.02, 0.04, 0.08, 0.55))
+	g.gradient.set_color(1, Color(0.02, 0.04, 0.08, 0.0))
 	shade.texture = g
 	shade.stretch_mode = TextureRect.STRETCH_SCALE
 	shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -42,28 +44,9 @@ func _ready() -> void:
 	add_child(shade)
 
 	_column = VBoxContainer.new()
-	_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	_column.alignment = BoxContainer.ALIGNMENT_BEGIN
 	_column.add_theme_constant_override("separation", 12)
 	add_child(_column)
-	var plate := PanelContainer.new()
-	plate.theme_type_variation = &"TitlePlate"
-	var title := Label.new()
-	title.theme_type_variation = &"MenuTitle"
-	title.text = Txt.t("UI_MENU_TITLE")
-	title.add_theme_font_size_override("font_size", 64)
-	title.add_theme_color_override("font_color", MenuKit.TEXT)
-	title.add_theme_color_override("font_outline_color", Color(0.02, 0.1, 0.08, 0.9))
-	title.add_theme_constant_override("outline_size", 6)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	plate.add_child(title)
-	var psb := plate.get_theme_stylebox("panel", "TitlePlate").duplicate() as StyleBox
-	psb.content_margin_left = 110.0
-	psb.content_margin_right = 110.0
-	plate.add_theme_stylebox_override("panel", psb)
-	_column.add_child(plate)
-	var gap := Control.new()
-	gap.custom_minimum_size.y = 26
-	_column.add_child(gap)
 	var has_save := _has_save()
 	if has_save:
 		_column.add_child(_centred(MenuKit.primary(Txt.t("UI_MENU_CONTINUE"), _continue, 24, 300)))
@@ -100,11 +83,14 @@ func _process(delta: float) -> void:
 	_t += delta
 	if _art == null or _art.texture == null:
 		return
-	# a slow drift: the painting a little bigger than the screen, panning side to side and a touch up and down
-	var over := size * 0.14
+	# a slow drift: the painting a little wider than the screen, panning side to side. It covers the screen at any
+	# window shape and stays pinned to the top, so the painted logo is never cut; extra height crops the bottom.
+	var tex := _art.texture.get_size()
+	var s := maxf(size.x / tex.x, size.y / tex.y) * (1.0 + DRIFT)
+	_art.size = tex * s
 	var k := 0.5 - 0.5 * cos(_t / DRIFT_SECONDS * TAU)
-	_art.size = size + over
-	_art.position = -Vector2(over.x * k, over.y * (0.3 + 0.4 * sin(_t / DRIFT_SECONDS * PI)))
+	# the same small sway at any window shape, around the picture's middle (a squarer window has more to pan across)
+	_art.position = Vector2(-(_art.size.x - size.x) * 0.5 + size.x * DRIFT * (k - 0.5), 0.0).floor()
 
 
 func _fit() -> void:
@@ -112,7 +98,7 @@ func _fit() -> void:
 	_column.size = need
 	var s := minf(1.0, minf((size.x - 80.0) / maxf(1.0, need.x), (size.y - 80.0) / maxf(1.0, need.y)))
 	_column.scale = Vector2(s, s)
-	_column.position = ((size - need * s) * 0.5).floor()
+	_column.position = Vector2(size.x * COLUMN_X, size.y * COLUMN_Y - need.y * s * 0.5).floor()
 	var foot := get_node_or_null("Foot") as Control
 	if foot:
 		foot.position = Vector2(18, size.y - 34)
