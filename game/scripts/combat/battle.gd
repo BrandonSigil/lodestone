@@ -56,6 +56,7 @@ var _forecast_label: Label
 var _banner: Label
 var _rect := Rect2()
 var _fit_board := true  ## false when the host owns the board's camera (exploration maps)
+var cam: FightCamera  ## the fight's camera on a board this battle owns (null on a borrowed board)
 var _moving := false  ## MOVE picked: the menu is hidden and the reachable tiles are lit
 var _cancel: Button
 var side_below := Callable()  ## (y): the host moves its side box under the test buttons
@@ -94,6 +95,9 @@ func setup(p_grid: CombatGrid, p_units: Array, seed_value: int, strangeness := 0
 		board.backdrop = true
 		board.wallpaper = wallpaper
 		add_child(board)
+		cam = FightCamera.new()
+		cam.board = board
+		add_child(cam)
 	board.units = units
 	board.combat_stance = true  # weapons out while the fight lasts
 	board.cell_clicked.connect(_on_cell_clicked)
@@ -174,7 +178,8 @@ func _build_ui() -> void:
 	_layout_btn.visible = Game.dev_mode
 
 
-## Centre the board in a screen rect at a scale that fits (a borrowed board only places the menus).
+## Place the menus in the play area, and on a board this battle owns, the camera (FightCamera: the first layout
+## frames the pieces; later ones keep the view). A borrowed board only places the menus.
 func layout(r: Rect2) -> void:
 	if board == null:
 		return
@@ -193,14 +198,21 @@ func layout(r: Rect2) -> void:
 	_log_view.place(r, _hud.dock_rect() if _hud != null else Rect2())
 	if not _fit_board:
 		return
-	var bs := board.board_size()
-	var s := minf(r.size.x / bs.x, r.size.y / bs.y) * 0.95
-	s = clampf(s, 0.5, 1.6)
-	board.scale = Vector2.ONE * s
-	board.position = r.position + (r.size - bs * s) * 0.5 - board.board_origin() * s
+	cam.rect = r
+	if not cam._ready_once:
+		cam.frame(units)
+	cam.apply()
 
 
 func _on_rotated() -> void:
+	if cam != null and cam._ready_once:  # the board's points all move on a turn: look at the same piece again
+		var waiting := _ready_units()
+		var at: CombatUnit = selected if selected != null else (waiting[0] if not waiting.is_empty() else null)
+		if at != null:
+			cam.look_at_unit(at)
+			cam.snap()
+		else:
+			cam.frame(units)
 	layout(_rect)
 	if selected and _menu.visible:
 		_place_menu()
@@ -248,6 +260,8 @@ func _start_player_phase() -> void:
 					board.float_text(u.cell, Txt.f("LOG_SPOOKED", ""), Color(0.8, 0.7, 1.0))
 	state = S.IDLE
 	_refresh_danger()
+	if cam != null and round_no > 1:  # a new round: both sides in view again (a foe may have stopped under the dock)
+		cam.frame(units, true)
 	phase_changed.emit(0)
 	changed.emit()
 	if auto_fight:
@@ -333,6 +347,15 @@ func _auto_player_phase() -> void:
 
 ## One piece's turn played by the AI: move, then use a skill or guard.
 func _ai_turn(u: CombatUnit) -> void:
+	if cam != null:  # a foe acting is always in view: the camera goes to it and walks with it
+		cam.track = u
+		cam.show_unit(u)
+	await _ai_act(u)
+	if cam != null:
+		cam.track = null
+
+
+func _ai_act(u: CombatUnit) -> void:
 	var plan := EnemyAi.plan(grid, u, units)
 	var stop := CombatRules.walk_stop(grid, u, plan.path, units)  # a piece on OVERWATCH, or a trap, stops the walk
 	if not stop.is_empty():
@@ -532,6 +555,8 @@ func _use(u: CombatUnit, a: Ability, aim: Vector2i) -> void:
 	_forecast.visible = false
 	log_line.emit("%s: %s" % [Txt.t(u.name_key), Txt.t(a.name_key)])
 	_saw(u, a)
+	if cam != null:  # the one acting and where it aims, both in view (a long shot from off screen)
+		cam.show_cells([u.cell, aim])
 	var events := CombatRules.resolve(rng, grid, u, a, aim, units)
 	# Pushed units are already moved in the rules; draw them where they started until the push plays.
 	for ev in events:
@@ -741,6 +766,9 @@ func _select(u: CombatUnit) -> void:
 	_show_attack_hints()
 	_open_menu()
 	info.emit(unit_text(u))
+	if cam != null:  # the active piece: the camera brings it into view (a pick ends a pan by hand)
+		cam.free = false
+		cam.show_unit(u)
 
 
 func _deselect() -> void:
@@ -1157,6 +1185,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_refresh_danger()
 		KEY_E:
 			end_player_phase()
+		KEY_SPACE:  # the camera back on the active piece
+			if cam != null and selected != null:
+				cam.look_at_unit(selected)
 		KEY_TAB:
 			if is_player_turn() and state != S.TARGET:
 				var waiting := _ready_units()
@@ -1261,7 +1292,11 @@ func _move_selected(c: Vector2i) -> void:
 			_finish_unit()
 		return
 	log_line.emit(Txt.f("LOG_MOVE", [Txt.t(u.name_key), maxi(1, path.size() - 1)]))
+	if cam != null:
+		cam.track = u
 	await board.animate_move(u, path)
+	if cam != null:
+		cam.track = null
 	u.place(c, grid.height_at(c))
 	u.moved = true
 	await _spot(u)
