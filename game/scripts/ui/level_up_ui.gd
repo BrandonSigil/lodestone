@@ -94,7 +94,8 @@ class Screen extends PanelContainer:
 		var holder := Control.new()
 		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(holder)
-		var w := MenuKit.window(Txt.t("UI_LV_TITLE"), _room, _later)
+		# entry.plain: a pick kept for later, opened from the Lodestone menu: nobody levelled just now
+		var w := MenuKit.window(Txt.t("UI_VIC_PICK" if entry.get("plain", false) else "UI_LV_TITLE"), _room, _later)
 		_win = w.root
 		holder.add_child(_win)
 		var body := HBoxContainer.new()
@@ -154,7 +155,8 @@ static func who_card(parent: Control, id: String, entry: Dictionary) -> void:
 	var levels: Array = entry.get("levels", [])
 	var now := int(levels[levels.size() - 1]) if not levels.is_empty() else int(Game.level_state(id).level)
 	var was := int(levels[0]) - 1 if not levels.is_empty() else now - 1
-	var lv := MenuKit.chip(Txt.f("UI_LV_REACHED", [maxi(1, was), now]), "star_guide", VictoryUi.XP_GOLD, "", UiSkin.T_BODY)
+	var reached := "%s %d" % [Txt.t("UI_VIC_LV"), now] if entry.get("plain", false) else Txt.f("UI_LV_REACHED", [maxi(1, was), now])
+	var lv := MenuKit.chip(reached, "star_guide", VictoryUi.XP_GOLD, "", UiSkin.T_BODY)
 	lv.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(lv)
 	var stats: Dictionary = entry.get("stats", {})

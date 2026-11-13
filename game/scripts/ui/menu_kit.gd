@@ -238,6 +238,100 @@ static func pointer(col: Control, drop := 30.0) -> void:
 	col.add_child(p)
 
 
+# --- tabs -----------------------------------------------------------------------------------------
+
+## A tab strip (the Lodestone menu: PARTY, PACK, VILLAGE, OPTIONS): one word a tab, the open one gold with a diamond on
+## the rule under it. `items`: [{"id", "text", "mark" (something waits on that tab), "tip"}]. `pick` gets a tab's id when
+## another tab is pressed. The left and right keys walk the tabs.
+static func tabs(items: Array, current: String, pick: Callable) -> Control:
+	var strip := _TabStrip.new()
+	strip.alignment = BoxContainer.ALIGNMENT_CENTER
+	strip.add_theme_constant_override("separation", 6)
+	for it: Dictionary in items:
+		var id := String(it.id)
+		var t := _Tab.new()
+		t.text = String(it.text)
+		t.on = id == current
+		t.mark = bool(it.get("mark", false))
+		t.tooltip_text = String(it.get("tip", ""))
+		t.look()
+		t.pressed.connect(func() -> void:
+			if id != current:
+				pick.call(id))
+		strip.add_child(t)
+	return strip
+
+
+## One tab: its word, dim until it is the open one.
+class _Tab extends Button:
+	var on := false
+	var mark := false  ## something waits on this tab: a gold stud by its word
+
+	func _init() -> void:
+		for s in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
+			var e := StyleBoxEmpty.new()
+			e.content_margin_left = 20.0
+			e.content_margin_right = 20.0
+			e.content_margin_top = 4.0
+			e.content_margin_bottom = 14.0
+			add_theme_stylebox_override(s, e)
+		add_theme_font_size_override("font_size", UiSkin.T_LEAD)
+		for sig in [mouse_entered, mouse_exited, focus_entered, focus_exited]:
+			(sig as Signal).connect(queue_redraw)
+
+	func look() -> void:
+		var col := UiSkin.GOLD if on else UiSkin.TEXT_DIM
+		var lit := UiSkin.GOLD if on else UiSkin.TEXT
+		add_theme_color_override("font_color", col)
+		for c in ["font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
+			add_theme_color_override(c, lit)
+
+	func _draw() -> void:
+		var y := size.y - _TabStrip.RULE_UP
+		var c := roundf(size.x * 0.5)
+		if on:  # the strip's rule turns gold under the open tab, a diamond at its middle
+			var half := size.x * 0.5 - 4.0
+			for k: float in [-1.0, 1.0]:
+				draw_polyline_colors(PackedVector2Array([Vector2(c + k * 8.0, y), Vector2(c + k * half, y)]),
+					PackedColorArray([Color(UiSkin.HAIR, 0.95), Color(UiSkin.HAIR, 0.0)]), 1.5, true)
+			SkinBox.stud(get_canvas_item(), Vector2(c, y), 3.6)
+		elif is_hovered() or has_focus():
+			var half := size.x * 0.28
+			draw_line(Vector2(c - half, y), Vector2(c + half, y), Color(UiSkin.HAIR, 0.6), 1.0, true)
+		if mark:
+			SkinBox.stud(get_canvas_item(), Vector2(size.x - 12.0, 11.0), 3.6)
+
+
+## The tabs' row: a quiet rule runs under all of them.
+class _TabStrip extends HBoxContainer:
+	const RULE_UP := 5.5  ## the rule this far above the strip's foot
+
+	func _draw() -> void:
+		var y := size.y - RULE_UP
+		draw_line(Vector2(0, y), Vector2(size.x, y), UiSkin.LINE, 1.0)
+
+
+## Tab pages stacked in one place. It is as big as its biggest page, shown or not, so the window keeps one size and one
+## place whichever tab is open. Every page gets the whole stage.
+class Stage extends Container:
+	func _get_minimum_size() -> Vector2:
+		var m := Vector2.ZERO
+		for c in get_children():
+			if c is Control:
+				m = m.max((c as Control).get_combined_minimum_size())
+		return m
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_SORT_CHILDREN:
+			for c in get_children():
+				if c is Control:
+					fit_child_in_rect(c, Rect2(Vector2.ZERO, size))
+			recheck.call_deferred()  # a hidden page that changed size said nothing: ask again once this pass settles
+
+	func recheck() -> void:
+		update_minimum_size()
+
+
 # --- the dialogue call/response screen ---------------------------------------------------------------
 
 const DIALOG_W := 468.0  ## the options' width
@@ -259,6 +353,7 @@ static func dialogue(panel: PanelContainer, text: String, area: Callable, face_i
 	row.add_theme_constant_override("separation", 20)
 	panel.set_meta("frame_x", UiTheme.frame_window(panel, row, area, Callable(), text if call else ""))  # the X; scrolls past the room
 	panel.set_meta("kit_w", DIALOG_W - (DIALOG_PORTRAIT * 0.5 if face else 0.0))
+	panel.set_meta("area", area)  # the room it was given: a window opened from this one stands in the same room
 	if face:
 		var pic := portrait(face_id, DIALOG_PORTRAIT, false)
 		pic.size_flags_vertical = Control.SIZE_SHRINK_BEGIN

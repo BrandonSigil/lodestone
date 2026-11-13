@@ -12,6 +12,22 @@
 
 Before and after pictures of every menu: `art/screens/menus-v3/` (left is main today, right is the prototype as it stands). `_layout_1.jpg` and `_layout_2.jpg` put main, round two and the first layouts side by side. `_show_1.jpg` to `_show_3.jpg` are from round two (main, the first drawn skin, round two); `_bar_close.jpg` does the same for the bottom bar.
 
+[USER] 2026-11-13, after round three: "Yes, tabs next" (the next-step button).
+
+## Round four: the Lodestone menu as tabs
+
+Pictures: `_tabs_1.jpg` (the four tabs: party, pack, village, options) and `_tabs_2.jpg` (five along on the party and pack tabs, the NEW ABILITY window, and the pack before the Lodestone).
+
+- **One window, four tabs.** With the Lodestone in hand, PARTY, PACK, VILLAGE and OPTIONS are tabs of one window titled LODESTONE (`AdventureMenu.open`, `MenuKit.tabs`). One title, one X, one place. The bag button and I open it on PACK, the big diamond on PARTY. The open tab is gold with a diamond on the rule under it; a gold stud by PARTY says a skill is waiting.
+- **One size.** Every tab's page is built and only the open one shows (`MenuKit.Stage`), so the window is as big as its biggest page and does not jump when the tab changes.
+- **PARTY.** The member cards, three to a row at most, then blessings, the meal and bonds. SAVE AND QUIT and GO HOME stand on the foot. The VILLAGE REPAIRS, OPTIONS and CLOSE buttons are gone: the tabs and the X do that.
+- **NEW ABILITY has its own window.** It used to open under the cards and scroll inside the menu. It now opens the window a level up shows (`LevelUpUi.open`, titled NEW ABILITY!) in the menu's place. Decide later, the X and Esc bring the menu back. A job branch still shows over the cards.
+- **PACK.** The pack page from round three. With more than three along, the use rows (EAT, DRINK, CAST) and the counts stand under the pack grid instead of under the party rows, so the page is about 100 px shorter and five along fit with the tabs above them. That also fills the felt that sat empty under the pack.
+- **VILLAGE.** A card a building. A step shows DONE, IN PROGRESS, or what it still needs as chips (the thing's picture and have / need, gold once there is enough) with TRACK beside them. The list scrolls inside the tab and keeps its place when TRACK rebuilds it.
+- **OPTIONS.** A row an option, its name on the left. The screen row shows WINDOWED and FULLSCREEN with the one in use lit, where it used to be one button naming the other mode.
+- **Esc closes it** through the X's action (`UiTheme.press_close`, panel meta `esc_close`). The full pack (FOUND ITEMS) is left out on purpose: its way out leaves things on the ground.
+- **Where it does not apply.** Before the Lodestone is found the pack opens alone, as before. FOUND ITEMS and the pack stay their own window. `LODESTONE_SKIN=old` keeps the four separate menus.
+
 ## Round three: the first layouts
 
 - **Nothing is scaled.** Kit windows used to be drawn at 90% (`UiTheme.KIT_SCALE`), which resampled every word. The scale is now 1.0 and the tenth came off the sizes themselves, so windows are the size they were and their words sit on whole pixels. A window is shrunk only as a last resort, when it cannot fit even after its inside has scrolled (`UiTheme.fit_scale`).
@@ -82,8 +98,11 @@ To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot
 
 ## What it does not do yet (honest notes)
 
-- **Three layouts are still the old ones:** the Lodestone menu's button grid (and its skill pick scrolling inside it), the character sheet's cream plates and the fight's text panel, dock labels and log box. Those are steps 4 to 6.
-- The pack page's PACK section is as tall as PARTY, so with a big party the felt under the pack grid is empty.
+- **Two layouts are still the old ones:** the character sheet's cream plates, and the fight's text panel, dock labels and log box. Those are steps 5 and 6.
+- The tabs have no keys of their own yet (the left and right keys walk them once one has the focus); a pad's shoulder buttons would be the usual way.
+- The OPTIONS tab is short, so most of its page is plain felt when the pack makes the window big.
+- A PACK tab sits beside a PARTY section inside it. The names are right but close; worth a look in play.
+- The tabs were checked in screenshots, by tests and by the play-through robot (which never opens them); nobody has clicked through them in live play yet.
 - Many sizes were converted by rule (old size times 0.9, to the nearest step); each screen was looked at in a screenshot, not tuned by hand.
 - `LODESTONE_SKIN=old` still swaps the painted frames in but no longer matches main's sizes. Compare against main for a true before.
 - The bottom bar keeps the painted frame's height and slots, because the screens measure from them. It can be made slimmer once dialogues stop measuring from the art.
@@ -98,6 +117,6 @@ To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot
 1. Tune the skin with him (done twice, above; more rounds as he asks).
 2. Done (round three): the size and type tokens, titles on the top edge, scroll to the real room, `KIT_SCALE` dropped for dialogues, win, level up, HOME AGAIN and the menus.
 3. Done (round three): pack, loot and found items as one window with sections (it fixes the cut-off with a full party).
-4. The Lodestone menu as tabs: Party, Pack, Village, Options.
+4. Done (round four): the Lodestone menu as tabs: Party, Pack, Village, Options.
 5. The character sheet on the kit.
 6. The fight HUD: side panel as a compact card, dock labels readable, the log as a quiet line.

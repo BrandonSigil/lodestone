@@ -434,6 +434,10 @@ static func press_close(box: Control) -> bool:
 		if b.visible and not b.disabled and texts.has(b.text):
 			pick = b
 	if pick == null:
+		# a window with no close button of its own that Esc may shut (the Lodestone menu's tabs, the pack): its X's action
+		if box.has_meta("esc_close") and box.has_meta("close_cb"):
+			(box.get_meta("close_cb") as Callable).call()
+			return true
 		return false
 	pick.pressed.emit()
 	return true

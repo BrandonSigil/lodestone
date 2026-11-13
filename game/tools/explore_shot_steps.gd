@@ -506,12 +506,15 @@ func run(s: Node, f: int, step: String) -> bool:
 				up.pressed = false
 				Input.parse_input_event(up)
 			return f == 40
-		"pack_big":
+		"pack_big", "pack_big_tab", "party_big_tab":
 			# The full inventory page with five along (the dog and three more): it must fit above the frame.
+			# pack_big_tab: with the Lodestone in hand, so it is the PACK tab of the Lodestone menu; party_big_tab: its PARTY tab.
 			if f == 5:
 				var game: Node = s.get_node("/root/Game")
 				game.save_enabled = false
 				game.meta.flags.append("met_dog")
+				if step != "pack_big":
+					game.meta.flags.append("has_lodestone")  # in memory only, not saved
 				game.refresh_party()
 				var run: RunState = game.run
 				for d: CharacterDef in Db.roster():
@@ -520,7 +523,8 @@ func run(s: Node, f: int, step: String) -> bool:
 					if not run.members.any(func(m: Dictionary) -> bool: return (m.def as CharacterDef).id == d.id):
 						run.join(d)
 				run.food = 30
-				s._open_menu("pack")
+				s._refresh_hud()
+				s._open_menu("lodestone" if step == "party_big_tab" else "pack")
 			return f == 30
 		"pack_dog":
 			# The PACK box with the dog along: his saddlebag, with something in it, beside his portrait.
@@ -539,10 +543,13 @@ func run(s: Node, f: int, step: String) -> bool:
 				s._refresh_hud()
 				s._open_menu("pack")
 			return f == 30
-		"pack":
-			# The PACK box with a few stacks and a find in it, to judge the grid.
+		"pack", "pack_tab":
+			# The PACK box with a few stacks and a find in it, to judge the grid. pack_tab: as the Lodestone menu's PACK tab.
 			if f == 5:
 				var run: RunState = s.get_node("/root/Game").run
+				if step == "pack_tab":
+					s.get_node("/root/Game").save_enabled = false  # a shot never writes the real save
+					s.get_node("/root/Game").meta.flags.append("has_lodestone")
 				run.food = 34
 				run.medicine = 4
 				run.add_item("rope", 1)

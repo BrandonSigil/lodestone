@@ -1047,14 +1047,7 @@ func _open_menu(which: String) -> void:
 		_close_dialog()
 	_menu_which = which
 	_menu_close = close
-	if which == "pack":
-		AdventureMenu.pack(box, changed, close)
-	elif which == "restore":
-		AdventureMenu.restore_list(box, changed, close)
-	elif which == "options":
-		AdventureMenu.options(box, changed, _open_menu.bind("lodestone"))
-	else:
-		AdventureMenu.lodestone(box, changed, close, true, _open_menu.bind("restore"), _open_menu.bind("options"))
+	AdventureMenu.open(box, which, changed, close, _open_menu, true)  # the Lodestone menu's tabs, or the pack alone
 
 
 func _new_dialog(text: String) -> VBoxContainer:

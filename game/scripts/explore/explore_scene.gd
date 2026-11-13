@@ -2270,11 +2270,4 @@ func _open_menu(which: String) -> void:
 		mode = M.WALK
 	_menu_which = which
 	_menu_close = close
-	if which == "pack":
-		AdventureMenu.pack(box, changed, close)
-	elif which == "restore":
-		AdventureMenu.restore_list(box, changed, close)
-	elif which == "options":
-		AdventureMenu.options(box, changed, _open_menu.bind("lodestone"))
-	else:
-		AdventureMenu.lodestone(box, changed, close, map.map_name != "village", _open_menu.bind("restore"), _open_menu.bind("options"))
+	AdventureMenu.open(box, which, changed, close, _open_menu, map.map_name != "village")  # the Lodestone menu's tabs, or the pack alone

@@ -13,6 +13,308 @@ const PARTY_CARD := Vector2(172, 52)  ## a member's card in the pack's PARTY win
 static var _focus := ""  ## the member whose pick or branch shows under the Lodestone menu's cards
 
 
+const TABS := ["lodestone", "pack", "restore", "options"]  ## the Lodestone menu's tabs, by the ids the screens open them with
+const TAB_TEXT := {"lodestone": "UI_PARTY", "pack": "UI_PACK", "restore": "UI_TAB_VILLAGE", "options": "UI_OPTIONS"}
+const FOOT_W := 196.0  ## a tab's foot button (GO HOME, SAVE AND QUIT)
+
+static var _hidden := false  ## building a tab's page that is not the open one: nothing in it may take the keys' focus
+static var _village_at := 0  ## how far down the VILLAGE tab's list was when TRACK rebuilt the menu
+
+
+## The one way a screen opens these menus (menus v3, "fewer windows"; Brandon, 2026-11-13: "Yes, tabs next"). With the
+## Lodestone in hand the party, the pack, the village's repairs and the options are four tabs of one window: one title,
+## one X, one place, and one size whichever tab is open (MenuKit.Stage: every page is built, the open one shows).
+## `which` is the tab to open on; `go` reopens the menu on another (the screen's own _open_menu). The pack stands alone
+## while there is no Lodestone yet, and when a pickup found no room (that page is a choice to make, not a menu).
+## The old painted skin keeps the four separate menus.
+static func open(box: VBoxContainer, which: String, changed: Callable, close: Callable, go: Callable, home := true) -> void:
+	var lone := which == "pack" and (Game.run.overfull() or not Game.has_flag("has_lodestone"))
+	if lone or not UiSkin.on():
+		match which:
+			"pack":
+				pack(box, changed, close)
+			"restore":
+				restore_list(box, changed, close)
+			"options":
+				options(box, changed, go.bind("lodestone"))
+			_:
+				lodestone(box, changed, close, home, go.bind("restore"), go.bind("options"))
+		return
+	if not TABS.has(which):
+		which = "lodestone"
+	MenuKit.title_on(box, Txt.t("UI_LODESTONE"))
+	var items := []
+	for id: String in TABS:
+		items.append({"id": id, "text": Txt.t(String(TAB_TEXT[id])), "mark": id == "lodestone" and Game.pending_picks() > 0})
+	box.add_child(MenuKit.tabs(items, which, go))
+	var stage := MenuKit.Stage.new()
+	box.add_child(stage)
+	for id: String in TABS:
+		var page := VBoxContainer.new()
+		page.name = "Tab_" + id
+		page.add_theme_constant_override("separation", 10)
+		page.visible = id == which
+		stage.add_child(page)
+		_hidden = id != which
+		match id:
+			"pack":
+				pack(page, changed, close)
+			"restore":
+				_village_page(page, changed)
+			"options":
+				_options_page(page, changed)
+			_:
+				_party_page(page, changed, home)
+	_hidden = false
+	ContainerUi.bare(box, null, close)  # a menu: the middle of the play area, and the frame's X closes it
+	_esc_closes(box)
+	if which == "lodestone" and _focus != "" and LevelUpUi.has_pick(_focus):
+		_show_pick(box, _focus, changed)
+
+
+## Esc shuts this window through its X's action (UiTheme.press_close): it has no CLOSE button of its own.
+static func _esc_closes(box: Control) -> void:
+	var n: Node = box
+	while n != null and not (n is PanelContainer and n.has_meta("frame_x")):
+		n = n.get_parent()
+	if n != null:
+		n.set_meta("esc_close", true)
+
+
+## The PARTY tab: a card per member (three to a row at most), the open member's pick under them, blessings, the meal
+## and bonds as chips, and at the foot SAVE AND QUIT and GO HOME.
+static func _party_page(box: VBoxContainer, changed: Callable, home: bool) -> void:
+	var waiting := func(id: String) -> bool:
+		var rs := Game.rank_state(id)
+		return LevelUpUi.has_pick(id) or (id == "lead" and Game.job_id() != "" and LevelRules.branch_ready(rs, Db.levels))
+	var ids: Array = Game.run.members.map(func(m: Dictionary) -> String: return String(m.def.id))
+	if not _hidden and (not ids.has(_focus) or not waiting.call(_focus)):
+		_focus = ""
+	var shown := "" if _hidden else _focus  # whose NEW ABILITY window is up (open() shows it once the menu is built)
+	if shown != "" and Game.job_id() != "" and shown == "lead" and LevelRules.branch_ready(Game.rank_state(shown), Db.levels):
+		_branch_row(box, changed)  # the hero's job branch comes first: two buttons over the cards
+	var n: int = Game.run.members.size()
+	var cards := GridContainer.new()
+	cards.columns = n if n <= 3 else mini(3, ceili(n / 2.0))
+	cards.add_theme_constant_override("h_separation", 8)
+	cards.add_theme_constant_override("v_separation", 8)
+	cards.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(cards)
+	for m in Game.run.members:
+		var id := String(m.def.id)
+		cards.add_child(_member_card(m, waiting.call(id), id == shown, func() -> void:
+			_focus = "" if _focus == id else id  # pressed again: closes it
+			changed.call()))
+	var chips := HFlowContainer.new()
+	chips.alignment = FlowContainer.ALIGNMENT_CENTER
+	chips.add_theme_constant_override("h_separation", 7)
+	chips.add_theme_constant_override("v_separation", 5)
+	for id in Game.run.boons:
+		var b: Dictionary = Db.boons[id]
+		chips.add_child(_chip(String(b.get("short", "")), Color(0.62, 0.9, 0.5) if b.kind == "blessing" else Color(1.0, 0.55, 0.45),
+			String(b.get("icon", "")), Txt.f("UI_LS_BLESSING" if b.kind == "blessing" else "UI_LS_SETBACK", Txt.t(String(b.name_key)))))
+	if not Game.run.meal.is_empty():
+		var rec: Dictionary = Db.recipes.get(String(Game.run.meal.recipe), {})
+		chips.add_child(_chip(str(int(Game.run.meal.fights)), UiTheme.GOLD, String(rec.get("meal", "")),
+			Txt.f("UI_LS_MEAL", [Txt.t(String(rec.get("name_key", ""))), int(Game.run.meal.fights)])))
+	if chips.get_child_count() > 0:
+		box.add_child(chips)
+	var bonds := VBoxContainer.new()  # a TALK's line lands here, above the foot
+	box.add_child(bonds)
+	_bonds(bonds, not home)
+	var gap := Control.new()  # the foot stands on the window's foot, however tall the other tabs make it
+	gap.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(gap)
+	var foot := HBoxContainer.new()
+	foot.alignment = BoxContainer.ALIGNMENT_END
+	foot.add_theme_constant_override("separation", 10)
+	box.add_child(foot)
+	var quit := Button.new()
+	quit.theme_type_variation = &"QuietButton"
+	quit.text = Txt.t("UI_LS_SAVE_QUIT")
+	quit.custom_minimum_size = Vector2(FOOT_W, 36)
+	quit.pressed.connect(func() -> void:
+		# [USER] omr-4, omr-11: put a bookmark in; Continue on the launch menu comes back right here
+		var tree := Engine.get_main_loop() as SceneTree
+		if tree.current_scene.has_method("bookmark"):
+			tree.current_scene.call("bookmark")
+		tree.quit())
+	foot.add_child(quit)
+	if home:
+		var b := Button.new()
+		b.text = Txt.t("UI_LS_HOME")
+		b.custom_minimum_size = Vector2(FOOT_W, 36)
+		b.pressed.connect(func() -> void:
+			var close := _close_of(box)
+			if close.is_valid():
+				close.call()
+			Game.wake_in_town(false))
+		foot.add_child(b)
+
+
+## A member's NEW ABILITY, opened from the PARTY tab: the same window a level up shows (LevelUpUi.open), in the menu's
+## place, so the skill rows have a whole window and never scroll inside a tab. A pick spends it and rebuilds the menu
+## (and comes straight back here while another waits); Decide later, the X and Esc bring the menu back.
+static func _show_pick(box: Control, id: String, changed: Callable) -> void:
+	var n: Node = box
+	while n != null and not (n is PanelContainer and n.has_meta("frame_x")):
+		n = n.get_parent()
+	var panel := n as PanelContainer
+	if panel == null or not panel.is_inside_tree():
+		return
+	var live := {"on": true, "sc": null}  # the window, reached through this: a lambda keeps a local as it was when made
+	var shut := func() -> void:
+		live.on = false
+		if is_instance_valid(live.sc):
+			(live.sc as Node).queue_free()
+	var done := func() -> void:
+		shut.call()
+		_focus = id if LevelUpUi.has_pick(id) else ""
+		changed.call()
+	var later := func() -> void:
+		shut.call()
+		_focus = ""
+		panel.visible = true
+	var sc := LevelUpUi.open(id, {"plain": true}, done, later, panel.get_meta("area", Callable()))
+	live.sc = sc
+	panel.visible = false
+	panel.get_parent().add_child(sc)
+	panel.tree_exiting.connect(func() -> void:  # the menu was replaced under it (I, a bar button): it goes too
+		if live.on:
+			shut.call()
+			_focus = "")
+
+
+## The window's own way out (ContainerUi.bare leaves it on the frame).
+static func _close_of(from: Node) -> Callable:
+	var n := from
+	while n != null and not (n is PanelContainer and n.has_meta("close_cb")):
+		n = n.get_parent()
+	return n.get_meta("close_cb") as Callable if n != null else Callable()
+
+
+## The VILLAGE tab: every building's restore ladder ([USER] omr-5), a card a building. A step is done, under way, or
+## shows what it still needs as chips (the thing's picture, have / need, gold once there is enough) with TRACK beside
+## them. The list scrolls inside the tab, so a long one never makes the window taller.
+static func _village_page(box: VBoxContainer, changed: Callable) -> void:
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(W + 60.0, 240.0)
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 8)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+	var have := Game.have_for_goals()
+	var buildings := RestoreRules.buildings(Db.restore)
+	for building in buildings:
+		var card := MenuKit.card(list, Txt.t("BUILDING_" + building.to_upper()), true)
+		card.add_theme_constant_override("separation", 6)
+		if not RestoreRules.is_open(Db.restore, building, Game.meta.flags):
+			var locked := MenuKit.label(Game.locked_text(building), UiSkin.T_SMALL, MenuKit.TEXT_DIM)
+			locked.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			card.add_child(locked)
+			continue
+		for r: Dictionary in RestoreRules.ladder(Db.restore, building):
+			var id := String(r.id)
+			var st := RestoreRules.status(Game.meta.restore, id)
+			var row := HBoxContainer.new()
+			row.add_theme_constant_override("separation", 8)
+			card.add_child(row)
+			var step := MenuKit.label(Txt.t(String(r.name_key)), UiSkin.T_BODY, MenuKit.TEXT_DIM if st == "done" else MenuKit.TEXT)
+			step.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			step.custom_minimum_size.x = 150.0
+			step.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			row.add_child(step)
+			if st == "done":
+				row.add_child(MenuKit.chip(Txt.t("UI_RESTORE_DONE"), "", Color(0.62, 0.9, 0.5), "", UiSkin.T_SMALL))
+				continue
+			if st == "paid":
+				row.add_child(MenuKit.chip(Txt.t("UI_RESTORE_WORKING"), "", MenuKit.GOLD, Txt.t("UI_RESTORE_WAIT"), UiSkin.T_SMALL))
+				continue
+			var needs := RestoreRules.parse_needs(String(r.needs))
+			for k in needs:
+				var got := mini(int(have.get(k, 0)), int(needs[k]))
+				var item := Txt.t(String(Db.items[k].name_key))
+				var pic := ActionInfo.icon(String(k)) != null  # no picture yet: its name stands in
+				row.add_child(MenuKit.chip(("%d/%d" if pic else item + " %d/%d") % [got, int(needs[k])], String(k) if pic else "",
+					MenuKit.GOLD if got >= int(needs[k]) else MenuKit.TEXT, item, UiSkin.T_SMALL))
+			var b := Button.new()
+			b.text = Txt.t("UI_RESTORE_UNTRACK" if Game.meta.tracked.has(id) else "UI_RESTORE_TRACK")
+			b.custom_minimum_size = Vector2(104, 30)
+			b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			b.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
+			b.pressed.connect(func() -> void:
+				_village_at = scroll.scroll_vertical  # the rebuilt list opens where this one was
+				Game.toggle_track(id)
+				changed.call())
+			row.add_child(b)
+	if buildings.is_empty():
+		var none := MenuKit.label(Txt.t("UI_RESTORE_NONE"), UiSkin.T_BODY, MenuKit.TEXT_DIM)
+		none.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		list.add_child(none)
+	if not _hidden and _village_at > 0:
+		var at := _village_at
+		_village_at = 0
+		list.resized.connect(func() -> void: scroll.set_deferred("scroll_vertical", at))
+
+
+## The OPTIONS tab ([USER] 2026-10-30 listed them among the menus that share one look): the fight menu's layout, the
+## small UI's size and the window. A row an option, its name on the left; each pick saves at once (Game.meta.settings).
+static func _options_page(box: VBoxContainer, changed: Callable) -> void:
+	var rows := MenuKit.card(box)
+	rows.add_theme_constant_override("separation", 12)
+	(rows.get_parent() as Control).size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var row := func(key: String) -> HBoxContainer:
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override("separation", 8)
+		var l := MenuKit.label(Txt.t(key), UiSkin.T_BODY)
+		l.custom_minimum_size.x = 190.0
+		h.add_child(l)
+		rows.add_child(h)
+		return h
+	var layout: HBoxContainer = row.call("UI_OPT_FIGHT_MENU")
+	for l: String in ActionHud.LAYOUTS:
+		var b := Button.new()
+		b.text = Txt.t("UI_LAYOUT_" + l.to_upper())
+		b.toggle_mode = true
+		b.button_pressed = Battle.action_layout() == l
+		b.custom_minimum_size = Vector2(98, 32)
+		b.pressed.connect(func() -> void:
+			Game.set_setting("action_ui", l)
+			changed.call())
+		layout.add_child(b)
+	var size_row: HBoxContainer = row.call("UI_OPT_UI_SIZE")  # [USER] 2026-10-30: the small UI in 5% notches
+	var size := clampf(float(Game.meta.get("settings", {}).get("ui_size", 1.0)), 0.5, 2.0)
+	for step: float in [-UiTheme.SIZE_STEP, UiTheme.SIZE_STEP]:
+		if step > 0:
+			var shown := MenuKit.label("%d%%" % roundi(size * 100), UiSkin.T_BODY, MenuKit.GOLD)
+			shown.custom_minimum_size.x = 60.0
+			shown.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			size_row.add_child(shown)
+		var b := Button.new()
+		b.text = "-5%" if step < 0 else "+5%"
+		b.custom_minimum_size = Vector2(68, 32)
+		b.pressed.connect(func() -> void:
+			Game.set_setting("ui_size", snappedf(clampf(size + step, 0.5, 2.0), UiTheme.SIZE_STEP))
+			changed.call())
+		size_row.add_child(b)
+	var window: HBoxContainer = row.call("UI_OPT_WINDOW")
+	var full := bool(Game.meta.get("settings", {}).get("fullscreen", false))
+	for want: bool in [false, true]:  # both named, the one in use lit: no guessing what a press will do
+		var b := Button.new()
+		b.text = Txt.t("UI_OPT_FULL" if want else "UI_OPT_WINDOWED")
+		b.toggle_mode = true
+		b.button_pressed = full == want
+		b.custom_minimum_size = Vector2(98, 32)
+		b.pressed.connect(func() -> void:
+			Game.set_setting("fullscreen", want)
+			changed.call())
+		window.add_child(b)
+
+
 ## [USER] 2026-10-28: the Lodestone opens from its bottom-bar button at any time: skill ranks waiting, head back
 ## to town ([USER] 2026-10-29: stats roll on their own each level; every 4 levels a rank for one of the
 ## character's own skills). home: false hides GO HOME (in town already, or mid-fight).
@@ -162,24 +464,29 @@ static func _member_card(m: Dictionary, waiting: bool, open: bool, show: Callabl
 	return card
 
 
+## The hero's job branch, when it is ready: the line that asks and the two branches as buttons.
+static func _branch_row(box: VBoxContainer, changed: Callable) -> void:
+	var job: Dictionary = Db.jobs[Game.job_id()]
+	_label(box, Txt.t("UI_LS_BRANCH"), UiSkin.T_BODY)
+	var brow := HBoxContainer.new()
+	brow.add_theme_constant_override("separation", 7)
+	brow.alignment = BoxContainer.ALIGNMENT_CENTER
+	for which in ["a", "b"]:
+		var bb := Button.new()
+		bb.text = Txt.t(String(job["branch_" + which]))
+		bb.custom_minimum_size = Vector2(BTN_W, 30)
+		bb.pressed.connect(func() -> void:
+			Game.choose_branch(which)
+			changed.call())
+		brow.add_child(bb)
+	box.add_child(brow)
+
+
 ## The open member's job branch (when it is ready) and pick.
 static func _member_choices(box: VBoxContainer, id: String, changed: Callable) -> void:
 	var rs := Game.rank_state(id)
 	if id == "lead" and Game.job_id() != "" and LevelRules.branch_ready(rs, Db.levels):
-		var job: Dictionary = Db.jobs[Game.job_id()]
-		_label(box, Txt.t("UI_LS_BRANCH"), UiSkin.T_BODY)
-		var brow := HBoxContainer.new()
-		brow.add_theme_constant_override("separation", 7)
-		brow.alignment = BoxContainer.ALIGNMENT_CENTER
-		for which in ["a", "b"]:
-			var bb := Button.new()
-			bb.text = Txt.t(String(job["branch_" + which]))
-			bb.custom_minimum_size = Vector2(BTN_W, 30)
-			bb.pressed.connect(func() -> void:
-				Game.choose_branch(which)
-				changed.call())
-			brow.add_child(bb)
-		box.add_child(brow)
+		_branch_row(box, changed)
 	LevelUpUi.picks(box, id, changed)  # the picks decided later: learn a kit ability or upgrade one
 
 
@@ -330,7 +637,10 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	var y := top.y
 	var cards := []
 	var row_h := maxf(PARTY_CARD.y, cell) + 8.0
-	var party_w := USE_W + 110.0
+	# more than three along: their rows fill the PARTY section, so the use rows and counts stand under the pack instead,
+	# where a big party leaves the room; the window stays short enough for the play area either way
+	var under_pack: bool = run.members.size() > 3
+	var party_w := 0.0 if under_pack else USE_W + 110.0
 	for k in run.members.size():
 		var m: Dictionary = run.members[k]
 		cards.append({"name": _short(Txt.t((m.def as CharacterDef).name_key)), "hp": int(m.hp), "max_hp": run.max_hp(m),
@@ -349,7 +659,8 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	y += run.members.size() * row_h + 4.0
 	var col := VBoxContainer.new()  # the read-outs and buttons, a real column inside the window
 	col.add_theme_constant_override("separation", 4)
-	col.position = Vector2(cx, y)
+	col.position = Vector2(top.x, bottom) if under_pack else Vector2(cx, y)
+	var col_w := right - top.x if under_pack else party_w
 	grid.add_child(col)
 	var hurt := TravelRules.most_hurt(run) != {}
 	for food: String in Db.items:  # each food that heals: meat always, then any caught fish carried
@@ -386,7 +697,7 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	var counts := HFlowContainer.new()  # [USER] 2026-11-01 "We've got icons! We should use em!": a picture and a number
 	counts.add_theme_constant_override("h_separation", 12)
 	counts.add_theme_constant_override("v_separation", 4)
-	counts.custom_minimum_size.x = party_w
+	counts.custom_minimum_size.x = col_w
 	col.add_child(counts)
 	counts.add_child(MenuKit.chip(str(run.gold), "gold", MenuKit.TEXT, Txt.t("UI_PACK_GOLD_TIP"), UiSkin.T_SMALL))
 	counts.add_child(MenuKit.chip("%d/%d" % [run.pack.used_cells(), run.pack.capacity()], "backpack", MenuKit.TEXT, Txt.t("UI_PACK_SLOTS_TIP"), UiSkin.T_SMALL))
@@ -397,7 +708,7 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 		var pile := HFlowContainer.new()
 		pile.add_theme_constant_override("h_separation", 8)
 		pile.add_theme_constant_override("v_separation", 4)
-		pile.custom_minimum_size.x = party_w
+		pile.custom_minimum_size.x = col_w
 		pile.tooltip_text = Txt.t("UI_VILLAGE_STORE_TIP")
 		pile.mouse_filter = Control.MOUSE_FILTER_PASS
 		col.add_child(pile)
@@ -409,7 +720,7 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 			Game.refresh_party()
 			Game.save_adventure()
 			changed.call())
-		send.custom_minimum_size.x = party_w
+		send.custom_minimum_size.x = col_w
 	# no CLOSE: the window's X (and Esc) closes ([USER] 2026-11-02, fewer words)
 	# the sections: as tall as the taller of the two once the column knows its height
 	var pack_win := Rect2(Vector2.ZERO, Vector2(left_w, 0))
@@ -417,7 +728,7 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	grid.add_window(pack_win, Txt.t("UI_PACK"))
 	grid.add_window(party_win, Txt.t("UI_PARTY"))
 	var fit := func() -> void:
-		var h := maxf(bottom, col.position.y + maxf(col.size.y, col.get_combined_minimum_size().y)) + pad - 4.0
+		var h := maxf(maxf(bottom, y - 4.0), col.position.y + maxf(col.size.y, col.get_combined_minimum_size().y)) + pad - 4.0
 		grid.windows[0].rect = Rect2(pack_win.position, Vector2(pack_win.size.x, h))
 		grid.windows[1].rect = Rect2(party_win.position, Vector2(party_win.size.x, h))
 		grid.refit()
@@ -429,6 +740,7 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 	box.add_child(grid)
 	fit.call()
 	ContainerUi.bare(box, grid, close)
+	_esc_closes(box)
 
 
 ## A pickup found no room ([USER] 2026-11-01: the inventory and the loot as two windows): the pack with the dog's saddlebag

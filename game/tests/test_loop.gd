@@ -1462,6 +1462,91 @@ func test_pick_who_eats_or_drinks() -> void:
 	eq(r.medicine, 1)
 
 
+## Menus v3 (Brandon, 2026-11-13: "Yes, tabs next"): with the Lodestone in hand the party, the pack, the village's
+## repairs and the options are four tabs of one window. Every page is built, so the window keeps one size, and only
+## the open one shows; a tab's press asks the screen for that tab.
+func test_lodestone_menu_is_tabs() -> void:
+	var saved := _fresh_game()
+	Game.meta.flags.append("has_lodestone")
+	var went := []
+	var noop := func() -> void: pass
+	var go := func(id: String) -> void: went.append(id)
+	var box := VBoxContainer.new()
+	AdventureMenu.open(box, "pack", noop, noop, go)
+	var stages := box.get_children().filter(func(n: Node) -> bool: return n is MenuKit.Stage)
+	eq(stages.size(), 1, "one stage holds the pages")
+	var pages: Array = (stages[0] as Node).get_children()
+	eq(pages.size(), AdventureMenu.TABS.size(), "a page a tab")
+	eq(pages.filter(func(n: Control) -> bool: return n.visible).map(func(n: Control) -> String: return String(n.name)), ["Tab_pack"], "only the open tab shows")
+	eq((stages[0] as Control).get_combined_minimum_size(), pages.map(func(n: Control) -> Vector2: return n.get_combined_minimum_size()).reduce(
+		func(a: Vector2, b: Vector2) -> Vector2: return a.max(b)), "the stage is as big as its biggest page, shown or not")
+	var tabs: Array = box.get_child(0).get_children()
+	eq(tabs.map(func(b: Button) -> String: return b.text), [Txt.t("UI_PARTY"), Txt.t("UI_PACK"), Txt.t("UI_TAB_VILLAGE"), Txt.t("UI_OPTIONS")])
+	(tabs[1] as Button).pressed.emit()
+	eq(went, [], "the open tab's own press does nothing")
+	(tabs[2] as Button).pressed.emit()
+	eq(went, ["restore"], "another tab asks the screen to open it")
+	ok(not box.find_children("*", "Button", true, false).any(func(b: Button) -> bool:
+		return b.text == Txt.t("UI_CLOSE_MENU") or b.text == Txt.t("UI_OPT_BACK")), "no CLOSE or BACK rows: the X and the tabs do that")
+	box.free()
+	# a pickup that found no room is a choice to make, not a menu: the pack and FOUND stand alone
+	Game.run.found.put("rope", RunState.shape_of("rope"), 1, 1)
+	var full := VBoxContainer.new()
+	AdventureMenu.open(full, "pack", noop, noop, go)
+	ok(not full.get_children().any(func(n: Node) -> bool: return n is MenuKit.Stage), "the full pack has no tabs")
+	full.free()
+	Game.run.found.items.clear()
+	# and before the Lodestone there is only the pack
+	Game.meta.flags.erase("has_lodestone")
+	var lone := VBoxContainer.new()
+	AdventureMenu.open(lone, "pack", noop, noop, go)
+	ok(not lone.get_children().any(func(n: Node) -> bool: return n is MenuKit.Stage), "no Lodestone yet: the pack alone")
+	eq(lone.find_children("*", "PackView", true, false).size(), 1)
+	lone.free()
+	_restore(saved)
+
+
+## Esc on a window with no close button of its own shuts it through its X's action, but only where that is safe: the
+## full pack's X leaves things on the ground, so Esc leaves it open.
+func test_esc_closes_a_menu_by_its_x() -> void:
+	var calls := [0]
+	var panel := PanelContainer.new()
+	panel.set_meta("close_cb", func() -> void: calls[0] += 1)
+	ok(not UiTheme.press_close(panel), "not marked: Esc does nothing")
+	eq(calls[0], 0)
+	panel.set_meta("esc_close", true)
+	ok(UiTheme.press_close(panel), "marked: Esc is the X")
+	eq(calls[0], 1)
+	panel.free()
+
+
+## With more than three along their rows fill the PARTY section, so the use rows and counts stand under the pack.
+func test_pack_use_rows_move_under_the_pack_for_a_big_party() -> void:
+	var saved := _fresh_game()
+	var run := Game.run
+	var noop := func() -> void: pass
+	var col_of := func(pv: PackView) -> Control:
+		return pv.get_children().filter(func(n: Node) -> bool: return n is VBoxContainer)[0]
+	var small := VBoxContainer.new()
+	AdventureMenu.pack(small, noop, noop)
+	var pv: PackView = small.find_children("*", "PackView", true, false)[0]
+	ok((col_of.call(pv) as Control).position.x >= (pv.windows[1].rect as Rect2).position.x, "a small party: in the PARTY section")
+	small.free()
+	for d: CharacterDef in Db.roster():
+		if run.members.size() >= 5:
+			break
+		if not run.members.any(func(m: Dictionary) -> bool: return (m.def as CharacterDef).id == d.id):
+			run.join(d)
+	var big := VBoxContainer.new()
+	AdventureMenu.pack(big, noop, noop)
+	pv = big.find_children("*", "PackView", true, false)[0]
+	var col: Control = col_of.call(pv)
+	ok((pv.windows[0].rect as Rect2).has_point(col.position), "five along: under the pack, in its section")
+	ok(col.position.y > pv._rect_of(pv.areas[0]).end.y, "below the grid")
+	big.free()
+	_restore(saved)
+
+
 func test_pack_cards_take_a_pick_or_a_drop() -> void:
 	var saved := _fresh_game()
 	var run := Game.run
