@@ -14,12 +14,16 @@ const BACKDROP := "res://art/source/ui/menu/title_screen.webp"  ## Brandon 2026-
 const VIDEO := "res://art/source/ui/menu/title_intro.ogv"  ## no sound track; the player is muted too
 const LOOP_FADE := 0.6  ## seconds the video takes to fade out into the painting before it loops
 const LOOP_IN := 0.15  ## seconds it takes to fade back in once it restarts (the same picture, so it is unseen)
+const STUCK_MS := 500  ## the video not moving on for this long (real time) counts as frozen, and it restarts
 const DRIFT_SECONDS := 60.0  ## one slow pan across the painting and back
 const DRIFT := 0.04  ## how much wider than the screen the painting is drawn, for the pan
 const LOGO_BOTTOM := 0.32  ## where the painted logo ends, as a share of the painting's height: the buttons stay below
 
 var _art: TextureRect  ## the title painting: the video's first frame, under the video
 var _video: VideoStreamPlayer
+var _video_on := false  ## the video should be playing (not in headless runs)
+var _last_pos := -1.0  ## the watchdog: where the video was, and when it last moved on
+var _last_move_ms := 0
 var _column: VBoxContainer
 var _box: Control  ## the open window (options, the new-game check), or null
 var _dim: ColorRect  ## the shade behind it
@@ -45,7 +49,8 @@ func _ready() -> void:
 	_video.finished.connect(_loop)
 	add_child(_video)
 	if DisplayServer.get_name() != "headless":
-		_video.play()
+		_video_on = true
+		_loop()
 	var shade := TextureRect.new()  # a soft pool of shade behind the buttons; the edges of the painting stay clear
 	var g := GradientTexture2D.new()
 	g.fill = GradientTexture2D.FILL_RADIAL
@@ -107,6 +112,7 @@ func _process(delta: float) -> void:
 	if _video:  # framed like the painting (the same picture, the same shape), so they line up as they swap
 		_video.position = r.position
 		_video.size = r.size
+		_watch()
 		var length := _video.get_stream_length()
 		if _video.is_playing() and length > 0.0:
 			var pos := _video.stream_position
@@ -115,7 +121,30 @@ func _process(delta: float) -> void:
 
 func _loop() -> void:
 	_video.modulate.a = 0.0
+	_video.stop()
+	_video.paused = false
 	_video.play()
+	_last_pos = -1.0
+	_last_move_ms = Time.get_ticks_msec()
+
+
+## Brandon (2026-11-13): the video froze when he resized the window. Resizes, a burst of them and a 3-second stall
+## from code didn't reproduce it, so this catches any freeze, whatever its cause: a video that stops moving on for
+## STUCK_MS, or stops without looping, starts again from the top. The painting under it is its first frame, so a restart
+## looks like the logo fading back in. Real time, not delta, so a stall can't hide it.
+func _watch() -> void:
+	if not _video_on:
+		return
+	var now := Time.get_ticks_msec()
+	if not _video.is_playing():
+		_loop()
+		return
+	var pos := _video.stream_position
+	if pos != _last_pos:
+		_last_pos = pos
+		_last_move_ms = now
+	elif now - _last_move_ms > STUCK_MS:
+		_loop()
 
 
 ## Where the painting sits, for a screen of `screen` size and a picture of `tex` size, `k` (0 to 1) along its sway.
