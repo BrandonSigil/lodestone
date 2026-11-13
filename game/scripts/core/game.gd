@@ -56,6 +56,7 @@ func _ready() -> void:
 	# One look for every menu ([USER] 2026-10-30). Merged into the engine's default, the theme every Control falls
 	# back to (a root-window theme doesn't reach Controls under a CanvasLayer); riso screens still set their own.
 	ThemeDB.get_default_theme().merge_with(UiTheme.make())
+	UiSkin.watch(get_tree())  # each window blurs the world behind it
 	load_meta()
 	_apply_settings()
 	add_child(GodMode.new())

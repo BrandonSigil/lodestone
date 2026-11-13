@@ -187,6 +187,8 @@ static func window(title: String, area: Callable, close := Callable(), title_px 
 ## The little point under a dialogue window, aimed at the bottom frame's diamond (mockups A and B). Goes last in the
 ## window's column; it draws below the frame's rim.
 static func pointer(col: Control, drop := 30.0) -> void:
+	if UiSkin.on():  # the drawn bar's gem marks the spot; a point on top of it only clutters
+		return
 	var p := _Pointer.new()
 	p.drop = drop
 	col.add_child(p)
@@ -478,6 +480,15 @@ class XButton extends Button:
 		var r := minf(size.x, size.y) * 0.5 - 1.0
 		var lit := is_hovered() and not disabled
 		var a := 0.45 if disabled else 1.0
+		if UiSkin.on():  # the drawn skin: a small quiet square, the cross in the hairline's gold
+			var box := UiSkin.flat(Color(UiSkin.GOLD, 0.16) if lit else Color(0, 0, 0, 0.22), Color(UiSkin.HAIR, 0.95 if lit else 0.3), 4, 0.0, 0.0)
+			var side := minf(minf(size.x, size.y), UiSkin.X_SIZE)  # a square in the middle, whatever room it was given
+			draw_style_box(box, Rect2(c - Vector2(side, side) * 0.5, Vector2(side, side)))
+			var q := side * 0.2
+			var cross := Color(UiSkin.TEXT if lit else UiSkin.HAIR, a)
+			draw_line(c + Vector2(-q, -q), c + Vector2(q, q), cross, 1.6, true)
+			draw_line(c + Vector2(-q, q), c + Vector2(q, -q), cross, 1.6, true)
+			return
 		if lit:
 			draw_circle(c, r + 4.0, Color(MenuKit.GOLD, 0.25))
 		draw_circle(c, r, Color(0.02, 0.06, 0.08, a))

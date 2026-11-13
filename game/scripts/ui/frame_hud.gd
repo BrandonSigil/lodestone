@@ -46,6 +46,7 @@ var _leaf_tex: Texture2D
 var _leaf_u := 1.0  ## screen px per art px
 var _leaf_extra: Array[float] = [0.0, 0.0]  ## art px each stretch run grows by
 var _leaf_block: Control
+var _leaf_back: SkinBackdrop  ## the drawn skin: the blurred map under the bar
 var _leaf_pack_cb := Callable()
 var _border: StyleBoxFlat
 
@@ -163,6 +164,10 @@ func use_leaf_frame() -> void:
 	_leaf_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_leaf_art.draw.connect(_draw_leaf)
 	leaf.add_child(_leaf_art)
+	if UiSkin.on():  # the drawn bar blurs the map under it
+		_leaf_back = SkinBackdrop.new()
+		_leaf_back.radius = 0.0
+		_leaf_art.add_child(_leaf_back)
 	leaf_pack = Button.new()
 	leaf_pack.tooltip_text = Txt.t("UI_PACK")
 	var sack := TextureRect.new()  # [USER] 2026-10-30: an inventory asset, not the word; big enough to fill the square
@@ -198,7 +203,10 @@ func use_leaf_frame() -> void:
 	sb.bg_color = Color(0.08, 0.1, 0.1, 0.72)
 	sb.set_corner_radius_all(6)
 	sb.set_content_margin_all(10)
-	side_panel.add_theme_stylebox_override("panel", sb)
+	if UiSkin.on():  # the drawn skin: the fight's side panel is a small window like any other
+		side_panel.add_theme_stylebox_override("panel", UiSkin.panel(10.0, 10.0, false, false, 12.0))
+	else:
+		side_panel.add_theme_stylebox_override("panel", sb)
 	root.add_child(side_panel)
 	root.move_child(side_panel, leaf.get_index())  # under the frame and its buttons
 	side.get_parent().remove_child(side)
@@ -223,6 +231,9 @@ func _layout_leaf() -> void:
 	_leaf_art.position = Vector2(0, top)
 	_leaf_art.size = Vector2(vs.x, art.y * s)
 	_leaf_art.queue_redraw()
+	if _leaf_back != null:
+		_leaf_back.rect = Rect2(0, LEAF_BAND_TOP * s, vs.x, (art.y - LEAF_BAND_TOP) * s)
+		_leaf_back.queue_redraw()
 	bottom_h = (art.y - LEAF_BAND_TOP) * s
 	clear_h = (art.y - LEAF_DIAMOND_TOP) * s
 	_leaf_block.position = Vector2(0, vs.y - bottom_h)
@@ -241,6 +252,44 @@ func _layout_leaf() -> void:
 	side_panel.grow_vertical = Control.GROW_DIRECTION_END
 
 
+## The drawn skin's bottom bar (prototype, docs/design/menus-v3.md): the same band, slots and sizes as the painted
+## frame, drawn in code: dark glass with the gold hairline along its top, the blue gem where dialogues stand, and a
+## sunk well for the pack, the tracked goals and the party.
+func _draw_skin_bar() -> void:
+	var c := _leaf_art
+	var top := LEAF_BAND_TOP * _leaf_u
+	var w := c.size.x
+	var h := c.size.y
+	c.draw_polygon(PackedVector2Array([Vector2(0, top), Vector2(w, top), Vector2(w, h), Vector2(0, h)]),
+		PackedColorArray([UiSkin.BAR_TOP, UiSkin.BAR_TOP, UiSkin.BAR_FOOT, UiSkin.BAR_FOOT]))
+	c.draw_line(Vector2(0, top - 0.5), Vector2(w, top - 0.5), Color(UiSkin.INK, 0.85), 1.0)
+	c.draw_line(Vector2(0, top + 0.5), Vector2(w, top + 0.5), Color(UiSkin.HAIR, 0.7), 1.0)
+	c.draw_line(Vector2(0, top + 2.5), Vector2(w, top + 2.5), Color(1, 1, 1, 0.05), 1.0)
+	var well := UiSkin.flat(Color(0, 0, 0, 0.28), Color(1, 1, 1, 0.09), 5, 0.0, 0.0)
+	for r: Rect2 in [LEAF_PACK, LEAF_PARTY]:
+		c.draw_style_box(well, Rect2(_leaf_at(r.position), _leaf_at(r.end) - _leaf_at(r.position)).grow(3.0))
+	# the tracked goals: a quiet rule under the words, a small diamond at each end
+	var a := _leaf_at(Vector2(LEAF_BAR.position.x, LEAF_BAR.end.y + 6.0))
+	var b := _leaf_at(Vector2(LEAF_BAR.end.x, LEAF_BAR.end.y + 6.0))
+	c.draw_line(a, b, Color(UiSkin.HAIR, 0.35), 1.0)
+	for p: Vector2 in [a, b]:
+		_gem(c, p, 3.5, false)
+	_gem(c, Vector2(w * 0.5, top), 11.0, true)  # the diamond a dialogue stands on
+
+
+func _gem(c: Control, at: Vector2, r: float, big: bool) -> void:
+	var d := func(k: float, col: Color) -> void:
+		c.draw_colored_polygon(PackedVector2Array([at + Vector2(0, -k), at + Vector2(k, 0), at + Vector2(0, k), at + Vector2(-k, 0)]), col)
+	if big:
+		d.call(r + 3.0, Color(UiSkin.INK, 0.9))
+		d.call(r + 1.5, UiSkin.HAIR)
+		d.call(r - 0.5, UiSkin.GEM)
+		c.draw_colored_polygon(PackedVector2Array([at + Vector2(0, -r + 0.5), at + Vector2(r - 0.5, 0), at + Vector2(0, 0), at + Vector2(-r + 0.5, 0)]), UiSkin.GEM.lightened(0.25))
+	else:
+		d.call(r + 1.0, Color(UiSkin.HAIR, 0.8))
+		d.call(r - 0.5, UiSkin.GEM)
+
+
 ## A point of the band's art (art px) on screen, relative to the band's top left: x passes the stretch runs.
 func _leaf_at(p: Vector2) -> Vector2:
 	var x := p.x
@@ -254,6 +303,9 @@ func _leaf_at(p: Vector2) -> Vector2:
 
 ## The band in pieces: fixed art between the stretch runs, each run drawn wider.
 func _draw_leaf() -> void:
+	if UiSkin.on():
+		_draw_skin_bar()
+		return
 	var art := _leaf_tex.get_size()
 	var cuts: Array[float] = [0.0]
 	for run: Vector2 in LEAF_STRETCH:

@@ -75,6 +75,8 @@ static func make() -> Theme:
 	# Buttons, chips, slots, the X and the scrollbar: the menu kit (dark with a thin rim; gold for the one to press).
 	MenuKit.style(t)
 	_kit(t)
+	if UiSkin.on():  # the drawn skin (prototype, docs/design/menus-v3.md): the same pieces, drawn instead of painted
+		UiSkin.apply(t)
 	return t
 
 
@@ -168,6 +170,9 @@ static func pill(tint: Color, glow: float) -> FramedBox:
 # --- drawing for screens that paint themselves (the character sheet) --------------------------------------
 
 static func frame(ci: CanvasItem, r: Rect2) -> void:
+	if UiSkin.on():
+		ci.draw_style_box(UiSkin.solid_panel(), r)
+		return
 	ci.draw_style_box(look("look_panel.png", 72, 72, 0.5, 0.0, 0.0, Color.WHITE, true), r)  # the same frame every panel wears
 
 
@@ -340,6 +345,10 @@ static func frame_window(panel: PanelContainer, content: Control, area: Callable
 		var m := panel.get_theme_stylebox("panel")
 		x.size = Vector2(FRAME_X, FRAME_X)
 		var drop := float(panel.get_meta("x_drop", 0.0))  # a big window's X stands further in, off its rim
+		if m is SkinBox:  # the drawn skin has no corner gem to clear: the X sits just inside the top right corner
+			x.size = Vector2(UiSkin.X_SIZE, UiSkin.X_SIZE)
+			x.position = Vector2(head.size.x + m.content_margin_right - UiSkin.X_SIZE - UiSkin.X_INSET, -m.content_margin_top + UiSkin.X_INSET)
+			return
 		x.position = Vector2(head.size.x + m.content_margin_right - X_RIGHT - drop, -m.content_margin_top + X_TOP + drop)
 	head.resized.connect(put_x)
 	panel.resized.connect(put_x)

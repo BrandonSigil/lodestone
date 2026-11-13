@@ -126,6 +126,10 @@ func _place_face(k: int) -> void:
 ## A framed window behind some grids, its title on a plate at the top.
 func add_window(r: Rect2, title := "") -> void:
 	windows.append({"rect": r, "title": title})
+	if UiSkin.on() and not sections:  # the drawn skin: the world blurred behind each window this view draws itself
+		var back := SkinBackdrop.new()
+		back.rect = r
+		add_child(back, false, Node.INTERNAL_MODE_FRONT)
 	_fit_size()
 
 
@@ -527,7 +531,9 @@ func _draw_window(r: Rect2, title: String) -> void:
 			draw_line(Vector2(cx + tw * 0.5 + 12.0, cy), Vector2(r.end.x - 30.0, cy), rule, 1.5, true)
 		return
 	var sb := get_theme_stylebox("panel", "DialogPanel")
-	if sb != null:
+	if UiSkin.on():
+		draw_style_box(UiSkin.panel(0.0, 0.0), r)  # side by side windows: no gem each
+	elif sb != null:
 		draw_style_box(sb, r)
 	else:
 		draw_rect(r, Riso.INK)

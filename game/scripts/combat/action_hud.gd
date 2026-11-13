@@ -283,11 +283,27 @@ func _art_panel(margin_from: Vector2, margin_to: Vector2, min_size: Vector2, pai
 	p.custom_minimum_size = min_size
 	p.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS  # painted big, drawn small
 	p.draw.connect(painter.bind(p))
+	if UiSkin.on():  # the drawn skin: the fight blurred behind the bar
+		var back := SkinBackdrop.new()
+		p.add_child(back, false, Node.INTERNAL_MODE_FRONT)
+		var fit := func() -> void:
+			back.rect = _skin_bar_rect(p)
+			back.queue_redraw()
+		p.resized.connect(fit)
+		fit.call()
 	return p
+
+
+## The drawn skin's bar: inside the room the painted ends and crests took.
+func _skin_bar_rect(c: Control) -> Rect2:
+	return Rect2(Vector2(14, 8), c.size - Vector2(28, 16))
 
 
 ## The bar: fixed left and right ends, a fill that grows or shrinks with the boxes, the crests on top and under.
 func _draw_bar(c: Control) -> void:
+	if UiSkin.on():  # the drawn skin: one small window, the gem on its top edge
+		c.draw_style_box(UiSkin.panel(0.0, 0.0, true, false, 10.0), _skin_bar_rect(c))
+		return
 	var left := _tex("bar_left")
 	var lw := left.get_width() * KS
 	c.draw_texture_rect(_tex("bar_fill"), Rect2(lw - 1.0, 0, c.size.x - 2.0 * lw + 2.0, c.size.y), false)
@@ -414,7 +430,14 @@ func _portrait_panel(u: CombatUnit) -> Control:
 	panel.custom_minimum_size = frame.get_size() * KP
 	panel.size_flags_vertical = Control.SIZE_SHRINK_END
 	panel.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	panel.draw.connect(func() -> void: panel.draw_texture_rect(frame, Rect2(Vector2.ZERO, frame.get_size() * KP), false))
+	if UiSkin.on():  # the drawn skin: a small window round the face and its meters
+		var box := Rect2(Vector2(70, 96) * KP, Vector2(416, 438) * KP)
+		var back := SkinBackdrop.new()
+		back.rect = box
+		panel.add_child(back)
+		panel.draw.connect(func() -> void: panel.draw_style_box(UiSkin.panel(0.0, 0.0, false, false, 10.0), box))
+	else:
+		panel.draw.connect(func() -> void: panel.draw_texture_rect(frame, Rect2(Vector2.ZERO, frame.get_size() * KP), false))
 	var window := Rect2(Vector2(82, 108) * KP, Vector2(392, 322) * KP)  # the cream window, in the art's pixels
 	panel.add_child(_portrait(u, window))
 	var x := 80.0 * KP
