@@ -15,13 +15,10 @@ Read `docs/context/README.md` first, then `docs/context/current-state.md`. Toget
 - After a change, run `tools/check.sh` (headless import, unit tests, scene smoke runs) and fix every error.
 - Any Godot run that opens a window (the `game/tools/*_shot.gd` screenshot scripts) goes through `tools/godot.sh <args>`, never the bare binary. It runs a private focus-free copy of Godot (built by `tools/nofocus/setup.sh`) that can never become the front app, so Brandon's windows, keyboard and mouse are never touched. Never run a windowed Godot any other way. Headless runs can use either.
 
-## Playtest builds at every major milestone
-Brandon, 2026-11-13: build the Mac and Windows copies "at regular major milestones". A major milestone is any of these:
-- a numbered milestone (M1, M2...) lands;
-- a feature or fix batch Brandon approved is merged to main;
-- before anything goes to friends and family testers.
+## Playtest builds: big releases only
+Day to day, a change is done when it works in the local Godot project: `tools/check.sh` passes, and screenshots go through `tools/godot.sh`. Don't build Mac or Windows apps for ordinary work, and don't offer to (Brandon, 2026-11-13: "dont ask to make mac/windows apps unless it's a big release. Just have it work on our local godot env"). This replaces his earlier same-day ask to build them at every major milestone.
 
-When one lands:
+For a big release, meaning one Brandon calls a release or a build going to friends and family testers:
 1. `tools/check.sh` passes.
 2. Run `tools/export/build.sh all`. It writes `build/mac/Lodestone.zip` and `build/windows/Lodestone.exe`. Headless Godot needs the Bash sandbox off.
 3. Smoke-test the Mac build: unzip it to a scratch folder and run `Lodestone.app/Contents/MacOS/Lodestone --headless --quit-after 300`. It must print only the version line. Any `ERROR` blocks the build, most often a data CSV not imported as "keep".

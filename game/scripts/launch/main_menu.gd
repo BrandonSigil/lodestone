@@ -1,16 +1,16 @@
 class_name MainMenu
 extends Control
 ## The player's front door (the game's main scene): Brandon's title painting (the logo is painted in, so the menu draws
-## no title of its own) drifting slowly, with CONTINUE, NEW GAME, OPTIONS and QUIT down the dark trees on the left. A small DEV TOOLS button (debug builds and Brandon's machines only, Game.dev_available)
-## opens the old launch page with every tool on it; anything started from there runs in dev mode.
+## no title of its own) drifting slowly, with CONTINUE, NEW GAME, OPTIONS and QUIT in the middle of the screen, under
+## the logo (Brandon 2026-11-13: "Put em smack in the middle"). A small DEV TOOLS button (debug builds and Brandon's
+## machines only, Game.dev_available) opens the old launch page with every tool on it; anything started from there runs in dev mode.
 ## Brandon 2026-11-13: "there should be a main menu player path, with ... the Dev Tools menu that if you click it opens
 ## all of our other tools we currently have on that main launch page".
 
 const BACKDROP := "res://art/source/ui/menu/title_screen.webp"  ## Brandon 2026-11-13: "Make this the menu screen"
 const DRIFT_SECONDS := 60.0  ## one slow pan across the painting and back
 const DRIFT := 0.04  ## how much wider than the screen the painting is drawn, for the pan
-const COLUMN_X := 0.065  ## the buttons' left edge, as a share of the width: over the dark trees, clear of the logo
-const COLUMN_Y := 0.47  ## the buttons' middle, as a share of the height: above the standing stone
+const LOGO_BOTTOM := 0.32  ## where the painted logo ends, as a share of the painting's height: the buttons stay below
 
 var _art: TextureRect
 var _column: VBoxContainer
@@ -29,12 +29,13 @@ func _ready() -> void:
 	_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_art)
-	var shade := TextureRect.new()  # a soft shade down the left only, so the buttons read and the painting stays clear
+	var shade := TextureRect.new()  # a soft pool of shade behind the buttons; the edges of the painting stay clear
 	var g := GradientTexture2D.new()
-	g.fill_from = Vector2(0, 0)
-	g.fill_to = Vector2(0.42, 0)
+	g.fill = GradientTexture2D.FILL_RADIAL
+	g.fill_from = Vector2(0.5, 0.55)
+	g.fill_to = Vector2(0.5, 1.0)
 	g.gradient = Gradient.new()
-	g.gradient.set_color(0, Color(0.02, 0.04, 0.08, 0.55))
+	g.gradient.set_color(0, Color(0.02, 0.04, 0.08, 0.4))
 	g.gradient.set_color(1, Color(0.02, 0.04, 0.08, 0.0))
 	shade.texture = g
 	shade.stretch_mode = TextureRect.STRETCH_SCALE
@@ -44,7 +45,7 @@ func _ready() -> void:
 	add_child(shade)
 
 	_column = VBoxContainer.new()
-	_column.alignment = BoxContainer.ALIGNMENT_BEGIN
+	_column.alignment = BoxContainer.ALIGNMENT_CENTER
 	_column.add_theme_constant_override("separation", 12)
 	add_child(_column)
 	var has_save := _has_save()
@@ -98,7 +99,10 @@ func _fit() -> void:
 	_column.size = need
 	var s := minf(1.0, minf((size.x - 80.0) / maxf(1.0, need.x), (size.y - 80.0) / maxf(1.0, need.y)))
 	_column.scale = Vector2(s, s)
-	_column.position = Vector2(size.x * COLUMN_X, size.y * COLUMN_Y - need.y * s * 0.5).floor()
+	var top := (size.y - need.y * s) * 0.5  # the middle of the screen, but never over the painted logo
+	if _art and _art.texture:
+		top = maxf(top, _art.size.y * LOGO_BOTTOM + 8.0)
+	_column.position = Vector2((size.x - need.x * s) * 0.5, top).floor()
 	var foot := get_node_or_null("Foot") as Control
 	if foot:
 		foot.position = Vector2(18, size.y - 34)
@@ -118,10 +122,10 @@ func _centred(c: Control) -> Control:
 	return c
 
 
-func _plain(text: String, cb: Callable) -> Button:
+func _plain(text: String, cb: Callable, w := 300.0) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(300, 48)
+	b.custom_minimum_size = Vector2(w, 48)
 	b.add_theme_font_size_override("font_size", 20)
 	b.pressed.connect(cb)
 	return b
