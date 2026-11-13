@@ -116,15 +116,15 @@ static func fill(box: VBoxContainer, container: InventoryGrid, title: String, ch
 				break
 	view.changed.connect(changed)
 	box.add_child(view)
-	bare(box, view)
+	bare(box, view, close)
 	return view
 
 
-const CELL := 46.0
-const GAP := 18.0  ## between the two windows
-const BUTTON_H := 40.0
+const CELL := 42.0
+const GAP := 12.0  ## between the two sections
+const BUTTON_H := 36.0
 const X_SIZE := 34.0  ## the close X at a window's top right
-const MIN_BUTTON_W := 150.0  ## the narrowest a window gets for its TAKE ALL across the bottom edge
+const MIN_BUTTON_W := 136.0  ## the narrowest a window gets for its TAKE ALL across the bottom edge
 
 
 ## Lays out a PackView set up on the pack as two windows: the inventory (pack, the courier's saddlebag beside it, the bin
@@ -134,6 +134,8 @@ const MIN_BUTTON_W := 150.0  ## the narrowest a window gets for its TAKE ALL acr
 ## x_close: when set, each window gets a small X at its top right that calls it, and a single button sits centred across
 ## the bottom edge of the other window, half in and half out.
 static func windows(view: PackView, other: InventoryGrid, other_title: String, buttons: Array, pack_to_other: bool, note := "", note_icon: Texture2D = null, x_close := Callable()) -> Array[Button]:
+	if UiSkin.on():  # one window with two sections; the dialogue's own X closes it (bare)
+		return panes(view, other, other_title, buttons, pack_to_other, note, note_icon)
 	var run := Game.run
 	var cell := view.cell
 	var pad := PackView.WINDOW_PAD
@@ -197,13 +199,88 @@ static func windows(view: PackView, other: InventoryGrid, other_title: String, b
 	return made
 
 
+## One window, two sections (menus v3, docs/design/menus-v3.md): `other` (a container, the loot, FOUND) on the left
+## under its heading, with its note and its buttons under its grid; the pack on the right, the dog's saddlebag beside
+## it in its inset, THROW AWAY under them when the view has a bin, and the party's gold as a chip at the foot. Both
+## sections are the same height. `other` is area 1 (a click there sends to the pack), the saddlebag area 2. The
+## dialogue's own frame is the window: one X, and its inside scrolls when the room is short.
+static func panes(view: PackView, other: InventoryGrid, other_title: String, buttons: Array, pack_to_other: bool, note := "", note_icon: Texture2D = null) -> Array[Button]:
+	var run := Game.run
+	var cell := view.cell
+	var pad := SECTION_PAD
+	var f := Riso.font()
+	view.sections = true
+	var top_y := PackView.WINDOW_TITLE + 6.0
+	# the other grid's section: as wide as its grid, its heading with a rule each side, and its widest button need
+	var ow := maxf(other.cols * cell, MIN_BUTTON_W)
+	ow = maxf(ow, f.get_string_size(other_title, HORIZONTAL_ALIGNMENT_LEFT, -1, MenuKit.HEAD).x + 96.0)
+	for b in buttons:
+		ow = maxf(ow, f.get_string_size(String(b[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, UiSkin.T_BODY).x + 40.0)
+	ow = ceilf(ow)
+	var gx := pad + roundf((ow - other.cols * cell) * 0.5)
+	view.add_area(other, Vector2(gx, top_y), "", null, 0)
+	# the pack's section
+	var x0 := ow + pad * 2.0 + GAP
+	var top := Vector2(x0 + pad, top_y)
+	var right := top.x + run.pack.cols * cell
+	var bottom := top.y + run.pack.rows * cell
+	view.move_area(0, top)
+	view.areas[0]["click_to"] = 1 if pack_to_other else -1
+	var saddle: InventoryGrid = run.open_courier_bag()
+	if saddle != null:
+		var end := saddle_beside(view, saddle, right, top.y)
+		right = end.x
+		bottom = maxf(bottom, end.y)
+	if view.bin.is_valid():  # THROW AWAY: a thin bar under the grids
+		view.place_bin(Rect2(Vector2(top.x, bottom + 10.0), Vector2(right - top.x, 28.0)), "UI_THROW", "UI_BOUND_THROW")
+		bottom += 38.0
+	view.add_note(str(run.gold), Vector2(top.x, bottom + 10.0), right - top.x, ActionInfo.icon("gold"))
+	view.gold_note = view.notes.back()
+	view.gold_note["chip"] = true
+	view.flash_at = Vector2(top.x + 104.0, bottom + 10.0 + PackView.NOTE_CHIP_H * 0.5)
+	bottom += 10.0 + PackView.NOTE_CHIP_H
+	# under the other grid: its note (the coins it holds or gave), then its buttons
+	var y := top_y + other.rows * cell + 10.0
+	if note != "":
+		var lines := view.add_note(note, Vector2(gx, y + 2.0), ow, note_icon)
+		y += PackView.NOTE_LINE * lines + 6.0
+	var made: Array[Button] = []
+	for b in buttons:
+		made.append(view.add_button(String(b[0]), Rect2(Vector2(pad, y), Vector2(ow, BUTTON_H)), b[1]))
+		y += BUTTON_H + 6.0
+	var oh := y - 6.0 + pad - 4.0
+	var h := maxf(oh, bottom + pad - 4.0)
+	view.add_window(Rect2(Vector2(x0, 0), Vector2(right + pad - x0, h)), Txt.t("UI_PACK"))
+	view.add_window(Rect2(Vector2.ZERO, Vector2(ow + pad * 2.0, h)), other_title)
+	view.custom_minimum_size = Vector2(right + pad, h)
+	return made
+
+
+## The dog's saddlebag beside the pack in its own inset, his round face over it (as on the win screen). `pack_right`
+## is the pack grid's right edge, `top_y` its top. Returns the inset's right edge and the bag's bottom.
+static func saddle_beside(view: PackView, saddle: InventoryGrid, pack_right: float, top_y: float, click_to := 0) -> Vector2:
+	var run := Game.run
+	var cell := view.cell
+	var block := SADDLE_FACE + 8.0 + saddle.rows * cell
+	var gy := top_y + maxf(0.0, roundf((run.pack.rows * cell - block) * 0.5)) + SADDLE_FACE + 8.0
+	var at := Vector2(pack_right + SADDLE_GAP, gy)
+	var who: CharacterDef = run.courier().def
+	view.add_area(saddle, at, Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)), face_of(String(who.id)), click_to)
+	var sk := view.areas.size() - 1
+	view.areas[sk].at = at
+	view.areas[sk].face_at = at + Vector2(roundf((saddle.cols * cell - SADDLE_FACE) * 0.5), -SADDLE_FACE - 8.0)
+	view.round_face(sk, String(who.id), SADDLE_FACE)
+	view.saddle_inset = true
+	return Vector2(at.x + saddle.cols * cell + PackView.INSET_PAD, gy + saddle.rows * cell)
+
+
 ## The win screen's loot ([USER] 2026-11-01 X7: "show the loot earned in a box that fits the size of whatever the loot is,
 ## with your inventory under it so that yo ucan drag stuff into it"): `other` in its own window on top, sized to its grid,
 ## TAKE ALL across its bottom edge; the pack (the courier's saddlebag beside it) in a window under it, the party's gold
 ## under the pack. `other` is area 1 (a click there sends to the pack), the saddlebag area 2.
-const SECTION_PAD := 20.0
-const SADDLE_GAP := 34.0  ## between the pack and the dog's saddlebag on the win screen (room for his bag's inset)
-const SADDLE_FACE := 46.0  ## the dog's round face over his saddlebag there
+const SECTION_PAD := 18.0
+const SADDLE_GAP := 30.0  ## between the pack and the dog's saddlebag on the win screen (room for his bag's inset)
+const SADDLE_FACE := 42.0  ## the dog's round face over his saddlebag there
 
 static func stacked(view: PackView, other: InventoryGrid, other_title: String) -> void:
 	var run := Game.run
@@ -297,7 +374,7 @@ static func _beside(view: PackView, other: InventoryGrid, other_title: String, p
 ## whole thing shrinks to fit.
 const FRAME_ROOM := 150.0  ## the bottom frame and a margin above it
 
-static func bare(box: Control, view: Control = null) -> void:
+static func bare(box: Control, view: Control = null, close := Callable()) -> void:
 	var n: Node = box.get_parent()
 	while n != null and not n is PanelContainer:
 		n = n.get_parent()
@@ -308,6 +385,12 @@ static func bare(box: Control, view: Control = null) -> void:
 	for c in panel.get_child(0).get_children() if panel.get_child_count() > 0 else []:
 		if c is MenuKit._Pointer:  # and no point down at the diamond
 			c.queue_free()
+	if UiSkin.on():  # one window (menus v3): the dialogue's own frame holds the sections, and its X closes
+		if close.is_valid():
+			panel.set_meta("close_cb", close)
+		if panel.has_meta("frame_x"):  # the sections start below the X
+			((panel.get_meta("frame_x") as Control).get_parent() as Control).custom_minimum_size.y = 16.0
+		return
 	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	if panel.has_meta("frame_x"):  # its windows carry their own X's
 		(panel.get_meta("frame_x") as Control).visible = false

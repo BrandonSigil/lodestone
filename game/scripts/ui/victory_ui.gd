@@ -15,16 +15,15 @@ extends PanelContainer
 
 const ICONS := "res://art/source/icons/"
 const STAT_ICON := {"hp": "potion", "damage": "strength", "armor": "shield", "magic": "rare", "crit": "focus"}
-const CARD_W := 246.0
-const FACE := 60.0
-const LOOT_CELL := 70.0  ## the loot and pack grids' cell size here, unless _cell fits them to the party column
-const CELL_MIN := 56.0
-const CELL_MAX := 84.0
+const CARD_W := 222.0
+const FACE := 54.0
+const LOOT_CELL := 64.0  ## the loot and pack grids' cell size here, unless _cell fits them to the party column
+const CELL_MIN := 50.0
+const CELL_MAX := 76.0
 const FILL_TIME := 1.1  ## seconds an XP bar takes to fill (a level up rolls it over and goes on)
-const BAR_LABEL := 88.0  ## room for a bar's name (CHARGES, MORALE)
-const FOOT_H := 48.0  ## the foot row's chips and buttons
-const CARD_PAD := 16.0  ## a party card's inner margin left and right
-const MIN_SCALE := 0.8  ## the smallest the window shrinks to before its inside scrolls
+const BAR_LABEL := 80.0  ## room for a bar's name (CHARGES, MORALE)
+const FOOT_H := 44.0  ## the foot row's chips and buttons
+const CARD_PAD := 14.0  ## a party card's inner margin left and right
 const STAGGER := 0.18  ## each card starts this much after the one before
 const XP_GOLD := Color(0.98, 0.8, 0.32)
 const HP_RED := Color(0.82, 0.24, 0.2)
@@ -98,30 +97,27 @@ func _ready() -> void:
 	dim.room = _room
 	_holder = dim
 	add_child(_holder)
-	# the window scales down to fit before its inside would scroll (research: to 85%, then scroll)
-	var w := MenuKit.window(Txt.t(String(r.get("title", "UI_VICTORY"))), _room, _press_first, 46, func() -> Rect2:
-		var rr := _room()
-		rr.size.y /= MIN_SCALE
-		return rr)
+	# the window is laid out at its real size; its inside scrolls when the room is too short for it
+	var w := MenuKit.window(Txt.t(String(r.get("title", "UI_VICTORY"))), _room, _press_first)
 	_win = w.root
 	_holder.add_child(_win)
 	_page = w.body
 	_foot = w.foot
 	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 22)
+	body.add_theme_constant_override("separation", 20)
 	_page.add_child(body)
 	var left := VBoxContainer.new()
-	left.add_theme_constant_override("separation", 14)
+	left.add_theme_constant_override("separation", 12)
 	body.add_child(left)
 	_party(left)
 	_bonds(left)
 	var right := VBoxContainer.new()
-	right.add_theme_constant_override("separation", 12)
+	right.add_theme_constant_override("separation", 10)
 	body.add_child(right)
 	_loot(right)
 	var end := String(r.get("end_text", ""))
 	if end != "":
-		var l := _label(end, 20)
+		var l := _label(end, UiSkin.T_LEAD)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_page.add_child(l)
 	# the foot goes under the loot and the pack, level with the party cards' foot (the window's own foot stays empty):
@@ -131,7 +127,7 @@ func _ready() -> void:
 	push.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(push)
 	_foot = HBoxContainer.new()
-	_foot.add_theme_constant_override("separation", 12)
+	_foot.add_theme_constant_override("separation", 10)
 	right.add_child(_foot)
 	var gap := Control.new()
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -152,16 +148,11 @@ func _room() -> Rect2:
 	return get_viewport_rect()
 
 
-## The window centred in the room, scaled down (never up) to fit it with a margin.
+## The window centred in the room at its own size (UiTheme.place: on whole pixels, shrunk only if it cannot fit).
 func _fit() -> void:
 	if not is_instance_valid(_win):
 		return
-	_win.reset_size()
-	var room := _room()
-	var free := room.size - Vector2(32, 32)
-	var k := minf(UiTheme.KIT_SCALE, minf(free.x / maxf(1.0, _win.size.x), free.y / maxf(1.0, _win.size.y)))
-	_win.scale = Vector2(k, k)
-	_win.position = (room.position + (room.size - _win.size * k) * 0.5).floor()
+	UiTheme.place(_win, _room())
 	_holder.queue_redraw()
 
 
@@ -199,12 +190,12 @@ func _skip_or_go() -> void:
 ## were knocked out either"): EXP and the gold. The loot's things wait in the loot window under it.
 func _summary(col: Control) -> void:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 10)
+	row.add_theme_constant_override("separation", 8)
 	row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	col.add_child(row)
-	var chips := [MenuKit.chip(Txt.f("UI_VIC_EXP", int(r.get("xp", 0))), "star_guide", XP_GOLD, "", 18)]
+	var chips := [MenuKit.chip(Txt.f("UI_VIC_EXP", int(r.get("xp", 0))), "star_guide", XP_GOLD, "", UiSkin.T_BODY)]
 	if int(r.get("coins", 0)) > 0:
-		chips.append(MenuKit.chip(Txt.f("UI_VIC_GOLD", int(r.coins)), "gold", XP_GOLD, Txt.t("UI_PACK_GOLD_TIP"), 18))
+		chips.append(MenuKit.chip(Txt.f("UI_VIC_GOLD", int(r.coins)), "gold", XP_GOLD, Txt.t("UI_PACK_GOLD_TIP"), UiSkin.T_BODY))
 	for c: Control in chips:
 		c.custom_minimum_size.y = FOOT_H  # one height across the foot row
 		row.add_child(c)
@@ -236,15 +227,15 @@ func _cell(col: Control, rows: int) -> float:
 	if h <= 0.0 or rows <= 0:
 		return LOOT_CELL
 	var chrome := PackView.WINDOW_TITLE + 8.0 + PackView.NOTE_CHIP_H + 4.0  # heading, foot row, a hair of room
-	return clampf(floorf((h - FOOT_H - 12.0 - chrome) / rows), CELL_MIN, CELL_MAX)
+	return clampf(floorf((h - FOOT_H - 10.0 - chrome) / rows), CELL_MIN, CELL_MAX)
 
 
 func _party(into: Control) -> void:
 	var members: Array = r.get("members", [])
 	var grid := GridContainer.new()
 	grid.columns = 1 if members.size() <= 2 else (2 if members.size() <= 4 else 3)  # two across past two, as in mockup D
-	grid.add_theme_constant_override("h_separation", 12)
-	grid.add_theme_constant_override("v_separation", 12)
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 10)
 	into.add_child(grid)
 	for m: Dictionary in members:
 		grid.add_child(_card(m))
@@ -261,11 +252,11 @@ func _card(m: Dictionary) -> Control:
 		card.add_theme_stylebox_override("panel", sb)
 	card.custom_minimum_size.x = CARD_W
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
+	col.add_theme_constant_override("separation", 5)
 	card.add_child(col)
 	# the round face, the LV UP plate over its foot, and a gem when a pick waits
 	var face := Control.new()
-	face.custom_minimum_size = Vector2(CARD_W - 28, FACE + 4)
+	face.custom_minimum_size = Vector2(CARD_W - 26, FACE + 4)
 	col.add_child(face)
 	var pic := MenuKit.portrait(String(m.id), FACE, true)
 	pic.size = Vector2(FACE, FACE)
@@ -276,7 +267,7 @@ func _card(m: Dictionary) -> Control:
 	var bl := Label.new()
 	bl.theme_type_variation = &"MenuTitle"
 	bl.text = Txt.t("UI_VIC_LV_UP")
-	bl.add_theme_font_size_override("font_size", 20)
+	bl.add_theme_font_size_override("font_size", UiSkin.T_LEAD)
 	badge.add_child(bl)
 	badge.visible = false
 	face.add_child(badge)
@@ -286,12 +277,12 @@ func _card(m: Dictionary) -> Control:
 	# the level as a chip on the face's corner; the name under the face
 	var top := HBoxContainer.new()  # the name, and the level as a chip beside it (clear of the face)
 	top.alignment = BoxContainer.ALIGNMENT_CENTER
-	top.add_theme_constant_override("separation", 8)
+	top.add_theme_constant_override("separation", 7)
 	col.add_child(top)
-	var nm := _label(String(m.name), 17)
+	var nm := _label(String(m.name), UiSkin.T_BODY)
 	nm.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(nm)
-	var lvc := MenuKit.chip("%s %d" % [Txt.t("UI_VIC_LV"), int(m.lv0)], "", XP_GOLD, "", 15)
+	var lvc := MenuKit.chip("%s %d" % [Txt.t("UI_VIC_LV"), int(m.lv0)], "", XP_GOLD, "", UiSkin.T_SMALL)
 	top.add_child(lvc)
 	var lv: Label = lvc.get_child(0).get_child(0)
 	# the bars, each named in small plain words ([USER] 2026-11-01 X7: "Which bar is health? Which bar is Energy?")
@@ -312,8 +303,8 @@ func _card(m: Dictionary) -> Control:
 	# the stats a level gave, as icons, and a gem when a new trick waits (shown when the bar rolls over)
 	var gains := HBoxContainer.new()
 	gains.alignment = BoxContainer.ALIGNMENT_CENTER
-	gains.add_theme_constant_override("separation", 8)
-	gains.custom_minimum_size.y = 28
+	gains.add_theme_constant_override("separation", 7)
+	gains.custom_minimum_size.y = 26
 	gains.modulate.a = 0.0
 	col.add_child(gains)
 	var stats: Dictionary = m.get("stats", {})
@@ -321,8 +312,8 @@ func _card(m: Dictionary) -> Control:
 		if int(stats.get(k, 0)) > 0:
 			var g := HBoxContainer.new()
 			g.add_theme_constant_override("separation", 1)
-			g.add_child(_tex(String(STAT_ICON[k]), 24))
-			var gl := _label("+%d" % int(stats[k]), 17)
+			g.add_child(_tex(String(STAT_ICON[k]), 22))
+			var gl := _label("+%d" % int(stats[k]), UiSkin.T_BODY)
 			gl.add_theme_color_override("font_color", UP_GREEN)
 			g.add_child(gl)
 			g.tooltip_text = Txt.t("UI_STAT_" + k.to_upper())
@@ -331,7 +322,7 @@ func _card(m: Dictionary) -> Control:
 		var g := HBoxContainer.new()
 		g.add_theme_constant_override("separation", 4)
 		g.add_child(_Gem.new())
-		var gl := _label(Txt.t("UI_VIC_PICK"), 15)
+		var gl := _label(Txt.t("UI_VIC_PICK"), UiSkin.T_SMALL)
 		gl.add_theme_color_override("font_color", UiTheme.GOLD)
 		g.add_child(gl)
 		gains.add_child(g)
@@ -342,11 +333,11 @@ func _card(m: Dictionary) -> Control:
 
 func _bar_row(col: VBoxContainer, label: String, fill: Color, value: float, text: String) -> UiBar:
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 6)
+	h.add_theme_constant_override("separation", 5)
 	col.add_child(h)
-	var l := _label(label, 12)
+	var l := _label(label, UiSkin.T_SMALL)
 	l.add_theme_color_override("font_color", UiTheme.PARCHMENT_DARK)
-	l.custom_minimum_size.x = 54.0
+	l.custom_minimum_size.x = 48.0
 	h.add_child(l)
 	var b := UiBar.new()
 	b.fill = fill
@@ -365,8 +356,8 @@ func _bonds(col: VBoxContainer) -> void:
 		return
 	var row := HFlowContainer.new()
 	row.alignment = FlowContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("h_separation", 10)
-	row.add_theme_constant_override("v_separation", 8)
+	row.add_theme_constant_override("h_separation", 8)
+	row.add_theme_constant_override("v_separation", 7)
 	col.add_child(row)
 	for up: Array in ups:
 		var ids := String(up[0]).split("+")
@@ -375,10 +366,10 @@ func _bonds(col: VBoxContainer) -> void:
 		var h := HBoxContainer.new()
 		h.add_theme_constant_override("separation", 4)
 		p.add_child(h)
-		h.add_child(MenuKit.portrait(ids[0], 34))
-		h.add_child(_tex("heal", 26))
-		h.add_child(MenuKit.portrait(ids[1] if ids.size() > 1 else "", 34))
-		var l := _label("%s %d" % [Txt.t("UI_VIC_LV"), int(up[1])], 18)
+		h.add_child(MenuKit.portrait(ids[0], 30))
+		h.add_child(_tex("heal", 24))
+		h.add_child(MenuKit.portrait(ids[1] if ids.size() > 1 else "", 30))
+		var l := _label("%s %d" % [Txt.t("UI_VIC_LV"), int(up[1])], UiSkin.T_BODY)
 		l.add_theme_color_override("font_color", HEART_PINK)
 		h.add_child(l)
 		row.add_child(p)
@@ -389,21 +380,21 @@ func _bonds(col: VBoxContainer) -> void:
 func _buttons() -> void:
 	var row := _foot
 	for b: Array in buttons:
-		var btn := MenuKit.primary(String(b[0]), b[1], 21, 210.0) if _first == null else Button.new()
+		var btn := MenuKit.primary(String(b[0]), b[1], UiSkin.T_LEAD, 188.0) if _first == null else Button.new()
 		btn.custom_minimum_size.y = FOOT_H
 		if _first != null:
 			btn.text = String(b[0])
-			btn.custom_minimum_size = Vector2(210, FOOT_H)
-			btn.add_theme_font_size_override("font_size", 20)
+			btn.custom_minimum_size = Vector2(188, FOOT_H)
+			btn.add_theme_font_size_override("font_size", UiSkin.T_LEAD)
 			btn.pressed.connect(b[1])
 		row.add_child(btn)
 		if _first == null:
 			_first = btn
 	var clear := Control.new()  # level with the pack card's right edge (its card is inset 8 px), clear of the corner leaves
-	clear.custom_minimum_size = Vector2(8, 0)
+	clear.custom_minimum_size = Vector2(7, 0)
 	row.add_child(clear)
 	var under := Control.new()
-	under.custom_minimum_size = Vector2(0, 10)
+	under.custom_minimum_size = Vector2(0, 8)
 	row.get_parent().add_child(under)
 	if _first != null:
 		_first.grab_focus.call_deferred()
@@ -478,18 +469,19 @@ func _label(text: String, px: int) -> Label:
 ## A blue gem with a "!" on a portrait's corner: a skill pick is waiting.
 class _Gem extends Control:
 	func _init() -> void:
-		custom_minimum_size = Vector2(22, 22)
+		custom_minimum_size = Vector2(20, 20)
 		size = Vector2(22, 22)
 		mouse_filter = Control.MOUSE_FILTER_PASS
 
 	func _draw() -> void:
 		var c := size * 0.5
-		var pts := PackedVector2Array([c + Vector2(0, -11), c + Vector2(11, 0), c + Vector2(0, 11), c + Vector2(-11, 0)])
+		var h := size.x * 0.5
+		var pts := PackedVector2Array([c + Vector2(0, -h), c + Vector2(h, 0), c + Vector2(0, h), c + Vector2(-h, 0)])
 		draw_colored_polygon(pts, UiTheme.DIAMOND)
 		pts.append(pts[0])
 		draw_polyline(pts, UiTheme.PARCHMENT, 2.0)
 		var font := get_theme_default_font()
-		draw_string(font, c + Vector2(-3, 6), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, UiTheme.PARCHMENT)
+		draw_string(font, c + Vector2(-3, 5), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, UiSkin.T_SMALL, UiTheme.PARCHMENT)
 
 
 ## The clear background: the room dimmed (the map shows faintly through), the bottom frame left bright.

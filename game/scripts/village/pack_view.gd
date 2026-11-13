@@ -13,9 +13,9 @@ signal changed
 
 const CELL := 72.0
 const SELL_SIZE := Vector2(150, 110)
-const LABEL_H := 20.0  ## room above a labeled grid for its name
-const FACE_ROW := 40.0  ## room above a grid whose only name is a picture ([USER] 2026-11-01: "Just a doggo pic will do")
-const FACE := 34.0  ## that picture's side
+const LABEL_H := 18.0  ## room above a labeled grid for its name
+const FACE_ROW := 36.0  ## room above a grid whose only name is a picture ([USER] 2026-11-01: "Just a doggo pic will do")
+const FACE := 30.0  ## that picture's side
 ## Kinds Riso.draw_item_icon draws an icon for. Every other kind (gear, material, meal, tonic...) shows its name instead,
 ## so nothing in the pack is a blank square (Brandon's bug, 2026-11-01: a tonic looked like an empty slot).
 const ICON_KINDS := ["food", "crate", "med", "herb", "book"]
@@ -42,18 +42,18 @@ var targets: Array[Dictionary] = []
 var target_gain := Callable()  ## (card index, item id) -> HP that member would gain from one
 var use_on := Callable()  ## (card index, item id) -> bool: one was used on them
 var choosing := ""  ## the item EAT or DRINK picked: the cards show what each would gain; Esc cancels
-const TARGET_SIZE := Vector2(132, 58)
+const TARGET_SIZE := Vector2(120, 52)
 ## Framed windows drawn behind the grids: {"rect": Rect2, "title": String}.
 var windows: Array[Dictionary] = []
 const WINDOW_PAD := 34.0  ## from a window's edge to its grids, clear of the frame's corner leaves
-const WINDOW_TITLE := 46.0  ## room for a window's title plate
+const WINDOW_TITLE := 40.0  ## room for a window's title plate, or a section's heading
 var sections := false  ## windows drawn as the kit's section cards (inside a bigger window: the win screen)
 var notes: Array[Dictionary] = []  ## lines of text in a window: {"text", "at" (top-left), "width"}
-const NOTE_LINE := 24.0
+const NOTE_LINE := 22.0
 var gold_note := {}  ## in windows: the party's gold under the pack, kept current when coins come over (one of `notes`)
 var flash_at := Vector2(-1, -1)  ## where the flash line goes in windows; unset, it sits under everything
 var saddle_inset := false  ## as sections: the dog's saddlebag (the grid with a round face) stands in its own inset
-const INSET_PAD := 12.0
+const INSET_PAD := 10.0
 
 
 func _init() -> void:
@@ -142,7 +142,7 @@ func add_button(text: String, r: Rect2, cb: Callable) -> Button:
 	b.position = r.position
 	b.size = r.size
 	b.custom_minimum_size = r.size
-	b.add_theme_font_size_override("font_size", 17)
+	b.add_theme_font_size_override("font_size", UiSkin.T_BODY)
 	b.pressed.connect(cb)
 	add_child(b)
 	return b
@@ -153,8 +153,8 @@ func add_note(text: String, at: Vector2, width: float, icon: Texture2D = null) -
 	notes.append({"text": text, "at": at, "width": width, "icon": icon})
 	queue_redraw()
 	var f := Riso.font()
-	var h := f.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, width, 15).y
-	return maxi(1, ceili(h / f.get_height(15)))
+	var h := f.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, width, UiSkin.T_BODY).y
+	return maxi(1, ceili(h / f.get_height(UiSkin.T_BODY)))
 
 
 ## As sections (the win screen): every grid starts right under its card's heading, and one foot row sits under the
@@ -193,7 +193,7 @@ func stretch_sections() -> void:
 		w.rect = Rect2(r.position, Vector2(r.size.x, h - r.position.y))
 	if not gold_note.is_empty():
 		var card: Rect2 = windows[0].rect  # the pack's card: the chip centred across it, as TAKE ALL is in the loot's
-		var cw := get_theme_default_font().get_string_size(String(gold_note.text), HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x + 62.0
+		var cw := get_theme_default_font().get_string_size(String(gold_note.text), HORIZONTAL_ALIGNMENT_LEFT, -1, UiSkin.T_BODY).x + CHIP_EXTRA
 		gold_note.at = Vector2(roundf(card.get_center().x - cw * 0.5), roundf(mid - NOTE_CHIP_H * 0.5))
 		flash_at = Vector2(gold_note.at.x + cw + 14.0, mid)
 	var want := Vector2(custom_minimum_size.x, h)
@@ -443,9 +443,9 @@ func _draw() -> void:
 			continue
 		var nx := 0.0
 		if n.get("icon") != null:
-			draw_texture_rect(n.icon, Rect2(n.at + Vector2(0, -3), Vector2(24, 24)), false)
-			nx = 30.0
-		draw_multiline_string(Riso.font(), n.at + Vector2(nx, 15), String(n.text), HORIZONTAL_ALIGNMENT_LEFT, n.width - nx, 15, -1,
+			draw_texture_rect(n.icon, Rect2(n.at + Vector2(0, -3), Vector2(22, 22)), false)
+			nx = 28.0
+		draw_multiline_string(Riso.font(), n.at + Vector2(nx, 14), String(n.text), HORIZONTAL_ALIGNMENT_LEFT, n.width - nx, UiSkin.T_BODY, -1,
 			get_theme_color("font_color", "Label"))
 	if saddle_inset and areas.size() > 0:  # as tall as the pack grid, holding the dog's face and his bag
 		var r0 := _rect_of(areas[0])
@@ -463,7 +463,7 @@ func _draw() -> void:
 		elif a.get("portrait") != null:  # the picture is the grid's name: no words
 			_draw_face(a.portrait, Rect2(a.face_at, Vector2(FACE, FACE)))
 		elif a.label != "":
-			Riso.draw_label(self, a.label, a.at - Vector2(0, LABEL_H * 0.55), 13, label_color)
+			Riso.draw_label(self, a.label, a.at - Vector2(0, LABEL_H * 0.55), UiSkin.T_SMALL, label_color)
 		bottom = maxf(bottom, _rect_of(a).end.y)
 	var sr := _bin_rect()
 	if bin.is_valid():
@@ -471,7 +471,7 @@ func _draw() -> void:
 		var bin_red := Color(0.95, 0.45, 0.38)  # the bin: a dark kit plate with a dashed red rim
 		draw_style_box(MenuKit.flat(Color(0.18, 0.05, 0.04, 0.85) if over else MenuKit.INSET, Color(0, 0, 0, 0), 0.0, 8, 0.0, 0.0), sr)
 		_dashed_rect(sr, bin_red)
-		Riso.draw_label(self, Txt.t(bin_key), Vector2(sr.position.x + 4, sr.get_center().y), 18, bin_red, HORIZONTAL_ALIGNMENT_CENTER, sr.size.x - 8)
+		Riso.draw_label(self, Txt.t(bin_key), Vector2(sr.position.x + 4, sr.get_center().y), UiSkin.T_BODY, bin_red, HORIZONTAL_ALIGNMENT_CENTER, sr.size.x - 8)
 		bottom = maxf(bottom, sr.end.y)
 	var item := choosing
 	if held != -1:
@@ -480,9 +480,9 @@ func _draw() -> void:
 		bottom = maxf(bottom, _draw_target(k, item))
 	var prompt := flash.begins_with("UI_WHO_")  # "who eats?" asks, it isn't a refusal: cream, not red
 	if flash != "" and flash_at.x >= 0.0:  # in windows the note has its own line, on the green
-		Riso.draw_label(self, Txt.t(flash), flash_at, 14, MenuKit.TEXT if prompt else Riso.mix(Riso.RED, Riso.CREAM, 0.45))
+		Riso.draw_label(self, Txt.t(flash), flash_at, UiSkin.T_SMALL, MenuKit.TEXT if prompt else Riso.mix(Riso.RED, Riso.CREAM, 0.45))
 	elif flash != "":
-		Riso.draw_label(self, Txt.t(flash), Vector2(0, bottom + 16), 14, Riso.RED)
+		Riso.draw_label(self, Txt.t(flash), Vector2(0, bottom + 14), UiSkin.T_SMALL, Riso.RED)
 	if held != -1:
 		var it := (areas[held_area].bag as InventoryGrid).items[held]
 		var cells := InventoryGrid.rotated(it.shape, held_rot)
@@ -499,20 +499,21 @@ func _draw() -> void:
 		_draw_count(self, cells, top_left, cell, int(it.get("n", 1)))
 
 
-const NOTE_CHIP_H := 38.0  ## a note drawn as a kit chip (the party's gold on the win screen)
+const NOTE_CHIP_H := 34.0  ## a note drawn as a kit chip (the party's gold on the win screen)
+const CHIP_EXTRA := 54.0  ## such a chip's width beyond its words: its pads and its icon
 
 ## A note as a kit chip: its icon, then its words, in a dark pill.
 func _draw_chip_note(n: Dictionary) -> void:
 	var f := get_theme_default_font()
-	var px := 18
+	var px := UiSkin.T_BODY
 	var tw := f.get_string_size(String(n.text), HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
-	var r := Rect2(n.at, Vector2(tw + 62.0, NOTE_CHIP_H))
+	var r := Rect2(n.at, Vector2(tw + CHIP_EXTRA, NOTE_CHIP_H))
 	var sb := get_theme_stylebox("panel", "KitChip")
 	if sb != null:
 		draw_style_box(sb, r)
 	if n.get("icon") != null:
-		draw_texture_rect(n.icon, Rect2(r.position + Vector2(12, (NOTE_CHIP_H - 24.0) * 0.5), Vector2(24, 24)), false)
-	draw_string(f, Vector2(r.position.x + 44.0, r.get_center().y + px * 0.36), String(n.text), HORIZONTAL_ALIGNMENT_LEFT, -1, px, MenuKit.TEXT)
+		draw_texture_rect(n.icon, Rect2(r.position + Vector2(10, (NOTE_CHIP_H - 22.0) * 0.5), Vector2(22, 22)), false)
+	draw_string(f, Vector2(r.position.x + 38.0, r.get_center().y + px * 0.36), String(n.text), HORIZONTAL_ALIGNMENT_LEFT, -1, px, MenuKit.TEXT)
 
 
 ## A window: the dialogue's own painted frame, its title on the long thin plate at the top. As `sections` (the win
@@ -523,12 +524,12 @@ func _draw_window(r: Rect2, title: String) -> void:
 		if title != "":
 			var f := get_theme_default_font()
 			var tw := f.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, MenuKit.HEAD).x
-			var cy := r.position.y + 30.0
+			var cy := r.position.y + 24.0
 			var cx := r.get_center().x
 			draw_string(f, Vector2(cx - tw * 0.5, cy + MenuKit.HEAD * 0.36), title, HORIZONTAL_ALIGNMENT_LEFT, -1, MenuKit.HEAD, MenuKit.TEXT)
 			if UiSkin.on():
-				UiSkin.rule(self, Vector2(cx - tw * 0.5 - 12.0, cy), Vector2(r.position.x + 30.0, cy))
-				UiSkin.rule(self, Vector2(cx + tw * 0.5 + 12.0, cy), Vector2(r.end.x - 30.0, cy))
+				UiSkin.rule(self, Vector2(cx - tw * 0.5 - 10.0, cy), Vector2(r.position.x + 26.0, cy))
+				UiSkin.rule(self, Vector2(cx + tw * 0.5 + 10.0, cy), Vector2(r.end.x - 26.0, cy))
 				return
 			var rule := Color(MenuKit.TEXT, 0.55)
 			draw_line(Vector2(r.position.x + 30.0, cy), Vector2(cx - tw * 0.5 - 12.0, cy), rule, 1.5, true)
@@ -544,12 +545,12 @@ func _draw_window(r: Rect2, title: String) -> void:
 	if title == "":
 		return
 	var inset := WINDOW_PAD + 16.0  # the plate stops short of the round X on the top right corner
-	var plate := Rect2(r.position + Vector2(inset, 26.0), Vector2(r.size.x - inset * 2.0, 34.0))
+	var plate := Rect2(r.position + Vector2(inset, 24.0), Vector2(r.size.x - inset * 2.0, 30.0))
 	var psb := get_theme_stylebox("panel", "TitlePlate")
 	if psb != null:
 		draw_style_box(psb, plate)
 	var col := get_theme_color("font_color", "MenuTitle")
-	Riso.draw_label(self, title, Vector2(plate.position.x, plate.get_center().y), 19, col, HORIZONTAL_ALIGNMENT_CENTER, plate.size.x)
+	Riso.draw_label(self, title, Vector2(plate.position.x, plate.get_center().y), UiSkin.T_LEAD, col, HORIZONTAL_ALIGNMENT_CENTER, plate.size.x)
 
 
 ## A party card: their face and an HP bar ([USER] 2026-11-01, fewer words: the name only when there is no face); while
@@ -574,16 +575,16 @@ func _draw_target(k: int, item: String) -> float:
 	# the name and HP number on one line, a thin HP bar under them (the kit's bars), what one would heal under that
 	var w := r.size.x - left - 10.0
 	var f := get_theme_default_font()
-	draw_string(f, r.position + Vector2(left, 20), String(c.name), HORIZONTAL_ALIGNMENT_LEFT, w, 13, ink)
-	draw_string(f, r.position + Vector2(left, 20), "%d/%d" % [int(c.hp), int(c.max_hp)], HORIZONTAL_ALIGNMENT_RIGHT, w, 12, Color(ink, 0.85 * a))
-	var bar := Rect2(r.position + Vector2(left, 28), Vector2(w, 7))
+	draw_string(f, r.position + Vector2(left, 19), String(c.name), HORIZONTAL_ALIGNMENT_LEFT, w, UiSkin.T_SMALL, ink)
+	draw_string(f, r.position + Vector2(left, 19), "%d/%d" % [int(c.hp), int(c.max_hp)], HORIZONTAL_ALIGNMENT_RIGHT, w, UiSkin.T_SMALL, Color(ink, 0.85 * a))
+	var bar := Rect2(r.position + Vector2(left, 26), Vector2(w, 6))
 	var hp := clampf(float(c.hp) / maxf(1.0, float(c.max_hp)), 0.0, 1.0)
 	draw_style_box(MenuKit.flat(Color(MenuKit.INSET, 0.9 * a), Color(MenuKit.RIM, 0.5 * a), 1.0, 4, 0.0, 0.0), bar)
 	if hp > 0.0:
 		draw_style_box(MenuKit.flat(Color(VictoryUi.HP_RED, a), Color(0, 0, 0, 0), 0.0, 4, 0.0, 0.0), Rect2(bar.position, Vector2(bar.size.x * hp, bar.size.y)))
 	if item != "":
-		draw_string(f, r.position + Vector2(left, r.size.y - 8), Txt.f("UI_GAIN_HP", g) if g > 0 else Txt.t("UI_FULL_HP"),
-			HORIZONTAL_ALIGNMENT_LEFT, w, 12, VictoryUi.UP_GREEN if g > 0 else ink)
+		draw_string(f, r.position + Vector2(left, r.size.y - 6), Txt.f("UI_GAIN_HP", g) if g > 0 else Txt.t("UI_FULL_HP"),
+			HORIZONTAL_ALIGNMENT_LEFT, w, UiSkin.T_SMALL, VictoryUi.UP_GREEN if g > 0 else ink)
 	return r.end.y
 
 
@@ -649,10 +650,10 @@ static func _draw_count(ci: CanvasItem, cells: Array[Vector2i], top_left: Vector
 	var corner := top_left + (Vector2(last) + Vector2(1, 1)) * cell
 	# light with a dark outline, so it reads on any tile (the menu kit's slot counts)
 	var font := Riso.font()
-	var px := maxi(12, int(cell * 0.36))
+	var px := UiSkin.T_SMALL if cell < 48.0 else (UiSkin.T_BODY if cell < 64.0 else UiSkin.T_LEAD)
 	var w := font.get_string_size(str(n), HORIZONTAL_ALIGNMENT_LEFT, -1, px).x
-	var at := corner - Vector2(cell * 0.1 + w, cell * 0.12)
-	ci.draw_string_outline(font, at, str(n), HORIZONTAL_ALIGNMENT_LEFT, -1, px, 7, Color(0.02, 0.06, 0.05, 1.0))
+	var at := (corner - Vector2(cell * 0.1 + w, cell * 0.12)).round()
+	ci.draw_string_outline(font, at, str(n), HORIZONTAL_ALIGNMENT_LEFT, -1, px, 5, Color(0.02, 0.06, 0.05, 1.0))
 	ci.draw_string(font, at, str(n), HORIZONTAL_ALIGNMENT_LEFT, -1, px, MenuKit.TEXT)
 
 

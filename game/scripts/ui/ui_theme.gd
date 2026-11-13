@@ -245,8 +245,8 @@ static func keep_inside(c: Control, area: Callable, base := KIT_SCALE, top := tr
 			c.reset_size()  # shrink back when the box loses rows (this runs again from resized)
 			return
 		var r: Rect2 = area.call()
-		var room := r.size - Vector2(FIT_MARGIN, FIT_MARGIN) * 2.0
-		var k := minf(base, minf(room.x / maxf(1.0, c.size.x), room.y / maxf(1.0, c.size.y)))
+		r = r.grow_individual(0.0, -float(c.get_meta("title_over", 0.0)), 0.0, 0.0)  # a title standing over its top rim
+		var k := fit_scale(c.size, r, base)
 		c.set_meta("fit_k", k)  # pop_in grows to this even when the box changes size while it opens
 		c.scale = Vector2(k, k)
 		c.position.x = roundf(r.get_center().x - c.size.x * k * 0.5)
@@ -259,10 +259,25 @@ static func keep_inside(c: Control, area: Callable, base := KIT_SCALE, top := tr
 
 
 const FIT_MARGIN := 12.0
-## How big the kit's windows and dialogues stand at most ([USER] 2026-11-02 X20: "Text feels huge right now, things are
-## just too big everywhere"): every window that fits itself to its room grows to this, not to full size, so text, slots,
-## bars and buttons all come down together.
-const KIT_SCALE := 0.9
+## The kit's windows and dialogues stand at their own size. ([USER] 2026-11-02 X20: "Text feels huge right now, things
+## are just too big everywhere", which made this 0.9; menus v3 took that tenth off the sizes themselves instead, so the
+## words sit on whole pixels and nothing is resampled. docs/design/menus-v3.md.)
+const KIT_SCALE := 1.0
+
+
+## The scale a box of `size` stands at in `room`: `base`, or less only when it cannot fit (a last resort: the kit's
+## windows scroll their inside before they are ever shrunk).
+static func fit_scale(size: Vector2, room: Rect2, base := KIT_SCALE) -> float:
+	var free := room.size - Vector2(FIT_MARGIN, FIT_MARGIN) * 2.0
+	return minf(base, minf(free.x / maxf(1.0, size.x), free.y / maxf(1.0, size.y)))
+
+
+## A window centred in `room` at its own size, on whole pixels (the win and level up screens place themselves).
+static func place(c: Control, room: Rect2) -> void:
+	c.reset_size()
+	var k := fit_scale(c.size, room)
+	c.scale = Vector2(k, k)
+	c.position = (room.position + (room.size - c.size * k) * 0.5).round()
 
 
 ## The one standard place for menus ([USER] 2026-11-02: "make sure that Menus have a reliable location. Like total center
@@ -307,13 +322,13 @@ static func has_close(box: Control) -> bool:
 ## else the box's own close-type button (press_close: CLOSE, BACK, OK, CONTINUE, LEAVE...); it greys out while the box
 ## offers no way out (a real choice). Returns the X.
 const FRAME_X := 34.0
-const FRAME_ROOM_MARGIN := 96.0  ## the panel's own frame and header, kept clear inside the room
+const FRAME_ROOM_MARGIN := 96.0  ## the painted panel's own frame and header, kept clear inside the room
 const X_RIGHT := 76.0  ## the X's left edge this far in from the frame's outer right edge: beside the corner gem
 const X_TOP := 16.0  ## and its top this far down from the outer top: level with the gem
 
 static func frame_window(panel: PanelContainer, content: Control, area: Callable, close := Callable(), title := "") -> Button:
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 6)
+	col.add_theme_constant_override("separation", 4)
 	panel.add_child(col)
 	# the head: the call line centred (a dialogue's "THIS CHEST IS LOCKED"), and the X floating on the top right corner,
 	# over the rim, as in the mockups; with no call line the head takes no room
@@ -330,6 +345,9 @@ static func frame_window(panel: PanelContainer, content: Control, area: Callable
 		head.add_child(t)
 		var fit_head := func() -> void:  # one short line: the head is as tall and as wide as it, clear of the X both sides
 			var need := t.get_combined_minimum_size()
+			if UiSkin.on():
+				head.custom_minimum_size = Vector2(need.x + (UiSkin.X_SIZE + UiSkin.SPACE) * 2.0, maxf(UiSkin.X_SIZE, need.y + 10.0))
+				return
 			head.custom_minimum_size = Vector2(need.x + (X_RIGHT + 4.0) * 2.0 - 64.0, maxf(FRAME_X, need.y + 14.0))  # a breath under it
 		t.minimum_size_changed.connect(fit_head)  # again once it has its real font, in the tree
 		fit_head.call()
@@ -338,6 +356,8 @@ static func frame_window(panel: PanelContainer, content: Control, area: Callable
 	x.pressed.connect(func() -> void:
 		if close.is_valid():
 			close.call()
+		elif panel.has_meta("close_cb"):  # a window whose host closes it (the pack, a container: ContainerUi.bare)
+			(panel.get_meta("close_cb") as Callable).call()
 		else:
 			press_close(content))
 	head.add_child(x)
@@ -361,6 +381,7 @@ static func frame_window(panel: PanelContainer, content: Control, area: Callable
 	var fit := _Fit.new()  # a node on the scroll: its deferred calls die with the window (a freed lambda errored)
 	fit.scroll = scroll
 	fit.content = content
+	fit.panel = panel
 	fit.area = area
 	fit.x = x if not close.is_valid() else null
 	scroll.add_child(fit, false, Node.INTERNAL_MODE_FRONT)
@@ -375,6 +396,7 @@ static func frame_window(panel: PanelContainer, content: Control, area: Callable
 class _Fit extends Node:
 	var scroll: ScrollContainer
 	var content: Control
+	var panel: Control
 	var area := Callable()
 	var x: Button
 
@@ -384,9 +406,17 @@ class _Fit extends Node:
 	func run() -> void:
 		var room: Rect2 = area.call() if area.is_valid() else scroll.get_viewport_rect()
 		var need := content.get_combined_minimum_size()
-		scroll.custom_minimum_size = Vector2(need.x, minf(need.y, maxf(120.0, room.size.y - FRAME_ROOM_MARGIN)))
+		# everything of the window that is not the scroll: its frame, head, foot row and the title standing over its rim
+		var frame: Control = panel
+		if frame != null and frame.get_parent() is Control and (frame.get_parent() as Control).has_meta("kit_root"):
+			frame = frame.get_parent()
+		var chrome := FRAME_ROOM_MARGIN
+		if frame != null and UiSkin.on():
+			chrome = frame.get_combined_minimum_size().y - scroll.get_combined_minimum_size().y + FIT_MARGIN * 2.0
+			chrome += float(panel.get_meta("title_over", 0.0))
+		scroll.custom_minimum_size = Vector2(need.x, minf(need.y, maxf(120.0, floorf(room.size.y - chrome))))
 		if x != null:
-			x.disabled = not UiTheme.has_close(content)
+			x.disabled = not (panel != null and panel.has_meta("close_cb")) and not UiTheme.has_close(content)
 
 	func drag(e: InputEvent) -> void:
 		if e is InputEventMouseMotion and (e as InputEventMouseMotion).button_mask & MOUSE_BUTTON_MASK_LEFT:

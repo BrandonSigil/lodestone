@@ -94,7 +94,7 @@ class Screen extends PanelContainer:
 		var holder := Control.new()
 		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(holder)
-		var w := MenuKit.window(Txt.t("UI_LV_TITLE"), _room, _later, 34)
+		var w := MenuKit.window(Txt.t("UI_LV_TITLE"), _room, _later)
 		_win = w.root
 		holder.add_child(_win)
 		var body := HBoxContainer.new()
@@ -113,14 +113,9 @@ class Screen extends PanelContainer:
 	func _room() -> Rect2:
 		return area.call() if area.is_valid() else get_viewport_rect()
 
-	func _fit() -> void:  # full size at most: its text was already made smaller by hand (X20), not shrunk again
-		if not is_instance_valid(_win):
-			return
-		_win.reset_size()
-		var r := _room()
-		var k := minf(1.0, minf((r.size.x - 32.0) / maxf(1.0, _win.size.x), (r.size.y - 24.0) / maxf(1.0, _win.size.y)))
-		_win.scale = Vector2(k, k)
-		_win.position = (r.position + (r.size - _win.size * k) * 0.5).floor()
+	func _fit() -> void:
+		if is_instance_valid(_win):
+			UiTheme.place(_win, _room())
 
 	func _later() -> void:
 		if later.is_valid():
@@ -153,13 +148,13 @@ static func who_card(parent: Control, id: String, entry: Dictionary) -> void:
 	pic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(pic)
 	if not m.is_empty():
-		var nm := MenuKit.label(Txt.t((m.def as CharacterDef).name_key), 18)
+		var nm := MenuKit.label(Txt.t((m.def as CharacterDef).name_key), UiSkin.T_LEAD)
 		nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(nm)
 	var levels: Array = entry.get("levels", [])
 	var now := int(levels[levels.size() - 1]) if not levels.is_empty() else int(Game.level_state(id).level)
 	var was := int(levels[0]) - 1 if not levels.is_empty() else now - 1
-	var lv := MenuKit.chip(Txt.f("UI_LV_REACHED", [maxi(1, was), now]), "star_guide", VictoryUi.XP_GOLD, "", 14)
+	var lv := MenuKit.chip(Txt.f("UI_LV_REACHED", [maxi(1, was), now]), "star_guide", VictoryUi.XP_GOLD, "", UiSkin.T_BODY)
 	lv.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(lv)
 	var stats: Dictionary = entry.get("stats", {})
@@ -229,17 +224,17 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable, foot: Contr
 	var head := HBoxContainer.new()
 	head.add_theme_constant_override("separation", 10)
 	box.add_child(head)
-	var hl := MenuKit.label(Txt.t("UI_LV_SKILLS"), 15, MenuKit.TEXT_DIM)
+	var hl := MenuKit.label(Txt.t("UI_LV_SKILLS"), UiSkin.T_BODY, MenuKit.TEXT_DIM)
 	hl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(hl)
-	head.add_child(MenuKit.chip(Txt.f("UI_LV_POINTS", int(Game.rank_state(id).pending)), "star_guide", VictoryUi.XP_GOLD, "", 13))
+	head.add_child(MenuKit.chip(Txt.f("UI_LV_POINTS", int(Game.rank_state(id).pending)), "star_guide", VictoryUi.XP_GOLD, "", UiSkin.T_SMALL))
 	var list := VBoxContainer.new()
 	list.add_theme_constant_override("separation", 6)
 	box.add_child(list)
 	var detail := MenuKit.card(box)
 	detail.get_parent().custom_minimum_size = Vector2(ROW_W, DETAIL_H)
 	detail.add_theme_constant_override("separation", 3)
-	var pick := MenuKit.primary(Txt.t("UI_LV_LEARN_SKILL"), Callable(), 16, 210.0)
+	var pick := MenuKit.primary(Txt.t("UI_LV_LEARN_SKILL"), Callable(), UiSkin.T_BODY, 210.0)
 	pick.custom_minimum_size.y = 42
 	pick.disabled = true
 	var state := {"chosen": -1}
@@ -284,7 +279,7 @@ static func picks(box: VBoxContainer, id: String, refresh: Callable, foot: Contr
 		lb.text = Txt.t("UI_LV_LATER")
 		lb.tooltip_text = Txt.t("UI_LV_LATER_TIP")
 		lb.custom_minimum_size = Vector2(150, 42)
-		lb.add_theme_font_size_override("font_size", 15)
+		lb.add_theme_font_size_override("font_size", UiSkin.T_BODY)
 		lb.pressed.connect(later)
 		at.add_child(lb)
 	at.add_child(pick)
@@ -354,7 +349,7 @@ static func _row(o: Dictionary) -> Button:
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(col)
-	var nm := MenuKit.label(_name(o).to_upper(), 16)
+	var nm := MenuKit.label(_name(o).to_upper(), UiSkin.T_BODY)
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	col.add_child(nm)
@@ -366,13 +361,13 @@ static func _row(o: Dictionary) -> Button:
 		bp.add_theme_stylebox_override("panel", MenuKit.flat(Color(0.05, 0.2, 0.1, 0.95), VictoryUi.UP_GREEN, 1.0, 5, 5.0, 0.0))
 		bp.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		bp.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var bl := MenuKit.label(tag_text.to_upper(), 11, VictoryUi.UP_GREEN)
+		var bl := MenuKit.label(tag_text.to_upper(), UiSkin.T_SMALL, VictoryUi.UP_GREEN)
 		bl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		bp.add_child(bl)
 		col.add_child(bp)
 		badge = bp
 	else:
-		var tag := MenuKit.label(tag_text, 12, Color(0.75, 0.75, 0.75) if o.locked else Color(0.86, 0.88, 0.82))
+		var tag := MenuKit.label(tag_text, UiSkin.T_SMALL, Color(0.75, 0.75, 0.75) if o.locked else Color(0.86, 0.88, 0.82))
 		tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		col.add_child(tag)
 	var nodes := _Nodes.new()
@@ -466,7 +461,7 @@ static func _detail(detail: VBoxContainer, u: CombatUnit, o: Dictionary, ranks: 
 		c.queue_free()
 	var a: Ability = o.ability
 	var have: int = o.have
-	var title := MenuKit.label(_name(o), 16, MenuKit.GOLD)
+	var title := MenuKit.label(_name(o), UiSkin.T_BODY, MenuKit.GOLD)
 	detail.add_child(title)
 	_line(detail, _desc(o), 13)
 	if o.locked:
@@ -479,7 +474,7 @@ static func _detail(detail: VBoxContainer, u: CombatUnit, o: Dictionary, ranks: 
 		chips.add_theme_constant_override("h_separation", 6)
 		chips.add_theme_constant_override("v_separation", 4)
 		for part in _number_parts(u, LevelRules.ranked(a, have, Db.skill_ranks)):
-			chips.add_child(MenuKit.chip(part, "", MenuKit.TEXT, "", 12))
+			chips.add_child(MenuKit.chip(part, "", MenuKit.TEXT, "", UiSkin.T_SMALL))
 		if chips.get_child_count() > 0:
 			detail.add_child(chips)
 	var steps: Array = Db.upgrade_steps.get(String(o.id), [])

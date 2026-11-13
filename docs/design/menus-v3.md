@@ -8,7 +8,19 @@
 
 [USER] 2026-11-13, on round two: "This is a lot better, but make the marbling green even more subtle. Like closer to a flat green with just a hint of texture/marbling than what there is now".
 
-Before and after pictures of every menu: `art/screens/menus-v3/` (left is main today, right is the prototype as it stands). `_show_1.jpg` to `_show_3.jpg` put main, the first drawn skin and round two side by side; `_bar_close.jpg` does the same for the bottom bar.
+[USER] 2026-11-13, after round two: "Start layouts" (the next-step button).
+
+Before and after pictures of every menu: `art/screens/menus-v3/` (left is main today, right is the prototype as it stands). `_layout_1.jpg` and `_layout_2.jpg` put main, round two and the first layouts side by side. `_show_1.jpg` to `_show_3.jpg` are from round two (main, the first drawn skin, round two); `_bar_close.jpg` does the same for the bottom bar.
+
+## Round three: the first layouts
+
+- **Nothing is scaled.** Kit windows used to be drawn at 90% (`UiTheme.KIT_SCALE`), which resampled every word. The scale is now 1.0 and the tenth came off the sizes themselves, so windows are the size they were and their words sit on whole pixels. A window is shrunk only as a last resort, when it cannot fit even after its inside has scrolled (`UiTheme.fit_scale`).
+- **Five text sizes.** `UiSkin.T_SMALL` 13, `T_BODY` 15, `T_LEAD` 18, `T_HEAD` 24, `T_TITLE` 32. The kit's pieces (`MenuKit.label`, `chip`, `primary`) snap whatever they are given to these, so the 10 to 12 px text is gone. One exception: a graybox item with no icon still writes its name small inside its cell.
+- **The title is always on the top edge.** WIN, LEVEL UP! and HOME AGAIN already wore a banner across the rim (`MenuKit.window`); the Lodestone menu, options and village repairs now do too (`MenuKit.title_on`), instead of a plate inside the window.
+- **A window's inside scrolls to its real room.** `frame_window` measures everything that is not the scroll (frame, head, foot row, the banner standing over the rim) and caps the scroll to what is left, so no window runs off the play area and none is shrunk to make it fit.
+- **Pack screens are one window.** Pack and party, a chest or loot and the pack, and FOUND ITEMS and the pack were each two framed windows with two title plates and two X's. Each is now one window with two sections (the win screen's LOOT and PACK headings), one X, the same height both sides (`ContainerUi.panes`, `AdventureMenu.pack`). The container or loot stands on the left and the pack on the right, as on the win screen. The dog's saddlebag sits beside the pack in its own inset under his round face, as on the win screen. With a full party the window fits; if it ever does not, it scrolls.
+- **Sizes.** Dialogue option rows are 44 px, the close X 24 px, window padding 20 by 18, section padding 18, gaps mostly 8 and 12.
+- **Test runs are silent** (Brandon: "In any testing you do with Lodestone, please mute it"): `tools/godot.sh` adds `--audio-driver Dummy`.
 
 ## Round two: what changed after his notes
 
@@ -66,12 +78,14 @@ The prototype is step 1 and 2 applied to the whole game without touching any scr
 - The bottom frame (`FrameHud._draw_skin_bar`, with the Lodestone diamond `leaf_stone`), the fight dock and its portrait, the fight's side panel, the pack view's windows, the character sheet's frame and the close X all have a drawn version.
 - The painted art is untouched and still in the game. `LODESTONE_SKIN=old` in the environment brings the painted look back.
 
-To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot --path game`. For the old look, put `LODESTONE_SKIN=old` in front.
+To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot --path game` (not `tools/godot.sh`: that is the silent, invisible copy for test runs). For the old look, put `LODESTONE_SKIN=old` in front.
 
 ## What it does not do yet (honest notes)
 
-- **Layout is unchanged.** The two-window pack, the Lodestone button grid, the sheet's cream plates, the fight's text panel and the small text are all still there, just in the new skin. Those are steps 3 to 6.
-- **Windows are still scaled to 90%**, so text is still slightly soft. That goes when sizes come from tokens.
+- **Three layouts are still the old ones:** the Lodestone menu's button grid (and its skill pick scrolling inside it), the character sheet's cream plates and the fight's text panel, dock labels and log box. Those are steps 4 to 6.
+- The pack page's PACK section is as tall as PARTY, so with a big party the felt under the pack grid is empty.
+- Many sizes were converted by rule (old size times 0.9, to the nearest step); each screen was looked at in a screenshot, not tuned by hand.
+- `LODESTONE_SKIN=old` still swaps the painted frames in but no longer matches main's sizes. Compare against main for a true before.
 - The bottom bar keeps the painted frame's height and slots, because the screens measure from them. It can be made slimmer once dialogues stop measuring from the art.
 - The launch menu and the map maker are not touched.
 - The blur reads the screen once per frame. It ran fine in every shot (Compatibility renderer); it has not been measured on the Windows PC.
@@ -82,8 +96,8 @@ To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot
 ## If Brandon likes the direction, the order I would build it
 
 1. Tune the skin with him (done twice, above; more rounds as he asks).
-2. The one window shell and the size and spacing tokens; move the dialogue, win, level up and HOME AGAIN screens onto it and drop `KIT_SCALE`.
-3. Pack rebuilt as one window with sections (this was already the next UI job; it fixes the cut-off with a full party).
+2. Done (round three): the size and type tokens, titles on the top edge, scroll to the real room, `KIT_SCALE` dropped for dialogues, win, level up, HOME AGAIN and the menus.
+3. Done (round three): pack, loot and found items as one window with sections (it fixes the cut-off with a full party).
 4. The Lodestone menu as tabs: Party, Pack, Village, Options.
 5. The character sheet on the kit.
 6. The fight HUD: side panel as a compact card, dock labels readable, the log as a quiet line.

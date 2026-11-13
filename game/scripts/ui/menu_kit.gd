@@ -25,12 +25,12 @@ const TEXT_QUIET := Color(0.86, 0.85, 0.78)  ## a quiet button's words: dimmer, 
 const TEXT_DIM := Color(0.78, 0.82, 0.78)
 const PORTRAIT_BG := Color("b9cfdc")
 
-const ROW_H := 50.0  ## a dialogue option's height
-const ICON := 36.0  ## an option's icon
-const BODY := 19  ## body text size
-const HEAD := 18  ## a section heading
-const CALL := 28  ## a dialogue's call line ("THIS CHEST IS LOCKED")
-const WINDOW_TOP := 26.0  ## a big window's inside starts this far down: below the title plate's foot and the X
+const ROW_H := 44.0  ## a dialogue option's height
+const ICON := 32.0  ## an option's icon
+const BODY := UiSkin.T_LEAD  ## body text size
+const HEAD := UiSkin.T_LEAD  ## a section heading
+const CALL := UiSkin.T_HEAD  ## a dialogue's call line ("THIS CHEST IS LOCKED")
+const WINDOW_TOP := 22.0  ## a big window's inside starts this far down: below the title plate's foot and the X
 
 ## an option's icon by its text key: an icon in art/source/icons, or a drawn glyph (talk, plus, leave, dot) where
 ## there is no art yet (graybox)
@@ -131,22 +131,23 @@ static func _buttons(t: Theme, type: String, bg: Color, rim: Color, text: Color,
 ## A big window with a title plate on its top edge (HOME AGAIN, WIN): returns {"root", "panel", "body", "x"}. `body`
 ## (a VBox) is the window's inside; it scrolls past the room `area` gives (frame_window). The root is what the host
 ## places (keep_inside or a CenterContainer); the plate straddles the frame's top rim, bright green, the one call-out.
-static func window(title: String, area: Callable, close := Callable(), title_px := 40, scroll_room := Callable()) -> Dictionary:
+static func window(title: String, area: Callable, close := Callable(), scroll_room := Callable()) -> Dictionary:
 	var root := MarginContainer.new()
+	root.set_meta("kit_root", true)
 	var plate := PanelContainer.new()
 	plate.theme_type_variation = &"TitlePlate"
 	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var t := Label.new()
 	t.theme_type_variation = &"MenuTitle"
 	t.text = title
-	t.add_theme_font_size_override("font_size", title_px)
+	t.add_theme_font_size_override("font_size", UiSkin.T_TITLE)
 	t.add_theme_color_override("font_color", TEXT)
 	t.add_theme_color_override("font_outline_color", Color(0.02, 0.1, 0.08, 0.9))
-	t.add_theme_constant_override("outline_size", 4)
+	t.add_theme_constant_override("outline_size", 3)
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	plate.add_child(t)
 	var psb := plate.get_theme_stylebox("panel", "TitlePlate").duplicate() as StyleBox
-	var clear := 58.0 if UiSkin.on() else 84.0  # the words well clear of the plate's ends (leaf and gem, or the banner's point and diamond)
+	var clear := 52.0 if UiSkin.on() else 84.0  # the words well clear of the plate's ends (leaf and gem, or the banner's point and diamond)
 	psb.content_margin_left = clear
 	psb.content_margin_right = clear
 	plate.add_theme_stylebox_override("panel", psb)
@@ -157,7 +158,7 @@ static func window(title: String, area: Callable, close := Callable(), title_px 
 	panel.set_meta("x_drop", 10.0)
 	root.add_child(panel)
 	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 14)
+	body.add_theme_constant_override("separation", 12)
 	var x := UiTheme.frame_window(panel, body, scroll_room if scroll_room.is_valid() else area, close)
 	var room := Control.new()  # the inside starts below the plate's foot and the X
 	room.custom_minimum_size.y = WINDOW_TOP
@@ -165,11 +166,9 @@ static func window(title: String, area: Callable, close := Callable(), title_px 
 	body.add_child(room)
 	var foot := HBoxContainer.new()  # the primary button's row: under the scroll, so it never scrolls away (research B2)
 	foot.alignment = BoxContainer.ALIGNMENT_END
-	foot.add_theme_constant_override("separation", 14)
+	foot.add_theme_constant_override("separation", 12)
 	var foot_pad := MarginContainer.new()
-	foot_pad.add_theme_constant_override("margin_right", 30)  # clear of the corner leaves (the mockup's CONTINUE flag)
-	foot_pad.add_theme_constant_override("margin_top", 6)
-	foot_pad.add_theme_constant_override("margin_bottom", 8)
+	foot_pad.add_theme_constant_override("margin_top", 8)
 	foot_pad.add_child(foot)
 	panel.get_child(0).add_child(foot_pad)
 	var top := Control.new()  # the plate's stand: full width, the plate centred on the rim
@@ -178,11 +177,55 @@ static func window(title: String, area: Callable, close := Callable(), title_px 
 	top.add_child(plate)
 	var place := func() -> void:
 		plate.reset_size()
-		plate.custom_minimum_size.x = maxf(plate.get_combined_minimum_size().x, 380.0)
+		plate.custom_minimum_size.x = maxf(plate.get_combined_minimum_size().x, 280.0)
 		plate.position = Vector2(roundf((top.size.x - plate.size.x) * 0.5), -over)
 	top.resized.connect(place)
 	plate.resized.connect(place)
 	return {"root": root, "panel": panel, "body": body, "x": x, "foot": foot}
+
+
+## A title on a dialogue window's top edge (the Lodestone menu, options, village repairs): the banner a big window
+## wears (`window`), standing across the rim of the panel `from` sits in, so every window carries its title in the
+## same place. The window grows wide enough for the banner to clear the X.
+static func title_on(from: Node, text: String, px := UiSkin.T_HEAD) -> void:
+	var n := from
+	while n != null and not (n is PanelContainer and n.has_meta("frame_x")):
+		n = n.get_parent()
+	if n == null:
+		return
+	var panel := n as PanelContainer
+	var stand := Control.new()  # as big as the panel's inside; the banner hangs from its top
+	stand.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(stand)
+	var plate := PanelContainer.new()
+	plate.theme_type_variation = &"TitlePlate"
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var t := Label.new()
+	t.theme_type_variation = &"MenuTitle"
+	t.text = text
+	t.add_theme_font_size_override("font_size", px)
+	t.add_theme_color_override("font_color", TEXT)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	plate.add_child(t)
+	var psb := panel.get_theme_stylebox("panel", "TitlePlate").duplicate() as StyleBox
+	psb.content_margin_left = 44.0
+	psb.content_margin_right = 44.0
+	plate.add_theme_stylebox_override("panel", psb)
+	stand.add_child(plate)
+	var need := plate.get_combined_minimum_size()
+	var over := roundf(need.y * 0.62)  # how far the banner stands above the frame
+	panel.set_meta("title_over", over)
+	stand.custom_minimum_size.x = need.x + (UiSkin.X_SIZE + UiSkin.X_INSET) * 2.0
+	var x := panel.get_meta("frame_x") as Control
+	if x != null:  # the window's inside starts below the X
+		(x.get_parent() as Control).custom_minimum_size.y = 14.0
+	var place := func() -> void:
+		plate.reset_size()
+		var m := panel.get_theme_stylebox("panel")
+		plate.position = Vector2(roundf((stand.size.x - plate.size.x) * 0.5), -m.content_margin_top - over)
+	stand.resized.connect(place)
+	plate.resized.connect(place)
+	place.call()
 
 
 ## The little point under a dialogue window, aimed at the bottom frame's diamond (mockups A and B). Goes last in the
@@ -197,8 +240,8 @@ static func pointer(col: Control, drop := 30.0) -> void:
 
 # --- the dialogue call/response screen ---------------------------------------------------------------
 
-const DIALOG_W := 520.0  ## the options' width
-const DIALOG_PORTRAIT := 190.0
+const DIALOG_W := 468.0  ## the options' width
+const DIALOG_PORTRAIT := 172.0
 const CALL_CHARS := 44  ## a call line this short or shorter is the window's heading
 
 ## The dialogue call/response screen ([USER] 2026-11-01: "the same screen for "This chest is locked" "I have the key!!!"
@@ -213,7 +256,7 @@ static func dialogue(panel: PanelContainer, text: String, area: Callable, face_i
 	var face := face_id != "" and ResourceLoader.exists("res://art/source/portraits/%s.png" % face_id)
 	var call := text != "" and not face and text.length() <= CALL_CHARS and not text.contains("\n")
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 22)
+	row.add_theme_constant_override("separation", 20)
 	panel.set_meta("frame_x", UiTheme.frame_window(panel, row, area, Callable(), text if call else ""))  # the X; scrolls past the room
 	panel.set_meta("kit_w", DIALOG_W - (DIALOG_PORTRAIT * 0.5 if face else 0.0))
 	if face:
@@ -221,22 +264,22 @@ static func dialogue(panel: PanelContainer, text: String, area: Callable, face_i
 		pic.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 		row.add_child(pic)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
+	box.add_theme_constant_override("separation", 8)
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(box)
 	if face:  # the speaker's name over the words (mockup B's dialogue with a portrait)
 		var d := Db.character(StringName(face_id))
 		if d != null:
-			var nm := label(Txt.t(d.name_key), 20, GOLD)
+			var nm := label(Txt.t(d.name_key), UiSkin.T_LEAD, GOLD)
 			box.add_child(nm)
 	if text != "" and not call:
-		var l := label(text, 21)
+		var l := label(text, UiSkin.T_LEAD)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if face else HORIZONTAL_ALIGNMENT_CENTER
-		l.custom_minimum_size = Vector2(float(panel.get_meta("kit_w")) - 48.0, 0)
+		l.custom_minimum_size = Vector2(float(panel.get_meta("kit_w")) - 44.0, 0)
 		var pad := MarginContainer.new()  # clear of the X on the top right corner
-		pad.add_theme_constant_override("margin_right", 48)
-		pad.add_theme_constant_override("margin_left", 0 if face else 48)
+		pad.add_theme_constant_override("margin_right", 44)
+		pad.add_theme_constant_override("margin_left", 0 if face else 44)
 		pad.add_child(l)
 		box.add_child(pad)
 		var gap := Control.new()  # the words, then a breath before the options
@@ -272,7 +315,7 @@ static func card(parent: Control, heading := "", rules := false) -> VBoxContaine
 	c.theme_type_variation = &"KitCard"
 	parent.add_child(c)
 	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 10)
+	v.add_theme_constant_override("separation", 8)
 	c.add_child(v)
 	if heading != "":
 		v.add_child(heading_row(heading, rules))
@@ -282,7 +325,7 @@ static func card(parent: Control, heading := "", rules := false) -> VBoxContaine
 ## A heading, centred; with `rules`, a thin line runs out either side (LOOT, PACK on the win screen).
 static func heading_row(text: String, rules := false) -> Control:
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 12)
+	h.add_theme_constant_override("separation", 10)
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	if rules:
 		h.add_child(_Rule.new())
@@ -299,44 +342,45 @@ static func heading_row(text: String, rules := false) -> Control:
 
 
 ## A chip: a small pill with an optional icon and a short value ("+3", "60%", "0/4"). Hover names it (`tip`).
-static func chip(text: String, icon := "", col := TEXT, tip := "", px := 17) -> PanelContainer:
+static func chip(text: String, icon := "", col := TEXT, tip := "", px := UiSkin.T_BODY) -> PanelContainer:
+	px = UiSkin.snap(px)
 	var p := PanelContainer.new()
 	p.theme_type_variation = &"KitChip"
 	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER  # a pill, never stretched tall by its row
 	p.tooltip_text = tip
 	p.mouse_filter = Control.MOUSE_FILTER_STOP if tip != "" else Control.MOUSE_FILTER_IGNORE
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 6)
+	h.add_theme_constant_override("separation", 5)
 	h.alignment = BoxContainer.ALIGNMENT_CENTER
 	p.add_child(h)
 	if icon != "":
-		h.add_child(icon_rect(icon, px + 9))
+		h.add_child(icon_rect(icon, px + 7))
 	h.add_child(label(text, px, col))
 	return p
 
 
 ## An item slot: the item's icon in a dark rounded square, its count in the corner (the win screen's loot and pack,
 ## HOME AGAIN's haul). `count` 0 hides the number; an empty `icon` is an empty slot.
-static func slot(icon: String, count := 0, px := 52.0, tip := "") -> PanelContainer:
+static func slot(icon: String, count := 0, px := 48.0, tip := "") -> PanelContainer:
 	var p := PanelContainer.new()
 	p.theme_type_variation = &"KitSlot"
 	p.custom_minimum_size = Vector2(px, px)
 	p.tooltip_text = tip
 	p.mouse_filter = Control.MOUSE_FILTER_STOP if tip != "" else Control.MOUSE_FILTER_IGNORE
 	if icon != "" and (icon.begins_with("@") or ActionInfo.icon(icon) != null):
-		p.add_child(icon_rect(icon, px - 12))
+		p.add_child(icon_rect(icon, px - 10))
 	elif icon != "":  # graybox: no picture yet, so its name, small
-		var n := label(Txt.t(String(Db.items[icon].name_key)) if Db.items.has(icon) else icon, 11, MenuKit.TEXT_DIM)
+		var n := label(Txt.t(String(Db.items[icon].name_key)) if Db.items.has(icon) else icon, UiSkin.T_SMALL, MenuKit.TEXT_DIM)
 		n.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		n.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		p.add_child(n)
 	if count > 0:
-		var n := label(str(count), 15)
+		var n := label(str(count), UiSkin.T_SMALL)
 		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		n.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 		n.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-		n.add_theme_constant_override("outline_size", 4)
+		n.add_theme_constant_override("outline_size", 3)
 		n.add_theme_constant_override("line_spacing", -4)
 		p.add_child(n)
 	return p
@@ -358,19 +402,19 @@ static func portrait(id: String, px: float, round := true) -> Control:
 
 
 ## A labelled bar: the label outside on the left ("HP", "MP"), the bar with its number on it.
-static func bar_row(parent: Control, text: String, fill: Color, value: float, number: String, label_w := 44.0) -> UiBar:
+static func bar_row(parent: Control, text: String, fill: Color, value: float, number: String, label_w := 40.0) -> UiBar:
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 8)
+	h.add_theme_constant_override("separation", 7)
 	parent.add_child(h)
 	if text != "":
-		var l := label(text, 15, TEXT)
+		var l := label(text, UiSkin.T_SMALL, TEXT)
 		l.custom_minimum_size.x = label_w
 		h.add_child(l)
 	var b := UiBar.new()
 	b.fill = fill
 	b.value = clampf(value, 0.0, 1.0)
 	b.text = number
-	b.custom_minimum_size = Vector2(130, 16)
+	b.custom_minimum_size = Vector2(116, 14)
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	h.add_child(b)
@@ -379,21 +423,21 @@ static func bar_row(parent: Control, text: String, fill: Color, value: float, nu
 
 ## A dialogue option or action: a full-width row with its icon on the left, its words, and an odds or cost chip on the
 ## right. Its text stays the plain label (Esc and the robot find buttons by it). `quiet` for the way out.
-static func option(text: String, cb: Callable, icon := "", chip_text := "", quiet := false, width := 520.0) -> Button:
+static func option(text: String, cb: Callable, icon := "", chip_text := "", quiet := false, width := DIALOG_W) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.custom_minimum_size = Vector2(width, ROW_H)
-	b.add_theme_font_size_override("font_size", 20)
+	b.add_theme_font_size_override("font_size", UiSkin.T_LEAD)
 	if quiet:
 		b.theme_type_variation = &"QuietButton"
 	if cb.is_valid():
 		b.pressed.connect(cb)
-	var pad := 24.0
+	var pad := 20.0
 	if icon != "":
-		pad = 22.0 + ICON + 18.0
+		pad = 16.0 + ICON + 14.0
 		var ic := icon_rect(icon, ICON)
-		ic.position = Vector2(22.0, (ROW_H - ICON) * 0.5)
+		ic.position = Vector2(16.0, (ROW_H - ICON) * 0.5)
 		ic.modulate = Color(1, 1, 1, 0.8) if quiet else Color.WHITE
 		b.add_child(ic)
 		b.resized.connect(func() -> void: ic.position.y = roundf((b.size.y - ICON) * 0.5))
@@ -401,15 +445,15 @@ static func option(text: String, cb: Callable, icon := "", chip_text := "", quie
 		var sb := b.get_theme_stylebox(s).duplicate() as StyleBox
 		sb.content_margin_left = pad
 		if chip_text != "":
-			sb.content_margin_right = 96.0
+			sb.content_margin_right = 86.0
 		b.add_theme_stylebox_override(s, sb)
 	if chip_text != "":
-		var c := chip(chip_text, "", TEXT, "", 16)
+		var c := chip(chip_text, "", TEXT, "", UiSkin.T_BODY)
 		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		b.add_child(c)
 		var put := func() -> void:
 			c.reset_size()
-			c.position = Vector2(b.size.x - c.size.x - 14.0, roundf((b.size.y - c.size.y) * 0.5))
+			c.position = Vector2(b.size.x - c.size.x - 12.0, roundf((b.size.y - c.size.y) * 0.5))
 		b.resized.connect(put)
 		c.resized.connect(put)
 	return b
@@ -449,18 +493,18 @@ static func icon_rect(id: String, px: float) -> Control:
 static func label(text: String, px := BODY, col := TEXT) -> Label:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_font_size_override("font_size", px)
+	l.add_theme_font_size_override("font_size", UiSkin.snap(px))  # always a size on the type scale
 	l.add_theme_color_override("font_color", col)
 	return l
 
 
 ## A button in the kit's primary look (the one to press: CONTINUE, ONE MORE GO, TAKE ALL).
-static func primary(text: String, cb: Callable, px := 22, w := 240.0) -> Button:
+static func primary(text: String, cb: Callable, px := UiSkin.T_LEAD, w := 216.0) -> Button:
 	var b := Button.new()
 	b.theme_type_variation = &"PrimaryButton"
 	b.text = text
-	b.custom_minimum_size = Vector2(w, 52)
-	b.add_theme_font_size_override("font_size", px)
+	b.custom_minimum_size = Vector2(w, 44)
+	b.add_theme_font_size_override("font_size", UiSkin.snap(px))
 	if cb.is_valid():
 		b.pressed.connect(cb)
 	return b
@@ -509,7 +553,7 @@ class _Rule extends Control:
 	var flip := false  ## the rule on the heading's right: its words are to its left
 
 	func _init() -> void:
-		custom_minimum_size = Vector2(70, 8)
+		custom_minimum_size = Vector2(64, 8)
 		size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -574,8 +618,8 @@ class _Portrait extends Control:
 			draw_colored_polygon(body, tint.darkened(0.15))
 		var ring := pts.duplicate()
 		ring.append(pts[0])
-		draw_polyline(ring, Color(0.03, 0.1, 0.09), 5.0, true)
-		draw_polyline(ring, Color(0.93, 0.95, 0.94), 2.5, true)
+		draw_polyline(ring, Color(0.03, 0.1, 0.09), 4.0, true)
+		draw_polyline(ring, Color(0.93, 0.95, 0.94), 2.0, true)
 
 
 class _Glyph extends Control:

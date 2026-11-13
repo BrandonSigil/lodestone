@@ -12,12 +12,12 @@ extends Control
 
 signal done
 
-const COL_W := 300.0  ## a card's width
-const BAR_LABEL := 64.0  ## room for a bar's name
-const COL_H := 380.0  ## the three cards' height: four rows of friends and SHOW ALL fit whole, the rest scroll
-const COL_H_SHORT := 236.0  ## the same with a second row of cards on the page (a fall's boss card): three rows fit
+const COL_W := 270.0  ## a card's width
+const BAR_LABEL := 58.0  ## room for a bar's name
+const COL_H := 342.0  ## the three cards' height: four rows of friends and SHOW ALL fit whole, the rest scroll
+const COL_H_SHORT := 212.0  ## the same with a second row of cards on the page (a fall's boss card): three rows fit
 const ROWS := 4  ## rows a card shows before SHOW ALL
-const FACE := 44.0
+const FACE := 40.0
 const FRAME_ROOM := 96.0  ## the bottom frame's height, kept clear
 
 var s: Dictionary = {}  ## HomecomingRules.summary + "headline"
@@ -48,15 +48,12 @@ func _ready() -> void:
 	add_child(center)
 	var title := Txt.t("UI_HC_TITLE_FELL" if bool(s.get("fell", false)) else "UI_HC_TITLE_HOME")
 	# an X at its top right (OK's continue), and the page scrolls when it runs past the window ([USER] 2026-11-01 X11)
-	var w := MenuKit.window(title, func() -> Rect2: return get_viewport_rect().grow_individual(-20.0, -20.0, -20.0, -FRAME_ROOM), close, 40)
-	center.add_child(w.root)
-	center.sort_children.connect(func() -> void:  # the kit's size ([USER] 2026-11-02: "things are just too big"); a
-		w.root.pivot_offset = w.root.size * 0.5  # container resets its child's scale on each layout, so set it after
-		w.root.scale = Vector2.ONE * UiTheme.KIT_SCALE)
+	var w := MenuKit.window(title, func() -> Rect2: return get_viewport_rect().grow_individual(-20.0, -20.0, -20.0, -FRAME_ROOM), close)
+	center.add_child(w.root)  # at its own size: the kit's sizes are real pixels, nothing is scaled
 	var page: VBoxContainer = w.body
 	var line := String(s.get("headline", ""))
 	if line != "":
-		var l := MenuKit.label(line, 19, MenuKit.TEXT)
+		var l := MenuKit.label(line, UiSkin.T_LEAD, MenuKit.TEXT)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size.x = COL_W * 2.0
@@ -68,7 +65,7 @@ func _ready() -> void:
 	if fell_first and extra != null:
 		page.add_child(extra)  # a fall leads with what the party learned
 	var cols := HBoxContainer.new()
-	cols.add_theme_constant_override("separation", 14)
+	cols.add_theme_constant_override("separation", 12)
 	cols.alignment = BoxContainer.ALIGNMENT_CENTER
 	page.add_child(cols)
 	_materials(cols)
@@ -77,7 +74,7 @@ func _ready() -> void:
 	if not fell_first and extra != null:
 		page.add_child(extra)
 	_goal(w.foot)
-	_ok = MenuKit.primary(Txt.t("UI_HC_OK"), close, 22, 250.0)
+	_ok = MenuKit.primary(Txt.t("UI_HC_OK"), close, UiSkin.T_LEAD, 224.0)
 	w.foot.add_child(_ok)
 	_ok.grab_focus.call_deferred()
 	UiTheme.pop_in_later(w.panel)
@@ -120,21 +117,21 @@ func _materials(cols: HBoxContainer) -> void:
 		return
 	var grid := GridContainer.new()
 	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 10)
-	grid.add_theme_constant_override("v_separation", 10)
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(grid)
 	var ids := mats.keys()
 	ids.sort()
 	for id: String in ids:
 		var cell := VBoxContainer.new()  # the item in its slot, the number in a chip under it (mockup C)
-		cell.add_theme_constant_override("separation", 6)
+		cell.add_theme_constant_override("separation", 5)
 		grid.add_child(cell)
 		var name := Txt.t(String(Db.items[id].name_key)) if Db.items.has(id) else id
-		var sl := MenuKit.slot(id, 0, 76.0, name)
+		var sl := MenuKit.slot(id, 0, 68.0, name)
 		sl.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		cell.add_child(sl)
-		var c := MenuKit.chip("+%d" % int(mats[id]), "", MenuKit.TEXT, "", 17)
+		var c := MenuKit.chip("+%d" % int(mats[id]), "", MenuKit.TEXT, "", UiSkin.T_BODY)
 		c.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		cell.add_child(c)
 
@@ -154,16 +151,16 @@ func _levels(cols: HBoxContainer) -> void:
 		line.add_child(mid)
 		var up := int(r.to) > int(r.from)
 		var lv := Txt.f("UI_HC_LEVEL_UP", [int(r.from), int(r.to)]) if up else Txt.f("UI_HC_LEVEL", int(r.to))
-		mid.add_child(MenuKit.label(lv, 16, MenuKit.GOLD if up else MenuKit.TEXT))
+		mid.add_child(MenuKit.label(lv, UiSkin.T_BODY, MenuKit.GOLD if up else MenuKit.TEXT))
 		var bar := UiBar.new()
 		var d := Db.character(StringName(String(r.id)))
 		bar.fill = d.tint.lightened(0.15) if d else VictoryUi.XP_GOLD  # each member's own colour (mockup C)
 		bar.value = float(r.xp_now) / maxf(1.0, float(r.xp_per))
 		bar.tooltip_text = "%d/%d" % [int(r.xp_now), int(r.xp_per)]
 		bar.mouse_filter = Control.MOUSE_FILTER_STOP
-		bar.custom_minimum_size = Vector2(100, 16)
+		bar.custom_minimum_size = Vector2(90, 14)
 		mid.add_child(bar)
-		line.add_child(MenuKit.chip("+%d" % int(r.xp), "", MenuKit.TEXT, Txt.f("UI_HC_XP", int(r.xp)), 16))
+		line.add_child(MenuKit.chip("+%d" % int(r.xp), "", MenuKit.TEXT, Txt.f("UI_HC_XP", int(r.xp)), UiSkin.T_BODY))
 
 
 ## FRIENDS: morale per character ([USER] 2026-10-31 design-goodboy; MoraleRules), the biggest moves first, a heart in the
@@ -193,8 +190,8 @@ func _friends(cols: HBoxContainer) -> void:
 		var more := Button.new()
 		more.theme_type_variation = &"QuietButton"
 		more.text = Txt.t("UI_HC_SHOW_ALL")
-		more.custom_minimum_size.y = 36
-		more.add_theme_font_size_override("font_size", 15)
+		more.custom_minimum_size.y = 32
+		more.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
 		more.pressed.connect(func() -> void:
 			for r in rest:
 				r.visible = true
@@ -221,7 +218,7 @@ func _morale_row(box: VBoxContainer, r: Dictionary) -> Control:
 	bars.alignment = BoxContainer.ALIGNMENT_CENTER
 	line.add_child(bars)
 	_vitals(bars, String(r.id))
-	line.add_child(MenuKit.chip("+%d" % d if d > 0 else str(d), "", VictoryUi.UP_GREEN if d > 0 else VictoryUi.DOWN_RED, "", 17))
+	line.add_child(MenuKit.chip("+%d" % d if d > 0 else str(d), "", VictoryUi.UP_GREEN if d > 0 else VictoryUi.DOWN_RED, "", UiSkin.T_BODY))
 	return line
 
 
@@ -230,20 +227,20 @@ func _bond_row(box: VBoxContainer, r: Dictionary) -> Control:
 	var lv0 := BondRules.level(int(r.from), Db.bonds)
 	var lv1 := BondRules.level(int(r.to), Db.bonds)
 	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", 6)
+	line.add_theme_constant_override("separation", 5)
 	line.tooltip_text = Txt.f("UI_HC_BOND", ["%s + %s" % [_name(ids[0]), _name(ids[1] if ids.size() > 1 else "")], int(r.to) - int(r.from)])
 	line.mouse_filter = Control.MOUSE_FILTER_PASS
 	box.add_child(line)
-	line.add_child(MenuKit.portrait(ids[0], 40))
-	line.add_child(MenuKit.icon_rect("heal", 24))
-	line.add_child(MenuKit.portrait(ids[1] if ids.size() > 1 else "", 40))
+	line.add_child(MenuKit.portrait(ids[0], 36))
+	line.add_child(MenuKit.icon_rect("heal", 22))
+	line.add_child(MenuKit.portrait(ids[1] if ids.size() > 1 else "", 36))
 	var gap := Control.new()
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	line.add_child(gap)
 	var text := "+%d" % (int(r.to) - int(r.from))
 	if lv1 > lv0:
 		text = Txt.f("UI_HC_BOND_LEVEL", lv1)
-	line.add_child(MenuKit.chip(text, "", MenuKit.GOLD if lv1 > lv0 else MenuKit.TEXT, "", 16))
+	line.add_child(MenuKit.chip(text, "", MenuKit.GOLD if lv1 > lv0 else MenuKit.TEXT, "", UiSkin.T_BODY))
 	return line
 
 
@@ -251,7 +248,7 @@ func _bond_row(box: VBoxContainer, r: Dictionary) -> Control:
 ## and the restore steps just finished, as cards side by side. Null when there is none of these.
 func _extras() -> Control:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 14)
+	row.add_theme_constant_override("separation", 12)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	for cid: String in Array(s.get("cards", [])):
 		if not ResourceLoader.exists("res://data/classes/%s.tres" % cid):
@@ -259,21 +256,21 @@ func _extras() -> Control:
 		var c := Db.class_def(cid)
 		var v := MenuKit.card(row, Txt.t("UI_HC_CARD"))
 		v.get_parent().custom_minimum_size.x = COL_W * 1.6
-		var name := MenuKit.label(Txt.t(c.name_key), 20, MenuKit.GOLD)
+		var name := MenuKit.label(Txt.t(c.name_key), UiSkin.T_LEAD, MenuKit.GOLD)
 		name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(name)
 		var stats := HBoxContainer.new()
 		stats.alignment = BoxContainer.ALIGNMENT_CENTER
-		stats.add_theme_constant_override("separation", 8)
+		stats.add_theme_constant_override("separation", 7)
 		v.add_child(stats)
-		stats.add_child(MenuKit.chip("%s %d" % [Txt.t("UI_STAT_HP"), c.max_hp], "potion", MenuKit.TEXT, "", 15))
-		stats.add_child(MenuKit.chip("%s %d" % [Txt.t("UI_STAT_ARMOR"), c.armor], "shield", MenuKit.TEXT, "", 15))
-		stats.add_child(MenuKit.chip("%s %d" % [Txt.t("UI_HC_MOVE"), c.move], "dash", MenuKit.TEXT, "", 15))
+		stats.add_child(MenuKit.chip("%s %d" % [Txt.t("UI_STAT_HP"), c.max_hp], "potion", MenuKit.TEXT, "", UiSkin.T_SMALL))
+		stats.add_child(MenuKit.chip("%s %d" % [Txt.t("UI_STAT_ARMOR"), c.armor], "shield", MenuKit.TEXT, "", UiSkin.T_SMALL))
+		stats.add_child(MenuKit.chip("%s %d" % [Txt.t("UI_HC_MOVE"), c.move], "dash", MenuKit.TEXT, "", UiSkin.T_SMALL))
 		var moves := HFlowContainer.new()  # each move as a chip, its icon and name; what it does on hover (plain rules text)
 		moves.alignment = FlowContainer.ALIGNMENT_CENTER
-		moves.add_theme_constant_override("h_separation", 8)
-		moves.add_theme_constant_override("v_separation", 6)
-		moves.custom_minimum_size.x = COL_W * 1.6 - 40.0
+		moves.add_theme_constant_override("h_separation", 7)
+		moves.add_theme_constant_override("v_separation", 5)
+		moves.custom_minimum_size.x = COL_W * 1.6 - 36.0
 		v.add_child(moves)
 		for aid in c.abilities:
 			var a := Db.ability(String(aid))
@@ -281,14 +278,14 @@ func _extras() -> Control:
 				continue
 			var desc := "DESC_" + a.id.to_upper()
 			var icon := a.id if ActionInfo.icon(a.id) != null else "@dot"
-			moves.add_child(MenuKit.chip(Txt.t(a.name_key), icon, MenuKit.TEXT, Txt.t(desc) if Txt.t(desc) != desc else Txt.t(a.name_key), 15))
+			moves.add_child(MenuKit.chip(Txt.t(a.name_key), icon, MenuKit.TEXT, Txt.t(desc) if Txt.t(desc) != desc else Txt.t(a.name_key), UiSkin.T_SMALL))
 	var k: Dictionary = s.get("knowledge", {})
 	if not k.is_empty():
 		var v := MenuKit.card(row, Txt.t("UI_HC_KNOW"))
 		v.get_parent().custom_minimum_size.x = COL_W * 0.8
 		for kind: String in ["got", "beaten", "passed"]:
 			if k.has(kind):
-				v.add_child(MenuKit.label(Txt.f("UI_HC_KNOW_" + kind.to_upper(), int(k[kind])), 16))
+				v.add_child(MenuKit.label(Txt.f("UI_HC_KNOW_" + kind.to_upper(), int(k[kind])), UiSkin.T_BODY))
 	var ids: Array = s.get("restored", [])
 	if not ids.is_empty():
 		var v := MenuKit.card(row, Txt.t("UI_HC_RESTORED"))
@@ -296,7 +293,7 @@ func _extras() -> Control:
 		for id: String in ids:
 			for r: Dictionary in Db.restore:
 				if String(r.id) == id:
-					var l := MenuKit.label(Txt.t(String(r.name_key)), 16, MenuKit.GOLD)
+					var l := MenuKit.label(Txt.t(String(r.name_key)), UiSkin.T_BODY, MenuKit.GOLD)
 					l.tooltip_text = Txt.t("BUILDING_" + String(r.building).to_upper())
 					l.mouse_filter = Control.MOUSE_FILTER_PASS
 					v.add_child(l)
@@ -310,15 +307,15 @@ func _goal(foot: HBoxContainer) -> void:
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	foot.add_child(card)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", 10)
 	card.add_child(row)
 	var head := Label.new()
 	head.theme_type_variation = &"KitHeading"
 	head.text = Txt.t("UI_HC_NEXT")
-	head.add_theme_font_size_override("font_size", 22)
+	head.add_theme_font_size_override("font_size", UiSkin.T_LEAD)
 	row.add_child(head)
 	if goal.is_empty():
-		row.add_child(MenuKit.label(Txt.t("UI_HC_NO_GOAL"), 17, MenuKit.TEXT_DIM))
+		row.add_child(MenuKit.label(Txt.t("UI_HC_NO_GOAL"), UiSkin.T_BODY, MenuKit.TEXT_DIM))
 		return
 	var r: Dictionary = goal.row
 	head.tooltip_text = "%s: %s" % [Txt.t("BUILDING_" + String(r.building).to_upper()), Txt.t(String(r.name_key))]
@@ -326,10 +323,10 @@ func _goal(foot: HBoxContainer) -> void:
 	for p: Dictionary in goal.parts:
 		var item := Txt.t(String(Db.items[p.id].name_key)) if Db.items.has(String(p.id)) else String(p.id)
 		var c := MenuKit.chip("%d/%d" % [int(p.have), int(p.need)], String(p.id), MenuKit.GOLD if int(p.have) >= int(p.need) else MenuKit.TEXT,
-			Txt.f("UI_HC_OF", [int(p.have), int(p.need), item]), 18)
+			Txt.f("UI_HC_OF", [int(p.have), int(p.need), item]), UiSkin.T_BODY)
 		row.add_child(c)
 	if bool(goal.get("ready", false)):
-		row.add_child(MenuKit.label(Txt.t("UI_RESTORE_READY"), 16, MenuKit.GOLD))
+		row.add_child(MenuKit.label(Txt.t("UI_RESTORE_READY"), UiSkin.T_BODY, MenuKit.GOLD))
 
 
 # --- pieces ------------------------------------------------------------------------------------
@@ -353,14 +350,14 @@ func _vitals(col: VBoxContainer, id: String) -> void:
 ## A row that starts with a round face (party, friends).
 func _row(box: VBoxContainer, id: String) -> HBoxContainer:
 	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", 10)
+	line.add_theme_constant_override("separation", 8)
 	box.add_child(line)
 	line.add_child(MenuKit.portrait(id, FACE))
 	return line
 
 
 func _quiet(box: Control, key: String) -> void:
-	var l := MenuKit.label(Txt.t(key), 16, MenuKit.TEXT_DIM)
+	var l := MenuKit.label(Txt.t(key), UiSkin.T_BODY, MenuKit.TEXT_DIM)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(l)
 

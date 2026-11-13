@@ -9,7 +9,8 @@
 # around constantly and unfocus my mouse". If the focus-free copy can't be built, the run is refused.
 # Every run goes through tools/mem_guard.sh: over GODOT_MEM_CAP_MB (default 6144) it is killed, not left to fill the Mac.
 # Usage: tools/godot.sh <godot args...>
-# Env: GODOT_BIN (the real binary, non-Mac and headless runs), GODOT_SCREEN (display index, default 1), GODOT_MEM_CAP_MB.
+# Env: GODOT_BIN (the real binary, non-Mac and headless runs), GODOT_SCREEN (display index, default 1), GODOT_MEM_CAP_MB,
+# LODESTONE_SOUND=1 (windowed runs are silent unless this is set).
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 GUARD="$HERE/mem_guard.sh"
@@ -32,5 +33,10 @@ fi
 args=("$@")
 if [[ " $* " != *" --screen "* ]]; then
 	args=(--screen "${GODOT_SCREEN:-1}" "${args[@]}")
+fi
+# Silent: these are Claude's test runs, and Brandon kept hearing the music start (2026-11-13: "In any testing you do
+# with Lodestone, please mute it. I keep hearing little starts to our music"). LODESTONE_SOUND=1 to hear a run.
+if [ "${LODESTONE_SOUND:-0}" != 1 ] && [[ " $* " != *" --audio-driver "* ]]; then
+	args=(--audio-driver Dummy "${args[@]}")
 fi
 exec "$GUARD" "$NF/launch" "$NF/Godot.app/Contents/MacOS/Godot" "$NF/nofocus.dylib" "${args[@]}"

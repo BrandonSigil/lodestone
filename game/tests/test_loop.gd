@@ -1823,7 +1823,7 @@ func test_containers() -> void:
 	Game.refresh_party()
 	var box := VBoxContainer.new()
 	var shown := ContainerUi.fill(box, chest, "CHEST", func() -> void: pass, func() -> void: pass, "", 7)
-	eq(shown.windows.size(), 2, "two windows: the inventory and the container")
+	eq(shown.windows.size(), 2, "two sections of one window: the pack and the container (menus v3)")
 	eq(String(shown.notes.back().text), "+7", "the gold it gave: a number by the gold icon ([USER] 2026-11-01 fewer words)")
 	eq(String(shown.gold_note.text), str(Game.run.gold), "the party's gold total under the pack ([USER] 2026-11-01)")
 	# [USER] 2026-11-01 "Take all should move money over too": a box's coins wait in it until TAKE ALL
@@ -1844,15 +1844,15 @@ func test_containers() -> void:
 	box2.free()
 	ok(shown.areas[1].bag == chest, "the container is the second grid")
 	eq(int(shown.areas[0].click_to), 1, "a click in the pack sends to the container")
-	ok((shown.windows[1].rect as Rect2).position.x >= (shown.windows[0].rect as Rect2).end.x, "the container's window stands right of the inventory")
+	ok((shown.windows[1].rect as Rect2).end.x <= (shown.windows[0].rect as Rect2).position.x, "the container's section stands left of the pack's, as the loot does on the win screen")
 	if Game.run.open_courier_bag() != null:
 		ok(shown.areas[2].bag == Game.run.open_courier_bag(), "the saddlebag is the third grid")
 		var pack_r := shown._rect_of(shown.areas[0])
 		var bag_r := shown._rect_of(shown.areas[2])
-		ok(is_equal_approx(bag_r.position.y, pack_r.position.y) and bag_r.position.x > pack_r.end.x, "beside the pack, level with it")
+		ok(bag_r.position.y >= pack_r.position.y and bag_r.position.x > pack_r.end.x, "beside the pack, in its own inset")
 		ok((shown.windows[0].rect as Rect2).encloses(bag_r), "inside the inventory window")
 		eq(String(shown.areas[2].label) != "" and shown.areas[2].portrait != null, true, "Doggo's picture names his saddlebag")
-		ok(is_equal_approx(bag_r.position.y - (shown.areas[2].face_at as Vector2).y, PackView.FACE_ROW), "the picture row, no words")
+		ok(is_equal_approx(bag_r.position.y - (shown.areas[2].face_at as Vector2).y, ContainerUi.SADDLE_FACE + 8.0), "his round face over it, no words")
 	box.free()
 	# the full inventory page (I): PACK and PARTY windows, the belts in PARTY
 	var page := VBoxContainer.new()

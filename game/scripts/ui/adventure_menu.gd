@@ -4,10 +4,10 @@ extends RefCounted
 ## Each fills a dialog box the screen made. `changed` runs after a pick or a use (the screen refreshes
 ## its HUD and rebuilds the box); `close` shuts the box.
 
-const W := 460.0
-const PACK_CELL := 56.0
-const USE_W := 150.0  ## a use row's chip and heal line, before its EAT / DRINK / CAST button
-const PARTY_CARD := Vector2(190, 58)  ## a member's card in the pack's PARTY window, their belt beside it
+const W := 414.0
+const PACK_CELL := 50.0
+const USE_W := 136.0  ## a use row's chip and heal line, before its EAT / DRINK / CAST button
+const PARTY_CARD := Vector2(172, 52)  ## a member's card in the pack's PARTY window, their belt beside it
 
 
 static var _focus := ""  ## the member whose pick or branch shows under the Lodestone menu's cards
@@ -20,7 +20,7 @@ static var _focus := ""  ## the member whose pick or branch shows under the Lode
 ## icons); a member with a pick or a job branch waiting gets a gem button that opens it under the cards, one member
 ## at a time; then blessings, meal and bonds as chips, and the buttons two by two.
 static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, home := true, open_list := Callable(), open_options := Callable()) -> void:
-	_label(box, Txt.t("UI_LODESTONE"), 20)
+	_label(box, Txt.t("UI_LODESTONE"), UiSkin.T_LEAD)
 	var waiting := func(id: String) -> bool:
 		var rs := Game.rank_state(id)
 		return LevelUpUi.has_pick(id) or (id == "lead" and Game.job_id() != "" and LevelRules.branch_ready(rs, Db.levels))
@@ -29,7 +29,7 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 		_focus = ""  # closed until its NEW TRICK button is pressed: the menu opens short, at full size
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 10)
+	row.add_theme_constant_override("separation", 8)
 	box.add_child(row)
 	for m in Game.run.members:
 		var id := String(m.def.id)
@@ -39,8 +39,8 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 	if _focus != "":
 		_member_choices(box, _focus, changed)
 	var chips := HFlowContainer.new()
-	chips.add_theme_constant_override("h_separation", 8)
-	chips.add_theme_constant_override("v_separation", 6)
+	chips.add_theme_constant_override("h_separation", 7)
+	chips.add_theme_constant_override("v_separation", 5)
 	for id in Game.run.boons:  # [USER] 2026-11-01 fewer words: the stat's icon and the change, the whole line on hover
 		var b: Dictionary = Db.boons[id]
 		chips.add_child(_chip(String(b.get("short", "")), Color(0.62, 0.9, 0.5) if b.kind == "blessing" else Color(1.0, 0.55, 0.45),
@@ -54,14 +54,14 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 	_bonds(box, not home)
 	var grid := GridContainer.new()
 	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 6)
+	grid.add_theme_constant_override("h_separation", 7)
+	grid.add_theme_constant_override("v_separation", 5)
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(grid)
 	var cell := func(text: String, cb: Callable) -> void:
 		var b := Button.new()
 		b.text = text
-		b.custom_minimum_size = Vector2(BTN_W, 34)
+		b.custom_minimum_size = Vector2(BTN_W, 30)
 		b.pressed.connect(cb)
 		grid.add_child(b)
 	if home:
@@ -81,8 +81,8 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 	cell.call(Txt.t("UI_CLOSE_MENU"), close)
 
 
-const BTN_W := 228.0
-const CARD_W := 210.0
+const BTN_W := 206.0
+const CARD_W := 188.0
 const STAT_ICONS := [["strength", "damage"], ["shield", "armor"], ["focus", "crit"], ["rare", "magic_power"]]
 
 
@@ -99,21 +99,21 @@ static func _member_card(m: Dictionary, waiting: bool, open: bool, show: Callabl
 	col.add_theme_constant_override("separation", 4)
 	card.add_child(col)
 	var top := HBoxContainer.new()
-	top.add_theme_constant_override("separation", 8)
+	top.add_theme_constant_override("separation", 7)
 	col.add_child(top)
-	top.add_child(_face(id, d.tint, 56))
+	top.add_child(_face(id, d.tint, 50))
 	var words := VBoxContainer.new()
 	words.add_theme_constant_override("separation", -2)
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(words)
 	var nm := Label.new()
 	nm.text = Txt.t(d.name_key)
-	nm.add_theme_font_size_override("font_size", 17)
+	nm.add_theme_font_size_override("font_size", UiSkin.T_BODY)
 	nm.clip_text = true
 	words.add_child(nm)
 	var lv := Label.new()
 	lv.text = "%s %d" % [Txt.t("UI_VIC_LV"), int(s.level)]
-	lv.add_theme_font_size_override("font_size", 15)
+	lv.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
 	lv.add_theme_color_override("font_color", UiTheme.GOLD)
 	words.add_child(lv)
 	if id == "lead" and Game.job_id() != "":  # the hero's job and its own level
@@ -122,7 +122,7 @@ static func _member_card(m: Dictionary, waiting: bool, open: bool, show: Callabl
 		var branch := String(rs.get("branch", ""))
 		var jl := Label.new()
 		jl.text = "%s %d" % [Txt.t(String(job["branch_" + branch] if branch != "" else job.name_key)), int(rs.level)]
-		jl.add_theme_font_size_override("font_size", 12)
+		jl.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
 		jl.add_theme_color_override("font_color", UiTheme.PARCHMENT_DARK)
 		jl.clip_text = true
 		words.add_child(jl)
@@ -141,19 +141,19 @@ static func _member_card(m: Dictionary, waiting: bool, open: bool, show: Callabl
 	col.add_child(stats)
 	for pair in STAT_ICONS:
 		var v := int(u.get(pair[1]))
-		stats.add_child(_icon(String(pair[0]), 22))
+		stats.add_child(_icon(String(pair[0]), 20))
 		var l := Label.new()
 		l.text = ("%d%%" % v) if pair[1] == "crit" else str(v)
-		l.add_theme_font_size_override("font_size", 14)
-		l.custom_minimum_size.x = 26
+		l.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
+		l.custom_minimum_size.x = 24
 		stats.add_child(l)
 	if waiting:
 		var b := Button.new()
 		b.text = Txt.t("UI_VIC_PICK")
 		b.toggle_mode = true
 		b.set_pressed_no_signal(open)
-		b.custom_minimum_size = Vector2(0, 30)
-		b.add_theme_font_size_override("font_size", 14)
+		b.custom_minimum_size = Vector2(0, 28)
+		b.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
 		b.add_theme_color_override("font_color", UiTheme.GOLD)
 		b.pressed.connect(show)
 		col.add_child(b)
@@ -167,14 +167,14 @@ static func _member_choices(box: VBoxContainer, id: String, changed: Callable) -
 	var rs := Game.rank_state(id)
 	if id == "lead" and Game.job_id() != "" and LevelRules.branch_ready(rs, Db.levels):
 		var job: Dictionary = Db.jobs[Game.job_id()]
-		_label(box, Txt.t("UI_LS_BRANCH"), 15)
+		_label(box, Txt.t("UI_LS_BRANCH"), UiSkin.T_BODY)
 		var brow := HBoxContainer.new()
-		brow.add_theme_constant_override("separation", 8)
+		brow.add_theme_constant_override("separation", 7)
 		brow.alignment = BoxContainer.ALIGNMENT_CENTER
 		for which in ["a", "b"]:
 			var bb := Button.new()
 			bb.text = Txt.t(String(job["branch_" + which]))
-			bb.custom_minimum_size = Vector2(BTN_W, 34)
+			bb.custom_minimum_size = Vector2(BTN_W, 30)
 			bb.pressed.connect(func() -> void:
 				Game.choose_branch(which)
 				changed.call())
@@ -185,9 +185,9 @@ static func _member_choices(box: VBoxContainer, id: String, changed: Callable) -
 
 static func _bar(col: VBoxContainer, icon: String, fill: Color, value: float, text: String) -> UiBar:
 	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 5)
+	h.add_theme_constant_override("separation", 4)
 	col.add_child(h)
-	h.add_child(_icon(icon, 22))
+	h.add_child(_icon(icon, 20))
 	var b := UiBar.new()
 	b.fill = fill
 	b.value = clampf(value, 0.0, 1.0)
@@ -235,7 +235,7 @@ static func _chip(text: String, col: Color, icon := "", tip := "") -> Control:
 	p.add_child(h)
 	var has_icon := ActionInfo.icon(icon) != null
 	if has_icon:
-		h.add_child(_icon(icon, 24))
+		h.add_child(_icon(icon, 22))
 	var l := Label.new()
 	l.text = text if has_icon or tip == "" else tip
 	l.add_theme_font_size_override("font_size", 14 if has_icon else 13)
@@ -248,22 +248,22 @@ static func _chip(text: String, col: Color, icon := "", tip := "") -> Control:
 ## Every building's restore ladder at once ([USER] omr-5, like Stardew's community center): steps done,
 ## under way, open (with what they need) or locked until the settler moves in. WATCH tracks any open step.
 static func restore_list(box: VBoxContainer, changed: Callable, close: Callable) -> void:
-	_label(box, Txt.t("UI_RESTORE_LIST"), 20)
+	_label(box, Txt.t("UI_RESTORE_LIST"), UiSkin.T_LEAD)
 	var have := Game.have_for_goals()
 	for building in RestoreRules.buildings(Db.restore):
-		_label(box, Txt.t("BUILDING_" + building.to_upper()), 15)
+		_label(box, Txt.t("BUILDING_" + building.to_upper()), UiSkin.T_BODY)
 		if not RestoreRules.is_open(Db.restore, building, Game.meta.flags):
-			_label(box, "  " + Game.locked_text(building), 12)
+			_label(box, "  " + Game.locked_text(building), UiSkin.T_SMALL)
 			continue
 		for r: Dictionary in RestoreRules.ladder(Db.restore, building):
 			var id := String(r.id)
 			var st := RestoreRules.status(Game.meta.restore, id)
 			var line := "  %s" % Txt.t(String(r.name_key))
 			if st == "done":
-				_label(box, line + "   " + Txt.t("UI_RESTORE_DONE"), 12)
+				_label(box, line + "   " + Txt.t("UI_RESTORE_DONE"), UiSkin.T_SMALL)
 				continue
 			if st == "paid":
-				_label(box, line + "   " + Txt.t("UI_RESTORE_WORKING"), 12)
+				_label(box, line + "   " + Txt.t("UI_RESTORE_WORKING"), UiSkin.T_SMALL)
 				continue
 			var parts: PackedStringArray = []
 			var needs := RestoreRules.parse_needs(String(r.needs))
@@ -272,20 +272,20 @@ static func restore_list(box: VBoxContainer, changed: Callable, close: Callable)
 			var row := HBoxContainer.new()
 			var l := Label.new()
 			l.text = line + "   " + ", ".join(parts)
-			l.add_theme_font_size_override("font_size", 12)
-			l.custom_minimum_size = Vector2(W - 130, 0)
+			l.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
+			l.custom_minimum_size = Vector2(W - 116, 0)
 			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			row.add_child(l)
 			var b := Button.new()
 			b.text = Txt.t("UI_RESTORE_UNTRACK" if Game.meta.tracked.has(id) else "UI_RESTORE_TRACK")
-			b.custom_minimum_size = Vector2(120, 26)
+			b.custom_minimum_size = Vector2(108, 24)
 			b.pressed.connect(func() -> void:
 				Game.toggle_track(id)
 				changed.call())
 			row.add_child(b)
 			box.add_child(row)
 	if RestoreRules.buildings(Db.restore).is_empty():
-		_label(box, Txt.t("UI_RESTORE_NONE"), 12)
+		_label(box, Txt.t("UI_RESTORE_NONE"), UiSkin.T_SMALL)
 	_button(box, Txt.t("UI_CLOSE_MENU"), close)
 
 
@@ -303,39 +303,40 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 		return
 	var grid := PackView.new()
 	var cell := PACK_CELL
-	var pad := PackView.WINDOW_PAD
+	var pad := ContainerUi.SECTION_PAD
+	grid.sections = true  # one window: PACK and PARTY are its two sections (menus v3)
 	grid.setup_bag(run.pack, Db.items, run.throw_away, cell)
-	# PACK: the pack, the saddlebag beside it, the bin a bar under them
-	var top := Vector2(pad, pad + PackView.WINDOW_TITLE)
+	# PACK: the pack, the dog's saddlebag beside it in its inset, the bin a bar under them
+	var top := Vector2(pad, PackView.WINDOW_TITLE + 6.0)
 	var courier := run.courier()
 	var bag: InventoryGrid = run.open_courier_bag()  # the dog's 2 x 2 saddlebag, always here while he is along
-	var head := PackView.FACE_ROW if bag != null else 0.0  # his picture over it, no words ([USER] 2026-11-01)
-	grid.move_area(0, top + Vector2(0, head))
+	grid.move_area(0, top)
 	var right := top.x + run.pack.cols * cell
-	var bottom := top.y + head + run.pack.rows * cell
+	var bottom := top.y + run.pack.rows * cell
 	if bag != null:
-		var who: CharacterDef = courier.def
-		grid.add_area(bag, Vector2(right + 22.0, top.y), Txt.f("UI_COURIER_BAG", Txt.t(who.name_key)), ContainerUi.face_of(String(who.id)))
-		right += 22.0 + bag.cols * cell
-		bottom = maxf(bottom, top.y + head + bag.rows * cell)
-	grid.place_bin(Rect2(Vector2(top.x, bottom + 14.0), Vector2(right - top.x, 34.0)), "UI_THROW", "UI_BOUND_THROW")
-	bottom += 14.0 + 34.0
+		var end := ContainerUi.saddle_beside(grid, bag, right, top.y, -1)
+		right = end.x
+		bottom = maxf(bottom, end.y)
+	grid.place_bin(Rect2(Vector2(top.x, bottom + 10.0), Vector2(right - top.x, 30.0)), "UI_THROW", "UI_BOUND_THROW")
+	bottom += 40.0
 	grid.flash_at = Vector2(top.x, bottom + 14.0)  # "no room", "who eats?"
-	bottom += 30.0
+	bottom += 24.0
 	grid.tooltip_text = Txt.t("UI_PACK_HELP_RUN")  # [USER] 2026-11-01 less text: the how-to waits on hover
 	var left_w := right + pad
 	# PARTY: a row per member, their card (face, name, HP) with their belt beside it (what each can use in a fight); drop
-	# food or a potion on a card, or EAT / DRINK then click one. Then the rest.
+	# food or a potion on a card, or EAT / DRINK then click one. Then the rest. As wide as its widest row.
 	var ox := left_w + ContainerUi.GAP
 	var cx := ox + pad
 	var y := top.y
 	var cards := []
-	var row_h := maxf(PARTY_CARD.y, cell) + 10.0
+	var row_h := maxf(PARTY_CARD.y, cell) + 8.0
+	var party_w := USE_W + 110.0
 	for k in run.members.size():
 		var m: Dictionary = run.members[k]
 		cards.append({"name": _short(Txt.t((m.def as CharacterDef).name_key)), "hp": int(m.hp), "max_hp": run.max_hp(m),
 			"face": ContainerUi.face_of(String((m.def as CharacterDef).id))})
-		grid.add_area(m.belt, Vector2(cx + PARTY_CARD.x + 14.0, y + k * row_h + (PARTY_CARD.y - cell) * 0.5), "", null)
+		grid.add_area(m.belt, Vector2(cx + PARTY_CARD.x + 12.0, y + k * row_h + roundf((PARTY_CARD.y - cell) * 0.5)), "", null)
+		party_w = maxf(party_w, PARTY_CARD.x + 12.0 + (m.belt as InventoryGrid).cols * cell)
 	grid.add_targets(cards, Vector2(cx, y))
 	for k in grid.targets.size():
 		grid.targets[k].rect = Rect2(Vector2(cx, y + k * row_h), PARTY_CARD)
@@ -345,7 +346,7 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 			return false
 		Game.save_adventure()
 		return true
-	y += run.members.size() * row_h + 6.0
+	y += run.members.size() * row_h + 4.0
 	var col := VBoxContainer.new()  # the read-outs and buttons, a real column inside the window
 	col.add_theme_constant_override("separation", 4)
 	col.position = Vector2(cx, y)
@@ -383,41 +384,40 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 				run.add_item("tonic", -1)
 			changed.call())
 	var counts := HFlowContainer.new()  # [USER] 2026-11-01 "We've got icons! We should use em!": a picture and a number
-	counts.add_theme_constant_override("h_separation", 14)
+	counts.add_theme_constant_override("h_separation", 12)
 	counts.add_theme_constant_override("v_separation", 4)
-	counts.custom_minimum_size.x = W
+	counts.custom_minimum_size.x = party_w
 	col.add_child(counts)
-	counts.add_child(MenuKit.chip(str(run.gold), "gold", MenuKit.TEXT, Txt.t("UI_PACK_GOLD_TIP"), 14))
-	counts.add_child(MenuKit.chip("%d/%d" % [run.pack.used_cells(), run.pack.capacity()], "backpack", MenuKit.TEXT, Txt.t("UI_PACK_SLOTS_TIP"), 14))
+	counts.add_child(MenuKit.chip(str(run.gold), "gold", MenuKit.TEXT, Txt.t("UI_PACK_GOLD_TIP"), UiSkin.T_SMALL))
+	counts.add_child(MenuKit.chip("%d/%d" % [run.pack.used_cells(), run.pack.capacity()], "backpack", MenuKit.TEXT, Txt.t("UI_PACK_SLOTS_TIP"), UiSkin.T_SMALL))
 	var weapon := Db.weapons.get(Game.weapon_id(), {}) as Dictionary
 	if not weapon.is_empty() and Game.weapon_id() != "none":  # bare hands need no line
-		counts.add_child(MenuKit.chip(Txt.t(String(weapon.name_key)), String(weapon.get("icon", "")), MenuKit.TEXT, Txt.t("UI_PACK_WEAPON_TIP"), 14))
+		counts.add_child(MenuKit.chip(Txt.t(String(weapon.name_key)), String(weapon.get("icon", "")), MenuKit.TEXT, Txt.t("UI_PACK_WEAPON_TIP"), UiSkin.T_SMALL))
 	if not Game.meta.materials.is_empty():  # the village pile: each material's icon and count
 		var pile := HFlowContainer.new()
-		pile.add_theme_constant_override("h_separation", 10)
+		pile.add_theme_constant_override("h_separation", 8)
 		pile.add_theme_constant_override("v_separation", 4)
-		pile.custom_minimum_size.x = W
+		pile.custom_minimum_size.x = party_w
 		pile.tooltip_text = Txt.t("UI_VILLAGE_STORE_TIP")
 		pile.mouse_filter = Control.MOUSE_FILTER_PASS
 		col.add_child(pile)
 		for id: String in Game.meta.materials:  # each material at home as a kit chip, its name on hover
-			pile.add_child(MenuKit.chip(str(int(Game.meta.materials[id])), id, MenuKit.TEXT, Txt.t(String(Db.items[id].name_key)), 14))
+			pile.add_child(MenuKit.chip(str(int(Game.meta.materials[id])), id, MenuKit.TEXT, Txt.t(String(Db.items[id].name_key)), UiSkin.T_SMALL))
 	if bag != null and not bag.items.is_empty():  # he can take what he carries home at any time, and rejoins when the party is home
-		_button(col, Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
+		var send := _button(col, Txt.f("UI_SEND_HOME", Txt.t((courier.def as CharacterDef).name_key)), func() -> void:
 			run.send_home(courier)
 			Game.refresh_party()
 			Game.save_adventure()
 			changed.call())
-	# no CLOSE: each window's X (and Esc) closes ([USER] 2026-11-02, fewer words)
-	# the windows: as tall as the taller of the two once the column knows its height
+		send.custom_minimum_size.x = party_w
+	# no CLOSE: the window's X (and Esc) closes ([USER] 2026-11-02, fewer words)
+	# the sections: as tall as the taller of the two once the column knows its height
 	var pack_win := Rect2(Vector2.ZERO, Vector2(left_w, 0))
-	var party_win := Rect2(Vector2(ox, 0), Vector2(W + pad * 2.0, 0))
+	var party_win := Rect2(Vector2(ox, 0), Vector2(party_w + pad * 2.0, 0))
 	grid.add_window(pack_win, Txt.t("UI_PACK"))
 	grid.add_window(party_win, Txt.t("UI_PARTY"))
-	for wx in [pack_win.end.x, party_win.end.x]:  # an X at each window's top right ([USER] 2026-11-01 X11)
-		grid.add_button("X", Rect2(Vector2(wx - ContainerUi.X_SIZE - 10.0, 10.0), Vector2(ContainerUi.X_SIZE, ContainerUi.X_SIZE)), close)
 	var fit := func() -> void:
-		var h := maxf(bottom, col.position.y + maxf(col.size.y, col.get_combined_minimum_size().y)) + pad
+		var h := maxf(bottom, col.position.y + maxf(col.size.y, col.get_combined_minimum_size().y)) + pad - 4.0
 		grid.windows[0].rect = Rect2(pack_win.position, Vector2(pack_win.size.x, h))
 		grid.windows[1].rect = Rect2(party_win.position, Vector2(party_win.size.x, h))
 		grid.refit()
@@ -428,7 +428,7 @@ static func pack(box: VBoxContainer, changed: Callable, close: Callable) -> void
 			changed.call())
 	box.add_child(grid)
 	fit.call()
-	ContainerUi.bare(box, grid)
+	ContainerUi.bare(box, grid, close)
 
 
 ## A pickup found no room ([USER] 2026-11-01: the inventory and the loot as two windows): the pack with the dog's saddlebag
@@ -460,35 +460,35 @@ static func _pack_full(box: VBoxContainer, changed: Callable, close: Callable) -
 		if view.flash == "":  # a refused move keeps the box up so its "no room" stays readable
 			changed.call())
 	box.add_child(view)
-	ContainerUi.bare(box, view)
+	ContainerUi.bare(box, view, drop)
 
 
 ## Options ([USER] 2026-10-30 listed them among the menus that share one look): the fight menu's layout and the
 ## window. Each pick saves at once (Game.meta.settings); back returns to the Lodestone menu.
 static func options(box: VBoxContainer, changed: Callable, back: Callable) -> void:
-	_label(box, Txt.t("UI_OPTIONS"), 20)
-	_label(box, Txt.t("UI_OPT_FIGHT_MENU"), 15)
+	_label(box, Txt.t("UI_OPTIONS"), UiSkin.T_LEAD)
+	_label(box, Txt.t("UI_OPT_FIGHT_MENU"), UiSkin.T_BODY)
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
+	row.add_theme_constant_override("separation", 5)
 	for l: String in ActionHud.LAYOUTS:
 		var b := Button.new()
 		b.text = Txt.t("UI_LAYOUT_" + l.to_upper())
 		b.toggle_mode = true
 		b.button_pressed = Battle.action_layout() == l
-		b.custom_minimum_size = Vector2(108, 30)
+		b.custom_minimum_size = Vector2(98, 28)
 		b.pressed.connect(func() -> void:
 			Game.set_setting("action_ui", l)
 			changed.call())
 		row.add_child(b)
 	box.add_child(row)
-	_label(box, Txt.t("UI_OPT_UI_SIZE"), 15)  # [USER] 2026-10-30: the small UI in 5% notches
+	_label(box, Txt.t("UI_OPT_UI_SIZE"), UiSkin.T_BODY)  # [USER] 2026-10-30: the small UI in 5% notches
 	var size_row := HBoxContainer.new()
-	size_row.add_theme_constant_override("separation", 6)
+	size_row.add_theme_constant_override("separation", 5)
 	var size := clampf(float(Game.meta.get("settings", {}).get("ui_size", 1.0)), 0.5, 2.0)
 	for step: float in [-UiTheme.SIZE_STEP, UiTheme.SIZE_STEP]:
 		var b := Button.new()
 		b.text = "-5%" if step < 0 else "+5%"
-		b.custom_minimum_size = Vector2(90, 30)
+		b.custom_minimum_size = Vector2(80, 28)
 		b.pressed.connect(func() -> void:
 			Game.set_setting("ui_size", snappedf(clampf(size + step, 0.5, 2.0), UiTheme.SIZE_STEP))
 			changed.call())
@@ -497,7 +497,7 @@ static func options(box: VBoxContainer, changed: Callable, back: Callable) -> vo
 	shown.text = "%d%%" % roundi(size * 100)
 	size_row.add_child(shown)
 	box.add_child(size_row)
-	_label(box, Txt.t("UI_OPT_WINDOW"), 15)
+	_label(box, Txt.t("UI_OPT_WINDOW"), UiSkin.T_BODY)
 	var full := bool(Game.meta.get("settings", {}).get("fullscreen", false))
 	_button(box, Txt.t("UI_OPT_WINDOWED") if full else Txt.t("UI_OPT_FULL"), func() -> void:
 		Game.set_setting("fullscreen", not full)
@@ -511,8 +511,8 @@ static func _bonds(box: VBoxContainer, at_home: bool) -> void:
 	var bonds: Dictionary = Game.meta.get("bonds", {})
 	var ids: Array = Game.run.members.map(func(m: Dictionary) -> String: return String(m.def.id))
 	var flow := HFlowContainer.new()
-	flow.add_theme_constant_override("h_separation", 8)
-	flow.add_theme_constant_override("v_separation", 6)
+	flow.add_theme_constant_override("h_separation", 7)
+	flow.add_theme_constant_override("v_separation", 5)
 	for i in ids.size():
 		for j in range(i + 1, ids.size()):
 			var k := BondRules.key(ids[i], ids[j])
@@ -529,14 +529,14 @@ static func _bonds(box: VBoxContainer, at_home: bool) -> void:
 			p.add_child(h)
 			for n in 2:
 				var dd := Db.character(StringName(pair[n]))
-				h.add_child(_face(pair[n], dd.tint if dd else Color.GRAY, 30))
+				h.add_child(_face(pair[n], dd.tint if dd else Color.GRAY, 28))
 				if n == 0:
-					h.add_child(_icon("heal", 22))
+					h.add_child(_icon("heal", 20))
 			var bar := UiBar.new()
 			bar.fill = VictoryUi.HEART_PINK
 			bar.value = clampf(float(pts) / maxf(1.0, float(next)), 0.0, 1.0)
 			bar.text = "%s %d" % [Txt.t("UI_VIC_LV"), lv]
-			bar.custom_minimum_size = Vector2(90, 18)
+			bar.custom_minimum_size = Vector2(80, 16)
 			bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			h.add_child(bar)
 			flow.add_child(p)
@@ -544,14 +544,14 @@ static func _bonds(box: VBoxContainer, at_home: bool) -> void:
 				var b := Button.new()
 				b.text = Txt.f("UI_LS_TALK", n) if at_home else Txt.t("UI_LS_TALK_AWAY")
 				b.disabled = not at_home
-				b.add_theme_font_size_override("font_size", 13)
+				b.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
 				b.pressed.connect(func() -> void:
 					var heard: Array = Game.meta.get("talks_heard", [])
 					if not heard.has("%s:%d" % [k, n]):
 						heard.append("%s:%d" % [k, n])
 						Game.meta.talks_heard = heard
 						Game.save_meta()
-					_label(box, Txt.t(BondRules.talk_key(k, n)), 13))
+					_label(box, Txt.t(BondRules.talk_key(k, n)), UiSkin.T_SMALL))
 				flow.add_child(b)
 	if flow.get_child_count() > 0:
 		box.add_child(flow)
@@ -567,20 +567,23 @@ static func _label(box: BoxContainer, text: String, font_size: int) -> void:
 	l.text = text
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	l.custom_minimum_size = Vector2(W, 0)
-	if font_size >= 20:  # a title on its plate (Brandon's frame, the long thin one)
+	if font_size >= UiSkin.T_LEAD and UiSkin.on():  # a window's title: the banner across its top edge, as on every window
+		MenuKit.title_on(box, text)
+		return
+	if font_size >= UiSkin.T_LEAD:  # a title on its plate (Brandon's frame, the long thin one)
 		l.theme_type_variation = &"MenuTitle"
-		l.custom_minimum_size = Vector2(W - 40, 0)
+		l.custom_minimum_size = Vector2(W - 36, 0)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		var plate := PanelContainer.new()
 		plate.theme_type_variation = &"TitlePlate"
 		if UiSkin.on():  # the drawn banner: as wide as its words, centred, so it clears the X in the corner
 			l.autowrap_mode = TextServer.AUTOWRAP_OFF
-			l.custom_minimum_size = Vector2(150.0, 0)
+			l.custom_minimum_size = Vector2(136.0, 0)
 			plate.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		plate.add_child(l)
 		box.add_child(plate)
 		return
-	elif font_size == 15:
+	elif font_size == UiSkin.T_BODY:  # a section heading
 		l.theme_type_variation = &"SubTitle"
 	else:
 		l.add_theme_font_size_override("font_size", font_size)
@@ -595,10 +598,10 @@ static func _count(icon: String, text: String, tip: String) -> Control:
 	h.mouse_filter = Control.MOUSE_FILTER_PASS
 	var tex := ActionInfo.icon(icon)
 	if tex != null:
-		h.add_child(_icon(icon, 24))
+		h.add_child(_icon(icon, 22))
 	var l := Label.new()
 	l.text = text if tex != null else "%s %s" % [tip, text]
-	l.add_theme_font_size_override("font_size", 14)
+	l.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
 	l.mouse_filter = Control.MOUSE_FILTER_PASS
 	h.add_child(l)
 	return h
@@ -607,7 +610,7 @@ static func _count(icon: String, text: String, tip: String) -> Control:
 static func _button(box: BoxContainer, text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(W, 30)
+	b.custom_minimum_size = Vector2(W, 28)
 	b.pressed.connect(cb)
 	box.add_child(b)
 	return b
@@ -618,21 +621,21 @@ static func _button(box: BoxContainer, text: String, cb: Callable) -> Button:
 static func _use_row(box: BoxContainer, icon: String, n: int, tip: String, verb: String, enabled: bool, cb: Callable, heal := 0) -> void:
 	var row := HBoxContainer.new()
 	var c := HBoxContainer.new()  # the thing as a kit chip (its picture and how many), what one heals beside it
-	c.add_theme_constant_override("separation", 8)
+	c.add_theme_constant_override("separation", 7)
 	c.custom_minimum_size = Vector2(USE_W, 0)  # the button right after it, by the thing it uses
-	c.add_child(MenuKit.chip(str(n), icon, MenuKit.TEXT, tip, 14))
+	c.add_child(MenuKit.chip(str(n), icon, MenuKit.TEXT, tip, UiSkin.T_SMALL))
 	if heal > 0:
 		var g := Label.new()
 		g.text = Txt.f("UI_GAIN_HP", heal)
 		g.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		g.add_theme_font_size_override("font_size", 13)
+		g.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
 		g.add_theme_color_override("font_color", Color(0.62, 0.9, 0.5))
 		g.mouse_filter = Control.MOUSE_FILTER_PASS
 		c.add_child(g)
 	row.add_child(c)
 	var b := Button.new()
 	b.text = verb
-	b.custom_minimum_size = Vector2(100, 28)
+	b.custom_minimum_size = Vector2(90, 26)
 	b.disabled = not enabled
 	b.pressed.connect(cb)
 	row.add_child(b)
