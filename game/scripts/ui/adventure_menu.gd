@@ -573,6 +573,10 @@ static func _label(box: BoxContainer, text: String, font_size: int) -> void:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		var plate := PanelContainer.new()
 		plate.theme_type_variation = &"TitlePlate"
+		if UiSkin.on():  # the drawn banner: as wide as its words, centred, so it clears the X in the corner
+			l.autowrap_mode = TextServer.AUTOWRAP_OFF
+			l.custom_minimum_size = Vector2(150.0, 0)
+			plate.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		plate.add_child(l)
 		box.add_child(plate)
 		return

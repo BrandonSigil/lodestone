@@ -526,13 +526,17 @@ func _draw_window(r: Rect2, title: String) -> void:
 			var cy := r.position.y + 30.0
 			var cx := r.get_center().x
 			draw_string(f, Vector2(cx - tw * 0.5, cy + MenuKit.HEAD * 0.36), title, HORIZONTAL_ALIGNMENT_LEFT, -1, MenuKit.HEAD, MenuKit.TEXT)
+			if UiSkin.on():
+				UiSkin.rule(self, Vector2(cx - tw * 0.5 - 12.0, cy), Vector2(r.position.x + 30.0, cy))
+				UiSkin.rule(self, Vector2(cx + tw * 0.5 + 12.0, cy), Vector2(r.end.x - 30.0, cy))
+				return
 			var rule := Color(MenuKit.TEXT, 0.55)
 			draw_line(Vector2(r.position.x + 30.0, cy), Vector2(cx - tw * 0.5 - 12.0, cy), rule, 1.5, true)
 			draw_line(Vector2(cx + tw * 0.5 + 12.0, cy), Vector2(r.end.x - 30.0, cy), rule, 1.5, true)
 		return
 	var sb := get_theme_stylebox("panel", "DialogPanel")
 	if UiSkin.on():
-		draw_style_box(UiSkin.panel(0.0, 0.0), r)  # side by side windows: no gem each
+		draw_style_box(UiSkin.panel(0.0, 0.0, false, true), r)  # side by side windows: no gem each
 	elif sb != null:
 		draw_style_box(sb, r)
 	else:

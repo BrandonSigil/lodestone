@@ -3,14 +3,18 @@ extends RefCounted
 ## The drawn skin (prototype, branch menus-prototype; docs/design/menus-v3.md). Brandon, 2026-11-13: the menus "look
 ## very jpeg's pasted onto a frame", "very clunky, very bulky, very amateur looking"; he asked for menus that "feel more
 ## baked into the game, more dynamically sizable, and just AAA clean feeling". So nothing here is a bitmap: every panel,
-## button, chip and slot is drawn by the engine from the tokens below (SkinBox), the same one-pixel rim at any size, and
-## the game shows through each window blurred (SkinBackdrop), so a window sits in the scene instead of on top of it.
+## button, chip and slot is drawn by the engine from the tokens below (SkinBox), the same thin rim at any size.
+## Round two, Brandon the same day: "I like these A LOT MORE, but now can we fold back in just a bit more
+## high-fantasy/painterly look? Some transparency is fine, but it reads a bit like glassmorphism", "a little bit of like
+## diamond shaped flourishes on major frames". So the fill is painted felt, nearly solid (the world behind shows through
+## only faintly, SkinBackdrop), the rim is bevelled gold with a cream line inside, and windows, titles and headings
+## carry diamonds.
 ## UiTheme.make calls `apply` last, so every menu in the game wears it with no change to the menus themselves.
 ## LODESTONE_SKIN=old in the environment keeps the painted frame, for before and after pictures.
 
 # --- tokens: colour ----------------------------------------------------------------------------------
-const GLASS_TOP := Color(0.075, 0.2, 0.175, 0.62)
-const GLASS_BOTTOM := Color(0.03, 0.095, 0.085, 0.74)
+const FELT_TOP := Color(0.05, 0.272, 0.218, 0.93)  ## a window's felt at its top edge: nearly solid
+const FELT_BOTTOM := Color(0.027, 0.162, 0.132, 0.95)
 const HAIR := Color(0.93, 0.85, 0.62)  ## the gold hairline
 const INK := Color(0.01, 0.04, 0.035)
 const TEXT := Color("f2eddb")
@@ -27,10 +31,10 @@ const R_BUTTON := 5
 const R_CHIP := 9
 const R_SLOT := 4
 const SPACE := 8.0  ## the spacing unit: gaps and pads are 1, 1.5, 2 or 3 of these
-const BAR_TOP := Color(0.07, 0.2, 0.175, 0.66)  ## the bottom bar's glass
-const BAR_FOOT := Color(0.03, 0.1, 0.09, 0.82)
+const BAR_TOP := Color(0.046, 0.258, 0.207, 0.96)  ## the bottom bar's felt
+const BAR_FOOT := Color(0.024, 0.15, 0.122, 0.97)
 const X_SIZE := 26.0  ## a window's close button
-const X_INSET := 8.0  ## and how far in from the window's top right corner it sits
+const X_INSET := 13.0  ## and how far in from the window's top right corner it sits (clear of the corner stud)
 const BAR := Color(0.03, 0.1, 0.09, 0.72)  ## a plain button: dark enough to stand alone on a bright map
 
 
@@ -38,12 +42,14 @@ static func on() -> bool:
 	return OS.get_environment("LODESTONE_SKIN") != "old"
 
 
-static func panel(pad_x: float, pad_y: float, gem := false, ticks := false, shadow := 18.0) -> SkinBox:
+## A panel. `ornate`: a window's full rim (the cream line inside the gold, a stud in each corner). `gem`: the blue
+## diamond on its top edge.
+static func panel(pad_x: float, pad_y: float, gem := false, ornate := false, shadow := 18.0) -> SkinBox:
 	var sb := SkinBox.new()
-	sb.top = GLASS_TOP
-	sb.bottom = GLASS_BOTTOM
+	sb.top = FELT_TOP
+	sb.bottom = FELT_BOTTOM
 	sb.gem = gem
-	sb.ticks = ticks
+	sb.ornate = ornate
 	sb.shadow = shadow
 	sb.content_margin_left = pad_x
 	sb.content_margin_right = pad_x
@@ -52,11 +58,11 @@ static func panel(pad_x: float, pad_y: float, gem := false, ticks := false, shad
 	return sb
 
 
-## A window for a screen that paints itself (the character sheet): nothing blurs behind it, so its glass is near solid.
+## A window for a screen that paints itself (the character sheet): nothing blurs behind it, so its felt is solid.
 static func solid_panel() -> SkinBox:
-	var sb := panel(0.0, 0.0, true)
-	sb.top = Color(GLASS_TOP, 0.95)
-	sb.bottom = Color(GLASS_BOTTOM, 0.97)
+	var sb := panel(0.0, 0.0, true, true)
+	sb.top = Color(FELT_TOP, 0.98)
+	sb.bottom = Color(FELT_BOTTOM, 0.98)
 	return sb
 
 
@@ -79,7 +85,7 @@ static func flat(bg: Color, rim: Color, radius: int, pad_x: float, pad_y: float,
 ## Lays the skin over the theme UiTheme.make built: the same type variations, drawn instead of painted.
 static func apply(t: Theme) -> void:
 	# windows: dialogues and the big screens carry the gem on the top edge; small menus and the fight's corner panel don't
-	t.set_stylebox("panel", "DialogPanel", panel(22.0, 18.0, true))
+	t.set_stylebox("panel", "DialogPanel", panel(24.0, 20.0, true, true))
 	t.set_stylebox("panel", "MenuPanel", panel(12.0, 10.0, false, false, 12.0))
 	t.set_stylebox("panel", "TipPanel", panel(16.0, 14.0, false, false, 12.0))
 	t.set_stylebox("panel", "InfoPanel", flat(Color(INK, 0.55), LINE, 5, 12.0, 8.0))
@@ -89,14 +95,12 @@ static func apply(t: Theme) -> void:
 	tip.top = Color(0.05, 0.13, 0.115, 0.96)
 	tip.bottom = Color(0.03, 0.085, 0.075, 0.97)
 	t.set_stylebox("panel", "TooltipPanel", tip)
-	# the title: a slim tab with a gem at each end, the one solid piece (it sits across a window's top edge)
-	var plate := panel(26.0, 3.0, false, false, 0.0)
+	# the title: a banner with pointed ends and a diamond either side of the words (it sits across a window's top edge)
+	var plate := panel(40.0, 4.0, false, false, 6.0)
 	plate.plate = true
 	plate.blur = false
-	plate.radius = 3.0
-	plate.top = Color(0.1, 0.27, 0.235, 1.0)
-	plate.bottom = Color(0.05, 0.16, 0.14, 1.0)
-	plate.rim = Color(HAIR, 0.85)
+	plate.top = Color(0.075, 0.33, 0.265, 1.0)
+	plate.bottom = Color(0.035, 0.2, 0.16, 1.0)
 	t.set_stylebox("panel", "TitlePlate", plate)
 	t.set_color("font_color", "MenuTitle", TEXT)
 	# inside a window
@@ -153,6 +157,13 @@ static func _focus() -> StyleBoxFlat:
 	var sb := flat(Color(GOLD, 0.1), Color(HAIR, 1.0), R_BUTTON, 20.0, 7.0)
 	sb.draw_center = false
 	return sb
+
+
+## A heading's rule: a gold diamond at `near` (beside the words), a line that fades out toward `far`.
+static func rule(ci: CanvasItem, near: Vector2, far: Vector2) -> void:
+	var dir := (far - near).normalized()
+	ci.draw_polyline_colors(PackedVector2Array([near + dir * 9.0, far]), PackedColorArray([Color(HAIR, 0.75), Color(HAIR, 0.0)]), 1.5, true)
+	SkinBox.stud(ci.get_canvas_item(), near + dir * 3.5, 3.4)
 
 
 # --- the world behind a window ---------------------------------------------------------------------

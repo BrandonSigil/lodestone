@@ -48,6 +48,10 @@ var _leaf_extra: Array[float] = [0.0, 0.0]  ## art px each stretch run grows by
 var _leaf_block: Control
 var _leaf_back: SkinBackdrop  ## the drawn skin: the blurred map under the bar
 var _leaf_pack_cb := Callable()
+var leaf_stone: Button  ## the drawn skin: the bar's big diamond, which opens the Lodestone menu ([USER] 2026-11-13)
+var _leaf_stone_cb := Callable()
+var _stone_glow := false  ## something waits in the Lodestone menu (a skill to pick): the diamond pulses
+var _stone_name: Label
 var _border: StyleBoxFlat
 
 
@@ -193,6 +197,26 @@ func use_leaf_frame() -> void:
 	leaf_party.add_theme_constant_override("separation", 4)
 	leaf_party.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	leaf.add_child(leaf_party)
+	if UiSkin.on():  # the big diamond is the Lodestone's button; it draws itself, over the bar
+		leaf_stone = Button.new()
+		leaf_stone.flat = true
+		leaf_stone.focus_mode = Control.FOCUS_NONE
+		leaf_stone.disabled = true
+		for st in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
+			leaf_stone.add_theme_stylebox_override(st, StyleBoxEmpty.new())
+		leaf_stone.draw.connect(_draw_stone)
+		leaf_stone.mouse_entered.connect(leaf_stone.queue_redraw)
+		leaf_stone.mouse_exited.connect(leaf_stone.queue_redraw)
+		leaf_stone.pressed.connect(func() -> void:
+			if _leaf_stone_cb.is_valid():
+				_leaf_stone_cb.call())
+		leaf.add_child(leaf_stone)
+		_stone_name = _label(Txt.t("UI_LODESTONE"), 11)
+		_stone_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_stone_name.add_theme_color_override("font_color", Color(UiSkin.HAIR, 0.8))
+		_stone_name.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_stone_name.visible = false
+		leaf.add_child(_stone_name)
 	slots_label.visible = false
 	slots_box.visible = false
 	party_box.visible = false
@@ -246,48 +270,100 @@ func _layout_leaf() -> void:
 	leaf_party.size = _leaf_at(LEAF_PARTY.end) - _leaf_at(LEAF_PARTY.position)
 	for c in leaf_party.get_children():
 		(c as Control).custom_minimum_size = _member_size()
+	if leaf_stone != null:
+		var k := _bar_k()
+		var half := Vector2(STONE.x + 7.0, STONE.y + 7.0) * k
+		var mid := Vector2(vs.x * 0.5, top + roundf(LEAF_BAND_TOP * s) + STONE_DROP * k)
+		leaf_stone.position = mid - half
+		leaf_stone.size = half * 2.0
+		_stone_name.position = Vector2(mid.x - 70.0, mid.y + STONE.y * k + 5.0)
+		_stone_name.size = Vector2(140.0, 16.0)
 	var clear := (art.y - LEAF_DECOR_TOP) * s + 6.0
 	_pin(tools_box, 1, 1, 1, 1, -RIGHT_W + 14, -clear - 52, -14, -clear)
 	_pin(side_panel, 1, 0, 1, 0, -RIGHT_W + 4, side_top, -10, side_top)  # under a fight's test buttons
 	side_panel.grow_vertical = Control.GROW_DIRECTION_END
 
 
+const STONE := Vector2(15.0, 21.0)  ## the big diamond's half width and half height, at 1280 wide
+const STONE_DROP := 11.0  ## its centre below the band's top edge: its tip stands where the painted diamond's did
+
+
+## How big the bar's ornaments are drawn: 1 at 1280 wide, with the band.
+func _bar_k() -> float:
+	return _leaf_u / (1280.0 / 2000.0 * LEAF_THIN)
+
+
 ## The drawn skin's bottom bar (prototype, docs/design/menus-v3.md): the same band, slots and sizes as the painted
-## frame, drawn in code: dark glass with the gold hairline along its top, the blue gem where dialogues stand, and a
-## sunk well for the pack, the tracked goals and the party.
+## frame, drawn in code. Round two ([USER] 2026-11-13, the first drawn bar was "a little too techy or generic
+## looking. I liked the ornate framing, the big diamond in the middle ... And the leaf embossing stuff on the
+## left/right is gone and I miss something like that"): painted felt; a rim of gold over a blue band; a laurel either
+## side of the big diamond (which is the Lodestone's button, `leaf_stone`); a spray of leaves and a gem in each end;
+## and a gold-rimmed well with a stud each side for the pack and for the party.
 func _draw_skin_bar() -> void:
 	var c := _leaf_art
-	var top := LEAF_BAND_TOP * _leaf_u
+	var to := c.get_canvas_item()
+	var k := _bar_k()
+	var top := roundf(LEAF_BAND_TOP * _leaf_u)
 	var w := c.size.x
 	var h := c.size.y
 	c.draw_polygon(PackedVector2Array([Vector2(0, top), Vector2(w, top), Vector2(w, h), Vector2(0, h)]),
 		PackedColorArray([UiSkin.BAR_TOP, UiSkin.BAR_TOP, UiSkin.BAR_FOOT, UiSkin.BAR_FOOT]))
-	c.draw_line(Vector2(0, top - 0.5), Vector2(w, top - 0.5), Color(UiSkin.INK, 0.85), 1.0)
-	c.draw_line(Vector2(0, top + 0.5), Vector2(w, top + 0.5), Color(UiSkin.HAIR, 0.7), 1.0)
-	c.draw_line(Vector2(0, top + 2.5), Vector2(w, top + 2.5), Color(1, 1, 1, 0.05), 1.0)
-	var well := UiSkin.flat(Color(0, 0, 0, 0.28), Color(1, 1, 1, 0.09), 5, 0.0, 0.0)
+	RenderingServer.canvas_item_add_texture_rect(to, Rect2(0, top, w, h - top), SkinBox.grain_tex().get_rid(), true, Color(SkinBox.GRAIN_TINT, SkinBox.GRAIN * 1.2))
+	# the rim, from the top: ink, gold (lit, mid, shaded), ink, the blue band with a dark foot, ink, a soft shade
+	var rim: Array = [Color(UiSkin.INK, 0.9), Color(0.97, 0.9, 0.68), UiSkin.HAIR, Color(0.66, 0.5, 0.22), Color(UiSkin.INK, 0.95),
+		Color(0.1, 0.52, 0.86), Color(0.06, 0.43, 0.78), Color(0.05, 0.24, 0.42), Color(UiSkin.INK, 0.95), Color(0, 0, 0, 0.28), Color(0, 0, 0, 0.12)]
+	for i in rim.size():
+		c.draw_rect(Rect2(0, top - 1.0 + i, w, 1.0), rim[i])
+	c.draw_rect(Rect2(0, h - 3.0, w, 1.0), Color(UiSkin.INK, 0.8))
+	c.draw_rect(Rect2(0, h - 2.0, w, 2.0), Color(0.66, 0.5, 0.22))
+	# the pack and the party: a sunk well with a gold line round it and a stud each side
+	var well := UiSkin.flat(Color(0, 0, 0, 0.36), Color(UiSkin.HAIR, 0.6), 3, 0.0, 0.0)
 	for r: Rect2 in [LEAF_PACK, LEAF_PARTY]:
-		c.draw_style_box(well, Rect2(_leaf_at(r.position), _leaf_at(r.end) - _leaf_at(r.position)).grow(3.0))
+		var box := Rect2(_leaf_at(r.position), _leaf_at(r.end) - _leaf_at(r.position)).grow(3.0)
+		c.draw_style_box(UiSkin.flat(Color(0, 0, 0, 0.0), Color(UiSkin.INK, 0.7), 4, 0.0, 0.0), box.grow(1.0))
+		c.draw_style_box(well, box)
+		for x: float in [box.position.x, box.end.x]:
+			SkinBox.stud(to, Vector2(x, box.get_center().y), 3.6 * k)
 	# the tracked goals: a quiet rule under the words, a small diamond at each end
 	var a := _leaf_at(Vector2(LEAF_BAR.position.x, LEAF_BAR.end.y + 6.0))
 	var b := _leaf_at(Vector2(LEAF_BAR.end.x, LEAF_BAR.end.y + 6.0))
-	c.draw_line(a, b, Color(UiSkin.HAIR, 0.35), 1.0)
+	c.draw_line(a, b, Color(UiSkin.HAIR, 0.4), 1.0)
 	for p: Vector2 in [a, b]:
-		_gem(c, p, 3.5, false)
-	_gem(c, Vector2(w * 0.5, top), 11.0, true)  # the diamond a dialogue stands on
+		SkinBox.stud(to, p, 3.0 * k)
+	# a laurel either side of the big diamond, lying along the rim
+	var mid := Vector2(w * 0.5, top + 7.0 * k)
+	for dir: float in [-1.0, 1.0]:
+		var base := mid + Vector2(dir * 15.0 * k, 0)
+		var run := 76.0 * k
+		c.draw_line(base, base + Vector2(dir * run, 0), FramedBox.LEAF_INK, 2.6 * k, true)
+		c.draw_line(base, base + Vector2(dir * run, 0), FramedBox.LEAF_SHADE, 1.2 * k, true)
+		for i in 5:
+			var t := 0.1 + i * 0.19
+			var tilt := -0.6 if i % 2 == 0 else 0.6  # up, down, up... (y grows downward)
+			var ang := tilt if dir > 0.0 else PI - tilt
+			var length := lerpf(30.0, 17.0, t) * k
+			FramedBox._leaf(to, base + Vector2(dir * run * t, 0), ang, length, length * 0.42)
+		FramedBox._leaf(to, base + Vector2(dir * run * 0.96, 0), 0.0 if dir > 0.0 else PI, 15.0 * k, 6.5 * k)
+	# the ends: three leaves fan up and inward out of each corner, over a gem
+	for dir: float in [-1.0, 1.0]:
+		var base := Vector2(13.0 * k if dir < 0.0 else w - 13.0 * k, top + 9.0 * k)
+		for leafy: Array in [[-1.12, 27.0], [-0.52, 32.0], [0.12, 27.0]]:
+			var ang: float = leafy[0] if dir < 0.0 else PI - float(leafy[0])
+			FramedBox._leaf(to, base, ang, float(leafy[1]) * k, float(leafy[1]) * 0.4 * k)
+		SkinBox.jewel(to, base, 5.5 * k, 5.5 * k)
 
 
-func _gem(c: Control, at: Vector2, r: float, big: bool) -> void:
-	var d := func(k: float, col: Color) -> void:
-		c.draw_colored_polygon(PackedVector2Array([at + Vector2(0, -k), at + Vector2(k, 0), at + Vector2(0, k), at + Vector2(-k, 0)]), col)
-	if big:
-		d.call(r + 3.0, Color(UiSkin.INK, 0.9))
-		d.call(r + 1.5, UiSkin.HAIR)
-		d.call(r - 0.5, UiSkin.GEM)
-		c.draw_colored_polygon(PackedVector2Array([at + Vector2(0, -r + 0.5), at + Vector2(r - 0.5, 0), at + Vector2(0, 0), at + Vector2(-r + 0.5, 0)]), UiSkin.GEM.lightened(0.25))
-	else:
-		d.call(r + 1.0, Color(UiSkin.HAIR, 0.8))
-		d.call(r - 0.5, UiSkin.GEM)
+## The big diamond, drawn by its own button: lit under the mouse, pulsing while a skill waits, grey when the Lodestone
+## menu isn't offered (before the stone is found, and in a fight).
+func _draw_stone() -> void:
+	var k := _bar_k()
+	var on := _leaf_stone_cb.is_valid()
+	var lit := 0.0
+	if on and leaf_stone.is_hovered():
+		lit = 1.0
+	elif on and _stone_glow:
+		lit = 0.35 + 0.35 * sin(Time.get_ticks_msec() * 0.005)
+	SkinBox.jewel(leaf_stone.get_canvas_item(), leaf_stone.size * 0.5, STONE.x * k, STONE.y * k, lit, not on)
 
 
 ## A point of the band's art (art px) on screen, relative to the band's top left: x passes the stretch runs.
@@ -341,6 +417,8 @@ func _res_bar(e: Dictionary, size: Vector2) -> ProgressBar:
 
 
 func _process(_delta: float) -> void:
+	if leaf_stone != null and _stone_glow:
+		leaf_stone.queue_redraw()  # the diamond's pulse
 	# the floating controls box only shows while it holds a button or a line to read
 	if side_panel != null:
 		side_panel.visible = side.get_children().any(func(c: Node) -> bool:
@@ -489,9 +567,15 @@ func set_pack(bag: InventoryGrid) -> void:
 func set_tools(entries: Array) -> void:
 	for c in tools_box.get_children():
 		c.queue_free()
+	_leaf_stone_cb = Callable()
+	_stone_glow = false
 	for e: Dictionary in entries:
 		if leaf != null and e.get("id", "") == "pack":
 			_leaf_pack_cb = e.cb
+			continue
+		if leaf_stone != null and e.get("id", "") == "lodestone":  # the drawn skin: the bar's big diamond opens it
+			_leaf_stone_cb = e.cb
+			_stone_glow = e.get("glow", false)
 			continue
 		var b := Button.new()
 		b.text = e.text
@@ -500,6 +584,14 @@ func set_tools(entries: Array) -> void:
 		if e.get("glow", false):
 			b.add_theme_color_override("font_color", Color(0.65, 0.95, 1.0))
 		tools_box.add_child(b)
+	if leaf_stone != null:
+		var on := _leaf_stone_cb.is_valid()
+		leaf_stone.disabled = not on
+		leaf_stone.tooltip_text = Txt.t("UI_LODESTONE") if on else ""
+		leaf_stone.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if on else Control.CURSOR_ARROW
+		leaf_stone.mouse_filter = Control.MOUSE_FILTER_STOP if on else Control.MOUSE_FILTER_IGNORE
+		_stone_name.visible = on
+		leaf_stone.queue_redraw()
 
 
 ## The long bar of the leaf frame on screen (where a full-screen mode puts its own actions: fishing's Leave), or an empty

@@ -146,8 +146,9 @@ static func window(title: String, area: Callable, close := Callable(), title_px 
 	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	plate.add_child(t)
 	var psb := plate.get_theme_stylebox("panel", "TitlePlate").duplicate() as StyleBox
-	psb.content_margin_left = 84.0  # the words well clear of the plate's leaf-and-gem ends
-	psb.content_margin_right = 84.0
+	var clear := 58.0 if UiSkin.on() else 84.0  # the words well clear of the plate's ends (leaf and gem, or the banner's point and diamond)
+	psb.content_margin_left = clear
+	psb.content_margin_right = clear
 	plate.add_theme_stylebox_override("panel", psb)
 	var over := plate.get_combined_minimum_size().y * 0.62  # how far the plate stands above the frame
 	root.add_theme_constant_override("margin_top", int(over))
@@ -291,7 +292,9 @@ static func heading_row(text: String, rules := false) -> Control:
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	h.add_child(l)
 	if rules:
-		h.add_child(_Rule.new())
+		var right := _Rule.new()
+		right.flip = true
+		h.add_child(right)
 	return h
 
 
@@ -503,6 +506,8 @@ class XButton extends Button:
 # --- drawn bits -----------------------------------------------------------------------------------
 
 class _Rule extends Control:
+	var flip := false  ## the rule on the heading's right: its words are to its left
+
 	func _init() -> void:
 		custom_minimum_size = Vector2(70, 8)
 		size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -511,6 +516,11 @@ class _Rule extends Control:
 
 	func _draw() -> void:
 		var y := size.y * 0.5
+		if UiSkin.on():  # the drawn skin: the rule fades out from a gold diamond beside the words
+			var near := Vector2(0.0 if flip else size.x, y)
+			var far := Vector2(size.x if flip else 0.0, y)
+			UiSkin.rule(self, near, far)
+			return
 		draw_line(Vector2(0, y), Vector2(size.x, y), Color(MenuKit.TEXT, 0.55), 1.5, true)
 
 

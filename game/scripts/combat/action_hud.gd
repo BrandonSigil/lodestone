@@ -302,7 +302,7 @@ func _skin_bar_rect(c: Control) -> Rect2:
 ## The bar: fixed left and right ends, a fill that grows or shrinks with the boxes, the crests on top and under.
 func _draw_bar(c: Control) -> void:
 	if UiSkin.on():  # the drawn skin: one small window, the gem on its top edge
-		c.draw_style_box(UiSkin.panel(0.0, 0.0, true, false, 10.0), _skin_bar_rect(c))
+		c.draw_style_box(UiSkin.panel(0.0, 0.0, true, true, 10.0), _skin_bar_rect(c))
 		return
 	var left := _tex("bar_left")
 	var lw := left.get_width() * KS

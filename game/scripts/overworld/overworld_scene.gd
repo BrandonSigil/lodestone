@@ -1026,7 +1026,7 @@ func _refresh_hud() -> void:
 	hud.set_goals(Game.goal_lines())
 	var tools := [{"id": "pack", "text": Txt.t("UI_PACK"), "cb": _open_menu.bind("pack")}]
 	if Game.has_flag("has_lodestone"):
-		tools.append({"text": Txt.t("UI_LODESTONE"), "cb": _open_menu.bind("lodestone"), "glow": Game.pending_picks() > 0})
+		tools.append({"id": "lodestone", "text": Txt.t("UI_LODESTONE"), "cb": _open_menu.bind("lodestone"), "glow": Game.pending_picks() > 0})
 	hud.set_tools(tools)
 	_refresh_side()
 
