@@ -84,14 +84,20 @@ func _process(delta: float) -> void:
 	_t += delta
 	if _art == null or _art.texture == null:
 		return
-	# a slow drift: the painting a little wider than the screen, panning side to side. It covers the screen at any
-	# window shape and stays pinned to the top, so the painted logo is never cut; extra height crops the bottom.
-	var tex := _art.texture.get_size()
-	var s := maxf(size.x / tex.x, size.y / tex.y) * (1.0 + DRIFT)
-	_art.size = tex * s
-	var k := 0.5 - 0.5 * cos(_t / DRIFT_SECONDS * TAU)
-	# the same small sway at any window shape, around the picture's middle (a squarer window has more to pan across)
-	_art.position = Vector2(-(_art.size.x - size.x) * 0.5 + size.x * DRIFT * (k - 0.5), 0.0).floor()
+	var r := art_rect(size, _art.texture.get_size(), 0.5 - 0.5 * cos(_t / DRIFT_SECONDS * TAU))
+	_art.position = r.position
+	_art.size = r.size
+
+
+## Where the painting sits, for a screen of `screen` size and a picture of `tex` size, `k` (0 to 1) along its sway.
+## A slow drift: the painting a little wider than the screen, panning side to side. It covers the screen at any window
+## shape and stays pinned to the top, so the painted logo is never cut; extra height crops the bottom. The sway is the
+## same small amount at any window shape, around the picture's middle. LoadingScreen frames its video with k = 0, the
+## menu's first frame, so the crossfade lines up.
+static func art_rect(screen: Vector2, tex: Vector2, k: float) -> Rect2:
+	var s := maxf(screen.x / tex.x, screen.y / tex.y) * (1.0 + DRIFT)
+	var sz := tex * s
+	return Rect2(Vector2(-(sz.x - screen.x) * 0.5 + screen.x * DRIFT * (k - 0.5), 0.0).floor(), sz)
 
 
 func _fit() -> void:
