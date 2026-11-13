@@ -21,6 +21,16 @@ done
 
 "${RUN[@]}" --headless --path . --import >/dev/null 2>&1
 
+# Data tables are read as plain files (CsvTable), so each must be imported as "keep". Godot's default for a new .csv
+# is a translation: the editor still reads it, but exported builds leave the table out (2026-11-13: 12 tables were
+# missing from the first playtest build). Only text/placeholder.csv is a translation (Txt).
+for imp in $(find data -name '*.csv.import'); do
+	if ! grep -q '^importer="keep"' "$imp"; then
+		echo "FAIL $imp: set importer=\"keep\" (Import dock > Import As: Keep File), or builds leave the table out"
+		fail=1
+	fi
+done
+
 if ! "${RUN[@]}" --headless --path . -s res://tests/run_tests.gd; then
 	fail=1
 fi

@@ -3,8 +3,8 @@
 # Usage: tools/export/build.sh [mac|windows|all]   (GODOT=/path/to/godot to pick the binary)
 #
 # Needs Godot's export templates for this exact version (Editor > Manage Export Templates > Download, or the .tpz
-# from godotengine.org installed into ~/Library/Application Support/Godot/export_templates/<version>/). They are not
-# installed on this Mac yet (2026-11-13): this script says so and stops.
+# from godotengine.org installed into ~/Library/Application Support/Godot/export_templates/<version>/). Without them
+# this script says so and stops. Data CSVs must import as "keep" or builds leave them out (tools/check.sh checks).
 #
 # The presets live here (tools/export/export_presets.cfg) because game/export_presets.cfg is gitignored (it can hold
 # signing secrets). This one holds none: the Mac build is ad-hoc signed, so on first open a tester right-clicks the app

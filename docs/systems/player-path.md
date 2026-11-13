@@ -29,7 +29,10 @@ Built 2026-11-13 from a new-player E2E playtest (backlog section "2026-11-13 new
 
 ## Feedback notes and builds
 - F12 anywhere: the screen is saved, then SEND FEEDBACK asks what happened. SAVE NOTE writes `user://feedback/<time>.png` and `.txt` (the note, scene, map, goal, trips, `application/config/version`). OPEN FOLDER shows them (on a Mac: `~/Library/Application Support/Godot/app_userdata/Lodestone/feedback/`).
-- `tools/export/build.sh [mac|windows|all]` builds `build/mac/Lodestone.zip` and `build/windows/Lodestone.exe` from `tools/export/export_presets.cfg` (copied into `game/`, where that file is gitignored). It needs Godot's export templates for the installed version; they were not installed on the Mac on 2026-11-13. The Mac build is ad-hoc signed (testers right-click and Open the first time).
+- `tools/export/build.sh [mac|windows|all]` builds `build/mac/Lodestone.zip` and `build/windows/Lodestone.exe` from `tools/export/export_presets.cfg` (copied into `game/`, where that file is gitignored). It needs Godot's export templates for the installed version (4.7.2's were installed on Brandon's Mac on 2026-11-13, with his OK). The Mac build is universal (Apple Silicon and Intel) and ad-hoc signed: testers right-click the app and pick Open the first time. Windows SmartScreen asks once too ("More info", then "Run anyway"). About 120 MB zipped for Mac, 170 MB for Windows.
+- Builds need `rendering/textures/vram_compression/import_etc2_astc=true` (the Apple Silicon export refuses without it).
+- Every `data/*.csv` must be imported as Keep File (`importer="keep"` in its `.import`). Godot imports a new CSV as a translation by default, which the editor hides but builds drop. The first build lost 12 tables that way. `tools/check.sh` now fails on any data CSV that isn't "keep". Only `text/placeholder.csv` is a translation.
+- Smoke test a build: unzip it and run `Lodestone.app/Contents/MacOS/Lodestone --headless --quit-after 300`. It should print nothing but the version line.
 
 ## Other fixes from the same playtest
 - Out of a door: the party stands a step clear of it, and F prefers a "!" over a doorway beside it (`ExploreRules.thing_to_use`).
@@ -45,6 +48,6 @@ Built 2026-11-13 from a new-player E2E playtest (backlog section "2026-11-13 new
 ## Waiting on Brandon (2026-11-13)
 These belong on the Studio desk as cards, but the Studio page (5NsBvyRP81zBRgAFCANTP5) answered "not found" from the account that built this, so they are recorded here until a session that can open the page posts them. The new screens' screenshots had a fresh-reviewer look check: the main menu passed; the rest failed on older screens around them (backlog P19 to P21), so none is ready for a card yet.
 - **Real sound and music.** The game has code-made placeholders only. Options: keep them for the friends-and-family playtest; a royalty-free game audio pack (licensed, dropped in as `.ogg`); commissioned music; or his own. Any file at `res://audio/sfx/<name>.ogg` or `res://audio/music/<mood>.ogg` replaces a placeholder with no code change (names in "Sound" above).
-- **Godot export templates.** Builds need the 4.7.2 templates (about 1 GB from godotengine.org, or Editor > Manage Export Templates). Not downloaded: that needs his OK. After that, `tools/export/build.sh all`.
+- **Export templates: done (2026-11-13).** He said yes; the 4.7.2 templates are installed and the first Mac and Windows copies built. They are not committed (`build/` is gitignored): send them to testers by hand, or rebuild with `tools/export/build.sh all`.
 - **Art asks from the playtest** (art is his, never painted by Claude): the square's statue reads as a plain cube; the bridges are flat grey; a pink placeholder box stands on the pass; the crypt reads bright for a crypt; interiors float in a black void.
 - **Story text for the first road fight:** `EV_TR_FIRST` is a caveman placeholder on the Word Swap page.
