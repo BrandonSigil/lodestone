@@ -41,3 +41,10 @@ Built 2026-11-13 from a new-player E2E playtest (backlog section "2026-11-13 new
 - Taking a weapon at the smithy fills the hero's HP to the new max.
 - The character sheet's locked builds say why on hover; move descriptions wrap to two lines.
 - Road action buttons are bigger (the box stays at the [USER] half size).
+
+## Waiting on Brandon (2026-11-13)
+These belong on the Studio desk as cards, but the Studio page (5NsBvyRP81zBRgAFCANTP5) answered "not found" from the account that built this, so they are recorded here until a session that can open the page posts them. The new screens' screenshots had a fresh-reviewer look check: the main menu passed; the rest failed on older screens around them (backlog P19 to P21), so none is ready for a card yet.
+- **Real sound and music.** The game has code-made placeholders only. Options: keep them for the friends-and-family playtest; a royalty-free game audio pack (licensed, dropped in as `.ogg`); commissioned music; or his own. Any file at `res://audio/sfx/<name>.ogg` or `res://audio/music/<mood>.ogg` replaces a placeholder with no code change (names in "Sound" above).
+- **Godot export templates.** Builds need the 4.7.2 templates (about 1 GB from godotengine.org, or Editor > Manage Export Templates). Not downloaded: that needs his OK. After that, `tools/export/build.sh all`.
+- **Art asks from the playtest** (art is his, never painted by Claude): the square's statue reads as a plain cube; the bridges are flat grey; a pink placeholder box stands on the pass; the crypt reads bright for a crypt; interiors float in a black void.
+- **Story text for the first road fight:** `EV_TR_FIRST` is a caveman placeholder on the Word Swap page.

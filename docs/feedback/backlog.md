@@ -29,6 +29,9 @@ How each was fixed: `docs/systems/player-path.md`.
 | P16 | The dog didn't seem to follow | Claude (E2E playtest session) | open (not reproduced: may have been the test's teleport) |
 | P17 | Camera framing on arrival looked off once | Claude (E2E playtest session) | open (not reproduced in the re-playtest) |
 | P18 | Art: the square's statue is a cube, grey bridges, a pink box on the pass, the crypt reads bright, interiors float in a void | Brandon (art) | open (art asks on the desk; Claude never paints) |
+| P19 | Look check (fresh reviewer, 2026-11-13): the world map is a small unframed rectangle on a flat beige field, fogged hexes read as missing art, place labels clip | UI lane | open |
+| P20 | Look check: the fight's YOUR TURN side panel is a wall of caps stats (wants icons or bars); action bar labels about 8 px; the first-fight card hugs the screen's left edge | UI lane | open |
+| P21 | Look check: the gate picker with one member met is a small card in a big panel; road action buttons still read small | UI lane | open |
 
 ## 2026-11-01 playtest (Studio chat, 03:57 to 05:57 UTC)
 
