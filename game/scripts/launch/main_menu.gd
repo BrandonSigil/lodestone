@@ -1,18 +1,25 @@
 class_name MainMenu
 extends Control
-## The player's front door (the game's main scene): Brandon's title painting (the logo is painted in, so the menu draws
-## no title of its own) drifting slowly, with CONTINUE, NEW GAME, OPTIONS and QUIT in the middle of the screen, under
+## The player's front door (the game's main scene): Brandon's title video looping, muted (Brandon 2026-11-13: "Loop the
+## video on the menu screen"), with the calm menu music; the logo is in the art, so the menu draws no title of its own.
+## The video starts on the title painting with its logo and ends without it, so the painting waits underneath: the
+## video fades out over its last moments, the logo seems to fade back in, and the video starts again on that same
+## frame. Both drift slowly, with CONTINUE, NEW GAME, OPTIONS and QUIT in the middle of the screen, under
 ## the logo (Brandon 2026-11-13: "Put em smack in the middle"). A small DEV TOOLS button (debug builds and Brandon's
 ## machines only, Game.dev_available) opens the old launch page with every tool on it; anything started from there runs in dev mode.
 ## Brandon 2026-11-13: "there should be a main menu player path, with ... the Dev Tools menu that if you click it opens
 ## all of our other tools we currently have on that main launch page".
 
 const BACKDROP := "res://art/source/ui/menu/title_screen.webp"  ## Brandon 2026-11-13: "Make this the menu screen"
+const VIDEO := "res://art/source/ui/menu/title_intro.ogv"  ## no sound track; the player is muted too
+const LOOP_FADE := 0.6  ## seconds the video takes to fade out into the painting before it loops
+const LOOP_IN := 0.15  ## seconds it takes to fade back in once it restarts (the same picture, so it is unseen)
 const DRIFT_SECONDS := 60.0  ## one slow pan across the painting and back
 const DRIFT := 0.04  ## how much wider than the screen the painting is drawn, for the pan
 const LOGO_BOTTOM := 0.32  ## where the painted logo ends, as a share of the painting's height: the buttons stay below
 
-var _art: TextureRect
+var _art: TextureRect  ## the title painting: the video's first frame, under the video
+var _video: VideoStreamPlayer
 var _column: VBoxContainer
 var _box: Control  ## the open window (options, the new-game check), or null
 var _dim: ColorRect  ## the shade behind it
@@ -29,6 +36,16 @@ func _ready() -> void:
 	_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_art)
+	_video = VideoStreamPlayer.new()
+	_video.stream = load(VIDEO) as VideoStream
+	_video.volume = 0.0
+	_video.expand = true
+	_video.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_video.modulate.a = 0.0
+	_video.finished.connect(_loop)
+	add_child(_video)
+	if DisplayServer.get_name() != "headless":
+		_video.play()
 	var shade := TextureRect.new()  # a soft pool of shade behind the buttons; the edges of the painting stay clear
 	var g := GradientTexture2D.new()
 	g.fill = GradientTexture2D.FILL_RADIAL
@@ -87,13 +104,24 @@ func _process(delta: float) -> void:
 	var r := art_rect(size, _art.texture.get_size(), 0.5 - 0.5 * cos(_t / DRIFT_SECONDS * TAU))
 	_art.position = r.position
 	_art.size = r.size
+	if _video:  # framed like the painting (the same picture, the same shape), so they line up as they swap
+		_video.position = r.position
+		_video.size = r.size
+		var length := _video.get_stream_length()
+		if _video.is_playing() and length > 0.0:
+			var pos := _video.stream_position
+			_video.modulate.a = clampf(minf(pos / LOOP_IN, (length - pos) / LOOP_FADE), 0.0, 1.0)
+
+
+func _loop() -> void:
+	_video.modulate.a = 0.0
+	_video.play()
 
 
 ## Where the painting sits, for a screen of `screen` size and a picture of `tex` size, `k` (0 to 1) along its sway.
 ## A slow drift: the painting a little wider than the screen, panning side to side. It covers the screen at any window
 ## shape and stays pinned to the top, so the painted logo is never cut; extra height crops the bottom. The sway is the
-## same small amount at any window shape, around the picture's middle. LoadingScreen frames its video with k = 0, the
-## menu's first frame, so the crossfade lines up.
+## same small amount at any window shape, around the picture's middle.
 static func art_rect(screen: Vector2, tex: Vector2, k: float) -> Rect2:
 	var s := maxf(screen.x / tex.x, screen.y / tex.y) * (1.0 + DRIFT)
 	var sz := tex * s
