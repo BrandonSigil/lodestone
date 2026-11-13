@@ -69,6 +69,8 @@ func _ready() -> void:
 	Game.ensure_run()
 	Game.refresh_party()
 	map = ExploreMap.load_named(Game.explore_map)
+	Game.set_flag("entered_" + map.map_name)  # GoalRules: places reached (entered_crypt)
+	Sfx.music(Sfx.map_mood(map.map_name))
 	_came_from = Game.explore_from  # the door the party came through (the lodestone nudge asks)
 	Game.explore_from = ""
 	if map.map_name == "village":
@@ -221,7 +223,7 @@ const NUDGE_BACK := 0.9
 var _nudge: Tween
 var _beam: Node2D
 var _came_from := ""  ## the map the party stepped out of to get here
-var _gate_asked := false  ## the gate's food warning has been shown for this GO
+var _gate_starter := 0  ## free rations the first trip added, shown on the gate picker
 
 
 func _nudge_due() -> bool:
@@ -463,14 +465,16 @@ func _stands_there(t: Dictionary) -> bool:
 
 func _free_start() -> Vector2i:
 	var from: Vector2i = map.start[0] if not map.start.is_empty() else Vector2i.ZERO
-	if grid.in_bounds(Game.explore_entry):
+	var by_door := grid.in_bounds(Game.explore_entry)
+	if by_door:
 		from = Game.explore_entry
 	Game.explore_entry = Vector2i(-1, -1)
-	for r in range(0, 6):
+	# Out of a door: a step clear of it, never on it (2026-11-13 playtest: F walked straight back in).
+	for r in range(1 if by_door else 0, 6):
 		for dy in range(-r, r + 1):
 			for dx in range(-r, r + 1):
 				var c := from + Vector2i(dx, dy)
-				if grid.walkable(c):
+				if grid.walkable(c) and not (by_door and things.any(func(t: Dictionary) -> bool: return t.cell == c)):
 					return c
 	return from
 
@@ -482,6 +486,8 @@ func _process(delta: float) -> void:
 		return
 	if mode == M.WALK and _dialog == null and Game.run.overfull():
 		_open_menu("pack")  # a pickup found no room: the player decides before walking on
+	if mode == M.WALK and _dialog == null and _nudge == null and not _menu_open and not is_instance_valid(_hint):
+		_next_hint()
 	var pan := Vector2.ZERO
 	_wasd(delta)
 	if get_viewport().gui_get_focus_owner() == null and _nudge == null:  # the arrows move along a focused menu (the fight's dock) instead
@@ -681,6 +687,20 @@ func toggle_pack() -> void:
 
 
 ## What F uses: the thing the overlay puts its F hint on (ExploreRules.thing_to_use).
+## The walk's one-time hints (GoalRules.HINTS, 2026-11-13 playtest: no one knew the keys), one at a time: the keys
+## on the first walk, then "press F" the first time something usable is in reach.
+var _hint: HintToast
+
+
+func _next_hint() -> void:
+	if Game.dev_mode:
+		return
+	if not Game.has_flag(GoalRules.hint_flag("walk")):
+		_hint = Game.hint("walk", hud.root, hud.clear_rect)
+	elif not Game.has_flag(GoalRules.hint_flag("use")) and not nearest_thing().is_empty():
+		_hint = Game.hint("use", hud.root, hud.clear_rect)
+
+
 func nearest_thing() -> Dictionary:
 	var lead := leader()
 	if lead == null:
@@ -786,6 +806,9 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 		var path := ExploreRules.path_to_use(grid, lead.cell, t.cell, lead.jump, _blocked(), seen, true)
 		if path.size() == 1:
 			_open_thing(t)
+		else:  # out of reach: say so, instead of nothing (2026-11-13 playtest)
+			board.float_text(t.cell, Txt.t("UI_EX_TOO_FAR"), Color(0.95, 0.88, 0.7))
+			Sfx.play("error", -6.0)
 		return
 	for u: CombatUnit in party:  # a party piece (the dog at his heels): its character sheet
 		if u.cell == c and board.units.has(u):
@@ -1297,6 +1320,7 @@ func _letter_terrain(letter: String) -> int:
 ## Walk through a door into another map (a house, back out to the street). This map is remembered.
 func _travel(t: Dictionary) -> void:
 	_remember()
+	Sfx.play("door")
 	mode = M.OVER
 	Game.explore_from = map.map_name
 	Game.explore_map = String(t.to)
@@ -1588,6 +1612,7 @@ func start_fight(g: Dictionary, how: String) -> void:
 	focus_h = heights / fighters.size()
 	if how == "ambushed":
 		board.float_text(leader().cell, Txt.t("UI_EX_SPOTTED"), Color(1.0, 0.5, 0.4))
+		Game.hint("ambush", hud.root, hud.clear_rect)  # why the foes move first ([AI] 2026-10-27 ambush rule), once
 	if Battle.auto_fight:
 		_begin_battle()  # testing: the auto placement stands and the fight plays itself
 		return
@@ -1658,6 +1683,7 @@ func _begin_battle() -> void:
 	battle.finished.connect(_on_fight_over.bind(_pending.foes))
 	_fight_side()
 	battle.layout(hud.center_rect())
+	Sfx.music("boss" if _pending.foes.any(func(f: Dictionary) -> bool: return bool(f.def.get("boss", false))) else "fight")
 	battle.start(how == "ambushed")
 
 
@@ -1678,10 +1704,11 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	var big := foes.any(func(f: Dictionary) -> bool: return bool(f.def.get("boss", false)) or bool(f.def.get("elite", false)))
 	var before := VictoryUi.snapshot(party.map(func(u: CombatUnit) -> String: return String(u.figure)))  # the bars fill from here
 	Game.fight_morale(battle.units, ("escaped" if battle.outcome.how == "exit" else "won") if won else "lost", big)
-	if not won:
-		var box := _new_dialog(Txt.t("UI_DEFEAT"))
-		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall())
+	if not won:  # a beat on the fallen board first, then one box that says what happens next (2026-11-13 playtest)
 		mode = M.OVER
+		await get_tree().create_timer(1.2).timeout
+		var box := _new_dialog(Txt.t("UI_DEFEAT") + "\n" + Txt.t("UI_DEFEAT_NEXT"))
+		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall())
 		return
 	var loot_items := ""  # what the group's loot gives in food, medicine and things: the shared loot grid
 	var body := _main_foe_down(foes)  # a boss or leader down: the loot lies on him ([USER] 2026-11-02)
@@ -1754,7 +1781,7 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 		if yielded:  # he stopped at 1 HP and offers his son (placeholder text)
 			rep.end_text = Txt.t("UI_BOSS_YIELDS") + "\n" + rep.end_text
 		_victory(rep, [[Txt.t("UI_E2E_WAKE"), func() -> void: Game.wake_in_town(false)],
-			[Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.LAUNCH)]])
+			[Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.menu_scene())]])
 		mode = M.OVER
 		return
 	# one screen ([USER] 2026-11-01 X7): the loot window and the pack sit on the victory screen itself; what is left in
@@ -1791,7 +1818,7 @@ func _pass_boss(g: Dictionary) -> void:
 		Game.set_flag("e2e_done")
 	var box := _new_dialog(Txt.t("UI_BOSS_PASSED") + "\n" + Txt.t("UI_E2E_DONE"))
 	_dialog_button(box, Txt.t("UI_E2E_WAKE"), func() -> void: Game.wake_in_town(false))
-	_dialog_button(box, Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.LAUNCH))
+	_dialog_button(box, Txt.t("UI_E2E_LAUNCH"), func() -> void: Game.go(Game.menu_scene()))
 
 
 ## The victory screen (VictoryUi) as the open dialog: the next box (loot, level-ups) replaces it.
@@ -1906,6 +1933,7 @@ func _end_fight() -> void:
 		Game.party_spent()
 		return
 	_close_dialog()
+	Sfx.music(Sfx.map_mood(map.map_name))
 	if battle:
 		battle.queue_free()
 		battle = null
@@ -2045,18 +2073,37 @@ func _need_weapon() -> void:
 ## Leaving the village by the gate ([USER] pc-10: "press F to proceed", "press P to edit party").
 ## The village gate (backlog X4): walking up to it opens the party picker straight away, with GO and STAY on it, one
 ## step. PLAYTEST: every playable character is on it, met or not ("let me pick from all playable characters here before
-## heading out"); picking one not met yet sets their unlock flag, as the square's line-up does.
+## heading out"); picking one not met yet sets their unlock flag, as the square's line-up does. Since 2026-11-13 that is
+## dev mode only: a player sees the people they have met, so the picker spoils no one.
+## One box (2026-11-13 playtest: the picker, then a second food box): the first trip's free rations and the food for
+## this party show on the picker itself, as chips, and GO turns to GO ANYWAY when the food runs short.
 func _gate_prompt() -> void:
 	mode = M.DIALOG
 	_gate_open = true
+	_gate_starter += Game.starter_food()  # the new-player bumper ([USER] 2026-11-02): once, on the first trip
+	var shown: Array = []
+	for id in Game.ADVENTURE_ROSTER:
+		if Game.dev_mode or Game.is_unlocked(Db.character(StringName(id))) or Game.in_party(String(id)):
+			shown.append(String(id))
 	var box := _new_dialog(Txt.f("UI_GATE_PICK", [Game.adventure_defs().size(), Game.party_max()]))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(row)
-	for id in Game.ADVENTURE_ROSTER:
-		row.add_child(_pick_card(String(id)))
-	_dialog_button(box, Txt.t("UI_GATE_GO"), _gate_go)
+	for id: String in shown:
+		row.add_child(_pick_card(id))
+	var days := TravelRules.food_days(Game.run)
+	var short := days < int(Db.levels.get("gate_warn_days", 3))
+	var chips := HBoxContainer.new()  # the numbers at a glance: days of food, and what a hungry day costs
+	chips.alignment = BoxContainer.ALIGNMENT_CENTER
+	chips.add_theme_constant_override("separation", 12)
+	box.add_child(chips)
+	chips.add_child(MenuKit.chip(Txt.f("UI_GATE_DAYS_CHIP", days), "ration", MenuKit.TEXT if not short else Color(1.0, 0.72, 0.55), "", 17))
+	if short:
+		chips.add_child(MenuKit.chip(Txt.f("UI_GATE_COST_CHIP", int(Db.morale.get("unfed", -15))), "heal", Color(1.0, 0.72, 0.55), "", 17))
+	if _gate_starter > 0:
+		box.add_child(MenuKit.label(Txt.f("UI_GATE_STARTER", _gate_starter), 15))
+	_dialog_button(box, Txt.t("UI_GATE_FOOD_GO" if short else "UI_GATE_GO"), _gate_go)
 	_dialog_button(box, Txt.t("OPT_STAY"), func() -> void:
 		_gate_open = false
 		_close_dialog()
@@ -2100,33 +2147,10 @@ func _pick_card(id: String) -> Button:
 	return card
 
 
-## GO at the gate. The new-player bumpers first ([USER] 2026-11-02, docs/design/morale-hunger.md): the first trip's free
-## rations, and a warning when the pack holds under gate_warn_days of food for the party picked (GO ANYWAY / BACK).
+## GO at the gate: out onto the road. The food warning sits on the picker (GO ANYWAY), so this is one press.
 func _gate_go() -> void:
-	var added := Game.starter_food()
-	var days := TravelRules.food_days(Game.run)
-	var short := days < int(Db.levels.get("gate_warn_days", 3))
-	if (added > 0 or short) and not _gate_asked:
-		_gate_asked = true
-		var lines: PackedStringArray = []
-		if added > 0:
-			lines.append(Txt.f("UI_GATE_STARTER", added))
-		if short:
-			lines.append(Txt.t("UI_GATE_FOOD_NONE") if days <= 0 else Txt.f("UI_GATE_FOOD_WARN", days))
-		var box := _new_dialog("\n".join(lines))
-		var chips := HBoxContainer.new()  # the numbers at a glance: days of food, and what a hungry day costs
-		chips.alignment = BoxContainer.ALIGNMENT_CENTER
-		chips.add_theme_constant_override("separation", 12)
-		box.add_child(chips)
-		chips.add_child(MenuKit.chip(Txt.f("UI_GATE_DAYS_CHIP", days), "ration", MenuKit.TEXT if not short else Color(1.0, 0.72, 0.55), "", 17))
-		chips.add_child(MenuKit.chip(Txt.f("UI_GATE_COST_CHIP", int(Db.morale.get("unfed", -15))), "heal", Color(1.0, 0.72, 0.55), "", 17))
-		_dialog_button(box, Txt.t("UI_GATE_FOOD_GO" if short else "UI_GATE_GO"), _gate_go)
-		_dialog_button(box, Txt.t("UI_GATE_FOOD_BACK"), func() -> void:
-			_gate_asked = false
-			_gate_prompt())
-		return
-	_gate_asked = false
 	_gate_open = false
+	_gate_starter = 0
 	_close_dialog()
 	Game.start_trip()
 	_finish_map()

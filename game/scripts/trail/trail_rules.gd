@@ -185,6 +185,8 @@ static func pick_event(run: RunState, events: Array[Dictionary], flags: Array) -
 			continue
 		if ev.once_flag != "" and flags.has(ev.once_flag):
 			continue
+		if ev.weight <= 0.0:
+			continue  # weight 0: scripted only, never rolled (tr_first, the first road fight)
 		pool.append(ev)
 		total += ev.weight
 	if pool.is_empty():
@@ -195,6 +197,15 @@ static func pick_event(run: RunState, events: Array[Dictionary], flags: Array) -
 		if pick <= 0.0:
 			return ev
 	return pool.back()
+
+
+## The first road encounter (2026-11-13 playtest: "a random encounter that wasnt so random the first time a user goes
+## out on the road that is a fair fight and has any explainers"): tr_first until its once_flag is set, else {}.
+static func first_event(events: Array[Dictionary], flags: Array) -> Dictionary:
+	for ev in events:
+		if String(ev.id) == "tr_first" and not flags.has(String(ev.once_flag)):
+			return ev
+	return {}
 
 
 ## Resolve one event option. Returns {"check": Dictionary or {}, "success": bool, "combat": String, "unlocks": Array}.

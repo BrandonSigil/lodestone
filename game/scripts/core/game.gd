@@ -16,7 +16,8 @@ const SANDBOX := "res://scenes/combat_sandbox.tscn"  ## archived combat sandbox:
 const EXPLORE := "res://scenes/explore.tscn"  ## walkable map, F10 from any screen for now
 const MAKER := "res://scenes/map_maker.tscn"  ## the map maker, F8 from any screen
 const PLOT_MAKER := "res://scenes/plot_maker.tscn"  ## the road-fight plot maker, from the map maker's top bar
-const LAUNCH := "res://scenes/launch.tscn"  ## the fast-travel menu the game opens on, F7 from any screen
+const LAUNCH := "res://scenes/launch.tscn"  ## Dev Tools: the fast-travel page of every place and tool, F7 from any screen (dev mode)
+const MAIN_MENU := "res://scenes/main_menu.tscn"  ## the player's front door, the game's main scene
 const FISHING := "res://scenes/fishing.tscn"  ## the fishing minigame on its own, for practice (launch menu)
 const OVERWORLD := "res://scenes/overworld.tscn"  ## the map between places: town, the snowy pass, and paths still shut
 const SQUARE := Vector2i(20, 23)  ## where the party wakes in the village: the square, by the statue
@@ -26,6 +27,9 @@ const ADVENTURE_ROSTER := [&"lead", &"dog", &"fire_mage", &"bushberry", &"lich_p
 var meta := _fresh_meta()
 var run: RunState = null
 var save_enabled := true
+## Dev mode: the god-mode "!", the fight's test buttons and the F7 / F8 / F10 keys. Off on the player path (the main
+## menu); on once anything is opened from Dev Tools. Brandon 2026-11-13: the player path and a Dev Tools menu.
+var dev_mode := false
 var _combat_setup := {}
 var pending_lines: PackedStringArray = []  ## shown by the next screen
 ## Village prep that survives a trip to the world map and back. Cleared on departure.
@@ -151,14 +155,30 @@ static func memory_from_save(saved: Dictionary) -> Dictionary:
 	return out
 
 
-## Developer shortcuts from anywhere: F7 the launch menu, F8 the map maker, F10 the walkable map.
+## Developer shortcuts from anywhere: F7 Dev Tools, F8 the map maker, F10 the walkable map. Only where the tools are
+## (dev_available); pressing one turns dev mode on.
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event.pressed and not event.is_echo() and event.keycode == KEY_F7:
-		go(LAUNCH)
-	elif event.pressed and not event.is_echo() and event.keycode == KEY_F10:
-		go(EXPLORE)
-	elif event.pressed and not event.is_echo() and event.keycode == KEY_F8:
-		go(MAKER)
+	if event.pressed and not event.is_echo() and event.keycode == KEY_F12:  # a feedback note, for every player
+		FeedbackNote.open(get_tree())
+		get_viewport().set_input_as_handled()
+		return
+	if not event.pressed or event.is_echo() or not dev_available():
+		return
+	var to := {KEY_F7: LAUNCH, KEY_F10: EXPLORE, KEY_F8: MAKER}.get(event.keycode, "") as String
+	if to != "":
+		dev_mode = true
+		go(to)
+
+
+## The developer tools exist here: the editor and debug builds, or a machine with an empty ~/.lodestone/dev file.
+## Never in a release export (what friends and family get).
+static func dev_available() -> bool:
+	return OS.is_debug_build() or FileAccess.file_exists(OS.get_environment("HOME") + "/.lodestone/dev")
+
+
+## Where "back to the menu" goes: Dev Tools in dev mode, else the main menu.
+func menu_scene() -> String:
+	return LAUNCH if dev_mode else MAIN_MENU
 
 
 # --- meta ---------------------------------------------------------------
@@ -173,6 +193,17 @@ func set_flag(f: String) -> bool:
 	meta.flags.append(f)
 	save_meta()
 	return true
+
+
+## A one-time hint (GoalRules.HINTS) over `parent`, at the top of `area`, the first time only, and never in dev mode.
+## Returns the toast, or null when it didn't show.
+func hint(id: String, parent: Node, area: Callable) -> HintToast:
+	var key := GoalRules.hint(id, meta.flags)
+	if key == "" or parent == null or dev_mode:
+		return null
+	meta.flags.append(GoalRules.hint_flag(id))
+	save_meta()
+	return HintToast.open(parent, Txt.t(key), area)
 
 
 func is_unlocked(d: CharacterDef) -> bool:
@@ -332,6 +363,10 @@ func take_weapon(id: String) -> void:
 		s.jobs[job] = LevelRules.fresh_job()
 	meta.levels["lead"] = s
 	refresh_party()
+	if run != null:  # taken at the smithy, in town: the new job's HP starts full (2026-11-13 playtest, B7)
+		for m: Dictionary in run.members:
+			if String((m.def as CharacterDef).id) == "lead":
+				m.hp = CombatUnit.from_member(m).max_hp
 	save_adventure()
 	save_meta()
 
@@ -685,6 +720,7 @@ func award_xp(amount: int, only: Array = []) -> PackedStringArray:
 				up.append("%s +%d" % [Txt.t("UI_STAT_" + k.to_upper()), gained])
 		if not reached.is_empty():
 			level_ups.append({"id": id, "levels": reached, "stats": stats})
+			Sfx.play("levelup")
 		if not up.is_empty():
 			lines.append("  " + "  ".join(up))
 		var waiting := int(s.pending) > had
@@ -1150,6 +1186,8 @@ func used_this_trip(key: String) -> bool:
 ## Out the gate: a new trip. Steps paid before it finish when the party is home again.
 func start_trip() -> void:
 	meta.trips = int(meta.trips) + 1
+	if not has_flag("left_village"):
+		meta.flags.append("left_village")  # GoalRules: out the gate
 	meta.ledger = HomecomingRules.snapshot(meta, true)  # the homecoming page counts the trip from here
 	save_meta()
 
@@ -1261,6 +1299,9 @@ func tracked_missing() -> Array:
 ## The frame's goal lines: each tracked step and what it still misses ("SMITHY FORGE: METAL 2, WOOD 1").
 func goal_lines() -> PackedStringArray:
 	var lines: PackedStringArray = []
+	var main := GoalRules.main_goal(flags_now())  # the playtest's next step first (2026-11-13), then tracked steps
+	if main != "":
+		lines.append(Txt.t(main))
 	for g: Dictionary in tracked_missing():
 		var parts: PackedStringArray = []
 		for id in g.missing:
@@ -1271,6 +1312,7 @@ func goal_lines() -> PackedStringArray:
 
 ## A pickup that counts toward a tracked step says so ([USER] omr-5).
 func _on_pickup(id: String, _n: int) -> void:
+	Sfx.play("coin" if id == "gold" else "pickup", -4.0)
 	for r: Dictionary in Db.restore:
 		if meta.tracked.has(String(r.id)) and RestoreRules.status(meta.restore, String(r.id)) == "" \
 				and RestoreRules.parse_needs(String(r.needs)).has(id):
@@ -1424,6 +1466,8 @@ func material_count(id: String) -> int:
 ## Apply an action's side effects that touch meta (unlocks, the Wall flag).
 func absorb(unlocks: Array) -> void:
 	for f in unlocks:
+		if f == "has_lodestone" and not has_flag(f):
+			Sfx.play("stone")
 		if set_flag(f):
 			run.note(Txt.t("LOG_UNLOCK"))
 	if run.passed_wall and set_flag("reached_wall"):

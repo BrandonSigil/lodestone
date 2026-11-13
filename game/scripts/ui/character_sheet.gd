@@ -66,6 +66,7 @@ func _refresh() -> void:
 		var st := String(takes[page])
 		_take.disabled = st != "take"
 		_take.text = Txt.t({"take": "UI_SHEET_TAKE", "held": "UI_SHEET_IN_HAND"}.get(st, "UI_SHEET_LOCKED"))
+		_take.tooltip_text = Txt.t("UI_SHEET_LOCKED_TIP") if st == "locked" else ""
 	queue_redraw()
 
 
@@ -162,7 +163,8 @@ func _draw() -> void:
 			continue
 		var m: Dictionary = moves[i]
 		_text(Txt.t(m.name), r.position + Vector2(10, 20), 15, INK)
-		_text(Txt.t(m.desc) if Txt.has(m.desc) else "", r.position + Vector2(150, 20), 11, INK.lightened(0.25), HORIZONTAL_ALIGNMENT_LEFT, int(w - 250))
+		if Txt.has(m.desc):  # up to two lines, never cut off (2026-11-13 playtest: the move text was clipped)
+			draw_multiline_string(_font, r.position + Vector2(150, 13), Txt.t(m.desc), HORIZONTAL_ALIGNMENT_LEFT, w - 220, 11, 2, INK.lightened(0.25))
 		if int(m.cost) > 0:
 			_text(Txt.f("UI_SHEET_COST", int(m.cost)), r.position + Vector2(w - 10, 20), 11, INK, HORIZONTAL_ALIGNMENT_RIGHT, 0)
 	if pages.size() > 1:

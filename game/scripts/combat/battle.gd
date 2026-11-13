@@ -170,6 +170,8 @@ func _build_ui() -> void:
 	_layout_btn.pressed.connect(_next_layout)
 	_ui.add_child(_layout_btn)
 	_show_layout()
+	_auto.visible = Game.dev_mode  # test buttons: dev mode only, never on the player path (2026-11-13)
+	_layout_btn.visible = Game.dev_mode
 
 
 ## Centre the board in a screen rect at a scale that fits (a borrowed board only places the menus).
@@ -186,8 +188,8 @@ func layout(r: Rect2) -> void:
 	_layout_btn.custom_minimum_size.x = bw
 	_auto.position = Vector2(r.end.x - bw - 8, r.position.y + 8)
 	_layout_btn.position = _auto.position + Vector2(0, AUTO_SIZE.y + 4)
-	if side_below.is_valid():  # the host's side box starts under them
-		side_below.call(_layout_btn.position.y + AUTO_SIZE.y + 6.0)
+	if side_below.is_valid():  # the host's side box starts under them (at the top when they're hidden)
+		side_below.call(_layout_btn.position.y + AUTO_SIZE.y + 6.0 if _auto.visible else r.position.y + 8.0)
 	_log_view.place(r, _hud.dock_rect() if _hud != null else Rect2())
 	if not _fit_board:
 		return
@@ -216,7 +218,11 @@ func start(enemy_first := false) -> void:
 		board.goal_cells[c] = true
 	for line in goal_lines():
 		log_line.emit(line)
+	if not Game.dev_mode and GoalRules.hint("fight", Game.meta.flags) != "":  # the first fight ever: the ticked how-to
+		Game.set_flag(GoalRules.hint_flag("fight"))  # card (2026-11-13 playtest)
+		FightTips.open(self, _ui)
 	if enemy_first:
+		log_line.emit(Txt.t("LOG_AMBUSHED"))
 		_enemy_phase()
 	else:
 		_start_player_phase()
@@ -573,10 +579,16 @@ func _play(ev: Dictionary) -> void:
 				board.float_text(t.cell, "-%d!" % ev.amount, Color(1, 0.55, 0.3), 26)
 			else:
 				board.float_text(t.cell, "-%d" % ev.amount, Color(1, 0.85, 0.5))
+			Sfx.play("crit" if ev.crit else ("hurt" if t.team == 0 else "hit"))
 			log_line.emit(Txt.f("LOG_HIT_CRIT" if ev.crit else "LOG_HIT", [Txt.t(src.name_key), Txt.t(t.name_key), ev.amount]))
 			t.shown_hp = maxi(0, t.shown_hp - int(ev.amount))
+			changed.emit()  # the side panel's bars follow each blow (2026-11-13 playtest: they lagged a phase)
 			if t.shown_hp <= 0:
 				log_line.emit(Txt.f("LOG_DOWN", Txt.t(t.name_key)))
+				Sfx.play("down")
+				if t.team == 1:  # a foe leaves the board in a puff of dust, and the fight holds a beat to show it
+					board.puff(t.cell)
+					await get_tree().create_timer(0.35).timeout
 				for m: CombatUnit in t.minions:  # its called pieces fell with it
 					if m.crumbled and m.shown_hp > 0:
 						m.shown_hp = 0
@@ -584,6 +596,7 @@ func _play(ev: Dictionary) -> void:
 		"heal":
 			t.shown_hp = mini(t.max_hp, t.shown_hp + int(ev.amount))
 			log_line.emit(Txt.f("LOG_HP_BACK", [Txt.t(t.name_key), ev.amount]))
+			Sfx.play("confirm", -6.0)
 			board.float_text(t.cell, "+%d" % ev.amount, Color(0.5, 1.0, 0.6))
 			await get_tree().create_timer(0.25).timeout
 		"status":
@@ -600,6 +613,7 @@ func _play(ev: Dictionary) -> void:
 			await board.animate_push(t, ev.path)
 		"bump", "fall":
 			t.shown_hp = maxi(0, t.shown_hp - int(ev.amount))
+			changed.emit()  # the side panel's bars follow each blow (2026-11-13 playtest: they lagged a phase)
 			board.float_text(t.cell, "%s -%d" % [Txt.t("UI_" + String(ev.type).to_upper()), ev.amount], Color(1, 0.7, 0.4))
 			log_line.emit("  %s %s -%d" % [Txt.t(t.name_key), Txt.t("UI_" + String(ev.type).to_upper()), ev.amount])
 			await get_tree().create_timer(0.25).timeout
@@ -611,6 +625,7 @@ func _play(ev: Dictionary) -> void:
 			board.float_text(t.cell, "-%d %s" % [ev.amount, Txt.t("UI_HELP")], Color(0.7, 0.9, 1.0))
 			log_line.emit(Txt.f("LOG_HELP", [Txt.t(ev.src.name_key), ev.amount]))
 			t.shown_hp = maxi(0, t.shown_hp - int(ev.amount))
+			changed.emit()  # the side panel's bars follow each blow (2026-11-13 playtest: they lagged a phase)
 		"revive":
 			_deed(ev.src, t, "help_up")
 			t.shown_hp = int(ev.amount)
@@ -704,7 +719,9 @@ func _finish(won: bool) -> void:
 	board.marks = {}
 	board.combat_stance = false
 	# a win's own screen says WIN: no second line under it, and the log steps behind it ([USER] 2026-11-01)
-	_banner.text = "" if won else Txt.t("UI_DEFEAT")
+	# a loss's own box says it too (2026-11-13 playtest: two defeat lines at once), so the banner stays clear either way
+	_banner.text = ""
+	Sfx.play("victory" if won else "defeat")
 	log_line.emit(Txt.t("LOG_FIGHT_WON") if won else Txt.t("LOG_FIGHT_LOST"))
 	_log_view.visible = false
 	changed.emit()

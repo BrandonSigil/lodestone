@@ -985,13 +985,21 @@ func test_the_gate_opens_the_party_picker() -> void:
 	ok(texts.has(Txt.t("UI_GATE_GO")) and texts.has(Txt.t("OPT_STAY")), "GO and STAY on the picker")
 	ok(not texts.has(Txt.t("OPT_GO_ON")), "no GO ON box first")
 	var labels: Array = s._dialog.find_children("*", "Label", true, false).map(func(l: Label) -> String: return l.text)
+	ok(not labels.has(Txt.t(Db.character("bushberry").name_key)), "player mode: no one not met yet is on the picker (no spoilers)")
+	ok(labels.has(Txt.t(Db.character("lead").name_key)), "the hero is")
+	ok(labels.any(func(t: String) -> bool: return t == Txt.f("UI_GATE_DAYS_CHIP", TravelRules.food_days(Game.run))),
+		"one box: the food for this party sits on the picker (no second food box)")
+	Game.dev_mode = true  # dev mode: every playable character, met or not (the PLAYTEST picker)
+	s._gate_prompt()
+	labels = s._dialog.find_children("*", "Label", true, false).map(func(l: Label) -> String: return l.text)
 	for id in Game.ADVENTURE_ROSTER:
-		ok(labels.has(Txt.t(Db.character(id).name_key)), "every playable character is listed: " + String(id))
+		ok(labels.has(Txt.t(Db.character(id).name_key)), "dev mode: every playable character is listed: " + String(id))
 	ok(not Game.in_party("bushberry"))
 	s._pick_toggle("bushberry")  # not met yet: playtest picks meet him on the spot
 	ok(Game.in_party("bushberry"), "a character not met yet joins from the picker")
 	s._pick_toggle("bushberry")
 	ok(not Game.in_party("bushberry"), "and stays home again")
+	Game.dev_mode = false
 	s.free()
 	Game.explore_memory.clear()
 	Game.explore_map = "home"
@@ -1180,12 +1188,13 @@ func test_paying_tracking_and_coming_home() -> void:
 	Game.meta.flags.append("smith_here")
 	Game.meta.materials = {"metal": 3, "wood": 2}
 	Game.toggle_track("forge_2")
-	eq(Array(Game.goal_lines()), ["X2: %s 1" % Txt.t("ITEM_RARE")], "the frame shows what the tracked step misses")
+	eq(Array(Game.goal_lines()).slice(1), ["X2: %s 1" % Txt.t("ITEM_RARE")], "the frame shows what the tracked step misses")
+	eq(Game.goal_lines()[0], Txt.t("GOAL_LODESTONE"), "under the playtest's next step (GoalRules)")
 	var heard := []
 	Game.counts.connect(func(t: String) -> void: heard.append(t))
 	Game.run.add_item("rare", 1)
 	eq(heard.size(), 1, "a pickup that counts says so")
-	eq(Array(Game.goal_lines()), ["X2: %s" % Txt.t("UI_RESTORE_READY")])
+	eq(Array(Game.goal_lines()).slice(1), ["X2: %s" % Txt.t("UI_RESTORE_READY")])
 	ok(Game.pay_step("forge_1"))
 	eq(Game.meta.materials, {}, "the pile paid for it")
 	Game.home_again()

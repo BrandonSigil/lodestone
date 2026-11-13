@@ -52,6 +52,7 @@ const SNOW_REACH := 190.0  ## map units round a snowy place that the snow falls 
 
 
 func _ready() -> void:
+	Sfx.music("road")
 	for id in Db.world_nodes:
 		_elites[id] = ExploreRules.elites_left(Array(String(Db.world_nodes[id].maps).split("|")), Game.flags_now())
 	Game.ensure_run()
@@ -123,7 +124,13 @@ func _process(delta: float) -> void:
 		_night()  # a night still owed (after a road fight, or MAKE CAMP's rest ran past nightfall)
 	if not _busy and _dialog == null and Game.run.overfull():
 		_open_menu("pack")  # a pickup found no room: the player decides before walking on
-	if walking() and not _busy:
+	if not is_instance_valid(_hint) and _dialog == null and not _menu_open and not _busy:  # one-time hints, one at a time
+		_hint = Game.hint("walking" if walking() else "road", _ui, hud.clear_rect)
+	if not walking():
+		_fast = false
+	elif not _busy and _dialog == null and _fast:
+		_skip()
+	elif not _busy:
 		_advance_to(float(Game.travel.t) + delta)
 	queue_redraw()
 
@@ -176,6 +183,7 @@ func _arrive() -> void:
 	var to := String(Game.travel.to)
 	var then: Array = Game.travel.get("then", [])
 	Game.travel = {"at": to}
+	Game.set_flag("visited_" + to)  # GoalRules: places reached (visited_pass)
 	_discover(to)
 	bookmark()
 	Game.save_adventure()
@@ -217,16 +225,31 @@ func _enter() -> void:
 	Game.go(Game.EXPLORE)
 
 
+## FAST (Tab) skips to the next stop and stays on until the walk ends, so each event or camp doesn't drop it
+## (2026-11-13 playtest). Press it again to walk at normal speed.
+var _fast := false
+var _hint: HintToast  ## the one-time hint showing (GoalRules.HINTS: road, walking)
+
+
 func fast_forward() -> void:
-	if not walking() or _busy:
+	if not walking():
 		return
+	_fast = not _fast
+	_side()
+	if _fast and not _busy:
+		_skip()
+
+
+func _skip() -> void:
 	_advance_to(TravelRules.next_stop(float(Game.travel.t), Game.travel.stops, float(leg().get("seconds", 60))))
 
 
 # --- encounters ---------------------------------------------------------------------------------
 
 func _encounter() -> void:
-	var ev := TrailRules.pick_event(Game.run, Db.travel_events, Game.flags_now())
+	var ev := TrailRules.first_event(Db.travel_events, Game.flags_now())  # the first trip's fair, scripted fight
+	if ev.is_empty():
+		ev = TrailRules.pick_event(Game.run, Db.travel_events, Game.flags_now())
 	if ev.is_empty():
 		return
 	_busy = true
@@ -318,7 +341,16 @@ func _go_fish() -> void:
 ## what the clock reached on the way (the arrival or an encounter), run once the nights are eaten.
 func _night(then := Callable()) -> void:
 	_busy = true
-	_night_box(TravelRules.default_picks(Game.run), then)
+	Sfx.play("camp")
+	var picks := TravelRules.default_picks(Game.run)
+	# EAT THE SAME EVERY NIGHT (2026-11-13 playtest: two camps a leg, the same clicks each time): eaten at once, with a
+	# line, while last night's picks still feed everyone; the box opens when someone would go hungry
+	if bool(Game.meta.get("settings", {}).get("auto_camp", false)) and not Game.run.last_picks.is_empty() \
+			and TravelRules.hungry_with(Game.run, picks).is_empty():
+		_say(Txt.t("UI_CAMP_AUTO_ATE"))
+		_eat_night(picks, then)
+		return
+	_night_box(picks, then)
 
 
 func _night_box(picks: Dictionary, then: Callable) -> void:
@@ -459,25 +491,37 @@ func _night_box(picks: Dictionary, then: Callable) -> void:
 	eat.theme_type_variation = &"PrimaryButton"  # the one to press (the menu kit)
 	eat.text = Txt.t("UI_CAMP_EAT")
 	eat.custom_minimum_size = Vector2(140, 34)
-	eat.pressed.connect(func() -> void:
-		var lines := Game.camp_hunger(TravelRules.camp_meal(run, picks))
-		for l in lines:
-			run.note(l)
-		if not lines.is_empty():
-			_say(lines[lines.size() - 1])
-		if Game.all_spent():  # everyone at 0: the party is carried home ([USER] 2026-11-02)
-			_close_dialog()
-			Game.party_spent()
-			return
-		_end_night(then))
+	eat.pressed.connect(func() -> void: _eat_night(picks, then))
 	acts.add_child(eat)
-	var same := Button.new()
+	var same := Button.new()  # eats last night's picks at once (2026-11-13 playtest: it only reset the rows)
 	same.text = Txt.t("UI_CAMP_SAME")
 	same.custom_minimum_size = Vector2(200, 34)
 	same.disabled = run.last_picks.is_empty()
 	same.tooltip_text = Txt.t("UI_CAMP_SAME_TIP" if same.disabled else "UI_CAMP_SAME_ON")
-	same.pressed.connect(func() -> void: _night_box(TravelRules.default_picks(run), then))
+	same.pressed.connect(func() -> void: _eat_night(TravelRules.default_picks(run), then))
 	acts.add_child(same)
+	var auto := CheckBox.new()  # every night after this eats the same on its own, while no one would go hungry
+	auto.text = Txt.t("UI_CAMP_AUTO")
+	auto.tooltip_text = Txt.t("UI_CAMP_AUTO_TIP")
+	auto.add_theme_font_size_override("font_size", 14)
+	auto.button_pressed = bool(Game.meta.get("settings", {}).get("auto_camp", false))
+	auto.toggled.connect(func(on: bool) -> void: Game.set_setting("auto_camp", on))
+	box.add_child(auto)
+
+
+## A night's meal eaten with these picks: hunger lines, everyone Spent carried home, else the night ends.
+func _eat_night(picks: Dictionary, then: Callable) -> void:
+	var run := Game.run
+	var lines := Game.camp_hunger(TravelRules.camp_meal(run, picks))
+	for l in lines:
+		run.note(l)
+	if not lines.is_empty():
+		_say(lines[lines.size() - 1])
+	if Game.all_spent():  # everyone at 0: the party is carried home ([USER] 2026-11-02)
+		_close_dialog()
+		Game.party_spent()
+		return
+	_end_night(then)
 
 
 ## A night eaten: the day counts (morale for whoever is home), and the next night owed or what the clock reached.
@@ -950,7 +994,7 @@ func _side() -> void:
 		col.add_theme_constant_override("separation", 6)
 		_acts.add_child(col)
 		_info = Label.new()
-		_info.add_theme_font_size_override("font_size", 16)
+		_info.add_theme_font_size_override("font_size", 24)
 		_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		col.add_child(_info)
 		_acts_row = HBoxContainer.new()
@@ -971,7 +1015,8 @@ func _side() -> void:
 		_acts_row.remove_child(c)
 		c.queue_free()
 	if walking():
-		_act_button(Txt.t("UI_OW_FAST"), fast_forward)
+		var fast := _act_button(Txt.t("UI_OW_FAST_ON" if _fast else "UI_OW_FAST"), fast_forward)
+		fast.tooltip_text = Txt.t("UI_OW_FAST_TIP")
 		_act_button(Txt.t("UI_OW_HUNT"), act.bind("hunt"))
 		var fish := _act_button(Txt.t("UI_OW_FISH"), act.bind("fish"))
 		fish.disabled = not TravelRules.can_try(Game.run, "fish")  # no rod in the pack
@@ -992,8 +1037,9 @@ func _side() -> void:
 func _act_button(text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(0, 40)
-	b.add_theme_font_size_override("font_size", 16)
+	b.custom_minimum_size = Vector2(0, 58)
+	b.add_theme_font_size_override("font_size", 27)  # the box is drawn at half size ([USER] SMALL): ~14 px on screen
+	# (2026-11-13 playtest: 16, so 8 px, was too small to read on a laptop)
 	b.pressed.connect(cb)
 	_acts_row.add_child(b)
 	return b

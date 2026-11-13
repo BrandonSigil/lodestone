@@ -22,7 +22,7 @@ func _again() -> void:
 	game = FishingGame.open(self, "lake", FishingRules.mods_for(Game.run), 0, pond)
 	game.finished.connect(func(res: Dictionary) -> void:
 		if String(res.outcome) == "left":
-			Game.go(Game.LAUNCH)
+			Game.go(Game.menu_scene())
 		else:
 			_again.call_deferred())
 

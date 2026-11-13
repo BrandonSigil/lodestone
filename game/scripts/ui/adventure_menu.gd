@@ -77,7 +77,8 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 		var tree := Engine.get_main_loop() as SceneTree
 		if tree.current_scene.has_method("bookmark"):
 			tree.current_scene.call("bookmark")
-		tree.quit())
+		var game := tree.root.get_node("Game")  # back to the main menu (2026-11-13), where QUIT closes the game
+		game.call("go", game.call("menu_scene")))
 	cell.call(Txt.t("UI_CLOSE_MENU"), close)
 
 
@@ -497,6 +498,24 @@ static func options(box: VBoxContainer, changed: Callable, back: Callable) -> vo
 	shown.text = "%d%%" % roundi(size * 100)
 	size_row.add_child(shown)
 	box.add_child(size_row)
+	for vol: Array in [["music_volume", "UI_OPT_MUSIC", 0.7], ["sfx_volume", "UI_OPT_SOUND", 0.8]]:  # 2026-11-13: sound
+		_label(box, Txt.t(String(vol[1])), 15)
+		var vrow := HBoxContainer.new()
+		vrow.add_theme_constant_override("separation", 6)
+		var now := clampf(float(Game.meta.get("settings", {}).get(vol[0], vol[2])), 0.0, 1.0)
+		for step: float in [-0.1, 0.1]:
+			var vb := Button.new()
+			vb.text = "-" if step < 0 else "+"
+			vb.custom_minimum_size = Vector2(60, 30)
+			vb.pressed.connect(func() -> void:
+				Game.set_setting(String(vol[0]), snappedf(clampf(now + step, 0.0, 1.0), 0.1))
+				Sfx.apply_volumes()
+				changed.call())
+			vrow.add_child(vb)
+		var vl := Label.new()
+		vl.text = Txt.t("UI_OPT_OFF") if now <= 0.001 else "%d%%" % roundi(now * 100)
+		vrow.add_child(vl)
+		box.add_child(vrow)
 	_label(box, Txt.t("UI_OPT_WINDOW"), 15)
 	var full := bool(Game.meta.get("settings", {}).get("fullscreen", false))
 	_button(box, Txt.t("UI_OPT_WINDOWED") if full else Txt.t("UI_OPT_FULL"), func() -> void:

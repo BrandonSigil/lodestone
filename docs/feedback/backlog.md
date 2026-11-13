@@ -6,6 +6,30 @@ How to use it: when you start on an item, put your thread in **Owner**; when it 
 
 Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#PR)`.
 
+## 2026-11-13 new-player playtest (Claude, as a first-time player; Brandon approved all fixes)
+How each was fixed: `docs/systems/player-path.md`.
+
+| # | Problem | Owner | Status |
+| --- | --- | --- | --- |
+| P1 | The game opens on the developer launch page; god mode's "!" opens the map maker; fight test buttons show | Claude (E2E playtest session) | done (main menu, dev mode) |
+| P2 | No controls shown anywhere (WASD, F, I, Tab, D) | Claude (E2E playtest session) | done (one-time hints) |
+| P3 | No next goal after the opening; the homecoming page says NO GOAL YET | Claude (E2E playtest session) | done (goal chain in the long bar and NEXT GOAL) |
+| P4 | Caveman text on game screens (not story) and a wrong recall line (said the pack is lost) | Claude (E2E playtest session) | done (game text sweep; story lines left for Brandon) |
+| P5 | The first fight is an ambush: wolves move first with no explanation | Claude (E2E playtest session) | done (scripted fair first road fight, first-fight card, ambush hint) |
+| P6 | The gate picker shows companions not met yet; picker then a second food box | Claude (E2E playtest session) | done (met only; one box) |
+| P7 | FAST FORWARD turns off after every stop; road buttons too small to read | Claude (E2E playtest session) | done |
+| P8 | Move text cut off on the character sheet; locked builds don't say why | Claude (E2E playtest session) | done |
+| P9 | No sound or music at all | Claude (E2E playtest session) | done (code placeholders); real audio source on the desk |
+| P10 | No way to hand a build to friends, no way for them to report | Claude (E2E playtest session) | done (export presets and build script; F12 notes); templates not installed |
+| P11 | F walks straight back into the house just left | Claude (E2E playtest session) | done |
+| P12 | Clicking a thing out of reach does nothing | Claude (E2E playtest session) | done (TOO FAR) |
+| P13 | Defeat: two defeat lines, no beat; foes vanish instantly; side bars lag | Claude (E2E playtest session) | done |
+| P14 | SAME AS LAST NIGHT only resets the picks; two camps a leg is many clicks | Claude (E2E playtest session) | done (eats; opt-in every night) |
+| P15 | HP not full after taking a weapon that raises max HP | Claude (E2E playtest session) | done |
+| P16 | The dog didn't seem to follow | Claude (E2E playtest session) | open (not reproduced: may have been the test's teleport) |
+| P17 | Camera framing on arrival looked off once | Claude (E2E playtest session) | open (not reproduced in the re-playtest) |
+| P18 | Art: the square's statue is a cube, grey bridges, a pink box on the pass, the crypt reads bright, interiors float in a void | Brandon (art) | open (art asks on the desk; Claude never paints) |
+
 ## 2026-11-01 playtest (Studio chat, 03:57 to 05:57 UTC)
 
 ### Fights and abilities
