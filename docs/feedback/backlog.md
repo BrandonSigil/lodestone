@@ -32,6 +32,7 @@ How each was fixed: `docs/systems/player-path.md`.
 | P19 | Look check (fresh reviewer, 2026-11-13): the world map is a small unframed rectangle on a flat beige field, fogged hexes read as missing art, place labels clip | UI lane | open |
 | P20 | Look check: the fight's YOUR TURN side panel is a wall of caps stats (wants icons or bars); action bar labels about 8 px; the first-fight card hugs the screen's left edge | UI lane | open |
 | P21 | Look check: the gate picker with one member met is a small card in a big panel; road action buttons still read small | UI lane | open |
+| P22 | "these combat maps are too zoomed out, I expect them to be closer" (Brandon, 2026-11-13, a forest road fight: the whole map fitted in view, the pieces tiny in one corner) | Systems developer (fight-zoom session) | built on branch `claude/fight-zoom-273723` (FightCamera: opens at 1.1 to 1.35 on the pieces, was 0.75; pan, zoom and follow); not merged |
 
 ## 2026-11-01 playtest (Studio chat, 03:57 to 05:57 UTC)
 
