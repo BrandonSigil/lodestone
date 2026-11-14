@@ -14,6 +14,19 @@ Before and after pictures of every menu: `art/screens/menus-v3/` (left is main t
 
 [USER] 2026-11-13, after round three: "Yes, tabs next" (the next-step button).
 
+[USER] 2026-11-13, after round four: "Yes, sheet next" (the next-step button).
+
+## Round five: the character sheet on the kit
+
+Pictures: `_sheet_1.jpg` (left the sheet as it stood after round four, right now: the smithy rack's sword page, then the dog's sheet) and `character_sheet.jpg` (main | now).
+
+- **A kit window.** The sheet used to paint itself: a fixed 720 by 430 picture of cream plates, scaled to fit. It is now the window the level up screen uses (`MenuKit.window`): the name on the title banner, the X or Esc to close, real controls laid out at their own size, and it scrolls before it would ever shrink (`CharacterSheet`, placed by `UiTheme.place`).
+- **Left, the character's card**, as on level up: the portrait, the job, the level as a chip, HP and EXP as bars, the trail skills as chips (hover says what they are).
+- **Right, the numbers as chips** with the level up window's words and icons: DMG, ARMOR, CRIT, RANGE, MOVE, then the weapon and the job's resource.
+- **A row a skill**, with its icon, its damage, reach and cost as chips, and its whole line under it. The old rows cut the line off mid-sentence and drew empty plates for skills a character does not have.
+- **The rack's foot.** The arrows and the page count on the left, the gold TAKE on the right (IN HAND or LOCKED when it cannot be taken). The CLOSE button is gone: the X does it.
+- **The portrait slot** is unchanged in what it shows. A full-length pose now stands on its own background colour across the whole slot instead of on a strip.
+
 ## Round four: the Lodestone menu as tabs
 
 Pictures: `_tabs_1.jpg` (the four tabs: party, pack, village, options) and `_tabs_2.jpg` (five along on the party and pack tabs, the NEW ABILITY window, and the pack before the Lodestone).
@@ -98,7 +111,9 @@ To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot
 
 ## What it does not do yet (honest notes)
 
-- **Two layouts are still the old ones:** the character sheet's cream plates, and the fight's text panel, dock labels and log box. Those are steps 5 and 6.
+- **One layout is still the old one:** the fight's text panel, dock labels and log box. That is step 6.
+- The sheet's skill rows say DMG, reach and costs in the level up window's words; the unarmed hero's sheet is one row with plain felt under it.
+- The sheet was checked in four screenshots (the hero, the dog, two rack pages) and by tests; nobody has opened it in live play yet.
 - The tabs have no keys of their own yet (the left and right keys walk them once one has the focus); a pad's shoulder buttons would be the usual way.
 - The OPTIONS tab is short, so most of its page is plain felt when the pack makes the window big.
 - A PACK tab sits beside a PARTY section inside it. The names are right but close; worth a look in play.
@@ -118,5 +133,5 @@ To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot
 2. Done (round three): the size and type tokens, titles on the top edge, scroll to the real room, `KIT_SCALE` dropped for dialogues, win, level up, HOME AGAIN and the menus.
 3. Done (round three): pack, loot and found items as one window with sections (it fixes the cut-off with a full party).
 4. Done (round four): the Lodestone menu as tabs: Party, Pack, Village, Options.
-5. The character sheet on the kit.
+5. Done (round five): the character sheet on the kit.
 6. The fight HUD: side panel as a compact card, dock labels readable, the log as a quiet line.

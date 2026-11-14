@@ -62,6 +62,38 @@ func test_the_dog_has_a_sheet() -> void:
 	_restore(saved)
 
 
+## Menus v3 (Brandon, 2026-11-13: "Yes, sheet next"): the sheet is a kit window. A skill's whole line shows, and the
+## rack's TAKE is the gold button on the window's foot; a member's own sheet has none.
+func test_the_sheet_is_a_kit_window() -> void:
+	var saved := _fresh()
+	var sh := CharacterSheet.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(sh)
+	sh.show_pages([Game.sheet("lead", "sword"), Game.sheet("lead", "book")], 0, ["take", "locked"])
+	var words := func() -> Array:
+		return sh._win.find_children("*", "Label", true, false).map(func(l: Label) -> String: return l.text)
+	var golds := func() -> Array:
+		return sh._win.find_children("*", "Button", true, false).filter(func(b: Button) -> bool: return b.theme_type_variation == &"PrimaryButton")
+	ok(words.call().has(Txt.t("DESC_SHOVE")), "a skill's whole line, not a cut one")
+	eq(golds.call().size(), 1, "one gold button")
+	var take: Button = golds.call()[0]
+	eq(take.text, Txt.t("UI_SHEET_TAKE"))
+	ok(not take.disabled)
+	var got := []
+	sh.taken.connect(func(i: int) -> void: got.append(i))
+	take.pressed.emit()
+	eq(got, [0], "TAKE names the open page")
+	sh.flip(1)
+	take = golds.call()[0]
+	eq(take.text, Txt.t("UI_SHEET_LOCKED"), "the book before it is found")
+	ok(take.disabled)
+	ok(not words.call().has(Txt.t("DESC_SHOVE")), "the page's own skills")
+	sh.show_pages([Game.sheet("dog")])
+	eq(golds.call().size(), 0, "a member's own sheet has no TAKE")
+	ok(words.call().has(Txt.t("DESC_BITE")))
+	sh.free()
+	_restore(saved)
+
+
 func test_the_rack_opens_sheets_and_take_arms_the_hero() -> void:
 	var saved := _fresh()
 	Game.explore_map = "village"

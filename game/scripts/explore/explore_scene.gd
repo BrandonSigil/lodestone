@@ -2016,12 +2016,9 @@ func _show_sheet(pages: Array, at := 0, states: Array = []) -> void:
 	mode = M.DIALOG
 	walking_now = false
 	sheet = CharacterSheet.new()
-	_ui.add_child(sheet)
+	sheet.area = _dialog_area  # a kit window: it centres itself in the play area and scrolls before it shrinks
 	sheet.show_pages(pages, at, states)
-	var r := hud.center_rect()
-	var k := minf(1.0, minf(r.size.x / CharacterSheet.SIZE.x, r.size.y / CharacterSheet.SIZE.y) * 0.96)
-	sheet.scale = Vector2.ONE * k
-	sheet.position = r.get_center() - CharacterSheet.SIZE * k * 0.5
+	_ui.add_child(sheet)
 	UiTheme.fade_in(sheet)
 	sheet.closed.connect(func() -> void:
 		_close_sheet()
