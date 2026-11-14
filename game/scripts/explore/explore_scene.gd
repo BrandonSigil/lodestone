@@ -456,11 +456,16 @@ func _blocked() -> Dictionary:
 func _stands_there(t: Dictionary) -> bool:
 	if String(t.get("when", "")) != "" and not Game.has_flag(t.when):
 		return false
-	if String(t.kind) == "companion":
-		var who := String(t.get("event", "")).trim_prefix("companion_").trim_prefix("recruit_").trim_prefix("rescue_")
-		if who != "" and Game.in_party(who):
-			return false
-	return true
+	return _spot_waits(t)
+
+
+## A companion's spot (see ExploreRules.spot_waits): hidden while they are in the party or not yet met.
+func _spot_waits(t: Dictionary) -> bool:
+	if String(t.kind) != "companion":
+		return true
+	var party_ids: Array = Game.adventure_defs().map(func(d: CharacterDef) -> String: return String(d.id))
+	var known: Array = Game.companions().map(func(d: CharacterDef) -> String: return String(d.id))
+	return ExploreRules.spot_waits(t, things, party_ids, known)
 
 
 func _free_start() -> Vector2i:
@@ -1296,6 +1301,8 @@ func _restore_box(building: String) -> void:
 ## flag shows only once that flag is set (the dog's door opens from inside once he is out).
 func shown(t: Dictionary) -> bool:
 	if String(t.get("when", "")) != "" and not Game.has_flag(t.when):
+		return false
+	if not _spot_waits(t):
 		return false
 	return t.kind != "hidden" or ExploreRules.dist(leader().cell, t.cell) <= 1.5
 

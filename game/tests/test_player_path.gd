@@ -45,6 +45,27 @@ func test_the_first_road_fight_is_scripted_and_fair() -> void:
 	eq(Array(Db.encounters["first_road"].units).size(), 2, "two foes: a fair fight for a party of one or two")
 
 
+## Brandon, 2026-11-14: companions are found first. A new game's party is the hero alone; the rescued dog joins, can be
+## sent to the square from the party page (Game.dismiss) and is taken again from there (Game.invite).
+func test_a_new_game_starts_with_the_hero_alone_and_the_dog_comes_and_goes() -> void:
+	if Db.explore_events.is_empty():
+		Db.reload()
+	var was := {"meta": Game.meta.duplicate(true), "on": Game.save_enabled}
+	Game.save_enabled = false
+	Game.meta = Game._fresh_meta()
+	Game.refresh_party()
+	eq(Game.adventure_defs().size(), 1, "a new game: the hero alone")
+	ok(not Game.in_party("dog"), "no dog yet")
+	Game.set_flag("met_dog")  # let out of his house (dog_free)
+	ok(Game.in_party("dog"), "rescued: he joins")
+	Game.dismiss("dog")
+	ok(not Game.in_party("dog"), "sent to the square: out of the party")
+	ok(Game.invite("dog") and Game.in_party("dog"), "taken again from the square")
+	Game.meta = was.meta
+	Game.save_enabled = was.on
+	Game.run = null
+
+
 func test_dev_mode_is_off_on_the_player_path() -> void:
 	var was := Game.dev_mode
 	Game.dev_mode = false

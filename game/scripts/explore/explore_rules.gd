@@ -683,6 +683,33 @@ static func thing_to_use(things: Array, at: Vector2i, facing: Vector2i, lit: Dic
 const WALK_ON_KINDS := ["enter", "exit"]
 
 
+## Who a companion's spot is for ("dog" for companion_dog, recruit_dog, rescue_dog); "" for any other thing.
+static func companion_who(t: Dictionary) -> String:
+	if String(t.get("kind", "")) != "companion":
+		return ""
+	return String(t.get("event", "")).trim_prefix("companion_").trim_prefix("recruit_").trim_prefix("rescue_")
+
+
+## Is a companion's spot there to see and use? (Brandon, 2026-11-14: "if he's in my party this should go away" and "you
+## need to go find them first".) party / known: ids of who is in the party and who the hero has met.
+##  - in the party: nobody waits there, so no figure, "!" or glow, and nothing blocks the way
+##  - a square spot (recruit_<id>) waits until the hero has met them (the dog: rescued from his house first)
+##  - a home spot (companion_<id>) gives way to the square spot when the same map has one: they wait in one place
+## Any other thing is always open here (its own `when` flag is checked by the scene).
+static func spot_waits(t: Dictionary, things: Array, party: Array, known: Array) -> bool:
+	var who := companion_who(t)
+	if who == "":
+		return true
+	if party.has(who):
+		return false
+	var ev := String(t.get("event", ""))
+	if ev.begins_with("recruit_"):
+		return known.has(who)
+	if ev.begins_with("companion_"):
+		return not things.any(func(o: Dictionary) -> bool: return String(o.get("event", "")) == "recruit_" + who)
+	return true
+
+
 ## Can someone standing at `at` use the thing at `thing`? Next to it (diagonals count) and not a cliff apart.
 static func can_use_from(grid: CombatGrid, at: Vector2i, thing: Vector2i) -> bool:
 	var g := CombatGrid.ground(at) - CombatGrid.ground(thing)
