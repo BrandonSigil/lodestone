@@ -1,6 +1,6 @@
 class_name FightCamera
 extends Node
-## The fight's camera on a board the battle owns (road fights, the battle view). Backlog P22, Brandon 2026-11-13:
+## The fight's camera on a board the battle owns (road fights, the battle view). Backlog P23, Brandon 2026-11-13:
 ## "these combat maps are too zoomed out, I expect them to be closer". The old view fitted the whole map in the play
 ## area (about 0.8 on a 21 x 18 road map), so the pieces were tiny. Now a fight opens at the exploration camera's
 ## zoom (1.35, [USER] 2026-10-29 "close in"), framed on the pieces: both sides when they fit the clear part of the

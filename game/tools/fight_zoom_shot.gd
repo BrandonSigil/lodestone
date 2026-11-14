@@ -1,5 +1,5 @@
 extends SceneTree
-## A fight's opening view as a PNG, to check how close the fight camera frames it (backlog P22).
+## A fight's opening view as a PNG, to check how close the fight camera frames it (backlog P23).
 ## Args after "--": <png path> <road|map> <art set for road ("" = the old 10x8 trail island) or map name for map>
 ##   [seed, default 7] [encounter, default pair_wolves] [steps, comma list]
 ## road: a road fight through combat.tscn with the leader and the dog (as in play). map: data/maps/<name>.json in the

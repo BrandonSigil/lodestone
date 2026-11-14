@@ -1963,3 +1963,51 @@ func test_lich_prince_kit() -> void:
 	var ranked := LevelRules.ranked(nepo, 3, Db.skill_ranks)
 	ok(ranked.power == nepo.power + 1 and ranked.radius == nepo.radius + 1 and ranked.status_turns == nepo.status_turns + 1,
 		"its upgrades: more cold, further reach, stays longer")
+
+
+## Brandon's playtest, 2026-11-13 (backlog P22): "4-5 turns of smacking 1 wolf for 1 or 2 damage". Wolves carry no
+## armor now ([AI] 2026-11-13 damage tuning), so a first-trip party's hits on a wolf land 2 or more and a wolf falls
+## in two or three solid hits. Pinned here as hits to kill on flat ground with no flank or crit.
+func _hits_to_kill(hp: int, r: Vector2i) -> Vector2i:
+	return Vector2i(ceili(float(hp) / r.y), ceili(float(hp) / r.x))
+
+
+func test_a_first_trip_party_drops_a_wolf_in_two_or_three_hits() -> void:
+	var g := CombatGrid.flat(6, 1)
+	var road_wolf := _unit("wolf", 1, Vector2i(2, 0), g)
+	var explore_wolf := CombatUnit.enemy(load("res://data/classes/wolf.tres"), ExploreRules.road_mods())
+	explore_wolf.place(Vector2i(2, 0), 0)
+	eq(road_wolf.max_hp, 7, "a road wolf")
+	eq(explore_wolf.max_hp, 5, "an explore-map wolf (explore_foe_hp_pct)")
+	# weapon -> [the move, its damage on a wolf, hits to kill a road wolf, hits to kill an explore wolf]
+	var builds := {
+		"sword": ["strike", Vector2i(4, 6), Vector2i(2, 2), Vector2i(1, 2)],
+		"daggers": ["strike", Vector2i(3, 5), Vector2i(2, 3), Vector2i(1, 2)],
+		"bow": ["strike", Vector2i(3, 5), Vector2i(2, 3), Vector2i(1, 2)],
+		"book": ["firebolt", Vector2i(4, 6), Vector2i(2, 2), Vector2i(1, 2)],
+	}
+	for w: String in builds:
+		var hero := CombatUnit.from_member({"def": Db.character(&"lead"), "hp": 20})
+		hero.apply_class(Db.class_def(String(Db.jobs[String(Db.weapons[w].job)].class)), Game.weapon_mods("lead", w))
+		hero.team = 0
+		var a: Ability = hero.abilities.filter(func(x: Ability) -> bool: return x.id == builds[w][0])[0]
+		var from := Vector2i(1, 0) if CombatRules.ability_range(hero, a).x <= 1 else Vector2i(0, 0)
+		hero.place(from, 0)
+		var r := CombatRules.damage_range(g, hero, road_wolf, from, a, [hero, road_wolf])
+		eq(r, builds[w][1], w + ": damage on a wolf")
+		eq(_hits_to_kill(road_wolf.max_hp, r), builds[w][2], w + ": hits to drop a road wolf")
+		eq(_hits_to_kill(explore_wolf.max_hp, r), builds[w][3], w + ": hits to drop an explore wolf")
+	var dog := CombatUnit.from_member({"def": Db.character(&"dog"), "hp": 15})
+	dog.team = 0
+	dog.place(Vector2i(1, 0), 0)
+	for id in ["strike", "bite"]:
+		var a: Ability = dog.abilities.filter(func(x: Ability) -> bool: return x.id == id)[0]
+		var r := CombatRules.damage_range(g, dog, road_wolf, dog.cell, a, [dog, road_wolf])
+		eq(r, Vector2i(2, 4), "the dog's " + id + " never bottoms out at 1")
+		eq(_hits_to_kill(road_wolf.max_hp, r), Vector2i(2, 4), "the dog drops a road wolf in 2 to 4 (3 typical)")
+		eq(_hits_to_kill(explore_wolf.max_hp, r), Vector2i(2, 3), "and an explore wolf in 2 or 3")
+	# position still changes the count: one level of high ground takes the dog's worst case from 4 hits to 3
+	g.set_height(Vector2i(1, 0), 1)
+	dog.place(Vector2i(1, 0), 1)
+	eq(_hits_to_kill(road_wolf.max_hp, CombatRules.damage_range(g, dog, road_wolf, dog.cell, null, [dog, road_wolf])),
+		Vector2i(2, 3), "from high ground")

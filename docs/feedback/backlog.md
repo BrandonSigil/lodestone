@@ -6,6 +6,12 @@ How to use it: when you start on an item, put your thread in **Owner**; when it 
 
 Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#PR)`.
 
+## 2026-11-13 Brandon's playtest (first road fight)
+
+| # | Problem | Owner | Status |
+| --- | --- | --- | --- |
+| P22 | Damage too low in the first wolf fight: "Damage is SO LOW right now, it feels like I had 4-5 turns of smacking 1 wolf for 1 or 2 damage, and it wasnt a fun tactical choice, just us trading blows until someone fell" (his screenshot: the lead and the dog by two grey wolves on an early grass map) | Claude (damage tuning session) | in progress (branch `claude/damage-tuning-e47b23`; numbers and the fix in `docs/systems/combat.md` under "Damage tuning") |
+
 ## 2026-11-13 new-player playtest (Claude, as a first-time player; Brandon approved all fixes)
 How each was fixed: `docs/systems/player-path.md`.
 
@@ -32,7 +38,7 @@ How each was fixed: `docs/systems/player-path.md`.
 | P19 | Look check (fresh reviewer, 2026-11-13): the world map is a small unframed rectangle on a flat beige field, fogged hexes read as missing art, place labels clip | UI lane | open |
 | P20 | Look check: the fight's YOUR TURN side panel is a wall of caps stats (wants icons or bars); action bar labels about 8 px; the first-fight card hugs the screen's left edge | UI lane | open |
 | P21 | Look check: the gate picker with one member met is a small card in a big panel; road action buttons still read small | UI lane | open |
-| P22 | "these combat maps are too zoomed out, I expect them to be closer" (Brandon, 2026-11-13, a forest road fight: the whole map fitted in view, the pieces tiny in one corner) | Systems developer (fight-zoom session) | built on branch `claude/fight-zoom-273723` (FightCamera: opens at 1.1 to 1.35 on the pieces, was 0.75; pan, zoom and follow); not merged |
+| P23 | "these combat maps are too zoomed out, I expect them to be closer" (Brandon, 2026-11-13, a forest road fight: the whole map fitted in view, the pieces tiny in one corner) | Systems developer (fight-zoom session) | built on branch `claude/fight-zoom-273723` (FightCamera: opens at 1.1 to 1.35 on the pieces, was 0.75; pan, zoom and follow); not merged |
 
 ## 2026-11-01 playtest (Studio chat, 03:57 to 05:57 UTC)
 
