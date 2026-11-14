@@ -76,6 +76,7 @@ func _ready() -> void:
 	battle.finished.connect(_on_finished)
 	_layout()
 	get_viewport().size_changed.connect(_layout)
+	Sfx.music("fight")
 	battle.start()
 
 
@@ -110,8 +111,10 @@ func _on_finished(won: bool) -> void:
 	_refresh_hud()
 	var go_on := func() -> void: _loot_panel(loot_items, coins, won)
 	if not won or not Game.run.adventure:
+		if not won:
+			await get_tree().create_timer(1.2).timeout  # a beat on the fallen board first
 		var panel := PanelContainer.new()  # the one dialogue screen (MenuKit.dialogue), on the diamond
-		var box := MenuKit.dialogue(panel, Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT"), hud.clear_rect)
+		var box := MenuKit.dialogue(panel, Txt.t("UI_VICTORY") if won else Txt.t("UI_DEFEAT") + "\n" + Txt.t("UI_DEFEAT_NEXT"), hud.clear_rect)
 		var b := MenuKit.primary(Txt.t("UI_CONTINUE"), func() -> void:
 			panel.queue_free()
 			go_on.call(), 22, MenuKit.DIALOG_W)

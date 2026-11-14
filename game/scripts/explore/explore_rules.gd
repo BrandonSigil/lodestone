@@ -670,6 +670,8 @@ static func thing_to_use(things: Array, at: Vector2i, facing: Vector2i, lit: Dic
 		if d > HINT_RANGE:
 			continue
 		d -= 0.01 * Vector2(CombatGrid.ground(c) - CombatGrid.ground(at)).normalized().dot(face)
+		if WALK_ON_KINDS.has(String(t.get("kind", ""))):
+			d += 0.75  # a "!" beats the doorway beside it (2026-11-13 playtest: F re-entered the house just left)
 		if d < best_d:
 			best = t
 			best_d = d

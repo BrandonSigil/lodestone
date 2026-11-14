@@ -9,9 +9,9 @@ const SIZE := 34.0
 var _btn: Button
 
 
-## On in debug builds (the editor, Brandon's runs) or with an empty ~/.lodestone/dev file; never in an export.
-static func enabled() -> bool:
-	return OS.is_debug_build() or FileAccess.file_exists(OS.get_environment("HOME") + "/.lodestone/dev")
+## Shown in dev mode only (opened from Dev Tools or an F key; Game.dev_mode), never on the player path.
+func enabled() -> bool:
+	return bool(get_node("/root/Game").get("dev_mode"))
 
 
 func _ready() -> void:

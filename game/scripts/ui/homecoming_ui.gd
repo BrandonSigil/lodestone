@@ -314,8 +314,12 @@ func _goal(foot: HBoxContainer) -> void:
 	head.text = Txt.t("UI_HC_NEXT")
 	head.add_theme_font_size_override("font_size", UiSkin.T_LEAD)
 	row.add_child(head)
-	if goal.is_empty():
-		row.add_child(MenuKit.label(Txt.t("UI_HC_NO_GOAL"), UiSkin.T_BODY, MenuKit.TEXT_DIM))
+	if goal.is_empty():  # no village step to pay: the playtest's next step (GoalRules), else NO GOAL YET
+		var main := GoalRules.main_goal(Game.flags_now())
+		var l := MenuKit.label(Txt.t(main) if main != "" else Txt.t("UI_HC_NO_GOAL"), UiSkin.T_BODY, MenuKit.TEXT if main != "" else MenuKit.TEXT_DIM)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(l)
 		return
 	var r: Dictionary = goal.row
 	head.tooltip_text = "%s: %s" % [Txt.t("BUILDING_" + String(r.building).to_upper()), Txt.t(String(r.name_key))]

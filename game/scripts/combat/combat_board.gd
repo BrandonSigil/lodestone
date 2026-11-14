@@ -121,6 +121,8 @@ var _paint_button := 0
 var hover := NONE
 var selected: CombatUnit = null
 var _floaters: Array[Dictionary] = []  # {"text", "pos", "t", "color", "size"}
+var _puffs: Array[Dictionary] = []  # {"pos", "t"}: a foe falling, as a dust puff (2026-11-13 playtest: foes just vanished)
+const PUFF_TIME := 0.8
 var _shouts: Array[Dictionary] = []  # BARK's shout rings: {"unit", "t"} (SHOUT_TIME down to 0)
 const SHOUT_TIME := 1.1
 const SHOUT_REACH := 6.0  ## how many tiles across the outer shout ring grows
@@ -220,6 +222,9 @@ func _process(delta: float) -> void:
 		f.t -= delta
 		f.pos.y -= 30.0 * delta
 	_floaters = _floaters.filter(func(f: Dictionary) -> bool: return f.t > 0.0)
+	for p in _puffs:
+		p.t -= delta
+	_puffs = _puffs.filter(func(p: Dictionary) -> bool: return p.t > 0.0)
 	for s in _shouts:
 		s.t -= delta
 	_shouts = _shouts.filter(func(s: Dictionary) -> bool: return s.t > 0.0)
@@ -1192,6 +1197,23 @@ func _paint_top() -> void:
 		var at: Vector2 = f.pos - Vector2((w - 120.0) * 0.5, 0)
 		_ci.draw_string_outline(font, at, f.text, HORIZONTAL_ALIGNMENT_CENTER, w, fs, maxi(4, fs / 4), Color(0, 0, 0, a))
 		_ci.draw_string(font, at, f.text, HORIZONTAL_ALIGNMENT_CENTER, w, fs, Color(f.color, a))
+	for pf in _puffs:  # a ring of dust spreading from where the foe stood, and motes rising and fading
+		var k := 1.0 - float(pf.t) / PUFF_TIME
+		var at: Vector2 = pf.pos
+		var fade := 1.0 - k
+		var dust := Color(0.42, 0.36, 0.3)  # a dark warm dust: it reads on snow and on grass alike
+		Pawn.ellipse(_ci, at, lerpf(14.0, 52.0, k), lerpf(7.0, 23.0, k), Color(dust, 0.7 * fade), false, 4.0)
+		Pawn.ellipse(_ci, at + Vector2(0, -2), lerpf(10.0, 36.0, k), lerpf(5.0, 15.0, k), Color(dust, 0.35 * fade))
+		for i in 10:
+			var ang := TAU * i / 10.0 + 0.4
+			var d := Vector2(cos(ang), sin(ang) * 0.5) * lerpf(8.0, 42.0, k) + Vector2(0, -lerpf(6.0, 56.0, k) * (0.6 + 0.4 * sin(i * 1.7)))
+			_ci.draw_circle(at + d, lerpf(6.0, 2.0, k), Color(dust.lightened(0.2), 0.9 * fade))
+			_ci.draw_circle(at + d, lerpf(3.0, 1.0, k), Color(0.95, 0.92, 0.85, 0.7 * fade))
+
+
+## A dust puff where a piece fell (the foe's figure leaves the board as it plays).
+func puff(c: Vector2i) -> void:
+	_puffs.append({"pos": cell_top(c), "t": PUFF_TIME})
 
 
 ## Not drawn: never seen under fog of war, or off screen on a big map.

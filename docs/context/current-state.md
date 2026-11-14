@@ -1,5 +1,7 @@
 # Current state
 
+> **2026-11-13 (read first):** the player path is built from a new-player E2E playtest Brandon approved: the game opens on a main menu (DEV TOOLS opens the old launch page in dev mode), a next-goal chain, one-time hints and a ticked first-fight card, a scripted fair first road fight, placeholder sound and music, F12 feedback notes, and export presets (`tools/export/build.sh`; Godot's export templates are not installed yet). How: `docs/systems/player-path.md`. The run steps below still say F5 opens the launch menu: it now opens the main menu.
+
 > **Paused 2026-11-02 (read first):** Brandon paused all Lodestone work: "sleep until I nudge you again". Every decision is in `docs/decisions.md` and every lane's work is on main; nothing is in flight and the Studio desk is clear. On his nudge, the PM restarts from `docs/context/roles/pm.md` (section "Where it stands") and the lanes from `docs/systems/studio.md` ("Three lanes"). Next jobs when work resumes: the pack and loot rebuild (UI lane; the FOUND ITEMS layout failed its look check) and tuning the Lich's second try (Systems).
 
 > **Handoff 2026-10-31 (read first):** Brandon paused system work so another Claude account can continue. What is open on the Studio desk, the notes between roles, and where each role stands are in `docs/context/studio-snapshot/README.md`. Each role restarts from `docs/context/roles/<role>.md`. The rest of this file is older background.

@@ -139,7 +139,8 @@ static func _party_page(box: VBoxContainer, changed: Callable, home: bool) -> vo
 		var tree := Engine.get_main_loop() as SceneTree
 		if tree.current_scene.has_method("bookmark"):
 			tree.current_scene.call("bookmark")
-		tree.quit())
+		var game := tree.root.get_node("Game")  # back to the main menu (2026-11-13), where QUIT closes the game
+		game.call("go", game.call("menu_scene")))
 	foot.add_child(quit)
 	if home:
 		var b := Button.new()
@@ -301,6 +302,23 @@ static func _options_page(box: VBoxContainer, changed: Callable) -> void:
 			Game.set_setting("ui_size", snappedf(clampf(size + step, 0.5, 2.0), UiTheme.SIZE_STEP))
 			changed.call())
 		size_row.add_child(b)
+	for vol: Array in [["music_volume", "UI_OPT_MUSIC", 0.7], ["sfx_volume", "UI_OPT_SOUND", 0.8]]:  # 2026-11-13: sound, in 10% steps
+		var vrow: HBoxContainer = row.call(String(vol[1]))
+		var now := clampf(float(Game.meta.get("settings", {}).get(vol[0], vol[2])), 0.0, 1.0)
+		for step: float in [-0.1, 0.1]:
+			if step > 0:
+				var shown := MenuKit.label(Txt.t("UI_OPT_OFF") if now <= 0.001 else "%d%%" % roundi(now * 100), UiSkin.T_BODY, MenuKit.GOLD)
+				shown.custom_minimum_size.x = 60.0
+				shown.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+				vrow.add_child(shown)
+			var vb := Button.new()
+			vb.text = "-" if step < 0 else "+"
+			vb.custom_minimum_size = Vector2(68, 32)
+			vb.pressed.connect(func() -> void:
+				Game.set_setting(String(vol[0]), snappedf(clampf(now + step, 0.0, 1.0), 0.1))
+				Sfx.apply_volumes()
+				changed.call())
+			vrow.add_child(vb)
 	var window: HBoxContainer = row.call("UI_OPT_WINDOW")
 	var full := bool(Game.meta.get("settings", {}).get("fullscreen", false))
 	for want: bool in [false, true]:  # both named, the one in use lit: no guessing what a press will do
@@ -379,7 +397,8 @@ static func lodestone(box: VBoxContainer, changed: Callable, close: Callable, ho
 		var tree := Engine.get_main_loop() as SceneTree
 		if tree.current_scene.has_method("bookmark"):
 			tree.current_scene.call("bookmark")
-		tree.quit())
+		var game := tree.root.get_node("Game")  # back to the main menu (2026-11-13), where QUIT closes the game
+		game.call("go", game.call("menu_scene")))
 	cell.call(Txt.t("UI_CLOSE_MENU"), close)
 
 
@@ -809,6 +828,24 @@ static func options(box: VBoxContainer, changed: Callable, back: Callable) -> vo
 	shown.text = "%d%%" % roundi(size * 100)
 	size_row.add_child(shown)
 	box.add_child(size_row)
+	for vol: Array in [["music_volume", "UI_OPT_MUSIC", 0.7], ["sfx_volume", "UI_OPT_SOUND", 0.8]]:  # 2026-11-13: sound
+		_label(box, Txt.t(String(vol[1])), UiSkin.T_BODY)
+		var vrow := HBoxContainer.new()
+		vrow.add_theme_constant_override("separation", 6)
+		var now := clampf(float(Game.meta.get("settings", {}).get(vol[0], vol[2])), 0.0, 1.0)
+		for step: float in [-0.1, 0.1]:
+			var vb := Button.new()
+			vb.text = "-" if step < 0 else "+"
+			vb.custom_minimum_size = Vector2(60, 30)
+			vb.pressed.connect(func() -> void:
+				Game.set_setting(String(vol[0]), snappedf(clampf(now + step, 0.0, 1.0), 0.1))
+				Sfx.apply_volumes()
+				changed.call())
+			vrow.add_child(vb)
+		var vl := Label.new()
+		vl.text = Txt.t("UI_OPT_OFF") if now <= 0.001 else "%d%%" % roundi(now * 100)
+		vrow.add_child(vl)
+		box.add_child(vrow)
 	_label(box, Txt.t("UI_OPT_WINDOW"), UiSkin.T_BODY)
 	var full := bool(Game.meta.get("settings", {}).get("fullscreen", false))
 	_button(box, Txt.t("UI_OPT_WINDOWED") if full else Txt.t("UI_OPT_FULL"), func() -> void:

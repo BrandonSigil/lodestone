@@ -248,6 +248,7 @@ func _foot(foot: HBoxContainer) -> void:
 	var st := String(takes[page])
 	var take := MenuKit.primary(Txt.t({"take": "UI_SHEET_TAKE", "held": "UI_SHEET_IN_HAND"}.get(st, "UI_SHEET_LOCKED")), func() -> void: taken.emit(page))
 	take.disabled = st != "take"
+	take.tooltip_text = Txt.t("UI_SHEET_LOCKED_TIP") if st == "locked" else ""  # why not, on a hover (2026-11-13 playtest)
 	take.focus_mode = Control.FOCUS_NONE
 	foot.add_child(take)
 

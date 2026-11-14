@@ -1,8 +1,8 @@
 class_name LaunchMenu
 extends Control
-## The launch screen (the game's main scene): one button per place we've built, so Play opens on a
-## fast-travel menu instead of a developer shortcut. Start game = the hero's cottage, the first walk.
-## F7 returns here from anywhere. Button labels are developer labels, not player text.
+## Dev Tools (2026-11-13: the main menu is the player's front door now; this page opens from its DEV TOOLS button):
+## one button per place and tool we've built. Anything started here runs in dev mode (god mode, test buttons, F keys).
+## F7 returns here from anywhere in dev mode. Button labels are developer labels, not player text.
 
 const BUTTON_SIZE := Vector2(270, 58)
 const EDGE := Vector2(40, 28)  # space kept clear around the menu
@@ -13,6 +13,7 @@ var _column: VBoxContainer
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	Game.dev_mode = true
 	theme = RisoTheme.make()
 	resized.connect(queue_redraw)
 
@@ -26,7 +27,7 @@ func _ready() -> void:
 	_column.minimum_size_changed.connect(_fit)
 
 	var title := Label.new()
-	title.text = "LODESTONE"
+	title.text = "DEV TOOLS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 56)
 	column.add_child(title)
@@ -39,8 +40,15 @@ func _ready() -> void:
 	card.add_child(_sections_row())
 	sections.add_child(card)
 
+	var back := Button.new()
+	back.text = "Back to the main menu (player mode)"
+	back.custom_minimum_size = Vector2(320, 40)
+	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	back.pressed.connect(func() -> void: Game.go(Game.MAIN_MENU))
+	column.add_child(back)
+
 	var hint := Label.new()
-	hint.text = "F7 back here   F8 map maker   F10 explore   F6 runs the open scene"
+	hint.text = "F7 back here   F8 map maker   F10 explore   F6 runs the open scene   F12 feedback note"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 13)
 	column.add_child(hint)
