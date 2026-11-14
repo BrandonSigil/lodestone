@@ -422,7 +422,7 @@ func _process(_delta: float) -> void:
 	# the floating controls box only shows while it holds a button or a line to read
 	if side_panel != null:
 		side_panel.visible = side.get_children().any(func(c: Node) -> bool:
-			return (c as CanvasItem).visible and (c is Button or (c is Label and (c as Label).text != "")))
+			return (c as CanvasItem).visible and (c is Button or c is FightCard or (c is Label and (c as Label).text != "")))
 
 
 ## A member's square in the party panel: as tall as the panel, four fit across.
@@ -669,6 +669,12 @@ func add_side_label(text: String, font_size := 14) -> Label:
 
 func fight_side(battle: Battle) -> Dictionary:
 	clear_side()
+	if UiSkin.on() and side_panel != null:  # the drawn skin: one compact card (FightCard), not a paragraph and two buttons
+		var card := FightCard.new(battle)
+		side.add_child(card)
+		battle.side_below = set_side_top
+		battle.layout(center_rect())
+		return {"phase": card.phase, "info": card.info}
 	var phase := add_side_label("", 20)
 	var info := add_side_label("", 14)
 	add_button(Txt.t("UI_END_PHASE"), func() -> void: battle.end_player_phase())

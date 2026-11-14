@@ -11,6 +11,7 @@ extends Node2D
 
 signal log_line(text: String)
 signal info(text: String)
+signal looked(u: CombatUnit, cell: Vector2i)  ## what a pick or the pointer is on now: a piece (or null) and a tile (or CombatBoard.NONE). The side card (FightCard) reads it; `info` is the same in words
 signal phase_changed(team: int)
 signal changed
 signal finished(won: bool)
@@ -24,6 +25,7 @@ const ALLY_COLOR := Color(0.35, 0.9, 0.45, 0.4)
 const AREA_COLOR := Color(1.0, 0.75, 0.3, 0.3)
 const CANCEL_SIZE := Vector2(120, 30)
 const AUTO_SIZE := Vector2(120, 28)
+const TEST_H := 24.0  ## the drawn skin: the test buttons' height
 
 var grid: CombatGrid
 var units: Array = []
@@ -150,7 +152,7 @@ func _build_ui() -> void:
 	_auto.toggle_mode = true
 	_auto.button_pressed = auto_fight
 	_auto.custom_minimum_size = Vector2(AUTO_SIZE.x, AUTO_SIZE.y)
-	_auto.add_theme_font_size_override("font_size", 12)
+	_auto.add_theme_font_size_override("font_size", UiSkin.T_SMALL if UiSkin.on() else 12)
 	_auto.toggled.connect(_on_auto_toggled)
 	_ui.add_child(_auto)
 	var hand_layer := CanvasLayer.new()  # under the bottom frame (layer 2): the cards peek over it and rise on a point
@@ -166,7 +168,7 @@ func _build_ui() -> void:
 	_hud.visible = false
 	_layout_btn = Button.new()  # testing: switch the action layout ([USER] 2026-10-30, three to pick from)
 	_layout_btn.custom_minimum_size = Vector2(AUTO_SIZE.x, AUTO_SIZE.y)
-	_layout_btn.add_theme_font_size_override("font_size", 12)
+	_layout_btn.add_theme_font_size_override("font_size", UiSkin.T_SMALL if UiSkin.on() else 12)
 	_layout_btn.pressed.connect(_next_layout)
 	_ui.add_child(_layout_btn)
 	_show_layout()
@@ -186,8 +188,14 @@ func layout(r: Rect2) -> void:
 	_layout_btn.custom_minimum_size.x = bw
 	_auto.position = Vector2(r.end.x - bw - 8, r.position.y + 8)
 	_layout_btn.position = _auto.position + Vector2(0, AUTO_SIZE.y + 4)
+	if UiSkin.on():  # the drawn skin: the two test buttons are one small row, each as wide as its words
+		for b: Button in [_auto, _layout_btn]:
+			b.custom_minimum_size = Vector2(0, TEST_H)
+			b.reset_size()
+		_layout_btn.position = Vector2(r.end.x - _layout_btn.size.x - 10, r.position.y + 8)
+		_auto.position = _layout_btn.position - Vector2(_auto.size.x + 6, 0)
 	if side_below.is_valid():  # the host's side box starts under them
-		side_below.call(_layout_btn.position.y + AUTO_SIZE.y + 6.0)
+		side_below.call(_layout_btn.position.y + _layout_btn.size.y + 6.0)
 	_log_view.place(r, _hud.dock_rect() if _hud != null else Rect2())
 	if not _fit_board:
 		return
@@ -724,6 +732,7 @@ func _select(u: CombatUnit) -> void:
 	_show_attack_hints()
 	_open_menu()
 	info.emit(unit_text(u))
+	looked.emit(u, CombatBoard.NONE)
 
 
 func _deselect() -> void:
@@ -984,6 +993,7 @@ func _start_targeting(a: Ability) -> void:
 		board.highlights[c] = col
 	_refresh_cancel()
 	info.emit(Txt.t(a.name_key))
+	looked.emit(selected, CombatBoard.NONE)
 
 
 func _cancel_targeting() -> void:
@@ -1175,6 +1185,7 @@ func _on_cell_clicked(c: Vector2i, right: bool) -> void:
 				_select(u)
 			elif u:
 				info.emit(unit_text(u))
+				looked.emit(u, CombatBoard.NONE)
 		S.MENU:
 			if _moving:
 				if u == null and reach.get("cost", {}).has(c):
@@ -1259,6 +1270,7 @@ func _move_selected(c: Vector2i) -> void:
 func _on_cell_hovered(c: Vector2i) -> void:
 	if c == CombatBoard.NONE:
 		_forecast.visible = false
+		looked.emit(null, CombatBoard.NONE)  # off the board: the side card goes back to the piece picked
 		return
 	if state == S.TARGET and targeting != null:
 		board.area = {}
@@ -1280,6 +1292,7 @@ func _on_cell_hovered(c: Vector2i) -> void:
 		info.emit(unit_text(u))
 	else:
 		info.emit(tile_text(c))
+	looked.emit(u, c)
 
 
 ## Hovering a ranged piece while nothing else is lit shades the tiles in its range it can't see ([USER] c14).
@@ -1393,6 +1406,37 @@ func unit_text(u: CombatUnit) -> String:
 		if Txt.has(key):
 			lines.append("%s: %s" % [Txt.t(key), Txt.t(key + "_DESC")])
 	return "\n".join(lines)
+
+
+## What the side card shows of piece u, as data (unit_text is the same in one string, for the hosts without the card).
+## {name, team, know, hp, max_hp, numbers: [[text key, value]], res_kind, res, res_max, tags: [String],
+## skills: [{name, cost}], traits: [{name, desc}]}. An unknown boss hides his HP and the moves he has not used.
+func unit_card(u: CombatUnit) -> Dictionary:
+	var know := known(u)
+	var skills := []
+	for a in u.abilities.slice(1):
+		if know or used.get(u, []).has(a.id):
+			skills.append({"name": Txt.t(a.name_key), "cost": a.res_cost if u.res_kind != "" else 0})
+	var traits := []
+	for t in u.traits:
+		var key := "TRAIT_" + String(t).to_upper()
+		if Txt.has(key):
+			traits.append({"name": Txt.t(key), "desc": Txt.t(key + "_DESC")})
+	return {"name": Txt.t(u.name_key), "team": u.team, "know": know, "hp": u.hp, "max_hp": u.max_hp,
+		"numbers": [["UI_STAT_MOVE", str(CombatRules.move_points(u))], ["UI_SHEET_JUMP", str(u.jump)],
+			["UI_SHEET_RANGE", str(u.range_max) if u.range_min == u.range_max else "%d-%d" % [u.range_min, u.range_max]],
+			["UI_STAT_DAMAGE", str(u.damage)], ["UI_STAT_ARMOR", str(u.armor)], ["UI_STAT_CRIT", "+%d%%" % u.crit]],
+		"res_kind": u.res_kind, "res": u.res, "res_max": u.res_max,
+		"tags": u.tags.map(func(t: StringName) -> String: return Txt.t("FOE_" + String(t).to_upper())),
+		"skills": skills, "traits": traits}
+
+
+## What the side card shows of tile c: {name, height, cost (0: no way through), cover, mark (what lands here, or "")}.
+func tile_card(c: Vector2i) -> Dictionary:
+	var m: Array = CombatRules.marks(units).get(c, [])
+	return {"name": String(CombatGrid.T.keys()[grid.terrain_at(c)]), "height": grid.height_at(c),
+		"cost": grid.step_cost(c) if grid.passable(c) else 0, "cover": grid.cover(c),
+		"mark": Txt.f("UI_MARK", [Txt.t(m[0].ability.name_key), int(m[0].left)]) if not m.is_empty() else ""}
 
 
 func tile_text(c: Vector2i) -> String:

@@ -22,6 +22,10 @@ const TIP_W := 205.0  ## narrow enough to sit beside the dock's portrait panel
 const PORTRAIT_DIR := "res://art/source/portraits/"
 const DOCK_GROW := 1.5  ## [USER] 2026-11-01 "the player UI/actionbar is tiny": the dock, its pop-ups and tips this much over the small size
 
+const SKIN_BOX := 46.0  ## the drawn skin: a box's side at the normal UI size (the dock is built at its real size, never scaled)
+const SKIN_FACE := Vector2(124, 92)  ## and the portrait's window
+const SKIN_TIP_W := 244.0
+
 var layout := "dock"
 var on_hover: Callable  ## (ability or null): light its range
 var on_unhover: Callable
@@ -49,6 +53,27 @@ func _ready() -> void:
 	_tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_tip.visible = false
 	add_child(_tip)
+
+
+## The dock's size against the normal one: 1 at the default UI size (the UI size option's 50% to 200% gives 0.5 to 2).
+static func grow() -> float:
+	return UiTheme.small() * DOCK_GROW / 0.75
+
+
+## How much the dock, its columns and its details are scaled when drawn. The painted dock is laid out small and scaled
+## up; the drawn skin's is laid out at its real size, so its words land on whole pixels and stay sharp.
+static func drawn_scale() -> float:
+	return 1.0 if UiSkin.on() else UiTheme.small() * DOCK_GROW
+
+
+## A box's side, in the dock's own units.
+static func box_px() -> float:
+	return roundf(SKIN_BOX * grow()) if UiSkin.on() else BOX
+
+
+## The size of the words under a box: never under the type scale's smallest (the old labels drew at about 7 px).
+static func text_px() -> int:
+	return UiSkin.snap(UiSkin.T_SMALL * grow()) if UiSkin.on() else 10
 
 
 func clear() -> void:
@@ -147,7 +172,7 @@ func dock_rect() -> Rect2:
 
 
 func hovering() -> bool:
-	return _slots.any(func(s: ActionSlot) -> bool: return is_instance_valid(s) and (s.is_hovered() or s.has_focus()))
+	return _slots.any(func(s: ActionSlot) -> bool: return is_instance_valid(s) and s.hot())
 
 
 var _bar_slots: Array[ActionSlot] = []
@@ -169,8 +194,14 @@ func _build() -> void:
 	_dock.add_child(row)
 	if swap_count > 0:  # NEXT GUY: an arrows icon, far left by the portrait ([USER] 2026-10-30)
 		row.add_child(_swap_button())
-	row.add_child(_portrait_panel(_unit))
-	var bar := _art_panel(Vector2(38, 20), Vector2(38, 20), Vector2(0, 292 * KS), _draw_bar)  # left piece, fill, right piece
+	row.add_child(_face_card(_unit) if UiSkin.on() else _portrait_panel(_unit))
+	var bar: PanelContainer
+	if UiSkin.on():  # one small window, the gem on its top edge; UiSkin.watch blurs the fight behind it
+		row.add_theme_constant_override("separation", 8)
+		bar = PanelContainer.new()
+		bar.add_theme_stylebox_override("panel", UiSkin.panel(14.0, 10.0, true, true, 10.0))
+	else:
+		bar = _art_panel(Vector2(38, 20), Vector2(38, 20), Vector2(0, 292 * KS), _draw_bar)  # left piece, fill, right piece
 	bar.size_flags_vertical = Control.SIZE_SHRINK_END
 	row.add_child(bar)
 	_bar = bar
@@ -199,14 +230,16 @@ func _build() -> void:
 	_tip.move_to_front()
 
 
-## One box: the icon, its key number, the label under it.
-func _box(e: Dictionary, parent: Control) -> ActionSlot:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 1)
+## One box: the icon, its key number, the label under it. `beside` (the drawn skin's pop-up column): the label to the
+## right of the box on one line, so a column reads as a short list.
+func _box(e: Dictionary, parent: Control, beside := false) -> ActionSlot:
+	var col: BoxContainer = HBoxContainer.new() if beside else VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8 if beside else 1)
 	var s := ActionSlot.new()
 	s.entry = e
 	s.unit = _unit
-	s.custom_minimum_size = Vector2(BOX, BOX)
+	s.custom_minimum_size = Vector2(box_px(), box_px())
+	s.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	s.disabled = not bool(e.enabled)
 	s.pressed.connect(func() -> void:
 		_hide_tip()
@@ -223,12 +256,39 @@ func _box(e: Dictionary, parent: Control) -> ActionSlot:
 	col.add_child(s)
 	var l := Label.new()
 	l.text = String(e.text)
-	l.add_theme_font_size_override("font_size", 10)
+	l.add_theme_font_size_override("font_size", text_px())
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART  # a long caveman name wraps under its box
 	l.custom_minimum_size = Vector2(BOX + 10, 0)
 	col.add_child(l)
 	parent.add_child(col)
+	if UiSkin.on():  # readable words: as wide as the name's longest word, so it wraps between words and never inside one
+		l.add_theme_color_override("font_color", UiSkin.TEXT if bool(e.enabled) else UiSkin.TEXT_DIM)
+		l.add_theme_constant_override("line_spacing", -2)
+		var font := l.get_theme_font("font")
+		var widest := box_px() + 6.0
+		for word in String(e.text).split(" ", false):
+			widest = maxf(widest, ceilf(font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, text_px()).x) + 2.0)
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD
+		l.custom_minimum_size = Vector2(widest, 0)
+		if beside:
+			l.autowrap_mode = TextServer.AUTOWRAP_OFF
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+			l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			l.custom_minimum_size = Vector2.ZERO
+			l.mouse_filter = Control.MOUSE_FILTER_STOP  # the name is part of the button: pointing at it or clicking it is the box
+			l.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+			l.mouse_entered.connect(func() -> void:
+				s.named = true
+				s.queue_redraw()
+				_hover(s))
+			l.mouse_exited.connect(func() -> void:
+				s.named = false
+				s.queue_redraw()
+				_unhover(s))
+			l.gui_input.connect(func(ev: InputEvent) -> void:
+				if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT and not s.disabled:
+					s.pressed.emit())
 	_slots.append(s)
 	return s
 
@@ -241,10 +301,12 @@ var _pieces := {}
 func _swap_button() -> Button:
 	var b := Button.new()
 	b.tooltip_text = Txt.t("UI_SWAP")
-	b.custom_minimum_size = Vector2(48, 48)
+	var side := box_px() if UiSkin.on() else 48.0
+	var u := side / 48.0
+	b.custom_minimum_size = Vector2(side, side)
 	b.size_flags_vertical = Control.SIZE_SHRINK_END
 	b.focus_mode = Control.FOCUS_ALL
-	for n in ["normal", "hover", "pressed", "focus"]:
+	for n in ([] if UiSkin.on() else ["normal", "hover", "pressed", "focus"]):  # the drawn skin: a plain button like any other
 		var sb := StyleBoxFlat.new()
 		sb.bg_color = Color(0.05, 0.2, 0.14) if n != "hover" else Color(0.1, 0.3, 0.22)
 		sb.border_color = Color(0.9, 0.82, 0.7) if n != "focus" else Color(0.55, 0.78, 1.0)
@@ -252,12 +314,12 @@ func _swap_button() -> Button:
 		sb.set_corner_radius_all(3)
 		b.add_theme_stylebox_override(n, sb)
 	b.draw.connect(func() -> void:  # an arrow right over an arrow left
-		var c := Color(0.9, 0.82, 0.7)
+		var c := UiSkin.HAIR if UiSkin.on() else Color(0.9, 0.82, 0.7)
 		for d in [[-1.0, 15.0], [1.0, 33.0]]:
 			var dir: float = d[0]
-			var y: float = d[1]
-			b.draw_line(Vector2(24 - 13 * dir, y), Vector2(24 + 13 * dir, y), c, 2.0)
-			b.draw_colored_polygon(PackedVector2Array([Vector2(24 + 15 * dir, y), Vector2(24 + 6 * dir, y - 6), Vector2(24 + 6 * dir, y + 6)]), c))
+			var y: float = d[1] * u
+			b.draw_line(Vector2(24 - 13 * dir, y / u) * Vector2(u, u), Vector2(24 + 13 * dir, y / u) * Vector2(u, u), c, 2.0)
+			b.draw_colored_polygon(PackedVector2Array([Vector2((24 + 15 * dir) * u, y), Vector2((24 + 6 * dir) * u, y - 6 * u), Vector2((24 + 6 * dir) * u, y + 6 * u)]), c))
 	b.pressed.connect(func() -> void:
 		if on_swap.is_valid():
 			on_swap.call())
@@ -320,6 +382,11 @@ func _draw_bar(c: Control) -> void:
 ## A pop-up column's container: plain, with a thin rim, standing on the bar.
 func _plain_panel() -> PanelContainer:
 	var p := PanelContainer.new()
+	if UiSkin.on():  # a small window of the same felt; its foot runs on behind the bar's top edge
+		var felt := UiSkin.panel(8.0, 8.0, false, false, 10.0)
+		felt.content_margin_bottom = 12.0
+		p.add_theme_stylebox_override("panel", felt)
+		return p
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0.05, 0.2, 0.14)
 	sb.border_color = Color(0.9, 0.82, 0.7)
@@ -335,9 +402,9 @@ func _plain_panel() -> PanelContainer:
 
 func _diamond_sep() -> Control:
 	var c := Control.new()
-	c.custom_minimum_size = Vector2(10, BOX)
+	c.custom_minimum_size = Vector2(10, box_px())
 	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	c.draw.connect(func() -> void: UiTheme.diamond(c, Vector2(5, BOX + 8), 4.0))
+	c.draw.connect(func() -> void: UiTheme.diamond(c, Vector2(5, box_px() + 8), 4.0))
 	return c
 
 
@@ -353,13 +420,13 @@ func _pop(s: ActionSlot) -> void:
 	_pop_panel = _plain_panel()
 	add_child(_pop_panel)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 2)
+	col.add_theme_constant_override("separation", 4 if UiSkin.on() else 2)
 	_pop_panel.add_child(col)
 	var made: Array[ActionSlot] = []
 	for i in range(entries.size() - 1, -1, -1):  # built top-down, so the first entry ends up nearest the bar
 		var e: Dictionary = entries[i]
 		e["key"] = -1
-		made.push_front(_box(e, col))
+		made.push_front(_box(e, col, UiSkin.on()))
 		made[0].mouse_exited.connect(_maybe_close_pop)
 	_pop_slots = made
 	for i in made.size():
@@ -374,7 +441,7 @@ func _pop(s: ActionSlot) -> void:
 	if not is_instance_valid(_pop_panel) or _pop_for != s:
 		return
 	_pop_panel.reset_size()
-	var k := UiTheme.small() * DOCK_GROW
+	var k := drawn_scale()
 	_pop_panel.scale = Vector2(k, k)
 	var r := s.get_global_rect()
 	var x := r.get_center().x - _pop_panel.size.x * k * 0.5
@@ -402,9 +469,9 @@ func _maybe_close_pop() -> void:
 	await get_tree().process_frame
 	if _pop_for == null:
 		return
-	var on := is_instance_valid(_pop_for) and (_pop_for.is_hovered() or _pop_for.has_focus())
+	var on := is_instance_valid(_pop_for) and _pop_for.hot()
 	for m in _pop_slots:
-		on = on or (is_instance_valid(m) and (m.is_hovered() or m.has_focus()))
+		on = on or (is_instance_valid(m) and m.hot())
 	if not on:
 		_close_pop()
 
@@ -415,9 +482,9 @@ func _place() -> void:
 	if _dock == null:
 		return
 	_dock.reset_size()
-	var k := UiTheme.small() * DOCK_GROW  # [USER] 2026-10-30: the fight dock much smaller, with a size option
+	var k := drawn_scale()  # [USER] 2026-10-30: the fight dock much smaller, with a size option
 	_dock.scale = Vector2(k, k)
-	_dock.position = Vector2(_area.get_center().x - _dock.size.x * k * 0.5, _area.end.y - FRAME_ART - _dock.size.y * k)
+	_dock.position = Vector2(_area.get_center().x - _dock.size.x * k * 0.5, _area.end.y - FRAME_ART - _dock.size.y * k).round()
 	if not _bar_slots.is_empty() and not hovering():
 		_bar_slots[0].grab_focus()
 
@@ -451,6 +518,57 @@ func _portrait_panel(u: CombatUnit) -> Control:
 		res.position = Vector2(x, y + 13.0)
 		panel.add_child(res)
 	return panel
+
+
+## The drawn skin's portrait card: the selected character's face in a small window of its own, then HP as a bar and the
+## job's resource as pips, each with its number beside it at a size that reads.
+func _face_card(u: CombatUnit) -> Control:
+	var k := grow()
+	var p := PanelContainer.new()
+	p.add_theme_stylebox_override("panel", UiSkin.panel(7.0, 7.0, false, false, 10.0))
+	p.size_flags_vertical = Control.SIZE_SHRINK_END
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 4)
+	p.add_child(col)
+	var face_size := (SKIN_FACE * k).round()
+	var holder := Control.new()
+	holder.custom_minimum_size = face_size
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.draw.connect(func() -> void:
+		holder.draw_rect(Rect2(Vector2.ZERO, holder.size), MenuKit.PORTRAIT_BG)
+		holder.draw_rect(Rect2(Vector2.ZERO, holder.size).grow(1.0), Color(UiSkin.INK, 0.8), false, 1.0))
+	holder.add_child(_portrait(u, Rect2(Vector2.ZERO, face_size)))
+	col.add_child(holder)
+	col.add_child(_skin_meter(u.hp, u.max_hp, VictoryUi.HP_RED, false, face_size.x))
+	if u.res_kind != "":
+		col.add_child(_skin_meter(u.res, u.res_max, FightCard.RES_COLORS.get(u.res_kind, Color.WHITE), true, face_size.x))
+	return p
+
+
+## The drawn skin's meter: a rounded track with a fill (HP) or pips (the resource), and value/max to its right.
+func _skin_meter(v: int, most: int, tint: Color, pips: bool, w: float) -> Control:
+	var px := text_px()
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(w, px + 3.0)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.draw.connect(func() -> void:
+		var font := c.get_theme_default_font()
+		var text := "%d/%d" % [v, most]
+		var num_w := maxf(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, px).x, font.get_string_size("00/00", HORIZONTAL_ALIGNMENT_LEFT, -1, px).x)
+		var r := Rect2(0, roundf((c.size.y - 10.0) * 0.5), c.size.x - num_w - 6.0, 10.0)
+		var track := UiSkin.flat(Color(0, 0, 0, 0.45), Color(1, 1, 1, 0.14), 5, 0.0, 0.0)
+		c.draw_style_box(track, r)
+		if pips and most > 0:
+			var each := (r.size.x - 2.0) / most
+			for i in most:
+				c.draw_rect(Rect2(r.position.x + 1.0 + i * each + 0.5, r.position.y + 2.0, each - 1.0, r.size.y - 4.0), tint if i < v else Color(tint, 0.18))
+		elif most > 0:
+			var fw := (r.size.x - 2.0) * clampf(float(v) / most, 0.0, 1.0)
+			if fw > 1.0:
+				var fill := UiSkin.flat(tint, Color(1, 1, 1, 0.0), 4, 0.0, 0.0, 0)
+				c.draw_style_box(fill, Rect2(r.position + Vector2(1, 1), Vector2(fw, r.size.y - 2.0)))
+		c.draw_string(font, Vector2(c.size.x - num_w, c.size.y * 0.5 + px * 0.36), text, HORIZONTAL_ALIGNMENT_RIGHT, num_w, px, UiSkin.TEXT))
+	return c
 
 
 ## A bar (HP) or a row of pips (the resource), with value/max beside it.
@@ -509,7 +627,7 @@ func _hover(s: ActionSlot) -> void:
 	if a == null:
 		return
 	await get_tree().create_timer(TIP_DELAY).timeout  # a short rest on the box asks for its details
-	if is_instance_valid(s) and (s.is_hovered() or s.has_focus()):
+	if is_instance_valid(s) and s.hot():
 		_show_tip(s)
 
 
@@ -528,7 +646,7 @@ func _process(_delta: float) -> void:
 	if not visible or not Input.is_key_pressed(KEY_SHIFT):  # holding Shift asks for the box under the pointer
 		return
 	for s in _slots:
-		if is_instance_valid(s) and (s.is_hovered() or s.has_focus()) and s.entry.get("ability") != null and _tip_for != s:
+		if is_instance_valid(s) and s.hot() and s.entry.get("ability") != null and _tip_for != s:
 			_show_tip(s)
 
 
@@ -548,17 +666,17 @@ func _show_tip(s: ActionSlot) -> void:
 		if i == 0:
 			l.theme_type_variation = &"SubTitle"
 		else:
-			l.add_theme_font_size_override("font_size", 12)
+			l.add_theme_font_size_override("font_size", UiSkin.T_SMALL if UiSkin.on() else 12)
 		if i == lines.size() - 1 and i > 3:
 			l.add_theme_color_override("font_color", Color(0.75, 0.9, 0.75))  # the caveman line
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size = Vector2(TIP_W, 0)
+		l.custom_minimum_size = Vector2(SKIN_TIP_W if UiSkin.on() else TIP_W, 0)
 		_tip_box.add_child(l)
 	_tip.visible = true
 	_tip.reset_size()
 	await get_tree().process_frame
 	if _tip_for == s:
-		var k := UiTheme.small() * DOCK_GROW
+		var k := drawn_scale()
 		_tip.scale = Vector2(k, k)
 		_tip.position = Vector2(_area.position.x + 10, _area.end.y - _tip.size.y * k - FRAME_ART * 0.6)  # bottom left
 

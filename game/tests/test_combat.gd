@@ -1193,6 +1193,64 @@ func test_action_hover_card_reads_the_data() -> void:
 	eq(ActionInfo.wait_text(dog, Db.ability("bite")), Txt.f("TIP_CHARGE_BACK", dog.res_every))
 
 
+## The fight's side card (menus v3, round six): the piece and the tile as data in rows, not a paragraph. It shows the
+## piece picked, or the one under the pointer; END TURN sleeps on the foes' turn.
+func test_the_fight_card_reads_the_piece_and_the_tile() -> void:
+	var g := CombatGrid.flat(6, 3)
+	var mage := _unit("mage", 0, Vector2i(1, 1), g)
+	var foe := _unit("bandit", 1, Vector2i(4, 1), g)
+	var b := Battle.new()
+	b.grid = g
+	b.units = [mage, foe]
+	var d := b.unit_card(mage)
+	eq(d.name, Txt.t(mage.name_key))
+	eq((d.skills as Array).size(), mage.abilities.size() - 1, "every move but the plain hit, each with its cost")
+	ok((d.numbers as Array).any(func(n: Array) -> bool: return n[0] == "UI_STAT_MOVE" and n[1] == str(CombatRules.move_points(mage))), "the numbers are pairs of a text key and a value")
+	eq(int(b.tile_card(Vector2i(2, 1)).cost), g.step_cost(Vector2i(2, 1)), "a tile's step cost")
+	var card := FightCard.new(b)
+	(Engine.get_main_loop() as SceneTree).root.add_child(card)
+	var words := func() -> Array:
+		return card.find_children("*", "Label", true, false).map(func(l: Label) -> String: return l.text)
+	b.selected = mage
+	card._process(0.0)
+	ok(words.call().has(Txt.t(mage.name_key)), "the piece picked shows")
+	ok(not card.end_turn.disabled, "END TURN is live on your turn")
+	b.looked.emit(foe, foe.cell)
+	card._process(0.0)
+	eq(card.shown(), foe, "the piece under the pointer takes the card")
+	ok(words.call().has(Txt.t(foe.name_key)) and words.call().has(Txt.t("UI_TILE_HEIGHT")), "with the tile it stands on")
+	ok(not words.call().has(Txt.t(mage.name_key)), "and the other piece's rows are gone")
+	b.looked.emit(null, CombatBoard.NONE)
+	eq(card.shown(), mage, "off the board: back to the piece picked")
+	b.state = Battle.S.BUSY
+	card._process(0.0)
+	ok(card.end_turn.disabled, "END TURN sleeps while the foes move")
+	eq(card.phase.text, Txt.t("UI_ENEMY_PHASE"))
+	card.queue_free()
+	b.free()
+
+
+## The log is one quiet line, the newest thing that happened; a click opens the whole log. And the dock is laid out at
+## its real size, so the words under its boxes are never smaller than the type scale's smallest.
+func test_the_fight_log_is_a_quiet_line_and_the_dock_reads() -> void:
+	var view := CombatLog.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(view)
+	ok(not view.visible, "nothing has happened: nothing shows")
+	view.add("ONE")
+	view.add("  TWO")
+	ok(view.visible and not view.open, "one line")
+	eq(view._line.text, "TWO", "the newest")
+	ok(not view._text.visible, "the whole log is put away")
+	view._line.pressed.emit()
+	ok(view.open and view._text.visible, "a click opens it")
+	eq(view._line.text, Txt.t("UI_LOG_HIDE"))
+	view._line.pressed.emit()
+	ok(not view.open and view._line.text == "TWO", "and another puts it away")
+	view.queue_free()
+	eq(ActionHud.drawn_scale(), 1.0, "the dock is never scaled")
+	ok(ActionHud.text_px() >= UiSkin.T_SMALL, "its words are on the type scale")
+
+
 ## The dock (Brandon's pictures, dev-action-dock): MOVE, HIT, TRICKS, BELT, WAIT; GUARD pops up over HIT and the
 ## spells over TRICKS, the first nearest the bar; keys 1 to 0 pick a bar box, and up goes into its column.
 func test_the_dock_bar_and_its_pop_up_columns() -> void:

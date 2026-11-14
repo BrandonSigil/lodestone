@@ -626,6 +626,29 @@ func run(s: Node, f: int, step: String) -> bool:
 				var row: Array = hud._pop_slots if not hud._pop_slots.is_empty() else hud._bar_slots
 				if int(parts[2]) < row.size():
 					row[int(parts[2])].grab_focus()
+			# a fourth part puts the side card or the log in a state: foe (the pointer on a foe), tile (on a bare tile),
+			# aim (aiming the first spell), log (the log open), danger (danger tiles on), enemy (the foes' turn)
+			if f == 34 and parts.size() > 3:
+				var b: Battle = s.battle
+				var foe: CombatUnit = b.units.filter(func(u: CombatUnit) -> bool: return u.team == 1)[0]
+				match parts[3]:
+					"foe":
+						b.looked.emit(foe, foe.cell)
+					"tile":
+						b.looked.emit(null, s.party[0].cell + Vector2i(1, 0))
+					"aim":
+						b._start_targeting(s.party[0].abilities[1])
+					"log":
+						for i in 6:
+							b.log_line.emit("LOG LINE %d FOR THE SHOT" % i)
+						b._log_view.set_open(true)
+					"danger":
+						b.show_danger = true
+						b._refresh_danger()
+					"enemy":
+						b._deselect()
+						b._hide_menu()
+						b.state = Battle.S.BUSY
 			return f == 150  # past the hover delay at any frame rate
 		"levelup", "levelup_dog", "levelup_ranked":
 			# the level-up screen: the hero (sword) or the dog gets XP for a level, then the screen opens (levelup_ranked: the

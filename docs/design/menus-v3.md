@@ -10,11 +10,28 @@
 
 [USER] 2026-11-13, after round two: "Start layouts" (the next-step button).
 
-Before and after pictures of every menu: `art/screens/menus-v3/` (left is main today, right is the prototype as it stands). `_layout_1.jpg` and `_layout_2.jpg` put main, round two and the first layouts side by side. `_show_1.jpg` to `_show_3.jpg` are from round two (main, the first drawn skin, round two); `_bar_close.jpg` does the same for the bottom bar.
+Before and after pictures of every menu: `art/screens/menus-v3/` (left is main today, right is the prototype as it stands). `_layout_1.jpg` and `_layout_2.jpg` put main, round two and the first layouts side by side. `_show_1.jpg` to `_show_3.jpg` are from round two (main, the first drawn skin, round two); `_bar_close.jpg` does the same for the bottom bar. `_tabs_`, `_sheet_` and `_hud_` are rounds four to six.
 
 [USER] 2026-11-13, after round three: "Yes, tabs next" (the next-step button).
 
 [USER] 2026-11-13, after round four: "Yes, sheet next" (the next-step button).
+
+[USER] 2026-11-13, after round five: "Yes, fight HUD" (the next-step button).
+
+## Round six: the fight HUD
+
+Pictures: `_hud_1.jpg` (left the fight as it stood after round five, right now: the hero's abilities popped up in a crypt fight, then a road fight), `_hud_2.jpg` (the side card with the pointer on a foe, aiming a spell, the log open, the foes' turn), and `fight_dock.jpg` and `road_fight.jpg` (main | now).
+
+- **The side card** (`FightCard`, built by `FrameHud.fight_side`). The old side box printed a paragraph (`Battle.unit_text`) over two full-width buttons. The card reads data instead (`Battle.unit_card`, `Battle.tile_card`): whose turn and the round on top; END TURN, the one gold button, with DANGER beside it; then the piece's name, HP and its resource as bars, six numbers as a quiet grid, and a row a move with what it costs.
+- **The buttons never move.** They sit above the piece, so the card grows and shrinks under them as the pointer moves. END TURN sleeps on the foes' turn. DANGER stays lit while the danger tiles are on. Both say their key in a hover tip.
+- **Who the card shows.** The piece under the pointer, else the piece picked. A bare tile under the pointer adds one quiet block under the piece (the tile's name, height, step cost, cover, or what lands there) instead of replacing it, so the card no longer flips between a piece and a tile. While a move is being aimed its row is gold and the card says AIMING.
+- **The dock is laid out at its real size.** It used to be built small and scaled to 75%, so the words under its boxes drew at about 7 px and soft. Under the skin nothing is scaled (`ActionHud.drawn_scale`): boxes are 46 px, the words under them 13 px, as wide as their longest word. The UI size option still sizes it (`ActionHud.grow`).
+- **The portrait card** is a small window: the face, HP as a bar and the resource as pips, each with its number at 13 px (they were about 7).
+- **A pop-up column is a short list**: each box with its name beside it on one line, the name clickable too. Three spells are 150 px tall where they were 250.
+- **The details panel** (bottom left, on a rest over a box) is at its real size too: 13 px lines.
+- **The log is one quiet line**, the newest thing that happened, bottom right on a soft ink pill as wide as its words. A click opens the whole log in a small window over it; HIDE LOG puts it away. The empty bordered box is gone.
+- **The two test buttons** are one small row at the top right, each as wide as its words.
+- `LODESTONE_SKIN=old` keeps the old side box, the painted dock and the boxed log.
 
 ## Round five: the character sheet on the kit
 
@@ -111,7 +128,10 @@ To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot
 
 ## What it does not do yet (honest notes)
 
-- **One layout is still the old one:** the fight's text panel, dock labels and log box. That is step 6.
+- The fight HUD was checked in ten screenshots and by tests; nobody has played a fight with it yet. Never run by hand: clicking a name in a pop-up list, the log opening on a click during play, DANGER from the card.
+- The dock is wider than it was (readable words need the room): about 380 px for five boxes where it was 320, plus the portrait card. With many boxes on a narrow window it has not been checked.
+- A tile's name on the side card is still the engine's word for it (STONE, VOID); they have no text keys yet.
+- The fight's list layout (the UI: LIST test button), the forecast box and the round banner are untouched.
 - The sheet's skill rows say DMG, reach and costs in the level up window's words; the unarmed hero's sheet is one row with plain felt under it.
 - The sheet was checked in four screenshots (the hero, the dog, two rack pages) and by tests; nobody has opened it in live play yet.
 - The tabs have no keys of their own yet (the left and right keys walk them once one has the focus); a pad's shoulder buttons would be the usual way.
@@ -124,7 +144,6 @@ To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot
 - The launch menu and the map maker are not touched.
 - The blur reads the screen once per frame. It ran fine in every shot (Compatibility renderer); it has not been measured on the Windows PC.
 - The big diamond replaces a labelled button, so a new player has only the word under it and the hover tip to learn what it is. Worth a first-time hint when the stone is found.
-- In a fight the test buttons and the log box at the right are still their old flat look.
 - Not look-checked by a second reviewer yet. Brandon has seen rounds one and two as pictures, not in play.
 
 ## If Brandon likes the direction, the order I would build it
@@ -134,4 +153,4 @@ To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot
 3. Done (round three): pack, loot and found items as one window with sections (it fixes the cut-off with a full party).
 4. Done (round four): the Lodestone menu as tabs: Party, Pack, Village, Options.
 5. Done (round five): the character sheet on the kit.
-6. The fight HUD: side panel as a compact card, dock labels readable, the log as a quiet line.
+6. Done (round six): the fight HUD: the side panel as a compact card, the dock at its real size with readable words, the log as a quiet line.

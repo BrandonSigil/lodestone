@@ -10,6 +10,12 @@ const BASIC_ICONS := {"move": "dash", "guard": "guard", "wait": "focus", "undo":
 var entry: Dictionary = {}
 var unit: CombatUnit
 var open := false  ## TRICKS or STUFF whose row is open: drawn lit
+var named := false  ## the pointer is on this box's name beside it (the drawn skin's pop-up list): the same as on the box
+
+
+## Under the pointer (the box or its name) or holding the keys' focus.
+func hot() -> bool:
+	return is_hovered() or has_focus() or named
 
 
 static func tint(e: Dictionary) -> Color:
@@ -105,4 +111,4 @@ func _ready() -> void:
 
 
 func _draw() -> void:
-	paint(self, Rect2(Vector2.ZERO, size), entry, unit, is_hovered() or has_focus() or open)
+	paint(self, Rect2(Vector2.ZERO, size), entry, unit, hot() or open)
