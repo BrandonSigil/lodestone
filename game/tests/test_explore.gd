@@ -601,3 +601,38 @@ func test_the_village_dog_waits_in_the_square_only_after_the_rescue() -> void:
 	ok(not sq.is_empty(), "the village has the dog's square spot")
 	ok(not ExploreRules.spot_waits(sq, m.things, ["lead"], []), "a new game: no dog in the square")
 	ok(ExploreRules.spot_waits(sq, m.things, ["lead"], ["dog"]), "rescued and sent to the square: he waits there")
+
+
+## Brandon's bug (2026-11-14, backlog P24): "This house has some seethrough even when I'm not near it." The village
+## tavern opened a window for the usable barrel behind it (and would for a waiting person) from across the map.
+## People and usable things open windows only once a party piece is close; a piece really behind a house still
+## opens one at any range.
+func test_waiting_things_open_windows_only_when_the_party_is_near() -> void:
+	var m := ExploreMap.load_named("village")
+	var barrel := Vector2i(35, 19)
+	var tavern := Vector2i(29, 18)
+	var b := CombatBoard.new()
+	b.grid = m.grid
+	b.rot = m.view
+	b.strangeness = m.strangeness
+	b.art_set = m.art_set
+	BattleArt.use_set(m.art_set)
+	b.usable = {barrel: true}
+	var u := _unit("knight")
+	u.team = 0
+	u.hp = u.max_hp
+	u.shown_hp = u.hp
+	b.units = [u]
+	u.place(Vector2i(12, 28), m.grid.height_at(Vector2i(12, 28)))  # the start, far from the tavern
+	b._find_cover()
+	ok(not b._covered_props.has(barrel), "far away: the barrel behind the tavern gets no silhouette")
+	ok(not b._fade.has(tavern), "far away: the tavern stays solid")
+	u.place(Vector2i(36, 24), m.grid.height_at(Vector2i(36, 24)))  # beside the forest edge, a few cells off
+	b._find_cover()
+	ok(b._covered_props.has(barrel), "near: the hidden barrel shows")
+	ok(b._fade.has(tavern), "near: the tavern opens its window")
+	u.place(Vector2i(30, 14), m.grid.height_at(Vector2i(30, 14)))  # a piece really behind the tavern still gets its window from any range
+	b._find_cover()
+	ok(b._fade.has(tavern), "a piece behind the tavern opens it")
+	BattleArt.use_set("")
+	b.free()
