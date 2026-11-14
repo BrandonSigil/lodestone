@@ -102,7 +102,7 @@ func play(t: SceneTree) -> void:
 	game.run.members[0].hp = 0
 	game.recall()
 	s = await _explore("village")
-	_check(s.leader().cell == game.SQUARE, "woke in the square")
+	_check(_by_square(s.leader().cell), "woke in the square")
 	_check(game.run.item_count("rope") == rope and game.run.gold == gold, "kept every item")
 	_check(game.run.members.all(func(m: Dictionary) -> bool: return m.hp == game.run.max_hp(m)), "everyone at full HP")
 	_check(game.has_flag("lodestone_revealed"), "a fall reveals the Lodestone")
@@ -221,6 +221,13 @@ func _explore(map_name: String) -> Node:
 		await _dismiss(s)
 	print("-- %s" % map_name)
 	return s
+
+
+## In the square: on the wake-up cell or a step from it (since 2026-11-13 an arrival stands a step clear of where it
+## came in, ExploreScene._free_start).
+func _by_square(c: Vector2i) -> bool:
+	var d: Vector2i = c - game.SQUARE
+	return maxi(absi(d.x), absi(d.y)) <= 1
 
 
 func _thing(s: Node, id: String) -> Dictionary:
@@ -423,9 +430,13 @@ func _fell(what: String) -> Node:
 	print("  lost %s: the Lodestone brings the party home" % what)
 	var cur := tree.current_scene
 	if String(cur.scene_file_path).ends_with("explore.tscn"):
+		var waited := 0.0  # the defeat box comes up after a beat on the fallen board (2026-11-13 playtest): wait for it
+		while cur.get("_dialog") == null and waited < 10.0:
+			await tree.process_frame
+			waited += tree.root.get_process_delta_time()
 		await _press(cur, 0)
 	var v: Node = await _explore("village")
-	_check(v.leader().cell == game.SQUARE, "woke in the square")
+	_check(_by_square(v.leader().cell), "woke in the square")
 	_check(_kept(game.run.items) == items, "kept every item (materials go to the village pile)")
 	_check(game.run.members.all(func(m: Dictionary) -> bool: return m.hp == game.run.max_hp(m)), "everyone at full HP")
 	return v
