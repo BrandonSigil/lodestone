@@ -72,6 +72,7 @@ const FENCE_THIN := 0.12  ## a wall between two floors: this deep in cells ([USE
 const BLINK_MIN := 2.5  ## a standing piece blinks after this many seconds at the soonest
 const BLINK_MAX := 6.0  ## and this many at the latest
 const FOOT := 0.3  ## a piece's feet (and its ring) reach this far from its middle, in cells
+const THING_WINDOW_RANGE := 6  ## cells: people waiting and usable things open a window only when a party piece is this close
 const WINDOW_R := 92.0  ## see-through window round a piece behind a prop: radius on screen ([USER] 2026-11-01: "even wider", was 56)
 const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
 const WINDOW_MIN := 0.12  ## the prop's alpha in the open middle
@@ -4076,11 +4077,11 @@ func _find_cover() -> void:
 	_covered_props.clear()
 	for fc: Vector2i in figures:  # people waiting on an explore map (a fallen Bushberry among trees) get windows too
 		var fbox := Rect2(cell_top(fc) + Vector2(-30, -26), Vector2(60, 28)) if low_figures.has(fc) else Rect2(cell_top(fc) + Vector2(-20, -54), Vector2(40, 54))
-		if not hidden(fc) and _front_cover(fbox, fc, depth_of(fc.x, fc.y)):
+		if not hidden(fc) and _party_near(fc) and _front_cover(fbox, fc, depth_of(fc.x, fc.y)):
 			_covered_figs[fc] = true
 	for uc: Vector2i in usable:  # a usable thing's prop (a barrel, a chest) a tree in front hides gets a gold silhouette
 		var a := grid.prop_anchor(uc)
-		if a == CombatGrid.NONE_CELL or hidden(uc):
+		if a == CombatGrid.NONE_CELL or hidden(uc) or not _party_near(uc):
 			continue
 		var pr: Dictionary = grid.props[a]
 		var tex := prop_texture(pr, grid.zone_at(a))
@@ -4089,6 +4090,15 @@ func _find_cover() -> void:
 		var front := _prop_front(a, pr)
 		if _front_cover(_prop_rect(a, pr, tex), a, depth_of(front.x, front.y), 0.3):
 			_covered_props[a] = true
+
+
+## Is a living party piece within THING_WINDOW_RANGE cells of `c`? People waiting on a map and usable things only
+## open a see-through window once the party is close enough to be looking for them, never from across the map.
+func _party_near(c: Vector2i) -> bool:
+	for u: CombatUnit in units:
+		if u.team == 0 and u.shown_hp > 0 and maxi(absi(roundi(u.vis.x) - c.x), absi(roundi(u.vis.y) - c.y)) <= THING_WINDOW_RANGE:
+			return true
+	return false
 
 
 ## Trees and see-through props in front of the screen box `box` (standing on `at`, depth d): each that overlaps it by
