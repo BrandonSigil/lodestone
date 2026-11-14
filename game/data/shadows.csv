@@ -1,0 +1,31 @@
+key,a,b,c,shape,note
+sun,0.6,0.2,,,"The one sun (upper left): ground shift on screen per px of height. a = to the right, b = toward the viewer. Longer a = lower sun."
+color,0.12,0.15,0.3,,"Shadow colour (cool, never grey: style bible B12)"
+alpha,0.3,,,,"The one opacity every shadow shares. Overlaps merge first, so they never double."
+height_cap,80,0.25,,,"a = height (px) after which a shadow lengthens slowly; b = how much of the extra height still counts"
+edge,2,0.5,,,"a = soft band width (px) round a shadow, 0 = hard edge; b = share of the opacity the band carries"
+box,0.6,,,,"a = default share of a boxy prop's sprite height that casts (the rest is leaves, roof ridge, flowers)"
+sprite:prop_tree,1,,0.6,sil,"a = length multiplier (0 = no shadow); b = box height share; c = contact patch size multiplier"
+sprite:prop_stump,0.9,,1,sil,
+sprite:prop_bush,0.9,,1.2,sil,
+sprite:prop_boulder,1,,1,sil,
+sprite:prop_detail,0,,0,sil,"small flowers and tufts: no shadow"
+sprite:prop_planter,1,0.5,1,sil,
+sprite:prop_crates,1,0.6,1,sil,
+sprite:prop_crate,1,0.6,1,sil,
+sprite:prop_barrel,1,0.6,1,sil,
+sprite:prop_hay,1,0.6,1,sil,
+sprite:prop_bench,1,0.5,1,sil,
+sprite:prop_cart,1,0.5,1,sil,
+sprite:prop_stall,1,0.8,1,sil,
+sprite:prop_well,1,0.6,1,sil,
+sprite:prop_anvil,1,0.5,1,sil,
+sprite:prop_grindstone,1,0.6,1,sil,
+sprite:prop_rack,1,,0.8,sil,
+sprite:prop_rug,0,,0,sil,
+sprite:wall_plain,0,,0,sil,
+sprite:wall_window,0,,0,sil,
+sprite:wall_door,0,,0,sil,
+sprite:wall_corner,0,,0,sil,
+sprite:prop_arch,0.7,,0.6,sil,
+sprite:prop_arch_timber,0.7,,0.6,sil,
