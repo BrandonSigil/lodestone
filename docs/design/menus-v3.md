@@ -1,6 +1,8 @@
 # Menus v3: a drawn skin, one window, layout that sizes itself
 
-[AI] 2026-11-13, a proposal with a working prototype on branch `menus-prototype` (worktree `~/lodestone-menus`). Nothing here is decided until Brandon says so.
+[AI] 2026-11-13, a proposal built as a working prototype on branch `menus-prototype`, rounds one to six below.
+
+[USER] 2026-11-13, after round six: "Bundle up all the Lodestone work we've done and push it please". So the six rounds are on `main` now, merged together with the fight camera and the damage tuning. Brandon has seen every round as pictures and has not yet played them; his notes from play still decide what stays. `LODESTONE_SKIN=old` brings the painted look back.
 
 [USER] 2026-11-13, the ask: "prototype a new set of menus throughout the game. Right now they look very "jpeg's pasted onto a frame", and I'd like them to feel more baked into the game, more dynamically sizable, and just AAA clean feeling. Theyre very clunky, very bulky, very amateur looking. Comb through them all and suggest a better approach please".
 
@@ -124,7 +126,7 @@ The prototype is step 1 and 2 applied to the whole game without touching any scr
 - The bottom frame (`FrameHud._draw_skin_bar`, with the Lodestone diamond `leaf_stone`), the fight dock and its portrait, the fight's side panel, the pack view's windows, the character sheet's frame and the close X all have a drawn version.
 - The painted art is untouched and still in the game. `LODESTONE_SKIN=old` in the environment brings the painted look back.
 
-To see it: `cd ~/lodestone-menus && /Applications/Godot.app/Contents/MacOS/Godot --path game` (not `tools/godot.sh`: that is the silent, invisible copy for test runs). For the old look, put `LODESTONE_SKIN=old` in front.
+To see it: `cd ~/lodestone && /Applications/Godot.app/Contents/MacOS/Godot --path game` (not `tools/godot.sh`: that is the silent, invisible copy for test runs). For the old look, put `LODESTONE_SKIN=old` in front.
 
 ## What it does not do yet (honest notes)
 

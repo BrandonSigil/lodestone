@@ -6,7 +6,7 @@
 - `SheetRules.build(unit, info)` (pure, `game/scripts/ui/sheet_rules.gd`) works it out from a `CombatUnit`, so it always matches the fight: name, job, LV, EXP (this level's XP of `xp_per_level`), move, HP, then damage (ATK), crit % (`crit_base` plus the unit's), armor and range where Fire Emblem shows Atk, Hit, Crit and Avo (our hits always land). The stat block is the character's trail skills (`CHECK_<skill>`). The weapon row names the weapon and the job's resource. Up to `SheetRules.MOVES` (4) move rows: the unit's abilities in order, each with its caveman line `DESC_<ability id>` and its cost.
 - `Game.sheet(id, weapon := "")` builds the unit the same way the party does (level bonus, weapon numbers, the meal and blessings, ranks). For the hero with a `weapon` it shows him holding that one instead: that job's class, the weapon's numbers and upgrades, and that job's own ranks. Nothing is changed or saved.
 
-## How it looks (branch `menus-prototype`)
+## How it looks (menus v3, round five)
 - [AI] 2026-11-13, menus v3 round five: `CharacterSheet` is a kit window (`MenuKit.window`), built from controls, not painted. The name is the title banner; the X and Esc close. Left card: the portrait slot (`_Slot`), job, level chip, HP and EXP bars, the trail skills as chips. Right: DMG, ARMOR, CRIT, RANGE, MOVE, the weapon and the resource as chips, then a row per skill (icon, name, damage / reach / cost chips, its whole `DESC_` line). On the rack the foot holds ◀, the page count, ▶ and the gold TAKE. The host sets `sheet.area` (the play area); the window centres itself there. `docs/design/menus-v3.md`, "Round five".
 
 ## Where it opens

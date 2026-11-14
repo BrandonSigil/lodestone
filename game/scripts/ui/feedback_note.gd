@@ -34,7 +34,7 @@ func _ready() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 	var area := func() -> Rect2: return root.get_viewport_rect().grow(-40)
-	var w := MenuKit.window(Txt.t("UI_FEEDBACK_TITLE"), area, queue_free, 32)
+	var w := MenuKit.window(Txt.t("UI_FEEDBACK_TITLE"), area, queue_free)  # the title sits on the banner at the type scale (menus v3)
 	root.add_child(w.root)
 	var ask := MenuKit.label(Txt.t("UI_FEEDBACK_ASK"), 16)
 	ask.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
