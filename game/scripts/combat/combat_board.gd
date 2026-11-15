@@ -95,6 +95,15 @@ var goal_cells := {}  # cell -> true, a fight's way out (FightGoals exit), ringe
 var marks := {}  # cell -> own phases left before a boss's marked big move lands there (always shown)
 var glow := {}  # cell -> true, a door the party is close to: a warm pool of light on its doorstep (ExploreOverlay)
 var focus := {}  # cell -> true, the thing F would use now: a brighter pool and a light rim round its prop (ExploreOverlay)
+var exit_marks := {}:  ## cell -> outward step: a house's way out, marked at all times (ExploreOverlay's quiet look, P25)
+	set(v):
+		if v == exit_marks:
+			return
+		for c: Vector2i in exit_marks:  # its door frame stands in the ground slabs: redraw them round old and new
+			_mark_near(c)
+		exit_marks = v
+		for c: Vector2i in exit_marks:
+			_mark_near(c)
 var show_coords := false
 var edit_void := false  ## map editor: show VOID cells as faint outlines and let them be picked
 ## Play, not editing: walls, rock and anything else nobody stands on never take a click or the hover, so the
@@ -735,6 +744,10 @@ func _sync_slabs() -> void:
 			_bucket(_deck_over if CombatGrid.on_deck(c) else _over_by_depth, c)
 	if hover != NONE and grid.in_bounds(hover):
 		_bucket(_deck_over if CombatGrid.on_deck(hover) else _over_by_depth, hover)
+	for c: Vector2i in exit_marks:  # a way out's mat and daylight, on its cell and the next one in
+		for e: Vector2i in [c, c - exit_marks[c]]:
+			if grid.in_bounds(e):
+				_bucket(_deck_over if CombatGrid.on_deck(e) else _over_by_depth, e)
 	_units_by_depth.clear()
 	_deck_units.clear()
 	_figs_by_depth.clear()
@@ -886,12 +899,14 @@ func _paint(sl: Slab) -> void:
 					_draw_ground(c)
 				elif plugs.has(c) and grid.in_bounds(c) and grid.terrain_at(c) == CombatGrid.T.VOID:
 					_plug(c, float(plugs[c]))
-			if not rims.is_empty():  # the row behind's front-edge walls stand in front of its pieces
+			if not rims.is_empty() or not exit_marks.is_empty():  # the row behind's front-edge walls stand in front of its pieces
 				var rows := [sl.depth - 1] if sl.depth < _depths.size() - 1 else [sl.depth - 1, sl.depth]
 				for d: int in rows:
 					for c: Vector2i in (_depths[d] if d >= 0 else []):
 						if rims.has(c) and not _unseen(c):
 							_rim_walls(c)
+						if exit_marks.has(c) and not _unseen(c):
+							_exit_frame(c)  # and so does a way out's door frame
 		Slab.K.FALLS:
 			for c: Vector2i in ([] if greybox else _fall_cells[sl.depth]):
 				if not _unseen(c):
@@ -2909,6 +2924,8 @@ func _draw_over(c: Vector2i) -> void:
 	if goal_cells.has(c):
 		_fill_under(holes, top, Color(0.4, 0.95, 0.5, 0.18))
 		_rim_under(holes, ring, Color(0.45, 1.0, 0.55, 0.9), 2.0, true)
+	if not exit_marks.is_empty():
+		_exit_floor(c, holes)
 	if glow.has(c) or focus.has(c):  # a door the party is close to ([USER] 2026-10-30: doors glow instead of a "!")
 		var pulse := (0.75 + 0.25 * sin(_time * 3.0)) * (FOCUS_BOOST if focus.has(c) else 1.0)
 		var mid := (top[0] + top[2]) * 0.5
@@ -2928,6 +2945,91 @@ func _draw_over(c: Vector2i) -> void:
 		for p in ring:
 			inner.append(mid + (p - mid) * 0.82)
 		_rim_under(holes, inner, Color(0.55, 0.8, 1.0, 0.9), 2.0, true)
+
+
+## A house's way out (exit_marks, the quiet look's answer to [USER] P25 "it stinks not knowing where a door is"),
+## graybox until a door piece is painted: on the doorway's cell a stone sill on its outer edge and a mat, and
+## daylight spilling in from outside across it and over the next cell in (under the mat, so the mat reads).
+## All under the pieces.
+const EXIT_LIGHT := Color(1.0, 0.9, 0.62)  ## the daylight: warm low sun from outside
+const EXIT_REACH := 1.8  ## cells: how far in from the doorway the daylight reaches
+const EXIT_WOOD := Color(0.5, 0.33, 0.2)  ## the frame: the kit doorway's timber
+const EXIT_STONE := Color(0.72, 0.62, 0.5)  ## the doorstep outside it: warm sandstone, in the room's palette
+const EXIT_HIGH := 3.0  ## levels: the frame's opening, about 1.3 times the hero (the scale gate's door rule)
+
+func _exit_floor(c: Vector2i, holes: Array[Rect2]) -> void:
+	var door := NONE
+	var k0 := 0.0
+	if exit_marks.has(c):
+		door = c
+	else:
+		for d: Vector2i in CombatRules.DIRS:
+			if exit_marks.get(c + d, NONE) == d:
+				door = c + d
+				k0 = 1.0
+				break
+	if door == NONE:
+		return
+	var out: Vector2i = exit_marks[door]
+	var h := _surf(c)
+	var at := func(s: float, t: float) -> Vector2:  # s across the doorway (-0.5..0.5), t cells in from its outer edge
+		var g := Vector2(door) + Vector2(0.5, 0.5) + Vector2(out) * (0.5 - t) + Vector2(absf(out.y), absf(out.x)) * s
+		return iso(g.x, g.y, h)
+	# one flat wedge of light with clean edges (style bible R2: a plane gets one soft light band, never shading)
+	var t0 := k0
+	var t1 := minf(k0 + 1.0, EXIT_REACH)
+	if t1 > t0:
+		var w0 := 0.38 + 0.22 * t0 / EXIT_REACH
+		var w1 := 0.38 + 0.22 * t1 / EXIT_REACH
+		var wedge := PackedVector2Array([at.call(-w0, t0), at.call(w0, t0), at.call(w1, t1), at.call(-w1, t1)])
+		_fill_under(holes, wedge, Color(EXIT_LIGHT, 0.46))
+	if k0 == 0.0:
+		var sill := PackedVector2Array([at.call(-0.44, 0.0), at.call(0.44, 0.0), at.call(0.44, 0.12), at.call(-0.44, 0.12)])
+		_fill_under(holes, sill, Color(0.78, 0.68, 0.55))
+		var glow := PackedVector2Array([at.call(-0.36, 0.0), at.call(0.36, 0.0), at.call(0.36, 0.05), at.call(-0.36, 0.05)])
+		_fill_under(holes, glow, Color(EXIT_LIGHT, 0.9))  # the bright line where outside's light comes over the sill
+		var mat := PackedVector2Array([at.call(-0.34, 0.18), at.call(0.34, 0.18), at.call(0.34, 0.78), at.call(-0.34, 0.78)])
+		_fill_under(holes, mat, Color(0.55, 0.28, 0.2))
+		var inner := PackedVector2Array([at.call(-0.27, 0.24), at.call(0.27, 0.24), at.call(0.27, 0.72), at.call(-0.27, 0.72)])
+		_rim_under(holes, inner + PackedVector2Array([inner[0]]), Color(0.66, 0.45, 0.3, 0.9), 1.2, true)
+
+
+## The way out's door frame: two timber posts and a lintel standing on the doorway's outer edge, open between, so
+## the room behind still shows. Drawn with the row in front (like the front-edge stubs), so a piece in the doorway
+## stands inside it. Only on a front edge; a doorway in a back wall already has its kit piece.
+func _exit_frame(c: Vector2i) -> void:
+	var out: Vector2i = exit_marks[c]
+	if (out != front_dir(false) and out != front_dir(true)) or not grid.prop_at(c).is_empty():
+		return  # a back wall's doorway, or a door piece placed here already (the tavern's), has its own frame
+	var h := _surf(c)
+	var across := Vector2(absf(out.y), absf(out.x))
+	var edge := Vector2(c) + Vector2(0.5, 0.5) + Vector2(out) * 0.5
+	var spot := func(s: float, t: float) -> Vector2:  # s across, t outward from the edge, in cells
+		return edge + across * s + Vector2(out) * t
+	var step_lo: Vector2 = spot.call(-0.42, 0.0)  # a stone doorstep outside, a little under the floor
+	var step_hi: Vector2 = spot.call(0.42, 0.22)
+	_wood_box(Vector2(minf(step_lo.x, step_hi.x), minf(step_lo.y, step_hi.y)), Vector2(maxf(step_lo.x, step_hi.x), maxf(step_lo.y, step_hi.y)), h - 0.45, h - 0.12, EXIT_STONE)
+	for s0: float in [-0.42, 0.42]:  # contact shadows where the posts meet the floor
+		var f: Vector2 = spot.call(s0, 0.0)
+		Pawn.ellipse(_ci, iso(f.x, f.y, h) + Vector2(0, 1), 7.0, 3.0, Color(0.12, 0.08, 0.06, 0.35))
+	var pieces := [[-0.48, -0.36, 0.0, EXIT_HIGH], [0.36, 0.48, 0.0, EXIT_HIGH], [-0.54, 0.54, EXIT_HIGH, EXIT_HIGH + 0.4]]
+	for pc: Array in pieces:
+		var a: Vector2 = spot.call(pc[0], -0.06)
+		var b: Vector2 = spot.call(pc[1], 0.06)
+		_wood_box(Vector2(minf(a.x, b.x), minf(a.y, b.y)), Vector2(maxf(a.x, b.x), maxf(a.y, b.y)), h + pc[2], h + pc[3], EXIT_WOOD)
+
+
+## A small box in one flat colour (the frame's timber, the step's stone), two lit faces and a top, with the art's outline.
+func _wood_box(lo: Vector2, hi: Vector2, z0: float, z1: float, wood: Color) -> void:
+	for shade in [false, true]:
+		var d := front_dir(shade)
+		var e: Array = _side(lo, hi, d)
+		var q := PackedVector2Array([iso(e[0].x, e[0].y, z1), iso(e[1].x, e[1].y, z1), iso(e[1].x, e[1].y, z0), iso(e[0].x, e[0].y, z0)])
+		_ci.draw_colored_polygon(q, Color(wood * _face_light(Vector2(d)), 1.0))
+	var top := PackedVector2Array([iso(lo.x, lo.y, z1), iso(hi.x, lo.y, z1), iso(hi.x, hi.y, z1), iso(lo.x, hi.y, z1)])
+	_ci.draw_colored_polygon(top, wood.lightened(0.18))
+	var hull := Geometry2D.convex_hull(top + PackedVector2Array([iso(lo.x, lo.y, z0), iso(hi.x, lo.y, z0), iso(hi.x, hi.y, z0), iso(lo.x, hi.y, z0)]))
+	_ci.draw_polyline(hull, Color(INK, 0.85), 1.2, true)
 
 
 ## Body boxes (screen) of pieces drawn before tile c whose body its top `top` overlaps.

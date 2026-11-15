@@ -8,8 +8,27 @@ const ICON := Color(1.0, 0.86, 0.4)
 const INK := Color(0.12, 0.11, 0.1)
 const NO_MARK_KINDS := ["enter", "door"]  ## doorways, map exits and locked doors: no "!" over them
 
+## The quiet interaction look (backlog P24 and P25, a mockup for Brandon to pick, 2026-11-14). Off by default, so
+## the bubbles above still draw. On: no bubble over objects; the one thing F would use (or the mouse is over) gets
+## the board's rim and lift and one small prompt naming the action ("F Open"); unused things glint now and then;
+## only people with something to say keep a small, still "!"; an interior's way out is marked from anywhere in the
+## room (a door frame on its outer edge, a mat and daylight on the floor, CombatBoard.exit_marks). Turn it on with
+## the environment variable LODESTONE_QUIET_MARKS=1 or an empty file ~/.lodestone/quiet-marks; tests and shot
+## scripts set it directly.
+static var quiet := OS.get_environment("LODESTONE_QUIET_MARKS") == "1" \
+		or FileAccess.file_exists(OS.get_environment("HOME") + "/.lodestone/quiet-marks")
+const PEOPLE_KINDS := ["companion", "settler", "dog"]  ## quiet: the only kinds that keep a "!" (someone to talk to)
+const NO_GLINT_KINDS := ["enter", "door", "rubble", "hidden", "exit", "companion", "settler", "dog"]  ## quiet: ways, walls, finds and people don't glint
+const GLINT_EVERY := 4.5  ## s: quiet, an unused thing's glint comes round this often (each thing at its own moment)
+const GLINT_LONG := 0.55  ## s: and lasts this long
+const PILL_INK := Color(0.02, 0.2, 0.15, 0.9)  ## the prompt's body: the menus' deep green (UiTheme.GREEN, darker), never black
+const PILL_TEXT := Color("f2eddb")  ## UiTheme.PARCHMENT
+const PILL_LINE := Color(0.95, 0.82, 0.45, 0.45)  ## UiTheme.GOLD keyline, thin and soft (style bible F6: labels quieter than the picture)
+
 var scene: Node  ## the explore scene: things, party, mode
 var _time := 0.0
+var _pill_key := ""  ## quiet: the thing the prompt names, and when it first showed (it eases in)
+var _pill_since := 0.0
 
 
 func _process(delta: float) -> void:
@@ -24,8 +43,13 @@ func _draw() -> void:
 	var lead: CombatUnit = scene.leader()
 	var font := ThemeDB.fallback_font
 	var use: Dictionary = scene.nearest_thing() if lead != null and scene.walking() else {}  # the one F uses gets the F
+	var hov: Dictionary = _hovered(board) if quiet and lead != null and scene.walking() else {}  # quiet: the one under the mouse
 	board.glow = scene.lit_doors()  # doors glow on the board, under the pieces
 	board.focus = {use.cell: true} if not use.is_empty() and board.fog.get(use.cell, 0) == 2 else {}  # the one F uses lights up
+	if not hov.is_empty():
+		board.focus[hov.cell] = true
+	board.exit_marks = exits(scene.things, board, scene) if quiet else {}
+	var pills: Array = []  # quiet: [thing, at, with the F key] prompts, drawn last so nothing covers them
 	var figs := {}  # people waiting here draw with the board's pieces, in depth order (not over the hero)
 	var low := {}  # companions lying where they fell
 	var can_use := {}  # usable things in sight: a prop of theirs hidden behind a tree gets a gold silhouette (pm-occlusion)
@@ -46,8 +70,9 @@ func _draw() -> void:
 			figs[c] = _figure.bind(StringName(foe), dim, _time, true)
 			low[c] = true
 		else:
-			_thing(String(t.kind), p, dim, not dim and use.get("id") == t.id and use.cell == t.cell, not board.grid.prop_at(c).is_empty())
-		if pile and not dim:  # loot on the ground sparkles; an opened chest with things left in it doesn't
+			var lit_up: bool = not dim and ((use.get("id") == t.id and use.cell == t.cell) or (hov.get("id") == t.id and hov.cell == t.cell))
+			_thing(String(t.kind), p, dim, lit_up, not board.grid.prop_at(c).is_empty())
+		if pile and not dim and not quiet:  # loot on the ground sparkles; an opened chest with things left in it doesn't
 			_sparkles(p + Vector2(0, -10))
 		if String(t.kind) == "companion":
 			# a companion stands at home while benched ([USER] pc-10: walk up to invite them)
@@ -62,6 +87,19 @@ func _draw() -> void:
 		if dim or lead == null or not scene.walking():
 			continue
 		var near := ExploreRules.dist(lead.cell, c) <= ExploreRules.HINT_RANGE
+		if quiet:
+			var picked: bool = use.get("id") == t.id and use.cell == t.cell
+			var pointed: bool = hov.get("id") == t.id and hov.cell == t.cell
+			var lift := _lift(board, t)
+			var aim := Vector2(18, 0) if String(t.kind) == "statue" else Vector2.ZERO  # the statue's prompt points at the stone
+			if picked or pointed:
+				pills.append([t, p + aim + Vector2(0, -lift), picked])
+			elif PEOPLE_KINDS.has(String(t.kind)):
+				if figs.has(c) or String(t.kind) == "settler":  # someone standing here (a companion along already isn't)
+					_person_mark(p + Vector2(0, -lift))
+			elif not NO_GLINT_KINDS.has(String(t.kind)):
+				_glint(p + Vector2(7, 10 - lift), String(t.id))
+			continue
 		if NO_MARK_KINDS.has(String(t.kind)):
 			# doors get no "!" ([USER] 2026-10-30): they glow when the party is close (lit_doors), nothing from
 			# afar; the F shows over the one F would open
@@ -96,6 +134,155 @@ func _draw() -> void:
 	board.figures = figs
 	board.usable = can_use
 	board.low_figures = low
+	var key := ""
+	for pl: Array in pills:
+		key += "%s@%s;" % [pl[0].id, pl[0].cell]
+	if key != _pill_key:
+		_pill_key = key
+		_pill_since = _time
+	var head := board.cell_top(lead.cell) + Vector2(0, -50) if lead != null else Vector2.INF  # over the leader's head
+	for pl: Array in pills:
+		var at: Vector2 = pl[1]
+		var stem := at
+		if absf(at.x - head.x) < 70.0 and at.y > head.y - 4.0 and at.y < head.y + 60.0:
+			at.y = head.y - 4.0  # the thing is just behind the leader: lift its prompt clear of their head
+		if stem.y - at.y > 8.0:  # lifted: a thin stem keeps it on its thing
+			draw_line(at + Vector2(0, 4), stem + Vector2(0, 6), Color(PILL_LINE, 0.8), 1.5, true)
+			draw_circle(stem + Vector2(0, 7), 2.5, Color(PILL_TEXT, 0.9))
+		_pill(at, Txt.t(verb_key(pl[0], board.wall_kit.ends_with("_in"))), pl[2], font)
+
+
+# --- the quiet look (P24 and P25 mockup; see `quiet`) -------------------------------------
+
+## Quiet: the usable thing under the mouse (the floor cell the board's hover picked), if it is in sight.
+func _hovered(board: CombatBoard) -> Dictionary:
+	if board.hover == CombatBoard.NONE or board.fog.get(board.hover, 0) != 2:
+		return {}
+	for t: Dictionary in scene.things:
+		if t.done or t.cell != board.hover or not scene.shown(t) or String(t.kind) == "hidden":
+			continue
+		return t
+	return {}
+
+
+## How far over its cell's top a thing's prompt (or a person's "!") floats: above its prop, its figure or its shape.
+static func _lift(board: CombatBoard, t: Dictionary) -> float:
+	var kind := String(t.kind)
+	if kind == "dog" or String(t.get("event", "")).ends_with("_dog"):
+		return 52.0  # the corgi stands low: the same gap over his head as over a person's
+	if kind == "companion":
+		return 66.0
+	if kind == "statue":
+		return 92.0  # just over the stone in her hand
+	var prop: Dictionary = board.grid.prop_at(t.cell)
+	if not prop.is_empty() and float(prop.get("tall", 0.0)) > 0.0:
+		return float(prop.tall) * CombatBoard.TW + 12.0
+	if kind == "enter" or kind == "door" or kind == "exit":
+		return 66.0
+	return 38.0
+
+
+## The text key of the verb a thing's prompt shows: the thing's own `verb` key if it has one, else by its type
+## (a container's `type`, or its event's loot `box`: a chest opens, a barrel is searched), else by kind, else "Use". A doorway with an event
+## (a stuck or barred door) opens; a plain one enters, or leads outside from inside a house.
+static func verb_key(t: Dictionary, interior := false) -> String:
+	if String(t.get("verb", "")) != "":
+		return String(t.verb)
+	var kind := String(t.get("kind", ""))
+	var event := String(t.get("event", ""))
+	if kind == "enter":
+		if event != "":
+			return "UI_USE_DOOR"
+		return "UI_USE_LEAVE" if interior else "UI_USE_ENTER"
+	var sub := String(t.get("type", "")) if kind == "container" else ""  # every thing loads with a type; only boxes use it
+	if sub == "" and event != "":
+		sub = String(Db.explore_events.get(event, {}).get("box", ""))
+	for k: String in ["UI_USE_" + sub.to_upper() if sub != "" else "", "UI_USE_" + kind.to_upper()]:
+		if k != "" and Txt.has(k):
+			return k
+	return "UI_USE"
+
+
+## Quiet: an interior's ways out, marked from anywhere in the room ([USER] P25, 2026-11-14 "it stinks not knowing
+## where a door is"): cell -> the outward step, for every doorway on a house's floor edge (a walls map with an
+## "_in" wall kit). The board draws a door frame on that edge, a mat and daylight on the floor (CombatBoard.exit_marks).
+static func exits(things: Array, board: CombatBoard, sc: Node = null) -> Dictionary:
+	var out := {}
+	if not board.wall_kit.ends_with("_in"):
+		return out
+	for t: Dictionary in things:
+		if t.done or String(t.kind) != "enter" or (sc != null and not sc.shown(t)) or board.fog.get(t.cell, 0) == 0:
+			continue
+		var c: Vector2i = t.cell
+		for d: Vector2i in [board.front_dir(false), board.front_dir(true), -board.front_dir(false), -board.front_dir(true)]:
+			var n := c + d
+			if not board.grid.in_bounds(n) or board.grid.terrain_at(n) == CombatGrid.T.VOID:
+				out[c] = d
+				break
+	return out
+
+
+## Quiet: a small, still "!" over someone who has something to say. No bob, no ring.
+func _person_mark(at: Vector2) -> void:
+	draw_circle(at + Vector2(1, 1), 7.5, Color(0, 0, 0, 0.3))
+	draw_circle(at, 7.5, Color(ICON, 0.92))
+	draw_arc(at, 7.5, 0, TAU, 20, Color(INK, 0.9), 1.5, true)
+	draw_colored_polygon(PackedVector2Array([at + Vector2(-2.5, 6.5), at + Vector2(2.5, 6.5), at + Vector2(0, 10.5)]), Color(ICON, 0.92))
+	draw_rect(Rect2(at + Vector2(-1, -4.5), Vector2(2, 6)), Color(INK, 0.95))
+	draw_rect(Rect2(at + Vector2(-1, 2.5), Vector2(2, 2)), Color(INK, 0.95))
+
+
+## Quiet: an unused thing's glint, a small four-point star that comes and goes once every GLINT_EVERY seconds,
+## each thing at its own moment.
+func _glint(at: Vector2, id: String) -> void:
+	var s := fmod(_time + float(absi(hash(id)) % 1000) / 1000.0 * GLINT_EVERY, GLINT_EVERY)
+	if s > GLINT_LONG:
+		return
+	var a := sin(s / GLINT_LONG * PI)
+	var r := 2.0 + 4.5 * a
+	var col := Color(1.0, 0.98, 0.88, 0.9 * a)
+	draw_circle(at, r * 0.9, Color(1.0, 0.93, 0.6, 0.18 * a))
+	draw_colored_polygon(PackedVector2Array([at + Vector2(0, -r), at + Vector2(r * 0.22, -r * 0.22), at + Vector2(r, 0),
+		at + Vector2(r * 0.22, r * 0.22), at + Vector2(0, r), at + Vector2(-r * 0.22, r * 0.22), at + Vector2(-r, 0),
+		at + Vector2(-r * 0.22, -r * 0.22)]), col)
+
+
+## Quiet: the one prompt, a small dark pill over the thing naming what F (or a click) does: "[F] Open". The F key
+## cap shows only on the one F would use; the mouse's pick shows the verb alone. It eases in when it moves.
+func _pill(at: Vector2, verb: String, key: bool, fallback: Font) -> void:
+	var font: Font = _font if _font != null else fallback
+	var size := 13
+	var fade_in := clampf((_time - _pill_since) / 0.14, 0.0, 1.0)
+	at.y += 4.0 * (1.0 - fade_in)
+	var tw := font.get_string_size(verb, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	var cap := 16.0
+	var w := 9.0 + (cap + 6.0 if key else 0.0) + tw + 10.0
+	var h := 24.0
+	var r := Rect2(at.x - w * 0.5, at.y - h, w, h)
+	var body := StyleBoxFlat.new()
+	body.bg_color = Color(PILL_INK, PILL_INK.a * fade_in)
+	body.border_color = Color(PILL_LINE, PILL_LINE.a * fade_in)
+	body.set_border_width_all(1)
+	body.set_corner_radius_all(int(h * 0.5))
+	body.anti_aliasing = true
+	draw_style_box(body, r)
+	var notch := at + Vector2(0, 0.5)
+	draw_colored_polygon(PackedVector2Array([notch + Vector2(-4.5, -1.5), notch + Vector2(4.5, -1.5), notch + Vector2(0, 4.0)]), Color(PILL_INK, PILL_INK.a * fade_in))
+	var x := r.position.x + 9.0
+	var mid := r.position.y + h * 0.5
+	if key:
+		var kr := Rect2(x, mid - cap * 0.5, cap, cap)
+		var kb := StyleBoxFlat.new()
+		kb.bg_color = Color(PILL_TEXT, fade_in)
+		kb.set_corner_radius_all(4)
+		kb.anti_aliasing = true
+		draw_style_box(kb, kr)
+		draw_string(font, Vector2(x, mid + 4.5), "F", HORIZONTAL_ALIGNMENT_CENTER, cap, 12, Color(INK, fade_in))
+		x += cap + 6.0
+	draw_string(font, Vector2(x, mid + 4.5), verb, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Color(PILL_TEXT, fade_in))
+
+
+static var _font: Font = load("res://fonts/YoungSerif-Regular.ttf") as Font  ## the menus' face (UiTheme)
 
 
 ## A companion standing on p: their own sprite (idle, facing the camera) when they have art, else the code figure.
