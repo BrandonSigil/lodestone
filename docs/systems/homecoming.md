@@ -25,7 +25,7 @@ gave and closes on the next goal. Built 2026-11-01.
 | Village fixed | restore steps that just finished |
 | Next goal | the first tracked step not yet paid, else the next step of the first open building, with an "N OF M" bar per material |
 
-All words are `UI_HC_*` keys in `game/text/placeholder.csv` (caveman placeholders for Brandon).
+All words are `UI_HC_*` keys in `game/text/placeholder.csv`: game text, in plain English.
 
 ## Files
 - `game/scripts/core/homecoming_rules.gd`: pure rules (snapshot, summary, next goal).

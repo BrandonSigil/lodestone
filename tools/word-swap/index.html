@@ -75,6 +75,11 @@ main { padding-block: 18px 120px; padding-left: max(16px, env(safe-area-inset-le
 .newrow textarea::placeholder { color: var(--muted); }
 .send { border: 0; border-radius: 8px; background: var(--leaf); color: var(--leaf-ink); padding: 8px 16px; font-weight: 600; font-size: 14px; white-space: nowrap; }
 .send:disabled { opacity: .45; cursor: default; }
+.keep { border: 1px solid var(--leaf); border-radius: 8px; background: transparent; color: var(--leaf); padding: 7px 14px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+.keep:disabled { opacity: .45; cursor: default; }
+:root[data-theme="dark"] .keep { color: var(--ok); border-color: var(--ok); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .keep { color: var(--ok); border-color: var(--ok); } }
+.by { font-weight: 600; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--gem-soft); color: var(--gem); }
 .hint { font-size: 12.5px; color: var(--muted); }
 .hint.bad { color: var(--bad); }
 .yours { font-size: 13.5px; color: var(--muted); }
@@ -140,8 +145,10 @@ const MARK = /%(?:[-+ 0#]*\d*(?:\.\d+)?[sdif])/g;
 const marks = (s) => (String(s).match(MARK) || []).slice().sort();
 const S = { rows: [], talks: [], byKey: {}, swaps: {}, asks: {}, filter: "talk", q: "", sec: "", shown: 120, uid: 0, db: null, comments: null, wake: "off", told: 0, thread: null };
 // Story and dialogue are Brandon's; game text is ours ([USER] 2026-11-02). "talk" draws dialogue cards, the rest draw lines.
+// "Written by Claude": story lines Claude drafted (game/text/claude_written.txt, Brandon 2026-11-14), to rewrite or keep.
 const FILTERS = [
   ["talk", "Dialogue", (r) => false],
+  ["claude", "Written by Claude", (r) => r.c],
   ["story", "Story lines", (r) => r.g === "story" && !S.talkKeys.has(r.k)],
   ["name", "Names", (r) => r.g === "name"],
   ["game", "Game text", (r) => r.g === "game"],
@@ -200,15 +207,19 @@ function lineHtml(r, extra = "", kind = "", ev = "") {
   const sw = S.swaps[r.k], st = sw ? sw.status : "", dk = ev + "|" + r.k;
   const cls = (st === "applied" ? " done" : st === "sent" ? " sent" : "") + (kind ? " " + kind : "");
   const where = kind ? "" : r.u.length ? `<span>in ${esc(r.u.join(", "))}</span>` : "";
-  const tag = st === "sent" ? `<span class="state">Sent, waiting</span>` : st === "applied" ? `<span class="state">In the game</span>` : "";
-  const yours = st === "sent" ? `<div class="yours">Yours: <q>${esc(sw.new)}</q></div>` : "";
+  const kept = sw && sw.keep;
+  const tag = st === "sent" ? `<span class="state">${kept ? "Kept, waiting" : "Sent, waiting"}</span>` : st === "applied" ? `<span class="state">${kept ? "Kept" : "In the game"}</span>` : "";
+  const yours = st === "sent" && !kept ? `<div class="yours">Yours: <q>${esc(sw.new)}</q></div>` : "";
+  const by = r.c && !sw ? `<span class="by">Written by Claude</span>` : "";
+  // Keep: Brandon is happy with Claude's words as they are. It sends the same words, and applying it takes the flag off.
+  const keepBtn = r.c && !sw && !ev ? `<button class="keep" type="button" title="Keep these words as they are"${S.db ? "" : " disabled"}>Keep</button>` : "";
   const keep = r.f.length ? `<div class="hint" data-hint>Keep ${r.f.map((m) => `<span class="mk">${esc(m)}</span>`).join(" ")}: the game puts a ${r.f.some((m) => m.endsWith("s")) ? "word or number" : "number"} there.</div>` : `<div class="hint" data-hint hidden></div>`;
   const label = kind === "prompt" ? "Prompt" : kind === "opt" ? "Response" : esc(r.s);
   return `<article class="line${cls}" data-k="${esc(r.k)}">
-    <div class="meta"><span class="sec">${label}</span><span class="key">${esc(r.k)}</span>${where}${tag}</div>
+    <div class="meta"><span class="sec">${label}</span><span class="key">${esc(r.k)}</span>${by}${where}${tag}</div>
     <div class="old">${hi(r.t)}</div>${extra}${yours}
     <div class="newrow"><textarea id="new-${esc(dk)}" data-draft="${esc(dk)}" rows="1" placeholder="${st === "sent" ? "Change your line" : "Your words"}" aria-label="New words for ${esc(r.k)}">${esc(S.drafts[dk] || "")}</textarea>
-    ${ev ? "" : `<button class="send" type="button" disabled>Send</button>`}</div>${keep}
+    ${ev ? "" : `<button class="send" type="button" disabled>Send</button>`}${keepBtn}</div>${keep}
   </article>`;
 }
 function render() {
@@ -223,6 +234,7 @@ function render() {
     return;
   }
   const hits = S.rows.filter(matches);
+  if (S.filter === "claude") hits.sort((a, b) => a.c - b.c);  // the order the player meets them
   $("list").innerHTML = hits.slice(0, S.shown).map((r) => lineHtml(r)).join("");
   $("more").hidden = hits.length <= S.shown;
   $("empty").hidden = hits.length > 0;
@@ -233,7 +245,8 @@ function renderChips() {
     `<button class="chip" type="button" data-f="${id}" aria-pressed="${S.filter === id}">${label}<b>${id === "talk" ? S.talks.length : S.rows.filter(fn).length}</b></button>`).join("");
   const sent = Object.values(S.swaps).filter((s) => s.status === "sent").length;
   const done = Object.values(S.swaps).filter((s) => s.status === "applied").length;
-  $("tally").textContent = `${S.rows.length} lines · ${sent} sent and waiting · ${done} in the game`;
+  const mine = S.rows.filter((r) => r.c && !S.swaps[r.k]).length;
+  $("tally").textContent = `${S.rows.length} lines · ${mine} written by Claude · ${sent} sent and waiting · ${done} in the game`;
   renderBar();
 }
 const pending = () => Object.values(S.swaps).filter((s) => s.status === "sent").length + Object.values(S.asks).filter((a) => a.status === "sent").length;
@@ -283,6 +296,21 @@ function check(art) {
   if (v && !ok && r.f.length) { hint.hidden = false; hint.classList.add("bad"); }
   else if (v && marks(v).length && !r.f.length) { hint.hidden = false; hint.classList.add("bad"); hint.textContent = "Take out the % mark: this line has no number slot."; }
   else { hint.classList.remove("bad"); hint.hidden = !r.f.length; }
+}
+async function keepLine(art) {
+  const r = S.byKey[art.dataset.k], btn = art.querySelector(".keep");
+  if (!r || !S.db) return;
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const doc = { key: r.k, old: r.t, new: r.t, keep: true, at: new Date().toISOString(), status: "sent" };
+    await S.db.collection("swaps").doc(r.k).set(doc);
+    S.swaps[r.k] = doc;
+    art.outerHTML = lineHtml(r);
+    renderChips(); queueWake();
+  } catch {
+    btn.disabled = false; btn.textContent = "Keep";
+    const hint = art.querySelector("[data-hint]"); hint.hidden = false; hint.classList.add("bad"); hint.textContent = "That didn't save. Try Keep again.";
+  }
 }
 async function send(art) {
   const r = S.rows.find((x) => x.k === art.dataset.k), ta = art.querySelector("textarea"), btn = art.querySelector(".send");
@@ -334,6 +362,8 @@ $("list").addEventListener("input", (e) => {
   if (e.target.tagName === "TEXTAREA") check(e.target.closest(".line"));
 });
 $("list").addEventListener("click", (e) => {
+  const k = e.target.closest(".keep");
+  if (k && !k.disabled) { keepLine(k.closest(".line")); return; }
   const b = e.target.closest(".send");
   if (!b || b.disabled) return;
   if (b.hasAttribute("data-talk")) sendTalk(b.closest(".talk")); else send(b.closest(".line"));
