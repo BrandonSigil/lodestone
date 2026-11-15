@@ -1,0 +1,28 @@
+VILLAGE STATUE, ROUND 3 (2026-11-14): a cloaked elven woman facing south-west, holding the Lodestone.
+Run through Figma generate_image, GPT Image 2.5 Sunburst, 1024 x 1024, text only (the tool takes no reference picture).
+Three runs; only the POSE line changes:
+  A: One arm is stretched out in front of her, palm up, holding a blue crystal the size of her head. Hood up.
+  B: Both hands are cupped together in front of her chest, holding a blue crystal the size of her head. Hood up.
+  C: One arm is raised high above her head, holding up a blue crystal like a lantern; the other hand rests on her chest. Hood down.
+
+ONE GAME PIECE for a cosy fantasy tactics game, drawn to be cut out and placed on a map tile. It will be shown only about 150 pixels tall in the game, so it must read as a few big, simple shapes.
+
+THE ASSET: A chunky stone statue of a cloaked elven woman standing on a low, broad, square stone plinth. She wears a long hooded cloak; the hood is up, with long pointed elf ears poking out through it and long straight hair falling over one shoulder. A calm simple face: two small dots for eyes, nothing else. [POSE] Squat toy-like proportions, like a wooden board-game piece: about three heads tall, the cloak one smooth bell shape with at most two fold lines. The whole statue is warm grey-beige stone (her skin, hair and cloak are all the same stone) with two or three flat moss-green blobs. The crystal is a simple gem made of three flat blues, not glowing.
+
+FACING (essential): she faces SOUTH-WEST, which is the BOTTOM-LEFT corner of the picture. Three-quarter front view: her face, chest and hands all point toward the bottom-left corner, along the plinth's bottom-left edge direction. She does not face the viewer straight on and does not face right.
+
+SIMPLICITY (most important): flat colour. Every surface is one flat fill with one lighter and one darker flat tone, three tones in all. No gradients, no airbrush, no speckles, no dots, no cracks, no chips, no stains, no stone joints, no brick lines, no engraved trim, no texture rendering. Far less detail than a painting: closer to a sticker or a children's board-book picture.
+
+LINE: one bold, even, slightly wobbly dark warm charcoal outline (#373335, never pure black) around the whole silhouette, as thick as a felt marker. Only a few short inner lines in the whole piece.
+
+CAMERA AND FOOTPRINT: 2:1 dimetric game view. The ground is a square grid turned 45 degrees and seen from about 30 degrees above, so the square plinth's top is a diamond twice as wide as tall, a 2 x 2 tile footprint. Orthographic, no perspective, uprights perfectly vertical. The base touches the bottom centre of the picture.
+
+LIGHT: one soft sun from the upper left. Tops lightest, left faces mid-tone, right faces darkest.
+
+BACKGROUND: one flat solid magenta (#ff00ff) everywhere around the piece, perfectly even. The piece is alone, centred, with wide empty magenta all round it.
+
+COLOUR: muted, warm, slightly faded storybook colours; the darkest tone is a deep tint of the stone's own colour, never black.
+
+NO: text, a ground disc, grass, cast shadow, drop shadow, glow, light rays, sparkles, living people, animals, a second piece, a frame, magenta inside the piece.
+
+Avoid: realistic rendering, painterly detail, carved ornament, drapery folds, weathering, perspective, plan view, pixel art, photo, 3d render, glossy highlights, a figure facing right or facing straight at the viewer.
