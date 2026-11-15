@@ -6,6 +6,12 @@ How to use it: when you start on an item, put your thread in **Owner**; when it 
 
 Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#PR)`.
 
+## 2026-11-14 Brandon (Claude window)
+
+| # | Problem | Owner | Status |
+| --- | --- | --- | --- |
+| P24 | Interact marks on explore maps: "I dont like the interactions in the game right now. Having these like !!! F everywhere. What's a better more 2026 way of handling interactions?" (his screenshot: a chest in a house with the bobbing "!" bubble and the F cap; drawn in `explore_overlay.gd`) | PM (proposal given in the Claude window; UI lane to build once he picks) | open |
+
 ## 2026-11-13 Brandon's playtest (first road fight)
 
 | # | Problem | Owner | Status |
