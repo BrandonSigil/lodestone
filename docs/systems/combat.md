@@ -112,7 +112,7 @@ Where to pick: in the sandbox, the right panel's SPELLS section has a picker per
 | Dog | BITE: melee, the foe is SLOW for a phase, 1 charge. BARK: TAUNT until the dog's next phase, 1 charge ([USER] c4: bite slows, bark taunts). Passive GOOD BOY (above) |
 | Amber (job_ember) | FIRE ZAP is her plain attack; no spells at the start ([USER] 2026-11-01). Passive A HEART THAT BURNS (above). FIREBALL is learned at a level pick (her kit, `data/kits.csv`); IGNITE and FLASH join the picks once their kit versions are built |
 | Bandit | DIRTY KICK: +5% crit, -1 damage, push 1, 2 rage |
-| Lich King (38 HP, undead) | FIRE ZAP. BIG BAD BOOM, his big move, and ICE STICK UP: ice pillars (below) |
+| Lich King (38 HP, undead) | FIREBOLT. DOOM, his big move, and RAISE ICE: ice pillars (below) |
 
 ## Foe tags ([USER] design-foe-weakness; `data/tags.csv`)
 A class's `tags` (undead, beast, armored, flying) make some kinds of blow hit harder or softer. Kinds (`CombatRules.attack_kinds`): blade (non-magic melee), arrow (non-magic ranged), spell (magic, the Lich's plain hit too), and fire as well for a fire-element skill. The change is a damage part (`FOE_<TAG>`, shown in the forecast), so at least 1 still gets through. Table: undead fire +2, arrow -2; beast blade +1; armored spell +2, blade -1; flying arrow +2. Wolves are beast, the Lich and his minions undead ([USER] design-lich-tag). The bones trait (the skeleton archer) now just makes the piece undead. A foe's hover card lists its tags.
