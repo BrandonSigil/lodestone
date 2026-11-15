@@ -46,7 +46,7 @@ func _draw() -> void:
 			figs[c] = _figure.bind(StringName(foe), dim, _time, true)
 			low[c] = true
 		else:
-			_thing(String(t.kind), p, dim, not dim and use.get("id") == t.id and use.cell == t.cell, not board.grid.prop_at(c).is_empty())
+			_thing(String(t.kind), p, dim, not dim and use.get("id") == t.id and use.cell == t.cell, not board.grid.prop_at(c).is_empty(), c)
 		if pile and not dim:  # loot on the ground sparkles; an opened chest with things left in it doesn't
 			_sparkles(p + Vector2(0, -10))
 		if String(t.kind) == "companion":
@@ -141,7 +141,7 @@ const FALLEN_TURN := -PI * 0.5  ## a fallen companion lies on his side: the stan
 ## Kinds drawn by something else (a doorway, a person's figure) or meant to be found: no grey block for them.
 const NO_BLOCK_KINDS := ["enter", "companion", "dog", "hidden"]
 
-func _thing(kind: String, p: Vector2, dim: bool, lit := false, propped := false) -> void:
+func _thing(kind: String, p: Vector2, dim: bool, lit := false, propped := false, cell := Vector2i.ZERO) -> void:
 	var k := 0.55 if dim else (1.25 + 0.1 * sin(_time * 5.0) if lit else 1.0)  # the one F would use lifts and breathes
 	match kind:
 		"chest", "container":
@@ -157,9 +157,10 @@ func _thing(kind: String, p: Vector2, dim: bool, lit := false, propped := false)
 		"statue":
 			# The Lodestone in the statue's outstretched hand: a glow that goes once the stone is taken.
 			var glow := 0.55 + 0.45 * sin(_time * 2.5)
-			draw_circle(p + Vector2(18, -78), 14.0, Color(0.55, 0.95, 1.0, 0.18 * glow) * k)
-			draw_circle(p + Vector2(18, -78), 7.0, Color(0.6, 0.98, 1.0, 0.5 + 0.4 * glow) * k)
-			draw_circle(p + Vector2(18, -78), 3.5, Color(0.92, 1.0, 1.0) * k)
+			var stone := _stone_at(cell, p)
+			draw_circle(stone, 14.0, Color(0.55, 0.95, 1.0, 0.18 * glow) * k)
+			draw_circle(stone, 7.0, Color(0.6, 0.98, 1.0, 0.5 + 0.4 * glow) * k)
+			draw_circle(stone, 3.5, Color(0.92, 1.0, 1.0) * k)
 		"window":
 			# A small shutter on the house wall, low enough to climb through.
 			var f := PackedVector2Array([p + Vector2(-9, -30), p + Vector2(4, -36), p + Vector2(4, -22), p + Vector2(-9, -16)])
@@ -198,6 +199,28 @@ func _thing(kind: String, p: Vector2, dim: bool, lit := false, propped := false)
 			# No art for this kind yet ([USER] 2026-11-01 X8: "If we dont have a specific asset grey box it please"):
 			# a plain grey block, so the "!" over it always sits on something.
 			_box(p + Vector2(0, 2), 11.0, 14.0, Color(0.58, 0.58, 0.6) * k)
+
+
+## Where the Lodestone sits in the statue's art, as a part of the picture (ph_statue.png: the crystal in her hands).
+const STONE_IN_ART := Vector2(0.31, 0.40)
+
+## Where the Lodestone's glow goes: on the crystal of the statue prop beside the use spot `cell` when that prop has
+## art, else where the placeholder blob's hand was.
+func _stone_at(cell: Vector2i, p: Vector2) -> Vector2:
+	var board: CombatBoard = get_parent()
+	var best := 5.0
+	var at := p + Vector2(18, -78)
+	for anchor: Vector2i in board.grid.props:
+		var prop: Dictionary = board.grid.props[anchor]
+		if not String(prop.get("sprite", "")).contains("statue"):
+			continue
+		var d := (Vector2(anchor) + Vector2(prop.get("foot", Vector2i.ONE)) * 0.5).distance_to(Vector2(cell) + Vector2(0.5, 0.5))
+		var tex := board.prop_texture(prop, board.grid.zone_at(anchor))
+		if d < best and tex != null:
+			best = d
+			var r := board._prop_rect(anchor, prop, tex)
+			at = r.position + r.size * STONE_IN_ART
+	return at
 
 
 ## A little iso box standing on p: two faces and a lid.
