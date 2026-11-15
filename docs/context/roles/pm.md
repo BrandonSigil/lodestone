@@ -13,7 +13,7 @@ Brandon: "Let's pause all work on Lodestone for now, make sure all decisions and
   - Systems: retired at 860k context. Start a fresh one (Opus, medium, `use_worktree: false`) from `docs/context/roles/dev.md` with the job he approved on dev-balance-run-review: fix the party AI's AID-versus-STRIKE scoring (6bf2c08, `docs/design/outing-tuning.md`), rerun the batch, then tune. New sessions can only start on a message Brandon types in your Claude window, so ask him there.
 - **Your own job:** add a Word Swap quick-action button to the Studio masthead next to the status report and launch game buttons (his yes on pm-word-swap-dialogue). Edit the live page (from Artifact `read`, not the stale repo copy), republish it, mark that card done, and copy the page into `tools/studio-page/index.html`.
 - **On his desk:** dev-fishing-screen-review (fishing as a full screen, X19).
-- **Today's rules:** game text is ours in clear English, and caveman only for story, dialogue and names (CLAUDE.md, 78cb81b). Every picture on a card passes the look check. Play screens show the game, not text. Look checks stop after 5 rounds. Retire any session past ~300k tokens (PM ~250k).
+- **Today's rules:** real text everywhere, and Claude's story, dialogue and name lines are flagged in `game/text/claude_written.txt` (CLAUDE.md, Brandon 2026-11-14). Every picture on a card passes the look check. Play screens show the game, not text. Look checks stop after 5 rounds. Retire any session past ~300k tokens (PM ~250k).
 
 ## Job
 Brandon's PM. Keep his desk (the Studio page), route his answers and asks to the roles, relay results to him in plain words, keep `docs/context/` true. No story or copy from Claude; no secrets; CLAUDE.md hard rules apply.

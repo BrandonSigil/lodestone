@@ -7,7 +7,7 @@ Exported 2026-10-27 (PR #12), refreshed 2026-10-27 11:30 UTC after the night's w
 ## New here (a friend helping on another Claude account)?
 1. `git lfs install`, clone `github.com/BrandonSigil/lodestone`, open `game/project.godot` in Godot 4.4+ (F5 village, F9 combat sandbox, F10 exploration).
 2. Point your Claude session at the repo and have it read the files below in order. Brandon's project memory, thread history and published pages are copied here as of the last refresh.
-3. Two rules above all: never write story, dialogue, names, lore or flavor text (placeholders for those are caveman speak like `BANDIT COME. lorem ipsum. [ FIGHT ] [ TALK ]`), and never commit keys (the Picsart key stays in `~/.lodestone/`). Game text is ours to write well: abilities, tips, menus and screens get clear, helpful plain English (Brandon, 2026-11-02).
+3. Two rules above all: flag every story line, piece of dialogue, name, lore or flavor line Claude writes in `game/text/claude_written.txt` (real text everywhere since Brandon, 2026-11-14; older caveman lines like `BANDIT COME. lorem ipsum. [ FIGHT ] [ TALK ]` are being replaced), and never commit keys (the Picsart key stays in `~/.lodestone/`). Game text is ours to write well: abilities, tips, menus and screens get clear, helpful plain English (Brandon, 2026-11-02).
 
 ## Read order for a fresh Claude session
 1. `CLAUDE.md` (hard rules).
@@ -40,4 +40,4 @@ Published originals (Brandon's account only):
 
 ## Never in the repo
 - The Picsart API key. It lives at `~/.lodestone/picsart-api-key` (or env `PICSART_API_KEY`) on each machine.
-- Story, dialogue, names, lore or flavor text. Brandon writes those; placeholders for them are caveman speak. Everything else the player reads (ability and status rules, tips, menus, buttons, screen labels, warnings) is written by us in clear, helpful plain English.
+- Unflagged story from Claude. Story, dialogue, names, lore and flavor text are Brandon's; a line Claude drafts there is real text with its key listed in `game/text/claude_written.txt` (Brandon, 2026-11-14), never a caveman placeholder. Everything else the player reads (ability and status rules, tips, menus, buttons, screen labels, warnings) is written by us in clear, helpful plain English.

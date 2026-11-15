@@ -1,0 +1,2 @@
+# Text keys whose story, dialogue, name, lore or flavor words Claude wrote (drafts for Brandon; see CLAUDE.md).
+# One key per line. A key leaves when Brandon sends his own words for it or says to keep it.

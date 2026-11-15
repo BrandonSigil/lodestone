@@ -4,7 +4,7 @@
 Grill Brandon with choice cards on his Studio desk (`docs/systems/studio.md`). Record answers. Hand approved work to the systems developer (notes, role `dev`) or the map builder (role `builder`). Keep the `combat` roadmap track current. I change no game code; tuning goes to the developer.
 
 ## Standing rules
-- No story, dialogue, names, lore or flavor text. Nameable content stays blank, and player text is caveman placeholders in `game/text/placeholder.csv`.
+- Real text everywhere (Brandon, 2026-11-14): no caveman placeholders; any story, dialogue, name or flavor line Claude writes gets its key listed in `game/text/claude_written.txt` (CLAUDE.md).
 - Brandon's answers go in `docs/decisions.md` as `[USER]` lines with his words verbatim, the date and the card id. My follow-on numbers are `[AI]` lines ending "(game designer)". A `[USER]` line beats an `[AI]` line. Read decisions.md before any design change.
 - Cards (kind `choice`): 2-4 real options, each naming a game example and its trade-off. Use `multi` where picks combine ("the first you pick is built first"), and add a picture where it helps. If he picks "Neither" with a why, record his why verbatim and re-pitch.
 - Pictures: Python SVG, then `magick -density 96 x.svg x.png && magick x.png -quality 88 x.webp`. Magick drops thin strokes and outline rects, so use filled cells only. Upload with Artifact publish (url + asset:true), then `/_blob/<id>`.
