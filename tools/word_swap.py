@@ -3,7 +3,9 @@
 
   word_swap.py export          game/text/placeholder.csv -> tools/word-swap/rows.json (what the page lists)
   word_swap.py apply SWAPS     write Brandon's sent lines into placeholder.csv; SWAPS is a folder of
-                               ArtifactData JSON dumps (swaps/<KEY>.json) or one JSON list of {key, new}
+                               ArtifactData JSON dumps (swaps/<KEY>.json) or one JSON list of {key, new}.
+                               Every applied key (his words, or "keep" with the same words) leaves
+                               game/text/claude_written.txt.
 
 Only the swapped lines change; every other line of the CSV stays byte for byte.
 """
@@ -17,6 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CSV = ROOT / "game/text/placeholder.csv"
 ROWS = ROOT / "tools/word-swap/rows.json"
+# Keys whose story words Claude wrote (CLAUDE.md, Brandon 2026-11-14). The page shows them under "Written by Claude".
+CLAUDE = ROOT / "game/text/claude_written.txt"
 SCAN = ["game/scripts", "game/data", "game/scenes"]
 
 # Key prefix -> the section name the page shows. Labels for Brandon, not game text.
@@ -46,6 +50,25 @@ def read_rows():
         cells = next(csv.reader([line]))
         out.append((i, cells[0], ",".join(cells[1:])))
     return lines, out
+
+
+def claude_keys():
+    """{key: its place in claude_written.txt, from 1}; the file lists them in the order the player meets them."""
+    if not CLAUDE.exists():
+        return {}
+    keys = [ln.strip() for ln in CLAUDE.read_text(encoding="utf-8").splitlines() if ln.strip() and not ln.startswith("#")]
+    return {k: i for i, k in enumerate(dict.fromkeys(keys), start=1)}
+
+
+def drop_claude_keys(keys):
+    """Take keys off claude_written.txt (his words are in, or he kept ours); the header and the rest stay as they are."""
+    if not CLAUDE.exists() or not keys:
+        return []
+    lines = CLAUDE.read_text(encoding="utf-8").splitlines()
+    gone = [ln.strip() for ln in lines if ln.strip() in keys and not ln.startswith("#")]
+    CLAUDE.write_text("\n".join(ln for ln in lines if ln.strip() not in keys or ln.startswith("#")) + "\n",
+                      encoding="utf-8")
+    return gone
 
 
 def is_rules(key):
@@ -156,18 +179,21 @@ def export():
     used = usage([k for _, k, _ in rows])
     talks = dialogues()
     story_keys = {d["k"] for d in talks} | {o["k"] for d in talks for o in d["o"]}
+    mine = claude_keys()
     data = []
     for _, k, t in rows:
         prefix = "TAGDESC" if k.startswith("TAGDESC_") else k.split("_")[0]
         data.append({
             "k": k, "t": t, "s": SECTIONS.get(prefix, "Other"),
-            "u": used[k][:3], "r": is_rules(k), "g": group(k, story_keys),
+            "u": used[k][:3], "r": is_rules(k), "g": group(k, story_keys | set(mine)),
             "l": bool(re.search(r"lorem|ipsum", t, re.I)), "f": FORMAT.findall(t),
+            "c": mine.get(k, 0),  # 0, or its place on the Written by Claude tab
         })
     ROWS.parent.mkdir(parents=True, exist_ok=True)
     ROWS.write_text(json.dumps({"rows": data, "talks": talks}, ensure_ascii=False, separators=(",", ":")),
                     encoding="utf-8")
-    print(f"{len(data)} lines, {len(talks)} dialogues -> {ROWS.relative_to(ROOT)}")
+    print(f"{len(data)} lines ({sum(bool(r['c']) for r in data)} written by Claude), {len(talks)} dialogues"
+          f" -> {ROWS.relative_to(ROOT)}")
 
 
 def csv_line(key, text):
@@ -190,7 +216,7 @@ def load_swaps(src):
 def apply(src):
     lines, rows = read_rows()
     where = {k: (i, t) for i, k, t in rows}
-    done, bad = [], []
+    done, kept, bad = [], [], []
     for key, new in load_swaps(src):
         new = " ".join(new.split())  # one line in the table
         if key not in where:
@@ -200,10 +226,14 @@ def apply(src):
         if sorted(FORMAT.findall(new)) != sorted(FORMAT.findall(old)):
             bad.append(f"{key}: the % marks changed ({FORMAT.findall(old)} -> {FORMAT.findall(new)})")
             continue
-        lines[i] = csv_line(key, new)
-        done.append(key)
+        if new == " ".join(old.split()):
+            kept.append(key)  # "Keep": the words stay as they are, only the Claude flag goes
+        else:
+            lines[i] = csv_line(key, new)
+            done.append(key)
     CSV.write_text("\n".join(lines), encoding="utf-8")
-    print(json.dumps({"applied": done, "refused": bad}, indent=1))
+    unflagged = drop_claude_keys(set(done) | set(kept))
+    print(json.dumps({"applied": done, "kept": kept, "refused": bad, "off_claude_list": unflagged}, indent=1))
 
 
 if __name__ == "__main__":
