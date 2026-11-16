@@ -339,7 +339,7 @@ Steps 1, 2, 3 and 11 are landed. Steps 4, 5 and 8 need small rules code. Step 12
 3. **Who is the Lich built for?** Answered 2026-11-16: the first three directions for 2 or 3 members, the Lich for a full party, and the world does not scale. The plan follows that (3.3). The three smaller calls it left are answered too ("Yes to all this", each as recommended):
    - **How the Lich gets bigger:** HP alone, to 158. Landed.
    - **The west's ogre:** softened to 15 HP, 5 damage and 1 armor as an elite. Landed.
-   - **Fewer than four:** left as it is, and the homecoming page should say what the wall wants. Not built: it needs a line of text and a check on the party's size (backlog P34).
+   - **Fewer than four:** left as it is, and the homecoming page says what the wall wants. Built 2026-11-16 (backlog P34, `docs/systems/homecoming.md`); the line is Claude's flagged draft.
 4. **Slower levels?** Answered 2026-11-16 ("Yes, land both"): 200 XP a level. Landed.
 5. **What should a failed push cost, with falling free?** Recommended: morale (bed +10, wins +1, a floor of 40 at home), so two reckless pushes in a row cost a point of damage until the party rests or eats at the tavern. Leaving it free keeps pushing the best choice every time.
 6. **The bow against the Lich.** Arrows do -2 to undead by your call, and under this plan a full party led by the bow wins 0% and 20% on its first two tries, then 100%. Recommended: accept it as the "pokemon red" matchup, as with the book, and say so on the weapon rack. The other way is to drop the arrow penalty to -1.
