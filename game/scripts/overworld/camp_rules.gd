@@ -88,13 +88,14 @@ static func eat_pot(run: RunState, r: Dictionary) -> Dictionary:
 	return {"took": took, "need": need, "missed": missed}
 
 
-## Can this action be taken tonight? done: the action ids already taken this night.
-static func can_do(run: RunState, id: String, done: Array) -> bool:
+## Can this action be taken tonight? done: the action ids already taken this night. site: tonight's campsite row
+## (data/campsites.csv), {} when the party camps wherever the day ends (option A: fishing anywhere).
+static func can_do(run: RunState, id: String, done: Array, site: Dictionary = {}) -> bool:
 	if done.has(id):
 		return false
 	match id:
 		"fish":
-			return TravelRules.can_try(run, "fish")
+			return TravelRules.can_try(run, "fish") and (site.is_empty() or int(site.get("fish", 0)) == 1)
 		"mend":
 			return not most_hurt(run).is_empty()
 		"talk":
@@ -103,10 +104,12 @@ static func can_do(run: RunState, id: String, done: Array) -> bool:
 
 
 ## Why an action can't be taken tonight, as a text key ("" when it can).
-static func why_not(run: RunState, id: String, done: Array) -> String:
+static func why_not(run: RunState, id: String, done: Array, site: Dictionary = {}) -> String:
 	if done.has(id):
 		return "CAMP_DONE"
-	if not can_do(run, id, done):
+	if id == "fish" and TravelRules.can_try(run, "fish") and not can_do(run, id, done, site):
+		return "CAMP_NO_WATER"
+	if not can_do(run, id, done, site):
 		return {"fish": "CAMP_NEED_ROD", "mend": "CAMP_NOBODY_HURT", "talk": "CAMP_ALONE"}.get(id, "CAMP_DONE")
 	return ""
 
@@ -137,11 +140,61 @@ static func pairs(run: RunState) -> Array:
 
 ## Last night's plan kept for SAME AS LAST NIGHT, trimmed to what can still be done without a minigame tonight:
 ## fishing becomes a quick cast, so nothing in a repeated plan opens a screen.
-static func repeatable(run: RunState, plan: Array, n: int) -> Array:
+static func repeatable(run: RunState, plan: Array, n: int, site: Dictionary = {}) -> Array:
 	var out := []
 	for id: String in plan:
 		if out.size() >= n:
 			break
-		if can_do(run, id, out):
+		if can_do(run, id, out, site):
 			out.append(id)
 	return out
+
+
+# --- campsites on the map ([USER] 2026-11-16: "A to C is great", option C of docs/design/campfire-trail.md) ----------
+
+const SITES := "sites"  ## camp style: the party stops at campsites on the map (option C), the default
+const NIGHTLY := "nightly"  ## camp style: every day ends at a fire wherever the party is (option A)
+const DARK := "dark"  ## the rough camp when night falls before the party stops at a campsite
+const ASK_AFTER := 0.4  ## share of the day walked since the last camp before a campsite asks; sooner, it is passed
+
+
+## The camp style in the settings (Options: CAMPSITES or EVERY NIGHT), so both can be played and compared.
+static func style(settings: Dictionary) -> String:
+	return NIGHTLY if String(settings.get("camp_style", SITES)) == NIGHTLY else SITES
+
+
+## The campsites on a leg walked from `from`, in walking order: [{"t": seconds from the leg's start, "id": kind}].
+## Data: overworld_paths.csv `camps`, "0.3:meadow|0.5:river", each a share of the way from the row's `from`.
+static func leg_sites(path: Dictionary, from: String) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var seconds := float(path.get("seconds", 60))
+	for part in String(path.get("camps", "")).split("|", false):
+		var f := clampf(float(part.get_slice(":", 0)), 0.0, 1.0)
+		if String(path.get("from", "")) != from:
+			f = 1.0 - f
+		out.append({"t": snappedf(f * seconds, 0.1), "id": part.get_slice(":", 1).strip_edges()})
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.t) < float(b.t))
+	return out
+
+
+## The first campsite at or after t on the leg not passed yet (index into sites), or -1.
+static func next_site(sites: Array, t: float, passed: Array) -> int:
+	for i in sites.size():
+		if float(sites[i].t) >= t - 0.001 and not passed.has(int(i)) and not passed.has(float(i)):
+			return i
+	return -1
+
+
+## Evening actions at this campsite: the usual number plus the site's bonus (the rough camp has one fewer), at least 1.
+static func slots_at(cfg: Dictionary, site: Dictionary) -> int:
+	return maxi(1, slots(cfg) + int(site.get("slots", 0)))
+
+
+## Is a campsite worth asking about? Only once part of the day is walked; one reached right after a camp is passed.
+static func ask_at(since: float) -> bool:
+	return since >= ASK_AFTER * TravelRules.DAY_SECONDS
+
+
+## Daylight left, 0 to 1, after `since` seconds walked since the last camp.
+static func daylight(since: float) -> float:
+	return clampf(1.0 - since / TravelRules.DAY_SECONDS, 0.0, 1.0)

@@ -1,0 +1,6 @@
+id,name_key,tip_key,icon,slots,fish,free,morale,color,note
+river,CAMP_SITE_RIVER,CAMP_SITE_RIVER_TIP,rod,0,1,,0,5b8fb8,[AI] 2026-11-16 by water: the only camp where FISH works (option C)
+hill,CAMP_SITE_HILL,CAMP_SITE_HILL_TIP,,1,0,,0,8a9a5b,[AI] a high camp with a long view: one more evening action
+ruins,CAMP_SITE_RUINS,CAMP_SITE_RUINS_TIP,herb,0,0,forage,0,8f8579,[AI] old walls to search: a free forage before the evening
+meadow,CAMP_SITE_MEADOW,CAMP_SITE_MEADOW_TIP,,0,0,,0,9cc47a,[AI] open ground: nothing special
+dark,CAMP_SITE_DARK,CAMP_SITE_DARK_TIP,,-1,0,,-5,3a3f52,[AI] night fell before a campsite: a rough camp by the road (one fewer action, morale down)

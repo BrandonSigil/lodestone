@@ -38,6 +38,7 @@ var _menu_which := ""  ## the open menu: "pack", "lodestone", ...
 var _menu_close := Callable()
 var _time := 0.0
 var _hover := ""
+var _mouse := Vector2(-999, -999)  ## the pointer on screen: a campsite tent under it says its name
 var _elites := {}  ## place id -> elite groups still standing on its maps (the red badge)
 var _note := ""  ## a short line under the party (PATH SHUT, a talk line)
 var _note_time := 0.0
@@ -137,6 +138,9 @@ func _process(delta: float) -> void:
 
 ## Walk the clock forward to t1: journey days on the way, then an encounter or the arrival if one is reached.
 func _advance_to(t1: float) -> void:
+	if _sites():
+		_advance_sites(t1)
+		return
 	var tr := Game.travel
 	var seconds := float(leg().get("seconds", 60))
 	var stop := TravelRules.next_stop(float(tr.t), tr.stops, seconds)
@@ -162,6 +166,69 @@ func _advance_to(t1: float) -> void:
 	_refresh_side()
 
 
+## Campsites on the map ([USER] 2026-11-16 "A to C is great", option C; Options NIGHT CAMPS picks it or option A).
+func _sites() -> bool:
+	return CampRules.style(Game.meta.get("settings", {})) == CampRules.SITES
+
+
+## The clock with campsites: the day's light runs down as the party walks (`since`, carried from leg to leg); each
+## campsite on the leg stops the walk and asks CAMP HERE or WALK ON (one reached soon after a camp is passed); if the
+## light runs out first, the party makes a rough camp by the road (data/campsites.csv `dark`).
+func _advance_sites(t1: float) -> void:
+	var tr := Game.travel
+	var seconds := float(leg().get("seconds", 60))
+	var stop := TravelRules.next_stop(float(tr.t), tr.stops, seconds)
+	var since := float(tr.get("since", 0.0))
+	var dusk := float(tr.t) + maxf(0.0, TravelRules.DAY_SECONDS - since)
+	var sites: Array = tr.get("sites", [])
+	var passed: Array = tr.get("passed", [])
+	var si := CampRules.next_site(sites, float(tr.t), passed)
+	var site_t := float(sites[si].t) if si >= 0 else INF
+	t1 = minf(t1, minf(stop, minf(dusk, site_t)))
+	if Game.trickle(maxf(0.0, t1 - float(tr.t)), "trickle_seconds"):
+		_refresh_hud()
+	tr["since"] = since + maxf(0.0, t1 - float(tr.t))
+	tr.t = t1
+	var then := Callable()
+	if t1 >= stop - 0.001:
+		if stop >= seconds:
+			then = _arrive
+		else:
+			tr.stops.erase(stop)
+			then = _encounter
+	if t1 >= dusk - 0.001:
+		_night(then, Db.campsites.get(CampRules.DARK, {}))  # the light ran out on the road
+	elif then.is_valid():
+		then.call()  # an encounter on the same spot as a campsite comes first; the campsite asks next
+	elif si >= 0 and t1 >= site_t - 0.001:
+		passed.append(si)
+		tr["passed"] = passed
+		_at_site(Db.campsites.get(String(sites[si].id), {}))
+	_refresh_side()
+
+
+## A campsite on the road: CAMP HERE or WALK ON, with what it gives and the light left.
+func _at_site(row: Dictionary) -> void:
+	if row.is_empty():
+		return
+	var name := Txt.t(String(row.name_key))
+	if not CampRules.ask_at(float(Game.travel.get("since", 0.0))):
+		_say(Txt.f("CAMP_SITE_PASSED", name))  # just camped: walked past
+		return
+	_busy = true
+	var box := _new_dialog("%s\n%s\n%s" % [Txt.f("CAMP_SITE_ASK", name), Txt.t(String(row.tip_key)), _dusk_text()])
+	_button(box, Txt.t("CAMP_HERE"), func() -> void:
+		_close_dialog()
+		_night(Callable(), row))
+	_button(box, Txt.t("CAMP_WALK_ON"), _close_dialog)
+
+
+## "Dusk in 5 h": the day's light left, as hours of a 12-hour day.
+func _dusk_text() -> String:
+	var h := ceili(CampRules.daylight(float(Game.travel.get("since", 0.0))) * 12.0)
+	return Txt.t("CAMP_DUSK_SOON") if h <= 1 else Txt.f("CAMP_DUSK_IN", h)
+
+
 ## Walk to a place: leg by leg along the route, past cleared places on the way. then: the places still to go
 ## after this one.
 func _start_leg(to: String, then: Array = []) -> void:
@@ -175,14 +242,16 @@ func _start_leg(to: String, then: Array = []) -> void:
 		_start_leg(way[1], way.slice(2))
 		return
 	var stops := TravelRules.plan(Game.run.rng, float(p.seconds), int(p.enc_min), int(p.enc_max))
-	Game.travel = {"from": at, "to": to, "t": 0.0, "stops": stops, "acts": {}, "then": then}
+	var since := float(Game.travel.get("since", 0.0))  # the day's light carries on from the last leg
+	Game.travel = {"from": at, "to": to, "t": 0.0, "stops": stops, "acts": {}, "then": then, "since": since,
+		"sites": CampRules.leg_sites(p, at), "passed": []}
 	_side()
 
 
 func _arrive() -> void:
 	var to := String(Game.travel.to)
 	var then: Array = Game.travel.get("then", [])
-	Game.travel = {"at": to}
+	Game.travel = {"at": to, "since": float(Game.travel.get("since", 0.0))}
 	Game.set_flag("visited_" + to)  # GoalRules: places reached (visited_pass)
 	_discover(to)
 	bookmark()
@@ -297,21 +366,23 @@ func _choose(o: Dictionary) -> void:
 var _camp: CampScreen
 
 
-func _night(then := Callable()) -> void:
+## site: the campsite row (option C), {} for a camp wherever the day ended (option A).
+func _night(then := Callable(), site: Dictionary = {}) -> void:
 	_busy = true
 	Sfx.play("camp")
 	var settings: Dictionary = Game.meta.get("settings", {})
 	var r := CampRules.ration(Db.camp_rations, String(settings.get("camp_ration", CampRules.FILLING)))
 	if bool(settings.get("auto_camp", false)) and not (settings.get("camp_plan", []) as Array).is_empty() \
 			and Game.run.portions() >= CampRules.pot_need(Game.run, r):
-		var lines := CampScreen.repeat_plan(settings)
+		var lines := CampScreen.repeat_plan(settings, site)
 		lines.append_array(Game.camp_eat(String(r.id)))
+		lines.append_array(Game.camp_site_morale(int(site.get("morale", 0))))
 		lines.append(Txt.t("CAMP_AUTO_DONE"))
 		_after_camp(lines, then)
 		return
 	var nights: Dictionary = Game.meta.get("trip_nights", {})
 	var pond := "road/" + String(Game.travel.get("at", Game.travel.get("to", "road")))
-	_camp = CampScreen.open(_ui, hud.clear_rect, hud.bar_rect, pond, int(nights.get(str(int(Game.meta.trips)), 0)) + 1)
+	_camp = CampScreen.open(_ui, hud.clear_rect, hud.bar_rect, pond, int(nights.get(str(int(Game.meta.trips)), 0)) + 1, site)
 	_camp.slept.connect(_after_camp.bind(then))
 	_camp.changed.connect(_refresh_hud)
 	_refresh_hud()
@@ -340,6 +411,7 @@ func _after_camp(lines: PackedStringArray, then: Callable) -> void:
 func _end_night(then: Callable) -> void:
 	var tr := Game.travel
 	tr["nights_due"] = maxi(0, int(tr.get("nights_due", 0)) - 1)
+	tr["since"] = 0.0  # a new day's light
 	Game.pass_days(1)
 	_close_dialog()
 	_refresh_hud()
@@ -361,7 +433,8 @@ func _say(text: String) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		_hover = _node_at(_to_map((event as InputEventMouseMotion).position))
+		_mouse = (event as InputEventMouseMotion).position
+		_hover = _node_at(_to_map(_mouse))
 	elif event is InputEventMouseButton and (event as InputEventMouseButton).pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
 		var id := _node_at(_to_map((event as InputEventMouseButton).position))
 		if id != "" and not _busy and not walking():
@@ -481,6 +554,7 @@ func _draw() -> void:
 	for p: Dictionary in Db.world_paths:  # a road on every shared edge whose two tiles are both open now
 		if TravelRules.open_now(Db.world_nodes, p.from, Game.flags_now()) and TravelRules.open_now(Db.world_nodes, p.to, Game.flags_now()):
 			_draw_path(PackedVector2Array([_node_pos(p.from), _node_pos(p.to)]), k)
+	_draw_sites(k)
 	if walking():
 		var lp := leg()
 		var pts: PackedVector2Array = lp.points
@@ -528,6 +602,7 @@ func _draw_painted(k: float) -> void:
 		draw_polyline(_closed(ring), Color(0.62, 0.9, 0.5, 0.8), 2.0, true)
 	if _hover != "" and _hover != at and TravelRules.seen(_hover, flags):
 		draw_polyline(_closed(_screen_ring(TravelRules.tile_top(_node(_hover), 5.0))), Color(1, 1, 1, 0.85), 2.5, true)
+	_draw_sites(k * PIECE)
 	if walking():
 		var lp := leg()
 		var pts: PackedVector2Array = lp.points
@@ -698,6 +773,53 @@ func _draw_path(pts: PackedVector2Array, k: float) -> void:
 		draw_circle(_to_screen(TravelRules.point_at(pts, float(i) / maxf(1.0, n))), 4.0 * k + 1.0, ROAD)
 
 
+## Campsites (option C): a small tent in the site's colour on the leg being walked (passed ones faded), or, standing
+## at a place, on every road out of it, so the stops can be planned.
+func _draw_sites(_k: float) -> void:
+	if not _sites():
+		return
+	var legs := []  # [path, from, passed]
+	if walking():
+		legs.append([leg(), String(Game.travel.from), Game.travel.get("passed", [])])
+	else:
+		var at := String(Game.travel.get("at", ""))
+		for n in TravelRules.linked(Db.world_paths, at):
+			if TravelRules.open_now(Db.world_nodes, n, Game.flags_now()) and TravelRules.seen(n, Game.flags_now()):
+				legs.append([TravelRules.path_between(Db.world_paths, at, n), at, []])
+	var named := ""
+	var named_at := Vector2.ZERO
+	for l: Array in legs:
+		var p: Dictionary = l[0]
+		if p.is_empty():
+			continue
+		var sites := CampRules.leg_sites(p, String(l[1]))
+		for i in sites.size():
+			var row: Dictionary = Db.campsites.get(String(sites[i].id), {})
+			var c := Color(String(row.get("color", "9cc47a")))
+			var gone := (l[2] as Array).has(i) or (l[2] as Array).has(float(i)) or (walking() and float(sites[i].t) < float(Game.travel.t))
+			var at := _to_screen(TravelRules.point_at(p.points, float(sites[i].t) / float(p.seconds)))
+			_tent(at, c, 0.35 if gone else 1.0)
+			if at.distance_to(_mouse + Vector2(0, TENT * 0.5)) < TENT * 1.3:
+				named = Txt.t(String(row.get("name_key", "")))
+				named_at = at
+	if named != "":  # hovering a tent names it
+		_label(named_at + Vector2(0, -TENT * 1.6), named, 15, INK)
+
+
+const TENT := 11.0  ## half the width of a campsite's tent on screen, px
+
+
+## A campsite's tent: the site's colour on a pale disc, so it reads on the painted map.
+func _tent(p: Vector2, c: Color, a: float) -> void:
+	var w := TENT
+	var h := TENT * 1.15
+	draw_circle(p + Vector2(0, -h * 0.42), w * 1.2, Color(0.98, 0.95, 0.86, 0.85 * a))
+	var tri := PackedVector2Array([p + Vector2(-w, 0), p + Vector2(0, -h), p + Vector2(w, 0)])
+	draw_colored_polygon(tri, Color(c, a))
+	draw_polyline(PackedVector2Array([tri[0], tri[1], tri[2], tri[0]]), Color(INK, a), 1.6, true)
+	draw_colored_polygon(PackedVector2Array([p + Vector2(-w * 0.28, 0), p + Vector2(0, -h * 0.5), p + Vector2(w * 0.28, 0)]), Color(INK, 0.75 * a))
+
+
 func _draw_stop(p: Vector2, k: float) -> void:
 	draw_circle(p, 9 * k + 2, Color(0.95, 0.75, 0.3))
 	_label(p + Vector2(0, 5 * k), "?", 14, INK)
@@ -798,6 +920,8 @@ func _refresh_side() -> void:
 		var then: Array = Game.travel.get("then", [])
 		var goal := String(then.back()) if not then.is_empty() else String(Game.travel.to)
 		_info.text = Txt.f("UI_OW_WALKING", [Txt.t(_node(goal).name_key), int(100.0 * float(Game.travel.t) / float(lp.seconds))])
+		if _sites():
+			_info.text += "   " + _dusk_text()
 	else:  # [USER] 2026-11-01 fewer words: the map marks where the party stands and GO IN names it, so no line here
 		_info.text = ""
 	_info.visible = _info.text != ""

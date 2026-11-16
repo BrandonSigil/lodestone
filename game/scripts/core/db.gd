@@ -28,6 +28,7 @@ var camp: Dictionary = {}  # key -> number, from data/camp.csv (see CampRules)
 var camp_actions: Array[Dictionary] = []  # the campfire's evening actions, in order (data/camp_actions.csv)
 var town_chest: Array[Dictionary] = []  # what the town chest holds on a new game (data/town_chest.csv)
 var camp_rations: Array[Dictionary] = []  # the pot's ration dial, fullest first (data/camp_rations.csv)
+var campsites: Dictionary = {}  # campsite kind id -> row (data/campsites.csv): what a camp on the map gives
 var morale_bands: Array[Dictionary] = []  # data/morale_bands.csv rows, highest band first (see MoraleRules)
 var restore: Array[Dictionary] = []  # village restore ladders, data/restore.csv rows (see RestoreRules)
 var jobs: Dictionary = {}  # job id -> data/jobs.csv row (name_key, class, branch_a, branch_b)
@@ -96,6 +97,9 @@ func reload() -> void:
 		camp[row.key] = float(row.value)
 	camp_actions = CsvTable.load_rows("res://data/camp_actions.csv")
 	camp_rations = CsvTable.load_rows("res://data/camp_rations.csv")
+	campsites.clear()
+	for r: Dictionary in CsvTable.load_rows("res://data/campsites.csv"):
+		campsites[String(r.id)] = r
 	town_chest = CsvTable.load_rows("res://data/town_chest.csv")
 	morale_bands = CsvTable.load_rows("res://data/morale_bands.csv")
 	morale_bands.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.min) > int(b.min))

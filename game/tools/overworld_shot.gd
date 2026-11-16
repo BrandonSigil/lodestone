@@ -5,6 +5,9 @@ extends SceneTree
 ## pack (I pressed: the inventory page, the dog along), map (the hex world map at home, nothing open), walk (halfway
 ## along the leg to forest roads), arrive (at forest roads), night (the campfire: the dog along, the hero
 ## hurt, meat, a ration, a fish and a stew in the pack), hungry (one portion for two: the pot's hunger warning).
+## Campsites (option C; the steps above use EVERY NIGHT): site_map (at home: the tents on the roads out), site_ask
+## (walking to the pass: the river camp asks CAMP HERE or WALK ON), site_camp (the hilltop camp's evening), site_dark
+## (night falls on the road: the rough camp).
 
 var _frames := 0
 var _out := ""
@@ -22,6 +25,36 @@ func _initialize() -> void:
 func _process(_delta: float) -> bool:
 	_frames += 1
 	var s := current_scene
+	if _frames == 3:  # the old steps show the camp every night (option A); site_* the campsites (option C)
+		var meta: Dictionary = root.get_node("Game").get("meta")
+		if not meta.has("settings"):
+			meta["settings"] = {}
+		meta.settings["camp_style"] = "sites" if _step.begins_with("site") else "nightly"
+	if _frames == 5 and _step.begins_with("site"):
+		var game: Node = root.get_node("Game")
+		game.get("meta")["flags"].append("met_dog")
+		game.call("refresh_party")
+		var run: Object = game.get("run")
+		run.call("add_item", "rod", 1)
+		run.call("add_item", "ration", 2)
+		match _step:
+			"site_ask":
+				s.call("_start_leg", "pass")
+				game.get("travel")["stops"] = []
+				s.call("_advance_to", 20.0)  # the river camp, a quarter of the way
+			"site_camp":
+				s.call("_start_leg", "pass")
+				game.get("travel")["stops"] = []
+				game.get("travel")["t"] = 20.0
+				s.call("_night", Callable(), (root.get_node("Db").get("campsites") as Dictionary).hill)
+			"site_dark":
+				s.call("_start_leg", "pass")
+				game.get("travel")["stops"] = []
+				game.get("travel")["passed"] = [0, 1, 2]
+				game.get("travel")["since"] = 25.0
+				s.call("_advance_to", 40.0)  # the light runs out on the road
+			_:
+				s.call("_side")
 	if _frames == 5 and _step == "camp":
 		var game: Node = root.get_node("Game")
 		game.get("run").call("add_item", "meal_stew", 1)

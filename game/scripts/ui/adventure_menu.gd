@@ -322,6 +322,19 @@ static func _options_page(box: VBoxContainer, changed: Callable) -> void:
 				Sfx.apply_volumes()
 				changed.call())
 			vrow.add_child(vb)
+	var camps: HBoxContainer = row.call("UI_OPT_CAMPS")  # option C or option A of the campfire trail, to compare them
+	var style := CampRules.style(Game.meta.get("settings", {}))
+	for want: String in [CampRules.SITES, CampRules.NIGHTLY]:
+		var cb := Button.new()
+		cb.text = Txt.t("UI_OPT_CAMPS_" + want.to_upper())
+		cb.toggle_mode = true
+		cb.button_pressed = style == want
+		cb.tooltip_text = Txt.t("UI_OPT_CAMPS_TIP")
+		cb.custom_minimum_size = Vector2(130, 32)
+		cb.pressed.connect(func() -> void:
+			Game.set_setting("camp_style", want)
+			changed.call())
+		camps.add_child(cb)
 	var window: HBoxContainer = row.call("UI_OPT_WINDOW")
 	var full := bool(Game.meta.get("settings", {}).get("fullscreen", false))
 	for want: bool in [false, true]:  # both named, the one in use lit: no guessing what a press will do

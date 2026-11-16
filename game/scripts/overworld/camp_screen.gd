@@ -21,6 +21,7 @@ var room := Callable()  ## the play area it fills (FrameHud.clear_rect)
 var bar := Callable()  ## the party frame's bar (fishing puts its Leave there)
 var pond_key := "road"  ## Game.pond key for this camp's water
 var night := 1  ## the trip's night number, for the title
+var site: Dictionary = {}  ## tonight's campsite (data/campsites.csv), {} when camping wherever the day ended (option A)
 
 var _done: Array = []  ## action ids taken tonight, in order
 var _pair: Array = []  ## tonight's talk pair, kept for SAME AS LAST NIGHT
@@ -36,8 +37,9 @@ var _faces: Array[Control] = []
 var _fishing: FishingGame
 
 
-static func open(parent: Node, room_fn: Callable, bar_fn: Callable, pond: String, night_no: int) -> CampScreen:
+static func open(parent: Node, room_fn: Callable, bar_fn: Callable, pond: String, night_no: int, at: Dictionary = {}) -> CampScreen:
 	var c := CampScreen.new()
+	c.site = at
 	c.room = room_fn
 	c.bar = bar_fn
 	c.pond_key = pond
@@ -70,6 +72,10 @@ func _ready() -> void:
 	_bottom.add_theme_constant_override("separation", 12)
 	add_child(_bottom)
 	resized.connect(_layout)
+	var free := String(site.get("free", ""))
+	if free != "":  # the ruins: searched before the evening, without a slot
+		_lines.append(Txt.t("CAMP_SITE_SEARCHED"))
+		_lines.append_array(CampScreen.act(free, []))
 	_build()
 	UiTheme.fade_in(self)
 
@@ -79,7 +85,7 @@ func _settings() -> Dictionary:
 
 
 func _slots() -> int:
-	return CampRules.slots(Db.camp)
+	return CampRules.slots_at(Db.camp, site)
 
 
 # --- building ---------------------------------------------------------------------------------------
@@ -105,9 +111,13 @@ func _build() -> void:
 func _build_top() -> void:
 	var title := Label.new()
 	title.theme_type_variation = &"KitHeading"
-	title.text = Txt.f("CAMP_TITLE", night)
+	title.text = Txt.f("CAMP_TITLE", night) if site.is_empty() else Txt.f("CAMP_TITLE_AT", [night, Txt.t(String(site.name_key))])
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_top.add_child(title)
+	if not site.is_empty():  # what this campsite gives, in one line
+		var what := MenuKit.label(Txt.t(String(site.tip_key)), UiSkin.T_SMALL, CampScreen.WARN if int(site.get("morale", 0)) < 0 else MenuKit.TEXT_DIM)
+		what.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_top.add_child(what)
 	var row := HBoxContainer.new()  # tonight's slots: what was done, then the free ones
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 8)
@@ -186,7 +196,7 @@ func _build_actions() -> void:
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.custom_minimum_size = Vector2(200, 36)
 		b.add_theme_font_size_override("font_size", UiSkin.T_BODY)
-		var why := CampRules.why_not(Game.run, id, _done)
+		var why := CampRules.why_not(Game.run, id, _done, site)
 		if full and why == "":
 			why = "CAMP_FULL"
 		b.disabled = why != ""
@@ -235,7 +245,7 @@ func _action(id: String) -> Dictionary:
 # --- the evening ------------------------------------------------------------------------------------
 
 func _do(id: String) -> void:
-	if _done.size() >= _slots() or not CampRules.can_do(Game.run, id, _done):
+	if _done.size() >= _slots() or not CampRules.can_do(Game.run, id, _done, site):
 		return
 	match id:
 		"fish":
@@ -328,6 +338,7 @@ func _sleep() -> void:
 	Game.set_setting("camp_ration", _ration)
 	var lines := _lines.duplicate()
 	lines.append_array(Game.camp_eat(_ration))
+	lines.append_array(Game.camp_site_morale(int(site.get("morale", 0))))
 	Sfx.play("camp")
 	slept.emit(lines)
 	queue_free()
@@ -335,17 +346,17 @@ func _sleep() -> void:
 
 ## SAME AS LAST NIGHT: last night's evening (fishing as a quick cast) and ration, then sleep.
 func repeat_last() -> void:
-	_done = CampRules.repeatable(Game.run, _settings().get("camp_plan", []), _slots())
+	_done = CampRules.repeatable(Game.run, _settings().get("camp_plan", []), _slots(), site)
 	_pair = _settings().get("camp_pair", [])
-	_lines.append_array(CampScreen.repeat_plan(_settings()))
+	_lines.append_array(CampScreen.repeat_plan(_settings(), site))
 	_sleep()
 
 
 ## Run last night's plan without the screen (SAME AS LAST NIGHT, and the auto camp). Returns its lines.
-static func repeat_plan(settings: Dictionary) -> PackedStringArray:
+static func repeat_plan(settings: Dictionary, at: Dictionary = {}) -> PackedStringArray:
 	var out: PackedStringArray = []
 	var pair: Array = settings.get("camp_pair", [])
-	for id: String in CampRules.repeatable(Game.run, settings.get("camp_plan", []), CampRules.slots(Db.camp)):
+	for id: String in CampRules.repeatable(Game.run, settings.get("camp_plan", []), CampRules.slots_at(Db.camp, at), at):
 		if id == "talk" and not CampRules.pairs(Game.run).has(pair):
 			continue  # one of last night's pair is gone
 		out.append_array(CampScreen.act(id, pair))

@@ -167,3 +167,51 @@ func test_same_as_last_night_trims_what_cant_be_done() -> void:
 	run.add_item("rod", 1)
 	eq(CampRules.repeatable(run, ["fish", "hunt", "rest", "forage"], 3), ["fish", "hunt", "rest"], "never more than the slots")
 	_teardown()
+
+
+# --- campsites on the map (option C) ---
+
+func test_campsites_on_a_leg_read_both_ways() -> void:
+	_setup()
+	var p := {"from": "town", "to": "pass", "seconds": "60", "camps": "0.25:river|0.75:hill"}
+	var out := CampRules.leg_sites(p, "town")
+	eq(out.map(func(s: Dictionary) -> String: return String(s.id)), ["river", "hill"])
+	eq(float(out[0].t), 15.0, "a quarter of the way")
+	var back := CampRules.leg_sites(p, "pass")
+	eq(back.map(func(s: Dictionary) -> String: return String(s.id)), ["hill", "river"], "walked the other way, in walking order")
+	eq(float(back[0].t), 15.0)
+	eq(CampRules.next_site(out, 0.0, []), 0)
+	eq(CampRules.next_site(out, 0.0, [0]), 1, "a passed campsite doesn't ask again")
+	eq(CampRules.next_site(out, 50.0, []), -1, "none left ahead")
+	for row: Dictionary in Db.world_paths:  # every leg in data names campsites that exist
+		for s: Dictionary in CampRules.leg_sites(row, String(row.from)):
+			ok(Db.campsites.has(String(s.id)), "campsite %s on %s-%s" % [s.id, row.from, row.to])
+	_teardown()
+
+
+func test_what_each_campsite_gives() -> void:
+	_setup()
+	var run := Game.run
+	var base := CampRules.slots(Db.camp)
+	eq(CampRules.slots_at(Db.camp, {}), base, "a camp wherever the day ends (option A)")
+	eq(CampRules.slots_at(Db.camp, Db.campsites.hill), base + 1, "the hilltop: one more action")
+	eq(CampRules.slots_at(Db.camp, Db.campsites.dark), base - 1, "night on the road: one fewer")
+	run.add_item("rod", 1)
+	ok(CampRules.can_do(run, "fish", [], Db.campsites.river), "a river camp fishes")
+	ok(not CampRules.can_do(run, "fish", [], Db.campsites.meadow), "no water, no fishing")
+	eq(CampRules.why_not(run, "fish", [], Db.campsites.meadow), "CAMP_NO_WATER")
+	ok(CampRules.can_do(run, "fish", [], {}), "option A fishes anywhere with a rod")
+	ok(not CampRules.ask_at(0.0) and CampRules.ask_at(TravelRules.DAY_SECONDS * 0.5), "just camped: walk past")
+	eq(CampRules.style({}), CampRules.SITES, "campsites by default")
+	eq(CampRules.style({"camp_style": "nightly"}), CampRules.NIGHTLY)
+	_teardown()
+
+
+func test_a_rough_camp_costs_morale() -> void:
+	_setup()
+	var before := Game.morale_of("lead")
+	var lines := Game.camp_site_morale(int(Db.campsites.dark.morale))
+	ok(Game.morale_of("lead") < before, "everyone loses morale")
+	ok(not lines.is_empty())
+	eq(Game.camp_site_morale(0), PackedStringArray(), "a good campsite costs nothing")
+	_teardown()

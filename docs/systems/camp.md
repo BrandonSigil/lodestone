@@ -42,10 +42,25 @@ The first trip's free kit (`Game.starter_food`, at the gate) now includes a fish
 - Text keys `CAMP_*` in `game/text/placeholder.csv`.
 - Shots: `game/tools/overworld_shot.gd` steps `night`, `night_evening`, `hungry`, `camp`.
 
+## Campsites on the map (option C)
+Built 2026-11-16 after Brandon's "A to C is great". Options has NIGHT CAMPS: AT CAMPSITES (the default) or EVERY NIGHT (option A as first built), so the two can be played side by side. The commit before campsites is tagged `before-campsites`.
+
+- **The light.** A day is still 30 walked seconds (`TravelRules.DAY_SECONDS`), but with campsites it counts from the last camp (`Game.travel.since`), carried from leg to leg. The walking line shows "Dusk in n h" (a 12-hour day).
+- **Campsites.** Each road has three, drawn as tents on it, in the site's colour. Standing at a place, the roads out show theirs, so stops can be planned; walking, passed ones fade. Hovering a tent names it. Reaching one stops the walk and asks CAMP HERE or WALK ON, with what it gives and the light left. One reached in the first 40% of a day after a camp is walked past (`CampRules.ASK_AFTER`). FAST FORWARD stops at them too.
+- **What each gives** (`game/data/campsites.csv`):
+  - River camp: the only camp where FISH works.
+  - Hilltop camp: one more evening action (4).
+  - Old ruins: a free forage before the evening.
+  - Meadow camp: nothing special.
+  - Rough camp: when the light runs out before the party stops. One fewer action (2) and -5 morale for everyone (free in the new-player nights, like the ration's cost).
+- **The trade.** Stopping early is safe but spends a day's food on less road; pushing on to a better site risks the rough camp.
+- **Data.** `overworld_paths.csv` `camps`: "0.3:meadow|0.5:river|0.8:hill", each a share of the way from the row's `from` (`CampRules.leg_sites` turns it round for the other way). The campfire screen takes the site (`CampScreen.open(..., site)`): its name in the title, its line under it, its slots, fishing and free action. `Game.camp_site_morale` applies its morale on sleeping.
+- **Code.** `OverworldScene._advance_sites` (the clock), `_at_site` (the question), `_draw_sites` (the tents). Rules in `CampRules` (`style`, `leg_sites`, `next_site`, `slots_at`, `ask_at`, `daylight`). Tests in `test_camp.gd`. Screenshots: `overworld_shot.gd` steps `site_map`, `site_ask`, `site_camp`, `site_dark` (the older camp steps play EVERY NIGHT).
+- **My calls ([AI]):** the hill gives an action rather than a free watch (there are no night ambushes yet); the ruins give a free forage until fireside events are written; three campsites a road, in five rotating patterns, not placed by hand.
+
 ## Not built yet
 - **Fireside events:** about one night in three, a choice card.
 - **Pace dial:** STEADY / HARD / GRUELING.
-- **Water near camp:** FISH is offered whenever there's a rod.
+- **Water near camp:** with EVERY NIGHT, FISH is offered whenever there's a rod; with campsites only a river camp fishes.
 - **Dishes cooked at camp:** cooking is still at home; COOK serves what you carry.
-- **Campsites chosen on the map:** option C, the next step Brandon wants.
 - **Old camp code:** `TravelRules.camp_meal`, `default_picks` and `hungry_with` still exist for their tests and the old trail; the road no longer calls them.

@@ -1323,3 +1323,26 @@ READY_MEDICINE_TIP,Medicine
 READY_WARN_FOOD,Food for only %d days.
 READY_WARN_SPENT,%s is Spent and can't fight.
 READY_WARN_PACK,The pack is too full to carry.
+CAMP_SITE_RIVER,River camp
+CAMP_SITE_RIVER_TIP,"By the water: you can fish here."
+CAMP_SITE_HILL,Hilltop camp
+CAMP_SITE_HILL_TIP,"A long view: one more evening action."
+CAMP_SITE_RUINS,Old ruins
+CAMP_SITE_RUINS_TIP,"Old walls to search: a free forage before the evening."
+CAMP_SITE_MEADOW,Meadow camp
+CAMP_SITE_MEADOW_TIP,"Open ground. Nothing special, but you stop before dark."
+CAMP_SITE_DARK,Rough camp
+CAMP_SITE_DARK_TIP,"Night fell on the road: one fewer evening action, and everyone loses 5 morale."
+CAMP_SITE_SEARCHED,You search the ruins before dark.
+CAMP_SITE_PASSED,Passed: %s
+CAMP_SITE_ASK,A campsite: %s
+CAMP_TITLE_AT,NIGHT %d · %s
+CAMP_NO_WATER,No water here. Fish at a river camp.
+CAMP_HERE,CAMP HERE
+CAMP_WALK_ON,WALK ON
+CAMP_DUSK_IN,Dusk in %d h
+CAMP_DUSK_SOON,Dusk soon
+UI_OPT_CAMPS,NIGHT CAMPS
+UI_OPT_CAMPS_SITES,AT CAMPSITES
+UI_OPT_CAMPS_NIGHTLY,EVERY NIGHT
+UI_OPT_CAMPS_TIP,"At campsites: you choose where to stop on the map, and night on the road means a rough camp. Every night: the party camps wherever each day ends."

@@ -1398,6 +1398,26 @@ func camp_eat(ration_id: String) -> PackedStringArray:
 	return lines
 
 
+## A campsite's morale on sleeping (the rough camp when night fell on the road: data/campsites.csv `dark`), for
+## everyone in the party. The first nights of the first trips are free, as the ration's cost is. Returns the lines.
+func camp_site_morale(delta: int) -> PackedStringArray:
+	var lines: PackedStringArray = []
+	var nights: Dictionary = meta.get("trip_nights", {})
+	if delta == 0 or MoraleRules.grace(int(meta.trips), int(nights.get(str(int(meta.trips)), 0)), Db.morale):
+		return lines
+	var dog := _dog_along()
+	for m in run.alive():
+		var d: CharacterDef = m.def
+		var n := MoraleRules.change(meta.morale, String(d.id), delta, Db.morale, dog)
+		if n != 0:
+			lines.append(Txt.f("UI_MORALE_CHANGE", [Txt.t(d.name_key), str(n)]))
+		if MoraleRules.spent(meta.morale, String(d.id), Db.morale):
+			lines.append(Txt.f("UI_SPENT_NOW", Txt.t(d.name_key)))
+	refresh_party()
+	save_meta()
+	return lines
+
+
 ## The town chest ([USER] 2026-11-16, backlog P31): a stash at home for what the party doesn't carry, filled from
 ## data/town_chest.csv the first time it's opened. Item id -> count, in meta (it outlives every trip).
 func chest() -> Dictionary:
