@@ -10,8 +10,8 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 
 | # | Problem | Owner | Status |
 | --- | --- | --- | --- |
-| P24 | Interact marks on explore maps: "I dont like the interactions in the game right now. Having these like !!! F everywhere. What's a better more 2026 way of handling interactions?" (his screenshot: a chest in a house with the bobbing "!" bubble and the F cap; drawn in `explore_overlay.gd`) | PM (mockup asked: "Yes, mock it up") | in progress |
-| P25 | Interiors: "We need better art/visuals for the front of interiors, it stinks not knowing where a door is" (his screenshot: the hero's home, the way out is an unmarked floor tile on the open front edge that only lights when he stands near it) | PM (mockup with P24) | in progress |
+| P24 | Interact marks on explore maps: "I dont like the interactions in the game right now. Having these like !!! F everywhere. What's a better more 2026 way of handling interactions?" (his screenshot: a chest in a house with the bobbing "!" bubble and the F cap; drawn in `explore_overlay.gd`) | PM (mockup asked: "Yes, mock it up") | mockup shown, waiting on Brandon (branch `claude/interact-marks-d59d93`, switch `ExploreOverlay.quiet`, off on main) |
+| P25 | Interiors: "We need better art/visuals for the front of interiors, it stinks not knowing where a door is" (his screenshot: the hero's home, the way out is an unmarked floor tile on the open front edge that only lights when he stands near it) | PM (mockup with P24) | mockup shown, waiting on Brandon (same branch and switch: a graybox door frame, step, mat and daylight on the way out) |
 | P26 | Statue art: "Use Figma to get Sunburst images and get an actual asset of the statue in the middle of the city. Send me three examples" (his reference: a blue crystal over a stone dais between hooded praying statues) | PM | done (he picked round 3 B: "This one is great"; in the game as `ph_statue.png`, the glow sits on her crystal). Still open: a version with empty hands for after the stone is taken |
 
 ## 2026-11-14 Brandon's village playtest (seven screenshots)

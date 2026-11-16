@@ -636,3 +636,45 @@ func test_waiting_things_open_windows_only_when_the_party_is_near() -> void:
 	ok(b._fade.has(tavern), "a piece behind the tavern opens it")
 	BattleArt.use_set("")
 	b.free()
+
+
+## The quiet interaction look (P24 mockup, 2026-11-14, behind ExploreOverlay.quiet): every thing kind the overlay
+## knows names its action from a real text key, and a few verbs match what their events do.
+func test_quiet_marks_name_every_action() -> void:
+	if Db.explore_events.is_empty():
+		Db.reload()
+	for kind in ["chest", "container", "cache", "bed", "shrine", "exit", "enter", "door", "statue", "window", "boost",
+			"key", "rare", "climb", "companion", "settler", "dog", "restore", "rack", "find", "fish", "hidden", "rubble"]:
+		var k := ExploreOverlay.verb_key({"kind": kind, "type": "chest"})
+		ok(Txt.has(k), "%s names its action (%s)" % [kind, k])
+	eq(Txt.t(ExploreOverlay.verb_key({"kind": "container", "type": "pile"})), Txt.t("UI_USE_PILE"), "loot left after a fight")
+	eq(ExploreOverlay.verb_key({"kind": "cache", "event": "cache_potion", "type": "chest"}), "UI_USE_CHEST", "the cottage chest opens")
+	eq(ExploreOverlay.verb_key({"kind": "cache", "event": "cache_food", "type": "chest"}), "UI_USE_CACHE", "a food barrel is searched")
+	eq(ExploreOverlay.verb_key({"kind": "statue", "event": "statue_lodestone", "type": "chest"}), "UI_USE_STATUE", "only boxes read their type")
+	eq(ExploreOverlay.verb_key({"kind": "enter", "event": "door_stuck"}), "UI_USE_DOOR", "a stuck door opens")
+	eq(ExploreOverlay.verb_key({"kind": "enter"}), "UI_USE_ENTER", "a plain doorway enters")
+	eq(ExploreOverlay.verb_key({"kind": "enter"}, true), "UI_USE_LEAVE", "and leads outside from a house")
+	eq(ExploreOverlay.verb_key({"kind": "chest", "verb": "UI_USE_FISH"}), "UI_USE_FISH", "a thing's own verb wins")
+
+
+## P25 (2026-11-14): in a house the way out is marked from anywhere, on the floor edge it opens through.
+func test_quiet_marks_find_a_house_way_out() -> void:
+	var m := ExploreMap.load_named("home")
+	var board := CombatBoard.new()
+	board.grid = m.grid
+	board.wall_kit = m.wall_kit
+	for y in m.grid.h:
+		for x in m.grid.w:
+			board.fog[Vector2i(x, y)] = 2
+	var things: Array = []
+	for t: Dictionary in m.things:
+		var c := t.duplicate()
+		c["done"] = false
+		things.append(c)
+	var out := ExploreOverlay.exits(things, board)
+	eq(out.size(), 1, "one way out in the cottage")
+	for c: Vector2i in out:
+		ok(not m.grid.in_bounds(c + out[c]), "it steps off the floor's edge")
+	board.wall_kit = ""
+	ok(ExploreOverlay.exits(things, board).is_empty(), "outdoors and dungeons: no marks")
+	board.free()
