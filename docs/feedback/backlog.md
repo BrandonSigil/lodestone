@@ -6,6 +6,13 @@ How to use it: when you start on an item, put your thread in **Owner**; when it 
 
 Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#PR)`.
 
+## 2026-11-16 Brandon (Claude window)
+
+| # | Problem | Owner | Status |
+| --- | --- | --- | --- |
+| P31 | A get-ready screen before leaving town: "We need a better screen before leaving town. I'm thinking a large menu with tabs where you'd pick your party from available characters and get a feel for the team comp, move your inventory around and grab supplies from the town chest, we could have warnings on it too making sure people know they only have x days of food or w/e. Just a nice polished menu system to get people ready to hit the road." | Claude (trail and ready screen) | in progress: research, then options for Brandon |
+| P32 | The trail: "I hate how the overworld works right now. Fast forward, chat, fish (no fishing rod in the game yet which stinks! Because we have a mini game) eating is just an ugly menu with a confusing ux. Id like your ideas here. I love Oregon trail and want to honor that gameplay here, but it shouldn't be a burden either it should be fun. One thing that could help is lump everything together at a campfire, like thats where you chat, cook, eat, fish. Do deep research then give me some options on how to make this part of the game fun" | Claude (trail and ready screen) | in progress: research, then options for Brandon |
+
 ## 2026-11-14 Brandon (Claude window)
 
 | # | Problem | Owner | Status |
