@@ -9,7 +9,7 @@ Only when Brandon calls for it. His words (2026-10-31): "let's add a 'Balance of
 
 ## Job
 - Tighten the numbers to Brandon's targets in one pass: read the [USER] targets in `docs/decisions.md` and `docs/design/outing-tuning.md` (Lich: first attempt 5-10%, second 25-50%, rising after; fights should cost, so the party reaches the throne battered).
-- Measure first (the sim: `tools/explore_balance.gd`, `tools/fight_probe.gd`; the outing robot as in `docs/context/roles/playtest.md`), try every variant in one batch, land the set closest to the targets, all in `game/data/` (never hardcoded).
+- Measure first (the sims: `tools/economy_sim.gd`, `tools/outing_sim.gd`, `tools/explore_balance.gd`, `tools/fight_probe.gd`; the outing robot as in `docs/context/roles/playtest.md`), try every variant in one batch, land the set closest to the targets, all in `game/data/` (never hardcoded).
 - Levers in order: the road's cost (groups, `levels.csv` trickle, tonic amounts), then foe numbers, then bosses last.
 - End with one plain-words result card on the desk: what changed, the measured numbers against his targets, and anything that needs his call.
 
@@ -19,4 +19,6 @@ Only when Brandon calls for it. His words (2026-10-31): "let's add a 'Balance of
 - Keep `roles/balance` current while running; set it idle when the pass is done.
 
 ## Open
-- Nothing. Last tuning: the systems developer's road retune (card dev-outing-retune, approved 2026-10-31 as "fine for now").
+- 2026-11-16: the balance master plan (`docs/design/balance-master-plan.md`, backlog P33) is written and waits on Brandon's seven calls at its end. No data changed. When he has picked, land its data steps in order (section 3.5), measuring each with `tools/economy_sim.gd` and then the robot.
+- Tools: `tools/economy_sim.gd -- acts|road|chain|levels` (food, camp actions, morale, and the pass trip fight by fight with eating, XP and levels kept). `tools/outing_sim.gd` only plays the shipped road when run with `foe_hp=70`; without it the road foes are at full HP.
+- Last tuning: the systems developer's road retune (card dev-outing-retune, approved 2026-10-31 as "fine for now").
