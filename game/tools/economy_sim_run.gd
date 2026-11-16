@@ -10,6 +10,8 @@ extends "res://tools/outing_sim_run.gd"
 ## acts and road also take hunt_dc=13 hunt_food=4 forage_dc=9 forage_food=1 fish_dc=11 margin_div=2 (the dice in TravelRules.ACTS, tried here).
 ## chain and levels also take upg=N (weapon upgrade ranks), ally=hunter,bushberry (more party pieces), ally_lag=2 (levels they are behind).
 ## chain and levels also take boss_hp=125 (% of the Lich's HP), boss_dmg=1, boss_armor=1.
+## chain also takes route=pass|north|forest|farm (which fights, in order), xp0=270 (XP the hero starts with) and
+## ally_at=210,60 (the hero's XP when each ally joined: they start at level 1 and earn the same XP from then on);
 ## chain also takes loot_pct=50 (scale the loot's food), meat_heal=1 (HP a meat portion heals), home=20 (morale a night at home gives), nights=2.
 ## Other key=value pairs override a levels.csv, combat.csv, camp.csv or morale.csv row for this run only.
 
@@ -23,7 +25,16 @@ const PARTIES := {
 const PORTIONS_PER_FISH := 1.80  ## road spot: weights minnow 40 (1), perch 30 (2), trout 18 (2), pike 10 (4) over 98
 const INGREDIENT_PER_FISH := 0.29
 
+const ROUTES := {
+	"pass": [],  # the parent's ORDER: the pass, the den, the crypt and the throne
+	"north": [["snow_pass", "pass_wolves"], ["snow_pass", "pass_bandits"], ["wolf_den", "den_wolves"], ["wolf_den", "den_lone"]],
+	"forest": [["forest_roads", "forest_bandits"], ["forest_roads", "forest_wolves"], ["forest_roads", "forest_ogre"]],
+	"farm": [["farmland", "farm_bandits"]],
+}
+
 var _args := {}
+var _order: Array = []  ## the fights of this run's route, in order
+var _xp_now := -1  ## the hero's XP at the fight being built (-1 in `levels`, which has none)
 var _rng := RandomNumberGenerator.new()
 var _acts_cfg := {}  ## a copy of TravelRules.ACTS; hunt_dc=13, hunt_food=4, forage_dc=9 ... override it for this run
 var _margin_div := 2  ## a win adds its margin over the DC divided by this (margin_div=0: no margin food)
@@ -335,7 +346,10 @@ func _road_event(party: Array, morale: Dictionary, out: Dictionary) -> void:
 
 func _setup_maps() -> void:
 	_helper = load("res://tools/explore_balance_run.gd").new()
-	for name in ["snow_pass", "wolf_den", "crypt"]:
+	_order = ROUTES.get(String(_args.get("route", "pass")), [])
+	if _order.is_empty():
+		_order = ORDER
+	for name in ["snow_pass", "wolf_den", "crypt", "forest_roads", "farmland"]:
 		var m := ExploreMap.load_named(name)
 		_helper.call("_open_ways", m)
 		_maps[name] = m
@@ -351,7 +365,7 @@ func _chain_mode() -> void:
 	var upg := int(_num("upg", 0))
 	var keep := int(_num("keep", 4))
 	var weapons := String(_args.get("weapons", "sword,daggers,bow")).split(",")
-	print("## chain: the pass trip fight by fight (heal %s, keep %d portions back, weapon upgrade +%d, foes at %d%%, gap %.0f tiles, %d runs a weapon, a fall sends the party home with its levels and its morale)" % [heal, keep, upg, foe_hp, gap, runs])
+	print("## chain: route `%s` fight by fight (heal %s, keep %d portions back, weapon upgrade +%d, foes at %d%%, gap %.0f tiles, %d runs a weapon, a fall sends the party home with its levels and its morale)" % [String(_args.get("route", "pass")), heal, keep, upg, foe_hp, gap, runs])
 	var per_fight := {}  # fight index -> [n, wins, hp lost %, xp]
 	var tries := []
 	var arrival := {"hp": 0.0, "n": 0, "lvl": 0.0, "food": 0.0}
@@ -359,7 +373,7 @@ func _chain_mode() -> void:
 	for w in weapons:
 		var wins := {}
 		for i in runs:
-			var xp := 0
+			var xp := int(_num("xp0", 0))
 			var morale := 70
 			var food0 := 12
 			var at_throne := 0
@@ -391,7 +405,7 @@ func _chain_mode() -> void:
 					if r.won:
 						break
 		tries.append([w, wins])
-	print("| weapon | Lich try 1 | try 2 | try 3 | try 4 | try 5 |")
+	print("| weapon | last fight of the route (the Lich on `pass`), try 1 | try 2 | try 3 | try 4 | try 5 |")
 	print("| --- | --- | --- | --- | --- | --- |")
 	for t in tries:
 		var line := "| %s |" % t[0]
@@ -405,11 +419,11 @@ func _chain_mode() -> void:
 	print("")
 	print("| fight | group | fought | won | party HP lost a fight (% of max) | XP a win |")
 	print("| --- | --- | --- | --- | --- | --- |")
-	for n in ORDER.size():
+	for n in _order.size():
 		var row: Array = per_fight.get(n, [0, 0, 0.0, 0.0])
 		if row[0] == 0:
 			continue
-		print("| %d | %s | %d | %d%% | %d%% | %.0f |" % [n + 1, ORDER[n][1], row[0], roundi(100.0 * row[1] / row[0]), roundi(row[2] / row[0]), row[3] / maxi(1, row[1])])
+		print("| %d | %s | %d | %d%% | %d%% | %.0f |" % [n + 1, _order[n][1], row[0], roundi(100.0 * row[1] / row[0]), roundi(row[2] / row[0]), row[3] / maxi(1, row[1])])
 
 
 ## One attempt from the village. heal: none, meat (eat the loot's meat between fights, 2 HP a portion) or both (and drink potions).
@@ -424,13 +438,13 @@ func _trip(weapon: String, xp0: int, morale0: int, gap: float, heal: String, upg
 	_rng.seed = seed_i * 31 + 7
 	# the road out: two nights of food, and the morale the first ones cost under a FILLING pot are nothing; the sim only takes the food
 	food -= int(_num("nights", 2)) * 2
-	for n in ORDER.size():
-		var m: ExploreMap = _maps[ORDER[n][0]]
+	for n in _order.size():
+		var m: ExploreMap = _maps[_order[n][0]]
 		var g := {}
 		for x: Dictionary in m.groups:
-			if x.id == ORDER[n][1]:
+			if x.id == _order[n][1]:
 				g = x
-		var last_fight: bool = n == ORDER.size() - 1
+		var last_fight: bool = n == _order.size() - 1
 		trickle += gap / maxf(1.0, float(Db.levels.get("trickle_steps", 10)))
 		while trickle >= 1.0:
 			trickle -= 1.0
@@ -438,6 +452,7 @@ func _trip(weapon: String, xp0: int, morale0: int, gap: float, heal: String, upg
 				if not s.full and s.res < s.res_max:
 					s.res += 1
 		var level := _level(xp)
+		_xp_now = xp
 		var party: Array = _party_for(level, weapon, upg)
 		for i in party.size():
 			var u: CombatUnit = party[i]
@@ -459,7 +474,7 @@ func _trip(weapon: String, xp0: int, morale0: int, gap: float, heal: String, upg
 			out.level = level
 			out.arrive_hp = roundi(hp_before)
 			out.food_left = food
-		var r := _fight(m, g, party, state, seed_i * 31 + n)
+		var r := _fight2(m, g, party, state, seed_i * 31 + n)
 		var won: bool = r.winner == 0
 		var rec := {"n": n, "won": won, "lost": 0.0, "xp": 0}
 		if not won:
@@ -471,6 +486,8 @@ func _trip(weapon: String, xp0: int, morale0: int, gap: float, heal: String, upg
 		if last_fight:
 			out.won = true
 		var gain := LevelRules.fight_xp(int(r.foes), bool(g.get("boss", false)), Db.levels)
+		if bool(g.get("elite", false)):
+			gain = gain * int(CombatRules.num("elite_xp_pct")) / 100
 		xp += gain
 		out.xp = xp
 		rec.xp = gain
@@ -493,13 +510,97 @@ func _trip(weapon: String, xp0: int, morale0: int, gap: float, heal: String, upg
 	return out
 
 
+## One fight as the game sets it up (ExploreScene): elites get the elite numbers, ordinary groups the road's HP cut, a boss its
+## hand-tuned numbers (and this run's boss_hp, boss_dmg, boss_armor), and a unit with `char` is that character on the foes' side
+## (Bushberry beside the ogre). The carried HP and bars are stored back into `state`, as the outing sim's _fight does.
+func _fight2(m: ExploreMap, g: Dictionary, party: Array, state: Array, seed_i: int) -> Dictionary:
+	var grid := m.grid
+	var enemies: Array = []
+	var boss := bool(g.get("boss", false))
+	var elite := bool(g.get("elite", false))
+	for e: Dictionary in g.units:
+		var u: CombatUnit
+		if e.has("char"):
+			u = CombatUnit.from_def(Db.character(StringName(e.char)))
+			u.team = 1
+		else:
+			var cls := Db.class_def(e.id)
+			var mods := LevelRules.merge(ExploreRules.elite_mods() if elite else {},
+				ExploreRules.depth_mods(m.map_name, ExploreRules.group_depth(m.level, g), String(g.id), g.units.find(e), cls))
+			if not elite and not boss and foe_hp != 100:
+				mods["hp_pct"] = foe_hp
+			if boss and g.units.find(e) == 0:
+				mods["hp_pct"] = int(mods.get("hp_pct", 100)) * boss_hp / 100
+				mods["damage"] = int(mods.get("damage", 0)) + boss_dmg
+			u = CombatUnit.enemy(cls, mods)
+			u.elite = elite
+			if boss and g.units.find(e) == 0:
+				u.armor += boss_armor
+		u.place(e.cell, grid.height_at(e.cell))
+		u.summon_cells = g.get("summon", [] as Array[Vector2i])
+		for c in g.get("exit", []):
+			u.summon_avoid[Vector2i(int(c[0]), int(c[1]))] = true
+		enemies.append(u)
+	var cells: Array = enemies.map(func(u: CombatUnit) -> Vector2i: return u.cell)
+	var blocked := {}
+	for c in cells:
+		blocked[c] = true
+	var path := ExploreRules.find_path(grid, m.start[0], _helper.call("_near", grid, cells[0], blocked), 2, blocked)
+	var at: Vector2i = m.start[0]
+	for c in path:
+		at = c
+		if ExploreRules.sees(grid, [c], cells, ExploreRules.PARTY_SIGHT) or ExploreRules.sees(grid, cells, [c], int(g.sight)):
+			break
+	for u: CombatUnit in party:
+		u.place(at, grid.height_at(at))
+	var spots := ExploreRules.auto_deploy(grid, party, "party", blocked)
+	var units: Array = []
+	for u: CombatUnit in party:
+		if spots.has(u):
+			u.place(spots[u], grid.height_at(spots[u]))
+			units.append(u)
+	units.append_array(enemies)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_i * 7919 + 13
+	CombatUnit.pack_belts(units, {})
+	for u: CombatUnit in units:
+		var carried: bool = u.team == 0 and u.res_kind in ["mana", "charges"] and not state[party.find(u)].full
+		if not carried:
+			u.reset_resource()
+	var rounds := 0
+	var winner := -1
+	while rounds < CombatSim.MAX_ROUNDS and winner < 0:
+		rounds += 1
+		for team in [0, 1]:
+			var w := CombatSim.run_phase(rng, grid, units, team)
+			if w >= 0:
+				winner = w
+				break
+	for i in party.size():
+		var u: CombatUnit = party[i]
+		var s: Dictionary = state[i]
+		s.hp = maxi(1, u.hp)
+		if u.res_kind in ["mana", "charges"]:
+			s.res = u.res
+			s.tick = u.res_tick
+			s.full = false
+	return {"winner": winner, "foes": enemies.filter(func(u: CombatUnit) -> bool: return not u.alive()).size(), "rounds": rounds}
+
+
 ## The hero and Doggo as the outing sim builds them, with the hero's weapon upgrades (+1 damage a rank) and the allies named in `ally=hunter,bushberry`.
 func _party_for(level: int, weapon: String, upg: int) -> Array:
 	var party: Array = _helper.call("_party", level, weapon)
 	(party[0] as CombatUnit).damage += upg
-	for id in String(_args.get("ally", "")).split(",", false):
+	var ids := String(_args.get("ally", "")).split(",", false)
+	var at := String(_args.get("ally_at", "")).split(",", false)
+	for i in ids.size():
+		var id := ids[i]
 		var d := Db.character(StringName(id))
-		party.append(CombatUnit.from_def(d, LevelRules.bonus(_helper.call("_rolled", id, maxi(1, level - int(_num("ally_lag", 0)))), Db.levels)))
+		# a recruit joins at level 1 and earns the same XP as the hero from then on (Game.award_xp): ally_at is the hero's XP when each joined
+		var lv := maxi(1, level - int(_num("ally_lag", 0)))
+		if i < at.size() and _xp_now >= 0:
+			lv = _level(maxi(0, _xp_now - int(at[i])))
+		party.append(CombatUnit.from_def(d, LevelRules.bonus(_helper.call("_rolled", id, lv), Db.levels)))
 	return party
 
 
@@ -579,6 +680,6 @@ func _levels_mode() -> void:
 						state.append({"hp": maxi(1, roundi(u.max_hp * hp_pct / 100.0)), "max": u.max_hp, "res": u.res_max, "tick": 0, "full": true, "res_max": u.res_max})
 					for k in party.size():
 						(party[k] as CombatUnit).hp = state[k].hp
-					wins += 1 if _fight(m, g, party, state, i).winner == 0 else 0
+					wins += 1 if _fight2(m, g, party, state, i).winner == 0 else 0
 				line += " %d%% |" % roundi(100.0 * wins / n)
 			print(line)
