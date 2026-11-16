@@ -2,7 +2,8 @@ class_name HomecomingUi
 extends Control
 ## The homecoming page ([USER] 2026-11-01 Pitch J): one page after every return, a fall or GO HOME, as one kit window
 ## ([USER] 2026-11-01 "I like the second home again screen all in one page"; round 2 mockup C). The HOME AGAIN plate
-## on its top rim, the X at its top right (OK's continue), the wake-up line under it; then three cards side by side:
+## on its top rim, the X at its top right (OK's continue), the wake-up line under it (and, after a fall to a wall that
+## wanted a full party, one gold line saying so); then three cards side by side:
 ## BROUGHT HOME (each material banked as an item slot with its +N), PARTY (a row per piece: round face, its level, the
 ## XP bar and the XP gained) and FRIENDS (morale: who moved and by how much, a heart in the band's colour; the bond
 ## pairs that grew; four rows, then SHOW ALL, and the card scrolls). A boss card just learned, new knowledge and the
@@ -20,7 +21,7 @@ const ROWS := 4  ## rows a card shows before SHOW ALL
 const FACE := 40.0
 const FRAME_ROOM := 96.0  ## the bottom frame's height, kept clear
 
-var s: Dictionary = {}  ## HomecomingRules.summary + "headline"
+var s: Dictionary = {}  ## HomecomingRules.summary + "headline" and "wall" (HomecomingRules.wall_hint)
 var goal: Dictionary = {}  ## HomecomingRules.next_goal
 var _ok: Button
 var _col_h := COL_H
@@ -58,6 +59,13 @@ func _ready() -> void:
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size.x = COL_W * 2.0
 		page.add_child(l)
+	var wall: Dictionary = s.get("wall", {})  # a fall to a wall that wanted a full party: what it wants, in gold (P34)
+	if not wall.is_empty():
+		var wl := MenuKit.label(Txt.f(String(wall.key), [int(wall.party), int(wall.need)]), UiSkin.T_BODY, MenuKit.GOLD)
+		wl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		wl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		wl.custom_minimum_size.x = COL_W * 2.0
+		page.add_child(wl)
 	var extra := _extras()  # a boss card, knowledge, restored: a row of their own
 	if extra != null:
 		_col_h = COL_H_SHORT  # the page still fits the screen

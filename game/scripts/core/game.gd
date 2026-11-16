@@ -952,7 +952,8 @@ func join_food(id: String) -> void:
 ## Wake in the village square, everyone at full HP ([USER] 2026-10-28: a wipe costs nothing; the
 ## Lodestone's GO HOME lands the same way). The first wake-up is when the hero learns what the stone does.
 ## line: the wake-up line's text key when it is neither a fall nor GO HOME (an empty larder).
-func wake_in_town(fell: bool, line := "") -> void:
+## fall: the fight the party fell in (HomecomingRules.fall), so the page can say what the wall wants; {} when none.
+func wake_in_town(fell: bool, line := "", fall := {}) -> void:
 	ensure_run()
 	home_again(true)
 	for m in run.members:
@@ -966,6 +967,7 @@ func wake_in_town(fell: bool, line := "") -> void:
 	if not homecoming.is_empty():
 		homecoming.fell = fell
 		homecoming.headline = "\n".join(pending_lines)  # the page carries the wake-up line
+		homecoming.wall = HomecomingRules.wall_hint(fell, fall, Db.levels)  # a wall that wanted a full party (P34)
 		pending_lines = []
 	travel = {"at": "town"}
 	explore_memory = {}
@@ -1636,9 +1638,9 @@ func end_combat(won: bool) -> void:
 
 ## The Lodestone pulls everyone home. An adventure run wakes in the square with everything.
 ## The shelved trail's runs keep the old rule: possessions are lost, the map and unlocks stay.
-func recall() -> void:
+func recall(fall := {}) -> void:
 	if run and run.adventure:
-		wake_in_town(true)
+		wake_in_town(true, "", fall)
 		return
 	if run:
 		meta.best_distance = maxi(int(meta.best_distance), run.distance)

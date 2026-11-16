@@ -1712,9 +1712,11 @@ func _on_fight_over(won: bool, foes: Array) -> void:
 	Game.fight_morale(battle.units, ("escaped" if battle.outcome.how == "exit" else "won") if won else "lost", big)
 	if not won:  # a beat on the fallen board first, then one box that says what happens next (2026-11-13 playtest)
 		mode = M.OVER
+		# what the fight wanted and how many fought it: the homecoming page says so when the wall wanted more (P34)
+		var fall := HomecomingRules.fall(foes.map(func(f: Dictionary) -> Dictionary: return f.def), _deployed().size())
 		await get_tree().create_timer(1.2).timeout
 		var box := _new_dialog(Txt.t("UI_DEFEAT") + "\n" + Txt.t("UI_DEFEAT_NEXT"))
-		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall())
+		_dialog_button(box, Txt.t("UI_CONTINUE"), func() -> void: Game.recall(fall))
 		return
 	var loot_items := ""  # what the group's loot gives in food, medicine and things: the shared loot grid
 	var body := _main_foe_down(foes)  # a boss or leader down: the loot lies on him ([USER] 2026-11-02)

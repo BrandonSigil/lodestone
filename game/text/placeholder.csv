@@ -1080,6 +1080,7 @@ UI_MORALE_ALL,ALL MORALE %s
 UI_LS_MORALE,MORALE %d %s: %s
 UI_PARTY_HEART,MORALE %d %s
 UI_HC_DAYS,DAYS AWAY: %d
+UI_HC_WANTS_FULL_PARTY,That fight is too big for a party of %d. Come back with %d.
 EX_HOME_BED,Your own bed. You could sleep here and wake up rested.
 EX_KIND_BED,BED
 UI_SLEPT,"SLEPT WELL. All HP, mana and charges restored. Everyone's morale +%d."

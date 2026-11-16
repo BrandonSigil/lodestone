@@ -3,7 +3,8 @@ extends RefCounted
 ## The homecoming page ([USER] 2026-11-01 Pitch J, master-j-homecoming): after every return, a fall or GO HOME, one page
 ## shows what the trip gave: materials banked, XP and levels, bond points, morale changes, new knowledge and the restore
 ## steps just finished, then the next goal and how close the village is to it. On a fall it also shows the boss card
-## the party just learned. Pure: Game keeps a ledger (a snapshot of meta taken when a trip starts) and hands it here.
+## the party just learned, and what the wall wants when it asked for more than fought (`wall_hint`). Pure: Game keeps
+## a ledger (a snapshot of meta taken when a trip starts) and hands it here.
 ##
 ## ledger: {"gate": opened at the village gate, "trip", "levels": id -> {"level", "xp"}, "bonds": key -> points,
 ##   "flags": [..], "morale": id -> value, "days": meta.days (journey days counted so far, Game.pass_days)}.
@@ -12,6 +13,11 @@ extends RefCounted
 ## learned_: a boss's card (ExploreRules.learned_flag); got_: a lasting find; beaten_: a boss or elite down for good;
 ## passed_: a foe the party got past.
 const KNOWLEDGE := ["learned_", "got_", "beaten_", "passed_"]
+
+## What a foe group can ask of the party, in its row of the map file (`wants`, ExploreMap.STORY_KEYS): everyone the
+## party can hold, `party_max` in data/levels.csv. The Lich's throne asks it ([USER] 2026-11-16: the Lich King "is
+## expected to be a first skill check where you really need to come with a full party").
+const WANTS_FULL_PARTY := "full_party"
 
 
 static func snapshot(meta: Dictionary, gate: bool) -> Dictionary:
@@ -83,6 +89,29 @@ static func summary(before: Dictionary, meta: Dictionary, banked: Dictionary, fi
 	return {"fell": fell, "days": maxi(0, int(meta.get("days", 0)) - int(before.get("days", meta.get("days", 0)))),
 		"materials": banked.duplicate(), "levels": levels, "bonds": bonds, "morale": morale,
 		"cards": cards, "knowledge": knowledge, "restored": restored}
+
+
+## The fight a party just lost, for the page: what the first foe group with a `wants` asks, and how many of the party
+## fought. groups: the map rows of every group in the fight. {"wants": "" when no group asks anything, "party"}.
+static func fall(groups: Array, party: int) -> Dictionary:
+	for g: Dictionary in groups:
+		if String(g.get("wants", "")) != "":
+			return {"wants": String(g.wants), "party": party}
+	return {"wants": "", "party": party}
+
+
+## What the wall wants ([USER] 2026-11-16, backlog P34: "have the homecoming page say what the wall wants"): the line
+## the page adds after a fall in a fight that asks for a full party, when fewer than `party_max` fought. The world
+## does not scale to the party, so the page says what was missing. fell: the return was a fall; fall: `fall` above;
+## cfg: data/levels.csv. {"key": the line's text key, "party": how many fought, "need": party_max}; {} for no line.
+static func wall_hint(fell: bool, fall: Dictionary, cfg: Dictionary) -> Dictionary:
+	if not fell or String(fall.get("wants", "")) != WANTS_FULL_PARTY:
+		return {}
+	var need := int(cfg.get("party_max", 4))
+	var party := int(fall.get("party", need))
+	if party >= need:
+		return {}
+	return {"key": "UI_HC_WANTS_FULL_PARTY", "party": party, "need": need}
 
 
 ## Nothing to show: no material, XP, bond, morale, knowledge or restore step changed.

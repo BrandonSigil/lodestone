@@ -329,6 +329,7 @@
    "wins": "lich_wins",
    "yield_at": 3,
    "yields": "lich_relented|lich_yielded",
+   "wants": "full_party",
    "boss": true,
    "end": true,
    "goals": "defeat|exit",
