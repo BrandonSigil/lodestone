@@ -1,216 +1,216 @@
 {
- "name": "home",
- "art_set": "village_in",
- "strangeness": 0.0,
- "view": 0,
- "walls": true,
- "wall_kit": "village_in",
- "turn": false,
- "fog": true,
- "grid": {
-  "w": 8,
-  "h": 7,
-  "terrain": [
-   "rrrrrrrr",
-   "rsssssss",
-   "rsssssss",
-   "rsssssss",
-   "rsssssss",
-   "rsssssss",
-   "rsssssss"
-  ],
-  "heights": [
-   "33333333",
-   "31111111",
-   "31111111",
-   "31111111",
-   "31111111",
-   "31111111",
-   "31111111"
-  ],
-  "props": [
-   {
-    "sprite": "wall_window",
-    "cell": [
-     2,
-     0
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.0,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "wall_window",
-    "cell": [
-     0,
-     4
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.0,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_bed",
-    "cell": [
-     1,
-     1
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.75,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_hearth",
-    "cell": [
-     4,
-     1
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.95,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_cupboard",
-    "cell": [
-     6,
-     1
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 1.3,
-    "sight": 1.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_table",
-    "cell": [
-     4,
-     3
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.7,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_chair",
-    "cell": [
-     5,
-     3
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.75,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_rug",
-    "cell": [
-     2,
-     4
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.45,
-    "sight": 0.0,
-    "walk": true
-   },
-   {
-    "sprite": "prop_chest",
-    "cell": [
-     1,
-     3
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   },
-   {
-    "sprite": "prop_pots",
-    "cell": [
-     6,
-     4
-    ],
-    "foot": [
-     1,
-     1
-    ],
-    "tall": 0.6,
-    "sight": 0.0,
-    "walk": false
-   }
-  ]
- },
- "start": [
-  [
-   3,
-   4
-  ]
- ],
- "groups": [],
- "things": [
-  {
-   "id": "out",
-   "kind": "enter",
-   "event": "",
-   "cell": [
-    3,
-    6
-   ],
-   "to": "village",
-   "at": [
-    12,
-    28
-   ]
-  },
-  {
-   "id": "home_chest",
-   "kind": "cache",
-   "event": "cache_potion",
-   "cell": [
-    1,
-    3
-   ],
-   "once": "got_potion"
-  },
-  {
-   "id": "home_bed",
-   "kind": "bed",
-   "event": "home_bed",
-   "cell": [
-    1,
-    1
-   ]
-  }
- ]
+	"art_set": "village_in",
+	"fog": true,
+	"grid": {
+		"h": 7,
+		"heights": [
+			"33333333",
+			"31111111",
+			"31111111",
+			"31111111",
+			"31111111",
+			"31111111",
+			"31111111"
+		],
+		"props": [
+			{
+				"cell": [
+					2,
+					0
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "wall_window",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					0,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "wall_window",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					1,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_bed",
+				"tall": 0.75,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_hearth",
+				"tall": 0.95,
+				"walk": false
+			},
+			{
+				"cell": [
+					6,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_cupboard",
+				"tall": 1.3,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_table",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					5,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_chair",
+				"tall": 0.75,
+				"walk": false
+			},
+			{
+				"cell": [
+					2,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_rug",
+				"tall": 0.45,
+				"walk": true
+			},
+			{
+				"cell": [
+					1,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_chest",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					6,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "prop_pots",
+				"tall": 0.6,
+				"walk": false
+			}
+		],
+		"terrain": [
+			"rrrrrrrr",
+			"rsssssss",
+			"rsssssss",
+			"rsssssss",
+			"rsssssss",
+			"rsssssss",
+			"rsssssss"
+		],
+		"w": 8
+	},
+	"groups": [],
+	"name": "home",
+	"start": [
+		[
+			3.0,
+			4.0
+		]
+	],
+	"strangeness": 0.0,
+	"things": [
+		{
+			"at": [
+				12.0,
+				28.0
+			],
+			"cell": [
+				3.0,
+				6.0
+			],
+			"event": "",
+			"id": "out",
+			"kind": "enter",
+			"to": "village"
+		},
+		{
+			"cell": [
+				1.0,
+				3.0
+			],
+			"event": "cache_potion",
+			"id": "home_chest",
+			"kind": "cache",
+			"once": "got_potion"
+		},
+		{
+			"cell": [
+				1.0,
+				1.0
+			],
+			"event": "home_bed",
+			"id": "home_bed",
+			"kind": "bed"
+		}
+	],
+	"turn": false,
+	"view": 0,
+	"wall_kit": "village_in",
+	"walls": true
 }
