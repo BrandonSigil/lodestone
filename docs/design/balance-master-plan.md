@@ -19,7 +19,7 @@ This is a plan with measurements. Nothing in `game/data/` changed. Every number 
 
 So the wall already wanted a party, but four still won the first try 62% of the time, because levels came at 100 XP and meat was a free heal.
 
-**Then decisions 2 and 4, also the same day ("Yes, land both"):** a level is 200 XP (`levels.csv` `xp_per_level`, was 100), and the fights drop about 30% of the food they did: the pass, den and crypt groups 14 portions a trip (was 45), the farmland's fight 1 (was 3), the road's fights 1 each (was 3 or 4). `forest_roads.json` is Brandon's own map file and was not touched, so the west's two fights still drop 3 and 4. Measured on the written data, eating meat:
+**Then decisions 2 and 4, also the same day ("Yes, land both"):** a level is 200 XP (`levels.csv` `xp_per_level`, was 100), and the fights drop about 30% of the food they did: the pass, den and crypt groups 14 portions a trip (was 45), the farmland's fight 1 (was 3), the road's fights 1 each (was 3 or 4). `forest_roads.json` is Brandon's own map file and was not touched in that step (see the next note). Measured on the written data, eating meat:
 
 | the game as it now stands | try 1 | try 2 | try 3 | try 4 | try 5 |
 | --- | --- | --- | --- | --- | --- |
@@ -32,6 +32,17 @@ So the wall already wanted a party, but four still won the first try 62% of the 
 | the west's ogre, hero and Doggo: sword / daggers / bow | 60 / 53 / 100% | 42 / 57% | 71 / 67% | | |
 
 With two members the north's four fights cost 14, 26, 13 and 10% of the party's HP and are won every time, the east's one fight costs 22%, and the west's cost 10, 29 and 40%. Four members reach the Lich at full HP with 13.6 portions of fight meat left: the fights before him are sized for two, so for four they cost almost nothing (0 to 5% each). The daggers' first try (27% over 60 runs, 13% over the earlier 30) is the one number above the band.
+
+**Then the west's fight food, on his "Yes, cut it":** `forest_roads.json` `forest_bandits` drops 1 portion (was 3) and `forest_wolves` 1 (was 4). Only those two loot strings changed in his map file. This replaces the 3-and-4 note and the ogre row above: with less meat two members reach the ogre more hurt, and he turns on arrival HP. Measured on the written data, hero and Doggo, 60 runs a weapon, sword / daggers (the bow still wins 100%, and with Amber it is still 100%):
+
+| the ogre, hero and Doggo | arrive at | try 1 | try 2 | try 3 |
+| --- | --- | --- | --- | --- |
+| holding 4 portions back | 92% HP | 23 / 27% | 35 / 52% | 30 / 43% |
+| eating everything | 100% HP | 43 / 38% | 50 / 51% | 59 / 56% |
+| ogre at 12 HP (not landed), holding 4 back | 92% HP | 35 / 37% | 41 / 63% | 43 / 50% |
+| ogre at 12 HP (not landed), eating everything | 100% HP | 53 / 48% | 75 / 55% | 57 / 64% |
+
+So the west is now under the band proposed for two (about even odds at the map's hardest fight): about 1 in 4 for a careful eater, 2 in 5 for one who eats everything. `ogre.tres` HP 8, not 10, would bring it back to about even. That is Brandon's call and is not landed. The 60 / 53% measured before the cut was 30 runs with meat to spare.
 
 ## One-page summary
 
@@ -319,7 +330,7 @@ Each step should be measured before the next (`economy_sim.gd`, then the robot).
 | --- | --- | --- | --- | --- |
 | 1 | `levels.csv` `xp_per_level` (**landed 2026-11-16**) | 100 | 200 | levels a trip 4.5 to 2.2. At 100 no Lich HP gives a curve: four members go from 0% to 100% in one try (measured) |
 | 2 | `data/classes/lich.tres` HP (**landed 2026-11-16**) | 42 | 158 | with step 1 and all four members, tries 1 / 2 / 3 are 5 / 51 / 100%; the hero and Doggo alone, 0% in five tries (measured) |
-| 3 | `loot` food on the groups in `snow_pass.json`, `wolf_den.json`, `crypt.json`, `farmland.json`; the road's fights in `encounters.csv` (**landed 2026-11-16**; `forest_roads.json` is Brandon's file and still drops 7) | 45 a pass trip | 14 | food at the throne 53 to about 5; healing becomes a budget (measured) |
+| 3 | `loot` food on the groups in `snow_pass.json`, `wolf_den.json`, `crypt.json`, `farmland.json`; the road's fights in `encounters.csv` (**landed 2026-11-16**, `forest_roads.json` too, on his "Yes, cut it") | 45 a pass trip | 14 | food at the throne 53 to about 5; healing becomes a budget (measured) |
 | 4 | new rule: a cold meal every `morale.csv` `day_steps` tiles on explore maps | none | 150 tiles | a push eats 10 portions, not 4 (modelled; needs code) |
 | 5 | hunt and forage dice into `camp_actions.csv` (new columns `dc`, `food`, `margin_div`, `gives`) | hunt 12 / 3 / 2; forage 11 / 1 / 2 / potion | hunt 13 / 4 / 3; forage 9 / 1 / none / herb | hunt 50% empty, 5.2 when it lands; forage 30% empty; herbs get a source (measured for hunt; needs code) |
 | 6 | `camp.csv` `mend_hp`, `talk_points`; `levels.csv` `camp_hp_pct`; `morale.csv` `camp`; `bonds.csv` `fight_max` | 6, 2, 50, 10, 3 | 8, 4, 25, 5, 2 | no evening action worth more than about 4 portions (modelled) |
