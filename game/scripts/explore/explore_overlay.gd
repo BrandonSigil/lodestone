@@ -57,6 +57,8 @@ func _draw() -> void:
 				figs[c] = _figure.bind(StringName(who), dim, _time, bool(t.get("fallen", false)))
 				if bool(t.get("fallen", false)):
 					low[c] = true
+		elif String(t.kind) == "settler":
+			figs[c] = _figure.bind(CharacterArt.FALLBACK, dim, _time, false, SETTLER_TINT.get(String(t.get("event", "")), SETTLER_TINT_DEFAULT))
 		elif String(t.kind) == "dog":
 			figs[c] = _figure.bind(&"dog", dim, _time)  # the dog waiting in his house: Doggo's own sprite (backlog X1)
 		if dim or lead == null or not scene.walking():
@@ -100,7 +102,7 @@ func _draw() -> void:
 
 ## A companion standing on p: their own sprite (idle, facing the camera) when they have art, else the code figure.
 ## fallen: lying on his side where the fight left him (Bushberry after the ogre, [USER] 2026-11-01), still, a little grey.
-func _figure(ci: CanvasItem, p: Vector2, who: StringName, dim: bool, time: float, fallen := false) -> void:
+func _figure(ci: CanvasItem, p: Vector2, who: StringName, dim: bool, time: float, fallen := false, tint := Color.WHITE) -> void:
 	var d: CharacterDef = Db.character(who)
 	var art_id: StringName = d.sprite_id() if d != null else who
 	var lying := fallen and CharacterArt.has_anim(art_id, "down")  # its own down frames ([USER] 2026-11-01 X10)
@@ -116,7 +118,7 @@ func _figure(ci: CanvasItem, p: Vector2, who: StringName, dim: bool, time: float
 	# head left, the frame's middle on his cell (turned a quarter, the frame's height runs along x)
 	var lie := Vector2((f.anchor.y - f.region.size.y * 0.5) * s, -4.0 + (f.region.size.x * 0.5 - f.anchor.x) * s) if fallen and not lying else Vector2.ZERO
 	ci.draw_set_transform(p + lie, turn, Vector2(-s if f.flip else s, s))
-	var tone := Color(0.55, 0.55, 0.55) if dim else (Color(0.78, 0.78, 0.8) if fallen and not lying else Color.WHITE)
+	var tone := tint * (Color(0.55, 0.55, 0.55) if dim else (Color(0.78, 0.78, 0.8) if fallen and not lying else Color.WHITE))
 	ci.draw_texture_rect_region(f.tex, Rect2(-f.anchor, f.region.size), f.region, tone)
 	ci.draw_set_transform(Vector2.ZERO)
 
@@ -139,7 +141,12 @@ const FALLEN_TURN := -PI * 0.5  ## a fallen companion lies on his side: the stan
 
 
 ## Kinds drawn by something else (a doorway, a person's figure) or meant to be found: no grey block for them.
-const NO_BLOCK_KINDS := ["enter", "companion", "dog", "hidden"]
+const NO_BLOCK_KINDS := ["enter", "companion", "dog", "hidden", "settler"]
+
+## A settler waiting to move in stands as the general dummy (the art we have for any person without their own), tinted
+## so the smith and the cook read apart ([USER] 2026-11-14: "If not hide them OR use the dummy illustration we have").
+const SETTLER_TINT := {"settler_smith": Color(0.88, 0.62, 0.48), "settler_chef": Color(0.95, 0.86, 0.55)}
+const SETTLER_TINT_DEFAULT := Color(0.82, 0.8, 0.72)
 
 func _thing(kind: String, p: Vector2, dim: bool, lit := false, propped := false, cell := Vector2i.ZERO) -> void:
 	var k := 0.55 if dim else (1.25 + 0.1 * sin(_time * 5.0) if lit else 1.0)  # the one F would use lifts and breathes
@@ -181,6 +188,23 @@ func _thing(kind: String, p: Vector2, dim: bool, lit := false, propped := false,
 			draw_colored_polygon(_oval(p + Vector2(0, -6), 9.0, 6.0), Color(0.55, 0.5, 0.65) * k)
 			for o in [Vector2(-4, -12), Vector2(5, -9), Vector2(1, -16)]:
 				draw_circle(p + o, 1.5 + sin(_time * 5.0 + o.x) * 0.8, Color(0.85, 0.95, 1.0) * k)
+		"fish":
+			# A fishing spot: rings spreading on the water, no block ([USER] 2026-11-14: no random grey blocks).
+			for i in 2:
+				var ph := fposmod(_time * 0.6 + i * 0.5, 1.0)
+				draw_arc(p + Vector2(0, -2), 6.0 + 14.0 * ph, 0, TAU, 28, Color(0.9, 0.97, 1.0, 0.8 * (1.0 - ph)) * k, 2.0, true)
+		"restore":
+			# A building's repair board: a post with a sign, standing by the building it mends.
+			draw_line(p, p + Vector2(0, -34), Color(0.4, 0.28, 0.18) * k, 3.0)
+			var board := PackedVector2Array([p + Vector2(-13, -38), p + Vector2(13, -44), p + Vector2(13, -28), p + Vector2(-13, -22)])
+			draw_colored_polygon(board, Color(0.62, 0.45, 0.28) * k)
+			draw_polyline(board + PackedVector2Array([board[0]]), INK, 1.5, true)
+			draw_line(p + Vector2(-8, -33), p + Vector2(8, -37), Color(0.3, 0.2, 0.12) * k, 2.0)
+		"find":
+			# A thing lying in the grass to pick up: a small bundle with a glint.
+			draw_colored_polygon(_oval(p + Vector2(0, -5), 10.0, 6.0), Color(0.6, 0.44, 0.26) * k)
+			draw_line(p + Vector2(-8, -6), p + Vector2(8, -4), Color(0.82, 0.7, 0.4) * k, 2.0)
+			draw_circle(p + Vector2(7, -12), 1.5 + sin(_time * 5.0) * 0.8, Color(1.0, 0.95, 0.7))
 		"climb":
 			# A rope knot at the cliff foot.
 			draw_line(p + Vector2(0, -2), p + Vector2(2, -46), Color(0.75, 0.62, 0.4) * k, 2.5, true)

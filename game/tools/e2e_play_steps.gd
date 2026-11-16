@@ -28,6 +28,7 @@ func play(t: SceneTree) -> void:
 
 	s = await _explore("village")
 	_check(game.run.members.size() == 1, "alone in the village")
+	_check(not s.call("shown", _thing(s, "sq_dog")), "no dog waits in the square before he is rescued")
 	_check(not _offered(s, "gate", "OPT_GO_ON"), "the gate won't let you out without the Lodestone")
 	await _use(s, "weapon_rack", "OPT_TAKE_SWORD")
 	_check(game.weapon_id() == "sword", "the smithy sword is the hero's")
@@ -49,6 +50,11 @@ func play(t: SceneTree) -> void:
 	await _through(s, "out")
 
 	s = await _explore("village")
+	_check(not s.call("shown", _thing(s, "sq_dog")), "the dog is in the party: his square spot is empty")
+	game.dismiss("dog")  # the party page's SEND TO SQUARE
+	_check(game.run.members.size() == 1 and s.call("shown", _thing(s, "sq_dog")), "sent to the square, he waits there")
+	await _use(s, "sq_dog", "OPT_INVITE")
+	_check(game.in_party("dog") and not s.call("shown", _thing(s, "sq_dog")), "taken again from the square")
 	await _gate(s)
 
 	s = await _road("pass")

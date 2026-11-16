@@ -98,6 +98,25 @@ func run(s: Node, f: int, step: String) -> bool:
 			_put(s, t.cell + Vector2i(1, 0) if s.grid.passable(t.cell + Vector2i(1, 0)) else t.cell + Vector2i(0, 1))
 			s._open_thing(t)
 		return f == 30
+	if step.begins_with("vp:"):
+		# vp:square_party | vp:square_dismissed | vp:settler | vp:menu (map: village): the village people fixes, 2026-11-14.
+		# square_party: the dog is in the party (no mark at his spot); square_dismissed: sent to the square, waiting there;
+		# settler: the smith waiting to move in; menu: the party page with SEND TO SQUARE. In memory only, never saved.
+		if f == 5:
+			var game: Node = s.get_node("/root/Game")
+			game.save_enabled = false
+			game.meta.flags.append_array(["has_lodestone", "met_dog"])
+			s._after_change()
+			if step == "vp:square_dismissed":
+				game.dismiss("dog")
+				s._after_change()
+			if step == "vp:settler":
+				_put(s, Vector2i(10, 16))
+			else:
+				_put(s, Vector2i(19, 23))
+			if step == "vp:menu":
+				s._open_menu("lodestone")
+		return f == 40
 	if step.begins_with("deployat:"):
 		# deployat:<x>,<y>:<group index> - any map: the lead (with the dog along) stands at x,y and that group's
 		# fight starts, so the deploy ring shows (walls in front of it cut away).

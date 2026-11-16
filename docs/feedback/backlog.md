@@ -14,11 +14,20 @@ Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#
 | P25 | Interiors: "We need better art/visuals for the front of interiors, it stinks not knowing where a door is" (his screenshot: the hero's home, the way out is an unmarked floor tile on the open front edge that only lights when he stands near it) | PM (mockup with P24) | in progress |
 | P26 | Statue art: "Use Figma to get Sunburst images and get an actual asset of the statue in the middle of the city. Send me three examples" (his reference: a blue crystal over a stone dais between hooded praying statues) | PM | done (he picked round 3 B: "This one is great"; in the game as `ph_statue.png`, the glow sits on her crystal). Still open: a version with empty hands for after the stone is taken |
 
+## 2026-11-14 Brandon's village playtest (seven screenshots)
+
+| # | Problem | Owner | Status |
+| --- | --- | --- | --- |
+| P27 | "This house has some seethrough even when I'm not near it" (his shot: the west side of a village house shows a see-through window by the barrels with nobody behind it) | Claude (village fixes) | fixed on `main`; not yet confirmed by Brandon |
+| P28 | "In the village theres random blocks for stuff that we havent implemented yet, like the \"big arms\" person, do they do anything yet? If not hide them OR use the dummy illustration we have" (grey cubes for settlers) | Claude (village fixes) | fixed on `main`: settlers stand as the tinted general dummy, the repair board, fishing spot and pickup get small code drawings instead of grey cubes; not yet confirmed by Brandon |
+| P29 | The dog's spot in the square still shows its marker while the dog is in the party; "You should dismiss him from the party menu or something. AND on the regular player experience now of the companions should just be hanging out in the town square, you need to go find them first. So you have to rescue the dog from the house to get him." | Claude (village fixes) | fixed on `main`: spot hides while the companion is in the party, SEND TO SQUARE on the party page, the dog waits in the square only after his rescue; not yet confirmed by Brandon |
+| P30 | "shadows throughout should get a rework. They arent very believable right now, they clip from tile to tile so that you can see the squares of the world in an undesirable way. Things like planter boxes or weapon racks just have like a random circle. What's a better way to add shadows?" | Claude (village fixes) | fixed on `main`; not yet confirmed by Brandon |
+
 ## 2026-11-13 Brandon's playtest (first road fight)
 
 | # | Problem | Owner | Status |
 | --- | --- | --- | --- |
-| P22 | Damage too low in the first wolf fight: "Damage is SO LOW right now, it feels like I had 4-5 turns of smacking 1 wolf for 1 or 2 damage, and it wasnt a fun tactical choice, just us trading blows until someone fell" (his screenshot: the lead and the dog by two grey wolves on an early grass map) | Claude (damage tuning session) | in progress (branch `claude/damage-tuning-e47b23`; numbers and the fix in `docs/systems/combat.md` under "Damage tuning") |
+| P22 | Damage too low in the first wolf fight: "Damage is SO LOW right now, it feels like I had 4-5 turns of smacking 1 wolf for 1 or 2 damage, and it wasnt a fun tactical choice, just us trading blows until someone fell" (his screenshot: the lead and the dog by two grey wolves on an early grass map) | Claude (damage tuning session) | done (on main, `a430545`; four calls wait on Brandon in `docs/systems/combat.md` under "Damage tuning") |
 
 ## 2026-11-13 new-player playtest (Claude, as a first-time player; Brandon approved all fixes)
 How each was fixed: `docs/systems/player-path.md`.
@@ -46,7 +55,7 @@ How each was fixed: `docs/systems/player-path.md`.
 | P19 | Look check (fresh reviewer, 2026-11-13): the world map is a small unframed rectangle on a flat beige field, fogged hexes read as missing art, place labels clip | UI lane | open |
 | P20 | Look check: the fight's YOUR TURN side panel is a wall of caps stats (wants icons or bars); action bar labels about 8 px; the first-fight card hugs the screen's left edge | UI lane | open |
 | P21 | Look check: the gate picker with one member met is a small card in a big panel; road action buttons still read small | UI lane | open |
-| P23 | "these combat maps are too zoomed out, I expect them to be closer" (Brandon, 2026-11-13, a forest road fight: the whole map fitted in view, the pieces tiny in one corner) | Systems developer (fight-zoom session) | built on branch `claude/fight-zoom-273723` (FightCamera: opens at 1.1 to 1.35 on the pieces, was 0.75; pan, zoom and follow); not merged |
+| P23 | "these combat maps are too zoomed out, I expect them to be closer" (Brandon, 2026-11-13, a forest road fight: the whole map fitted in view, the pieces tiny in one corner) | Systems developer (fight-zoom session) | done (on main, `a430545`; FightCamera opens at 1.1 to 1.35 on the pieces, was 0.75; pan, zoom and follow) |
 
 ## 2026-11-01 playtest (Studio chat, 03:57 to 05:57 UTC)
 

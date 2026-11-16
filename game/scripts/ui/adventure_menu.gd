@@ -104,7 +104,10 @@ static func _party_page(box: VBoxContainer, changed: Callable, home: bool) -> vo
 		var id := String(m.def.id)
 		cards.add_child(_member_card(m, waiting.call(id), id == shown, func() -> void:
 			_focus = "" if _focus == id else id  # pressed again: closes it
-			changed.call()))
+			changed.call(), (func() -> void:  # in the village a companion can be sent back to wait in the square
+				Game.dismiss(id)
+				_focus = ""
+				changed.call()) if not home and id != "lead" else Callable()))
 	var chips := HFlowContainer.new()
 	chips.alignment = FlowContainer.ALIGNMENT_CENTER
 	chips.add_theme_constant_override("h_separation", 7)
@@ -408,7 +411,8 @@ const STAT_ICONS := [["strength", "damage"], ["shield", "armor"], ["focus", "cri
 
 
 ## One member: face and name, LV, the XP, HP and heart bars, the fight stats as icons, and a gem button when a pick waits.
-static func _member_card(m: Dictionary, waiting: bool, open: bool, show: Callable) -> Control:
+## dismiss: when valid, a SEND TO SQUARE button under the card (the hero has none).
+static func _member_card(m: Dictionary, waiting: bool, open: bool, show: Callable, dismiss := Callable()) -> Control:
 	var d: CharacterDef = m.def
 	var id := String(d.id)
 	var s := Game.level_state(id)
@@ -480,6 +484,15 @@ static func _member_card(m: Dictionary, waiting: bool, open: bool, show: Callabl
 		col.add_child(b)
 		if open:
 			b.call_deferred("grab_focus")
+	if dismiss.is_valid():
+		var sb := Button.new()
+		sb.name = "Dismiss"
+		sb.text = Txt.t("UI_LS_DISMISS")
+		sb.tooltip_text = Txt.f("UI_LS_DISMISS_TIP", Txt.t(d.name_key))
+		sb.custom_minimum_size = Vector2(0, 28)
+		sb.add_theme_font_size_override("font_size", UiSkin.T_SMALL)
+		sb.pressed.connect(dismiss)
+		col.add_child(sb)
 	return card
 
 

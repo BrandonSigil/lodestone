@@ -12,7 +12,7 @@ Built 2026-11-13 from a new-player E2E playtest (backlog section "2026-11-13 new
 - F7, F8 and F10 work only when dev tools are available.
 
 ## Goals
-- `GoalRules.main_goal(flags)` (pure, `scripts/core/goal_rules.gd`): the first step of the playtest chain not done yet. Lodestone (`has_lodestone`), a weapon (`weapon_*`), a companion (`met_dog`, or skipped once out the gate), out the gate (`left_village`, set by `Game.start_trip`), the Highlands (`visited_pass` from the world map, or `entered_snow_pass`), the crypt (`entered_crypt`), the boss (`e2e_done`). `entered_<map>` is set on every explore map arrival, `visited_<node>` on every world map arrival.
+- `GoalRules.main_goal(flags)` (pure, `scripts/core/goal_rules.gd`): the first step of the playtest chain not done yet. Lodestone (`has_lodestone`), a weapon (`weapon_*`), a companion (`met_dog`: rescue the dog from his house; the party starts as the hero alone; SEND TO SQUARE on the party page and F at the square bring him back; or skipped once out the gate), out the gate (`left_village`, set by `Game.start_trip`), the Highlands (`visited_pass` from the world map, or `entered_snow_pass`), the crypt (`entered_crypt`), the boss (`e2e_done`). `entered_<map>` is set on every explore map arrival, `visited_<node>` on every world map arrival.
 - The frame's long bar shows it first, then any tracked village steps (`Game.goal_lines`). The homecoming page's NEXT GOAL shows it when no village step is tracked.
 - Texts: `GOAL_*` in `text/placeholder.csv`. They must fit the long bar (about 40 characters).
 

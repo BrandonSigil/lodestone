@@ -532,6 +532,8 @@ EX_KIND_KEY,KEY
 EX_KIND_RARE,RARE MATERIALS
 UI_ELITE_WARN,"!! ELITE FOES. Tougher and harder hitting, but they pay 150% XP. You can walk away."
 UI_LS_HOME,GO HOME (TOWN)
+UI_LS_DISMISS,SEND TO SQUARE
+UI_LS_DISMISS_TIP,"%s leaves the party and waits in the village square. Walk up to them there to bring them along again."
 UI_CLOSE_MENU,CLOSE
 UI_EAT,EAT
 UI_DRINK,DRINK

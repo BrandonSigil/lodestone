@@ -72,6 +72,7 @@ const FENCE_THIN := 0.12  ## a wall between two floors: this deep in cells ([USE
 const BLINK_MIN := 2.5  ## a standing piece blinks after this many seconds at the soonest
 const BLINK_MAX := 6.0  ## and this many at the latest
 const FOOT := 0.3  ## a piece's feet (and its ring) reach this far from its middle, in cells
+const THING_WINDOW_RANGE := 6  ## cells: people waiting and usable things open a window only when a party piece is this close
 const WINDOW_R := 92.0  ## see-through window round a piece behind a prop: radius on screen ([USER] 2026-11-01: "even wider", was 56)
 const WINDOW_CLEAR := 0.45  ## share of that radius that stays fully open
 const WINDOW_MIN := 0.12  ## the prop's alpha in the open middle
@@ -150,6 +151,7 @@ var show_grid := true  ## cell outlines; off, only real ledges keep their rim (e
 ## on unbroken from cell to cell, flow strokes down the water, stairs cut into the rock. Off = the old blocks.
 ## Interiors ("plain" looks) always keep the blocks.
 var soft := true
+var cast_shadows := OS.get_environment("LODESTONE_OLD_SHADOWS") == ""  ## projected prop shadows, one sun (ShadowKit); false = the old blob under each prop
 ## The greybox view (the maker): no props, buildings, trees, backdrop or painted texture; plain grey blocks shaded by height.
 var greybox := false
 ## Greybox view: cells in front of a door (the map's enter and exit things), so a building box can mark its door side.
@@ -665,6 +667,7 @@ func _sync_slabs() -> void:
 			_dirty_props[d] = true
 	if gkey != _ground_key:
 		_ground_key = gkey
+		_sh_stale = true
 		_seen.clear()
 		_fog_snap.clear()
 		for d in _depths.size():
@@ -825,6 +828,7 @@ func _snapshot_grid() -> void:
 ## After an edit: the slabs around each changed cell redraw (its faces, lips and stairs depend on its
 ## neighbours, theirs on it). A changed prop redraws them all.
 func _diff_grid() -> void:
+	_sh_stale = true
 	if grid.props.hash() != _snap_props:
 		for d in _depths.size():
 			_dirty[d] = true
@@ -1357,6 +1361,8 @@ func _draw_ground(c: Vector2i) -> void:
 			if not stepped:
 				_stairs(c, h, top_col)
 	_contact_shadow(c, h)
+	if not stepped:
+		_cast_onto(c, h, top)
 	var edge := top_col.darkened(0.55)
 	if show_grid:
 		_ci.draw_polyline(PackedVector2Array([tl, tr, br, bl, tl]), Color(edge, 0.5 if top_tex == null else 0.2), 1.0, true)
@@ -1968,6 +1974,7 @@ func _draw_ground_soft(c: Vector2i) -> void:
 		_fringe(c, t, h, zone)
 	_road_ribbon(c, h, zone)
 	_contact_shadow(c, h)
+	_cast_onto(c, h, pts)
 	for k in 4:
 		if r[k] < 0.0:
 			_fillet(c, k, -r[k])
@@ -3102,12 +3109,14 @@ static func _hash(c: Vector2i) -> int:
 	return absi((c.x * 73856093) ^ (c.y * 19349663)) % 9973
 
 
-## Prop sprites standing on the cell (trees, boulders, pillars). False when this terrain has no art yet.
-func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color, zone := "") -> bool:
+## Where the tile set's prop sprites stand on a cell (trees, boulders, pillars): [{tex, base, pw, ph}], back first.
+## Empty when this terrain has no art yet.
+func _prop_spots(c: Vector2i, h: float, t: int, seed_v: int, zone := "") -> Array:
+	var out := []
 	var art := BattleArt.props(t, zone)
 	var list: Array = art.list
 	if list.is_empty() or art.count <= 0:
-		return false
+		return out
 	# Spots in grid units around the cell centre, back (smaller x + y) first so they overlap correctly.
 	var spots: Array = [Vector2.ZERO] if art.count == 1 else [Vector2(-0.2, -0.16), Vector2(0.18, 0.2)]
 	for i in spots.size():
@@ -3120,10 +3129,25 @@ func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color, zone := "")
 		if pw > TW * 0.9:  # wide props (bush, boulder) stay inside their cell
 			ph *= TW * 0.9 / pw
 			pw = TW * 0.9
-		if _soft():  # flat look: a faint cool shade, not a grey disc
-			Pawn.ellipse(_ci, base, pw * 0.3, pw * 0.1, Color(0.22, 0.3, 0.55, 0.14), true)
-		else:
-			Pawn.ellipse(_ci, base, pw * 0.36, pw * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
+		out.append({"tex": tex, "base": base, "pw": pw, "ph": ph})
+	return out
+
+
+## Prop sprites standing on the cell (trees, boulders, pillars). False when this terrain has no art yet.
+func _props(c: Vector2i, h: float, t: int, seed_v: int, tint: Color, zone := "") -> bool:
+	var spots := _prop_spots(c, h, t, seed_v, zone)
+	if spots.is_empty():
+		return false
+	for sp: Dictionary in spots:
+		var tex: Texture2D = sp.tex
+		var base: Vector2 = sp.base
+		var pw: float = sp.pw
+		var ph: float = sp.ph
+		if not cast_shadows:  # the old look: a blob under each
+			if _soft():
+				Pawn.ellipse(_ci, base, pw * 0.3, pw * 0.1, Color(0.22, 0.3, 0.55, 0.14), true)
+			else:
+				Pawn.ellipse(_ci, base, pw * 0.36, pw * 0.13, Color(0.1, 0.1, 0.12, 0.22), true)
 		var dst := Rect2(base.x - pw * 0.5, base.y - ph, pw, ph)
 		if _fade.has(c):  # a soft window round a piece standing behind it
 			_draw_windowed(tex, dst, Color(tint, 1.0), _fade[c])
@@ -3204,7 +3228,7 @@ func _placed(c: Vector2i) -> void:
 		_box(Vector2(CombatGrid.ground(a)), Vector2(CombatGrid.ground(a)) + Vector2(p.foot), h, h + (tall * 2.0 if tall > 0.0 else 3.0), col)
 		return
 	var r := _prop_rect(a, p, tex)
-	if p.tall > 0.0 and not p.walk:
+	if not cast_shadows and p.tall > 0.0 and not p.walk:  # the old look: a blob under it
 		var b := Vector2(r.get_center().x, r.end.y)
 		Pawn.ellipse(_ci, b, r.size.x * 0.36, r.size.x * 0.13, Color(0.1, 0.1, 0.12, 0.22 * col.a), true)
 	if _focused(a, p):
@@ -3964,6 +3988,139 @@ func _contact_shadow(c: Vector2i, h: float) -> void:
 			_ci.draw_colored_polygon(pts, Color(0.05, 0.08, 0.1, a))
 
 
+# --- cast shadows ------------------------------------------------------------------------
+# Every prop's shadow is worked out once per map (silhouette sheared along the sun, or a box's footprint swept
+# along it, plus a contact patch) and binned by screen position. A ground cell then draws the shadows that
+# reach it, merged into one shape and clipped to its own top, at the level of the prop that cast them. One
+# shape drawn in pieces, so no tile edge shows and overlaps never darken twice. See docs/systems/shadows.md.
+
+const SHADOW_BIN := 96.0  ## screen px a bin of the shadow index covers
+const SHADOW_LEVEL_TOL := 0.3  ## a shadow lands on ground within this many levels of its prop's
+
+var _sh_stale := true
+var _sh_items: Array = []  ## [{polys, rect, h}]
+var _sh_bins := {}  ## Vector2i bin -> indices into _sh_items
+
+
+func _shadow_add(polys: Array, h: float) -> void:
+	if polys.is_empty():
+		return
+	var rect := ShadowKit.bounds(polys)
+	var i := _sh_items.size()
+	_sh_items.append({"polys": polys, "rect": rect, "h": h})
+	for by in range(int(floor(rect.position.y / SHADOW_BIN)), int(floor(rect.end.y / SHADOW_BIN)) + 1):
+		for bx in range(int(floor(rect.position.x / SHADOW_BIN)), int(floor(rect.end.x / SHADOW_BIN)) + 1):
+			var k := Vector2i(bx, by)
+			if not _sh_bins.has(k):
+				_sh_bins[k] = []
+			_sh_bins[k].append(i)
+
+
+func _shadow_index() -> void:
+	if not _sh_stale:
+		return
+	_sh_stale = false
+	_sh_items.clear()
+	_sh_bins.clear()
+	if grid == null:
+		return
+	for a: Vector2i in grid.props:  # placed props: houses, planters, racks, a well
+		var p: Dictionary = grid.props[a]
+		if CombatGrid.on_deck(a) or p.walk:
+			continue
+		var tex := prop_texture(p, grid.zone_at(a))
+		var rule := ShadowKit.rule(String(p.sprite))
+		if tex == null or rule.len <= 0.0:
+			continue
+		var h := float(grid.height_at(a))
+		var arch: bool = p.get("arch", false)
+		var r := _prop_rect(a, p.merged({"tall": 0.0}, true) if arch else p, tex)
+		var g := CombatGrid.ground(a)
+		var foot := PackedVector2Array([iso(g.x, g.y, h), iso(g.x + p.foot.x, g.y, h), iso(g.x + p.foot.x, g.y + p.foot.y, h), iso(g.x, g.y + p.foot.y, h)])
+		var shape: String = rule.shape if rule.shape != "" else "sil"
+		var polys: Array = []
+		if shape == "box":
+			polys = ShadowKit.box(foot, r.size.y * rule.box_h, rule.len)
+		else:
+			var sil := ShadowKit.silhouette(tex)
+			var anchor := Vector2(r.get_center().x, r.end.y - float(sil.get("gap", 0.0)) * r.size.y)
+			var pa := ShadowKit.project(sil, anchor, r.size.x, r.size.y, rule.len, p.get("flip", false))
+			if rule.contact > 0.0:
+				var rx: float = minf(r.size.x * 0.3, (ShadowKit.bounds([foot]).size.x) * 0.36) * rule.contact
+				pa = ShadowKit.union_into(pa, ShadowKit.patch(anchor, rx, rx * 0.4))
+			polys = Array(pa)
+		_shadow_add(polys, h)
+	for y in grid.h:  # the tile set's own trees and boulders
+		for x in grid.w:
+			var c := Vector2i(x, y)
+			if _unseen(c) or grid.fences.has(c) or _kit_wall(c) or grid.prop_anchor(c) != CombatGrid.NONE_CELL or _wall(c):
+				continue
+			var t := grid.terrain_at(c)
+			var h := _surf(c)
+			for sp: Dictionary in _prop_spots(c, h, t, _hash(c), grid.zone_at(c)):
+				var tex: Texture2D = sp.tex
+				var rule := ShadowKit.rule(tex.resource_path.get_file().get_basename())
+				if rule.len <= 0.0:
+					continue
+				var sil := ShadowKit.silhouette(tex)
+				var anchor: Vector2 = sp.base - Vector2(0.0, float(sil.get("gap", 0.0)) * float(sp.ph))
+				var polys := ShadowKit.project(sil, anchor, sp.pw, sp.ph, rule.len)
+				if rule.contact > 0.0:
+					polys = ShadowKit.union_into(polys, ShadowKit.patch(anchor, float(sp.pw) * 0.3 * rule.contact, float(sp.pw) * 0.12 * rule.contact))
+				_shadow_add(Array(polys), h)
+
+
+## Draws the shadows that reach ground cell c (top polygon `top`, at level h) onto it.
+func _cast_onto(c: Vector2i, h: float, top: PackedVector2Array) -> void:
+	if not cast_shadows or greybox or _wall(c):
+		return
+	var t := grid.terrain_at(c)
+	if t == CombatGrid.T.WATER or t == CombatGrid.T.STAIRS:
+		return
+	_shadow_index()
+	if _sh_items.is_empty():
+		return
+	var box := ShadowKit.bounds([top])
+	var seen := {}
+	var polys: Array = []
+	for by in range(int(floor(box.position.y / SHADOW_BIN)), int(floor(box.end.y / SHADOW_BIN)) + 1):
+		for bx in range(int(floor(box.position.x / SHADOW_BIN)), int(floor(box.end.x / SHADOW_BIN)) + 1):
+			for i: int in _sh_bins.get(Vector2i(bx, by), []):
+				if seen.has(i):
+					continue
+				seen[i] = true
+				var it: Dictionary = _sh_items[i]
+				if absf(float(it.h) - h) <= SHADOW_LEVEL_TOL and (it.rect as Rect2).intersects(box):
+					polys.append_array(it.polys)
+	if polys.is_empty():
+		return
+	var rc := ShadowKit.receive(polys, top)
+	var col := ShadowKit.color()
+	var e := ShadowKit.edge()
+	var band := col.a * clampf(e.y, 0.0, 0.95)
+	for pg: PackedVector2Array in rc.edge:
+		_ci.draw_colored_polygon(pg, Color(col, band))
+	var inner_a := (col.a - band) / (1.0 - band) if not rc.edge.is_empty() else col.a
+	for pg: PackedVector2Array in rc.inner:
+		_ci.draw_colored_polygon(pg, Color(col, inner_a))
+
+
+## A piece's shadow on the ground: its footprint swept along the sun, the same shadow the props throw.
+func _unit_shadow(base: Vector2, rx: float, ry: float, reach: float) -> void:
+	if not cast_shadows:
+		Pawn.ellipse(_ci, base + Vector2(0, 2), rx, ry, Color(0, 0, 0, 0.25))
+		return
+	var s := ShadowKit.sun() * reach
+	var pts := PackedVector2Array()
+	for q in ShadowKit.patch(base, rx, ry, 12):
+		pts.append(q)
+	for q in ShadowKit.patch(base + s, rx * 0.7, ry * 0.7, 12):
+		pts.append(q)
+	var hull := Geometry2D.convex_hull(pts)
+	hull.remove_at(hull.size() - 1)
+	_ci.draw_colored_polygon(hull, ShadowKit.color())
+
+
 ## A small block (tree canopy) centred on p.
 func _cube(p: Vector2, r: float, tall: float, col: Color) -> void:
 	var t := p + Vector2(0, -tall)
@@ -4076,11 +4233,11 @@ func _find_cover() -> void:
 	_covered_props.clear()
 	for fc: Vector2i in figures:  # people waiting on an explore map (a fallen Bushberry among trees) get windows too
 		var fbox := Rect2(cell_top(fc) + Vector2(-30, -26), Vector2(60, 28)) if low_figures.has(fc) else Rect2(cell_top(fc) + Vector2(-20, -54), Vector2(40, 54))
-		if not hidden(fc) and _front_cover(fbox, fc, depth_of(fc.x, fc.y)):
+		if not hidden(fc) and _party_near(fc) and _front_cover(fbox, fc, depth_of(fc.x, fc.y)):
 			_covered_figs[fc] = true
 	for uc: Vector2i in usable:  # a usable thing's prop (a barrel, a chest) a tree in front hides gets a gold silhouette
 		var a := grid.prop_anchor(uc)
-		if a == CombatGrid.NONE_CELL or hidden(uc):
+		if a == CombatGrid.NONE_CELL or hidden(uc) or not _party_near(uc):
 			continue
 		var pr: Dictionary = grid.props[a]
 		var tex := prop_texture(pr, grid.zone_at(a))
@@ -4089,6 +4246,15 @@ func _find_cover() -> void:
 		var front := _prop_front(a, pr)
 		if _front_cover(_prop_rect(a, pr, tex), a, depth_of(front.x, front.y), 0.3):
 			_covered_props[a] = true
+
+
+## Is a living party piece within THING_WINDOW_RANGE cells of `c`? People waiting on a map and usable things only
+## open a see-through window once the party is close enough to be looking for them, never from across the map.
+func _party_near(c: Vector2i) -> bool:
+	for u: CombatUnit in units:
+		if u.team == 0 and u.shown_hp > 0 and maxi(absi(roundi(u.vis.x) - c.x), absi(roundi(u.vis.y) - c.y)) <= THING_WINDOW_RANGE:
+			return true
+	return false
 
 
 ## Trees and see-through props in front of the screen box `box` (standing on `at`, depth d): each that overlaps it by
@@ -4296,7 +4462,7 @@ func _draw_downed(u: CombatUnit, base: Vector2) -> void:
 ## A character sprite standing on base: contact shadow and team ring like the Pawn, then the anim frame.
 ## Returns how far above base the HP pips go.
 func _draw_sprite(u: CombatUnit, base: Vector2, col: Color, ring: Color) -> float:
-	Pawn.ellipse(_ci, base + Vector2(0, 2), 15.0, 5.0, Color(0, 0, 0, 0.25))
+	_unit_shadow(base, 12.0, 4.5, 28.0)
 	Pawn.ellipse(_ci, base, 16.0, 5.7, ring, false, 2.5)
 	var mod := Color.WHITE if col == u.tint else Color(0.65, 0.65, 0.65)  # done pieces dim like the pawn
 	if u.sprite == CharacterArt.FALLBACK:
