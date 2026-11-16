@@ -1,0 +1,8 @@
+id,name_key,tip_key,icon,note
+cook,CAMP_COOK,CAMP_COOK_TIP,meal_stew,serves a cooked meal from the pack (its heal, morale and buff); with none, a hot pot for morale
+fish,CAMP_FISH,CAMP_FISH_TIP,rod,the fishing minigame; needs a rod ([USER] 2026-10-30)
+hunt,CAMP_HUNT,CAMP_HUNT_TIP,meat,the party's best hunt roll (TravelRules.ACTS)
+forage,CAMP_FORAGE,CAMP_FORAGE_TIP,herb,the party's best forage roll (TravelRules.ACTS)
+talk,CAMP_TALK,CAMP_TALK_TIP,,two members talk: bond points
+mend,CAMP_MEND,CAMP_MEND_TIP,salve,heals the most hurt member
+rest,CAMP_REST,CAMP_REST_TIP,,Game.camp_rest: mana, charges, some HP, morale; lifts the Spent

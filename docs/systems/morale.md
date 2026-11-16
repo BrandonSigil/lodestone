@@ -83,13 +83,14 @@ character at home gets X morale". Built 2026-11-01 from the proposal in `docs/de
 - Heartened's fight bonus (+10% crit) is new; the design draft had none. Blessing statues ([USER] Pitch B) can grant
   morale through an event's `morale:+n` once one is placed.
 - Healing model A is built ([USER] 2026-11-01, `docs/design/healing-model.md`). Each journey day on the road ends
-  at a night camp (`OverworldScene._night`): every member eats their `food_per_day` portions of the food kind the
-  player picks for them, the picks open as last night's (SAME AS LAST NIGHT), and food heals its portions' worth
+  at the campfire (`docs/systems/camp.md`, 2026-11-16; it replaced the per-member picker described next): everyone
+  eats from one pot at the ration on the dial, meat first, and the meat's heal is shared. Before that, every member
+  ate their `food_per_day` portions of the food kind the player picked for them, and food healed its portions' worth
   (`heal` / `food` in `data/items.csv`: meat 2; plain rations, sacks, jerky and raw fish 0, cooked at home instead), so meat for a hurt
   member is the healing choice. A food item with several portions keeps what's left once opened (`RunState.opened`).
   A cooked meal in the pack is a TEAM MEAL: it feeds everyone that night, heals each its recipe's `heal`, gives its
   `morale` and its buff for the next fights (`Game.team_meal`). An empty or short pack no longer ends the journey:
-  see "Morale is hunger" below. MAKE CAMP (once a leg) is the free REST: half HP, all mana and charges, +10
+  see "Morale is hunger" below. REST (one of the campfire's evening actions; MAKE CAMP before 2026-11-16) is free: half HP, all mana and charges, +10
   morale. Support heals (mend, renew, patch: a member's `heal` abilities paid with mana or charges) can be cast out of
   a fight from the PARTY window (CAST, then a party card), at their cost and with their fight amount
   (`TravelRules.road_heals`, `cast_on`); mana trickles back on the road and refills at REST. In a fight nothing

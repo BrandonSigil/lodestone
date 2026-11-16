@@ -42,7 +42,7 @@ Built 2026-11-13 from a new-player E2E playtest (backlog section "2026-11-13 new
 - Clicking something out of reach floats TOO FAR.
 - The gate: one box. The party picker shows only people met (dev mode shows all), with the food for that party as chips, the first trip's free rations, and GO ANYWAY when food is short.
 - FAST FORWARD stays on until the walk ends (the button reads FAST FORWARD: ON); Tab toggles it.
-- Camp: SAME AS LAST NIGHT eats at once; "Eat the same every night" (`meta.settings.auto_camp`) eats later nights on its own while no one would go hungry.
+- Camp: the campfire (`docs/systems/camp.md`). SAME AS LAST NIGHT repeats last night's evening and ration and sleeps; "Every night the same" (`meta.settings.auto_camp`) repeats later nights on their own while the pot can feed everyone.
 - Fights: a fallen foe leaves in a dust puff and the fight holds a beat; side bars follow each blow; a loss holds 1.2 seconds on the board, then one box (no second defeat banner) saying the Lodestone carries the party home with everything they carried.
 - Taking a weapon at the smithy fills the hero's HP to the new max.
 - The character sheet's locked builds say why on hover; move descriptions wrap to two lines.

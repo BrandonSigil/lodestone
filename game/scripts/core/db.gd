@@ -24,6 +24,9 @@ var fish: Dictionary = {}  # fish id -> data/fish.csv row (grade, shadow size, h
 var recipes: Dictionary = {}  # recipe id -> data/recipes.csv row (meal, needs, kitchen flag, buff)
 var tavern_menu: Array[Dictionary] = []  # rows of data/tavern_menu.csv: what the tavern counter sells (item, price, needs)
 var morale: Dictionary = {}  # key -> number, from data/morale.csv (see MoraleRules)
+var camp: Dictionary = {}  # key -> number, from data/camp.csv (see CampRules)
+var camp_actions: Array[Dictionary] = []  # the campfire's evening actions, in order (data/camp_actions.csv)
+var camp_rations: Array[Dictionary] = []  # the pot's ration dial, fullest first (data/camp_rations.csv)
 var morale_bands: Array[Dictionary] = []  # data/morale_bands.csv rows, highest band first (see MoraleRules)
 var restore: Array[Dictionary] = []  # village restore ladders, data/restore.csv rows (see RestoreRules)
 var jobs: Dictionary = {}  # job id -> data/jobs.csv row (name_key, class, branch_a, branch_b)
@@ -87,6 +90,11 @@ func reload() -> void:
 	morale.clear()
 	for row in CsvTable.load_rows("res://data/morale.csv"):
 		morale[row.key] = float(row.value)
+	camp.clear()
+	for row in CsvTable.load_rows("res://data/camp.csv"):
+		camp[row.key] = float(row.value)
+	camp_actions = CsvTable.load_rows("res://data/camp_actions.csv")
+	camp_rations = CsvTable.load_rows("res://data/camp_rations.csv")
 	morale_bands = CsvTable.load_rows("res://data/morale_bands.csv")
 	morale_bands.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.min) > int(b.min))
 	recipes.clear()

@@ -119,10 +119,10 @@ func _process(delta: float) -> void:
 		_flash.size = Vector2(r.size.x, 30)
 		_flash.position = Vector2(r.position.x, above - 36.0)
 	if _acts != null:
-		_acts.visible = _dialog == null and not _menu_open and (_info.visible or _acts_row.get_child_count() > 0)
+		_acts.visible = _dialog == null and _camp == null and not _menu_open and (_info.visible or _acts_row.get_child_count() > 0)
 	if not _busy and _dialog == null and int(Game.travel.get("nights_due", 0)) > 0:
 		_night()  # a night still owed (after a road fight, or MAKE CAMP's rest ran past nightfall)
-	if not _busy and _dialog == null and Game.run.overfull():
+	if not _busy and _dialog == null and _camp == null and Game.run.overfull():
 		_open_menu("pack")  # a pickup found no room: the player decides before walking on
 	if not is_instance_valid(_hint) and _dialog == null and not _menu_open and not _busy:  # one-time hints, one at a time
 		_hint = Game.hint("walking" if walking() else "road", _ui, hud.clear_rect)
@@ -286,235 +286,47 @@ func _choose(o: Dictionary) -> void:
 	_button(box, Txt.t("UI_CONTINUE"), _close_dialog)
 
 
-# --- on the road: hunt, fish, forage, talk ---------------------------------------------------------
+# --- the campfire ---------------------------------------------------------------------------------
 
-func act(kind: String) -> void:
-	if not walking() or _busy:
-		return
-	var acts: Dictionary = Game.travel.acts
-	var t := float(Game.travel.t)
-	if not TravelRules.can_act(acts, kind, t):
-		_say(Txt.t("UI_OW_WAIT"))
-		return
-	if kind == "fish":
-		_go_fish()
-		return
-	acts[kind] = t
-	var r := TravelRules.activity(Game.run, kind)
-	_say(Txt.t("UI_EX_WIN") if r.success else Txt.t("UI_EX_LOSE"))
-	_refresh_hud()
+## The night's camp is the campfire ([USER] 2026-11-16, option A of docs/design/campfire-trail.md): one screen where
+## the party eats from one pot on a ration dial and spends the evening (cook, fish, hunt, forage, talk, mend, rest).
+## It replaces the road's HUNT, FISH, FORAGE, TALK and MAKE CAMP and the old per-member meal picker ([USER] 2026-11-16:
+## one pot replaces picking each member's food). With "Every night the same" on, a night repeats last night's plan
+## without the screen while the pot can feed everyone. then: what the clock reached on the way (the arrival or an
+## encounter), run once the nights are slept.
+var _camp: CampScreen
 
 
-## FISH on the road ([USER] 2026-11-01): the fishing minigame; the road clock stops while it's up. Leaving
-## before the cast doesn't start the cooldown.
-var fishing: FishingGame
-
-
-func _go_fish() -> void:
-	if not TravelRules.can_try(Game.run, "fish"):
-		_say(Txt.t("UI_OW_NO_ROD"))
-		return
-	_busy = true
-	fishing = FishingGame.open(self, "road", FishingRules.mods_for(Game.run), 0, Game.pond("road/" + String(Game.travel.get("at", Game.travel.get("to", "road"))), "road"),
-		hud.clear_rect, hud.bar_rect)  # the whole play area, the party frame under it ([USER] 2026-11-02 X19)
-	fishing.finished.connect(func(res: Dictionary) -> void:
-		fishing = null
-		_busy = false
-		if String(res.outcome) == "left":
-			_refresh_hud()
-			return
-		Game.travel.acts["fish"] = float(Game.travel.t)
-		if String(res.outcome) == "caught":
-			var got := Game.land_fish(res.fish)
-			_say((Txt.t("UI_FISH_NEW") + " " if got.new else "") + Txt.f("UI_FISH_GOT_KIND", Txt.t(String(res.fish.name_key))))
-		else:
-			_say(Txt.t("UI_FISH_NONE"))
-		_refresh_hud())
-
-
-## The night's camp ([USER] 2026-11-01 healing model A: "at the camp at night you as the player should pick what food
-## they each eat or use a team Feast item if you have one"). Each member gets a row with the food kinds in the pack;
-## their portions come from the kind picked (meat heals, plain food only feeds; the row shows the HP it gives). A cooked
-## meal feeds everyone instead (TEAM MEAL). The picks open as last night's (SAME AS LAST NIGHT puts them back). If the
-## pack can't feed everyone the camp warns who goes hungry and a row's GO HUNGRY chooses who does (Game.camp_hunger:
-## morale is hunger, [USER] 2026-11-02); everyone Spent carries the party home (Game.party_spent). then:
-## what the clock reached on the way (the arrival or an encounter), run once the nights are eaten.
 func _night(then := Callable()) -> void:
 	_busy = true
 	Sfx.play("camp")
-	var picks := TravelRules.default_picks(Game.run)
-	# EAT THE SAME EVERY NIGHT (2026-11-13 playtest: two camps a leg, the same clicks each time): eaten at once, with a
-	# line, while last night's picks still feed everyone; the box opens when someone would go hungry
-	if bool(Game.meta.get("settings", {}).get("auto_camp", false)) and not Game.run.last_picks.is_empty() \
-			and TravelRules.hungry_with(Game.run, picks).is_empty():
-		_say(Txt.t("UI_CAMP_AUTO_ATE"))
-		_eat_night(picks, then)
+	var settings: Dictionary = Game.meta.get("settings", {})
+	var r := CampRules.ration(Db.camp_rations, String(settings.get("camp_ration", CampRules.FILLING)))
+	if bool(settings.get("auto_camp", false)) and not (settings.get("camp_plan", []) as Array).is_empty() \
+			and Game.run.portions() >= CampRules.pot_need(Game.run, r):
+		var lines := CampScreen.repeat_plan(settings)
+		lines.append_array(Game.camp_eat(String(r.id)))
+		lines.append(Txt.t("CAMP_AUTO_DONE"))
+		_after_camp(lines, then)
 		return
-	_night_box(picks, then)
+	var nights: Dictionary = Game.meta.get("trip_nights", {})
+	var pond := "road/" + String(Game.travel.get("at", Game.travel.get("to", "road")))
+	_camp = CampScreen.open(_ui, hud.clear_rect, hud.bar_rect, pond, int(nights.get(str(int(Game.meta.trips)), 0)) + 1)
+	_camp.slept.connect(_after_camp.bind(then))
+	_camp.changed.connect(_refresh_hud)
+	_refresh_hud()
+	if is_instance_valid(_hint):  # a one-time map hint waits under the fire
+		_hint.visible = false
+	_refresh_side()
 
 
-func _night_box(picks: Dictionary, then: Callable) -> void:
-	var run := Game.run
-	var box := _new_dialog(Txt.t("UI_CAMP_NIGHT"))
-	# [USER] 2026-11-02 morale is hunger: an empty pack no longer ends the trip; the camp warns who goes hungry and the
-	# player chooses who eats (GO HUNGRY on a row)
-	var hungry := TravelRules.hungry_with(run, picks)
-	if not hungry.is_empty():
-		var nights: Dictionary = Game.meta.get("trip_nights", {})
-		var free := MoraleRules.grace(int(Game.meta.trips), int(nights.get(str(int(Game.meta.trips)), 0)), Db.morale)
-		var warn := HBoxContainer.new()
-		warn.add_theme_constant_override("separation", 8)
-		box.add_child(warn)
-		warn.add_child(MenuKit.icon_rect("ration", 34))
-		var wl := MenuKit.label(Txt.f("UI_CAMP_WARN_FREE" if free else "UI_CAMP_WARN", hungry.size()), 18,
-			MenuKit.TEXT if free else Color(1.0, 0.72, 0.55))
-		warn.add_child(wl)
-		if not free:  # the cost at a glance, as on the gate's warning
-			warn.add_child(MenuKit.chip(Txt.f("UI_GATE_COST_CHIP", int(Db.morale.get("unfed", -15))), "heal", Color(1.0, 0.72, 0.55),
-				Txt.t("UI_SPENT_TIP"), 15))
-	var stock := HBoxContainer.new()  # what the pack holds tonight, once (the rows then show what each pick heals)
-	stock.add_theme_constant_override("separation", 8)
-	box.add_child(stock)
-	stock.add_child(MenuKit.label(Txt.t("UI_CAMP_STOCK"), 15, MenuKit.TEXT_DIM))
-	for kind in run.larder():
-		stock.add_child(MenuKit.chip(str(run.portions_of(kind)), kind, MenuKit.TEXT, Txt.t(String(Db.items[kind].name_key)), 15))
-	if run.larder().is_empty():
-		stock.add_child(MenuKit.label(Txt.t("UI_CAMP_STOCK_NONE"), 15, Color(1.0, 0.72, 0.55)))
-	var share := TravelRules.shares(run)
-	var heals := TravelRules.meal_heals(run, picks)
-	for m in run.alive():
-		var id := String((m.def as CharacterDef).id)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		box.add_child(row)
-		var face := TextureRect.new()
-		face.texture = ContainerUi.face_of(id)
-		face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		face.custom_minimum_size = Vector2(36, 36)
-		face.tooltip_text = Txt.t((m.def as CharacterDef).name_key)
-		row.add_child(face)
-		var who := VBoxContainer.new()  # the name over the HP
-		who.add_theme_constant_override("separation", 0)
-		who.custom_minimum_size.x = 104
-		who.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.add_child(who)
-		who.add_child(MenuKit.label(Txt.t((m.def as CharacterDef).name_key), 15))
-		var hp := Label.new()
-		var gain := mini(int(heals.get(id, 0)), run.max_hp(m) - int(m.hp))
-		hp.text = "%s %d/%d%s" % [Txt.t("UI_VIC_BAR_HP"), int(m.hp), run.max_hp(m), ("  " + Txt.f("UI_GAIN_HP", gain)) if gain > 0 else ""]
-		hp.add_theme_font_size_override("font_size", 13)
-		hp.add_theme_color_override("font_color", MenuKit.TEXT_DIM)
-		who.add_child(hp)
-		if int(share.get(id, 0)) <= 0:
-			var none := Label.new()
-			none.text = Txt.t("UI_CAMP_NO_EAT")
-			row.add_child(none)
-			continue
-		var push := Control.new()  # the choices to the right: the rows fill the window
-		push.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(push)
-		var tag := CenterContainer.new()  # a fixed slot, so every row's food buttons line up
-		tag.custom_minimum_size = Vector2(130, 0)
-		row.add_child(tag)
-		if Game.spent(id):
-			tag.add_child(MenuKit.chip(Txt.t("UI_SPENT_HUNGRY" if hungry.has(id) else "UI_SPENT_TAG"), "", Color(1.0, 0.6, 0.5),
-				Txt.t("UI_SPENT_TIP"), 14))
-		elif hungry.has(id):  # this one goes hungry with these picks (the warning's count)
-			tag.add_child(MenuKit.chip(Txt.t("UI_CAMP_HUNGRY_TAG"), "", Color(1.0, 0.72, 0.55), Txt.t("UI_CAMP_HUNGRY_TIP"), 14))
-		for kind in run.larder():  # one button per food kind: its icon, the portions left, what one portion heals
-			var b := Button.new()
-			b.toggle_mode = true
-			b.set_pressed_no_signal(String(picks.get(id, "")) == kind)
-			b.icon = ActionInfo.icon(kind)
-			b.add_theme_constant_override("icon_max_width", 26)
-			b.custom_minimum_size = Vector2(104, 36)
-			if String(picks.get(id, "")) == kind and hungry.has(id):  # picked, but none left for this one tonight
-				b.modulate = Color(1, 1, 1, 0.55)
-				b.tooltip_text = Txt.t("UI_CAMP_NONE_LEFT")
-			elif String(picks.get(id, "")) == kind:  # the pick stands out
-				b.add_theme_color_override("font_color", UiTheme.GOLD)
-				b.add_theme_color_override("font_pressed_color", UiTheme.GOLD)
-				b.modulate = Color(1.15, 1.15, 1.0)
-			else:
-				b.modulate = Color(1, 1, 1, 0.7)
-			var hpp := RunState.heal_per_portion(kind)
-			b.text = Txt.f("UI_GAIN_HP", roundi(hpp * int(share[id]))) if hpp > 0.0 else Txt.t("UI_CAMP_FEEDS")
-			if b.tooltip_text == "":
-				b.tooltip_text = Txt.t(String(Db.items[kind].name_key))
-			b.add_theme_font_size_override("font_size", 13)
-			b.pressed.connect(func() -> void:
-				picks[id] = kind
-				_night_box(picks, then))
-			row.add_child(b)
-		var skip := Button.new()  # this member goes to bed hungry, leaving the food for the others
-		skip.toggle_mode = true
-		skip.text = Txt.t("UI_CAMP_SKIP")
-		skip.set_pressed_no_signal(String(picks.get(id, "")) == TravelRules.SKIP)
-		skip.custom_minimum_size = Vector2(104, 36)
-		skip.add_theme_font_size_override("font_size", 13)
-		skip.theme_type_variation = &"QuietButton"
-		if String(picks.get(id, "")) == TravelRules.SKIP:  # picked: it stands out like a food pick
-			skip.add_theme_color_override("font_color", UiTheme.GOLD)
-			skip.add_theme_color_override("font_pressed_color", UiTheme.GOLD)
-			skip.theme_type_variation = &"PrimaryButton"
-		elif hungry.has(id):
-			skip.add_theme_color_override("font_color", Color(1.0, 0.72, 0.55))
-		skip.pressed.connect(func() -> void:
-			picks[id] = TravelRules.SKIP
-			_night_box(picks, then))
-		row.add_child(skip)
-	var meals := run.items.keys().filter(func(k: String) -> bool: return String(Db.items[k].kind) == "meal")
-	if not meals.is_empty():  # a cooked meal feeds the whole party tonight: heal, morale and its buff
-		var team := HBoxContainer.new()
-		team.add_theme_constant_override("separation", 6)
-		box.add_child(team)
-		var l := Label.new()
-		l.text = Txt.t("UI_CAMP_TEAM")
-		team.add_child(l)
-		for k: String in meals:
-			var b := Button.new()
-			b.icon = ActionInfo.icon(k)
-			b.add_theme_constant_override("icon_max_width", 26)
-			b.text = Txt.t(String(Db.items[k].name_key))
-			b.custom_minimum_size = Vector2(0, 36)
-			b.add_theme_font_size_override("font_size", 13)
-			b.pressed.connect(func() -> void:
-				if Game.team_meal(k):
-					_say(Txt.t("UI_CAMP_ATE"))
-				_end_night(then))
-			team.add_child(b)
-	var acts := HBoxContainer.new()
-	acts.add_theme_constant_override("separation", 8)
-	box.add_child(acts)
-	var eat := Button.new()
-	eat.theme_type_variation = &"PrimaryButton"  # the one to press (the menu kit)
-	eat.text = Txt.t("UI_CAMP_EAT")
-	eat.custom_minimum_size = Vector2(140, 34)
-	eat.pressed.connect(func() -> void: _eat_night(picks, then))
-	acts.add_child(eat)
-	var same := Button.new()  # eats last night's picks at once (2026-11-13 playtest: it only reset the rows)
-	same.text = Txt.t("UI_CAMP_SAME")
-	same.custom_minimum_size = Vector2(200, 34)
-	same.disabled = run.last_picks.is_empty()
-	same.tooltip_text = Txt.t("UI_CAMP_SAME_TIP" if same.disabled else "UI_CAMP_SAME_ON")
-	same.pressed.connect(func() -> void: _eat_night(TravelRules.default_picks(run), then))
-	acts.add_child(same)
-	var auto := CheckBox.new()  # every night after this eats the same on its own, while no one would go hungry
-	auto.text = Txt.t("UI_CAMP_AUTO")
-	auto.tooltip_text = Txt.t("UI_CAMP_AUTO_TIP")
-	auto.add_theme_font_size_override("font_size", 14)
-	auto.button_pressed = bool(Game.meta.get("settings", {}).get("auto_camp", false))
-	auto.toggled.connect(func(on: bool) -> void: Game.set_setting("auto_camp", on))
-	box.add_child(auto)
-
-
-## A night's meal eaten with these picks: hunger lines, everyone Spent carried home, else the night ends.
-func _eat_night(picks: Dictionary, then: Callable) -> void:
-	var run := Game.run
-	var lines := Game.camp_hunger(TravelRules.camp_meal(run, picks))
+## A night slept: its lines, everyone Spent carried home, else the night ends.
+func _after_camp(lines: PackedStringArray, then: Callable) -> void:
+	_camp = null
+	if is_instance_valid(_hint):
+		_hint.visible = true
 	for l in lines:
-		run.note(l)
+		Game.run.note(l)
 	if not lines.is_empty():
 		_say(lines[lines.size() - 1])
 	if Game.all_spent():  # everyone at 0: the party is carried home ([USER] 2026-11-02)
@@ -536,65 +348,6 @@ func _end_night(then: Callable) -> void:
 	elif then.is_valid():
 		then.call()
 	_side()
-
-
-## MAKE CAMP ([USER] omr-9): once a leg. The party stands still a while (the road clock runs on: a night that falls
-## meanwhile is eaten after) and can rest for free (mana and charges, some HP, morale) or drink a tonic. Cooked meals are
-## eaten at the night's camp, as a team meal.
-func make_camp() -> void:
-	if not walking() or _busy or Game.travel.get("camped", false):
-		return
-	var tr := Game.travel
-	var rest := float(tr.get("rest", 0.0))
-	var camp := float(Db.levels.get("camp_seconds", 20))
-	var days := TravelRules.days_between(float(tr.t) + rest, float(tr.t) + rest + camp)
-	if days > 0:
-		tr["nights_due"] = int(tr.get("nights_due", 0)) + days
-	tr["rest"] = rest + camp
-	tr["camped"] = true
-	_busy = true
-	var box := _new_dialog(Txt.t("UI_CAMP"))
-	var rest_btn := Button.new()  # a rest: all mana and charges, some HP, morale; free
-	rest_btn.text = Txt.t("UI_CAMP_REST")
-	rest_btn.pressed.connect(func() -> void:
-		if Game.camp_rest():
-			_say(Txt.t("UI_CAMP_RESTED"))
-		_close_dialog()
-		_refresh_hud()
-		_side())
-	box.add_child(rest_btn)
-	if Game.run.item_count("tonic") > 0:
-		var tonic := Button.new()
-		tonic.text = Txt.t("UI_CAMP_TONIC")
-		tonic.pressed.connect(func() -> void:
-			if Game.tonic_effect():
-				Game.run.add_item("tonic", -1)
-				_say(Txt.t("UI_CAMP_TONIC_DONE"))
-			_close_dialog()
-			_refresh_hud()
-			_side())
-		box.add_child(tonic)
-	var go := Button.new()
-	go.text = Txt.t("UI_CONTINUE")
-	go.pressed.connect(func() -> void:
-		_close_dialog()
-		_side())
-	box.add_child(go)
-	_refresh_hud()
-
-
-func talk() -> void:
-	var others := Game.run.alive().filter(func(m: Dictionary) -> bool: return (m.def as CharacterDef).id != &"lead")
-	if others.is_empty():
-		_say(Txt.t("UI_OW_ALONE"))
-		return
-	var d: CharacterDef = others[_rng.randi_range(0, others.size() - 1)].def
-	var keys: Array[String] = []
-	for i in range(1, 10):
-		var k := "TALK_%s_%d" % [String(d.id).to_upper(), i]
-		if Txt.has(k):
-			keys.append(k)
-	_say(Txt.t(keys[_rng.randi_range(0, keys.size() - 1)]) if not keys.is_empty() else Txt.t("UI_OW_ALONE"))
 
 
 func _say(text: String) -> void:
@@ -1017,14 +770,6 @@ func _side() -> void:
 	if walking():
 		var fast := _act_button(Txt.t("UI_OW_FAST_ON" if _fast else "UI_OW_FAST"), fast_forward)
 		fast.tooltip_text = Txt.t("UI_OW_FAST_TIP")
-		_act_button(Txt.t("UI_OW_HUNT"), act.bind("hunt"))
-		var fish := _act_button(Txt.t("UI_OW_FISH"), act.bind("fish"))
-		fish.disabled = not TravelRules.can_try(Game.run, "fish")  # no rod in the pack
-		fish.tooltip_text = "" if not fish.disabled else Txt.t("UI_OW_NO_ROD")
-		_act_button(Txt.t("UI_OW_FORAGE"), act.bind("forage"))
-		_act_button(Txt.t("UI_OW_TALK"), talk)
-		if not Game.travel.get("camped", false):
-			_act_button(Txt.t("UI_OW_CAMP"), make_camp)
 	else:
 		var n := _node(String(Game.travel.get("at", "town")))
 		if map_ready(String(Game.travel.get("at", "town"))):  # no GO IN until the tile's map is built
@@ -1056,7 +801,7 @@ func _refresh_side() -> void:
 	else:  # [USER] 2026-11-01 fewer words: the map marks where the party stands and GO IN names it, so no line here
 		_info.text = ""
 	_info.visible = _info.text != ""
-	_acts.visible = _dialog == null and not _menu_open and (_info.visible or _acts_row.get_child_count() > 0)
+	_acts.visible = _dialog == null and _camp == null and not _menu_open and (_info.visible or _acts_row.get_child_count() > 0)
 	if Game.run.lines.size() > _lines_seen:  # a new roll or camp line: a moment in the standard place
 		_lines_seen = Game.run.lines.size()
 		_flash.text = String(Game.run.lines[Game.run.lines.size() - 1])

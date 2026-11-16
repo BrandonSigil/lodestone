@@ -1244,3 +1244,57 @@ UI_FEEDBACK_TITLE,SEND FEEDBACK
 UI_FEEDBACK_ASK,What happened? What did you expect? (A screenshot is saved with your note.)
 UI_FEEDBACK_SAVE,SAVE NOTE
 UI_FEEDBACK_FOLDER,OPEN FOLDER
+CAMP_TITLE,NIGHT %d
+CAMP_SLOTS,TONIGHT
+CAMP_EVENING,THE EVENING
+CAMP_SLOT_EMPTY,Free
+CAMP_POT,THE POT
+CAMP_FOOD_DAYS,Food: %d days
+CAMP_FOOD_PLENTY,Food: no need
+CAMP_FOOD_AT,%d days at %s
+CAMP_RATION_FILLING,FILLING
+CAMP_RATION_FILLING_TIP,Everyone eats their full share. Morale holds.
+CAMP_RATION_MEAGER,MEAGER
+CAMP_RATION_MEAGER_TIP,Half the food. Everyone who eats loses 5 morale.
+CAMP_RATION_BARE,BARE
+CAMP_RATION_BARE_TIP,Nobody eats and the food is saved. Everyone goes hungry and loses morale.
+CAMP_RATION_FREE,Your first nights out are free: thin rations cost no morale.
+CAMP_HUNGRY_WARN,Not enough food: %d will go hungry.
+CAMP_COOK,COOK
+CAMP_COOK_TIP,"Serve a cooked meal from the pack: it heals, lifts morale and gives its buff. With none, a hot pot: everyone gains %d morale."
+CAMP_FISH,FISH
+CAMP_FISH_TIP,Fish the water by the camp. Needs a rod.
+CAMP_HUNT,HUNT
+CAMP_HUNT_TIP,Roll to hunt. Meat feeds and heals.
+CAMP_FORAGE,FORAGE
+CAMP_FORAGE_TIP,Roll to forage for food and medicine.
+CAMP_TALK,TALK
+CAMP_TALK_TIP,Two of the party talk by the fire. Their bond grows.
+CAMP_MEND,MEND
+CAMP_MEND_TIP,The most hurt member heals %d HP.
+CAMP_REST,REST
+CAMP_REST_TIP,"Mana and charges refill, everyone heals half their max HP and gains morale."
+CAMP_DONE,Already done tonight.
+CAMP_FULL,The evening is full.
+CAMP_NEED_ROD,You need a fishing rod.
+CAMP_NOBODY_HURT,Nobody is hurt.
+CAMP_ALONE,It takes two to talk.
+CAMP_TALK_PICK,Who talks?
+CAMP_BACK,BACK
+CAMP_SLEEP,SLEEP
+CAMP_SLEEP_TIP,Eat from the pot and sleep until morning.
+CAMP_SAME,SAME AS LAST NIGHT
+CAMP_SAME_TIP,"Repeat last night's evening and ration, then sleep. Fishing becomes a quick cast."
+CAMP_AUTO,Every night the same
+CAMP_AUTO_TIP,Later camps repeat this night on their own unless someone would go hungry.
+CAMP_AUTO_DONE,Camp: the same as last night.
+CAMP_COOKED,Everyone ate %s.
+CAMP_HOT_POT_DONE,A hot pot: everyone gains %d morale.
+CAMP_MENDED,%s heals %d HP.
+CAMP_TALK_BOND,%s and %s: bond +%d
+CAMP_TALK_LEVEL,%s and %s reach bond level %d.
+CAMP_GOT_FOOD,%s: +%d food
+CAMP_GOT_BOTH,"%s: +%d food, +%d medicine"
+CAMP_GOT_NONE,%s: nothing this time.
+CAMP_FISH_CAUGHT,Caught: %s
+CAMP_FISH_NONE,Nothing bit.

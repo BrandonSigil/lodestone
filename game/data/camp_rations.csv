@@ -1,0 +1,4 @@
+id,name_key,tip_key,share,morale,note
+filling,CAMP_RATION_FILLING,CAMP_RATION_FILLING_TIP,100,0,[AI] 2026-11-16 everyone eats their full share
+meager,CAMP_RATION_MEAGER,CAMP_RATION_MEAGER_TIP,50,-5,[AI] half the party's portions (rounded up); everyone who eats loses a little morale
+bare,CAMP_RATION_BARE,CAMP_RATION_BARE_TIP,0,0,[AI] nothing from the pack: everyone goes hungry (morale.csv unfed) and the food is saved

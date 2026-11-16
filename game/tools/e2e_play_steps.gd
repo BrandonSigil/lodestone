@@ -456,13 +456,9 @@ func _road(to: String) -> Node:
 		s.call("_click_node", to)
 		_check(s.call("walking"), "on the road to " + to)
 		var meals: int = game.run.meals_eaten  ## the night camps on the walk (the robot eats the picks offered)
-		var foraged := false
 		var fell := false
 		_heal_up()
 		while game.travel.has("to"):
-			if not foraged:
-				s.call("act", "forage")
-				foraged = true
 			await _frames(1)
 			if tree.current_scene != s:
 				if not await _fight_on_generated_map():
@@ -471,7 +467,19 @@ func _road(to: String) -> Node:
 				s = await _scene("overworld")
 				continue
 			if s.get("_busy"):
-				if not await _press_text(s, Txt.t("UI_CAMP_EAT")):  # the night's camp: eat what it offers
+				var camp: Node = s.get("_camp")
+				if camp != null:  # the campfire: a hunt for the evening, then sleep (the pot feeds everyone)
+					for b: Button in camp.find_children("*", "Button", true, false):
+						if b.text == Txt.t("CAMP_HUNT") and not b.disabled:
+							b.pressed.emit()
+							await _frames(2)
+							break
+					for b: Button in camp.find_children("*", "Button", true, false):
+						if b.text == Txt.t("CAMP_SLEEP"):
+							b.pressed.emit()
+							await _frames(2)
+							break
+				else:
 					await _press(s, 0)
 			else:
 				s.call("fast_forward")

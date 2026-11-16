@@ -936,6 +936,8 @@ func starter_food() -> int:
 	var n := ceili(float(maxi(0, want)) / float(per))
 	if n > 0:
 		run.add_item("ration", n)
+	if run.item_count("rod") <= 0:  # a rod for the campfire's FISH (2026-11-16: "no fishing rod in the game yet")
+		run.add_item("rod", 1)
 	return n
 
 
@@ -1366,6 +1368,81 @@ func team_meal(meal_item: String) -> bool:
 	run.meals_eaten += 1
 	camp_hunger({})  # everyone fed: the night counts, and the Spent are lifted
 	return true
+
+
+## The campfire's pot (CampRules, [USER] 2026-11-16): everyone eats at the ration on the dial. Short or BARE goes
+## hungry as at the old camp (camp_hunger: morale is hunger); a thin ration costs the ration's morale to whoever ate.
+## The first nights of the first trips are free, as before. Returns the lines to show.
+func camp_eat(ration_id: String) -> PackedStringArray:
+	var r := CampRules.ration(Db.camp_rations, ration_id)
+	var nights: Dictionary = meta.get("trip_nights", {})
+	var free := MoraleRules.grace(int(meta.trips), int(nights.get(str(int(meta.trips)), 0)), Db.morale)
+	var res := CampRules.eat_pot(run, r)
+	var lines := camp_hunger(res.missed)
+	var cost := int(r.get("morale", 0))
+	if cost != 0 and free:
+		lines.append(Txt.t("CAMP_RATION_FREE"))
+	elif cost != 0:
+		var dog := _dog_along()
+		for m in CampRules.eaters(run):
+			var d: CharacterDef = m.def
+			if res.missed.has(String(d.id)):
+				continue
+			var n := MoraleRules.change(meta.morale, String(d.id), cost, Db.morale, dog)
+			if n != 0:
+				lines.append(Txt.f("UI_MORALE_CHANGE", [Txt.t(d.name_key), str(n)]))
+			if MoraleRules.spent(meta.morale, String(d.id), Db.morale):
+				lines.append(Txt.f("UI_SPENT_NOW", Txt.t(d.name_key)))
+		refresh_party()
+		save_meta()
+	return lines
+
+
+## COOK at the campfire: a cooked meal from the pack feeds its heal, morale and buff to everyone (eat_meal); with none,
+## a hot pot lifts everyone who eats by hot_pot morale. Returns the line to show.
+func camp_cook() -> String:
+	var meals := run.items.keys().filter(func(k: String) -> bool: return String(Db.items.get(k, {}).get("kind", "")) == "meal")
+	if not meals.is_empty() and eat_meal(String(meals[0])):
+		return Txt.f("CAMP_COOKED", Txt.t(String(Db.items[String(meals[0])].name_key)))
+	for m in CampRules.eaters(run):
+		MoraleRules.change(meta.morale, String((m.def as CharacterDef).id), int(Db.camp.get("hot_pot", 5)), Db.morale)
+	refresh_party()
+	save_meta()
+	return Txt.f("CAMP_HOT_POT_DONE", int(Db.camp.get("hot_pot", 5)))
+
+
+## MEND at the campfire: the most hurt member heals mend_hp. Returns the line to show ("" when nobody is hurt).
+func camp_mend() -> String:
+	var m := CampRules.most_hurt(run)
+	if m.is_empty():
+		return ""
+	var before := int(m.hp)
+	run.heal_member(m, int(Db.camp.get("mend_hp", 6)))
+	return Txt.f("CAMP_MENDED", [Txt.t((m.def as CharacterDef).name_key), int(m.hp) - before])
+
+
+## TALK at the campfire: the pair gains talk_points bond points and shares a talk (Brandon's line for their bond
+## level when he has written it). Returns the lines to show.
+func camp_talk(a: String, b: String) -> PackedStringArray:
+	var k := BondRules.key(a, b)
+	var bonds: Dictionary = meta.get("bonds", {})
+	var before := BondRules.level(int(bonds.get(k, 0)), Db.bonds)
+	bonds[k] = int(bonds.get(k, 0)) + int(Db.camp.get("talk_points", 2))
+	meta["bonds"] = bonds
+	var after := BondRules.level(int(bonds[k]), Db.bonds)
+	var lines: PackedStringArray = [Txt.t(BondRules.talk_key(k, after) if after > 0 else "BOND_TALK_EMPTY")]
+	lines.append(Txt.f("CAMP_TALK_BOND", [_name_of(a), _name_of(b), int(Db.camp.get("talk_points", 2))]))
+	if after > before:
+		lines.append(Txt.f("CAMP_TALK_LEVEL", [_name_of(a), _name_of(b), after]))
+	save_meta()
+	return lines
+
+
+func _name_of(id: String) -> String:
+	for m in run.members:
+		if String((m.def as CharacterDef).id) == id:
+			return Txt.t((m.def as CharacterDef).name_key)
+	return id
 
 
 ## Eat a carried meal: everyone gets its buff for the next few fights (meal_fights), heals the recipe's heal

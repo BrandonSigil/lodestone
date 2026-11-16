@@ -1,0 +1,5 @@
+key,value,note
+slots,3,[AI] 2026-11-16 evening actions a night at the campfire (Darkest Dungeon's camp budget)
+hot_pot,5,[AI] COOK with no cooked meal carried: everyone who eats gains this much morale
+mend_hp,6,[AI] MEND: HP to the most hurt member
+talk_points,2,[AI] TALK: bond points for the pair (a fight together gives up to 3)

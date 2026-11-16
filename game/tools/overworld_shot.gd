@@ -1,10 +1,10 @@
 extends SceneTree
 ## Drives the overworld into a state and saves a PNG. Args after "--": <png path> <step>.
-## Steps: camp (walking to the pass with a stew in the pack, MAKE CAMP open), carry (the party panel after fights:
-## the book hero's mana and the dog's charges half spent), carry_camp (the same with MAKE CAMP open: rest and tonic),
+## Steps: camp (walking to the pass with a stew in the pack, at nightfall: the campfire), carry (the party panel after fights:
+## the book hero's mana and the dog's charges half spent), carry_camp (the same at the campfire),
 ## pack (I pressed: the inventory page, the dog along), map (the hex world map at home, nothing open), walk (halfway
-## along the leg to forest roads), arrive (at forest roads), night (the night's camp picker: the dog along, the hero
-## hurt, meat, a ration, a fish and a stew in the pack), hungry (one portion for two: the camp's hunger warning).
+## along the leg to forest roads), arrive (at forest roads), night (the campfire: the dog along, the hero
+## hurt, meat, a ration, a fish and a stew in the pack), hungry (one portion for two: the pot's hunger warning).
 
 var _frames := 0
 var _out := ""
@@ -28,7 +28,8 @@ func _process(_delta: float) -> bool:
 		s.call("_start_leg", "pass")
 		game.get("travel")["t"] = 12.0
 		s.call("_side")
-		s.call("make_camp")
+		game.get("travel")["stops"] = []
+		s.call("_advance_to", 30.5)  # nightfall: the campfire
 	if _frames == 5 and _step.begins_with("carry"):
 		var game: Node = root.get_node("Game")
 		game.call("take_weapon", "book")
@@ -45,7 +46,8 @@ func _process(_delta: float) -> bool:
 		game.get("travel")["t"] = 12.0
 		s.call("_side")
 		if _step == "carry_camp":
-			s.call("make_camp")
+			game.get("travel")["stops"] = []
+			s.call("_advance_to", 30.5)  # nightfall: the campfire
 	if _frames == 5 and _step == "night":
 		var game: Node = root.get_node("Game")
 		game.get("meta")["flags"].append("met_dog")
@@ -61,6 +63,12 @@ func _process(_delta: float) -> bool:
 		game.get("travel")["stops"] = []
 		game.get("travel")["t"] = 29.0
 		s.call("_advance_to", 30.5)
+	if _frames == 20 and _step == "night_evening":  # the campfire after a hunt and a cook
+		var camp: Node = s.get("_camp")
+		camp.call("_do", "hunt")
+		camp.call("_do", "cook")
+	if _frames == 5 and _step == "night_evening":
+		_step_night(s)
 	if _frames == 5 and _step == "hungry":  # morale is hunger: one ration for a party of two, past the free nights
 		var game: Node = root.get_node("Game")
 		game.get("meta")["flags"].append("met_dog")
@@ -95,3 +103,20 @@ func _process(_delta: float) -> bool:
 		root.get_viewport().get_texture().get_image().save_png(_out)
 		quit()
 	return false
+
+
+## The night step's state, shared by night_evening.
+func _step_night(s: Node) -> void:
+	var game: Node = root.get_node("Game")
+	game.get("meta")["flags"].append("met_dog")
+	game.call("refresh_party")
+	var run: Object = game.get("run")
+	run.call("add_item", "ration", 1)
+	run.call("add_item", "fish_good", 1)
+	run.call("add_item", "rod", 1)
+	var members: Array = run.get("members")
+	members[0]["hp"] = 7
+	s.call("_start_leg", "pass")
+	game.get("travel")["stops"] = []
+	game.get("travel")["t"] = 29.0
+	s.call("_advance_to", 30.5)
