@@ -88,6 +88,13 @@ func play(t: SceneTree) -> void:
 	s = await _fight(s, "plaza")
 	s = await _fight(s, "tower")
 	_spend_picks()
+	# The Lich King is a fight for a full party and the world does not scale ([USER] 2026-11-16): the hero and the
+	# dog never pass him. So the robot turns back here and recruits, as a player must, then comes again with four.
+	s = await _recruit()
+	s = await _fight(s, "plaza")
+	s = await _fight(s, "tower")
+	_spend_picks()
+	_check(game.run.members.size() == game.party_max(), "a full party of %d stands before the throne" % game.party_max())
 	var lv: int = game.level_state("lead").level
 	print("  hero level %d, HP %d/%d before the boss" % [lv, game.run.members[0].hp, game.run.max_hp(game.run.members[0])])
 	s = await _fight(s, "throne", true, ["plaza", "tower"])
@@ -149,7 +156,7 @@ func play(t: SceneTree) -> void:
 		var meat: int = game.run.food
 		game.wake_in_town(false)
 		s = await _explore("village")
-		_check(not game.run.is_away(&"dog") and game.run.members.size() == 2, "home again, the dog is back")
+		_check(not game.run.is_away(&"dog") and game.run.members.size() == game.party_max(), "home again, the dog is back")
 		_check(game.run.food == meat + carried, "with the meat he carried")
 
 	# The third win ([USER] 2026-11-01): he stops at 1 HP and yields. A second win stands in here to keep the run short.
@@ -381,6 +388,9 @@ func _fight(s: Node, group_id: String, must_defeat := false, grind: Array = []) 
 		_check(s.get("battle") == null, "no fight already running before the %s fight" % group_id)
 		if attempt > 0:  # a player tries something new after a fall; the robot plays the same, so new dice stand in
 			game.run.rng.seed = game.run.rng.seed + 7919 * attempt
+		if group_id == "throne":
+			print("  throne, try %d: %s, food %d" % [attempt + 1, ", ".join(game.run.members.map(func(m: Dictionary) -> String:
+				return "%s level %d, morale %d" % [m.def.id, game.level_state(String(m.def.id)).level, MoraleRules.of(game.meta.morale, String(m.def.id), Db.morale)])), game.run.food])
 		s.call("start_fight", g, "party")
 		var waited := 0.0
 		var narrowed := false
@@ -404,19 +414,21 @@ func _fight(s: Node, group_id: String, must_defeat := false, grind: Array = []) 
 			return s
 		if not lost and must_defeat and how == "exit":
 			print("  escaped the fight with %s: back in to beat it" % group_id)
-			if not game.has_flag("e2e_done"):
-				await _press(s, 0)
+			await _press(s, 0)  # an escape never ends the loop, so its box is always there to press
 			await _frames(3)
 			continue
 		if not lost:
 			_check(true, "won the fight with %s (%s)" % [group_id, how])
 			var after: int = game.level_state("lead").xp + game.level_state("lead").level * 1000
 			_check(after > xp, "XP for the %s fight" % group_id)
-			if not game.has_flag("e2e_done"):
+			# The fight that ends the loop (the throne) shows the end box, which the robot leaves up. Any other win is
+			# pressed through, also after the loop is done: the guards fought again between tries at the third win.
+			if not bool(g.def.get("end", false)):
 				await _press(s, 0)
 				await _through_level_ups(s)
 			return s
 		s = await _fell("the fight with " + group_id)
+		game.start_trip()  # back out is a new trip (the robot skips the gate)
 		game.explore_map = map_name
 		game.explore_entry = Vector2i(-1, -1)
 		game.go(game.EXPLORE)
@@ -445,7 +457,105 @@ func _fell(what: String) -> Node:
 	_check(_by_square(v.leader().cell), "woke in the square")
 	_check(_kept(game.run.items) == items, "kept every item (materials go to the village pile)")
 	_check(game.run.members.all(func(m: Dictionary) -> bool: return m.hp == game.run.max_hp(m)), "everyone at full HP")
+	# A wipe costs each member about 20 morale, and at 0 a member is Spent and sits fights out. A player sleeps the fall
+	# off in the hero's bed (once a trip) before going out again; without it four falls in a row ended the run (seed 3).
+	game.sleep_at_home()
 	return v
+
+
+## From the crypt, short of the throne: the two recruits a player can reach before the Lich King, then back to the
+## crypt with four. Amber sleeps in the east by a fire that wants three wood, and wood banks at home, so it is carried
+## out of the crypt's chests on foot and past the town without going in. Bushberry is held by the west's ogre.
+func _recruit() -> Node:
+	var s: Node = tree.current_scene
+	for attempt in TRIES:
+		for id: String in ["hall_chest", "chapel_chest", "crypt_chest"]:
+			if game.run.item_count("wood") < 3 and _open(s, id):
+				await _use(s, id, "OPT_OPEN")
+				_pack_wood()
+		if s.get("_menu_open"):  # a full pack opened PACK on what still waits (meat, metal): the robot leaves that
+			await _press_text(s, Txt.t("UI_CLOSE_MENU"))
+		_check(game.run.item_count("wood") >= 3, "three wood from the crypt's chests")
+		await _through(s, "up_stair")
+		s = await _explore("snow_pass")
+		s = await _leave(s, "pass_exit")
+		s = await _into("farmland")
+		if game.run.item_count("wood") >= 3:
+			break
+		# a road fight lost on the way sent the wood to the village pile: back for more, as after any fall
+		print("  the wood went home with a fall: back to the crypt for more")
+		game.explore_map = "crypt"
+		game.explore_entry = Vector2i(-1, -1)
+		game.go(game.EXPLORE)
+		s = await _explore("crypt")
+	await _use(s, "amber_fire", "OPT_FEED_FLAME")
+	_check(game.has_flag("amber_fed"), "three wood fed Amber's fire")
+	await _use(s, "amber_log", "OPT_SIT")
+	_check(game.in_party("fire_mage") and game.run.members.size() == 3, "Amber joined: a party of three")
+	await _use(s, "farm_cache", "OPT_TAKE")
+	s = await _fight(s, "farm_bandits")
+	s = await _leave(s, "exit_home")
+
+	s = await _into("forest_roads")
+	await _use(s, "forest_cache", "OPT_TAKE")
+	s = await _fight(s, "forest_bandits")
+	s = await _fight(s, "forest_wolves")
+	s = await _fight(s, "forest_ogre")
+	_check(game.has_flag("bushberry_down"), "the ogre is down and Bushberry lies free")
+	await _use(s, "captive_bushberry", "OPT_HELP_UP")
+	_check(game.in_party("bushberry") and game.run.members.size() == 4, "Bushberry joined: a party of four")
+	_spend_picks()
+	s = await _leave(s, "exit_home")
+
+	s = await _into("snow_pass")
+	await _through(s, "crypt_stair")
+	return await _explore("crypt")
+
+
+## A full pack leaves a find waiting in the PACK window, and what waits is left behind on the way out (seeds 2 and 7
+## lost the wood that way). As a player would for Amber's fire, the robot repacks: everything out, the wood in first,
+## then the rest back, biggest first. What no longer fits is thrown out (a stack of meat or metal, a spare rope).
+func _pack_wood() -> void:
+	var run: RunState = game.run
+	var n: int = run.found.count("wood")
+	if n <= 0:
+		return
+	run.found.take("wood", n)
+	var left: int = run.pack.put("wood", RunState.shape_of("wood"), n, RunState.stack_of("wood"))
+	if left == 0:
+		return  # it fitted, or topped up a stack
+	var wood: int = run.pack.count("wood") + left
+	var rest: Array = run.pack.items.duplicate(true).filter(func(x: Dictionary) -> bool: return x.id != "wood")
+	rest.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return (x.shape as Array).size() > (y.shape as Array).size())
+	run.pack.items.clear()
+	run.pack.put("wood", RunState.shape_of("wood"), wood, RunState.stack_of("wood"))
+	for it: Dictionary in rest:
+		var room: Dictionary = run.pack.find_room(it.shape)
+		if room.is_empty():
+			print("  the pack is full: threw out %s x%d to make room for wood" % [it.id, int(it.get("n", 1))])
+			continue
+		var i: int = run.pack.place(String(it.id), it.shape, int(room.rot), room.pos, String(it.bound))
+		run.pack.items[i].n = int(it.get("n", 1))
+
+
+## A thing still there to use on this map (a chest opened this trip is gone).
+func _open(s: Node, id: String) -> bool:
+	return (s.get("things") as Array).any(func(t: Dictionary) -> bool: return t.id == id and not t.done)
+
+
+## Off an explore map by its way out, onto the big map.
+func _leave(s: Node, exit_id: String) -> Node:
+	_check(s.get("battle") == null, "no fight running when leaving through " + exit_id)
+	await _use(s, exit_id, "OPT_GO_ON")
+	return await _scene("overworld")
+
+
+## Along the road to a place and in: the explore map there.
+func _into(place: String) -> Node:
+	var node := "pass" if place == "snow_pass" else place
+	var o: Node = await _road(node)
+	await _press(o, 0)  # GO IN
+	return await _explore(place)
 
 
 ## Out the gate and along the road to a place, clicked on the big map; encounters on the way. Returns the
