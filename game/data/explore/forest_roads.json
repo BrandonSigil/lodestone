@@ -345,7 +345,7 @@
 		{
 			"event": "spot_people",
 			"id": "forest_bandits",
-			"loot": "food:+3;gold:+6",
+			"loot": "food:+1;gold:+6",
 			"sight": 5.0,
 			"units": [
 				{
@@ -368,7 +368,7 @@
 		{
 			"event": "spot_beasts",
 			"id": "forest_wolves",
-			"loot": "food:+4",
+			"loot": "food:+1",
 			"sight": 4.0,
 			"units": [
 				{
