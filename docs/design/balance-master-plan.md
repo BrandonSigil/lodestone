@@ -39,10 +39,10 @@ With two members the north's four fights cost 14, 26, 13 and 10% of the party's 
 | --- | --- | --- | --- | --- |
 | holding 4 portions back | 92% HP | 23 / 27% | 35 / 52% | 30 / 43% |
 | eating everything | 100% HP | 43 / 38% | 50 / 51% | 59 / 56% |
-| ogre at 12 HP (not landed), holding 4 back | 92% HP | 35 / 37% | 41 / 63% | 43 / 50% |
-| ogre at 12 HP (not landed), eating everything | 100% HP | 53 / 48% | 75 / 55% | 57 / 64% |
+| **ogre at 12 HP (landed), holding 4 back** | 92% HP | 35 / 37% | 41 / 63% | 43 / 50% |
+| **ogre at 12 HP (landed), eating everything** | 100% HP | 53 / 48% | 75 / 55% | 57 / 64% |
 
-So the west is now under the band proposed for two (about even odds at the map's hardest fight): about 1 in 4 for a careful eater, 2 in 5 for one who eats everything. `ogre.tres` HP 8, not 10, would bring it back to about even. That is Brandon's call and is not landed. The 60 / 53% measured before the cut was 30 runs with meat to spare.
+So the west is now under the band proposed for two (about even odds at the map's hardest fight): about 1 in 4 for a careful eater, 2 in 5 for one who eats everything. Brandon then said "Yes, trim him": `ogre.tres` is HP 8 (12 as the elite, with 5 damage and 1 armor), landed and re-measured on the written data with the same result as the two 12-HP rows; with Amber it is still 100%, losing 27% of the party's HP. The 60 / 53% measured before the cut was 30 runs with meat to spare.
 
 ## One-page summary
 
@@ -338,7 +338,7 @@ Each step should be measured before the next (`economy_sim.gd`, then the robot).
 | 8 | `morale.csv` `win`, `bed`; new `home_floor` | 2, 20, none | 1, 10, 40 | a failed push nets about -8, a safe trip +14; no trip starts under 40 (modelled; the floor needs code) |
 | 9 | `items.csv` and `tavern_menu.csv` price: ration, sack, jerky | 2, 4, 7 | 10, 24, 60 | a trip's gold buys 24 portions, not 120 (modelled) |
 | 10 | `levels.csv` `gate_warn_days` | 3 | 4 | the gate warns before a push that can't be fed |
-| 11 | `data/classes/ogre.tres` HP, damage, armor (**landed 2026-11-16**; the ogre's only other uses are two test groups on the launch menu) | 24, 5, 1 | 10, 4, 0 | as an elite he is 15 HP, 5 damage, 1 armor: two members win the first recruit 53 to 60% of the time on the first try with a sword or daggers, not 0%; with Amber 100% (measured on the written data) |
+| 11 | `data/classes/ogre.tres` HP, damage, armor (**landed 2026-11-16**; the ogre's only other uses are two test groups on the launch menu) | 24, 5, 1 | 8, 4, 0 | as an elite he is 12 HP, 5 damage, 1 armor: with the west's fight food cut, two members win the first recruit 35 to 53% of the time on the first try with a sword or daggers, not 0%; with Amber 100% (measured on the written data) |
 | 12 | repeatable finds on the side maps, and ingredients from a hunt that lands well | none | wood and herbs on forest roads, ingredients on farmland | gather runs pay something no push can (needs the map builder; `forest_roads.json` is Brandon's file) |
 
 Steps 1, 2, 3 and 11 are landed. Steps 4, 5 and 8 need small rules code. Step 12 needs maps. The rest are data and wait on decisions 1, 5, 6 and 7.
@@ -349,7 +349,7 @@ Steps 1, 2, 3 and 11 are landed. Steps 4, 5 and 8 need small rules code. Step 12
 2. **Is eating meat between fights meant to be free?** Answered 2026-11-16 ("Yes, land both"): eating stays as it is and the fights drop about 30% of what they did. Landed.
 3. **Who is the Lich built for?** Answered 2026-11-16: the first three directions for 2 or 3 members, the Lich for a full party, and the world does not scale. The plan follows that (3.3). The three smaller calls it left are answered too ("Yes to all this", each as recommended):
    - **How the Lich gets bigger:** HP alone, to 158. Landed.
-   - **The west's ogre:** softened to 15 HP, 5 damage and 1 armor as an elite. Landed.
+   - **The west's ogre:** softened to 15 HP as an elite, then to 12 once the west's fight food was cut ("Yes, trim him"), with 5 damage and 1 armor. Landed.
    - **Fewer than four:** left as it is, and the homecoming page should say what the wall wants. Not built: it needs a line of text and a check on the party's size (backlog P34).
 4. **Slower levels?** Answered 2026-11-16 ("Yes, land both"): 200 XP a level. Landed.
 5. **What should a failed push cost, with falling free?** Recommended: morale (bed +10, wins +1, a floor of 40 at home), so two reckless pushes in a row cost a point of damage until the party rests or eats at the tavern. Leaving it free keeps pushing the best choice every time.

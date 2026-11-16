@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"ogre"
 name_key = "ENEMY_OGRE"
-max_hp = 10
+max_hp = 8
 move = 3
 jump = 1
 attack = 3
