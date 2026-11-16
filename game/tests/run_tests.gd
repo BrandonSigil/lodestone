@@ -27,6 +27,7 @@ const SUITES := [
 	"res://tests/test_player_path.gd",
 	"res://tests/test_shadows.gd",
 	"res://tests/test_camp.gd",
+	"res://tests/test_ready.gd",
 ]
 
 

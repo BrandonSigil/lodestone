@@ -311,16 +311,29 @@ func run(s: Node, f: int, step: String) -> bool:
 				s._after_change()
 				_put(s, Vector2i(5, 24))
 			return f == 30
-		"gate":
-			# The village gate (backlog X4): the party picker straight away, every playable character, with GO and STAY.
+		"gate", "gate_pack", "gate_supplies", "gate_warn":
+			# The village gate's get-ready screen (backlog P31) on its PARTY tab, or PACK / SUPPLIES. gate_warn: one
+			# day of food and the dog Spent, so the road panel warns.
 			if f == 5:
 				var game: Node = s.get_node("/root/Game")
 				game.save_enabled = false  # a shot never writes the real save
 				game.meta.flags.append_array(["has_lodestone", "met_dog"])
 				game.take_weapon("sword")
 				game.refresh_party()
+				if step == "gate_warn":
+					game.meta.trips = 3
+					game.meta.flags.append("starter_food")
+					for k in game.run.items.keys():
+						if String(Db.items[k].kind) in ["food", "meal"]:
+							game.run.add_item(k, -game.run.item_count(k))
+					game.run.add_item("ration", 1)
+					game.run.food = 0
+					if game.in_party("dog"):
+						game.meta.morale["dog"] = 0
 				s._after_change()
 				s._apply_map_fx(["exit"], {})
+			if f == 8 and step != "gate" and step != "gate_warn":
+				s._gate_prompt(step.trim_prefix("gate_"))
 			return f == 30
 		"gate_food", "gate_first":
 			# the gate's bumpers: GO with a near-empty pack (gate_food: past the first trip) or before the first trip

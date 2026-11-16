@@ -1398,6 +1398,32 @@ func camp_eat(ration_id: String) -> PackedStringArray:
 	return lines
 
 
+## The town chest ([USER] 2026-11-16, backlog P31): a stash at home for what the party doesn't carry, filled from
+## data/town_chest.csv the first time it's opened. Item id -> count, in meta (it outlives every trip).
+func chest() -> Dictionary:
+	if not meta.has("chest"):
+		var c := {}
+		for row in Db.town_chest:
+			c[String(row.id)] = int(row.count)
+		meta["chest"] = c
+	return meta.chest
+
+
+## Move one item between the town chest and the pack (to_pack: out of the chest). False when there is none, or when
+## the pack has no room (the item goes back).
+func chest_move(id: String, to_pack: bool) -> bool:
+	var c := chest()
+	if not ReadyRules.move(c, run, id, to_pack):
+		return false
+	if to_pack and run.overfull():  # no room: back in the chest
+		run.found.take(id, 1)
+		c[id] = int(c.get(id, 0)) + 1
+		return false
+	save_meta()
+	save_adventure()
+	return true
+
+
 ## COOK at the campfire: a cooked meal from the pack feeds its heal, morale and buff to everyone (eat_meal); with none,
 ## a hot pot lifts everyone who eats by hot_pot morale. Returns the line to show.
 func camp_cook() -> String:

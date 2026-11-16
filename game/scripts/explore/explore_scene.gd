@@ -223,7 +223,6 @@ const NUDGE_BACK := 0.9
 var _nudge: Tween
 var _beam: Node2D
 var _came_from := ""  ## the map the party stepped out of to get here
-var _gate_starter := 0  ## free rations the first trip added, shown on the gate picker
 
 
 func _nudge_due() -> bool:
@@ -2075,86 +2074,32 @@ func _need_weapon() -> void:
 
 
 ## Leaving the village by the gate ([USER] pc-10: "press F to proceed", "press P to edit party").
-## The village gate (backlog X4): walking up to it opens the party picker straight away, with GO and STAY on it, one
-## step. PLAYTEST: every playable character is on it, met or not ("let me pick from all playable characters here before
-## heading out"); picking one not met yet sets their unlock flag, as the square's line-up does. Since 2026-11-13 that is
-## dev mode only: a player sees the people they have met, so the picker spoils no one.
-## One box (2026-11-13 playtest: the picker, then a second food box): the first trip's free rations and the food for
-## this party show on the picker itself, as chips, and GO turns to GO ANYWAY when the food runs short.
-func _gate_prompt() -> void:
+## The village gate opens the get-ready screen straight away ([USER] 2026-11-16, backlog P31, ReadyMenu): PARTY, PACK
+## and SUPPLIES (the town chest) tabs, and the road panel with the food in days, the few warnings and LEAVE. F leaves
+## too. Dev mode lists every playable character, met or not. The first trip's free kit is added on opening.
+var _gate_tab := "party"
+
+
+func _gate_prompt(tab := "party") -> void:
 	mode = M.DIALOG
 	_gate_open = true
-	_gate_starter += Game.starter_food()  # the new-player bumper ([USER] 2026-11-02): once, on the first trip
-	var shown: Array = []
-	for id in Game.ADVENTURE_ROSTER:
-		if Game.dev_mode or Game.is_unlocked(Db.character(StringName(id))) or Game.in_party(String(id)):
-			shown.append(String(id))
-	var box := _new_dialog(Txt.f("UI_GATE_PICK", [Game.adventure_defs().size(), Game.party_max()]))
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_child(row)
-	for id: String in shown:
-		row.add_child(_pick_card(id))
-	var days := TravelRules.food_days(Game.run)
-	var short := days < int(Db.levels.get("gate_warn_days", 3))
-	var chips := HBoxContainer.new()  # the numbers at a glance: days of food, and what a hungry day costs
-	chips.alignment = BoxContainer.ALIGNMENT_CENTER
-	chips.add_theme_constant_override("separation", 12)
-	box.add_child(chips)
-	chips.add_child(MenuKit.chip(Txt.f("UI_GATE_DAYS_CHIP", days), "ration", MenuKit.TEXT if not short else Color(1.0, 0.72, 0.55), "", 17))
-	if short:
-		chips.add_child(MenuKit.chip(Txt.f("UI_GATE_COST_CHIP", int(Db.morale.get("unfed", -15))), "heal", Color(1.0, 0.72, 0.55), "", 17))
-	if _gate_starter > 0:
-		box.add_child(MenuKit.label(Txt.f("UI_GATE_STARTER", _gate_starter), 15))
-	_dialog_button(box, Txt.t("UI_GATE_FOOD_GO" if short else "UI_GATE_GO"), _gate_go)
-	_dialog_button(box, Txt.t("OPT_STAY"), func() -> void:
-		_gate_open = false
-		_close_dialog()
-		mode = M.WALK)
+	_gate_tab = tab
+	Game.starter_food()  # the new-player bumper ([USER] 2026-11-02): once, on the first trip
+	var box := _new_dialog("", true)
+	ReadyMenu.open(box, tab, func(t: String) -> void:
+		_after_change()
+		_gate_prompt(t), _gate_go, _gate_stay)
 
 
-## One character on the gate's picker: face, name and level, and whether they come. Click to bring or leave them;
-## the hero always comes.
-func _pick_card(id: String) -> Button:
-	var d := Db.character(StringName(id))
-	var met := Game.is_unlocked(d)
-	var going := Game.in_party(id)
-	var card := Button.new()
-	card.custom_minimum_size = Vector2(112, 128)
-	card.toggle_mode = true
-	card.button_pressed = going
-	card.disabled = id == "lead"
-	card.tooltip_text = Txt.t(d.name_key)
-	var col := VBoxContainer.new()
-	col.alignment = BoxContainer.ALIGNMENT_CENTER
-	col.add_theme_constant_override("separation", 2)
-	col.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(col)
-	var face := AdventureMenu._face(id, d.tint, 56)
-	face.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	col.add_child(face)
-	for line: Array in [[Txt.t(d.name_key), 15, UiTheme.PARCHMENT],
-			[Txt.t("UI_PICK_IN" if going else ("UI_PICK_OUT" if met else "UI_PICK_NEW")), 13, UiTheme.GOLD if going else UiTheme.PARCHMENT_DARK]]:
-		var l := Label.new()
-		l.text = String(line[0])
-		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		l.clip_text = true
-		l.add_theme_font_size_override("font_size", int(line[1]))
-		l.add_theme_color_override("font_color", line[2])
-		col.add_child(l)
-	for c in col.find_children("*", "Control", true, false):
-		(c as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.modulate = Color.WHITE if going else Color(0.7, 0.7, 0.7)
-	card.pressed.connect(func() -> void: _pick_toggle(id))
-	return card
+func _gate_stay() -> void:
+	_gate_open = false
+	_close_dialog()
+	mode = M.WALK
 
 
-## GO at the gate: out onto the road. The food warning sits on the picker (GO ANYWAY), so this is one press.
+## LEAVE at the gate: out onto the road. The food warning sits on the ready screen's road panel, so this is one press.
 func _gate_go() -> void:
 	_gate_open = false
-	_gate_starter = 0
 	_close_dialog()
 	Game.start_trip()
 	_finish_map()
@@ -2171,7 +2116,7 @@ func _pick_toggle(id: String) -> void:
 			Game.set_flag(d.unlock)  # playtest: met on the spot
 		Game.invite(id)  # stays out when the party is full
 	_after_change()
-	_gate_prompt()
+	_gate_prompt(_gate_tab)
 
 
 ## Out the way out: onto the overworld, standing at the place this map belongs to.

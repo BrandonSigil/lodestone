@@ -291,7 +291,7 @@ func _gate(s: Node) -> void:
 	s.set("mode", 0)  # WALK
 	s.call("_open_thing", _thing(s, "gate"))
 	await _frames(2)
-	_check(await _press_text(s, Txt.t("UI_GATE_GO")), "the gate opens the party picker with GO")
+	_check(await _press_text(s, Txt.t("READY_LEAVE")), "the gate opens the get-ready screen with LEAVE")
 	# the new-player bumpers ([USER] 2026-11-02): the first trip's free rations, or a short pack's warning, ask once more
 	if is_instance_valid(s) and s.get("_gate_asked"):
 		_check(await _press_text(s, Txt.t("UI_GATE_GO")) or await _press_text(s, Txt.t("UI_GATE_FOOD_GO")), "the gate's food box lets the party go")

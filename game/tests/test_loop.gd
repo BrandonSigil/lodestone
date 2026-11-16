@@ -982,13 +982,15 @@ func test_the_gate_opens_the_party_picker() -> void:
 	s._open_thing(gate)
 	ok(s._gate_open, "backlog X4: walking up to the gate opens the picker straight away")
 	var texts: Array = s._dialog.find_children("*", "Button", true, false).map(func(b: Button) -> String: return b.text)
-	ok(texts.has(Txt.t("UI_GATE_GO")) and texts.has(Txt.t("OPT_STAY")), "GO and STAY on the picker")
+	ok(texts.has(Txt.t("READY_LEAVE")) and texts.has(Txt.t("OPT_STAY")), "LEAVE and STAY on the get-ready screen")
 	ok(not texts.has(Txt.t("OPT_GO_ON")), "no GO ON box first")
 	var labels: Array = s._dialog.find_children("*", "Label", true, false).map(func(l: Label) -> String: return l.text)
 	ok(not labels.has(Txt.t(Db.character("bushberry").name_key)), "player mode: no one not met yet is on the picker (no spoilers)")
 	ok(labels.has(Txt.t(Db.character("lead").name_key)), "the hero is")
-	ok(labels.any(func(t: String) -> bool: return t == Txt.f("UI_GATE_DAYS_CHIP", TravelRules.food_days(Game.run))),
-		"one box: the food for this party sits on the picker (no second food box)")
+	var days := CampRules.food_days(Game.run, CampRules.ration(Db.camp_rations, CampRules.FILLING))
+	ok(labels.any(func(t: String) -> bool: return t == (Txt.t("CAMP_FOOD_PLENTY") if days >= 99 else Txt.f("CAMP_FOOD_DAYS", days))),
+		"the road panel shows the food in days")
+	ok(texts.has(Txt.t("READY_SUPPLIES")) and texts.has(Txt.t("UI_PACK")), "the PACK and SUPPLIES tabs")
 	Game.dev_mode = true  # dev mode: every playable character, met or not (the PLAYTEST picker)
 	s._gate_prompt()
 	labels = s._dialog.find_children("*", "Label", true, false).map(func(l: Label) -> String: return l.text)

@@ -8,7 +8,7 @@ Built 2026-11-13 from a new-player E2E playtest (backlog section "2026-11-13 new
 - Video in Godot must be Ogg Theora (`.ogv`); MP4 won't play. Homebrew's ffmpeg has no Theora encoder, so the MP4 was cut into frames with ffmpeg and recorded with Godot's own Movie Maker (`--write-movie out.ogv --fixed-fps 24`, a throwaway project that shows one frame per tick, run through `tools/godot.sh`), then `ffmpeg -an -c:v copy` dropped Movie Maker's silent audio track.
 - The game opens on `scenes/main_menu.tscn` (`MainMenu`): Brandon's title painting (`art/source/ui/menu/title_screen.webp`, 2026-11-13; the logo is painted in, so the menu draws no title) with a slow side-to-side sway, pinned to the top so the logo is never cut at any window shape. CONTINUE (when there is a save), NEW GAME (asks first when a save exists), OPTIONS and QUIT stand in the middle of the screen (Brandon: "Put em smack in the middle"), pushed down only as far as needed to stay under the logo (`LOGO_BOTTOM`). Music: `menu`.
 - DEV TOOLS (bottom right) opens the old launch page (`scenes/launch.tscn`, now titled DEV TOOLS) with every map, fight and tool. It shows only when `Game.dev_available()`: a debug build (the editor, `tools/godot.sh`) or a Mac with `~/.lodestone/dev`. Exported release builds never show it.
-- `Game.dev_mode`: on when the Dev Tools page opens or an F7/F8/F10 key is used; off on the main menu. Dev mode shows the god-mode "!" button, the fight test buttons (AUTO, LAYOUT), every playable character on the gate picker, and no hints. `Game.menu_scene()` is where "main menu" buttons go: Dev Tools in dev mode, else the main menu. SAVE AND EXIT and the end-of-playtest button use it.
+- `Game.dev_mode`: on when the Dev Tools page opens or an F7/F8/F10 key is used; off on the main menu. Dev mode shows the god-mode "!" button, the fight test buttons (AUTO, LAYOUT), every playable character on the gate's get-ready screen, and no hints. `Game.menu_scene()` is where "main menu" buttons go: Dev Tools in dev mode, else the main menu. SAVE AND EXIT and the end-of-playtest button use it.
 - F7, F8 and F10 work only when dev tools are available.
 
 ## Goals
@@ -40,7 +40,7 @@ Built 2026-11-13 from a new-player E2E playtest (backlog section "2026-11-13 new
 ## Other fixes from the same playtest
 - Out of a door: the party stands a step clear of it, and F prefers a "!" over a doorway beside it (`ExploreRules.thing_to_use`).
 - Clicking something out of reach floats TOO FAR.
-- The gate: one box. The party picker shows only people met (dev mode shows all), with the food for that party as chips, the first trip's free rations, and GO ANYWAY when food is short.
+- The gate: the get-ready screen (`docs/systems/ready-screen.md`): PARTY, PACK and SUPPLIES tabs beside THE ROAD panel with food in days, the few warnings and LEAVE. Only people met show (dev mode shows all).
 - FAST FORWARD stays on until the walk ends (the button reads FAST FORWARD: ON); Tab toggles it.
 - Camp: the campfire (`docs/systems/camp.md`). SAME AS LAST NIGHT repeats last night's evening and ration and sleeps; "Every night the same" (`meta.settings.auto_camp`) repeats later nights on their own while the pot can feed everyone.
 - Fights: a fallen foe leaves in a dust puff and the fight holds a beat; side bars follow each blow; a loss holds 1.2 seconds on the board, then one box (no second defeat banner) saying the Lodestone carries the party home with everything they carried.
