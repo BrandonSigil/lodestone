@@ -17,7 +17,21 @@ This is a plan with measurements. Nothing in `game/data/` changed. Every number 
 | the Lich, hero, Doggo and Amber | 0% | 97 / 77 / 53% | 100% | |
 | the Lich, hero and Doggo | 0% | 0% | 53 / 3 / 0% | 100% |
 
-So the wall already wants a party, but it is not yet his curve: four win the first try 62% of the time, because levels still come at 100 XP and meat is still free. With steps 1 and 3 (200 XP a level, fight food at 30%) the same written Lich gives all four 5 / 51 / 100%, as in 3.3. Those two wait on decisions 4 and 2.
+So the wall already wanted a party, but four still won the first try 62% of the time, because levels came at 100 XP and meat was a free heal.
+
+**Then decisions 2 and 4, also the same day ("Yes, land both"):** a level is 200 XP (`levels.csv` `xp_per_level`, was 100), and the fights drop about 30% of the food they did: the pass, den and crypt groups 14 portions a trip (was 45), the farmland's fight 1 (was 3), the road's fights 1 each (was 3 or 4). `forest_roads.json` is Brandon's own map file and was not touched, so the west's two fights still drop 3 and 4. Measured on the written data, eating meat:
+
+| the game as it now stands | try 1 | try 2 | try 3 | try 4 | try 5 |
+| --- | --- | --- | --- | --- | --- |
+| Brandon's target for the Lich | 5 to 10% | 25 to 50% | rising | | |
+| **the Lich, all four, average (60 runs a weapon)** | **11%** | **53%** | **100%** | | |
+| sword / daggers / bow | 7 / 27 / 0% | 71 / 61 / 27% | 100% | | |
+| the Lich, hero, Doggo and Amber, average | 0% | 4% | 24% | 78% | 100% |
+| the Lich, hero, Doggo and Bushberry, average | 0% | 0% | 0% | 66% | 98% |
+| the Lich, hero and Doggo | 0% | 0% | 0% | 0% | 0% |
+| the west's ogre, hero and Doggo: sword / daggers / bow | 60 / 53 / 100% | 42 / 57% | 71 / 67% | | |
+
+With two members the north's four fights cost 14, 26, 13 and 10% of the party's HP and are won every time, the east's one fight costs 22%, and the west's cost 10, 29 and 40%. Four members reach the Lich at full HP with 13.6 portions of fight meat left: the fights before him are sized for two, so for four they cost almost nothing (0 to 5% each). The daggers' first try (27% over 60 runs, 13% over the earlier 30) is the one number above the band.
 
 ## One-page summary
 
@@ -40,7 +54,7 @@ So the wall already wants a party, but it is not yet his curve: four win the fir
 4. **Make each evening action worth about the same,** so the right pick depends on the night: a riskier, bigger hunt; a safer forage that brings herbs; a smaller REST; a bigger MEND and TALK.
 5. **Give the other run types their own pay:** a failed push costs morale that a safe trip earns back; side trips are the only source of herbs, ingredients and recruits; each town step is worth a named slice of the wall.
 
-**The calls only Brandon can make are at the end.** The third is answered and its two numbers are landed; decisions 2 and 4 (meat as a budget, 200 XP a level) are the ones the Lich's curve now waits on.
+**The calls only Brandon can make are at the end.** Decisions 2, 3 and 4 are answered and landed; 1, 5, 6 and 7 are open.
 
 ## 1. What is true now
 
@@ -303,9 +317,9 @@ Each step should be measured before the next (`economy_sim.gd`, then the robot).
 
 | # | file, key | from | to | effect |
 | --- | --- | --- | --- | --- |
-| 1 | `levels.csv` `xp_per_level` | 100 | 200 | levels a trip 4.5 to 2.2. At 100 no Lich HP gives a curve: four members go from 0% to 100% in one try (measured) |
+| 1 | `levels.csv` `xp_per_level` (**landed 2026-11-16**) | 100 | 200 | levels a trip 4.5 to 2.2. At 100 no Lich HP gives a curve: four members go from 0% to 100% in one try (measured) |
 | 2 | `data/classes/lich.tres` HP (**landed 2026-11-16**) | 42 | 158 | with step 1 and all four members, tries 1 / 2 / 3 are 5 / 51 / 100%; the hero and Doggo alone, 0% in five tries (measured) |
-| 3 | `loot` food on the groups in `snow_pass.json`, `wolf_den.json`, `crypt.json`; road fights in `encounters.csv` | 51 a trip | about 15 | food at the throne 53 to about 5; healing becomes a budget (measured) |
+| 3 | `loot` food on the groups in `snow_pass.json`, `wolf_den.json`, `crypt.json`, `farmland.json`; the road's fights in `encounters.csv` (**landed 2026-11-16**; `forest_roads.json` is Brandon's file and still drops 7) | 45 a pass trip | 14 | food at the throne 53 to about 5; healing becomes a budget (measured) |
 | 4 | new rule: a cold meal every `morale.csv` `day_steps` tiles on explore maps | none | 150 tiles | a push eats 10 portions, not 4 (modelled; needs code) |
 | 5 | hunt and forage dice into `camp_actions.csv` (new columns `dc`, `food`, `margin_div`, `gives`) | hunt 12 / 3 / 2; forage 11 / 1 / 2 / potion | hunt 13 / 4 / 3; forage 9 / 1 / none / herb | hunt 50% empty, 5.2 when it lands; forage 30% empty; herbs get a source (measured for hunt; needs code) |
 | 6 | `camp.csv` `mend_hp`, `talk_points`; `levels.csv` `camp_hp_pct`; `morale.csv` `camp`; `bonds.csv` `fight_max` | 6, 2, 50, 10, 3 | 8, 4, 25, 5, 2 | no evening action worth more than about 4 portions (modelled) |
@@ -316,17 +330,17 @@ Each step should be measured before the next (`economy_sim.gd`, then the robot).
 | 11 | `data/classes/ogre.tres` HP, damage, armor (**landed 2026-11-16**; the ogre's only other uses are two test groups on the launch menu) | 24, 5, 1 | 10, 4, 0 | as an elite he is 15 HP, 5 damage, 1 armor: two members win the first recruit 53 to 60% of the time on the first try with a sword or daggers, not 0%; with Amber 100% (measured on the written data) |
 | 12 | repeatable finds on the side maps, and ingredients from a hunt that lands well | none | wood and herbs on forest roads, ingredients on farmland | gather runs pay something no push can (needs the map builder; `forest_roads.json` is Brandon's file) |
 
-Steps 2 and 11 are landed. Steps 1 and 3 are data only and wait on decisions 4 and 2; until they land, four members win the first try at the Lich 62% of the time. Steps 4, 5 and 8 need small rules code. Step 12 needs maps.
+Steps 1, 2, 3 and 11 are landed. Steps 4, 5 and 8 need small rules code. Step 12 needs maps. The rest are data and wait on decisions 1, 5, 6 and 7.
 
 ## 4. Decisions for Brandon
 
 1. **Should days pass on the explore maps?** Recommended: yes, as a cold meal every 150 tiles with no camp, so "camp only on the world map" stands. Without it the food clock runs for 2 nights out of a 40-minute trip and food can't be tight. The other way is longer roads with more nights before each place.
-2. **Is eating meat between fights meant to be free?** Recommended: keep eating as it is and cut what the fights drop to about 30%, so meat is a budget to spend. The other way is a cap, such as each member eating to heal once between fights.
+2. **Is eating meat between fights meant to be free?** Answered 2026-11-16 ("Yes, land both"): eating stays as it is and the fights drop about 30% of what they did. Landed.
 3. **Who is the Lich built for?** Answered 2026-11-16: the first three directions for 2 or 3 members, the Lich for a full party, and the world does not scale. The plan follows that (3.3). The three smaller calls it left are answered too ("Yes to all this", each as recommended):
    - **How the Lich gets bigger:** HP alone, to 158. Landed.
    - **The west's ogre:** softened to 15 HP, 5 damage and 1 armor as an elite. Landed.
    - **Fewer than four:** left as it is, and the homecoming page should say what the wall wants. Not built: it needs a line of text and a check on the party's size (backlog P34).
-4. **Slower levels?** Recommended: 200 XP a level. At 100 the second try is always near 90%, whatever else changes.
+4. **Slower levels?** Answered 2026-11-16 ("Yes, land both"): 200 XP a level. Landed.
 5. **What should a failed push cost, with falling free?** Recommended: morale (bed +10, wins +1, a floor of 40 at home), so two reckless pushes in a row cost a point of damage until the party rests or eats at the tavern. Leaving it free keeps pushing the best choice every time.
 6. **The bow against the Lich.** Arrows do -2 to undead by your call, and under this plan a full party led by the bow wins 0% and 20% on its first two tries, then 100%. Recommended: accept it as the "pokemon red" matchup, as with the book, and say so on the weapon rack. The other way is to drop the arrow penalty to -1.
 7. **Should levels alone be enough to pass the first wall?** Your party call changes the question: two members never pass on levels (0% in five tries), and four pass on levels by the third try. Recommended: keep that for the Lich, and from the next wall on tune it so a full party's levels top out near 50% and upgrades or meals are needed. If the third try at the Lich should not be certain, the lever is slower levels, not more HP (168 HP gives 1 / 36 / 98%); that needs its own measuring.

@@ -228,7 +228,7 @@
    "id": "plaza",
    "event": "spot_people",
    "sight": 4,
-   "loot": "food:+6;gold:+10",
+   "loot": "food:+2;gold:+10",
    "units": [
     {
      "id": "bandit",
@@ -257,7 +257,7 @@
    "id": "tower",
    "event": "spot_people",
    "sight": 4,
-   "loot": "food:+10",
+   "loot": "food:+3",
    "units": [
     {
      "id": "bandit_archer",
@@ -279,7 +279,7 @@
    "id": "cave",
    "event": "spot_beasts",
    "sight": 4,
-   "loot": "food:+10",
+   "loot": "food:+3",
    "units": [
     {
      "id": "wolf",

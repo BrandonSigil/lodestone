@@ -1,5 +1,5 @@
 key,value,note
-xp_per_level,100,XP for each level; levels come on their own
+xp_per_level,200,"XP for each level; levels come on their own ([USER] 2026-11-16: 200, was 100)"
 max_level,40,
 growth_hp,2,max HP a successful HP roll gives (data/growth.csv has each character's odds)
 choice_every,2,every this many levels one pick to spend: learn a kit ability or upgrade a known one ([USER] 2026-10-31, docs/design/level-up.md)

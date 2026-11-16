@@ -883,7 +883,7 @@ func test_the_weapon_makes_the_job() -> void:
 func test_switching_jobs_keeps_the_level() -> void:
 	var saved := _fresh_game()
 	Game.take_weapon("sword")
-	Game.award_xp(100 * 9)  # level 10: the job is level 10 too
+	Game.award_xp(_xp_level() * 9)  # level 10: the job is level 10 too
 	var s := Game.level_state("lead")
 	eq(int(s.level), 10)
 	var gains: Dictionary = s.gains.duplicate()
@@ -1800,7 +1800,7 @@ func test_level_up_picks() -> void:
 	# the hero (sword job): the kit's goad is learnable, learning spends the job's pick and arms the piece
 	var saved := _fresh_game()
 	Game.take_weapon("sword")
-	Game.award_xp(100)  # level 2: the job's first pick
+	Game.award_xp(_xp_level())  # level 2: the job's first pick
 	ok(Game.learnable("lead").has("goad"), "the bulwark kit offers goad")
 	ok(Game.learn_skill("lead", "goad"), "learned")
 	eq(int(Game.rank_state("lead").pending), 0, "the pick is spent")
@@ -1815,7 +1815,7 @@ func test_level_up_picks() -> void:
 func test_level_up_pick_body() -> void:
 	var saved := _fresh_game()
 	Game.take_weapon("sword")
-	Game.award_xp(100)
+	Game.award_xp(_xp_level())
 	var box := VBoxContainer.new()
 	LevelUpUi.picks(box, "lead", func() -> void: pass, null, func() -> void: pass)
 	var buttons := box.find_children("*", "Button", true, false)
@@ -1833,7 +1833,7 @@ func test_level_up_pick_body() -> void:
 func test_level_up_offers_four() -> void:
 	var saved := _fresh_game()
 	Game.take_weapon("sword")
-	Game.award_xp(100)
+	Game.award_xp(_xp_level())
 	var icons := func(box: VBoxContainer) -> Array:
 		return box.find_children("*", "Button", true, false).filter(func(b: Node) -> bool: return (b as Button).toggle_mode)
 	var box := VBoxContainer.new()
@@ -1844,7 +1844,7 @@ func test_level_up_offers_four() -> void:
 	ok(Game.learn_skill("lead", "shield_wall"), "learned")
 	ok(CombatUnit.from_member(Game.run.members[0]).has_trait(&"shield_wall"), "and the piece has the trait")
 	Game.take_weapon("daggers")
-	Game.award_xp(200)  # the new job levels on the same XP: a pick waits
+	Game.award_xp(_xp_level() * 2)  # the new job levels on the same XP: a pick waits
 	var rogue := VBoxContainer.new()
 	LevelUpUi.picks(rogue, "lead", func() -> void: pass)
 	ok(icons.call(rogue).size() >= 4, "the daggers' kit fills up to four, the unbuilt ones locked")
@@ -2067,3 +2067,8 @@ func test_restore_boxes_open() -> void:
 		s._close_dialog()
 	s.queue_free()
 	_restore(saved)
+
+
+## The XP one level costs, from data/levels.csv, so these tests hold whatever the number is.
+func _xp_level() -> int:
+	return int(Db.levels.get("xp_per_level", 100))

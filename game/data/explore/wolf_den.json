@@ -117,7 +117,7 @@
    "id": "den_wolves",
    "event": "spot_beasts",
    "sight": 4,
-   "loot": "food:+6",
+   "loot": "food:+2",
    "goals": "hold:4",
    "units": [
     {
@@ -140,7 +140,7 @@
    "id": "den_lone",
    "event": "spot_beasts",
    "sight": 4,
-   "loot": "food:+3",
+   "loot": "food:+1",
    "elite": true,
    "units": [
     {

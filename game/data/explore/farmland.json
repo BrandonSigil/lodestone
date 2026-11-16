@@ -774,7 +774,7 @@
    "id": "farm_bandits",
    "event": "spot_people",
    "sight": 5,
-   "loot": "food:+3;gold:+6",
+   "loot": "food:+1;gold:+6",
    "units": [
     {
      "id": "bandit",
