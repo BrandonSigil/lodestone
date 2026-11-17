@@ -117,8 +117,15 @@ static func stair_run(grid: CombatGrid, c: Vector2i) -> Dictionary:
 	var up := best if hp >= hm else -best
 	var high := maxf(hp, hm)
 	var low := minf(hp, hm)
-	var lo := h - minf(maxf(h - low, 0.0), 2.0) * 0.5
-	var hi := h + minf(maxf(high - h, 0.0), 2.0) * 0.5
+	# Against plain ground the steps run all the way: from the low side's ground up to the high side's lip, so the
+	# top step meets the cliff it climbs ([USER] 2026-11-17: "This stair looks like it leads to nowhere, the tallest
+	# point of the stairs should face the cliff"). Against another stair in a flight they meet it halfway.
+	var lo_cell := c - up
+	var hi_cell := c + up
+	var lo_share := 0.5 if grid.terrain_at(lo_cell) == CombatGrid.T.STAIRS else 1.0
+	var hi_share := 0.5 if grid.terrain_at(hi_cell) == CombatGrid.T.STAIRS else 1.0
+	var lo := h - minf(maxf(h - low, 0.0), 2.0) * lo_share
+	var hi := h + minf(maxf(high - h, 0.0), 2.0) * hi_share
 	if is_equal_approx(lo, hi):
 		return {}
 	return {"up": up, "lo": lo, "hi": hi}

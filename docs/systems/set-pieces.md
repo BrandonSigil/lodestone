@@ -94,7 +94,10 @@ foe and exit tile can be walked to, and foes hide only from a party that walked 
 |---|---|---|---|---|---|
 | W1 `sp_wagon` | west | hillside road, the wagon across it, thieves' camp below the road and lookout knob above, both on the left | `tr_wagon` | `wagon_in`, `wagon_out` | three hidden ambushers by the spilled load, an archer on the knob; the woodcutters' trail on the right lets the party climb the bank |
 | W2 `sp_falls` | west | river falling off a shelf, footbridge on top, zig-zag stepping stones below, a trail up each side of the gorge | `tr_falls` | `falls_in`, `falls_out` | hidden ambusher at the stones' far end, bandit on the left bank, archers on the shelf and by the bridge; anyone kicked off a stone is swept downstream |
+| W3 `sp_lake` | west | fisher's boathouse on a lake shore, reeds either side, rowboat on the sand, road through the meadow behind | `tr_lake` | `lake_in`, `lake_out` | spiders hidden in the reeds either side of the hut, slimes out of the lake; a lake has no current, so a push into it only bumps |
+| N1 `sp_tower` | north | ruined watchtower on a crag above the road: the tower's broken corners on top, a built path switchbacking up the right, a goat track up the left | `tr_tower` | `tower_in`, `tower_out` | captain (leader) on the tower top, a shield warder at the top of the path, an archer on the middle ledge, an ambusher hidden by the goat track |
 | E2 `sp_bulls` | east | farm by the road: barn on a low rise with one stair, lane, broken corral and stock pond on the left, well and mown hay field on the right | `tr_bulls` | `bulls_in` | three bulls loose on the left; win by beating them or reaching the barn door |
 
-The tipped wagon uses the upright cart art until Brandon draws a tipped one. Event lines are Claude's drafts,
+The tipped wagon uses the upright cart art until Brandon draws a tipped one. A lone stair cut into a two-step terrace edge draws its steps from the ground below up to the lip it meets
+(Brandon 2026-11-17: "the tallest point of the stairs should face the cliff"). Event lines are Claude's drafts,
 flagged in `game/text/claude_written.txt`.

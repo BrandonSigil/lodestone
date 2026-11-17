@@ -8,3 +8,5 @@ tr_first,0,0,1,first_road_fight,EV_TR_FIRST,OPT_FIGHT,fight,0,combat:first_road;
 tr_wagon,4,0,1,,EV_TR_WAGON,OPT_SEARCH_WAGON,fight,0,combat:wagon_in,,OPT_HELP,fight,0,combat:wagon_in,,OPT_WALK_PAST,sneak,12,,combat:wagon_out,forest_roads|coastal_beach
 tr_bulls,4,0,1,,EV_TR_BULLS,OPT_CALM,tame,13,blessing:any,combat:bulls_in,OPT_DRIVE,fight,0,combat:bulls_in,,OPT_LEAVE,none,0,,,farmland|grassland
 tr_falls,4,0,1,,EV_TR_FALLS,OPT_CROSS_STONES,fight,0,combat:falls_in,,OPT_SCOUT,sneak,12,combat:falls_out,combat:falls_in,OPT_TURN_BACK,none,0,,,forest_roads|coastal_beach
+tr_lake,4,0,1,,EV_TR_LAKE,OPT_KNOCK,fight,0,combat:lake_in,,OPT_PEEK_IN,fight,0,combat:lake_in,,OPT_LEAVE,sneak,12,,combat:lake_out,forest_roads|coastal_beach
+tr_tower,4,0,1,,EV_TR_TOWER,OPT_CLIMB_UP,fight,0,combat:tower_in,,OPT_SNEAK_ROUND,sneak,12,combat:tower_out,combat:tower_in,OPT_LEAVE,none,0,,,pass|dwarven_mines|snowy_plains|frozen_dam

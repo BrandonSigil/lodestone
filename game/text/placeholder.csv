@@ -1357,4 +1357,10 @@ EV_TR_FALLS,"The road fords a river below a waterfall. Stepping stones lead acro
 OPT_CROSS_STONES,CROSS THE STONES
 OPT_SCOUT,SCOUT FIRST
 OPT_TURN_BACK,TURN BACK
+EV_TR_LAKE,"A fisher's hut stands on the lake shore. The door is shut and the nets hang dry."
+OPT_KNOCK,KNOCK
+OPT_PEEK_IN,PEEK IN
 OPT_DRIVE,DRIVE THEM BACK
+EV_TR_TOWER,"An old watchtower stands on a crag above the road. Smoke rises from its broken top."
+OPT_CLIMB_UP,CLIMB UP
+OPT_SNEAK_ROUND,SNEAK ROUND

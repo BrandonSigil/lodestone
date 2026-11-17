@@ -1,0 +1,255 @@
+{
+ "id": "tower",
+ "look": "alpine",
+ "art_set": "snow",
+ "note": "N1 Ruined watchtower: an old tower on a crag above the north road, forest giving way to snow. A worn path zig-zags up the right of the crag, a goat track climbs its left edge in the open. Bandits use the tower as a lookout: the captain on the tower's broken top, an archer on the middle ledge, a warder at the top of the path, one hidden in the old outer wall.",
+ "levels": [
+  "....44433.............",
+  "...3444333............",
+  "..33444333............",
+  "..33333333............",
+  "..33333333............",
+  "..22222222............",
+  "..22222222............",
+  "..22222222............",
+  "..11111111111....0000.",
+  ".11111111111111..00000",
+  ".111111111111110000000",
+  ".111111111111110000000",
+  "..00000000000000000000",
+  "0000000000000000000000",
+  "0000000000000000000000",
+  ".00000000000000000000.",
+  "...000000000000000....",
+  "......................"
+ ],
+ "marks": [
+  "                      ",
+  "       s              ",
+  "                      ",
+  "                      ",
+  "  s                   ",
+  "         s            ",
+  "                      ",
+  "                      ",
+  "   s     s        ttt ",
+  "                tttttt",
+  "           t    tttttt",
+  "                tttttt",
+  "  s          s        ",
+  "dddddddddddddddddddddd",
+  "dddddddddddddddddddddd",
+  "                      ",
+  "   tt         ttt     ",
+  "                      "
+ ],
+ "props": [
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    3,
+    3
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    7,
+    3
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    4,
+    6
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    5,
+    7
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    8,
+    7
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    3,
+    10
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    3,
+    11
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    8,
+    11
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    18,
+    12
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    7,
+    15
+   ]
+  },
+  {
+   "sprite": "prop_bush",
+   "tall": 0.55,
+   "sight": 0.5,
+   "cell": [
+    16,
+    15
+   ]
+  }
+ ],
+ "party": [
+  [
+   12,
+   9
+  ],
+  [
+   13,
+   9
+  ],
+  [
+   12,
+   10
+  ],
+  [
+   13,
+   10
+  ]
+ ],
+ "out": [
+  [
+   19,
+   13
+  ],
+  [
+   20,
+   13
+  ],
+  [
+   19,
+   14
+  ],
+  [
+   20,
+   14
+  ]
+ ],
+ "foes": [
+  {
+   "id": "bandit_archer",
+   "leader": true,
+   "cell": [
+    5,
+    1
+   ]
+  },
+  {
+   "id": "foe_warder",
+   "cell": [
+    8,
+    3
+   ]
+  },
+  {
+   "id": "bandit_archer",
+   "cell": [
+    8,
+    6
+   ]
+  },
+  {
+   "id": "ambusher",
+   "hidden": true,
+   "cell": [
+    2,
+    10
+   ]
+  }
+ ],
+ "exit": [],
+ "stones": [],
+ "docks": [],
+ "stairs": [],
+ "ruins": [
+  [
+   4,
+   0
+  ],
+  [
+   6,
+   0
+  ],
+  [
+   4,
+   2
+  ],
+  [
+   6,
+   2
+  ]
+ ],
+ "paving": [
+  [
+   5,
+   0
+  ],
+  [
+   4,
+   1
+  ],
+  [
+   6,
+   1
+  ],
+  [
+   5,
+   2
+  ]
+ ]
+}

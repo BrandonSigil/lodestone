@@ -1,0 +1,298 @@
+{
+ "id": "lake",
+ "look": "forest",
+ "art_set": "forest",
+ "note": "W3 Lake hut: a fisher's boathouse on a big lake, by the coast road. A dock runs out beside it, a rowboat is pulled up on the sand, reeds grow thick along the water. The road runs through the meadow behind; a path turns off it to the hut. Spiders nest in the reeds either side of it; slimes have crept out of the lake.",
+ "levels": [
+  "........00000...........",
+  "........00000.0000......",
+  ".....0000000000000......",
+  "....00000000000000......",
+  "....00000000000000000...",
+  "...000000000000000000...",
+  "...000000000000000000...",
+  "..000000000000000000....",
+  "....0000000000000000.00.",
+  "....0000000000000000000.",
+  "..00.000000000000000000.",
+  "..0..0000000000000000000",
+  ".....000000000000000....",
+  "....000000000000000.....",
+  "....0..000000.00........",
+  ".......00000..0........."
+ ],
+ "marks": [
+  "wwwwwwwww               ",
+  "wwwwwwwww               ",
+  "wwwwwwww        tt      ",
+  "wwwwwwww         t      ",
+  "wwwwwwww                ",
+  "wwwwwwwwww              ",
+  "wwwwwwwwww              ",
+  "wwwwwwwwwwdddddddd      ",
+  "wwwwwwwwww       d      ",
+  "wwwwwwwwww       d      ",
+  "wwwwwwwwww       d      ",
+  "wwwwwwww    dddddddddddd",
+  "wwwwwwww    d           ",
+  "wwwwwwww    dtt         ",
+  "wwwwwwwww  ddtt         ",
+  "wwwwwwwww  d            "
+ ],
+ "props": [
+  {
+   "sprite": "village/prop_reeds",
+   "tall": 0.6,
+   "sight": 0.5,
+   "cell": [
+    8,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_reeds",
+   "tall": 0.6,
+   "sight": 0.5,
+   "cell": [
+    9,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_crates",
+   "tall": 0.8,
+   "sight": 0.0,
+   "cell": [
+    11,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_barrel",
+   "tall": 0.7,
+   "sight": 0.0,
+   "cell": [
+    12,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    16,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_reeds",
+   "tall": 0.6,
+   "sight": 0.5,
+   "cell": [
+    8,
+    4
+   ]
+  },
+  {
+   "sprite": "village/prop_boathouse",
+   "foot": [
+    2,
+    2
+   ],
+   "tall": 1.5,
+   "sight": 2.0,
+   "flip": true,
+   "cell": [
+    10,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_crates",
+   "tall": 0.8,
+   "sight": 0.0,
+   "cell": [
+    15,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    19,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_barrel",
+   "tall": 0.7,
+   "sight": 0.0,
+   "cell": [
+    18,
+    8
+   ]
+  },
+  {
+   "sprite": "village/prop_crates",
+   "tall": 0.8,
+   "sight": 0.0,
+   "cell": [
+    14,
+    9
+   ]
+  },
+  {
+   "sprite": "prop_bush",
+   "tall": 0.55,
+   "sight": 0.5,
+   "cell": [
+    15,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    21,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_rowboat",
+   "foot": [
+    2,
+    1
+   ],
+   "tall": 0.5,
+   "sight": 0.0,
+   "cell": [
+    10,
+    11
+   ]
+  },
+  {
+   "sprite": "village/prop_reeds",
+   "tall": 0.6,
+   "sight": 0.5,
+   "cell": [
+    8,
+    12
+   ]
+  },
+  {
+   "sprite": "village/prop_reeds",
+   "tall": 0.6,
+   "sight": 0.5,
+   "cell": [
+    9,
+    12
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    14,
+    12
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    18,
+    12
+   ]
+  },
+  {
+   "sprite": "village/prop_reeds",
+   "tall": 0.6,
+   "sight": 0.5,
+   "cell": [
+    9,
+    14
+   ]
+  }
+ ],
+ "party": [
+  [
+   13,
+   7
+  ],
+  [
+   14,
+   7
+  ],
+  [
+   12,
+   8
+  ],
+  [
+   13,
+   8
+  ]
+ ],
+ "out": [
+  [
+   21,
+   10
+  ],
+  [
+   22,
+   10
+  ],
+  [
+   21,
+   11
+  ],
+  [
+   22,
+   11
+  ]
+ ],
+ "foes": [
+  {
+   "id": "spider",
+   "hidden": true,
+   "cell": [
+    9,
+    2
+   ]
+  },
+  {
+   "id": "slime",
+   "cell": [
+    11,
+    9
+   ]
+  },
+  {
+   "id": "slime",
+   "cell": [
+    11,
+    10
+   ]
+  },
+  {
+   "id": "spider",
+   "hidden": true,
+   "cell": [
+    8,
+    13
+   ]
+  }
+ ],
+ "exit": [],
+ "stones": [],
+ "docks": [],
+ "stairs": [],
+ "ruins": [],
+ "paving": []
+}

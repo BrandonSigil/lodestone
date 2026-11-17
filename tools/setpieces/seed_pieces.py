@@ -4,6 +4,7 @@ Then bake them into battle maps:  cd game && godot --headless --path . -s res://
 A piece is two grids of the same size. L: "." outside the map, "0"-"9" the terrace (two heights each). M: what is
 there. Plot marks (MapPlot): d road, w water, b bridge, s stairs, r rock outcrop, t woods. Then, one per cell:
   P party start (walked in)   p party start (saw them first)   X exit cell   o stepping stone   k dock plank
+  Z ruined wall (a broken stub of masonry, blocks)   Q paved floor (old flagstones)
   # filler under a big prop (ignored)
 and whatever the piece's own `props` and `foes` tables name. A big prop is marked at its low-x, low-y corner.
 The party side is drawn so the camera (which looks from high x + y towards low) sees the landmark behind open ground.
@@ -163,25 +164,54 @@ _L = levels(24, 16,
     "0:13-21,1-14 0:22,8-12 0:23,10-11 .:13,1 .:21,1 .:13,14 .:20-21,13-14 "  # the meadow behind the shore
     "0:13-15,15 .:12,15 "
     ".:0-4,0-2 .:0-2,3 .:0-3,13-15 .:0-1,12 .:4,15 .:19-23,0-1 .:21-23,2-3 .:16-23,14-15 .:19-23,13 "
-    ".:0,4-6 .:0-1,10-11 .:5-7,0 .:22-23,4-7 .:23,8-9 .:23,10 .:23,12 .:22,12 .:21,4-6 .:0-1,7-9 .:15-18,15 .:13,15")  # trees round it all
+    ".:0,4-6 .:0-1,10-11 .:5-7,0 .:22-23,4-7 .:23,8-9 .:23,10 .:23,12 .:22,12 .:21,4-6 .:0-1,7-9 .:15-18,15 .:13,15 "
+    ".:0-3,3-4 .:1-2,5-6 .:2-4,12 .:3,11 .:5,1 .:5-6,14-15 .:20,7-8 .:18-20,1-3 .:21,7 .:20-21,12 .:2-3,8-9 .:4,10-11 .:6-7,1")  # trees round it all
 PIECES["lake"] = dict(
     look="forest", art_set="forest",
     note="W3 Lake hut: a fisher's boathouse on a big lake, by the coast road. A dock runs out beside it, a rowboat is "
          "pulled up on the sand, reeds grow thick along the water. The road runs through the meadow behind; a path "
          "turns off it to the hut. Spiders nest in the reeds either side of it; slimes have crept out of the lake.",
     L=_L,
-    road="d:13-23,11 d:17,7-10 d:13-16,7 d:10-12,7",
+    road="d:13-23,11 d:12,11-14 d:11,14-15 d:17,7-10 d:13-16,7 d:10-12,7",
     M=marks(_L, "w:0-7,0-15 w:8-9,5-10 w:8,0-1 w:8,14-15 "                      # the lake, its bay by the hut
-                "H:10,5 #:11,5 #:10-11,6 D:8,8 #:9,8 d:10-12,7 "                 # boathouse, its dock, the path to it
+                "H:10,5 #:11,5 #:10-11,6 d:10-12,7 "                             # boathouse (its own little dock), the path to it
                 "K:10,11 #:11,11 x:11,3 c:12,3 "                                 # rowboat on the sand, the fisher's gear
-                "e:8,3 e:8,4 e:9,2 e:9,12 e:9,13 e:8,12 "                        # reeds
-                "t:17-18,2 t:19-20,2-3 t:13-14,13-14 T:16,3 T:19,5 T:14,12 T:21,9 y:15,9 B:18,12 "
-                "A:9,3 A:10,13 L:11,9 L:9,1 "
-                "P:12,5 P:12,6 P:11,7 P:12,8 p:21,10 p:22,11 p:21,11 p:22,10"),
-    props={"H": dict(sprite="village/prop_boathouse", foot=[2, 2], tall=1.5, sight=2.0),
-           "D": dict(sprite="village/prop_dock", foot=[2, 1], tall=0.3, sight=0.0),
+                "e:8,3 e:8,4 e:9,3 e:9,12 e:9,14 e:8,12 "                        # reeds
+                "t:16-17,2 t:17,3 t:13-14,13-14 T:16,3 T:19,5 T:14,12 T:21,9 y:15,9 B:18,12 x:15,5 x:14,9 c:18,8 "
+                "A:9,2 A:8,13 L:11,9 L:11,10 "
+                "P:13,7 P:14,7 P:13,8 P:12,8 p:21,10 p:22,11 p:21,11 p:22,10"),
+    props={"H": dict(sprite="village/prop_boathouse", foot=[2, 2], tall=1.5, sight=2.0, flip=True),  # its dock to the bay
            "K": dict(sprite="village/prop_rowboat", foot=[2, 1], tall=0.5, sight=0.0)},
     foes={"A": dict(id="spider", hidden=True), "L": dict(id="slime")},
+)
+
+# ---- N1 Ruined watchtower. An old watchtower on a crag above the north road, where the forest gives way to snow.
+# The crag rises from the road in three ledges to the tower's broken ring of wall. A worn path zig-zags up the right
+# of the crag (long, behind the ledges); a steeper goat track climbs straight up its left edge (short, in the open
+# under the tower). Bandits use the tower as a lookout: their captain on the tower floor, an archer on the middle
+# ledge, a warder holding the top of the path, one hidden in the old outer wall on the first ledge.
+_L = levels(22, 18,
+    "3:2-9,0-4 .:2-3,0 .:2,1 .:9,0 4:4-6,0-2 "                             # the crag top and the tower's broken top
+    "2:2-11,5-7 .:11,5 "                                          # the middle ledge
+    "1:1-14,8-11 .:1,8 .:14,8 "                                   # the first ledge
+    "0:0-21,12-15 .:0,15 .:21,15 0:3-17,16 0:15-21,10-11 0:17-21,8-9 .:21,8 "  # the road and the slope below
+    ".:0-1,12 .:10-21,0-7 .:15-16,8-9 .:13-14,8")
+PIECES["tower"] = dict(
+    look="alpine", art_set="snow",
+    note="N1 Ruined watchtower: an old tower on a crag above the north road, forest giving way to snow. A worn path "
+         "zig-zags up the right of the crag, a goat track climbs its left edge in the open. Bandits use the tower as a "
+         "lookout: the captain on the tower's broken top, an archer on the middle ledge, a warder at the top of the path, one "
+         "hidden in the old outer wall.",
+    L=_L,
+    road="d:0-21,13-14",
+    M=marks(_L, "Q:4-6,0-2 Z:4,0 Z:6,0 Z:4,2 Z:6,2 s:7,1 "                                                 # the tower's top, its stair
+                "s:13,12 s:9,8 s:9,5 s:2,12 s:3,8 s:2,4 "                                # the path (right) and goat track (left)
+                "B:3,10 B:3,11 B:8,11 B:3,3 B:7,3 B:5,7 "                                                   # fallen stones of the old outer wall
+                "t:16-21,9-11 t:18-20,8 t:3-4,16 t:14-16,16 t:11,10 B:4,6 B:8,7 B:18,12 B:7,15 y:16,15 "
+                "R:5,1 V:8,6 W:8,3 A:2,10 "
+                "P:12,9 P:13,9 P:12,10 P:13,10 p:19,13 p:20,13 p:19,14 p:20,14"),
+    foes={"R": dict(id="bandit_archer", leader=True), "V": dict(id="bandit_archer"), "W": dict(id="foe_warder"),
+          "A": dict(id="ambusher", hidden=True)},
 )
 
 
@@ -196,7 +226,7 @@ def sketch(pid):
     props_def.update(p.get("props", {}))
     foes_def = p.get("foes", {})
     out = dict(id=pid, look=p["look"], art_set=p["art_set"], note=p["note"], levels=L, marks=[],
-               props=[], party=[], out=[], foes=[], exit=[], stones=[], docks=[], stairs=[])
+               props=[], party=[], out=[], foes=[], exit=[], stones=[], docks=[], stairs=[], ruins=[], paving=[])
     road = marks_at(L, p.get("road", ""))  # road that runs on under things and pieces standing on it
     for y, row in enumerate(M):
         marks = ""
@@ -213,6 +243,10 @@ def sketch(pid):
                 out["exit"].append([x, y])
             elif ch == "S":
                 out["stairs"].append([x, y])
+            elif ch == "Z":
+                out["ruins"].append([x, y])
+            elif ch == "Q":
+                out["paving"].append([x, y])
             elif ch == "o":
                 out["stones"].append([x, y])
             elif ch == "k":

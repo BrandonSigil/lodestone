@@ -2746,7 +2746,13 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 	var rock := BattleArt.side_body(CombatGrid.T.GRASS, zone)
 	var rock_tint := _tint(CombatGrid.T.GRASS)
 	var anchor := h
-	var n := maxi(1, roundi((h - low) * look.stair_treads))
+	# A lone stair cut into a terrace edge stands halfway up it: its treads climb on past its own height to the lip
+	# of the ground it leads to, so the top step meets the cliff ([USER] 2026-11-17: "This stair looks like it leads
+	# to nowhere, the tallest point of the stairs should face the cliff").
+	var top := h
+	if not corner and up != Vector2i.ZERO and not is_stair.call(up) and float(hgt.call(up)) > h + 0.01:
+		top = minf(float(hgt.call(up)), h + 2.0)
+	var n := maxi(1, roundi((top - low) * look.stair_treads))
 	var base := low
 	for shade in [false, true]:
 		base = minf(base, _surf_or_floor(c + front_dir(shade)))
@@ -2759,7 +2765,7 @@ func _stair_steps_soft(c: Vector2i, h: float) -> bool:
 		var m := _rot((lo.x + hi.x) * 0.5, (lo.y + hi.y) * 0.5)
 		slabs.append({"lo": lo, "hi": hi, "h": sh, "depth": m.x + m.y})
 	for k in n:
-		var sh := low + (h - low) * float(k + 1) / n  # tread k (0 at the bottom); the top one flush with h
+		var sh := low + (top - low) * float(k + 1) / n  # tread k (0 at the bottom); the top one flush with the lip it meets
 		var f0 := float(k) / n
 		var f1 := float(k + 1) / n
 		if corner:
@@ -2886,6 +2892,8 @@ func _draw_falls(c: Vector2i) -> void:
 		var d := front_dir(shade)
 		var n := c + d
 		var edge := not grid.solid(n)
+		if edge and _valley():
+			continue  # a valley map's edge is the forest round it: water runs on under the trees, it doesn't spill
 		var nh := fl if edge else _surf(n)
 		if nh >= h:
 			continue
@@ -3999,6 +4007,8 @@ func _draw_fall_sheets(c: Vector2i) -> void:
 		var d := front_dir(shade)
 		var n := c + d
 		var edge := not grid.solid(n)
+		if edge and _valley():
+			continue  # a valley map's edge is the forest round it: water runs on under the trees, it doesn't spill
 		var nh := fl if edge else _surf(n)
 		if nh >= h:
 			continue
