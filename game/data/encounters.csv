@@ -29,3 +29,7 @@ shrine_in,,medicine:+1;gold:+10,defeat|leader,sp_shrine,in
 shrine_out,,medicine:+1;gold:+10,defeat|leader,sp_shrine,out
 rope_in,,food:+1;gold:+14,defeat|leader,sp_rope,in
 rope_out,,food:+1;gold:+14,defeat|leader,sp_rope,out
+farm_in,,food:+3;gold:+6,,sp_farm,in
+farm_out,,food:+3;gold:+6,,sp_farm,out
+mill_in,,food:+3;gold:+10,defeat|leader,sp_mill,in
+mill_out,,food:+3;gold:+10,defeat|leader,sp_mill,out
