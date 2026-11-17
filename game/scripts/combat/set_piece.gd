@@ -81,6 +81,7 @@ static func units(setup: SandboxSetup, members: Array, walked_in: bool) -> Array
 		f.place(e.cell, grid.height_at(e.cell))
 		f.hiding = walked_in and bool(e.get("hidden", false))
 		f.leader = bool(e.get("leader", false))
+		f.posted = bool(e.get("post", false))
 		taken[e.cell] = true
 		out.append(f)
 	return out

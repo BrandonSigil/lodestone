@@ -2074,3 +2074,24 @@ func test_a_river_sweeps_a_pushed_piece_downstream() -> void:
 	var h3 := _unit("bandit", 0, Vector2i(2, 3), l)
 	CombatRules.push(l, [f3, h3], h3.cell, f3, 1)
 	eq(f3.cell, Vector2i(3, 3), "a lake has no current")
+
+
+## A set piece's gatekeeper holds its post (N3's toll bandits): it stays put until a foe comes within POST_RANGE or
+## it is hurt, then fights as usual.
+func test_a_posted_foe_holds_until_someone_comes_close() -> void:
+	var g := CombatGrid.flat(12, 3)
+	var lead := _unit("knight", 0, Vector2i(9, 1), g)
+	var guard := _unit("bandit", 1, Vector2i(2, 1), g)
+	guard.posted = true
+	var units := [lead, guard]
+	eq(EnemyAi.plan(g, guard, units).move, guard.cell, "nobody near: it stays at its post")
+	ok(guard.posted, "and keeps holding it")
+	lead.place(Vector2i(5, 1), 1)
+	ok(EnemyAi.plan(g, guard, units).move != guard.cell, "someone within 3: it leaves its post")
+	ok(not guard.posted)
+	var archer_hit := _unit("bandit", 1, Vector2i(2, 0), g)
+	archer_hit.posted = true
+	archer_hit.hp -= 1
+	lead.place(Vector2i(11, 1), 1)
+	EnemyAi.plan(g, archer_hit, units + [archer_hit])
+	ok(not archer_hit.posted, "hurt from afar: it leaves its post too")

@@ -17,12 +17,27 @@ const AMBUSH_PICK := 60.0  ## an ambusher's pull toward soft targets, so armor a
 
 ## Returns {"move": Vector2i, "ability": Ability or null, "aim": Vector2i, "path": Array[Vector2i], "guard": bool}.
 ## "target" is kept for the old single-strike callers: the unit at "aim" if any.
+const POST_RANGE := 3  ## a posted foe leaves its post when a foe of it comes this close (CombatUnit.posted)
+
+
+## A living, unhidden foe of u within n steps of it.
+static func _foe_near(u: CombatUnit, units: Array, n: int) -> bool:
+	for o: CombatUnit in units:
+		if o.team != u.team and o.alive() and not o.hiding and CombatRules.dist(o.cell, u.cell) <= n:
+			return true
+	return false
+
+
 static func plan(grid: CombatGrid, u: CombatUnit, units: Array) -> Dictionary:
 	if u.has_trait(CombatRules.TRAIT_STRUCTURE):  # an ice pillar only stands there
 		return {"move": u.cell, "ability": null, "aim": u.cell, "target": null, "path": [] as Array[Vector2i], "guard": false, "cost": 0}
 	_reach_cache = {}
 	var reach := CombatRules.reachable(grid, u, units)
 	var cost: Dictionary = reach.cost
+	if u.posted and (u.hp < u.max_hp or _foe_near(u, units, POST_RANGE)):
+		u.posted = false  # someone came close or hurt it: it leaves its post
+	if u.posted:
+		cost = {u.cell: 0}  # holding its post: it strikes from where it stands, or waits
 	var best_score := 0.0
 	var best_cell := u.cell
 	var best_ability: Ability = null

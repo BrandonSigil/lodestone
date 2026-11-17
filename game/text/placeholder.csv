@@ -1366,3 +1366,5 @@ OPT_CLIMB_UP,CLIMB UP
 OPT_SNEAK_ROUND,SNEAK ROUND
 OPT_GO_DOWN,GO DOWN
 EV_TR_SHRINE,"Below the road, a ring of broken stones circles an old shrine in the snow. Grave mounds lie around it."
+OPT_CROSS,CROSS
+EV_TR_ROPE,"A rope bridge sways over a deep gorge. On the far side, crates are piled across the path."

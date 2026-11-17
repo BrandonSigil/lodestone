@@ -55,6 +55,7 @@ var spooked := false
 var move_origin := Vector2i(-1000, -1000)  ## where this piece began its phase (set by CombatRules.begin_phase)
 var move_spent := 0  ## move points walked this phase (hit and run walks the rest after a hit)
 var leader := false  ## a fight's leader: beating it wins a "leader" fight (FightGoals)
+var posted := false  ## holds its post (a set piece's gate or lookout): stays put, striking what comes in reach, until a foe of it comes within POST_RANGE or it is hurt (EnemyAI)
 var elite := false  ## from an elite group: tougher, and wears an ELITE badge
 var boss := false  ## from a boss group: its card hides HP and unseen moves until the party has fought it once
 var yields := false  ## stops at 1 HP and the fight ends as a win when it would fall (the Lich's third win, ExploreRules.yields_now)

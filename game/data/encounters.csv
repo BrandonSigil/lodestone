@@ -27,3 +27,5 @@ tower_in,,food:+1;gold:+12,defeat|leader,sp_tower,in
 tower_out,,food:+1;gold:+12,defeat|leader,sp_tower,out
 shrine_in,,medicine:+1;gold:+10,defeat|leader,sp_shrine,in
 shrine_out,,medicine:+1;gold:+10,defeat|leader,sp_shrine,out
+rope_in,,food:+1;gold:+14,defeat|leader,sp_rope,in
+rope_out,,food:+1;gold:+14,defeat|leader,sp_rope,out

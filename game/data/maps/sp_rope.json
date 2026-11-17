@@ -1,0 +1,305 @@
+{
+	"art_set": "snow",
+	"counters": false,
+	"enemies": [
+		{
+			"hidden": true,
+			"id": "ambusher",
+			"x": 6,
+			"y": 2
+		},
+		{
+			"id": "bandit",
+			"leader": true,
+			"post": true,
+			"x": 6,
+			"y": 7
+		},
+		{
+			"id": "bandit",
+			"post": true,
+			"x": 8,
+			"y": 7
+		},
+		{
+			"id": "bandit_archer",
+			"x": 7,
+			"y": 10
+		}
+	],
+	"enemy_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"extra_enemies": 0,
+	"map": {
+		"decks": [
+			{
+				"b": true,
+				"h": 7,
+				"t": "s",
+				"x": 10,
+				"y": 2
+			},
+			{
+				"b": true,
+				"h": 7,
+				"t": "s",
+				"x": 11,
+				"y": 2
+			},
+			{
+				"b": true,
+				"h": 7,
+				"t": "s",
+				"x": 10,
+				"y": 7
+			},
+			{
+				"b": true,
+				"h": 7,
+				"t": "s",
+				"x": 11,
+				"y": 7
+			},
+			{
+				"b": true,
+				"h": 7,
+				"t": "s",
+				"x": 12,
+				"y": 7
+			}
+		],
+		"h": 16,
+		"heights": [
+			"000000000700700000000000",
+			"000007777700707000000000",
+			"007077777700777777000000",
+			"007777777700777777000000",
+			"007777777700077777777000",
+			"077777777700077777777700",
+			"077777777700077777777700",
+			"777777777700077777777777",
+			"077777777700077777777777",
+			"007777777700077777777777",
+			"077777777000077777777770",
+			"077777777000077777770000",
+			"000077777000077700770000",
+			"000007777000007770000000",
+			"000000007000007000000000",
+			"000000007000000000000000"
+		],
+		"look": {
+			"id": "alpine"
+		},
+		"props": [
+			{
+				"cell": [
+					7,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					18,
+					5
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_crates",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_crates",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					8
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_crates",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_barrel",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					13
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush",
+				"tall": 0.55,
+				"walk": false
+			}
+		],
+		"terrain": [
+			".........gwwg...........",
+			".....gggggwwg.g.........",
+			"..g.gfggggwwgggfff......",
+			"..fffgggggwwgggfff......",
+			"..fffgggggwwwggfffggg...",
+			".gfffgggggwwwggggggggg..",
+			".gggggggggwwwggggggggg..",
+			"ddddddddddwwwddddddddddd",
+			".fggggggggwwwggggggggggg",
+			"..ggggggggwwwggggggggggg",
+			".gggffgggwwwwgggggffggg.",
+			".gggffgggwwwwgggggff....",
+			"....ffffgwwwwgfg..ff....",
+			".....gffgwwwwwggg.......",
+			"........gwwwwwg.........",
+			"........gwwwww.........."
+		],
+		"w": 24
+	},
+	"name": "sp_rope",
+	"party": [
+		{
+			"id": "lead",
+			"x": 14,
+			"y": 6
+		},
+		{
+			"id": "stardrop",
+			"x": 15,
+			"y": 6
+		},
+		{
+			"id": "hunter",
+			"x": 14,
+			"y": 8
+		},
+		{
+			"id": "knight",
+			"x": 15,
+			"y": 8
+		}
+	],
+	"party_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"piece": {
+		"exit": [],
+		"note": "N3 Rope bridge: the north road crosses a deep gorge on a rope bridge. Bandits hold the far end behind a barricade of crates and charge a toll; the river below runs fast. Upstream a fallen pine spans the narrows, a longer way over, out of the archers' line, where one of them waits in the trees.",
+		"out": [
+			[
+				20,
+				7
+			],
+			[
+				21,
+				7
+			],
+			[
+				20,
+				8
+			],
+			[
+				21,
+				8
+			]
+		]
+	},
+	"seed": 1,
+	"strangeness": 0.0,
+	"supplies": {
+		"food": 10,
+		"medicine": 3
+	},
+	"view": 0
+}
