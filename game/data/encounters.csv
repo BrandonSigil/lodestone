@@ -21,3 +21,7 @@ wagon_out,,food:+1;gold:+8,,sp_wagon,out
 bulls_in,,food:+2,defeat|exit,sp_bulls,in
 falls_in,,food:+1;gold:+10,,sp_falls,in
 falls_out,,food:+1;gold:+10,,sp_falls,out
+lake_in,,food:+2;gold:+6,,sp_lake,in
+lake_out,,food:+2;gold:+6,,sp_lake,out
+tower_in,,food:+1;gold:+12,defeat|leader,sp_tower,in
+tower_out,,food:+1;gold:+12,defeat|leader,sp_tower,out

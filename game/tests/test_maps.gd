@@ -67,8 +67,8 @@ func test_stair_run_spans_the_climb() -> void:
 	g.set_height(Vector2i(2, 2), 3)
 	var run := MapDress.stair_run(g, Vector2i(2, 2))
 	eq(run.up, Vector2i(1, 0))
-	eq(run.lo, 2.5)
-	eq(run.hi, 3.5)
+	eq(run.lo, 2.0, "a lone stair starts on the ground below it")
+	eq(run.hi, 4.0, "and its top step meets the lip it climbs to")
 	eq(MapDress.stair_run(g, Vector2i(0, 4)), {}, "a flat cell has no run")
 
 
