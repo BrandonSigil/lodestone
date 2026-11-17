@@ -5,6 +5,7 @@ shapes, jut outs, dynamics, verticality!").
 
     python3 tools/map_shape.py game/data/explore/crypt.json [more maps...] [--strict]   (strict: the higher bar for a map pushed further)
     python3 tools/map_shape.py game/data/maps/x.json --fight   (fight: the bar for a road fight up to 26 x 26, see FIGHT)
+    python3 tools/map_shape.py game/data/maps/sp_x.json --piece  (piece: a road set piece, judged on its outline alone, see PIECE)
 
 Measures the walkable footprint (cells a piece can stand on: not rock, void or deep water) and prints:
   fill       share of the bounding box the footprint covers          (a box is near 1; winding is low)
@@ -41,10 +42,13 @@ def load(path):
     return terr, [[HD.index(c) for c in row] for row in heights], decks
 
 
-def measure(path):
+def measure(path, outline=False):
     terr, hs, decks = load(path)
     H, W = len(terr), len(terr[0])
-    walk = [[terr[y][x] not in WALK_NOT and terr[y][x] != "w" for x in range(W)] for y in range(H)]
+    if outline:  # a set piece: the shape of the land itself, so ponds and rocks dropped inside can't buy a pass
+        walk = [[terr[y][x] != "." for x in range(W)] for y in range(H)]
+    else:
+        walk = [[terr[y][x] not in WALK_NOT and terr[y][x] != "w" for x in range(W)] for y in range(H)]
     for dk in decks:
         walk[int(dk["y"])][int(dk["x"])] = True
     cells = [(x, y) for y in range(H) for x in range(W) if walk[y][x]]
@@ -107,11 +111,20 @@ STRICT = {"MAX_FILL": 0.42, "MIN_EDGE": 2.0, "MIN_CORNERS": 25.0, "MIN_BAYS": 0.
 FIGHT = {"MAX_FILL": 0.62, "MIN_EDGE": 1.3, "MIN_CORNERS": 14.0, "MIN_BAYS": 0.3, "MIN_LEVELS": 7, "MIN_CLIMBS": 4}
 
 
-def verdict(m, strict=False, fight=False):
+## [AI] 2026-11-17: a road set piece is a believable place first ([USER] 2026-11-16: "It just doesnt make any reasonable sense as
+## an actual lived place. I'd rather have believable"). The fight bar counts every pond, ditch and rock inside the map as edge, and
+## asks for 7 levels and 4 climbs, which the first two set pieces met with filler. So a set piece is judged on its outline alone
+## (the land, water and rock included): not a box, cut in and out, bays at the corners. Heights come from the place, not a count.
+PIECE = {"MAX_FILL": 0.66, "MIN_EDGE": 0.0, "MIN_CORNERS": 10.0, "MIN_BAYS": 0.3, "MIN_LEVELS": 0, "MIN_CLIMBS": 0}
+
+
+def verdict(m, strict=False, fight=False, piece=False):
     global MAX_FILL, MIN_EDGE, MIN_CORNERS, MIN_BAYS, MIN_LEVELS, MIN_CLIMBS
     keys = ("MAX_FILL", "MIN_EDGE", "MIN_CORNERS", "MIN_BAYS", "MIN_LEVELS", "MIN_CLIMBS")
     if strict:  # the higher bar: a map Brandon asked to push further
         MAX_FILL, MIN_EDGE, MIN_CORNERS, MIN_BAYS, MIN_LEVELS, MIN_CLIMBS = [STRICT[k] for k in keys]
+    elif piece:
+        MAX_FILL, MIN_EDGE, MIN_CORNERS, MIN_BAYS, MIN_LEVELS, MIN_CLIMBS = [PIECE[k] for k in keys]
     elif fight:  # a road fight up to 26 x 26
         MAX_FILL, MIN_EDGE, MIN_CORNERS, MIN_BAYS, MIN_LEVELS, MIN_CLIMBS = [FIGHT[k] for k in keys]
     why = []
@@ -134,9 +147,10 @@ if __name__ == "__main__":
     bad = False
     strict = "--strict" in sys.argv
     fight = "--fight" in sys.argv
+    piece = "--piece" in sys.argv
     for f in [a for a in sys.argv[1:] if not a.startswith("--")]:
-        m = measure(f)
-        why = verdict(m, strict, fight)
+        m = measure(f, piece)
+        why = verdict(m, strict, fight, piece)
         bad |= bool(why)
         print(("ok   " if not why else "BOX  ") + json.dumps(m) + ("" if not why else "  <- " + "; ".join(why)))
     sys.exit(1 if bad else 0)

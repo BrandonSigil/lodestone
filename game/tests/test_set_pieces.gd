@@ -39,7 +39,7 @@ func test_every_set_piece_fight_builds() -> void:
 			seen[u.cell] = true
 		var reach := MapOps.reach(setup.grid, party[0].cell)
 		for u: CombatUnit in units:
-			ok(reach.has(u.cell), "%s: %s at %s can be walked to" % [id, u.name, u.cell])
+			ok(reach.has(u.cell), "%s: the piece at %s can be walked to" % [id, u.cell])
 		var goals := FightGoals.parse(enc.goals, setup.piece.get("exit", []))
 		if goals.kinds.has("exit"):
 			ok(not goals.exit_cells.is_empty(), "%s: an exit goal has exit cells" % id)

@@ -3,24 +3,19 @@
 	"counters": false,
 	"enemies": [
 		{
-			"id": "foe_rusher",
-			"x": 19,
-			"y": 6
+			"id": "foe_bull",
+			"x": 6,
+			"y": 9
 		},
 		{
 			"id": "foe_bull",
-			"x": 8,
-			"y": 7
+			"x": 5,
+			"y": 11
 		},
 		{
 			"id": "foe_bull",
-			"x": 13,
-			"y": 8
-		},
-		{
-			"id": "foe_bull",
-			"x": 11,
-			"y": 10
+			"x": 2,
+			"y": 12
 		}
 	],
 	"enemy_mods": {
@@ -32,22 +27,23 @@
 	},
 	"extra_enemies": 0,
 	"map": {
-		"h": 14,
+		"h": 15,
 		"heights": [
-			"0000003333000000000000",
-			"0000333333330000777000",
-			"0003333333330005577500",
-			"0003333333300005565500",
-			"0000200002120003455500",
-			"0001111111111112011100",
-			"1111011111111111011110",
-			"1011011111111111011121",
-			"1001011111111111011111",
-			"0112111111111111111111",
-			"0011111111111111111110",
-			"0011000011000000011100",
-			"0011111111111111111100",
-			"0000001111000000000000"
+			"000000001111111000000000",
+			"000000011111111100000000",
+			"000000011111111100000000",
+			"000000011111111100000000",
+			"000000011111111100000000",
+			"000011111111111111110000",
+			"000111111111111111111000",
+			"000111111111111111111000",
+			"000111111111111111111000",
+			"001111111111111111111100",
+			"011111111111111111111100",
+			"001111111111111111111100",
+			"111111111111111111111111",
+			"111111111111111111111111",
+			"000011111111111111110000"
 		],
 		"look": {
 			"id": "farmland"
@@ -55,8 +51,36 @@
 		"props": [
 			{
 				"cell": [
-					6,
+					8,
 					0
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					0
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					9,
+					1
 				],
 				"foot": [
 					4,
@@ -69,276 +93,36 @@
 			},
 			{
 				"cell": [
-					4,
-					1
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 1.0,
-				"sprite": "village/prop_tree",
-				"tall": 1.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					11,
-					1
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 1.0,
-				"sprite": "village/prop_tree",
-				"tall": 1.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					17,
-					1
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.5,
-				"sprite": "village/prop_hay",
-				"tall": 0.65,
-				"walk": false
-			},
-			{
-				"cell": [
-					18,
-					1
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 1.0,
-				"sprite": "village/prop_tree",
-				"tall": 1.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					3,
+					8,
 					2
 				],
 				"foot": [
 					1,
 					1
 				],
-				"sight": 1.0,
-				"sprite": "village/prop_tree",
-				"tall": 1.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					8,
-					3
-				],
-				"foot": [
-					1,
-					1
-				],
 				"sight": 0.5,
 				"sprite": "village/prop_hay",
 				"tall": 0.65,
-				"walk": false
-			},
-			{
-				"cell": [
-					19,
-					3
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 1.0,
-				"sprite": "village/prop_tree",
-				"tall": 1.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					3,
-					5
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.5,
-				"sprite": "village/prop_hay",
-				"tall": 0.65,
-				"walk": false
-			},
-			{
-				"cell": [
-					6,
-					5
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.5,
-				"sprite": "village/prop_hay",
-				"tall": 0.65,
-				"walk": false
-			},
-			{
-				"cell": [
-					7,
-					6
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					8,
-					6
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					9,
-					6
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					10,
-					6
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					11,
-					6
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
 				"walk": false
 			},
 			{
 				"cell": [
 					13,
-					6
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					14,
-					6
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					7,
-					7
-				],
-				"flip": true,
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					10,
-					7
+					2
 				],
 				"foot": [
 					2,
 					2
 				],
 				"sight": 1.0,
-				"sprite": "village/prop_well",
-				"tall": 1.8,
+				"sprite": "village/prop_cart",
+				"tall": 1.3,
 				"walk": false
 			},
 			{
 				"cell": [
-					14,
-					7
-				],
-				"flip": true,
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					18,
-					8
+					8,
+					3
 				],
 				"foot": [
 					1,
@@ -351,78 +135,8 @@
 			},
 			{
 				"cell": [
-					7,
-					9
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					8,
-					9
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					11,
-					9
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					12,
-					9
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					13,
-					9
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_fence",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
-					14,
-					9
+					4,
+					6
 				],
 				"foot": [
 					1,
@@ -436,35 +150,77 @@
 			{
 				"cell": [
 					5,
-					10
+					6
 				],
 				"foot": [
 					1,
 					1
 				],
-				"sight": 0.5,
-				"sprite": "village/prop_hay",
-				"tall": 0.65,
-				"walk": false
-			},
-			{
-				"cell": [
-					15,
-					10
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.5,
-				"sprite": "village/prop_hay",
-				"tall": 0.65,
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
 				"walk": false
 			},
 			{
 				"cell": [
 					6,
-					13
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					13,
+					6
+				],
+				"foot": [
+					2,
+					2
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_well",
+				"tall": 1.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					20,
+					6
 				],
 				"foot": [
 					1,
@@ -477,8 +233,251 @@
 			},
 			{
 				"cell": [
+					3,
+					7
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					7
+				],
+				"flip": true,
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
 					8,
-					13
+					7
+				],
+				"flip": true,
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					8
+				],
+				"flip": true,
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					5,
+					8
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_barrel",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					9
+				],
+				"flip": true,
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					9
+				],
+				"flip": true,
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					17,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					20,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					21,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					13,
+					11
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					11
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					19,
+					11
 				],
 				"foot": [
 					1,
@@ -491,38 +490,39 @@
 			}
 		],
 		"terrain": [
-			"......gggg............",
-			"....gggggggg....ggg...",
-			"...ggggggggg...ggggg..",
-			"...gggggggg....ggtgg..",
-			"....twwwwtgr...gtggg..",
-			"...ggggggggggggtwggg..",
-			"ggggwgggggggggggwgggg.",
-			"gwggwgggggggggggwgggrg",
-			"gwwgwgggggggggggwggggg",
-			".ggrgggggggggggggggggg",
-			"..ggggggggggggggggggg.",
-			"..ggwwwwggwwwwwwwggg..",
-			"..ddddddddddddddgggg..",
-			"......gggg............"
+			"........ggggggg.........",
+			".......ggggggggg........",
+			".......ggggggggg........",
+			".......ggggggggg........",
+			".......ggggggggg........",
+			"....ggggggddgggggggg....",
+			"...gggggggddggggggggg...",
+			"...gggggggddggggggggg...",
+			"...gggggggddggggggggg...",
+			"..ggggggggddgggggggggg..",
+			".gggggggggddgggggggggg..",
+			"..ggggggggddgggggggggg..",
+			"dddddddddddddddddddddddd",
+			"dddddddddddddddddddddddd",
+			"....gggggggggggggggg...."
 		],
-		"w": 22
+		"w": 24
 	},
 	"name": "sp_bulls",
 	"party": [
 		{
 			"id": "lead",
-			"x": 17,
-			"y": 9
+			"x": 15,
+			"y": 8
 		},
 		{
 			"id": "stardrop",
-			"x": 18,
-			"y": 9
+			"x": 17,
+			"y": 8
 		},
 		{
 			"id": "hunter",
-			"x": 17,
+			"x": 16,
 			"y": 10
 		},
 		{
@@ -541,38 +541,38 @@
 	"piece": {
 		"exit": [
 			[
-				3,
-				3
+				9,
+				4
 			],
 			[
-				4,
-				3
+				10,
+				4
 			],
 			[
-				5,
-				3
+				11,
+				4
 			],
 			[
-				6,
-				3
+				12,
+				4
 			]
 		],
-		"note": "E2 Loose bulls: a broken corral in open farmland, fields split by irrigation ditches with gaps to cross at. The barn stands on a rise behind a ditch, a haystack hill beside it. Bulls charge along straight runs; fences, hay bales and gateways break a run. The barn's yard is the way out.",
+		"note": "E2 Loose bulls: a farm by the road, on the flat. Barn at the back with its door clear, the lane down to the road. Corral with its gate open and its road-side fence broken on the left, where the bulls are; well and a mown hay field in rows on the right, where the party comes from. Fences, bales and the well break a charge; the barn door is the way out.",
 		"out": [
 			[
-				16,
+				20,
+				10
+			],
+			[
+				21,
+				11
+			],
+			[
+				21,
 				12
 			],
 			[
-				17,
-				12
-			],
-			[
-				18,
-				12
-			],
-			[
-				19,
+				22,
 				12
 			]
 		]
