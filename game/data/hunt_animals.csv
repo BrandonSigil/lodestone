@@ -1,0 +1,6 @@
+id,name_key,size,speed,pause_chance,pause_min,pause_max,food,strength,weight,modes,note
+rabbit,HUNT_RABBIT,0.55,330,0.35,0.5,1.0,1,6,40,bow snare drive,[AI] 2026-11-17 hunting prototypes: small and quick; size is its body length in tens of pixels at 1x
+pheasant,HUNT_PHEASANT,0.6,290,0.25,0.4,0.8,1,5,30,bow drive,flushes and flocks
+deer,HUNT_DEER,1.25,220,0.75,1.0,2.0,3,12,20,bow stalk,slow and pauses often: the easy big shot
+boar,HUNT_BOAR,1.0,250,0.4,0.6,1.2,2,15,15,bow snare,snaps thin snares (strength is the snare's DC)
+fox,HUNT_FOX,0.7,300,0.3,0.4,0.8,1,10,15,snare,never takes bait you handled

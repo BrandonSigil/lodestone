@@ -1372,3 +1372,56 @@ ENEMY_SCARECROW,SCARECROW
 ENEMY_STRAW_MAN,STRAW MAN
 EV_TR_FARM,"A farmhouse stands by the road. Its field is full of scarecrows, more than any farmer needs."
 EV_TR_MILL,"A windmill turns on a hill above the road. Its sails are tied, and men watch the road from the wheat."
+HUNT_TITLE,Hunting practice
+HUNT_A,A · Bow Blind
+HUNT_A_SUB,"Aim, draw, lead the runners"
+HUNT_B,B · Stalk
+HUNT_B_SUB,"Creep up, freeze, one shot"
+HUNT_C,C · Snare Line
+HUNT_C_SUB,"Set snares, watch the night"
+HUNT_D,D · Corgi Drive
+HUNT_D_SUB,Herd the flock as Doggo
+HUNT_WITH_HUNTER,Hunter in the party
+HUNT_WITH_DOGGO,Doggo in the party
+HUNT_BACK,Back
+HUNT_RABBIT,Rabbit
+HUNT_PHEASANT,Pheasant
+HUNT_DEER,Deer
+HUNT_BOAR,Boar
+HUNT_FOX,Fox
+HUNT_CARD_GOOD,Good hunt!
+HUNT_CARD_EMPTY,Empty-handed
+HUNT_CARD_EMPTY_SUB,Nothing caught this time.
+HUNT_CARD_FOOD,+%d food
+HUNT_CARD_KEYS,Space or click: again    Esc: back
+HUNT_ROLL,Hunt roll %s: %d animals in the glade
+HUNT_NOISE,Noise
+HUNT_ARROWS,Arrows
+HUNT_LEFT,Left
+HUNT_KEYS_BOW,Hold click: draw   Release: shoot
+HUNT_KEYS_FLUSH,   F: Doggo flushes the nearest bush
+HUNT_FLUSH,"Doggo, flush it!"
+HUNT_FETCHED,Doggo fetched the %s
+HUNT_DOG_RUNS,Doggo runs after it...
+HUNT_GOT_AWAY,It got away wounded
+HUNT_HIT,%s!
+HUNT_GRAZE,Grazed! It's running
+HUNT_MISS,Missed
+HUNT_TWIG_OK,Snap! Steady nerves (%s)
+HUNT_TWIG_BAD,Snap! It heard that (%s)
+HUNT_SCENT,The wind carries your scent to it
+HUNT_BOLTED,It bolted
+HUNT_TELL,flick
+HUNT_TELL_HUNTER,ears up!
+HUNT_ALERT,Alert
+HUNT_WIND,Wind
+HUNT_KEYS_STALK,"WASD: creep   In the ring, hold click: draw"
+HUNT_SNARES,Snares
+HUNT_BAIT,Bait
+HUNT_KEYS_SNARE,Click: snare   Right-click: bait   Space: sleep
+HUNT_FLEW_PAST,It flew past
+HUNT_BARK_MISS,Woof! (nothing in front)
+HUNT_BARKS,Barks
+HUNT_TIME,%ds
+HUNT_KEYS_DRIVE,WASD: run   Space: bark   Click or E: shoot in the gap
+HUNT_SNAPPED,snap!

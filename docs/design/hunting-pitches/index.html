@@ -1,0 +1,246 @@
+<title>Hunting Pitches</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Work+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one dusk column of four pitch "plates", each a sketch beside its rules, then a compare table and the call. */
+:root {
+  --sky: #b6a2d0;
+  --dusk: #2e2440;
+  --panel: #3a2f50;
+  --line: #55486e;
+  --cream: #fbf1d8;
+  --muted: #cbbfd9;
+  --amber: #ffcf4a;
+  --sun: #f2b36b;
+  --leaf: #7f8c5c;
+  --pine: #4c5a3b;
+  --meadow: #d6cc96;
+  --red: #c8363c;
+  --ochre: #e0a03a;
+  --indigo: #3a3f7a;
+  --display: "Young Serif", Georgia, "Times New Roman", serif;
+  --body: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+body { background: var(--dusk); color: var(--cream); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; }
+h2 { font-size: 1.6rem; line-height: 1.2; }
+h3 { font-size: 0.78rem; font-family: var(--body); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 62ch; }
+header { display: grid; gap: 12px; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sun); font-weight: 600; }
+.pitch { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: start; padding-top: 32px; border-top: 1px solid var(--line); }
+.pitch.pick { position: relative; }
+.badge { display: inline-block; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--amber); color: var(--dusk); }
+.badge.alt { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.sketch { border-radius: 10px; overflow: hidden; background: var(--panel); }
+.sketch svg { display: block; width: 100%; height: auto; }
+.cap { font-size: 0.82rem; color: var(--muted); padding: 8px 12px 10px; }
+.side { display: grid; gap: 16px; min-width: 0; }
+.titlerow { display: grid; gap: 6px; }
+.hook { color: var(--muted); }
+ul { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+li::marker { color: var(--sun); }
+.chips { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 0.92rem; }
+.chips dt { font-weight: 600; color: var(--sun); white-space: nowrap; }
+.chips dd { margin: 0; min-width: 0; }
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 0.92rem; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { font-weight: 600; color: var(--amber); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; }
+tbody th { font-family: var(--display); font-weight: 400; }
+tr:last-child td, tr:last-child th { border-bottom: 0; }
+.call { background: var(--panel); border-radius: 12px; padding: 24px; display: grid; gap: 14px; }
+.call strong { color: var(--amber); font-weight: 600; }
+.note { font-size: 0.85rem; color: var(--muted); }
+@media (max-width: 760px) { .pitch { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Lodestone · camp action · design pitch</div>
+  <h1>Hunting: four ways to bring home meat</h1>
+  <p class="lede">Each one is a short, repeatable game you get better at, sits beside fishing as a camp action (and a practice mode on the launch menu), and leaves room for gear upgrades, the Hunter, Doggo and the dice. Sketches are graybox. Numbers come later.</p>
+</header>
+
+<!-- A -->
+<section class="pitch pick" id="a">
+  <figure class="sketch" style="margin:0">
+    <svg viewBox="0 0 400 250" role="img" aria-label="Sketch: a forest glade seen from behind a log. A rabbit dashes along a dotted arc from one bush to another while the bow reticle leads it.">
+      <rect width="400" height="250" fill="#b6a2d0"/>
+      <rect y="70" width="400" height="30" fill="#f2b36b"/>
+      <g fill="#9a86b6"><circle cx="40" cy="98" r="34"/><circle cx="120" cy="104" r="40"/><circle cx="300" cy="100" r="38"/><circle cx="370" cy="96" r="30"/></g>
+      <g fill="#4c5a3b"><path d="M60 140 L80 60 L100 140Z"/><path d="M310 140 L335 50 L360 140Z"/><path d="M20 150 L36 90 L52 150Z"/></g>
+      <rect y="132" width="400" height="118" fill="#d6cc96"/>
+      <g fill="#7f8c5c"><circle cx="70" cy="150" r="20"/><circle cx="92" cy="146" r="16"/><circle cx="54" cy="154" r="13"/>
+        <circle cx="300" cy="158" r="22"/><circle cx="324" cy="152" r="15"/><circle cx="282" cy="162" r="12"/>
+        <circle cx="190" cy="140" r="13"/><circle cx="206" cy="138" r="10"/></g>
+      <path d="M96 150 Q190 104 282 156" fill="none" stroke="#2e2440" stroke-width="2" stroke-dasharray="4 5"/>
+      <g transform="translate(150,124)"><ellipse cx="0" cy="0" rx="11" ry="7" fill="#f3ead2"/><circle cx="10" cy="-5" r="5" fill="#f3ead2"/><ellipse cx="9" cy="-14" rx="2" ry="6" fill="#f3ead2"/><ellipse cx="13" cy="-13" rx="2" ry="6" fill="#f3ead2"/></g>
+      <path d="M128 118 l-8 -4 M130 126 l-10 0" stroke="#2e2440" stroke-width="2"/>
+      <g transform="translate(184,114)" fill="none" stroke="#c8363c" stroke-width="2.5"><circle r="16" stroke-dasharray="3 4"/><circle r="9" stroke="#ffcf4a" stroke-width="3"/><path d="M-22 0h8M14 0h8M0 -22v8M0 14v8"/></g>
+      <rect x="120" y="212" width="170" height="20" rx="10" fill="#7a5a3a"/>
+      <g transform="translate(205,214)"><ellipse cx="0" cy="18" rx="16" ry="5" fill="#2a2433"/><path d="M-12 16 Q0 -16 12 16Z" fill="#3a3f7a"/><circle cy="-10" r="9" fill="#f3ead2"/><path d="M-20 -26 Q-4 -10 -20 6" fill="none" stroke="#e0a03a" stroke-width="3"/></g>
+      <g transform="translate(14,14)"><rect width="82" height="22" rx="11" fill="#2e2440" opacity=".85"/><circle cx="16" cy="11" r="5" fill="#ffcf4a"/><circle cx="31" cy="11" r="5" fill="#55486e"/><circle cx="46" cy="11" r="5" fill="#55486e"/><text x="58" y="15" font-size="10" fill="#fbf1d8" font-family="Work Sans, sans-serif">noise</text></g>
+      <g transform="translate(316,14)"><rect width="70" height="22" rx="11" fill="#2e2440" opacity=".85"/><g stroke="#fbf1d8" stroke-width="2"><path d="M14 5v12M24 5v12M34 5v12M44 5v12"/></g><path d="M54 5v12" stroke="#55486e" stroke-width="2"/></g>
+    </svg>
+    <figcaption class="cap">Glade from behind a log. The reticle leads the rabbit; the ring around it is the draw.</figcaption>
+  </figure>
+  <div class="side">
+    <div class="titlerow"><span class="badge">Your idea, developed</span><h2>A · Bow Blind</h2><p class="hook">Duck Hunt in a forest glade, with a bow that fights back.</p></div>
+    <div><h3>How it plays</h3>
+    <ul>
+      <li>A small open forest map built from our tiles, trees and bushes. The hero crouches behind a log. The mouse is the aim.</li>
+      <li>Animals break from one bush and run for another. Some stop halfway to look around: that pause is the easy shot.</li>
+      <li>Hold to draw. The ring tightens to a sweet band, then the aim starts to shake. Let go in the band for a straight, fast arrow. Too early and it drops short.</li>
+      <li>Arrows take time to fly, so you lead fast animals.</li>
+      <li>Stealth: sit still and the noise pips drain, animals come out sooner and pause longer. Sweep the bow around fast and they bolt.</li>
+      <li>A clean hit is a catch. A graze leaves a wounded animal that runs off. A miss spooks it. Five arrows; the glade holds three animals a trip, like the fishing pond.</li>
+    </ul></div>
+    <dl class="chips">
+      <dt>You improve at</dt><dd>reading which bush is next, leading shots, timing the draw, knowing when to wait.</dd>
+      <dt>Upgrades</dt><dd>bow tiers (wider sweet band, faster draw), bigger quiver, broadheads (a graze still counts), a cloak that makes less noise.</dd>
+      <dt>Hunter</dt><dd>Steady Aim: no shake while still. Sees the next bush's rustle earlier.</dd>
+      <dt>Doggo</dt><dd>SNIFF marks the bush holding the next animal. FETCH runs down a wounded one before it's lost.</dd>
+      <dt>Dice</dt><dd>the party's hunt roll on entering sets how rich the glade is: how many animals, how bold.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- B -->
+<section class="pitch" id="b">
+  <figure class="sketch" style="margin:0">
+    <svg viewBox="0 0 400 250" role="img" aria-label="Sketch: top-down meadow. A deer grazes with a cone of sight; the hero creeps through tall grass along hoof prints, downwind.">
+      <rect width="400" height="250" fill="#d6cc96"/>
+      <g fill="#7f8c5c"><path d="M20 40 h120 v60 h-120z" opacity=".7"/><path d="M60 150 h150 v70 h-150z" opacity=".7"/><path d="M250 30 h110 v50 h-110z" opacity=".7"/></g>
+      <g stroke="#4c5a3b" stroke-width="2"><path d="M30 50v14M44 50v14M58 50v14M72 50v14M86 50v14M100 50v14M114 50v14M128 50v14M30 76v14M44 76v14M58 76v14M72 76v14M86 76v14M100 76v14M114 76v14M128 76v14"/><path d="M70 160v14M86 160v14M102 160v14M118 160v14M134 160v14M150 160v14M166 160v14M182 160v14M198 160v14M70 192v14M86 192v14M102 192v14M118 192v14M134 192v14M150 192v14M166 192v14M182 192v14M198 192v14"/></g>
+      <g fill="#4c5a3b"><circle cx="350" cy="190" r="22"/><circle cx="372" cy="176" r="16"/><circle cx="30" cy="220" r="16"/></g>
+      <path d="M300 120 L210 70 L215 175 Z" fill="#c8363c" opacity=".28"/>
+      <g transform="translate(300,124)"><ellipse rx="20" ry="11" fill="#e0a03a"/><circle cx="-20" cy="-6" r="7" fill="#e0a03a"/><path d="M-24 -12 l-6 -10 M-18 -12 l-2 -12" stroke="#7a5a3a" stroke-width="2.5"/></g>
+      <text x="268" y="96" font-size="18" fill="#c8363c" font-family="Young Serif, serif">!</text>
+      <g fill="#7a5a3a" opacity=".7"><circle cx="250" cy="150" r="3"/><circle cx="234" cy="160" r="3"/><circle cx="216" cy="166" r="3"/><circle cx="200" cy="178" r="3" opacity=".5"/><circle cx="184" cy="186" r="3" opacity=".35"/></g>
+      <circle cx="300" cy="124" r="70" fill="none" stroke="#ffcf4a" stroke-width="2" stroke-dasharray="6 6"/>
+      <g transform="translate(170,186)"><ellipse cy="10" rx="13" ry="4" fill="#2a2433"/><path d="M-10 9 Q0 -10 10 9Z" fill="#3a3f7a"/><circle cy="-6" r="7" fill="#f3ead2"/></g>
+      <g transform="translate(34,22)"><rect x="-20" y="-12" width="96" height="24" rx="12" fill="#2e2440" opacity=".85"/><path d="M-6 0 h30 m-8 -6 l8 6 l-8 6" stroke="#fbf1d8" stroke-width="2" fill="none"/><text x="32" y="4" font-size="10" fill="#fbf1d8" font-family="Work Sans, sans-serif">wind</text></g>
+    </svg>
+    <figcaption class="cap">Top-down meadow. Move while the head is down, freeze when it comes up, reach the gold ring for one shot.</figcaption>
+  </figure>
+  <div class="side">
+    <div class="titlerow"><span class="badge alt">New</span><h2>B · Stalk</h2><p class="hook">Red light, green light with a deer, then one shot.</p></div>
+    <div><h3>How it plays</h3>
+    <ul>
+      <li>A small top-down meadow, walked with WASD like the explore maps. Hoof prints lead to a grazing animal.</li>
+      <li>Move only while its head is down. When it lifts its head, freeze. Its sight cone shows; tall grass hides you.</li>
+      <li>Wind blows across the map. Come at it downwind or it smells you.</li>
+      <li>Reach the shot ring and you get one shot, using the same draw as A. Closer is easier.</li>
+    </ul></div>
+    <dl class="chips">
+      <dt>You improve at</dt><dd>reading the tells (a tail flick before the head comes up), picking a route through cover, playing the wind.</dd>
+      <dt>Upgrades</dt><dd>soft boots (faster crouch), scent oil (wind matters less), a longer-range bow.</dd>
+      <dt>Hunter</dt><dd>gets an ear-twitch warning half a second before the head comes up.</dd>
+      <dt>Doggo</dt><dd>SNIFF shows faded tracks. Send him wide to circle round and push the deer toward you.</dd>
+      <dt>Dice</dt><dd>step on a twig: a nerve check. Fail and the deer looks up.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- C -->
+<section class="pitch" id="c">
+  <figure class="sketch" style="margin:0">
+    <svg viewBox="0 0 400 250" role="img" aria-label="Sketch: a grid by the camp with faint animal runs drawn as dashed lines and three snares placed on them; a moon marks the night playing out.">
+      <rect width="400" height="250" fill="#3a2f50"/>
+      <g fill="#4c5a3b" opacity=".9"><rect x="20" y="20" width="360" height="210" rx="14"/></g>
+      <g stroke="#55486e" stroke-width="1" opacity=".7"><path d="M65 20v210M110 20v210M155 20v210M200 20v210M245 20v210M290 20v210M335 20v210M20 62h360M20 104h360M20 146h360M20 188h360"/></g>
+      <g fill="#7f8c5c"><circle cx="45" cy="45" r="16"/><circle cx="355" cy="205" r="18"/><circle cx="355" cy="45" r="14"/><circle cx="45" cy="205" r="14"/><circle cx="225" cy="125" r="13"/></g>
+      <path d="M45 45 C120 60 140 120 225 125 S330 190 355 205" fill="none" stroke="#f3ead2" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>
+      <path d="M45 205 C110 170 170 190 225 125 S300 60 355 45" fill="none" stroke="#e0a03a" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>
+      <path d="M20 104 H380" fill="none" stroke="#c8363c" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round" opacity=".8"/>
+      <g fill="none" stroke="#ffcf4a" stroke-width="3"><circle cx="132" cy="84" r="10"/><circle cx="290" cy="104" r="10"/><circle cx="168" cy="178" r="10"/></g>
+      <g fill="#ffcf4a"><path d="M132 94 v8 M290 114 v8 M168 188 v8" stroke="#ffcf4a" stroke-width="3"/></g>
+      <g transform="translate(255,152)"><circle r="6" fill="#c8363c"/><circle cx="5" cy="-5" r="3" fill="#4c5a3b"/></g>
+      <g transform="translate(350,26)"><circle r="14" fill="#fbf1d8"/><circle cx="6" cy="-4" r="13" fill="#3a2f50"/></g>
+      <g transform="translate(200,240)"><rect x="-60" y="-12" width="120" height="20" rx="10" fill="#2e2440"/><g fill="none" stroke="#ffcf4a" stroke-width="2"><circle cx="-40" cy="-2" r="5"/><circle cx="-24" cy="-2" r="5"/><circle cx="-8" cy="-2" r="5"/></g><path d="M10 -2 h40" stroke="#55486e" stroke-width="4" stroke-linecap="round"/><path d="M10 -2 h14" stroke="#ffcf4a" stroke-width="4" stroke-linecap="round"/></g>
+    </svg>
+    <figcaption class="cap">Set three snares on the runs, bait one, then watch the night play out in about ten seconds.</figcaption>
+  </figure>
+  <div class="side">
+    <div class="titlerow"><span class="badge alt">New</span><h2>C · Snare Line</h2><p class="hook">A tiny planning puzzle. No reflexes, all knowledge.</p></div>
+    <div><h3>How it plays</h3>
+    <ul>
+      <li>At camp you see the ground around it, with animal runs drawn as faint tracks.</li>
+      <li>Place three snares and an optional bait. Then the night plays out fast: animals walk their runs, and you watch what trips.</li>
+      <li>Each animal has habits: rabbits hug cover, foxes avoid bait you handled, boars snap thin wire.</li>
+    </ul></div>
+    <dl class="chips">
+      <dt>You improve at</dt><dd>learning each animal's habits. A Lodestone page could record them as you discover them.</dd>
+      <dt>Upgrades</dt><dd>more snares, wire snares for boars, baits from foraged berries and herbs.</dd>
+      <dt>Hunter</dt><dd>sees every run (others see half), and his snares hold better. This is the "trapping" half of your Hunter idea.</dd>
+      <dt>Doggo</dt><dd>SNIFF shows which runs are fresh tonight. Downside: a dog at camp scares off foxes.</dd>
+      <dt>Dice</dt><dd>a snare holds or breaks on a roll against the animal's strength.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- D -->
+<section class="pitch" id="d">
+  <figure class="sketch" style="margin:0">
+    <svg viewBox="0 0 400 250" role="img" aria-label="Sketch: Doggo the corgi barks a cone across a meadow, driving a small group of pheasants toward a gap between trees where the hero waits with a bow.">
+      <rect width="400" height="250" fill="#b6a2d0"/>
+      <rect y="60" width="400" height="190" fill="#d6cc96"/>
+      <g fill="#4c5a3b"><path d="M290 150 L315 50 L340 150Z"/><path d="M350 160 L372 70 L394 160Z"/><path d="M290 240 L315 170 L340 240Z" opacity=".0"/></g>
+      <g fill="#7f8c5c"><circle cx="40" cy="80" r="18"/><circle cx="140" cy="70" r="14"/><circle cx="60" cy="230" r="20"/><circle cx="210" cy="232" r="16"/></g>
+      <g transform="translate(70,150)"><ellipse cx="0" cy="6" rx="22" ry="12" fill="#e0a03a"/><circle cx="20" cy="-4" r="10" fill="#e0a03a"/><path d="M15 -12 l2 -12 l6 9Z M24 -11 l6 -10 l2 11Z" fill="#e0a03a"/><ellipse cx="2" cy="10" rx="14" ry="5" fill="#f3ead2"/><circle cx="26" cy="-4" r="2" fill="#2a2433"/></g>
+      <g fill="none" stroke="#c8363c" stroke-width="2.5" stroke-linecap="round"><path d="M104 132 q8 14 0 28"/><path d="M116 124 q14 22 0 44"/><path d="M128 116 q20 30 0 60"/></g>
+      <g fill="#c9664c"><g transform="translate(190,128)"><ellipse rx="9" ry="6"/><circle cx="8" cy="-5" r="4"/></g><g transform="translate(214,150)"><ellipse rx="9" ry="6"/><circle cx="8" cy="-5" r="4"/></g><g transform="translate(196,170)"><ellipse rx="9" ry="6"/><circle cx="8" cy="-5" r="4"/></g><g transform="translate(222,118)"><ellipse rx="9" ry="6"/><circle cx="8" cy="-5" r="4"/></g></g>
+      <g stroke="#2e2440" stroke-width="2" fill="none" stroke-dasharray="3 5"><path d="M230 128 l40 8"/><path d="M232 150 l40 2"/><path d="M214 170 l50 -12"/></g>
+      <rect x="282" y="132" width="58" height="34" rx="6" fill="#ffcf4a" opacity=".35"/>
+      <g transform="translate(360,196)"><ellipse cy="14" rx="14" ry="4" fill="#2a2433"/><path d="M-11 13 Q0 -12 11 13Z" fill="#3a3f7a"/><circle cy="-6" r="8" fill="#f3ead2"/><path d="M-16 -22 Q-2 -6 -16 10" fill="none" stroke="#e0a03a" stroke-width="3"/></g>
+      <g transform="translate(14,14)"><rect width="104" height="22" rx="11" fill="#2e2440" opacity=".85"/><text x="12" y="15" font-size="10" fill="#fbf1d8" font-family="Work Sans, sans-serif">BARK</text><circle cx="58" cy="11" r="5" fill="#ffcf4a"/><circle cx="73" cy="11" r="5" fill="#ffcf4a"/><circle cx="88" cy="11" r="5" fill="#55486e"/></g>
+    </svg>
+    <figcaption class="cap">You play Doggo. Herd the birds into the gold gap, where the hero shoots.</figcaption>
+  </figure>
+  <div class="side">
+    <div class="titlerow"><span class="badge alt">New</span><h2>D · Corgi Drive</h2><p class="hook">A herding game where you are the dog.</p></div>
+    <div><h3>How it plays</h3>
+    <ul>
+      <li>WASD runs Doggo through a meadow. Animals flee from him as a loose flock.</li>
+      <li>BARK (Space) pushes them in a cone, with a few barks a round. Press too hard and the flock scatters.</li>
+      <li>Drive them through the gold gap between the trees. The hero waits there and shoots what passes, on a timing tap.</li>
+    </ul></div>
+    <dl class="chips">
+      <dt>You improve at</dt><dd>herding: angles, pacing, saving barks for the stragglers.</dd>
+      <dt>Upgrades</dt><dd>Doggo's own levels: speed, bark range, an extra bark.</dd>
+      <dt>Hunter</dt><dd>shoots from the gap automatically and never misses a bird that passes.</dd>
+      <dt>Doggo</dt><dd>he is the game. Without him in the party there is no drive, so this works best as Doggo's own way to hunt, not the only one.</dd>
+      <dt>Dice</dt><dd>a tame check for skittish herds (the oxen-calming skill from your pitch fits here).</dd>
+    </dl>
+  </div>
+</section>
+
+<section style="display:grid;gap:16px">
+  <h2>Side by side</h2>
+  <div class="tablebox">
+  <table>
+    <thead><tr><th></th><th>Skill it tests</th><th>One try</th><th>Hunter matters</th><th>Doggo matters</th><th>Build size</th></tr></thead>
+    <tbody>
+      <tr><th>A · Bow Blind</th><td>aim, timing, patience</td><td>about 1 min</td><td>a lot</td><td>a lot</td><td>small: fishing's overlay with new beats</td></tr>
+      <tr><th>B · Stalk</th><td>stealth, reading tells</td><td>1 to 2 min</td><td>some</td><td>some</td><td>medium: needs a mini walk map and sight cones</td></tr>
+      <tr><th>C · Snare Line</th><td>planning, knowledge</td><td>about 30 s</td><td>a lot</td><td>some</td><td>small: a grid and a fast replay</td></tr>
+      <tr><th>D · Corgi Drive</th><td>herding, steering</td><td>about 1 min</td><td>a little</td><td>needs him</td><td>medium: flock movement takes tuning</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="call">
+  <h3>Recommendation</h3>
+  <p><strong>Build A, your Bow Blind, as the hunt.</strong> It's the most repeatable of the four, it grows with practice, and every hook lands on it: bow upgrades, the Hunter's Steady Aim, Doggo's SNIFF and FETCH, and the hunt roll. It also reuses the fishing overlay, so it's the quickest to get in your hands.</p>
+  <p>Borrow two ideas into it. From B: animals that pause and look up, so sitting still is the stealth. From D: a FLUSH command, where Doggo charges the bush you pick so you choose when the animal breaks.</p>
+  <p>Keep C for later as a second camp action, TRAP. It's the low-reflex choice for players who'd rather plan, and it fits "same as last night" well.</p>
+  <p class="note">Where it lives: the camp's HUNT button opens the glade the way FISH opens the pond, "same as last night" still uses the quick dice roll, and the launch menu gets a practice glade. Raw meat goes in the pack as rations, like fish.</p>
+</section>
+</div>

@@ -79,6 +79,7 @@ func _sections_row() -> HBoxContainer:
 			["Continue", "back to the bookmark: where you saved and quit" if Game.has_bookmark() else "the cottage, keeping what you found", _continue],
 			["Overworld", "town, the paths, the snowy pass", _go.bind(Game.OVERWORLD)],
 			["Fishing", "Look, Strike, Reel on its own (practice: nothing goes in the pack)", _go.bind(Game.FISHING)],
+			["Hunting", "four prototypes: Bow Blind, Stalk, Snare Line, Corgi Drive (practice)", _go.bind(Game.HUNTING)],
 		]],
 		["+SHELVED", [
 			["Village hub", "team, shop, pack, the gate", _go.bind(Game.VILLAGE)],
