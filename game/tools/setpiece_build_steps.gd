@@ -19,7 +19,7 @@ func bake(path: String, force: bool) -> String:
 	if FileAccess.file_exists(out) and not force:
 		return "kept %s (already baked; --force to bake over it)" % name
 	var look := String(d.get("look", "forest"))
-	var grid := MapPlot.build({"levels": d.levels, "marks": d.marks, "flip": false}, 1, look, true, true)
+	var grid := MapPlot.build({"levels": d.levels, "marks": d.marks, "flip": false}, 1, look, false, true)  # joined below, once its own stairs are in
 	var T := CombatGrid.T
 	for c in d.get("stairs", []):  # each its own stair, so cells side by side make one wide flight
 		if not MapOps.stairs(grid, Vector2i(int(c[0]), int(c[1]))):
@@ -30,6 +30,8 @@ func bake(path: String, force: bool) -> String:
 		grid.set_height(cell, grid.height_at(cell) + 2)
 	for c in d.get("paving", []):
 		grid.set_terrain(Vector2i(int(c[0]), int(c[1])), T.STONE)
+	MapOps.link(grid, 6, 1, false)  # whatever the sketch's own stairs leave cut off (none, in a finished piece)
+	MapOps.seal_unreachable(grid)
 	for c in d.get("stones", []):
 		var cell := Vector2i(int(c[0]), int(c[1]))
 		grid.set_terrain(cell, T.STONE)

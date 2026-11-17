@@ -198,22 +198,50 @@ _L = levels(22, 18,
     ".:0-1,12 .:10-21,0-7 .:15-16,8-9 .:13-14,8")
 PIECES["tower"] = dict(
     look="alpine", art_set="snow",
-    note="N1 Ruined watchtower: an old tower on a crag above the north road, forest giving way to snow. A worn path "
-         "zig-zags up the right of the crag, a goat track climbs its left edge in the open. Bandits use the tower as a "
-         "lookout: the captain on the tower's broken top, an archer on the middle ledge, a warder at the top of the path, one "
-         "hidden in the old outer wall.",
+    note="N1 Ruined watchtower: an old tower on a crag above the north road, forest giving way to snow. One wide stone "
+         "stair climbs straight up the crag's ledges to the tower's door, paved landings between. Bandits use the tower as "
+         "a lookout: the captain on its broken top, a shield warder at the top of the stair, an archer on the middle "
+         "ledge, one hidden among the fallen stones on the left.",
     L=_L,
     road="d:0-21,13-14",
-    M=marks(_L, "Q:4-6,0-2 Z:4,0 Z:6,0 Z:4,2 Z:6,2 s:7,1 "                                                 # the tower's top, its stair
-                "s:13,12 s:9,8 s:9,5 s:2,12 s:3,8 s:2,4 "                                # the path (right) and goat track (left)
-                "B:3,10 B:3,11 B:8,11 B:3,3 B:7,3 B:5,7 "                                                   # fallen stones of the old outer wall
-                "t:16-21,9-11 t:18-20,8 t:3-4,16 t:14-16,16 t:11,10 B:4,6 B:8,7 B:18,12 B:7,15 y:16,15 "
-                "R:5,1 V:8,6 W:8,3 A:2,10 "
+    M=marks(_L, "Q:4-6,0-2 Z:4,0 Z:6,0 Z:4,1 Z:6,1 "                                                 # the tower's top, its stair
+                "S:4-6,3 S:4-6,5 S:4-6,8 S:4-6,12 Q:4-6,4 Q:4-6,6-7 Q:4-6,9-11 "                                # the path (right) and goat track (left)
+                "B:2,9 B:3,11 B:8,11 B:3,3 B:8,3 B:9,6 "                                                   # fallen stones of the old outer wall
+                "t:16-21,9-11 t:18-20,8 t:3-4,16 t:14-16,16 t:11,10 B:2,6 B:8,7 B:18,12 B:7,15 y:16,15 "
+                "R:5,1 V:8,6 W:6,4 A:2,10 "
                 "P:12,9 P:13,9 P:12,10 P:13,10 p:19,13 p:20,13 p:19,14 p:20,14"),
     foes={"R": dict(id="bandit_archer", leader=True), "V": dict(id="bandit_archer"), "W": dict(id="foe_warder"),
           "A": dict(id="ambusher", hidden=True)},
 )
 
+
+# N2 Shrine bowl: an old shrine stone in a dell beside the north road, ringed by a broken wall. The dead buried round it
+# get up. The dell opens on the road in front and on the right; behind it the hill rises, and on the left a shelf and a
+# ridge where the old wall stands and the shrine's keeper watches. Stairs climb the hill and the shelf.
+_L = levels(22, 18,
+    "0:1-19,3-12 0:0-21,13-15 0:4-17,16 .:18,8-10 .:17,11 "     # the dell's floor, open to the road in front and right
+    "1:5-15,1-3 1:16-17,3-6 "                                       # the hill it is cut into, behind
+    "1:4-5,4-11 2:0-3,4-10 .:0,4 .:0,10 "                           # the shelf and the ridge on the left, where the wall stands
+    ".:5-8,1-2 .:15,1-2 .:9-10,1 .:4,3 .:18-21,3-7 .:0-1,11-12 .:2,11-12 .:0,15 .:21,15 "   # its ragged edge
+    ".:0-3,15-16 .:16-21,15-16 .:9-12,16 .:4-5,16 .:12-14,15 .:20-21,11-12 .:19,8-11 .:18,11-12 .:1-3,3 ")
+PIECES["shrine"] = dict(
+    look="alpine", art_set="snow",
+    note="N2 Shrine bowl: an old shrine stone in a snowy hollow below the north road, ringed by a broken wall. Graves "
+         "lie round the stone and the dead in them rise. The dell opens on the road; stairs climb the hill behind and "
+         "the shelf on the left, where the keeper watches from the old wall on the ridge.",
+    L=_L,
+    road="d:0-21,14",
+    M=marks(_L, "j:10,7 "                                                # the shrine stone on its old paving
+                "g:8,5 g:12,5 g:8,9 g:12,9 g:7,7 "                                   # graves round it
+                "s:12,4 s:7,4 s:6,9 s:4,6 "                                       # down from the road and the meadow; up the ridge
+                "Z:1,6 Z:1,8 Z:3,4 Z:3,10 Z:9,2 Z:12,1 Z:17,4 "                       # the broken wall on the ridge and the rim
+                "B:17,7 y:17,12 t:0-2,13 t:13-14,1 B:3,13 "
+                "K:2,7 M:9,4 M:7,9 H:7,5 H:8,10 "
+                "P:12,8 P:13,8 P:13,9 P:14,9 p:19,13 p:20,13 p:19,14 p:20,14"),
+    props={"j": dict(sprite="village/ph_statue", tall=1.2, sight=1.0),
+           "g": dict(sprite="village/prop_grave_mound", tall=0.35, sight=0.0)},
+    foes={"K": dict(id="foe_hexer", leader=True), "M": dict(id="lich_minion"), "H": dict(id="lich_minion", hidden=True)},
+)
 
 def sketch(pid):
     p = PIECES[pid]

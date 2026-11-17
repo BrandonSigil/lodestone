@@ -10,8 +10,8 @@
 		},
 		{
 			"id": "foe_warder",
-			"x": 8,
-			"y": 3
+			"x": 6,
+			"y": 4
 		},
 		{
 			"id": "bandit_archer",
@@ -37,18 +37,18 @@
 		"h": 18,
 		"heights": [
 			"0000b9b770000000000000",
-			"0007999877000000000000",
-			"0077b9b777000000000000",
+			"0007b9b777000000000000",
+			"0077999777000000000000",
+			"0077888777000000000000",
 			"0077777777000000000000",
-			"0067777777000000000000",
-			"0055555556000000000000",
+			"0055666555000000000000",
 			"0055555555000000000000",
 			"0055555555000000000000",
-			"0034333334333000011110",
+			"0033444333333000011110",
 			"0333333333333330011111",
 			"0333333333333331111111",
 			"0333333333333331111111",
-			"0021111111111211111111",
+			"0011222111111111111111",
 			"1111111111111111111111",
 			"1111111111111111111111",
 			"0111111111111111111110",
@@ -75,7 +75,7 @@
 			},
 			{
 				"cell": [
-					7,
+					8,
 					3
 				],
 				"foot": [
@@ -89,7 +89,7 @@
 			},
 			{
 				"cell": [
-					4,
+					2,
 					6
 				],
 				"foot": [
@@ -103,8 +103,8 @@
 			},
 			{
 				"cell": [
-					5,
-					7
+					9,
+					6
 				],
 				"foot": [
 					1,
@@ -131,8 +131,8 @@
 			},
 			{
 				"cell": [
-					3,
-					10
+					2,
+					9
 				],
 				"foot": [
 					1,
@@ -216,18 +216,18 @@
 		],
 		"terrain": [
 			"....usugg.............",
-			"...gsgstgg............",
-			"..ggusuggg............",
-			"..gggggggg............",
-			"..tggggggg............",
-			"..gggggggt............",
-			"..gggggggg............",
-			"..gggggggg............",
-			"..gtgggggtggg....gfff.",
-			".gggggggggggggg..fffff",
-			".ggggggggggfggggffffff",
-			".gggggggggggggggffffff",
-			"..tggggggggggtgggggggg",
+			"...guguggg............",
+			"..ggsssggg............",
+			"..ggtttggg............",
+			"..ggssgggg............",
+			"..ggtttggg............",
+			"..ggsssggg............",
+			"..ggsssggg............",
+			"..ggtttgggggg....gfff.",
+			".gggsssgggggggg..fffff",
+			".gggsssggggfggggffffff",
+			".gggsssgggggggggffffff",
+			"..ggtttggggggggggggggg",
 			"dddddddddddddddddddddd",
 			"dddddddddddddddddddddd",
 			".gggggggggggggggggggg.",
@@ -268,7 +268,7 @@
 	},
 	"piece": {
 		"exit": [],
-		"note": "N1 Ruined watchtower: an old tower on a crag above the north road, forest giving way to snow. A worn path zig-zags up the right of the crag, a goat track climbs its left edge in the open. Bandits use the tower as a lookout: the captain on the tower's broken top, an archer on the middle ledge, a warder at the top of the path, one hidden in the old outer wall.",
+		"note": "N1 Ruined watchtower: an old tower on a crag above the north road, forest giving way to snow. One wide stone stair climbs straight up the crag's ledges to the tower's door, paved landings between. Bandits use the tower as a lookout: the captain on its broken top, a shield warder at the top of the stair, an archer on the middle ledge, one hidden among the fallen stones on the left.",
 		"out": [
 			[
 				19,

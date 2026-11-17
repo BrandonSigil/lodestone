@@ -1,0 +1,276 @@
+{
+	"art_set": "snow",
+	"counters": false,
+	"enemies": [
+		{
+			"id": "lich_minion",
+			"x": 9,
+			"y": 4
+		},
+		{
+			"hidden": true,
+			"id": "lich_minion",
+			"x": 7,
+			"y": 5
+		},
+		{
+			"id": "foe_hexer",
+			"leader": true,
+			"x": 2,
+			"y": 7
+		},
+		{
+			"id": "lich_minion",
+			"x": 7,
+			"y": 9
+		},
+		{
+			"hidden": true,
+			"id": "lich_minion",
+			"x": 8,
+			"y": 10
+		}
+	],
+	"enemy_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"extra_enemies": 0,
+	"map": {
+		"h": 18,
+		"heights": [
+			"0000000000000000000000",
+			"0000000000035330000000",
+			"0000000005333330000000",
+			"0000033333333333330000",
+			"0557331211112111350000",
+			"5555331111111111330000",
+			"5755431111111111330000",
+			"5555331111111111110000",
+			"5755331111111111110000",
+			"5555332111111111110000",
+			"0557331111111111110000",
+			"0001331111111111100000",
+			"0001111111111111110100",
+			"1111111111111111111111",
+			"1111111111111111111111",
+			"0000111111110001000000",
+			"0000001110000111000000",
+			"0000000000000000000000"
+		],
+		"look": {
+			"id": "alpine"
+		},
+		"props": [
+			{
+				"cell": [
+					8,
+					5
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_grave_mound",
+				"tall": 0.35,
+				"walk": false
+			},
+			{
+				"cell": [
+					12,
+					5
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_grave_mound",
+				"tall": 0.35,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					7
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_grave_mound",
+				"tall": 0.35,
+				"walk": false
+			},
+			{
+				"cell": [
+					10,
+					7
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/ph_statue",
+				"tall": 1.2,
+				"walk": false
+			},
+			{
+				"cell": [
+					17,
+					7
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_grave_mound",
+				"tall": 0.35,
+				"walk": false
+			},
+			{
+				"cell": [
+					12,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_grave_mound",
+				"tall": 0.35,
+				"walk": false
+			},
+			{
+				"cell": [
+					17,
+					12
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					13
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			}
+		],
+		"terrain": [
+			"......................",
+			"...........guff.......",
+			".........uggggg.......",
+			".....ggggggggggggg....",
+			".ggugggtggggtggggu....",
+			"gggggggggggggggggg....",
+			"guggtggggggggggggg....",
+			"gggggggggggggggggg....",
+			"gugggggggggggggggg....",
+			"ggggggtggggggggggg....",
+			".ggugggggggggggggg....",
+			"...gggggggggggggg.....",
+			"...ggggggggggggggg.g..",
+			"fffggggggggggggggggggg",
+			"dddddddddddddddddddddd",
+			"....gggggggg...g......",
+			"......ggg....ggg......",
+			"......................"
+		],
+		"w": 22
+	},
+	"name": "sp_shrine",
+	"party": [
+		{
+			"id": "lead",
+			"x": 12,
+			"y": 8
+		},
+		{
+			"id": "stardrop",
+			"x": 13,
+			"y": 8
+		},
+		{
+			"id": "hunter",
+			"x": 13,
+			"y": 9
+		},
+		{
+			"id": "knight",
+			"x": 14,
+			"y": 9
+		}
+	],
+	"party_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"piece": {
+		"exit": [],
+		"note": "N2 Shrine bowl: an old shrine stone in a snowy hollow below the north road, ringed by a broken wall. Graves lie round the stone and the dead in them rise. The dell opens on the road; stairs climb the hill behind and the shelf on the left, where the keeper watches from the old wall on the ridge.",
+		"out": [
+			[
+				19,
+				13
+			],
+			[
+				20,
+				13
+			],
+			[
+				19,
+				14
+			],
+			[
+				20,
+				14
+			]
+		]
+	},
+	"seed": 1,
+	"strangeness": 0.0,
+	"supplies": {
+		"food": 10,
+		"medicine": 3
+	},
+	"view": 0
+}

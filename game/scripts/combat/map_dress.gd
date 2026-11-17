@@ -101,8 +101,8 @@ static func stair_run(grid: CombatGrid, c: Vector2i) -> Dictionary:
 			var n := c + e
 			if not grid.solid(n) or not grid.passable(n):
 				continue
-			if grid.terrain_at(n) == CombatGrid.T.STAIRS:
-				score += 100.0
+			if grid.terrain_at(n) == CombatGrid.T.STAIRS and grid.height_at(n) != grid.height_at(c):
+				score += 100.0  # the next step of the same flight (a stair beside it at its own height is the same step, wider)
 			score += absf(float(grid.height_at(n)) - h)
 		# a climb has a low side and a high side: an axis whose two sides both sit lower (the shelf a stair is cut
 		# into) is not the way up ([USER] 2026-11-16: "theyre facing east when the cliffs are north")

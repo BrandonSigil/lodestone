@@ -1364,3 +1364,5 @@ OPT_DRIVE,DRIVE THEM BACK
 EV_TR_TOWER,"An old watchtower stands on a crag above the road. Smoke rises from its broken top."
 OPT_CLIMB_UP,CLIMB UP
 OPT_SNEAK_ROUND,SNEAK ROUND
+OPT_GO_DOWN,GO DOWN
+EV_TR_SHRINE,"Below the road, a ring of broken stones circles an old shrine in the snow. Grave mounds lie around it."
