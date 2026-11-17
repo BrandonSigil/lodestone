@@ -19,3 +19,5 @@ first_road,wolf|wolf,food:+1,,,
 wagon_in,,food:+1;gold:+8,,sp_wagon,in
 wagon_out,,food:+1;gold:+8,,sp_wagon,out
 bulls_in,,food:+2,defeat|exit,sp_bulls,in
+falls_in,,food:+1;gold:+10,,sp_falls,in
+falls_out,,food:+1;gold:+10,,sp_falls,out

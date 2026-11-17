@@ -123,6 +123,36 @@ PIECES["bulls"] = dict(
     foes={"U": dict(id="foe_bull")},
 )
 
+# ---- W2 Stepping-stone falls. A forest river drops off a rock shelf at the back of the map. An old footbridge
+# crosses it on top, right at the lip of the falls; below, where the river spreads out shallow, travellers ford it
+# on four stepping stones. The road comes from the right, fords, and goes on left. A trail climbs each bank in two
+# steps (valley, shelf, top) to the bridge: the long, dry way round. The bandits hold the far (left) bank: one at
+# the stones' end, archers on the left shelf over the ford and on the top by the bridge. Anyone pushed into the river
+# is swept downstream and washes up on a bank (CombatRules.sweep).
+_L = levels(24, 18,
+    "2:4-18,0-4 .:4,0 .:18,0 .:18,4 2:5-7,5 1:8-9,5 "                     # the top, the river's shelf
+    "1:3-9,6-9 .:3,6 1:2,7 1:12-18,5-8 .:18,8 "                   # left bank shelf, right bank knoll, both to the gorge
+    "0:1-9,10-17 .:1,10 .:1-3,15-17 .:4-7,17 "                    # left valley floor
+    "0:12-22,9-15 .:22,9-10 .:19-22,14-15 .:21-22,13 0:12-14,16-17 .:14,17 "  # right valley floor
+    "2:10-11,0-4 0:10-11,5-17 "                                   # the river: on top, the falls, below
+    ".:16-18,0 .:15-18,1 .:17-18,2-3 .:16-18,4 .:1-2,13-14 .:17-18,14 .:15,16 .:13-15,0 .:1,11-12 .:19-20,13 .:19-21,9 .:20-21,10 .:2,10 .:2-3,7 .:18,5-7 .:16-18,13 .:4,15-16")  # the forest closing in
+PIECES["falls"] = dict(
+    look="forest", art_set="forest",
+    note="W2 Stepping-stone falls: a river falls off a rock shelf. An old track crosses it on a footbridge at the top "
+         "of the falls; below, the road fords it on a zig-zag of stepping stones. A trail climbs each side of the gorge, "
+         "valley to shelf to top: the dry way round, close to the edge. Bandits hold the left bank: one by the stones, "
+         "an archer on the shelf over the ford and one by the bridge.",
+    L=_L,
+    road="d:13-23,12 d:1-8,12 d:4-9,2 d:12-18,2",
+    M=marks(_L, "w:10-11,0-1 w:10-11,3-17 w:9,11-13 w:12,10-12 b:10-11,2 "                  # river, ford pool, bridge
+                "o:9,12 o:10,12 o:10,11 o:11,11 o:12,11 "                                  # the stones
+                "s:13,9 s:13,5 s:8,10 s:8,5 d:13,6-8 d:13,3-4 d:8,6-9 d:8,3-4 d:9,4 d:12,4 "    # the two gorge trails
+                "t:4-5,1-2 t:12,0 t:7,0 T:16,3 T:4,7 T:17,6 T:4,14 T:21,12 "
+                "B:6,7 B:15,10 B:7,13 B:16,6 y:14,13 y:3,10 e:8,11 e:9,14 e:12,14 "
+                "R:7,8 R:8,3 N:3,11 A:7,14 "
+                "P:13,10 P:13,11 P:13,12 P:14,11 p:20,11 p:21,12 p:20,12 p:21,11"),
+    foes={"R": dict(id="bandit_archer"), "N": dict(id="bandit"), "A": dict(id="ambusher", hidden=True)},
+)
 
 def sketch(pid):
     p = PIECES[pid]
@@ -140,7 +170,7 @@ def sketch(pid):
     for y, row in enumerate(M):
         marks = ""
         for x, ch in enumerate(row):
-            marks += "d" if (x, y) in road and ch not in "wbsrtS" else (ch if ch in PLOT else " ")
+            marks += "d" if (x, y) in road and ch not in "wbsrtSoke" else (ch if ch in PLOT else " ")
             if ch in PLOT or ch == "#":
                 continue
             assert L[y][x] != ".", (pid, "thing outside the map", ch, x, y)

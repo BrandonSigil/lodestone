@@ -175,7 +175,26 @@ static func _lay_stairs(g: CombatGrid, cells: Array[Vector2i]) -> void:
 			break
 		if not laid:
 			left.erase(c)
-			if not MapOps.stairs(g, c):
+			# a lone stair climbs between the two dry sides that differ (never from river water at its foot)
+			var best := Vector2i.ZERO
+			for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
+				var a := c - d
+				var b := c + d
+				if not g.in_bounds(a) or not g.in_bounds(b) or g.terrain_at(a) == T.WATER or g.terrain_at(b) == T.WATER:
+					continue
+				if not g.solid(a) or not g.solid(b) or g.height_at(a) == g.height_at(b):
+					continue
+				if best == Vector2i.ZERO or absi(g.height_at(a) - g.height_at(b)) > absi(g.height_at(c - best) - g.height_at(c + best)):
+					best = d
+			if best != Vector2i.ZERO:
+				var lo := c - best
+				var hi := c + best
+				if g.height_at(lo) > g.height_at(hi):
+					var t := lo
+					lo = hi
+					hi = t
+				MapOps.flight(g, lo, hi)
+			elif not MapOps.stairs(g, c):
 				g.set_terrain(c, T.GRASS)
 
 

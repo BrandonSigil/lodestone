@@ -31,6 +31,18 @@ fence, in the cell next to the target on the shooter's side, counts as cover (th
 with it). It does not count when the shooter is two or more levels above, or for a target on a bridge deck. So the
 side of the wagon you stand on matters.
 
+## Rivers and stepping stones
+
+- **Swept away** (built for W2, `CombatRules.sweep`): a piece pushed into river water is carried downstream instead of
+  bumping: toward where the river leaves the map at its lowest edge, up to 3 cells, then it washes up on the nearest
+  free bank, taking 2 damage (`SWEPT_DAMAGE`). Water that never leaves the map (a pond, a lake) still bumps. Ice
+  pillars aren't swept.
+- **Stepping stones**: a stone tile with river water on two or more sides is drawn as a round stone standing
+  in the water (`CombatBoard._ford_stone`), so a ford reads as separate steps, not a paved causeway. This also changes
+  the fords the random plots lay.
+- **Lone stairs beside water** (`MapPlot._lay_stairs`): a single stair mark climbs between the two dry cells either side
+  of it, never from the river at its foot (a trail up the side of a gorge).
+
 ## Building one
 
 Maps are typed as plain text in `tools/setpieces/seed_pieces.py` (levels, water, road, things, foes, both starts),
@@ -81,6 +93,7 @@ foe and exit tile can be walked to, and foes hide only from a party that walked 
 | Id | Road | Landmark | Event | Encounters | Notes |
 |---|---|---|---|---|---|
 | W1 `sp_wagon` | west | hillside road, the wagon across it, thieves' camp below the road and lookout knob above, both on the left | `tr_wagon` | `wagon_in`, `wagon_out` | three hidden ambushers by the spilled load, an archer on the knob; the woodcutters' trail on the right lets the party climb the bank |
+| W2 `sp_falls` | west | river falling off a shelf, footbridge on top, zig-zag stepping stones below, a trail up each side of the gorge | `tr_falls` | `falls_in`, `falls_out` | hidden ambusher at the stones' far end, bandit on the left bank, archers on the shelf and by the bridge; anyone kicked off a stone is swept downstream |
 | E2 `sp_bulls` | east | farm by the road: barn on a low rise with one stair, lane, broken corral and stock pond on the left, well and mown hay field on the right | `tr_bulls` | `bulls_in` | three bulls loose on the left; win by beating them or reaching the barn door |
 
 The tipped wagon uses the upright cart art until Brandon draws a tipped one. Event lines are Claude's drafts,

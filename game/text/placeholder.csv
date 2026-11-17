@@ -196,6 +196,7 @@ QUEST_WALL,SEE THE WALL. lorem ipsum ipsum.
 UI_ROUND,ROUND %d
 UI_BUMP,BUMP
 UI_FALL,FALL
+UI_SWEPT,SWEPT
 UI_COUNTER,HIT BACK
 UI_COUNTER_PREVIEW,THEY HIT BACK  DMG %s  CRIT %d%%
 TAG_GUARD,GUARD
@@ -1352,4 +1353,8 @@ EV_TR_BULLS,"Bulls have broken out of a corral by the road. They look angry."
 OPT_SEARCH_WAGON,LOOK FOR LOOT
 OPT_HELP,LOOK FOR SURVIVORS
 OPT_WALK_PAST,WALK PAST
+EV_TR_FALLS,"The road fords a river below a waterfall. Stepping stones lead across. An old footbridge spans the top of the falls."
+OPT_CROSS_STONES,CROSS THE STONES
+OPT_SCOUT,SCOUT FIRST
+OPT_TURN_BACK,TURN BACK
 OPT_DRIVE,DRIVE THEM BACK

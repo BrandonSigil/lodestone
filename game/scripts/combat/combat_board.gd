@@ -1284,6 +1284,9 @@ func _tint(t: int) -> Color:
 ## The still part of a cell (GROUND slab): its faces down to the neighbours in front, grass lips, the top,
 ## stairs, ledge lines. Falling water, overlays and props are drawn by the LIVE slab.
 func _draw_ground(c: Vector2i) -> void:
+	if _ford_water(c) != Vector2i(-1, -1):
+		_ford_stone(c, _surf(c))
+		return
 	if _kit_wall(c):
 		_plug(c, _surf(c))  # under a wall-kit piece (on the room's edge, _wall_piece): solid dark rock
 		return
@@ -3903,6 +3906,16 @@ func _water_colour(c: Vector2i) -> Color:
 
 ## A water cell's surface, or the water a bank's rounded-off corners show (WATER slab).
 func _draw_water(c: Vector2i) -> void:
+	var ford := _ford_water(c)
+	if ford != Vector2i(-1, -1):  # a stepping stone: the river runs on under and round it
+		var wh := _surf(ford)
+		var wp := PackedVector2Array()
+		var wu := PackedVector2Array()
+		for k in [Vector2(c), Vector2(c.x + 1, c.y), Vector2(c) + Vector2.ONE, Vector2(c.x, c.y + 1)]:
+			wp.append(iso(k.x, k.y, wh))
+			wu.append(k)
+		_water_poly(wp, wu, _water_colour(ford))
+		return
 	if grid.terrain_at(c) == CombatGrid.T.WATER:
 		var h := _surf(c)
 		var pts := PackedVector2Array()
@@ -3924,6 +3937,48 @@ func _draw_water(c: Vector2i) -> void:
 		for q: Vector2 in poly:
 			pts.append(iso(q.x, q.y, g.h))
 		_water_poly(pts, poly, _water_colour(g.src))
+
+
+## A stepping stone: a STONE cell with river water on two or more sides (a ford, straight or zig-zag). Returns one of those
+## water cells (whose height and colour the water under the stone takes), or (-1, -1).
+func _ford_water(c: Vector2i) -> Vector2i:
+	if not grid.in_bounds(c) or grid.terrain_at(c) != CombatGrid.T.STONE:
+		return Vector2i(-1, -1)
+	var wet: Array[Vector2i] = []
+	for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		if grid.in_bounds(c + d) and grid.terrain_at(c + d) == CombatGrid.T.WATER:
+			wet.append(c + d)
+	return wet[0] if wet.size() >= 2 else Vector2i(-1, -1)
+
+
+## The stone itself, drawn over the ford's water (GROUND slab): a flat-topped boulder a little smaller than the tile,
+## so the water shows round it and each stone reads as its own step.
+func _ford_stone(c: Vector2i, h: float) -> void:
+	var col := Color(0.62, 0.6, 0.56)
+	var ink := Color(0.215, 0.2, 0.208)
+	var cx := c.x + 0.5
+	var cy := c.y + 0.5
+	var r := 0.36 + float(_hash(c) % 5) * 0.012
+	var base := h - 0.55
+	var top := PackedVector2Array()
+	var side := PackedVector2Array()
+	for k in 20:
+		var a := TAU * k / 20.0
+		top.append(iso(cx + cos(a) * r, cy + sin(a) * r, h))
+	for k in 20:  # the front half's wall, down to the water
+		var a := TAU * k / 20.0
+		side.append(iso(cx + cos(a) * r, cy + sin(a) * r, base))
+	var wall := PackedVector2Array()
+	for p in side:
+		wall.append(p)
+	_ci.draw_colored_polygon(_hull(top + side), col.darkened(0.3))
+	_ci.draw_colored_polygon(top, col)
+	top.append(top[0])
+	_ci.draw_polyline(top, ink, 1.5, true)
+
+
+func _hull(pts: PackedVector2Array) -> PackedVector2Array:
+	return Geometry2D.convex_hull(pts)
 
 
 func _water_poly(pts: PackedVector2Array, uvs: PackedVector2Array, col: Color) -> void:

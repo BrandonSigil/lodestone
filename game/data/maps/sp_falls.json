@@ -1,0 +1,341 @@
+{
+	"art_set": "forest",
+	"counters": false,
+	"enemies": [
+		{
+			"id": "bandit_archer",
+			"x": 8,
+			"y": 3
+		},
+		{
+			"id": "bandit_archer",
+			"x": 7,
+			"y": 8
+		},
+		{
+			"id": "bandit",
+			"x": 3,
+			"y": 11
+		},
+		{
+			"hidden": true,
+			"id": "ambusher",
+			"x": 7,
+			"y": 14
+		}
+	],
+	"enemy_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"extra_enemies": 0,
+	"map": {
+		"decks": [
+			{
+				"b": true,
+				"h": 5,
+				"t": "s",
+				"x": 10,
+				"y": 2
+			},
+			{
+				"b": true,
+				"h": 5,
+				"t": "s",
+				"x": 11,
+				"y": 2
+			}
+		],
+		"h": 18,
+		"heights": [
+			"000005555544500000000000",
+			"000055555544555000000000",
+			"000055555544555550000000",
+			"000055555544555550000000",
+			"000055555544555500000000",
+			"000005554300343333000000",
+			"000033333300333333000000",
+			"000033333300333333000000",
+			"000333333300333333000000",
+			"000333333300121111100000",
+			"000111112100011111110000",
+			"001111111022211111111110",
+			"001111111220011111111110",
+			"000111111000111100000000",
+			"000111111100111110000000",
+			"000001111100111111100000",
+			"000001111100111000000000",
+			"000000001100110000000000"
+		],
+		"look": {
+			"id": "forest"
+		},
+		"props": [
+			{
+				"cell": [
+					16,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					17,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					7
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					6,
+					7
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					15,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					11
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_reeds",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					13
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					13
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					14
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					9,
+					14
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_reeds",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					12,
+					14
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_reeds",
+				"tall": 0.6,
+				"walk": false
+			}
+		],
+		"terrain": [
+			".....ggfggwwf...........",
+			"....ffggggwwggg.........",
+			"....ffddddwwddddd.......",
+			"....ggggggwwgdggg.......",
+			"....ggggddwwddgg........",
+			".....gggtgwwgtgggg......",
+			"....ggggdgwwgdgggg......",
+			"....ggggdgwwgdgggg......",
+			"...gggggdgwwgdgggg......",
+			"...gggggdgwwgtggggg.....",
+			"...gggggtgwwwggggggg....",
+			"..gggggggwsssgggggggggg.",
+			"..dddddddsswwdddddddddd.",
+			"...ggggggwwwgggg........",
+			"...gggggggwwggggg.......",
+			".....gggggwwggggggg.....",
+			".....gggggwwggg.........",
+			"........ggwwgg.........."
+		],
+		"w": 24
+	},
+	"name": "sp_falls",
+	"party": [
+		{
+			"id": "lead",
+			"x": 13,
+			"y": 10
+		},
+		{
+			"id": "stardrop",
+			"x": 13,
+			"y": 11
+		},
+		{
+			"id": "hunter",
+			"x": 14,
+			"y": 11
+		},
+		{
+			"id": "knight",
+			"x": 13,
+			"y": 12
+		}
+	],
+	"party_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"piece": {
+		"exit": [],
+		"note": "W2 Stepping-stone falls: a river falls off a rock shelf. An old track crosses it on a footbridge at the top of the falls; below, the road fords it on a zig-zag of stepping stones. A trail climbs each side of the gorge, valley to shelf to top: the dry way round, close to the edge. Bandits hold the left bank: one by the stones, an archer on the shelf over the ford and one by the bridge.",
+		"out": [
+			[
+				20,
+				11
+			],
+			[
+				21,
+				11
+			],
+			[
+				20,
+				12
+			],
+			[
+				21,
+				12
+			]
+		]
+	},
+	"seed": 1,
+	"strangeness": 0.0,
+	"supplies": {
+		"food": 10,
+		"medicine": 3
+	},
+	"view": 0
+}
