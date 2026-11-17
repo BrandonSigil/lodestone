@@ -269,6 +269,62 @@ PIECES["rope"] = dict(
           "A": dict(id="ambusher", hidden=True)},
 )
 
+# E1 Scarecrow farm: a farmhouse by the east road, its yard fenced, a well; on the left a field in crop rows with more
+# scarecrows than any farmer needs. The real ones stand in the beds; the ones on the paths are straw men, standing
+# still like the rest (post) until someone comes close or strikes one. Knocking puts the party at the yard gate; the field is between them and the road west.
+_L = levels(24, 16,
+    "0:0-23,0-15 .:0,0-11 .:0,14-15 .:23,0-11 .:23,14-15 "
+    ".:1-3,0-1 .:1,2 .:11-13,0 .:21-22,0-2 .:22,3 .:1,13-15 .:2-4,15 .:10-13,15 .:20-22,14-15 .:16-19,15 .:18-19,2-3 "
+    ".:1,6 .:22,8 .:1,3-11 .:10-12,0-1 .:18-23,0-1 .:19-23,2 .:1-6,14-15 .:2-3,13 .:17-23,14 .:22,9-11 .:10-11,14 .:21-23,8-11 .:12-15,15 .:13,14 .:4-9,0-1 .:14-16,14 .:22,3-7 .:2,10 ")
+PIECES["farm"] = dict(
+    look="farmland", art_set="farmland",
+    note="E1 Scarecrow farm: a farmhouse by the east road, its yard fenced with a well and hay; on the left a field "
+         "in crop rows, real scarecrows in the beds. The figures on the paths are straw men: they stand still like "
+         "the rest until someone comes close or strikes one.",
+    L=_L,
+    road="d:15-16,4-11 d:0-23,12-13",
+    M=marks(_L, "H:15,1 #:16-17,1 #:15-17,2-3 "                                    # the farmhouse, its door to the lane
+                "f:13-14,6 f:17-20,6 f:13,1-5 f:20,3-5 W:18,4 #:19,4 #:18-19,5 h:14,3 h:14,1 "   # yard fence, gate at the lane; well, hay
+                "K:2-3,2-3 K:5-6,2-3 K:8-9,2-3 K:2-3,5-6 K:5-6,5-6 K:8-9,5-6 K:2-3,8-9 K:5-6,8-9 K:8-9,8-9 "   # the field: crop beds, paths between
+                "C:2,3 C:9,5 C:5,9 C:3,8 x:12,7 "
+                "T:19,9 T:20,10 t:21,4-7 T:2,11 y:12,9 h:13,10 h:19,11 "
+                "M:4,4 M:7,7 M:10,4 M:4,10 "
+                "P:15,7 P:16,7 P:15,8 P:16,8 p:20,12 p:21,12 p:20,13 p:21,13"),
+    props={"H": dict(sprite="village/b_home_a", foot=[3, 3], tall=0.0, sight=3.0),
+           "W": dict(sprite="village/prop_well", foot=[2, 2], tall=1.8, sight=1.0),
+           "K": dict(sprite="village/prop_crops", tall=0.5, sight=0.5, walk=True)},
+    foes={"C": dict(id="scarecrow"), "M": dict(id="foe_scarecrow", post=True)},
+)
+
+# E3 Windmill hill: a windmill on a terraced hill above the east road, wheat on the terraces. A cart track climbs
+# straight from the road to the mill in two wide flights of steps; the farmers' own steps come up from the meadow
+# to the wheat and from the wheat to the mill's back. Bandits hold the mill: their captain by its door,
+# an archer on the hilltop's edge, men in the wheat, one lying low in it. Fences along the terraces are the cover.
+_L = levels(22, 16,
+    "0:0-21,11-14 0:12-20,4-10 0:15-19,2-3 "                          # the road and the meadow east of the hill
+    "1:1-11,1-10 2:3-8,1-6 "                                           # the wheat terrace, the hilltop
+    ".:1-2,1-2 .:1,3-4 .:10-11,1 .:0,14 .:21,14 .:0-2,15 .:3-21,15 .:19-21,4-5 .:20-21,6-8 .:12-14,4 .:1,10 .:21,9-10 "
+    ".:3,1 .:8,1 .:15-19,2-3 .:16-21,4-6 .:19-21,7-9 .:0,5-9 .:12-13,5 .:1-3,14 .:18-21,14 .:12,1-3 .:9-11,1 .:14-15,4 .:11-13,14 .:20-21,10-11 .:1,9 .:2,10 .:16-18,7 .:14-16,14 ")
+PIECES["mill"] = dict(
+    look="farmland", art_set="farmland",
+    note="E3 Windmill hill: a windmill on a terraced hill above the east road, wheat on the terraces. A cart track "
+         "climbs straight from the road to the mill in two wide flights. Bandits hold the mill: their captain by its "
+         "door, an archer on the hilltop's edge, men in the wheat, one lying low in it. Fences along the terraces.",
+    L=_L,
+    road="d:0-21,12-13 d:4-6,8-10",
+    M=marks(_L, "M:5,2 #:6,2 #:5-6,3 "                                           # the mill, its door to the track
+                "S:4-6,7 S:4-6,11 s:12,9 s:9,5 "                                             # the track's two flights, lined up on the mill
+                "f:3,6 f:7-8,6 f:3,10 f:7-8,10 x:4,9 "                                  # fences along the terrace lips, either side of the track
+                "K:9-11,2-4 K:9-11,6-8 K:1,5-6 K:1-2,7-8 "                        # wheat on the terrace, in beds
+                "h:13,6 h:14,8 x:4,4 c:7,4 T:15,5 T:18,10 T:0,11 y:17,10 B:12,10 "
+                "R:6,4 V:8,3 N:5,9 L:9,7 A:1,6 "
+                "P:11,12 P:12,12 P:11,13 P:12,13 p:16,8 p:17,8 p:16,9 p:17,9"),
+    props={"M": dict(sprite="village/prop_windmill", foot=[2, 2], tall=2.6, sight=2.0, flip=True),
+           "K": dict(sprite="village/prop_crops", tall=0.5, sight=0.5, walk=True)},
+    foes={"R": dict(id="bandit_archer", leader=True, post=True), "V": dict(id="bandit_archer"), "N": dict(id="bandit"),
+          "L": dict(id="bandit"), "A": dict(id="ambusher", hidden=True)},
+)
+
 def sketch(pid):
     p = PIECES[pid]
     L, M = p["L"], p["M"]

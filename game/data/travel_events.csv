@@ -12,3 +12,5 @@ tr_lake,4,0,1,,EV_TR_LAKE,OPT_KNOCK,fight,0,combat:lake_in,,OPT_PEEK_IN,fight,0,
 tr_tower,4,0,1,,EV_TR_TOWER,OPT_CLIMB_UP,fight,0,combat:tower_in,,OPT_SNEAK_ROUND,sneak,12,combat:tower_out,combat:tower_in,OPT_LEAVE,none,0,,,pass|dwarven_mines|snowy_plains|frozen_dam
 tr_shrine,4,0,1,,EV_TR_SHRINE,OPT_GO_DOWN,fight,0,combat:shrine_in,,OPT_SCOUT,sneak,12,combat:shrine_out,combat:shrine_in,OPT_LEAVE,none,0,,,pass|dwarven_mines|snowy_plains|frozen_dam
 tr_rope,4,0,1,,EV_TR_ROPE,OPT_CROSS,fight,0,combat:rope_in,,OPT_SCOUT,sneak,12,combat:rope_out,combat:rope_in,OPT_TURN_BACK,none,0,,,pass|dwarven_mines|snowy_plains|frozen_dam
+tr_farm,4,0,1,,EV_TR_FARM,OPT_KNOCK,fight,0,combat:farm_in,,OPT_SCOUT,sneak,12,combat:farm_out,combat:farm_in,OPT_LEAVE,none,0,,,farmland|grassland
+tr_mill,4,0,1,,EV_TR_MILL,OPT_CLIMB_UP,fight,0,combat:mill_in,,OPT_SCOUT,sneak,12,combat:mill_out,combat:mill_in,OPT_LEAVE,none,0,,,farmland|grassland

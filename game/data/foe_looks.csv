@@ -18,3 +18,5 @@ strange_thing,blob,1.05,8a5aa8,e0a050,,stalks,,odd thing from past the Wall
 bat,flyer,0.9,5a4a5e,3a2e40,,ears,,flying
 spider,spider,1.0,4a3e3a,c04838,,,,eight legs
 ice_pillar,crystal,1.1,a8d4e8,e8f6ff,,,,summoned pillar
+scarecrow,biped,1.0,d8b65a,7a5c34,,witch,,placeholder look: a farm scarecrow of straw in a floppy hat
+foe_scarecrow,biped,1.0,d8b65a,7a5c34,,witch,,placeholder look: the same as a real scarecrow until it moves

@@ -1,0 +1,701 @@
+{
+ "id": "farm",
+ "look": "farmland",
+ "art_set": "farmland",
+ "note": "E1 Scarecrow farm: a farmhouse by the east road, its yard fenced with a well and hay; on the left a field in crop rows, real scarecrows in the beds. The figures on the paths are straw men: they stand still like the rest until someone comes close or strikes one.",
+ "levels": [
+  "..............0000......",
+  ".............00000......",
+  "..0000000000000000......",
+  "..0000000000000000..00..",
+  "..00000000000000000000..",
+  "..00000000000000000000..",
+  "..00000000000000000000..",
+  "..00000000000000000000..",
+  "..0000000000000000000...",
+  "..0000000000000000000...",
+  "...000000000000000000...",
+  "..0000000000000000000...",
+  "000000000000000000000000",
+  "0...00000000000000000000",
+  ".......000..0...........",
+  ".......000.............."
+ ],
+ "marks": [
+  "                        ",
+  "                        ",
+  "                        ",
+  "                        ",
+  "               dd    t  ",
+  "               dd    t  ",
+  "               dd    t  ",
+  "               dd    t  ",
+  "               dd       ",
+  "               dd       ",
+  "               dd       ",
+  "               dd       ",
+  "dddddddddddddddddddddddd",
+  "dddddddddddddddddddddddd",
+  "                        ",
+  "                        "
+ ],
+ "props": [
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    13,
+    1
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    14,
+    1
+   ]
+  },
+  {
+   "sprite": "village/b_home_a",
+   "foot": [
+    3,
+    3
+   ],
+   "tall": 0.0,
+   "sight": 3.0,
+   "cell": [
+    15,
+    1
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    2,
+    2
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    3,
+    2
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    5,
+    2
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    6,
+    2
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    8,
+    2
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    9,
+    2
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    13,
+    2
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    3,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    5,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    6,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    8,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    9,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    13,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    14,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    20,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    13,
+    4
+   ]
+  },
+  {
+   "sprite": "village/prop_well",
+   "foot": [
+    2,
+    2
+   ],
+   "tall": 1.8,
+   "sight": 1.0,
+   "cell": [
+    18,
+    4
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    20,
+    4
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    2,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    3,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    5,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    6,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    8,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    13,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    20,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    2,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    3,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    5,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    6,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    8,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    9,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    13,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    14,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    17,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    18,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    19,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    20,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_crates",
+   "tall": 0.8,
+   "sight": 0.0,
+   "cell": [
+    12,
+    7
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    2,
+    8
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    5,
+    8
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    6,
+    8
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    8,
+    8
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    9,
+    8
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    2,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    3,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    6,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    8,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    9,
+    9
+   ]
+  },
+  {
+   "sprite": "prop_bush",
+   "tall": 0.55,
+   "sight": 0.5,
+   "cell": [
+    12,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    19,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    13,
+    10
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    20,
+    10
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    2,
+    11
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    19,
+    11
+   ]
+  }
+ ],
+ "party": [
+  [
+   15,
+   7
+  ],
+  [
+   16,
+   7
+  ],
+  [
+   15,
+   8
+  ],
+  [
+   16,
+   8
+  ]
+ ],
+ "out": [
+  [
+   20,
+   12
+  ],
+  [
+   21,
+   12
+  ],
+  [
+   20,
+   13
+  ],
+  [
+   21,
+   13
+  ]
+ ],
+ "foes": [
+  {
+   "id": "scarecrow",
+   "cell": [
+    2,
+    3
+   ]
+  },
+  {
+   "id": "foe_scarecrow",
+   "post": true,
+   "cell": [
+    4,
+    4
+   ]
+  },
+  {
+   "id": "foe_scarecrow",
+   "post": true,
+   "cell": [
+    10,
+    4
+   ]
+  },
+  {
+   "id": "scarecrow",
+   "cell": [
+    9,
+    5
+   ]
+  },
+  {
+   "id": "foe_scarecrow",
+   "post": true,
+   "cell": [
+    7,
+    7
+   ]
+  },
+  {
+   "id": "scarecrow",
+   "cell": [
+    3,
+    8
+   ]
+  },
+  {
+   "id": "scarecrow",
+   "cell": [
+    5,
+    9
+   ]
+  },
+  {
+   "id": "foe_scarecrow",
+   "post": true,
+   "cell": [
+    4,
+    10
+   ]
+  }
+ ],
+ "exit": [],
+ "stones": [],
+ "docks": [],
+ "stairs": [],
+ "ruins": [],
+ "paving": []
+}

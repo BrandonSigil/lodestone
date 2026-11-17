@@ -62,3 +62,4 @@ ability,foe_spook,,1,4,reach 1-3
 ability,foe_slow,,1,4,reach 1-3
 ability,foe_ward,,0,4,reach 0-3
 ability,throw_dagger,,2,4,reach 2-3
+class,foe_scarecrow,5,1,1,"move 4, reach 1-1"
