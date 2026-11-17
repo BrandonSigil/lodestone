@@ -75,8 +75,8 @@ static func noise(g: Vector2) -> float:
 
 ## How a stair cell climbs: {"up": direction of the high side, "lo": height at its low edge, "hi": at its
 ## high edge}, centred on the cell's own height so a piece standing on it is mid-flight.
-## It climbs along one axis: the one its flight carries on along (stair neighbours), else the one with the
-## biggest change in height, so every step of a flight runs the same way (a step picking its highest and
+## It climbs along one axis: the one its flight carries on along (stair neighbours), else the one whose two sides
+## differ most (low side to high side), then the biggest change in height, so every step of a flight runs the same way (a step picking its highest and
 ## lowest neighbours separately could climb sideways across the flight and leave a hole beside it).
 ## {} when nothing walkable along that axis is higher or lower (a flat landing).
 static func stair_run(grid: CombatGrid, c: Vector2i) -> Dictionary:
@@ -104,6 +104,9 @@ static func stair_run(grid: CombatGrid, c: Vector2i) -> Dictionary:
 			if grid.terrain_at(n) == CombatGrid.T.STAIRS:
 				score += 100.0
 			score += absf(float(grid.height_at(n)) - h)
+		# a climb has a low side and a high side: an axis whose two sides both sit lower (the shelf a stair is cut
+		# into) is not the way up ([USER] 2026-11-16: "theyre facing east when the cliffs are north")
+		score += 10.0 * absf(_walk_height(grid, c + d, h) - _walk_height(grid, c - d, h))
 		if score > best_score:
 			best_score = score
 			best = d

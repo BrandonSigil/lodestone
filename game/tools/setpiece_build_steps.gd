@@ -30,7 +30,7 @@ func bake(path: String, force: bool) -> String:
 		grid.set_height(cell, grid.height_at(cell) + 1)
 	for c in d.get("docks", []):
 		var cell := Vector2i(int(c[0]), int(c[1]))
-		grid.add_deck(cell, grid.height_at(cell) + 1, T.ROAD, true)
+		grid.add_deck(cell, grid.height_at(cell) + 1, T.ROAD, false)  # a plank dock: no rails
 	for p: Dictionary in d.get("props", []):
 		var cell := Vector2i(int(p.cell[0]), int(p.cell[1]))
 		var foot := Vector2i(int(p.get("foot", [1, 1])[0]), int(p.get("foot", [1, 1])[1]))

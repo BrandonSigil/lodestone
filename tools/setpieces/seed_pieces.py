@@ -153,6 +153,37 @@ PIECES["falls"] = dict(
                 "P:13,10 P:13,11 P:13,12 P:14,11 p:20,11 p:21,12 p:20,12 p:21,11"),
     foes={"R": dict(id="bandit_archer"), "N": dict(id="bandit"), "A": dict(id="ambusher", hidden=True)},
 )
+# ---- W3 Lake hut. A fisher's boathouse on the shore of a big lake, by the coast road. The lake fills the left of the
+# map; a short dock runs out from the shore beside the boathouse, a rowboat is pulled up on the sand, reeds grow
+# thick along the water. The road runs along the meadow above the shore; a path and one stair come down to the hut.
+# Spiders nest in the reeds either side of the hut; slimes have crept up out of the lake. Knocking or peeking puts the
+# party at the hut, between the reeds; leaving and being caught starts it on the road.
+_L = levels(24, 16,
+    "0:0-12,0-15 .:0-1,0 .:0,1 .:0-2,15 .:0,14 "                  # the lake and its shore
+    "0:13-21,1-14 0:22,8-12 0:23,10-11 .:13,1 .:21,1 .:13,14 .:20-21,13-14 "  # the meadow behind the shore
+    "0:13-15,15 .:12,15 "
+    ".:0-4,0-2 .:0-2,3 .:0-3,13-15 .:0-1,12 .:4,15 .:19-23,0-1 .:21-23,2-3 .:16-23,14-15 .:19-23,13 "
+    ".:0,4-6 .:0-1,10-11 .:5-7,0 .:22-23,4-7 .:23,8-9 .:23,10 .:23,12 .:22,12 .:21,4-6 .:0-1,7-9 .:15-18,15 .:13,15")  # trees round it all
+PIECES["lake"] = dict(
+    look="forest", art_set="forest",
+    note="W3 Lake hut: a fisher's boathouse on a big lake, by the coast road. A dock runs out beside it, a rowboat is "
+         "pulled up on the sand, reeds grow thick along the water. The road runs through the meadow behind; a path "
+         "turns off it to the hut. Spiders nest in the reeds either side of it; slimes have crept out of the lake.",
+    L=_L,
+    road="d:13-23,11 d:17,7-10 d:13-16,7 d:10-12,7",
+    M=marks(_L, "w:0-7,0-15 w:8-9,5-10 w:8,0-1 w:8,14-15 "                      # the lake, its bay by the hut
+                "H:10,5 #:11,5 #:10-11,6 D:8,8 #:9,8 d:10-12,7 "                 # boathouse, its dock, the path to it
+                "K:10,11 #:11,11 x:11,3 c:12,3 "                                 # rowboat on the sand, the fisher's gear
+                "e:8,3 e:8,4 e:9,2 e:9,12 e:9,13 e:8,12 "                        # reeds
+                "t:17-18,2 t:19-20,2-3 t:13-14,13-14 T:16,3 T:19,5 T:14,12 T:21,9 y:15,9 B:18,12 "
+                "A:9,3 A:10,13 L:11,9 L:9,1 "
+                "P:12,5 P:12,6 P:11,7 P:12,8 p:21,10 p:22,11 p:21,11 p:22,10"),
+    props={"H": dict(sprite="village/prop_boathouse", foot=[2, 2], tall=1.5, sight=2.0),
+           "D": dict(sprite="village/prop_dock", foot=[2, 1], tall=0.3, sight=0.0),
+           "K": dict(sprite="village/prop_rowboat", foot=[2, 1], tall=0.5, sight=0.0)},
+    foes={"A": dict(id="spider", hidden=True), "L": dict(id="slime")},
+)
+
 
 def sketch(pid):
     p = PIECES[pid]
