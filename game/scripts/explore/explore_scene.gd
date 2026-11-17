@@ -107,7 +107,7 @@ func _ready() -> void:
 	var start := _free_start()
 	for m in Game.run.alive():
 		var u := CombatUnit.from_member(m)
-		u.place(start, grid.height_at(start))
+		u.place(start, grid.stand_h(start))
 		party.append(u)
 	for g in map.groups:
 		var units: Array = []
@@ -127,7 +127,7 @@ func _ready() -> void:
 				mods = LevelRules.merge(mods, ExploreRules.road_mods())
 			var u := CombatUnit.enemy(cls, mods)
 			u.elite = elite
-			u.place(e.cell, grid.height_at(e.cell))
+			u.place(e.cell, grid.stand_h(e.cell))
 			u.leader = bool(e.get("leader", false))  # FightGoals: beat this one to win a "leader" fight
 			u.boss = bool(g.get("boss", false))
 			u.yields = g.units.find(e) == 0 and ExploreRules.yields_now(g, Game.meta, Game.meta.flags)  # the Lich's third win
@@ -875,7 +875,7 @@ func walk(path: Array[Vector2i], then_use := {}) -> void:
 func _glide(u: CombatUnit, to: Vector2i, spare: float) -> float:
 	var from := u.vis
 	var from_h := u.vis_h
-	var to_h := float(grid.height_at(to))
+	var to_h := grid.stand_h(to)
 	var dest := Vector2(CombatGrid.ground(to))
 	var length := maxf(0.01, from.distance_to(dest))
 	var rise := absf(to_h - from_h)
@@ -892,7 +892,7 @@ func _glide(u: CombatUnit, to: Vector2i, spare: float) -> float:
 		u.vis_h = lerpf(from_h, to_h, t)
 		u.hop = sin(t * PI) * rise * CombatBoard.HS * 0.6 if rise > 0.01 else 0.0
 	u.hop = 0.0
-	u.place(to, grid.height_at(to))
+	u.place(to, grid.stand_h(to))
 	return minf(gone - length, 0.5)
 
 
@@ -1512,7 +1512,7 @@ func _rebuild_party() -> void:
 	party = []
 	for m in Game.run.alive():
 		var u := CombatUnit.from_member(m)
-		u.place(at, grid.height_at(at))
+		u.place(at, grid.stand_h(at))
 		u.facing = facing
 		party.append(u)
 	_refresh_units()
@@ -1605,7 +1605,7 @@ func start_fight(g: Dictionary, how: String) -> void:
 	_reveal_around([leader().cell], 4)
 	for u: CombatUnit in party:
 		if _pending.spots.has(u):
-			u.place(_pending.spots[u], grid.height_at(_pending.spots[u]))
+			u.place(_pending.spots[u], grid.stand_h(_pending.spots[u]))
 	_show_deployed()
 	follow = false
 	var sum := Vector2.ZERO
@@ -1665,7 +1665,7 @@ func _on_deploy_click(c: Vector2i) -> void:
 	if _placing == null or not board.highlights.has(c):
 		return
 	_pending.spots[_placing] = c
-	_placing.place(c, grid.height_at(c))
+	_placing.place(c, grid.stand_h(c))
 	_show_deployed()
 	# Move on to the next member, round and round.
 	var i := party.find(_placing)
@@ -1813,7 +1813,7 @@ func _turned_friend(e: Dictionary) -> CombatUnit:
 	var u := CombatUnit.from_def(Db.character(StringName(e.char)))
 	u.team = 1
 	u.facing = Vector2i(-1, 0)
-	u.place(e.cell, grid.height_at(e.cell))
+	u.place(e.cell, grid.stand_h(e.cell))
 	return u
 
 
@@ -1959,7 +1959,7 @@ func _end_fight() -> void:
 	var lead := leader()
 	for u: CombatUnit in party:
 		if u != lead:
-			u.place(lead.cell, grid.height_at(lead.cell))
+			u.place(lead.cell, grid.stand_h(lead.cell))
 	_pending = {}
 	mode = M.WALK
 	follow = true

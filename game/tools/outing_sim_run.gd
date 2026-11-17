@@ -172,7 +172,7 @@ func _fight(m: ExploreMap, g: Dictionary, party: Array, state: Array, seed_i: in
 			u.armor += boss_armor  # armor only (the "defense" mod also moves his AI's stance)
 		if OS.get_environment("SIM_DEBUG") != "" and bool(g.get("boss", false)):
 			print("boss ", e.id, " hp ", u.max_hp, " mods ", mods)
-		u.place(e.cell, grid.height_at(e.cell))
+		u.place(e.cell, grid.stand_h(e.cell))
 		u.summon_cells = g.get("summon", [] as Array[Vector2i])
 		for c in g.get("exit", []):
 			u.summon_avoid[Vector2i(int(c[0]), int(c[1]))] = true
@@ -189,13 +189,13 @@ func _fight(m: ExploreMap, g: Dictionary, party: Array, state: Array, seed_i: in
 		if ExploreRules.sees(grid, [c], cells, ExploreRules.PARTY_SIGHT) or ExploreRules.sees(grid, cells, [c], int(g.sight)):
 			break
 	for u: CombatUnit in party:
-		u.place(at, grid.height_at(at))
+		u.place(at, grid.stand_h(at))
 	var spots := ExploreRules.auto_deploy(grid, party, "party", blocked)
 	var units: Array = []
 	var seated: Array = []
 	for u: CombatUnit in party:
 		if spots.has(u):
-			u.place(spots[u], grid.height_at(spots[u]))
+			u.place(spots[u], grid.stand_h(spots[u]))
 			units.append(u)
 			seated.append(u)
 	units.append_array(enemies)

@@ -25,12 +25,12 @@
   "   tt   tt tt           ",
   "   tt                   ",
   "                        ",
-  "     s          s       ",
+  "                        ",
   "                        ",
   "dddddddddddddddddddddddd",
   "dddddddddddddddddddddddd",
   "                        ",
-  "      s                 ",
+  "                        ",
   "                        ",
   "                        ",
   "                        "
@@ -51,15 +51,6 @@
    "sight": 1.0,
    "cell": [
     13,
-    3
-   ]
-  },
-  {
-   "sprite": "village/prop_stump",
-   "tall": 0.5,
-   "sight": 0.0,
-   "cell": [
-    18,
     3
    ]
   },
@@ -100,15 +91,6 @@
    ]
   },
   {
-   "sprite": "prop_boulder",
-   "tall": 0.6,
-   "sight": 1.0,
-   "cell": [
-    7,
-    6
-   ]
-  },
-  {
    "sprite": "village/prop_barrel",
    "tall": 0.7,
    "sight": 0.0,
@@ -140,15 +122,6 @@
    ]
   },
   {
-   "sprite": "village/prop_crates",
-   "tall": 0.8,
-   "sight": 0.0,
-   "cell": [
-    9,
-    9
-   ]
-  },
-  {
    "sprite": "prop_bush",
    "tall": 0.55,
    "sight": 0.5,
@@ -167,15 +140,6 @@
    ]
   },
   {
-   "sprite": "village/prop_stump",
-   "tall": 0.5,
-   "sight": 0.0,
-   "cell": [
-    4,
-    10
-   ]
-  },
-  {
    "sprite": "prop_boulder",
    "tall": 0.6,
    "sight": 1.0,
@@ -185,11 +149,11 @@
    ]
   },
   {
-   "sprite": "village/prop_crates",
-   "tall": 0.8,
+   "sprite": "village/prop_barrel",
+   "tall": 0.7,
    "sight": 0.0,
    "cell": [
-    2,
+    1,
     11
    ]
   },
@@ -212,8 +176,8 @@
    ]
   },
   {
-   "sprite": "village/prop_barrel",
-   "tall": 0.7,
+   "sprite": "village/prop_crates",
+   "tall": 0.8,
    "sight": 0.0,
    "cell": [
     2,
@@ -313,5 +277,19 @@
  "docks": [],
  "stairs": [],
  "ruins": [],
- "paving": []
+ "paving": [],
+ "slopes": [
+  [
+   5,
+   5
+  ],
+  [
+   16,
+   5
+  ],
+  [
+   6,
+   10
+  ]
+ ]
 }

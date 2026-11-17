@@ -5,7 +5,8 @@ extends RefCounted
 ## skeleton of a fight map, a flat sketch in two layers of characters, one row per map row:
 ##   levels  "." outside the map, "0" to "3" the terrace each cell stands on (low to high)
 ##   marks   " " plain ground, "d" road, "w" river water, "b" bridge over the water (a straight run, banks at both ends),
-##           "s" stairs (a climb between two terraces; a straight run of them is one flight), "r" rock outcrop, "t" woods
+##           "s" stairs (a climb between two terraces; a straight run of them is one flight), "/" slope (a grassy bank up
+##           to the terrace beside it, MapOps.slope), "r" rock outcrop, "t" woods
 ## plus "draft" (true: road fights skip it while it is being drawn), "river" (its job: "flank" runs along one side, "crossing" cuts between the starts and has the one bridge, "" none)
 ## and a designer "note". The party starts on the low-x side, the foes on the high-x side (CombatGrid.deploy_cells).
 ## `build` turns a plot and a seed into an ordinary map: the sketch fixes the outline, terraces, road, river and climbs;
@@ -85,6 +86,7 @@ static func build(plot: Dictionary, seed_value: int, look_id := "forest", join :
 	var woods_share := WOODS_SHARE + rng.randf_range(-0.1, 0.12)
 	var src := func(c: Vector2i) -> Vector2i: return Vector2i(c.x, size.y - 1 - c.y) if flip else c
 	var stairs: Array[Vector2i] = []
+	var slopes: Array[Vector2i] = []
 	var bridges: Array[Vector2i] = []
 	for y in size.y:
 		for x in size.x:
@@ -111,6 +113,8 @@ static func build(plot: Dictionary, seed_value: int, look_id := "forest", join :
 					g.set_height(c, ground + 1)  # a low outcrop: cover, not a pillar
 				"s":
 					stairs.append(c)
+				"/":
+					slopes.append(c)
 				"t":
 					g.set_terrain(c, T.FOREST)
 				_:
@@ -121,6 +125,8 @@ static func build(plot: Dictionary, seed_value: int, look_id := "forest", join :
 					elif woods.get_noise_2d(x, y) > woods_share and x >= CombatGrid.DEPLOY_COLS and x < size.x - CombatGrid.DEPLOY_COLS:
 						g.set_terrain(c, T.FOREST)
 	_lay_stairs(g, stairs)
+	for c in slopes:
+		MapOps.slope(g, c)
 	_lay_bridges(g, bridges)
 	MapOps.flatten_dead_stairs(g)
 	if join:

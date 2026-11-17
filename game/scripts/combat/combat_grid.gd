@@ -60,6 +60,14 @@ var _sight := {}  ## line of sight cache, cleared on any edit
 ## What abilities left on the ground this fight (not saved with the map): place -> [{"kind", "team", "turns",
 ## "src", "ability"}]. kind: trap, caltrops, fire, smoke (CombatRules.FIELD_*); turns: its maker's phases left.
 var fields := {}
+## Slopes ([USER] 2026-11-17: "build slopes ... just slopes around each of these cliff faces"): a slope cell keeps
+## its ground (grass, road) but its top tilts from the ground below to the ground above, so a hill reads as rolling
+## ground instead of a cliff with stairs. 1 = slope. Which way it tilts is worked out from the flat ground around it
+## (slope_corners), never stored, so editing the land around a slope reshapes it.
+var slopes := PackedByteArray()
+## A slope's corner sits at most this many levels above or below the cell's own height: one slope cell spans up to
+## two levels (a terrace step); a taller bank takes two cells of slope.
+const SLOPE_RISE := 1
 
 
 static func flat(width: int, height: int) -> CombatGrid:
@@ -71,6 +79,7 @@ static func flat(width: int, height: int) -> CombatGrid:
 	g.heights.fill(0)
 	g.terrain.fill(T.GRASS)
 	g.zones.resize(width * height)
+	g.slopes.resize(width * height)
 	return g
 
 
@@ -277,8 +286,125 @@ func terrain_at(c: Vector2i) -> int:
 
 func set_terrain(c: Vector2i, t: int) -> void:
 	terrain[idx(c)] = t
+	if not SLOPE_GROUND.has(t) and slopes[idx(c)] != 0:
+		slopes[idx(c)] = 0  # water, rock, ruin, stairs and holes never tilt
 	version += 1
 	_sight.clear()
+
+
+# --- slopes --------------------------------------------------------------------------------
+
+## Ground that can be a slope. Stairs, water, boulders, ruins and holes can't.
+const SLOPE_GROUND := [T.GRASS, T.FOREST, T.ROAD, T.STONE]
+## Side k of a cell, as TerrainShape.NORMALS: 0 north (y - 1), 1 east, 2 south, 3 west; side k runs from corner k to k + 1.
+const _SIDES := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
+
+
+func is_slope(c: Vector2i) -> bool:
+	return c.y < DECK and in_bounds(c) and slopes[idx(c)] != 0
+
+
+func set_slope(c: Vector2i, on: bool) -> void:
+	if on and not SLOPE_GROUND.has(terrain_at(c)):
+		return
+	slopes[idx(c)] = 1 if on else 0
+	version += 1
+	_sight.clear()
+
+
+## The heights of a slope's four corners (TerrainShape.CORNERS order), from the flat ground beside it, each held within
+## SLOPE_RISE of the slope's own height. A corner takes the flat ground across the two sides that meet there; when
+## those two disagree, the one on the slope's axis wins (the pair of opposite sides that differ most), so a slope runs
+## from the ground below up to the lip above whether it is cut into the top of a cliff or laid along its foot. A corner
+## with slopes on both sides takes the flat ground across the corner (a bank's outer or inner corner), or the mean of
+## the slopes there, so a bank two cells deep stays one surface. A flat cell's corners are all its height.
+func slope_corners(c: Vector2i) -> PackedFloat32Array:
+	var hc := float(height_at(c))
+	if not is_slope(c):
+		return PackedFloat32Array([hc, hc, hc, hc])
+	var e := PackedFloat32Array()
+	var known: Array[bool] = []
+	for d: Vector2i in _SIDES:
+		var n := c + d
+		var flat_n := solid(n) and not is_slope(n)
+		e.append(clampf(float(height_at(n)), hc - SLOPE_RISE, hc + SLOPE_RISE) if flat_n else hc)
+		known.append(flat_n)
+	var axis := [absf(e[0] - e[2]), absf(e[1] - e[3])]  # north-south, east-west
+	var out := PackedFloat32Array()
+	for k in 4:
+		var i1 := (k + 3) % 4  # corner k sits between side k - 1 and side k
+		var i2 := k
+		var v := hc
+		if known[i1] and known[i2]:
+			if absf(e[i1] - e[i2]) < 0.01:
+				v = e[i1]
+			else:
+				var s1: float = axis[i1 % 2]
+				var s2: float = axis[i2 % 2]
+				v = e[i1] if s1 > s2 else (e[i2] if s2 > s1 else maxf(e[i1], e[i2]))
+		elif known[i1]:
+			v = e[i1]
+		elif known[i2]:
+			v = e[i2]
+		else:
+			var q: Vector2i = c + _SIDES[i1] + _SIDES[i2]
+			if solid(q) and not is_slope(q):
+				v = clampf(float(height_at(q)), hc - SLOPE_RISE, hc + SLOPE_RISE)
+			else:
+				var sum := 0.0
+				var n := 0
+				for r: Vector2i in [c, c + _SIDES[i1], c + _SIDES[i2], q]:
+					if is_slope(r):
+						sum += float(height_at(r))
+						n += 1
+				v = sum / n
+		out.append(v)
+	return out
+
+
+## Which diagonal a slope's top folds along: 0 (corner 0 to 2) or 1 (corner 1 to 3). It folds along the diagonal whose
+## two ends are level when only one is (a hill's outer or inner corner), so the fold runs along the contour.
+static func slope_fold(z: PackedFloat32Array) -> int:
+	var level02 := absf(z[0] - z[2]) < 0.01
+	var level13 := absf(z[1] - z[3]) < 0.01
+	return 1 if level13 and not level02 else 0
+
+
+## The ground's height at point f (0..1 across the cell) of cell c: flat ground's height, or a slope's tilted top
+## (two flat triangles either side of its fold, as drawn).
+func surface_z(c: Vector2i, f: Vector2) -> float:
+	if not is_slope(c):
+		return float(height_at(c))
+	return surface_of(slope_corners(c), f)
+
+
+static func surface_of(z: PackedFloat32Array, f: Vector2) -> float:
+	var fx := clampf(f.x, 0.0, 1.0)
+	var fy := clampf(f.y, 0.0, 1.0)
+	if slope_fold(z) == 0:
+		if fx >= fy:
+			return z[0] + (z[1] - z[0]) * fx + (z[2] - z[1]) * fy
+		return z[0] + (z[3] - z[0]) * fy + (z[2] - z[3]) * fx
+	if fx + fy <= 1.0:
+		return z[0] + (z[1] - z[0]) * fx + (z[3] - z[0]) * fy
+	return z[2] + (z[3] - z[2]) * (1.0 - fx) + (z[1] - z[2]) * (1.0 - fy)
+
+
+## Where a piece standing in the middle of the cell has its feet (a slope's middle; flat ground's height).
+func stand_h(c: Vector2i) -> float:
+	if not is_slope(c):
+		return float(height_at(c))
+	return surface_z(c, Vector2(0.5, 0.5))
+
+
+## How high cell c's ground is along its side facing d (one of the four directions): a slope's two corners on that
+## side, averaged; flat ground's height. Walking between two cells compares their sides where they meet.
+func edge_h(c: Vector2i, d: Vector2i) -> float:
+	if not is_slope(c):
+		return float(height_at(c))
+	var z := slope_corners(c)
+	var k := 0 if d == Vector2i(0, -1) else (1 if d == Vector2i(1, 0) else (2 if d == Vector2i(0, 1) else 3))
+	return (z[k] + z[(k + 1) % 4]) * 0.5
 
 
 ## Is there ground here? False off the map and on VOID cells.
@@ -376,6 +502,7 @@ func resized(width: int, height: int) -> CombatGrid:
 			g.set_height(c, height_at(c))
 			g.set_terrain(c, terrain_at(c))
 			g.set_zone(c, zone_at(c))
+			g.slopes[g.idx(c)] = slopes[idx(c)]
 	for a: Vector2i in props:
 		var p: Dictionary = props[a]
 		var ga := ground(a)
@@ -445,6 +572,14 @@ func to_dict() -> Dictionary:
 				e["b"] = true  # a bridge piece (BridgeKit)
 			list.append(e)
 		d["decks"] = list
+	if slopes.count(1) > 0:  # one string per row: "/" a slope, "." flat
+		var s_rows: Array[String] = []
+		for y in h:
+			var sr := ""
+			for x in w:
+				sr += "/" if is_slope(Vector2i(x, y)) else "."
+			s_rows.append(sr)
+		d["slopes"] = s_rows
 	if not look.is_empty():
 		d["look"] = look.duplicate()
 	return d
@@ -469,6 +604,11 @@ static func from_dict(d: Dictionary) -> CombatGrid:
 	for y in mini(g.h, z_rows.size()):
 		for x in mini(g.w, String(z_rows[y]).length()):
 			g.set_zone(Vector2i(x, y), String(key.get(String(z_rows[y])[x], "")))
+	var s_rows: Array = d.get("slopes", [])
+	for y in mini(g.h, s_rows.size()):
+		for x in mini(g.w, String(s_rows[y]).length()):
+			if String(s_rows[y])[x] == "/":
+				g.set_slope(Vector2i(x, y), true)
 	for dk: Dictionary in d.get("decks", []):
 		g.add_deck(Vector2i(int(dk.x), int(dk.y)), clampi(int(dk.h), 0, MAX_HEIGHT), from_letter.get(String(dk.get("t", "s")), T.STONE), bool(dk.get("b", false)))
 	for p: Dictionary in d.get("props", []):
@@ -583,6 +723,10 @@ func can_step(a: Vector2i, b: Vector2i, jump: int) -> bool:
 	var limit := jump
 	if terrain_at(a) == T.STAIRS or terrain_at(b) == T.STAIRS:
 		limit += STAIRS_CLIMB
+	if is_slope(a) or is_slope(b):  # a slope is walked: compare the two sides where they meet
+		var d := ground(b) - ground(a)
+		if absi(d.x) + absi(d.y) == 1:
+			return absf(edge_h(b, -d) - edge_h(a, d)) <= limit + 0.01
 	return absi(height_at(b) - height_at(a)) <= limit
 
 

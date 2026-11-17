@@ -58,7 +58,7 @@ func _ready() -> void:
 				break
 			var u := CombatUnit.from_member(m)
 			var c: Vector2i = spots.pop_front()
-			u.place(c, grid.height_at(c))
+			u.place(c, grid.stand_h(c))
 			units.append(u)
 		var espots := grid.deploy_cells(1)
 		for id: String in enc.units:
@@ -66,7 +66,7 @@ func _ready() -> void:
 				break
 			var e := CombatUnit.enemy(Db.class_def(id))
 			var c: Vector2i = espots.pop_front()
-			e.place(c, grid.height_at(c))
+			e.place(c, grid.stand_h(c))
 			units.append(e)
 
 	battle = Battle.new()

@@ -6,6 +6,12 @@ How to use it: when you start on an item, put your thread in **Owner**; when it 
 
 Status values: `open` (nobody on it), `in progress` (a thread owns it), `done (#PR)`.
 
+## 2026-11-17 Brandon (Claude window)
+
+| # | Problem | Owner | Status |
+| --- | --- | --- | --- |
+| P35 | Slopes: "Could you help me build "slopes" too, like for this map, I feel like ultimately this windmill is ontop of a hill one that really doesnt need stairs and is more just surrounded by a few stacking hills. So I'd like to be able to add just slopes around each of these cliff faces. We should build this completely, so that its also in our map maker, used in other maps where it makes sense, etc." (E3 windmill screenshot) | thread "Build slopes for hills and cliffs" | in progress: slopes built (`docs/systems/slopes.md`), E3 banked all round, W1 trails (this PR) |
+
 ## 2026-11-16 Brandon (Claude window)
 
 | # | Problem | Owner | Status |

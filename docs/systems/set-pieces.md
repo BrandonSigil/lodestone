@@ -45,7 +45,7 @@ side of the wagon you stand on matters.
 
 ## Building one
 
-Maps are typed as plain text in `tools/setpieces/seed_pieces.py` (levels, water, road, things, foes, both starts),
+Maps are typed as plain text in `tools/setpieces/seed_pieces.py` (levels, water, road, slopes, things, foes, both starts),
 then baked into a battle map:
 
 ```
@@ -68,6 +68,8 @@ This just seems barfed at random." Every set piece is drawn to these rules befor
    segments, no puddles, no river you never have to cross.
 4. **Stairs are where people walk.** Every stair joins two places someone would go between, on a path, square to the
    cliff, one per need. Never two stairs side by side to the same place, never a stair into a wall or off the map.
+   Built places get stairs; soft land gets slopes (`docs/systems/slopes.md`): a rolling hill is banked, not stepped,
+   and a trail people wore up a bank is a slope, not a stair.
 5. **Doors, gates and paths stay clear**: two free tiles in front of every door and gate, nothing on a path but what the
    scene put there on purpose (the wagon).
 6. **Sides read at a glance.** The foes' side holds their cover and their reason to be there (spilled loot, a camp, a
@@ -92,7 +94,7 @@ foe and exit tile can be walked to, and foes hide only from a party that walked 
 
 | Id | Road | Landmark | Event | Encounters | Notes |
 |---|---|---|---|---|---|
-| W1 `sp_wagon` | west | hillside road, the wagon across it, thieves' camp below the road and lookout knob above, both on the left | `tr_wagon` | `wagon_in`, `wagon_out` | three hidden ambushers by the spilled load, an archer on the knob; the woodcutters' trail on the right lets the party climb the bank |
+| W1 `sp_wagon` | west | hillside road, the wagon across it, thieves' camp below the road and lookout knob above, both on the left | `tr_wagon` | `wagon_in`, `wagon_out` | three hidden ambushers by the spilled load, an archer on the knob; the woodcutters' trail on the right lets the party climb the bank; the trails up the bank and down to the camp are worn slopes |
 | W2 `sp_falls` | west | river falling off a shelf, footbridge on top, zig-zag stepping stones below, a trail up each side of the gorge | `tr_falls` | `falls_in`, `falls_out` | hidden ambusher at the stones' far end, bandit on the left bank, archers on the shelf and by the bridge; anyone kicked off a stone is swept downstream |
 | W3 `sp_lake` | west | fisher's boathouse on a lake shore, reeds either side, rowboat on the sand, road through the meadow behind | `tr_lake` | `lake_in`, `lake_out` | spiders hidden in the reeds either side of the hut, slimes out of the lake; a lake has no current, so a push into it only bumps |
 | N1 `sp_tower` | north | ruined watchtower on a crag above the road: the tower's broken corners on top, a built path switchbacking up the right, a goat track up the left | `tr_tower` | `tower_in`, `tower_out` | captain (leader) on the tower top, a shield warder at the top of the path, an archer on the middle ledge, an ambusher hidden by the goat track |
@@ -100,7 +102,7 @@ foe and exit tile can be walked to, and foes hide only from a party that walked 
 | N3 `sp_rope` | north | rope bridge over a deep gorge, a toll barricade of crates at the far end, a fallen pine across the narrows upstream | `tr_rope` | `rope_in`, `rope_out` | the toll keeper (leader) and his gate man hold their post (`post`) until someone comes within 3 or hurts them; an archer behind the barrel, an ambusher by the pine |
 | E1 `sp_farm` | east | farmhouse with a fenced yard, well and hay by the road; a field of crop beds on the left with scarecrows | `tr_farm` | `farm_in`, `farm_out` | real scarecrows (`scarecrow`, a structure) stand in the beds; straw men (`foe_scarecrow`, same look, spook) stand on the paths, holding their post until someone comes close or strikes one |
 | E2 `sp_bulls` | east | farm by the road: barn on a low rise with one stair, lane, broken corral and stock pond on the left, well and mown hay field on the right | `tr_bulls` | `bulls_in` | three bulls loose on the left; win by beating them or reaching the barn door |
-| E3 `sp_mill` | east | windmill on a terraced hill of wheat above the road; a cart track climbs straight to the mill in two wide flights; farmers' steps up from the meadow and to the mill's back | `tr_mill` | `mill_in`, `mill_out` | captain (archer, leader, post) at the mill door, an archer on the hilltop, men on the landing and in the wheat, an ambusher low in the west wheat |
+| E3 `sp_mill` | east | windmill on top of a rolling hill above the road, wheat on its lower shoulder, grassy banks all round both rises and no stairs ([USER] 2026-11-17); the cart track runs straight up the banks to the mill | `tr_mill` | `mill_in`, `mill_out` | captain (archer, leader, post) at the mill door, an archer on the hilltop, men on the landing and in the wheat, an ambusher low in the west wheat |
 
 The tipped wagon uses the upright cart art until Brandon draws a tipped one. A lone stair cut into a two-step terrace edge draws its steps from the ground below up to the lip it meets
 (Brandon 2026-11-17: "the tallest point of the stairs should face the cliff"). A foe marked `post` holds its cell (EnemyAI: it strikes what comes in reach) until a party piece comes within

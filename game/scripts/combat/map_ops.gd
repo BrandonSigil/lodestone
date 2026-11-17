@@ -187,6 +187,62 @@ static func stairs(grid: CombatGrid, c: Vector2i) -> bool:
 	return true
 
 
+## A slope on c ([USER] 2026-11-17, docs/systems/slopes.md): its ground tilts to meet the flat ground around it
+## (CombatGrid.slope_corners). A stair there turns to grass first. The cell moves to halfway between the lowest and
+## highest flat ground beside it, diagonals too (so a bank's corner cell meets the corner of the block above), at most
+## SLOPE_RISE from the lower: a slope at the foot of a two-level terrace edge runs from the ground up to the lip. A
+## taller cliff keeps the rest of its face above the slope; a second slope above it finishes the bank. False on water,
+## rock, ruin or no ground.
+static func slope(grid: CombatGrid, c: Vector2i) -> bool:
+	if not grid.solid(c):
+		return false
+	if grid.terrain_at(c) == T.STAIRS:
+		grid.set_terrain(c, T.GRASS)
+	if not CombatGrid.SLOPE_GROUND.has(grid.terrain_at(c)):
+		return false
+	var h := grid.height_at(c)
+	var lo := h
+	var hi := h
+	for dy in [-1, 0, 1]:
+		for dx in [-1, 0, 1]:
+			var n := c + Vector2i(dx, dy)
+			if n == c or not grid.solid(n) or grid.is_slope(n) or grid.terrain_at(n) in [T.RUIN, T.WATER]:
+				continue
+			lo = mini(lo, grid.height_at(n))
+			hi = maxi(hi, grid.height_at(n))
+	var rise := CombatGrid.SLOPE_RISE
+	if hi - lo >= 2 * rise:  # join the ground on the cell's own side and climb toward the other
+		grid.set_height(c, lo + rise if h - lo <= hi - h else hi - rise)
+	var a := grid.prop_anchor(c)
+	if a != CombatGrid.NONE_CELL and not bool(grid.props[a].get("walk", false)):
+		remove_prop(grid, a)  # nothing stands on a bank (it would tilt)
+	grid.set_slope(c, true)
+	return true
+
+
+## The cliffs in `cells` eased into slopes: every cell there with flat ground one or two levels above it (diagonals
+## count) becomes a slope climbing to it, so each terrace edge gets a bank along its foot. Water, stairs, rock and
+## ruins stay. Returns how many cells became slopes.
+static func bank(grid: CombatGrid, cells: Array[Vector2i]) -> int:
+	var feet: Array[Vector2i] = []
+	for c in cells:
+		if not grid.solid(c) or grid.is_slope(c) or not CombatGrid.SLOPE_GROUND.has(grid.terrain_at(c)):
+			continue
+		var h := grid.height_at(c)
+		var up := false
+		for dy in [-1, 0, 1]:
+			for dx in [-1, 0, 1]:
+				var n := c + Vector2i(dx, dy)
+				if n != c and grid.solid(n) and not grid.is_slope(n) and grid.terrain_at(n) not in [T.WATER, T.RUIN, T.STAIRS] \
+						and grid.height_at(n) - h >= 1 and grid.height_at(n) - h <= 2 * CombatGrid.SLOPE_RISE:
+					up = true
+		if up:
+			feet.append(c)
+	for c in feet:
+		slope(grid, c)
+	return feet.size()
+
+
 static func _walk_h(grid: CombatGrid, c: Vector2i, fallback: int) -> int:
 	return grid.height_at(c) if grid.solid(c) and grid.terrain_at(c) != T.ROCK and grid.terrain_at(c) != T.RUIN else fallback
 
@@ -281,7 +337,7 @@ static func add_prop(grid: CombatGrid, anchor: Vector2i, sprite: String, foot :=
 static func smooth(grid: CombatGrid, cells: Array[Vector2i]) -> void:
 	var want := {}
 	for c in cells:
-		if not grid.solid(c) or grid.terrain_at(c) == T.WATER or grid.terrain_at(c) == T.STAIRS:
+		if not grid.solid(c) or grid.terrain_at(c) == T.WATER or grid.terrain_at(c) == T.STAIRS or grid.is_slope(c):
 			continue
 		var sum := grid.height_at(c)
 		var n := 1
@@ -451,12 +507,12 @@ static func tidy(grid: CombatGrid, keep := {}, area := {}) -> int:
 
 ## Dry, natural ground tidy may move: not water, stairs, masonry, a cell next to stairs, or kept.
 static func _tidy_free(grid: CombatGrid, c: Vector2i, keep: Dictionary) -> bool:
-	if keep.has(c):
+	if keep.has(c) or grid.is_slope(c):
 		return false
 	if grid.solid(c) and grid.terrain_at(c) not in [T.GRASS, T.FOREST, T.ROCK, T.ROAD]:
 		return false
 	for d: Vector2i in CombatRules.DIRS:
-		if grid.in_bounds(c + d) and grid.terrain_at(c + d) == T.STAIRS:
+		if grid.in_bounds(c + d) and (grid.terrain_at(c + d) == T.STAIRS or grid.is_slope(c + d)):
 			return false
 	return true
 

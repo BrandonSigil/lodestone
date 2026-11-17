@@ -665,7 +665,7 @@ func _approach(s: Node, g: Dictionary) -> void:
 			continue
 		best = c
 		best_d = absf(d - 4.0)
-	lead.place(best, grid.height_at(best))
+	lead.place(best, grid.stand_h(best))
 	s.call("_refresh_sight")
 
 

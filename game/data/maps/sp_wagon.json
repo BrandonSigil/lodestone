@@ -86,20 +86,6 @@
 			},
 			{
 				"cell": [
-					18,
-					3
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_stump",
-				"tall": 0.5,
-				"walk": false
-			},
-			{
-				"cell": [
 					4,
 					4
 				],
@@ -156,20 +142,6 @@
 			},
 			{
 				"cell": [
-					7,
-					6
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 1.0,
-				"sprite": "prop_boulder",
-				"tall": 0.6,
-				"walk": false
-			},
-			{
-				"cell": [
 					8,
 					7
 				],
@@ -212,20 +184,6 @@
 			},
 			{
 				"cell": [
-					9,
-					9
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_crates",
-				"tall": 0.8,
-				"walk": false
-			},
-			{
-				"cell": [
 					14,
 					9
 				],
@@ -254,20 +212,6 @@
 			},
 			{
 				"cell": [
-					4,
-					10
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_stump",
-				"tall": 0.5,
-				"walk": false
-			},
-			{
-				"cell": [
 					17,
 					10
 				],
@@ -282,7 +226,7 @@
 			},
 			{
 				"cell": [
-					2,
+					1,
 					11
 				],
 				"foot": [
@@ -290,8 +234,8 @@
 					1
 				],
 				"sight": 0.0,
-				"sprite": "village/prop_crates",
-				"tall": 0.8,
+				"sprite": "village/prop_barrel",
+				"tall": 0.7,
 				"walk": false
 			},
 			{
@@ -332,8 +276,8 @@
 					1
 				],
 				"sight": 0.0,
-				"sprite": "village/prop_barrel",
-				"tall": 0.7,
+				"sprite": "village/prop_crates",
+				"tall": 0.8,
 				"walk": false
 			},
 			{
@@ -365,18 +309,34 @@
 				"walk": false
 			}
 		],
+		"slopes": [
+			"........................",
+			"........................",
+			"........................",
+			"........................",
+			"........................",
+			"...../........../.......",
+			"........................",
+			"........................",
+			"........................",
+			"........................",
+			"....../.................",
+			"........................",
+			"........................",
+			"........................"
+		],
 		"terrain": [
 			"....ggggg...............",
 			"...ggfggffgggg..........",
 			"..gffgggffgffgggggg.....",
 			"..gffggggggggggggggg....",
 			"..gggggggggggggggggg....",
-			"..gggtggggggggggtggg....",
+			"..gggggggggggggggggg....",
 			"gggggggggggggggggggggggg",
 			"dddddddddddddddddddddddd",
 			"dddddddddddddddddddddddd",
 			"..gggggggggggggggggggg..",
-			".gggggtgg....gggggggg...",
+			".gggggggg....gggggggg...",
 			".gggggggg......ggggg....",
 			"..gggggg................",
 			"..ggggg................."

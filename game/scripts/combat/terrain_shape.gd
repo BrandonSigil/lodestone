@@ -30,17 +30,18 @@ const NORMALS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 
 
 
 ## How corner k of cell c is shaped: > 0 rounds it off (both sides drop away; the radius in cells), < 0 is
-## a fillet (both sides rise to the same ground, which curves round into this cell's corner), 0 is square.
+## a fillet (both sides rise to the same ground, which curves round into this cell's corner), 0 is square. Slopes and
+## the corners beside them stay square.
 ## `surf` gives a cell's surface height, or the floor where there is no ground. Water never rounds off;
 ## stairs, and corners beside a stair, stay square so the stair stays cut into the block.
 static func corner_radius(grid: CombatGrid, c: Vector2i, k: int, surf: Callable) -> float:
 	var t := grid.terrain_at(c)
-	if t == CombatGrid.T.STAIRS:
+	if t == CombatGrid.T.STAIRS or grid.is_slope(c):
 		return 0.0
 	var n1: Vector2i = c + NORMALS[(k + 3) % 4]
 	var n2: Vector2i = c + NORMALS[k]
-	if _is(grid, n1, CombatGrid.T.STAIRS) or _is(grid, n2, CombatGrid.T.STAIRS):
-		return 0.0
+	if _is(grid, n1, CombatGrid.T.STAIRS) or _is(grid, n2, CombatGrid.T.STAIRS) or grid.is_slope(n1) or grid.is_slope(n2):
+		return 0.0  # beside a stair or a slope the block stays square, so the two meet edge to edge
 	var h: float = surf.call(c)
 	var h1: float = surf.call(n1)
 	var h2: float = surf.call(n2)
@@ -185,6 +186,14 @@ const ROAD_TAPER := 0.3  ## how far (cells) a road narrows to a rounded end wher
 ## smoothed so they bend instead of turning square, and widened into a band with a wavering edge. Cut into
 ## pieces per cell, so each cell draws its own at its own depth, and only on ground at the road's level:
 ## {"bands": cell -> [polygon], "edges": cell -> [polyline]} in grid units (edges are the band's two sides).
+## Do cell c and its neighbour along d meet level (a road runs on between them)? Flat ground at one height, or a
+## slope's side meeting the ground beside it.
+static func _level_join(grid: CombatGrid, c: Vector2i, d: Vector2i) -> bool:
+	if grid.is_slope(c) or grid.is_slope(c + d):
+		return absf(grid.edge_h(c, d) - grid.edge_h(c + d, -d)) < 0.01
+	return grid.height_at(c + d) == grid.height_at(c)
+
+
 static func ribbons(grid: CombatGrid, width := ROAD_WIDTH) -> Dictionary:
 	var road := {}
 	for y in grid.h:
@@ -193,7 +202,7 @@ static func ribbons(grid: CombatGrid, width := ROAD_WIDTH) -> Dictionary:
 			if grid.terrain_at(c) == CombatGrid.T.ROAD:
 				road[c] = true
 	var links := func(c: Vector2i) -> Array:
-		return NORMALS.filter(func(d: Vector2i) -> bool: return road.has(c + d) and grid.height_at(c + d) == grid.height_at(c))
+		return NORMALS.filter(func(d: Vector2i) -> bool: return road.has(c + d) and _level_join(grid, c, d))
 	var bands := {}
 	var edges := {}
 	var walked := {}
@@ -220,7 +229,7 @@ static func ribbons(grid: CombatGrid, width := ROAD_WIDTH) -> Dictionary:
 		var m := Vector2(c) + Vector2(0.5, 0.5)
 		for q: Vector2i in [Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1)]:
 			var block := [Vector2i(q.x, 0), Vector2i(0, q.y), q].all(func(d: Vector2i) -> bool:
-				return road.has(c + d) and grid.height_at(c + d) == grid.height_at(c))
+				return road.has(c + d) and _level_join(grid, c, d))
 			if block:
 				var k := m + Vector2(q) * 0.5
 				if not bands.has(c):

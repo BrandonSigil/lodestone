@@ -68,7 +68,7 @@ static func units(setup: SandboxSetup, members: Array, walked_in: bool) -> Array
 			break
 		var u := CombatUnit.from_member(m)
 		var c: Vector2i = cells.pop_front()
-		u.place(c, grid.height_at(c))
+		u.place(c, grid.stand_h(c))
 		out.append(u)
 	var taken := {}
 	for u: CombatUnit in out:
@@ -78,7 +78,7 @@ static func units(setup: SandboxSetup, members: Array, walked_in: bool) -> Array
 		if cd == null or not grid.passable(e.cell) or taken.has(e.cell):
 			continue
 		var f := CombatUnit.enemy(cd, setup.enemy_mods)
-		f.place(e.cell, grid.height_at(e.cell))
+		f.place(e.cell, grid.stand_h(e.cell))
 		f.hiding = walked_in and bool(e.get("hidden", false))
 		f.leader = bool(e.get("leader", false))
 		f.posted = bool(e.get("post", false))

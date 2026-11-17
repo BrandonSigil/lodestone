@@ -36,13 +36,13 @@ func run(args: PackedStringArray) -> void:
 			var spots := grid.deploy_cells(0)
 			for u: CombatUnit in _party(level, weapon):
 				var c: Vector2i = spots.pop_front()
-				u.place(c, grid.height_at(c))
+				u.place(c, grid.stand_h(c))
 				units.append(u)
 			var espots := grid.deploy_cells(1)
 			for id: String in Db.encounters[enc_id].units:
 				var e := CombatUnit.enemy(Db.class_def(id))
 				var c: Vector2i = espots.pop_front()
-				e.place(c, grid.height_at(c))
+				e.place(c, grid.stand_h(c))
 				units.append(e)
 			var rng := RandomNumberGenerator.new()
 			rng.seed = i * 7919 + 13
@@ -98,7 +98,7 @@ func _fight(m: ExploreMap, g: Dictionary, how: String, level: int, weapon: Strin
 		if not bool(g.get("boss", false)) and not bool(g.get("elite", false)):
 			mods = LevelRules.merge(mods, ExploreRules.road_mods())  # the road's cost, as in the game
 		var u := CombatUnit.enemy(cls, mods)
-		u.place(e.cell, grid.height_at(e.cell))
+		u.place(e.cell, grid.stand_h(e.cell))
 		u.summon_cells = g.get("summon", [] as Array[Vector2i])
 		for c in g.get("exit", []):  # as the explore scene: nothing raised on the way out
 			u.summon_avoid[Vector2i(int(c[0]), int(c[1]))] = true
@@ -118,12 +118,12 @@ func _fight(m: ExploreMap, g: Dictionary, how: String, level: int, weapon: Strin
 			break
 	var party := _party(level, weapon)
 	for u: CombatUnit in party:
-		u.place(at, grid.height_at(at))
+		u.place(at, grid.stand_h(at))
 	var spots := ExploreRules.auto_deploy(grid, party, how, blocked)
 	var units: Array = []
 	for u: CombatUnit in party:
 		if spots.has(u):
-			u.place(spots[u], grid.height_at(spots[u]))
+			u.place(spots[u], grid.stand_h(spots[u]))
 			units.append(u)
 	units.append_array(enemies)
 	var rng := RandomNumberGenerator.new()

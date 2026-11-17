@@ -141,6 +141,11 @@ static func draw(ci: CanvasItem, id: String, r: Rect2, col: Color) -> void:
 				_line([Vector2(0.1, y), Vector2(0.26, y - 0.08), Vector2(0.42, y), Vector2(0.58, y - 0.08), Vector2(0.74, y), Vector2(0.9, y - 0.08)])
 		"stairs":
 			_line([Vector2(0.12, 0.86), Vector2(0.12, 0.7), Vector2(0.32, 0.7), Vector2(0.32, 0.52), Vector2(0.52, 0.52), Vector2(0.52, 0.34), Vector2(0.72, 0.34), Vector2(0.72, 0.16), Vector2(0.9, 0.16), Vector2(0.9, 0.86)], true)
+		"slope":
+			_line([Vector2(0.08, 0.84), Vector2(0.92, 0.84), Vector2(0.92, 0.2), Vector2(0.08, 0.84)], true)
+			_line([Vector2(0.3, 0.84), Vector2(0.3, 0.68)])
+			_line([Vector2(0.52, 0.84), Vector2(0.52, 0.5)])
+			_line([Vector2(0.74, 0.84), Vector2(0.74, 0.34)])
 		"cut":
 			_circle(0.28, 0.74, 0.12)
 			_circle(0.72, 0.74, 0.12)

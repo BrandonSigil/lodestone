@@ -141,7 +141,7 @@ func build_units() -> Array:
 				cu.team = 0
 				cu.facing = Vector2i(1, 0)
 				cu.tint = Color(0.45, 0.55, 0.85)
-				cu.place(p.cell, grid.height_at(p.cell))
+				cu.place(p.cell, grid.stand_h(p.cell))
 				taken[p.cell] = true
 				units.append(cu)
 			continue
@@ -149,7 +149,7 @@ func build_units() -> Array:
 		if d == null or not grid.passable(p.cell) or taken.has(p.cell):
 			continue
 		var u := CombatUnit.from_def(d, party_mods, p.get("spells"))
-		u.place(p.cell, grid.height_at(p.cell))
+		u.place(p.cell, grid.stand_h(p.cell))
 		taken[p.cell] = true
 		units.append(u)
 	var ids: Array[String] = []
@@ -158,7 +158,7 @@ func build_units() -> Array:
 		if c == null or not grid.passable(e.cell) or taken.has(e.cell):
 			continue
 		var u := CombatUnit.enemy(c, enemy_mods)
-		u.place(e.cell, grid.height_at(e.cell))
+		u.place(e.cell, grid.stand_h(e.cell))
 		u.hiding = bool(e.get("hidden", false))
 		u.leader = bool(e.get("leader", false))
 		u.posted = bool(e.get("post", false))
@@ -173,7 +173,7 @@ func build_units() -> Array:
 			break
 		var c: Vector2i = free.pop_front()
 		var u := CombatUnit.enemy(Db.class_def(ids[i % ids.size()]), enemy_mods)
-		u.place(c, grid.height_at(c))
+		u.place(c, grid.stand_h(c))
 		taken[c] = true
 		units.append(u)
 	if scale_c:

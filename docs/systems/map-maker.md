@@ -17,7 +17,9 @@ Catalog: `game/data/catalog.csv`. Scene: `scenes/map_maker.tscn`.
   terrain (K, on), grid lines, height numbers, names over things; turn the view (editing only), fit, hide
   panels; **Play test**; **Plots** opens the plot maker (`docs/systems/plots.md`).
 - **Tool rail** (left): Select V, Place B, Erase X, Party U, Enemy E | Raise 1, Lower 2, Level 3, Smooth 4, Tidy 5,
-  Pillar 6 | Ground P, Path L, River W, Stairs T, Deck J | Cut C, Fill F, Zone Z. Hover a tool for what it does.
+  Pillar 6 | Ground P, Path L, River W, Stairs T, Slope Y, Bridge N, Deck J | Area A, Cut C, Fill F, Zone Z. Hover a tool for what it does.
+  **Slope** (Y) tilts cells into a grassy bank up to the cliff beside them; the Area tool's **Slope cliffs** banks
+  every cliff in a selection (`docs/systems/slopes.md`).
 - **Options bar** (top): what the picked tool needs: brush size and shape, the level height, ground
   swatches (the tile set's own textures), path ground and "follow ground", the zone's tile set, the stamp
   and its angle, or the selection's turn / mirror / copy / delete.

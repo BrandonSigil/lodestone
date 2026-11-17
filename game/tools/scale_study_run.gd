@@ -86,7 +86,7 @@ func _road(grid: CombatGrid, party: Array, enc_id: String, seed_i: int) -> Dicti
 	var spots := grid.deploy_cells(0)
 	for u: CombatUnit in party:
 		var c: Vector2i = spots.pop_front()
-		u.place(c, grid.height_at(c))
+		u.place(c, grid.stand_h(c))
 		units.append(u)
 	var foes: Array = []
 	var espots := grid.deploy_cells(1)
@@ -94,7 +94,7 @@ func _road(grid: CombatGrid, party: Array, enc_id: String, seed_i: int) -> Dicti
 		var e := CombatUnit.enemy(Db.class_def(id))
 		_stretch(e)
 		var c: Vector2i = espots.pop_front()
-		e.place(c, grid.height_at(c))
+		e.place(c, grid.stand_h(c))
 		units.append(e)
 		foes.append(e)
 	return _play(grid, units, party, foes, seed_i)
@@ -233,7 +233,7 @@ func _explore_fight(helper: RefCounted, m: ExploreMap, g: Dictionary, how: Strin
 		var cls := Db.class_def(e.id)
 		var depth := ExploreRules.group_depth(m.level, g)
 		var u := CombatUnit.enemy(cls, ExploreRules.depth_mods(m.map_name, depth, String(g.id), g.units.find(e), cls))
-		u.place(e.cell, grid.height_at(e.cell))
+		u.place(e.cell, grid.stand_h(e.cell))
 		u.summon_cells = g.get("summon", [] as Array[Vector2i])
 		for c in g.get("exit", []):
 			u.summon_avoid[Vector2i(int(c[0]), int(c[1]))] = true
@@ -253,13 +253,13 @@ func _explore_fight(helper: RefCounted, m: ExploreMap, g: Dictionary, how: Strin
 			break
 	var party: Array = helper.call("_party", 1, "sword")
 	for u: CombatUnit in party:
-		u.place(at, grid.height_at(at))
+		u.place(at, grid.stand_h(at))
 	var spots := ExploreRules.auto_deploy(grid, party, how, blocked)
 	var units: Array = []
 	var seated: Array = []
 	for u: CombatUnit in party:
 		if spots.has(u):
-			u.place(spots[u], grid.height_at(spots[u]))
+			u.place(spots[u], grid.stand_h(spots[u]))
 			units.append(u)
 			seated.append(u)
 	units.append_array(enemies)

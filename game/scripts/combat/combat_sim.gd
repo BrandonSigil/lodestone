@@ -22,7 +22,7 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 		plan["events"] = events
 		return plan
 	var moved: bool = plan.move != u.cell
-	u.place(plan.move, grid.height_at(plan.move))
+	u.place(plan.move, grid.stand_h(plan.move))
 	if moved:
 		events.append_array(CombatRules.hand_chill(grid, u, units))  # ended its move by the Lich Prince's hand (NEPO BABY)
 	if not stop.is_empty():
@@ -71,7 +71,7 @@ static func take_turn(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUni
 			var away := EnemyAi.retreat(grid, u, units)
 			events.append_array(CombatRules.leave_hits(rng, grid, u, units, away.move))
 			if u.alive():
-				u.place(away.move, grid.height_at(away.move))
+				u.place(away.move, grid.stand_h(away.move))
 				CombatRules.spot(grid, units, u)
 			u.moved = true
 	elif plan.guard:
