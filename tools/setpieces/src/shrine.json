@@ -1,0 +1,240 @@
+{
+ "id": "shrine",
+ "look": "alpine",
+ "art_set": "snow",
+ "note": "N2 Shrine bowl: an old shrine stone in a snowy hollow below the north road, ringed by a broken wall. Graves lie round the stone and the dead in them rise. The dell opens on the road; stairs climb the hill behind and the shelf on the left, where the keeper watches from the old wall on the ridge.",
+ "levels": [
+  "......................",
+  "...........1111.......",
+  ".........111111.......",
+  ".....1111111111111....",
+  ".22211000000000011....",
+  "222211000000000011....",
+  "222211000000000011....",
+  "222211000000000000....",
+  "222211000000000000....",
+  "222211000000000000....",
+  ".22211000000000000....",
+  "...01100000000000.....",
+  "...000000000000000.0..",
+  "0000000000000000000000",
+  "0000000000000000000000",
+  "....00000000...0......",
+  "......000....000......",
+  "......................"
+ ],
+ "marks": [
+  "                      ",
+  "             tt       ",
+  "                      ",
+  "                      ",
+  "       s    s         ",
+  "                      ",
+  "    s                 ",
+  "                      ",
+  "                      ",
+  "      s               ",
+  "                      ",
+  "                      ",
+  "                      ",
+  "ttt                   ",
+  "dddddddddddddddddddddd",
+  "                      ",
+  "                      ",
+  "                      "
+ ],
+ "props": [
+  {
+   "sprite": "village/prop_grave_mound",
+   "tall": 0.35,
+   "sight": 0.0,
+   "cell": [
+    8,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_grave_mound",
+   "tall": 0.35,
+   "sight": 0.0,
+   "cell": [
+    12,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_grave_mound",
+   "tall": 0.35,
+   "sight": 0.0,
+   "cell": [
+    7,
+    7
+   ]
+  },
+  {
+   "sprite": "village/ph_statue",
+   "tall": 1.2,
+   "sight": 1.0,
+   "cell": [
+    10,
+    7
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    17,
+    7
+   ]
+  },
+  {
+   "sprite": "village/prop_grave_mound",
+   "tall": 0.35,
+   "sight": 0.0,
+   "cell": [
+    8,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_grave_mound",
+   "tall": 0.35,
+   "sight": 0.0,
+   "cell": [
+    12,
+    9
+   ]
+  },
+  {
+   "sprite": "prop_bush",
+   "tall": 0.55,
+   "sight": 0.5,
+   "cell": [
+    17,
+    12
+   ]
+  },
+  {
+   "sprite": "prop_boulder",
+   "tall": 0.6,
+   "sight": 1.0,
+   "cell": [
+    3,
+    13
+   ]
+  }
+ ],
+ "party": [
+  [
+   12,
+   8
+  ],
+  [
+   13,
+   8
+  ],
+  [
+   13,
+   9
+  ],
+  [
+   14,
+   9
+  ]
+ ],
+ "out": [
+  [
+   19,
+   13
+  ],
+  [
+   20,
+   13
+  ],
+  [
+   19,
+   14
+  ],
+  [
+   20,
+   14
+  ]
+ ],
+ "foes": [
+  {
+   "id": "lich_minion",
+   "cell": [
+    9,
+    4
+   ]
+  },
+  {
+   "id": "lich_minion",
+   "hidden": true,
+   "cell": [
+    7,
+    5
+   ]
+  },
+  {
+   "id": "foe_hexer",
+   "leader": true,
+   "cell": [
+    2,
+    7
+   ]
+  },
+  {
+   "id": "lich_minion",
+   "cell": [
+    7,
+    9
+   ]
+  },
+  {
+   "id": "lich_minion",
+   "hidden": true,
+   "cell": [
+    8,
+    10
+   ]
+  }
+ ],
+ "exit": [],
+ "stones": [],
+ "docks": [],
+ "stairs": [],
+ "ruins": [
+  [
+   12,
+   1
+  ],
+  [
+   9,
+   2
+  ],
+  [
+   3,
+   4
+  ],
+  [
+   17,
+   4
+  ],
+  [
+   1,
+   6
+  ],
+  [
+   1,
+   8
+  ],
+  [
+   3,
+   10
+  ]
+ ],
+ "paving": []
+}

@@ -2,7 +2,7 @@
  "id": "tower",
  "look": "alpine",
  "art_set": "snow",
- "note": "N1 Ruined watchtower: an old tower on a crag above the north road, forest giving way to snow. A worn path zig-zags up the right of the crag, a goat track climbs its left edge in the open. Bandits use the tower as a lookout: the captain on the tower's broken top, an archer on the middle ledge, a warder at the top of the path, one hidden in the old outer wall.",
+ "note": "N1 Ruined watchtower: an old tower on a crag above the north road, forest giving way to snow. One wide stone stair climbs straight up the crag's ledges to the tower's door, paved landings between. Bandits use the tower as a lookout: the captain on its broken top, a shield warder at the top of the stair, an archer on the middle ledge, one hidden among the fallen stones on the left.",
  "levels": [
   "....44433.............",
   "...3444333............",
@@ -25,18 +25,18 @@
  ],
  "marks": [
   "                      ",
-  "       s              ",
   "                      ",
   "                      ",
-  "  s                   ",
-  "         s            ",
   "                      ",
   "                      ",
-  "   s     s        ttt ",
+  "                      ",
+  "                      ",
+  "                      ",
+  "                  ttt ",
   "                tttttt",
   "           t    tttttt",
   "                tttttt",
-  "  s          s        ",
+  "                      ",
   "dddddddddddddddddddddd",
   "dddddddddddddddddddddd",
   "                      ",
@@ -58,7 +58,7 @@
    "tall": 0.6,
    "sight": 1.0,
    "cell": [
-    7,
+    8,
     3
    ]
   },
@@ -67,7 +67,7 @@
    "tall": 0.6,
    "sight": 1.0,
    "cell": [
-    4,
+    2,
     6
    ]
   },
@@ -76,8 +76,8 @@
    "tall": 0.6,
    "sight": 1.0,
    "cell": [
-    5,
-    7
+    9,
+    6
    ]
   },
   {
@@ -94,8 +94,8 @@
    "tall": 0.6,
    "sight": 1.0,
    "cell": [
-    3,
-    10
+    2,
+    9
    ]
   },
   {
@@ -192,8 +192,8 @@
   {
    "id": "foe_warder",
    "cell": [
-    8,
-    3
+    6,
+    4
    ]
   },
   {
@@ -215,7 +215,56 @@
  "exit": [],
  "stones": [],
  "docks": [],
- "stairs": [],
+ "stairs": [
+  [
+   4,
+   3
+  ],
+  [
+   5,
+   3
+  ],
+  [
+   6,
+   3
+  ],
+  [
+   4,
+   5
+  ],
+  [
+   5,
+   5
+  ],
+  [
+   6,
+   5
+  ],
+  [
+   4,
+   8
+  ],
+  [
+   5,
+   8
+  ],
+  [
+   6,
+   8
+  ],
+  [
+   4,
+   12
+  ],
+  [
+   5,
+   12
+  ],
+  [
+   6,
+   12
+  ]
+ ],
  "ruins": [
   [
    4,
@@ -227,11 +276,11 @@
   ],
   [
    4,
-   2
+   1
   ],
   [
    6,
-   2
+   1
   ]
  ],
  "paving": [
@@ -241,15 +290,83 @@
   ],
   [
    4,
-   1
-  ],
-  [
-   6,
-   1
+   2
   ],
   [
    5,
    2
+  ],
+  [
+   6,
+   2
+  ],
+  [
+   4,
+   4
+  ],
+  [
+   5,
+   4
+  ],
+  [
+   4,
+   6
+  ],
+  [
+   5,
+   6
+  ],
+  [
+   6,
+   6
+  ],
+  [
+   4,
+   7
+  ],
+  [
+   5,
+   7
+  ],
+  [
+   6,
+   7
+  ],
+  [
+   4,
+   9
+  ],
+  [
+   5,
+   9
+  ],
+  [
+   6,
+   9
+  ],
+  [
+   4,
+   10
+  ],
+  [
+   5,
+   10
+  ],
+  [
+   6,
+   10
+  ],
+  [
+   4,
+   11
+  ],
+  [
+   5,
+   11
+  ],
+  [
+   6,
+   11
   ]
  ]
 }

@@ -311,5 +311,7 @@
  "exit": [],
  "stones": [],
  "docks": [],
- "stairs": []
+ "stairs": [],
+ "ruins": [],
+ "paving": []
 }
