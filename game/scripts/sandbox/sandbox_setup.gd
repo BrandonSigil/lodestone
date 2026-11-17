@@ -161,6 +161,7 @@ func build_units() -> Array:
 		u.place(e.cell, grid.height_at(e.cell))
 		u.hiding = bool(e.get("hidden", false))
 		u.leader = bool(e.get("leader", false))
+		u.posted = bool(e.get("post", false))
 		taken[e.cell] = true
 		units.append(u)
 		ids.append(e.id)
@@ -234,7 +235,7 @@ func to_dict() -> Dictionary:
 			var row := {"id": e.id, "x": e.cell.x, "y": e.cell.y}
 			if e.has("spells"):
 				row["spells"] = e.spells
-			for flag in ["hidden", "leader"]:
+			for flag in ["hidden", "leader", "post"]:
 				if e.get(flag, false):
 					row[flag] = true
 			out.append(row)
@@ -260,7 +261,7 @@ static func from_dict(d: Dictionary) -> SandboxSetup:
 			var entry := {"id": String(e.id), "cell": Vector2i(int(e.x), int(e.y))}
 			if e.has("spells"):
 				entry["spells"] = Array(e.spells).map(func(x: Variant) -> String: return String(x))
-			for flag in ["hidden", "leader"]:
+			for flag in ["hidden", "leader", "post"]:
 				if bool(e.get(flag, false)):
 					entry[flag] = true
 			list.append(entry)

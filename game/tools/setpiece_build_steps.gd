@@ -3,7 +3,7 @@ extends RefCounted
 ## A sketch: {"id", "art_set", "look", "note", "levels" and "marks" (a plot's two layers, MapPlot), "stones" [[x, y]]
 ## (a stepping stone standing in the water), "docks" [[x, y]] (a plank deck over the water), "climbs" [[x, y]],
 ## "ruins" [[x, y]] (a broken wall stub), "paving" [[x, y]] (flagstones), "props" [{"sprite" or "blob" (a named placeholder), "cell", "foot", "tall", "sight", "walk"}],
-## "party" [[x, y]] (walked in), "out" [[x, y]] (saw them first), "foes" [{"id", "cell", "hidden", "leader"}],
+## "party" [[x, y]] (walked in), "out" [[x, y]] (saw them first), "foes" [{"id", "cell", "hidden", "leader", "post"}],
 ## "exit" [[x, y]]}.
 
 
@@ -80,7 +80,7 @@ func bake(path: String, force: bool) -> String:
 			problems.append("foe %s %s can't stand there" % [f.id, cell])
 			continue
 		var e := {"id": String(f.id), "cell": cell}
-		for flag in ["hidden", "leader"]:
+		for flag in ["hidden", "leader", "post"]:
 			if bool(f.get(flag, false)):
 				e[flag] = true
 		s.enemies.append(e)
