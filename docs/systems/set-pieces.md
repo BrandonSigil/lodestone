@@ -39,13 +39,39 @@ then baked into a battle map:
 ```
 python3 tools/setpieces/seed_pieces.py <id>            # writes tools/setpieces/src/<id>.json and prints the grid
 cd game && godot --headless --path . -s res://tools/setpiece_build.gd -- <id> --force   # writes data/maps/sp_<id>.json
-python3 tools/map_shape.py --fight game/data/maps/sp_<id>.json                          # the "not a box" bar
+python3 tools/map_shape.py --piece game/data/maps/sp_<id>.json                          # the "not a box" bar (outline)
 ```
 
-Every set piece must pass the box bar (fill, edge, corners, bays, levels, climbs): the outline is never a plain
-rectangle ([USER] 2026-11-17: "these maps should not be just big squares and rectangles"). Edges come from the
-outline, creeks and ditches, not from scattered rock pillars. Once baked, a map can be hand-tuned in the map maker;
-re-baking needs `--force` and overwrites those edits.
+## A lived-in place first
+
+Brandon on the first W1 and E2 (2026-11-16, backlog X23): "It just doesnt make any reasonable sense as an actual lived
+place. I'd rather have believable ... feel lived in, and believable AND create fun combat/tactic choices for players.
+This just seems barfed at random." Every set piece is drawn to these rules before any number is checked:
+
+1. **Say what the place is in one sentence** (who uses it, why the road goes there) and put it in the map's `note`.
+   Every terrace, path and thing must answer to that sentence.
+2. **Land first, then use.** Lay the ground the way land lies (a hillside, a valley floor, a rise a barn was built on),
+   then the paths people wear into it, then what they left there. No feature only to bend a number.
+3. **Water is one thing with a reason**: one stream, pond or lake, flowing somewhere or fed from somewhere. No ditch
+   segments, no puddles, no river you never have to cross.
+4. **Stairs are where people walk.** Every stair joins two places someone would go between, on a path, square to the
+   cliff, one per need. Never two stairs side by side to the same place, never a stair into a wall or off the map.
+5. **Doors, gates and paths stay clear**: two free tiles in front of every door and gate, nothing on a path but what the
+   scene put there on purpose (the wagon).
+6. **Sides read at a glance.** The foes' side holds their cover and their reason to be there (spilled loot, a camp, a
+   corral); the party enters from the side the road comes from. In the iso view the foes' side is screen left (low x,
+   high y) and the party's is screen right (high x, low y) unless the scene says otherwise.
+7. **Height is earned**: a lookout, a rise a house sits on, a bank above a road. Each height has a stair or trail up and
+   something worth standing there for.
+8. **Two real choices at least**: a short exposed way and a longer covered or higher way.
+9. **Outline from the land**: the map's edge follows the hillside, the field's hedges, the water, never a rectangle
+   ([USER] 2026-11-17: "these maps should not be just big squares and rectangles"). Checked with
+   `python3 tools/map_shape.py --piece game/data/maps/sp_<id>.json`, which looks at the outline alone, so filler
+   ponds and rocks inside can't buy a pass.
+10. **Review before Brandon sees it**: a map-engineer pass (believable?) and a play-tester pass (two or three turns from
+    each start: dead zones, blocked doors, degenerate moves), fixes made, then screenshots.
+
+Once baked, a map can be hand-tuned in the map maker; re-baking needs `--force` and overwrites those edits.
 
 `game/tests/test_set_pieces.gd` checks every encounter with a `map`: it loads, the whole party gets a cell, every
 foe and exit tile can be walked to, and foes hide only from a party that walked in.
@@ -54,8 +80,8 @@ foe and exit tile can be walked to, and foes hide only from a party that walked 
 
 | Id | Road | Landmark | Event | Encounters | Notes |
 |---|---|---|---|---|---|
-| W1 `sp_wagon` | west | cart and spilled load across the road, creek with one bridge | `tr_wagon` | `wagon_in`, `wagon_out` | three hidden ambushers on the cover side, an archer up the bank |
-| E2 `sp_bulls` | east | corral with a broken fence, barn, well | `tr_bulls` | `bulls_in` | three bulls and a rusher charge down open lanes; win by beating them or reaching the far gate |
+| W1 `sp_wagon` | west | hillside road, the wagon across it, thieves' camp below the road and lookout knob above, both on the left | `tr_wagon` | `wagon_in`, `wagon_out` | three hidden ambushers by the spilled load, an archer on the knob; the woodcutters' trail on the right lets the party climb the bank |
+| E2 `sp_bulls` | east | farm by the road: barn on a low rise with one stair, lane, broken corral and stock pond on the left, well and mown hay field on the right | `tr_bulls` | `bulls_in` | three bulls loose on the left; win by beating them or reaching the barn door |
 
 The tipped wagon uses the upright cart art until Brandon draws a tipped one. Event lines are Claude's drafts,
 flagged in `game/text/claude_written.txt`.

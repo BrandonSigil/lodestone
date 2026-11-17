@@ -21,6 +21,9 @@ func bake(path: String, force: bool) -> String:
 	var look := String(d.get("look", "forest"))
 	var grid := MapPlot.build({"levels": d.levels, "marks": d.marks, "flip": false}, 1, look, true, true)
 	var T := CombatGrid.T
+	for c in d.get("stairs", []):  # each its own stair, so cells side by side make one wide flight
+		if not MapOps.stairs(grid, Vector2i(int(c[0]), int(c[1]))):
+			push_warning("stair %s has nothing to climb" % [c])
 	for c in d.get("stones", []):
 		var cell := Vector2i(int(c[0]), int(c[1]))
 		grid.set_terrain(cell, T.STONE)

@@ -23,7 +23,7 @@ PROPS = {
     "T": dict(sprite="village/prop_tree", tall=1.6, sight=1.0),
     "e": dict(sprite="village/prop_reeds", tall=0.6, sight=0.5),
 }
-PLOT = set("dwbsrt ")
+PLOT = set("dwbsrt ")  # "S" is a stair cell laid on its own, so a run of them side by side is one wide stair
 
 PIECES = {}
 
@@ -42,84 +42,85 @@ def marks(L, spec):
                 g[y][x] = ch
     return ["".join(r) for r in g]
 
+def levels(w, h, spec):
+    """The L grid from rectangles, later ones on top: "3:4-17,1-3 .:4,1" (level or "." for outside, x run, y run)."""
+    g = [["."] * w for _ in range(h)]
+    for tok in spec.split():
+        ch, at = tok.split(":")
+        xs, ys = at.split(",")
+        x0, x1 = xs.split("-") if "-" in xs else (xs, xs)
+        y0, y1 = ys.split("-") if "-" in ys else (ys, ys)
+        for y in range(int(y0), int(y1) + 1):
+            for x in range(int(x0), int(x1) + 1):
+                g[y][x] = ch
+    return ["".join(r) for r in g]
+
+
+def marks_at(L, spec):
+    """The cells a marks() spec covers (the mark letters are ignored)."""
+    g = marks(L, spec) if spec else []
+    return {(x, y) for y, r in enumerate(g) for x, ch in enumerate(r) if ch != " "}
+
+
+# ---- W1 Tipped wagon. The west road runs along a wooded hillside: the bank above it (back), the road, and below it
+# (front left) the hollow where the thieves camp. The wagon lies across the road; what spilled out of it lies on the
+# thieves' side (screen left, low x), with gaps above and below the wagon to squeeze past. Their lookout stands on
+# the bank edge one level above the road, so the wagon and its load still shield against him. The party comes along
+# the road from the right; the woodcutters' trail (stumps) lets it climb the bank and come along the top.
+_L = levels(24, 14,
+    "1:0-23,6-8 1:2-21,9 1:13-20,10 1:15-19,11 1:10-13,5 "                   # the road, its verge, the meadow on the right
+    "2:2-9,1-5 2:10-13,1-4 2:14-19,2-5 2:2-3,6 2:4-8,0 .:2,1 .:19,2 "  # the bank above the road, its edge in and out
+    "0:1-8,10-12 0:2-6,13 .:1,12 .:8,12")                          # the camp hollow below the road
 PIECES["wagon"] = dict(
     look="forest", art_set="forest",
-    note="W1 Tipped wagon: the road bends round a river cove under a broken wooded bank. The thieves' side (the "
-         "bank) has crates, rocks and trees to hide behind; the party's side is open grass with the water at its back.",
-    L=[
-        "....222......3333.....",
-        "...22222....333333....",
-        "..222222....3333333...",
-        "..22222.....22333333..",
-        "..111111....1122333...",
-        ".1111111.111111222....",
-        "....11111111111111....",
-        "000000111111111111....",
-        "00000000000000000111..",
-        ".00000000000000000....",
-        "..00000000000000000...",
-        "..00000000000000000000",
-        "...00000000000000000..",
-        "....00000000000000000.",
-        "......00......0000....",
-        "...............000....",
-        "......................",
-    ],
-    M=[
-        "    t t      tRt      ",
-        "   t   t    t   t     ",
-        "  t  r      s  r  t   ",
-        "  ts  x        s   t  ",
-        "   A        x     r   ",
-        " r   x r    A  s      ",
-        "    s      x    s     ",
-        "dd   s   r   w  A     ",
-        " ddddddd     w    s   ",
-        "  pp  ddK#x  w   r    ",
-        "  pp  P ##cddbddd     ",
-        "   r wwP  P  w  dddddd",
-        "   wwwwwww P w  y     ",
-        "    wwwwwwwwwwwwwwwww ",
-        "      ww      wwww    ",
-        "               www    ",
-        "                      ",
-    ],
-    props={"K": dict(sprite="village/prop_cart", foot=[2, 2], tall=1.3, sight=1.0)},
+    note="W1 Tipped wagon: a hillside road. The wagon lies across it with a gap above and below to get past. "
+         "The thieves' side is the left: the spilled load, their camp in the hollow below the road, their lookout on "
+         "the bank edge. The party comes from the right; the woodcutters' trail climbs the bank to come at the lookout.",
+    L=_L,
+    road="d:0-23,7-8",
+    M=marks(_L, "d:0-23,7-8 "
+                "K:10,7 #:11,7 #:10-11,8 c:8,7 x:7,8 x:9,9 B:7,6 "               # the wagon and its spilled load
+                "s:5,5 s:16,5 s:6,10 "                                          # thieves' trail, woodcutters' trail, way down to camp
+                "t:3-4,2-3 t:8-9,1-2 t:11-12,2 t:5,1 T:13,3 T:4,4 "             # woods on the thieves' bank
+                "u:15,4 u:18,3 u:17,5 T:19,4 T:15,2 "                           # cut stumps on the woodcutters' side
+                "u:3,10 u:5,12 u:4,10 x:2,11 x:3,12 c:2,12 y:7,11 "              # camp: seats round the fire pit, the loot they hauled off
+                "B:17,10 B:16,11 y:14,9 "                                       # a rockfall below the road on the party's side
+                "A:9,8 A:8,9 A:6,11 R:10,4 "
+                "P:12,6 P:12,9 P:13,7 P:13,8 p:21,7 p:21,8 p:22,7 p:22,8"),
+    props={"K": dict(sprite="village/prop_cart", foot=[2, 2], tall=1.3, sight=1.0),
+           "u": dict(sprite="village/prop_stump", tall=0.5, sight=0.0)},
     foes={"A": dict(id="ambusher", hidden=True), "R": dict(id="bandit_archer")},
 )
 
-_L = [
-    "......1111............",
-    "....11111111....333...",
-    "...111111111...22332..",
-    "...11111111....22222..",
-    "....00000000...11222..",
-    "...00000000000000000..",
-    "000000000000000000000.",
-    "0000000000000000000000",
-    "0000000000000000000000",
-    ".000000000000000000000",
-    "..0000000000000000000.",
-    "..000000000000000000..",
-    "..000000000000000000..",
-    "......0000............",
-]
+# ---- E2 Loose bulls. A small farm beside the east road, all on the flat. The barn at the back with clear ground in
+# front of its door, the lane from the door down to the road. Left of the lane: the corral, its gate open on the lane
+# and its road-side fence broken out, a water barrel inside. Right of the lane: the well in the yard, then a mown hay
+# field with bales left in rows. The bulls are loose on the left; the party comes along the road from the right.
+_L = levels(24, 15,
+    "0:7-15,0-4 .:7,0 .:15,0 "                             # the barn yard
+    "0:3-20,5-8 0:1-21,9-11 0:0-23,12-13 "                # yard, corral, field, road
+    "0:4-19,14 .:3,5 .:20,5 .:1,9 .:1,11")                 # verge
 PIECES["bulls"] = dict(
     look="farmland", art_set="farmland",
-    note="E2 Loose bulls: a broken corral in open farmland, fields split by irrigation ditches with gaps to cross at. The barn "
-         "stands on a rise behind a ditch, a haystack hill beside it. Bulls charge along straight runs; fences, "
-         "hay bales and gateways break a run. The barn's yard is the way out.",
+    note="E2 Loose bulls: a farm by the road, on the flat. Barn at the back with its door clear, the lane down to "
+         "the road. Corral with its gate open and its road-side fence broken on the left, where the bulls are; well "
+         "and a mown hay field in rows on the right, where the party comes from. Fences, bales and the well break a "
+         "charge; the barn door is the way out.",
     L=_L,
-    M=marks(_L, "H:6,0 #:7-9,0 #:6-9,1-2 T:4,1 T:11,1 T:3,2 h:17,1 T:18,1 X:3-6,3 h:8,3 T:19,3 "
-                "s:17,3 s:4,4 s:9,4 s:16,4 s:15,5 w:5-8,4 r:11,4 "
-                "f:7-11,6 f:13-14,6 F:7,7 F:14,7 f:7-8,9 f:11-14,9 "
-                "U:8,7 W:10,7 #:11,7 #:10-11,8 U:13,8 U:11,10 V:19,6 "
-                "w:4,6-8 w:16,5-8 w:4-7,11 w:10-16,11 w:1,7 w:1-2,8 r:3,9 r:20,7 h:6,5 h:15,10 h:3,5 h:18,8 h:5,10 "
-                "P:17-18,9 P:17-18,10 d:2-19,12 p:16-19,12 h:8,13 T:6,13"),
+    road="d:10-11,5-11 d:0-23,12-13",
+    M=marks(_L, "H:9,1 #:10-12,1 #:9-12,2-3 X:9-12,4 "
+                "h:8,2 h:8,3 K:13,2 #:14,2 #:13-14,3 T:8,0 T:14,0 "             # hay stacked by the barn wall, the farm cart
+                "f:4-8,6 f:4,10 f:7-8,10 F:4,7-9 F:8,7 F:8,9 c:5,8 h:3,7 "      # corral: gate (8,8) open, (5-6,10) broken
+                "W:13,6 #:14,6 #:13-14,7 "                                      # well
+                "h:14,9 h:17,9 h:20,9 h:13,11 h:16,11 h:19,11 "                 # bales in rows in the mown field
+                "T:20,6 T:3,9 T:21,10 "
+                "U:5,11 U:6,9 U:2,12 "
+                "P:15,8 P:16,10 P:18,10 P:17,8 p:20,10 p:21,11 p:21,12 p:22,12"),
     props={"H": dict(sprite="village/b_home_b", foot=[4, 3], tall=0.0, sight=3.0),
            "W": dict(sprite="village/prop_well", foot=[2, 2], tall=1.8, sight=1.0),
+           "K": dict(sprite="village/prop_cart", foot=[2, 2], tall=1.3, sight=1.0),
            "F": dict(sprite="village/prop_fence", tall=0.6, sight=0.0, flip=True)},
-    foes={"U": dict(id="foe_bull"), "V": dict(id="foe_rusher")},
+    foes={"U": dict(id="foe_bull")},
 )
 
 
@@ -134,11 +135,12 @@ def sketch(pid):
     props_def.update(p.get("props", {}))
     foes_def = p.get("foes", {})
     out = dict(id=pid, look=p["look"], art_set=p["art_set"], note=p["note"], levels=L, marks=[],
-               props=[], party=[], out=[], foes=[], exit=[], stones=[], docks=[])
+               props=[], party=[], out=[], foes=[], exit=[], stones=[], docks=[], stairs=[])
+    road = marks_at(L, p.get("road", ""))  # road that runs on under things and pieces standing on it
     for y, row in enumerate(M):
         marks = ""
         for x, ch in enumerate(row):
-            marks += ch if ch in PLOT else " "
+            marks += "d" if (x, y) in road and ch not in "wbsrtS" else (ch if ch in PLOT else " ")
             if ch in PLOT or ch == "#":
                 continue
             assert L[y][x] != ".", (pid, "thing outside the map", ch, x, y)
@@ -148,6 +150,8 @@ def sketch(pid):
                 out["out"].append([x, y])
             elif ch == "X":
                 out["exit"].append([x, y])
+            elif ch == "S":
+                out["stairs"].append([x, y])
             elif ch == "o":
                 out["stones"].append([x, y])
             elif ch == "k":

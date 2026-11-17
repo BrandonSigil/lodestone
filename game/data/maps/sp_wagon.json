@@ -4,26 +4,26 @@
 	"enemies": [
 		{
 			"id": "bandit_archer",
-			"x": 14,
-			"y": 0
-		},
-		{
-			"hidden": true,
-			"id": "ambusher",
-			"x": 3,
+			"x": 10,
 			"y": 4
 		},
 		{
 			"hidden": true,
 			"id": "ambusher",
-			"x": 12,
-			"y": 5
+			"x": 9,
+			"y": 8
 		},
 		{
 			"hidden": true,
 			"id": "ambusher",
-			"x": 16,
-			"y": 7
+			"x": 8,
+			"y": 9
+		},
+		{
+			"hidden": true,
+			"id": "ambusher",
+			"x": 6,
+			"y": 11
 		}
 	],
 	"enemy_mods": {
@@ -35,34 +35,22 @@
 	},
 	"extra_enemies": 0,
 	"map": {
-		"decks": [
-			{
-				"b": true,
-				"h": 1,
-				"t": "s",
-				"x": 13,
-				"y": 10
-			}
-		],
-		"h": 17,
+		"h": 14,
 		"heights": [
-			"0000555000000777700000",
-			"0005555500007777770000",
-			"0055565500006778777000",
-			"0054555000005576777700",
-			"0033333300003355778000",
-			"0433333403333334550000",
-			"0000233333333333430000",
-			"1111123334333233330000",
-			"1111111111111011133300",
-			"0111111111111011120000",
-			"0011111111111011111000",
-			"0012100111111011111111",
-			"0000000000111011111100",
-			"0000000000000000000000",
-			"0000000000000000000000",
-			"0000000000000000000000",
-			"0000000000000000000000"
+			"000055555000000000000000",
+			"000555555555550000000000",
+			"005555555555555555500000",
+			"005555555555555555550000",
+			"005555555555555555550000",
+			"005554555533335545550000",
+			"335533333333333333333333",
+			"333333333333333333333333",
+			"333333333333333333333333",
+			"003333333333333333333300",
+			"011111211000033333333000",
+			"011111111000000333330000",
+			"001111110000000000000000",
+			"001111100000000000000000"
 		],
 		"look": {
 			"id": "forest"
@@ -70,8 +58,148 @@
 		"props": [
 			{
 				"cell": [
-					6,
+					15,
+					2
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					13,
 					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					18,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					15,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					19,
+					4
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					17,
+					5
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					7
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_barrel",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					10,
+					7
+				],
+				"foot": [
+					2,
+					2
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_cart",
+				"tall": 1.3,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					8
 				],
 				"foot": [
 					1,
@@ -84,8 +212,134 @@
 			},
 			{
 				"cell": [
-					12,
-					4
+					9,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_crates",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_stump",
+				"tall": 0.5,
+				"walk": false
+			},
+			{
+				"cell": [
+					17,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					2,
+					11
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_crates",
+				"tall": 0.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					11
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "prop_bush",
+				"tall": 0.55,
+				"walk": false
+			},
+			{
+				"cell": [
+					16,
+					11
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "prop_boulder",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					2,
+					12
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_barrel",
+				"tall": 0.7,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					12
 				],
 				"foot": [
 					1,
@@ -99,130 +353,57 @@
 			{
 				"cell": [
 					5,
-					5
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_crates",
-				"tall": 0.8,
-				"walk": false
-			},
-			{
-				"cell": [
-					11,
-					6
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_crates",
-				"tall": 0.8,
-				"walk": false
-			},
-			{
-				"cell": [
-					8,
-					9
-				],
-				"foot": [
-					2,
-					2
-				],
-				"sight": 1.0,
-				"sprite": "village/prop_cart",
-				"tall": 1.3,
-				"walk": false
-			},
-			{
-				"cell": [
-					10,
-					9
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_crates",
-				"tall": 0.8,
-				"walk": false
-			},
-			{
-				"cell": [
-					10,
-					10
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_barrel",
-				"tall": 0.7,
-				"walk": false
-			},
-			{
-				"cell": [
-					16,
 					12
 				],
 				"foot": [
 					1,
 					1
 				],
-				"sight": 0.5,
-				"sprite": "prop_bush",
-				"tall": 0.55,
+				"sight": 0.0,
+				"sprite": "village/prop_stump",
+				"tall": 0.5,
 				"walk": false
 			}
 		],
 		"terrain": [
-			"....fgf......fgfg.....",
-			"...fgggf....fgggfg....",
-			"..fggrgg....tggrggf...",
-			"..ftggg.....gggtgggf..",
-			"..gggggg....ggggggr...",
-			".rgggggr.ggggggtgg....",
-			"....tgggggggggggtg....",
-			"ddgggtgggrgggwgggg....",
-			"gdddddddgggggwgggggg..",
-			".gggggddgggggwgggr....",
-			"..gggggggggddwdddgg...",
-			"..grgwwggggggwggdddddd",
-			"...wwwwwwwgggwgggggg..",
-			"....wwwwwwwwwwwwwwwww.",
-			"......ww......wwww....",
-			"...............www....",
-			"......................"
+			"....ggggg...............",
+			"...ggfggffgggg..........",
+			"..gffgggffgffgggggg.....",
+			"..gffggggggggggggggg....",
+			"..gggggggggggggggggg....",
+			"..gggtggggggggggtggg....",
+			"gggggggggggggggggggggggg",
+			"dddddddddddddddddddddddd",
+			"dddddddddddddddddddddddd",
+			"..gggggggggggggggggggg..",
+			".gggggtgg....gggggggg...",
+			".gggggggg......ggggg....",
+			"..gggggg................",
+			"..ggggg................."
 		],
-		"w": 22
+		"w": 24
 	},
 	"name": "sp_wagon",
 	"party": [
 		{
 			"id": "lead",
-			"x": 6,
-			"y": 10
+			"x": 12,
+			"y": 6
 		},
 		{
 			"id": "stardrop",
-			"x": 7,
-			"y": 11
+			"x": 13,
+			"y": 7
 		},
 		{
 			"id": "hunter",
-			"x": 10,
-			"y": 11
+			"x": 13,
+			"y": 8
 		},
 		{
 			"id": "knight",
-			"x": 11,
-			"y": 12
+			"x": 12,
+			"y": 9
 		}
 	],
 	"party_mods": {
@@ -234,23 +415,23 @@
 	},
 	"piece": {
 		"exit": [],
-		"note": "W1 Tipped wagon: the road bends round a river cove under a broken wooded bank. The thieves' side (the bank) has crates, rocks and trees to hide behind; the party's side is open grass with the water at its back.",
+		"note": "W1 Tipped wagon: a hillside road. The wagon lies across it with a gap above and below to get past. The thieves' side is the left: the spilled load, their camp in the hollow below the road, their lookout on the bank edge. The party comes from the right; the woodcutters' trail climbs the bank to come at the lookout.",
 		"out": [
 			[
-				2,
-				9
+				21,
+				7
 			],
 			[
-				3,
-				9
+				22,
+				7
 			],
 			[
-				2,
-				10
+				21,
+				8
 			],
 			[
-				3,
-				10
+				22,
+				8
 			]
 		]
 	},
