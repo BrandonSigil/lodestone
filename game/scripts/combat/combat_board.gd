@@ -1419,7 +1419,7 @@ const SLOPE_STEP := 0.03  ## light comes in flat steps this big, never a blend
 
 func _draw_slope(c: Vector2i) -> void:
 	var t := grid.terrain_at(c)
-	var g := _ground_t(t)
+	var g := t  # a road up a bank is dirt all across (a ribbon on a tilted top breaks into patches)
 	var zone := grid.zone_at(c)
 	var z := grid.slope_corners(c)
 	var h := _surf(c)
@@ -1480,7 +1480,6 @@ func _draw_slope(c: Vector2i) -> void:
 			_ci.draw_colored_polygon(poly, Color(top_col * light, 1.0))
 	for k in 4:
 		all.append(iso(pts[k].x, pts[k].y, h + z[k] - base))
-	_road_ribbon(c, h, zone)
 	# Ink along a back edge that stands out against lower ground behind it, as on a block's top.
 	if _soft():
 		for k in 4:

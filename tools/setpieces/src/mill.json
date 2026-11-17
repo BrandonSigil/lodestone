@@ -152,6 +152,16 @@
    ]
   },
   {
+   "sprite": "village/prop_crops",
+   "tall": 0.5,
+   "sight": 0.5,
+   "walk": true,
+   "cell": [
+    1,
+    6
+   ]
+  },
+  {
    "sprite": "village/prop_fence",
    "tall": 0.6,
    "sight": 0.0,
@@ -213,16 +223,6 @@
    "sight": 0.5,
    "walk": true,
    "cell": [
-    1,
-    7
-   ]
-  },
-  {
-   "sprite": "village/prop_crops",
-   "tall": 0.5,
-   "sight": 0.5,
-   "walk": true,
-   "cell": [
     10,
     7
    ]
@@ -253,16 +253,6 @@
    "sight": 0.0,
    "cell": [
     3,
-    8
-   ]
-  },
-  {
-   "sprite": "village/prop_crops",
-   "tall": 0.5,
-   "sight": 0.5,
-   "walk": true,
-   "cell": [
-    10,
     8
    ]
   },
@@ -309,6 +299,24 @@
    "sight": 0.0,
    "cell": [
     8,
+    10
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    9,
+    10
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    10,
     10
    ]
   },
@@ -407,13 +415,13 @@
    "hidden": true,
    "cell": [
     1,
-    6
+    7
    ]
   },
   {
    "id": "bandit",
    "cell": [
-    9,
+    10,
     8
    ]
   },
@@ -434,19 +442,7 @@
  "slopes": [
   [
    9,
-   2
-  ],
-  [
-   2,
    3
-  ],
-  [
-   9,
-   3
-  ],
-  [
-   2,
-   4
   ],
   [
    9,
@@ -466,10 +462,6 @@
   ],
   [
    9,
-   6
-  ],
-  [
-   12,
    6
   ],
   [
@@ -519,10 +511,6 @@
   [
    12,
    10
-  ],
-  [
-   2,
-   11
   ],
   [
    3,
