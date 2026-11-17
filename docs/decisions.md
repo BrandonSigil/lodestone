@@ -121,6 +121,7 @@ Every design call goes here, newest at the bottom of its section.
 - [AI] 2026-10-25 Route is 300 leagues. The Wall sits at 150. Strangeness = distance / 300.
 - [AI] 2026-10-25 Meta progression: the village grants +5 starting food per 50 leagues of best distance (the "prove it's worthwhile" lord). The Lodestone remembers event marks from every run.
 - [AI] 2026-10-25 Deferred: water, warmth and shelter needs; minigames (hunt, fish, herbs are dice rolls for now).
+- [AI] 2026-11-17 Hunting minigame pitches for Brandon to pick from (`docs/design/hunting-pitches/index.html`, page https://claude.ai/artifact/QaBQQdF4cHfsqaNYPZ3QNd): A Bow Blind (his idea: glade, mouse aim, draw tension, stillness as stealth), B Stalk (freeze when the animal looks up, wind, one shot), C Snare Line (place snares on animal runs, night replays), D Corgi Drive (herd with Doggo's bark into the hero's shot). Recommended: build A, borrowing B's look-up pause and a Doggo FLUSH command, with C later as a TRAP camp action. Nothing built until he picks. (game designer)
 
 ## Visual language
 - [USER] 2026-10-26 AI builds much of the visual work; Brandon directs and shapes it. Ideation happens in the "Shape the Lodestone visual language" project thread, around a published style lab page (source in `docs/style-lab/index.html`).
