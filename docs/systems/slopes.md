@@ -67,6 +67,8 @@ slope. Move and attack highlights tilt with the cell.
 
 ## Where they are used
 
+The rule ([USER] 2026-11-17, Brandon): "a mix of stairs in built up places and slopes in natural places". Stairs where people built the way up (towers, shrines, villages, rock cut in the north); slopes where the land itself rises (hills, banks, worn trails).
+
 - **E3 windmill hill** (`sp_mill`): both rises banked all round, no stairs; the cart track runs straight up the
   banks to the mill.
 - **W1 tipped wagon** (`sp_wagon`): the thieves' trail and the woodcutters' trail up the bank, and the way down to
