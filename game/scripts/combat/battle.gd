@@ -644,7 +644,7 @@ func _play(ev: Dictionary) -> void:
 		"push":
 			log_line.emit(Txt.f("LOG_PUSH", Txt.t(t.name_key)))
 			await board.animate_push(t, ev.path)
-		"bump", "fall":
+		"bump", "fall", "swept":
 			t.shown_hp = maxi(0, t.shown_hp - int(ev.amount))
 			changed.emit()  # the side panel's bars follow each blow (2026-11-13 playtest: they lagged a phase)
 			board.float_text(t.cell, "%s -%d" % [Txt.t("UI_" + String(ev.type).to_upper()), ev.amount], Color(1, 0.7, 0.4))

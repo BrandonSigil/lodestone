@@ -2039,3 +2039,29 @@ func test_a_first_trip_party_drops_a_wolf_in_two_or_three_hits() -> void:
 	dog.place(Vector2i(1, 0), 1)
 	eq(_hits_to_kill(road_wolf.max_hp, CombatRules.damage_range(g, dog, road_wolf, dog.cell, null, [dog, road_wolf])),
 		Vector2i(2, 3), "from high ground")
+
+
+func test_a_river_sweeps_a_pushed_piece_downstream() -> void:
+	# a river down column 3, leaving the map at the bottom (y = 7); banks either side
+	var g := CombatGrid.flat(7, 8)
+	for y in 8:
+		g.set_terrain(Vector2i(3, y), CombatGrid.T.WATER)
+	for y in 4:  # it comes in high at the top and runs down to the bottom
+		for x in 7:
+			g.set_height(Vector2i(x, y), 2)
+	var foe := _unit("bandit", 1, Vector2i(2, 1), g)
+	var hero := _unit("bandit", 0, Vector2i(1, 1), g)
+	var hp := foe.hp
+	var ev := CombatRules.push(g, [foe, hero], hero.cell, foe, 1)
+	ok(ev.any(func(e: Dictionary) -> bool: return e.type == "swept"), "pushed into the river, it is swept")
+	eq(foe.hp, hp - CombatRules.SWEPT_DAMAGE, "the current hurts")
+	ok(foe.cell.y > 1, "carried downstream, toward where the river leaves the map")
+	ok(g.terrain_at(foe.cell) != CombatGrid.T.WATER, "and washed up on a bank")
+	# a pond that doesn't leave the map is still a plain bump
+	var p := CombatGrid.flat(7, 7)
+	p.set_terrain(Vector2i(3, 3), CombatGrid.T.WATER)
+	var f2 := _unit("bandit", 1, Vector2i(2, 3), p)
+	var h2 := _unit("bandit", 0, Vector2i(1, 3), p)
+	var ev2 := CombatRules.push(p, [f2, h2], h2.cell, f2, 1)
+	ok(ev2.any(func(e: Dictionary) -> bool: return e.type == "bump"), "a pond bumps")
+	eq(f2.cell, Vector2i(2, 3), "and the piece stays put")

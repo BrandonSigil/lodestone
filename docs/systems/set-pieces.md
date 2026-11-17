@@ -31,6 +31,16 @@ fence, in the cell next to the target on the shooter's side, counts as cover (th
 with it). It does not count when the shooter is two or more levels above, or for a target on a bridge deck. So the
 side of the wagon you stand on matters.
 
+## Rivers and stepping stones
+
+- **Swept away** (built for W2, `CombatRules.sweep`): a piece pushed into river water is carried downstream instead of
+  bumping: toward where the river leaves the map at its lowest edge, up to 3 cells, then it washes up on the nearest
+  free bank, taking 2 damage (`SWEPT_DAMAGE`). Water that never leaves the map (a pond, a lake) still bumps. Ice
+  pillars aren't swept.
+- **Stepping stones**: a stone tile with river water on both sides along one line is drawn as a round stone standing
+  in the water (`CombatBoard._ford_stone`), so a ford reads as separate steps, not a paved causeway. This also changes
+  the fords the random plots lay.
+
 ## Building one
 
 Maps are typed as plain text in `tools/setpieces/seed_pieces.py` (levels, water, road, things, foes, both starts),

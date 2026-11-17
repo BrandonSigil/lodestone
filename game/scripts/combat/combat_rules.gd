@@ -11,6 +11,8 @@ const SKITTISH_DC := 11
 const SKITTISH_RANGE := 3
 const BUMP_DAMAGE := 2  ## pushed into a wall, rock, cliff face or another unit
 const FALL_DAMAGE := 2  ## per level dropped beyond the first when pushed off a ledge
+const SWEPT_DAMAGE := 2  ## pushed into a river: the current carries the piece downstream (sweep)
+const SWEPT_RUN := 3  ## how many water cells the current carries a piece before it can wash up
 
 const STATUS_GUARD := "guard"
 const STATUS_VEIL := "veil"
@@ -847,6 +849,15 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 			blocked = true
 		if blocked and pull:
 			break
+		if blocked and grid.terrain_at(dest) == CombatGrid.T.WATER and occupant(units, dest) == null and not t.has_trait(TRAIT_STRUCTURE):
+			var swept := sweep(grid, units, t, dest)
+			if not swept.is_empty():
+				path.append_array(swept)
+				t.place(swept[-1], grid.height_at(swept[-1]))
+				t.hp = maxi(0, t.hp - SWEPT_DAMAGE)
+				t.statuses.erase(STATUS_SLEEP)
+				events.append({"type": "swept", "unit": t, "amount": SWEPT_DAMAGE})
+				break
 		if blocked:
 			t.hp = maxi(0, t.hp - BUMP_DAMAGE)
 			t.statuses.erase(STATUS_SLEEP)
@@ -863,6 +874,78 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 	if path.size() > 1:
 		events.push_front({"type": "push", "unit": t, "path": path})
 	return events
+
+
+## A piece shoved into river water at cell w ([USER] 2026-11-17, set piece W2's rapids): the current carries it
+## downstream, toward where the river leaves the map (its lowest edge), SWEPT_RUN cells, then it washes up on the nearest free bank
+## beside the water. Returns the cells it passes, ending on the bank; empty when the water doesn't leave the map
+## (a pond or lake: the old bump) or there is no bank to wash up on.
+static func sweep(grid: CombatGrid, units: Array, t: CombatUnit, w: Vector2i) -> Array[Vector2i]:
+	var water := func(c: Vector2i) -> bool: return grid.in_bounds(c) and grid.terrain_at(c) == CombatGrid.T.WATER
+	# how far each water cell of this body is from where it leaves the map
+	var body := {w: true}
+	var queue: Array[Vector2i] = [w]
+	var i := 0
+	while i < queue.size():
+		var c: Vector2i = queue[i]
+		i += 1
+		for d: Vector2i in DIRS:
+			if water.call(c + d) and not body.has(c + d):
+				body[c + d] = true
+				queue.append(c + d)
+	var dist := {}
+	var front: Array[Vector2i] = []
+	var low := CombatGrid.MAX_HEIGHT + 1  # it leaves by its lowest edge cells: the river runs downhill
+	for c: Vector2i in body:
+		if c.x == 0 or c.y == 0 or c.x == grid.w - 1 or c.y == grid.h - 1:
+			low = mini(low, grid.height_at(c))
+	for c: Vector2i in body:
+		if (c.x == 0 or c.y == 0 or c.x == grid.w - 1 or c.y == grid.h - 1) and grid.height_at(c) == low:
+			dist[c] = 0
+			front.append(c)
+	if front.is_empty():
+		return []
+	i = 0
+	while i < front.size():
+		var c: Vector2i = front[i]
+		i += 1
+		for d: Vector2i in DIRS:
+			if body.has(c + d) and not dist.has(c + d):
+				dist[c + d] = int(dist[c]) + 1
+				front.append(c + d)
+	var run: Array[Vector2i] = [w]
+	var at := w
+	while true:
+		if run.size() > SWEPT_RUN or int(dist.get(at, 0)) == 0:
+			var bank := _bank(grid, units, t, at, run)
+			if bank != Vector2i(-1, -1):
+				run.append(bank)
+				return run
+			if int(dist.get(at, 0)) == 0:
+				break
+		var next := at
+		for d: Vector2i in DIRS:
+			if dist.has(at + d) and int(dist[at + d]) < int(dist[next]):
+				next = at + d
+		if next == at:
+			break
+		at = next
+		run.append(at)
+	# nowhere to wash up downstream: the nearest bank along the way back
+	for k in range(run.size() - 1, -1, -1):
+		var bank := _bank(grid, units, t, run[k], run)
+		if bank != Vector2i(-1, -1):
+			return run.slice(0, k + 1) + [bank] as Array[Vector2i]
+	return []
+
+
+static func _bank(grid: CombatGrid, units: Array, t: CombatUnit, c: Vector2i, _run: Array) -> Vector2i:
+	for d: Vector2i in DIRS:
+		var b := c + d
+		if grid.in_bounds(b) and grid.terrain_at(b) != CombatGrid.T.WATER and grid.passable(b) \
+				and (occupant(units, b) == null or occupant(units, b) == t) and grid.height_at(b) - grid.height_at(c) <= 2:
+			return b
+	return Vector2i(-1, -1)
 
 
 ## Where a piece shoved from place `at` into cell c lands: on the highest floor there it isn't shoved up into

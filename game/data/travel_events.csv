@@ -7,3 +7,4 @@ tr_cold,2,0,1,,EV_TR_COLD,OPT_PUSH_ON,nerve,10,blessing:any,hp_all:-1;setback:an
 tr_first,0,0,1,first_road_fight,EV_TR_FIRST,OPT_FIGHT,fight,0,combat:first_road;unlock:first_road_fight,,,,,,,,,,,,
 tr_wagon,4,0,1,,EV_TR_WAGON,OPT_SEARCH_WAGON,fight,0,combat:wagon_in,,OPT_HELP,fight,0,combat:wagon_in,,OPT_WALK_PAST,sneak,12,,combat:wagon_out,forest_roads|coastal_beach
 tr_bulls,4,0,1,,EV_TR_BULLS,OPT_CALM,tame,13,blessing:any,combat:bulls_in,OPT_DRIVE,fight,0,combat:bulls_in,,OPT_LEAVE,none,0,,,farmland|grassland
+tr_falls,4,0,1,,EV_TR_FALLS,OPT_CROSS_STONES,fight,0,combat:falls_in,,OPT_SCOUT,sneak,12,combat:falls_out,combat:falls_in,OPT_TURN_BACK,none,0,,,forest_roads|coastal_beach
