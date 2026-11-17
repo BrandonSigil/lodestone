@@ -1,7 +1,7 @@
 # Road set pieces (pitch)
 
 Status: **[USER] 2026-11-17: all nine approved, with two notes (below). Build in progress.** Page with sketches:
-https://claude.ai/artifact/MpxxgNjBQnvE1BhdqhAGsw. Sketches: `docs/art/set-pieces/` (drawn by
+https://claude.ai/artifact/MpxxgNjBQnvE1BhdqhAGsw. Built: W1, E2 (how: `docs/systems/set-pieces.md`). Sketches: `docs/art/set-pieces/` (drawn by
 `python3 tools/setpieces/sketch.py <out_dir>` from the grids in `tools/setpieces/layouts.py`).
 
 Brandon, 2026-11-17: "help me improve the "random encounter" maps. I'd like to have 2-3 per starting zone (east, west,

@@ -17,7 +17,10 @@ const PRESETS := {
 var map_name := "untitled"
 var grid: CombatGrid
 var party: Array = []  ## [{"id": character id, "cell": Vector2i, "spells": [ids] (casters only, optional)}]
-var enemies: Array = []  ## [{"id": class id, "cell": Vector2i}]
+var enemies: Array = []  ## [{"id": class id, "cell": Vector2i, "hidden": true (optional: an ambusher, unseen until spotted), "leader": true (optional: FightGoals "leader")}]
+## A road set piece (docs/systems/set-pieces.md), empty on any other map: {"out": [[x, y], ...] the party's cells when
+## it saw the foes first (the `party` entries are its cells when it walked in), "exit": [[x, y], ...] FightGoals exit cells}.
+var piece := {}
 var party_mods := {"hp_pct": 100, "attack": 0, "defense": 0, "damage": 0, "move": 0}
 var enemy_mods := {"hp_pct": 100, "attack": 0, "defense": 0, "damage": 0, "move": 0}
 var extra_enemies := 0  ## copies of the listed enemies added on the right edge at fight start
@@ -156,6 +159,8 @@ func build_units() -> Array:
 			continue
 		var u := CombatUnit.enemy(c, enemy_mods)
 		u.place(e.cell, grid.height_at(e.cell))
+		u.hiding = bool(e.get("hidden", false))
+		u.leader = bool(e.get("leader", false))
 		taken[e.cell] = true
 		units.append(u)
 		ids.append(e.id)
@@ -229,14 +234,20 @@ func to_dict() -> Dictionary:
 			var row := {"id": e.id, "x": e.cell.x, "y": e.cell.y}
 			if e.has("spells"):
 				row["spells"] = e.spells
+			for flag in ["hidden", "leader"]:
+				if e.get(flag, false):
+					row[flag] = true
 			out.append(row)
 		return out
-	return {
+	var d := {
 		"name": map_name, "map": grid.to_dict(), "party": cells.call(party), "enemies": cells.call(enemies),
 		"party_mods": party_mods, "enemy_mods": enemy_mods, "extra_enemies": extra_enemies,
 		"supplies": supplies, "seed": seed_value, "strangeness": strangeness, "art_set": art_set,
 		"counters": counters, "view": view,
 	}
+	if not piece.is_empty():
+		d["piece"] = piece.duplicate(true)
+	return d
 
 
 static func from_dict(d: Dictionary) -> SandboxSetup:
@@ -249,6 +260,9 @@ static func from_dict(d: Dictionary) -> SandboxSetup:
 			var entry := {"id": String(e.id), "cell": Vector2i(int(e.x), int(e.y))}
 			if e.has("spells"):
 				entry["spells"] = Array(e.spells).map(func(x: Variant) -> String: return String(x))
+			for flag in ["hidden", "leader"]:
+				if bool(e.get(flag, false)):
+					entry[flag] = true
 			list.append(entry)
 	for key in MOD_KEYS:
 		s.party_mods[key] = int(d.get("party_mods", {}).get(key, s.party_mods[key]))
@@ -261,6 +275,7 @@ static func from_dict(d: Dictionary) -> SandboxSetup:
 	s.art_set = String(d.get("art_set", ""))
 	s.counters = bool(d.get("counters", true))  # the data switch (combat.csv counters) still has the last word
 	s.view = int(d.get("view", 0)) % 4
+	s.piece = (d.get("piece", {}) as Dictionary).duplicate(true)
 	return s
 
 

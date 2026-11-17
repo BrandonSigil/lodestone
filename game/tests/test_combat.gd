@@ -115,6 +115,34 @@ func test_half_cover_against_ranged() -> void:
 	eq(CombatRules.damage(g, hunter, b, hunter.cell), maxi(1, shot - 1), "a shot loses 1")
 
 
+## [USER] 2026-11-17 (road set pieces): a wagon, hay bale, wall or well between the shooter and the target is the same
+## half cover as woods. Only on the shooter's side, only against shots, and not from two levels up.
+func test_things_are_cover_from_the_side_they_stand_on() -> void:
+	var g := CombatGrid.flat(9, 5)
+	var hunter := _unit("hunter", 0, Vector2i(0, 2), g)
+	var b := _unit("bandit", 1, Vector2i(5, 2), g)
+	var shot := CombatRules.damage(g, hunter, b, hunter.cell)
+	g.add_prop(Vector2i(4, 2), "prop_hay", Vector2i.ONE, 0.65, 0.5)
+	ok(g.shielded(hunter.cell, b.cell), "the bale stands between them")
+	eq(CombatRules.damage(g, hunter, b, hunter.cell), maxi(1, shot - 1), "a shot loses 1")
+	ok(not g.shielded(Vector2i(8, 2), b.cell), "from the far side the bale is behind the target")
+	ok(not g.shielded(Vector2i(5, 0), b.cell), "nor from straight across it")
+	ok(g.shielded(Vector2i(2, 1), b.cell), "a shot from a little off the line is still stopped")
+	g.set_height(hunter.cell, 2)
+	ok(not g.shielded(hunter.cell, b.cell), "two levels up shoots over it")
+	g.set_height(hunter.cell, 0)
+	g.remove_prop(Vector2i(4, 2))
+	g.add_prop(Vector2i(4, 2), "prop_rug", Vector2i.ONE, 0.1, 0.0, true)
+	ok(not g.shielded(hunter.cell, b.cell), "a thing you walk over is no cover")
+	g.remove_prop(Vector2i(4, 2))
+	g.set_terrain(Vector2i(4, 2), CombatGrid.T.ROCK)
+	g.set_height(Vector2i(4, 2), 1)
+	ok(g.shielded(hunter.cell, b.cell), "a rock outcrop is cover")
+	var knight := _unit("knight", 0, Vector2i(5, 1), g)
+	var melee := CombatRules.damage(CombatGrid.flat(9, 5), knight, b, knight.cell)
+	eq(CombatRules.damage(g, knight, b, knight.cell), melee, "melee ignores it")
+
+
 ## [USER] 2026-10-29: flanking adds crit chance (an ally already next to the target).
 func test_flank_adds_crit() -> void:
 	var g := CombatGrid.flat(5, 5)

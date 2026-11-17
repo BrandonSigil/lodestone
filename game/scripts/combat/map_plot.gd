@@ -62,7 +62,8 @@ static func mark_at(plot: Dictionary, c: Vector2i) -> String:
 
 ## The map a plot makes for this seed. join false skips MapOps.link and the seal (to see what a plot leaves cut off:
 ## a piece link has to join gets stair decks, which read as stray bridges).
-static func build(plot: Dictionary, seed_value: int, look_id := "forest", join := true) -> CombatGrid:
+## plain true builds exactly what the plot drew: no flip, lift, ledges or seeded trees (a set piece, SetPiece).
+static func build(plot: Dictionary, seed_value: int, look_id := "forest", join := true, plain := false) -> CombatGrid:
 	var size := size_of(plot)
 	var g := CombatGrid.flat(size.x, size.y)
 	var rng := RandomNumberGenerator.new()
@@ -71,6 +72,9 @@ static func build(plot: Dictionary, seed_value: int, look_id := "forest", join :
 	if plot.has("flip"):  # a plot can pin the side it faces the camera with
 		flip = bool(plot.flip)
 	var lift := rng.randi_range(0, 1)
+	if plain:
+		flip = false
+		lift = 0
 	var ledge := FastNoiseLite.new()
 	ledge.seed = seed_value + 17
 	ledge.frequency = rng.randf_range(0.1, 0.18)  # low: ledges come in patches, not lone pillars
@@ -110,7 +114,9 @@ static func build(plot: Dictionary, seed_value: int, look_id := "forest", join :
 				"t":
 					g.set_terrain(c, T.FOREST)
 				_:
-					if _quiet(plot, s) and ledge.get_noise_2d(x, y) > ledge_share and x >= CombatGrid.DEPLOY_COLS and x < size.x - CombatGrid.DEPLOY_COLS:
+					if plain:
+						pass
+					elif _quiet(plot, s) and ledge.get_noise_2d(x, y) > ledge_share and x >= CombatGrid.DEPLOY_COLS and x < size.x - CombatGrid.DEPLOY_COLS:
 						g.set_height(c, ground + 1)
 					elif woods.get_noise_2d(x, y) > woods_share and x >= CombatGrid.DEPLOY_COLS and x < size.x - CombatGrid.DEPLOY_COLS:
 						g.set_terrain(c, T.FOREST)

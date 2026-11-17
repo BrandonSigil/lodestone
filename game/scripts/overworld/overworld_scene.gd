@@ -318,7 +318,7 @@ func _skip() -> void:
 func _encounter() -> void:
 	var ev := TrailRules.first_event(Db.travel_events, Game.flags_now())  # the first trip's fair, scripted fight
 	if ev.is_empty():
-		ev = TrailRules.pick_event(Game.run, Db.travel_events, Game.flags_now())
+		ev = TrailRules.pick_event(Game.run, Db.travel_events, Game.flags_now(), [String(Game.travel.get("from", "")), String(Game.travel.get("to", ""))])
 	if ev.is_empty():
 		return
 	_busy = true

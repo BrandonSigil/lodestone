@@ -51,8 +51,9 @@ func test_events_valid() -> void:
 
 func test_encounters_valid() -> void:
 	for row in CsvTable.load_rows("res://data/encounters.csv"):
-		for id in row.units.split("|"):
+		for id in row.units.split("|", false):  # a set piece (map) keeps its foes on its map, so units may be empty
 			ok(ResourceLoader.exists("res://data/classes/%s.tres" % id), "%s unit %s" % [row.id, id])
+		ok(row.units != "" or String(row.get("map", "")) != "", "%s has foes or a set piece map" % row.id)
 		_check_effects(row.loot, row.id)
 
 

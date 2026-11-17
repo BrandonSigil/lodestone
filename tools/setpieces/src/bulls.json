@@ -1,0 +1,415 @@
+{
+ "id": "bulls",
+ "look": "farmland",
+ "art_set": "farmland",
+ "note": "E2 Loose bulls: a broken corral in open farmland, fields split by irrigation ditches with gaps to cross at. The barn stands on a rise behind a ditch, a haystack hill beside it. Bulls charge along straight runs; fences, hay bales and gateways break a run. The barn's yard is the way out.",
+ "levels": [
+  "......1111............",
+  "....11111111....333...",
+  "...111111111...22332..",
+  "...11111111....22222..",
+  "....00000000...11222..",
+  "...00000000000000000..",
+  "000000000000000000000.",
+  "0000000000000000000000",
+  "0000000000000000000000",
+  ".000000000000000000000",
+  "..0000000000000000000.",
+  "..000000000000000000..",
+  "..000000000000000000..",
+  "......0000............"
+ ],
+ "marks": [
+  "                      ",
+  "                      ",
+  "                      ",
+  "                 s    ",
+  "    swwwws r    s     ",
+  "               sw     ",
+  "    w           w     ",
+  " w  w           w   r ",
+  " ww w           w     ",
+  "   r                  ",
+  "                      ",
+  "    wwww  wwwwwww     ",
+  "  dddddddddddddd      ",
+  "                      "
+ ],
+ "props": [
+  {
+   "sprite": "village/b_home_b",
+   "foot": [
+    4,
+    3
+   ],
+   "tall": 0.0,
+   "sight": 3.0,
+   "cell": [
+    6,
+    0
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    4,
+    1
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    11,
+    1
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    17,
+    1
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    18,
+    1
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    3,
+    2
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    8,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    19,
+    3
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    3,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    6,
+    5
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    7,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    8,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    9,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    10,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    11,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    13,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    14,
+    6
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "flip": true,
+   "cell": [
+    7,
+    7
+   ]
+  },
+  {
+   "sprite": "village/prop_well",
+   "foot": [
+    2,
+    2
+   ],
+   "tall": 1.8,
+   "sight": 1.0,
+   "cell": [
+    10,
+    7
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "flip": true,
+   "cell": [
+    14,
+    7
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    18,
+    8
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    7,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    8,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    11,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    12,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    13,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_fence",
+   "tall": 0.6,
+   "sight": 0.0,
+   "cell": [
+    14,
+    9
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    5,
+    10
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    15,
+    10
+   ]
+  },
+  {
+   "sprite": "village/prop_tree",
+   "tall": 1.6,
+   "sight": 1.0,
+   "cell": [
+    6,
+    13
+   ]
+  },
+  {
+   "sprite": "village/prop_hay",
+   "tall": 0.65,
+   "sight": 0.5,
+   "cell": [
+    8,
+    13
+   ]
+  }
+ ],
+ "party": [
+  [
+   17,
+   9
+  ],
+  [
+   18,
+   9
+  ],
+  [
+   17,
+   10
+  ],
+  [
+   18,
+   10
+  ]
+ ],
+ "out": [
+  [
+   16,
+   12
+  ],
+  [
+   17,
+   12
+  ],
+  [
+   18,
+   12
+  ],
+  [
+   19,
+   12
+  ]
+ ],
+ "foes": [
+  {
+   "id": "foe_rusher",
+   "cell": [
+    19,
+    6
+   ]
+  },
+  {
+   "id": "foe_bull",
+   "cell": [
+    8,
+    7
+   ]
+  },
+  {
+   "id": "foe_bull",
+   "cell": [
+    13,
+    8
+   ]
+  },
+  {
+   "id": "foe_bull",
+   "cell": [
+    11,
+    10
+   ]
+  }
+ ],
+ "exit": [
+  [
+   3,
+   3
+  ],
+  [
+   4,
+   3
+  ],
+  [
+   5,
+   3
+  ],
+  [
+   6,
+   3
+  ]
+ ],
+ "stones": [],
+ "docks": []
+}

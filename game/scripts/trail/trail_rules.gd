@@ -170,18 +170,32 @@ static func _check_wall(run: RunState) -> void:
 
 
 ## Returns an event dictionary, or {} for a quiet day.
+static func on_road(ev: Dictionary, places: Array) -> bool:
+	var roads: Array = ev.get("road", [])
+	if roads.is_empty():
+		return true
+	for p in places:
+		if roads.has(String(p)):
+			return true
+	return false
+
+
 static func roll_event(run: RunState, events: Array[Dictionary], flags: Array) -> Dictionary:
 	if run.rng.randf() >= EVENT_CHANCE:
 		return {}
 	return pick_event(run, events, flags)
 
 
-static func pick_event(run: RunState, events: Array[Dictionary], flags: Array) -> Dictionary:
+## places: the two ends of the road being walked (overworld place ids). An event with a `road` list (the set pieces)
+## comes up only on a road that touches one of its places; an event without one comes up anywhere.
+static func pick_event(run: RunState, events: Array[Dictionary], flags: Array, places: Array = []) -> Dictionary:
 	var s := run.strangeness()
 	var pool: Array[Dictionary] = []
 	var total := 0.0
 	for ev in events:
 		if s < ev.min_s or s > ev.max_s:
+			continue
+		if not on_road(ev, places):
 			continue
 		if ev.once_flag != "" and flags.has(ev.once_flag):
 			continue
