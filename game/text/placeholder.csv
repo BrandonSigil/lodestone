@@ -1347,3 +1347,9 @@ UI_OPT_CAMPS,NIGHT CAMPS
 UI_OPT_CAMPS_SITES,AT CAMPSITES
 UI_OPT_CAMPS_NIGHTLY,EVERY NIGHT
 UI_OPT_CAMPS_TIP,"At campsites: you choose where to stop on the map, and night on the road means a rough camp. Every night: the party camps wherever each day ends."
+EV_TR_WAGON,"An overturned wagon lies across the road. Nobody is in sight."
+EV_TR_BULLS,"Bulls have broken out of a corral by the road. They look angry."
+OPT_SEARCH_WAGON,LOOK FOR LOOT
+OPT_HELP,LOOK FOR SURVIVORS
+OPT_WALK_PAST,WALK PAST
+OPT_DRIVE,DRIVE THEM BACK

@@ -514,6 +514,36 @@ func cover(c: Vector2i) -> int:
 	return COVER[terrain_at(c)]
 
 
+const SHIELD_TALL := 0.45  ## a prop at least this tall is something to duck behind (a crate, a hay bale, a fence)
+const SHIELD_OVER := 2  ## a shooter this many levels above the target shoots over whatever it hides behind
+
+
+## Is whoever stands on `to` behind something, seen from `from`? ([USER] 2026-11-17, road set pieces: the wagon, hay
+## bales, walls and wells are cover, not only woods.) The cell next to `to` on the shooter's side must hold a solid
+## thing standing at least as high as `to`: a prop pieces can't walk through, a rock outcrop, a ruin wall or a fence.
+## A shot counts as coming from a side when it comes within about 60 degrees of it, so a diagonal shot is stopped by
+## cover on either of its two sides. High ground beats it: from SHIELD_OVER levels up there is no cover.
+func shielded(from: Vector2i, to: Vector2i) -> bool:
+	if on_deck(to) or height_at(from) - height_at(to) >= SHIELD_OVER:
+		return false
+	var d := ground(from) - ground(to)
+	var sides: Array[Vector2i] = []
+	if d.x != 0 and absi(d.x) * 2 >= absi(d.y):
+		sides.append(Vector2i(signi(d.x), 0))
+	if d.y != 0 and absi(d.y) * 2 >= absi(d.x):
+		sides.append(Vector2i(0, signi(d.y)))
+	for side in sides:
+		var n := ground(to) + side
+		if not in_bounds(n) or n == ground(from) or height_at(n) < height_at(to):
+			continue
+		if terrain_at(n) == T.ROCK or terrain_at(n) == T.RUIN or fences.has(n):
+			return true
+		var p := prop_at(n)
+		if not p.is_empty() and not p.get("walk", false) and not under_arch(n) and float(p.get("tall", 0.0)) >= SHIELD_TALL:
+			return true
+	return false
+
+
 func passable(c: Vector2i) -> bool:
 	if not in_bounds(c) or step_cost(c) >= BLOCKED or fences.has(c):
 		return false

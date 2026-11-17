@@ -515,8 +515,8 @@ static func armor_parts(grid: CombatGrid, att: CombatUnit, tgt: CombatUnit, from
 	var wall := shield_armor(tgt, units)
 	if wall > 0:
 		parts.append(["MOD_SHIELD", wall])
-	if dist(from, tgt.cell) > 1 and grid.cover(tgt.cell) > 0:
-		parts.append(["MOD_COVER", int(num("cover_ranged"))])  # [USER] c14: half cover, ranged hits only
+	if dist(from, tgt.cell) > 1 and (grid.cover(tgt.cell) > 0 or grid.shielded(from, tgt.cell)):
+		parts.append(["MOD_COVER", int(num("cover_ranged"))])  # [USER] c14: half cover, ranged hits only; woods, or behind a thing
 	return parts
 
 

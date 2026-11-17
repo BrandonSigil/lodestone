@@ -1,0 +1,587 @@
+{
+	"art_set": "farmland",
+	"counters": false,
+	"enemies": [
+		{
+			"id": "foe_rusher",
+			"x": 19,
+			"y": 6
+		},
+		{
+			"id": "foe_bull",
+			"x": 8,
+			"y": 7
+		},
+		{
+			"id": "foe_bull",
+			"x": 13,
+			"y": 8
+		},
+		{
+			"id": "foe_bull",
+			"x": 11,
+			"y": 10
+		}
+	],
+	"enemy_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"extra_enemies": 0,
+	"map": {
+		"h": 14,
+		"heights": [
+			"0000003333000000000000",
+			"0000333333330000777000",
+			"0003333333330005577500",
+			"0003333333300005565500",
+			"0000200002120003455500",
+			"0001111111111112011100",
+			"1111011111111111011110",
+			"1011011111111111011121",
+			"1001011111111111011111",
+			"0112111111111111111111",
+			"0011111111111111111110",
+			"0011000011000000011100",
+			"0011111111111111111100",
+			"0000001111000000000000"
+		],
+		"look": {
+			"id": "farmland"
+		},
+		"props": [
+			{
+				"cell": [
+					6,
+					0
+				],
+				"foot": [
+					4,
+					3
+				],
+				"sight": 3.0,
+				"sprite": "village/b_home_b",
+				"tall": 0.0,
+				"walk": false
+			},
+			{
+				"cell": [
+					4,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					11,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					17,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					18,
+					1
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					2
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					19,
+					3
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					3,
+					5
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					6,
+					5
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					9,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					10,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					11,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					13,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					6
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					7
+				],
+				"flip": true,
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					10,
+					7
+				],
+				"foot": [
+					2,
+					2
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_well",
+				"tall": 1.8,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					7
+				],
+				"flip": true,
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					18,
+					8
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					7,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					11,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					12,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					13,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					14,
+					9
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.0,
+				"sprite": "village/prop_fence",
+				"tall": 0.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					5,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					15,
+					10
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			},
+			{
+				"cell": [
+					6,
+					13
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 1.0,
+				"sprite": "village/prop_tree",
+				"tall": 1.6,
+				"walk": false
+			},
+			{
+				"cell": [
+					8,
+					13
+				],
+				"foot": [
+					1,
+					1
+				],
+				"sight": 0.5,
+				"sprite": "village/prop_hay",
+				"tall": 0.65,
+				"walk": false
+			}
+		],
+		"terrain": [
+			"......gggg............",
+			"....gggggggg....ggg...",
+			"...ggggggggg...ggggg..",
+			"...gggggggg....ggtgg..",
+			"....twwwwtgr...gtggg..",
+			"...ggggggggggggtwggg..",
+			"ggggwgggggggggggwgggg.",
+			"gwggwgggggggggggwgggrg",
+			"gwwgwgggggggggggwggggg",
+			".ggrgggggggggggggggggg",
+			"..ggggggggggggggggggg.",
+			"..ggwwwwggwwwwwwwggg..",
+			"..ddddddddddddddgggg..",
+			"......gggg............"
+		],
+		"w": 22
+	},
+	"name": "sp_bulls",
+	"party": [
+		{
+			"id": "lead",
+			"x": 17,
+			"y": 9
+		},
+		{
+			"id": "stardrop",
+			"x": 18,
+			"y": 9
+		},
+		{
+			"id": "hunter",
+			"x": 17,
+			"y": 10
+		},
+		{
+			"id": "knight",
+			"x": 18,
+			"y": 10
+		}
+	],
+	"party_mods": {
+		"attack": 0,
+		"damage": 0,
+		"defense": 0,
+		"hp_pct": 100,
+		"move": 0
+	},
+	"piece": {
+		"exit": [
+			[
+				3,
+				3
+			],
+			[
+				4,
+				3
+			],
+			[
+				5,
+				3
+			],
+			[
+				6,
+				3
+			]
+		],
+		"note": "E2 Loose bulls: a broken corral in open farmland, fields split by irrigation ditches with gaps to cross at. The barn stands on a rise behind a ditch, a haystack hill beside it. Bulls charge along straight runs; fences, hay bales and gateways break a run. The barn's yard is the way out.",
+		"out": [
+			[
+				16,
+				12
+			],
+			[
+				17,
+				12
+			],
+			[
+				18,
+				12
+			],
+			[
+				19,
+				12
+			]
+		]
+	},
+	"seed": 1,
+	"strangeness": 0.0,
+	"supplies": {
+		"food": 10,
+		"medicine": 3
+	},
+	"view": 0
+}

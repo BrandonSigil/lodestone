@@ -34,33 +34,45 @@ func _ready() -> void:
 	# look's rules (V9 to V11). Without one (the shelved trail), the old generated island.
 	var art_set := String(setup.get("art_set", ""))
 	_art_set = art_set
-	var grid := MapGen.road_fight(setup.seed, art_set) if art_set != "" else CombatGrid.generate(setup.seed, 10, 8, setup.strangeness)
 	var enc: Dictionary = Db.encounters.get(setup.encounter, Db.encounters["debug"])
 	loot = enc.loot
-
-	var units: Array = []
-	var spots := grid.deploy_cells(0)
+	# A road set piece ([USER] 2026-11-17): the encounter names its own map, and its start says whether the party
+	# walked into it ("in": at the landmark, foes hidden, foes first) or saw it first ("out": at the edge, party first).
+	var piece := SetPiece.load_map(String(enc.get("map", "")))
 	var fit := Game.fit_members()  # the Spent sit it out ([USER] 2026-11-02 morale is hunger)
-	for m in (fit if not fit.is_empty() else Game.run.alive()):
-		if spots.is_empty():
-			break
-		var u := CombatUnit.from_member(m)
-		var c: Vector2i = spots.pop_front()
-		u.place(c, grid.height_at(c))
-		units.append(u)
-	var espots := grid.deploy_cells(1)
-	for id: String in enc.units:
-		if espots.is_empty():
-			break
-		var e := CombatUnit.enemy(Db.class_def(id))
-		var c: Vector2i = espots.pop_front()
-		e.place(c, grid.height_at(c))
-		units.append(e)
+	var members: Array = fit if not fit.is_empty() else Game.run.alive()
+	var units: Array = []
+	var grid: CombatGrid
+	var walked_in := false
+	if piece != null:
+		walked_in = String(enc.get("start", "in")) != "out"
+		grid = piece.grid
+		art_set = piece.art_set
+		_art_set = art_set
+		units = SetPiece.units(piece, members, walked_in)
+	else:
+		grid = MapGen.road_fight(setup.seed, art_set) if art_set != "" else CombatGrid.generate(setup.seed, 10, 8, setup.strangeness)
+		var spots := grid.deploy_cells(0)
+		for m in members:
+			if spots.is_empty():
+				break
+			var u := CombatUnit.from_member(m)
+			var c: Vector2i = spots.pop_front()
+			u.place(c, grid.height_at(c))
+			units.append(u)
+		var espots := grid.deploy_cells(1)
+		for id: String in enc.units:
+			if espots.is_empty():
+				break
+			var e := CombatUnit.enemy(Db.class_def(id))
+			var c: Vector2i = espots.pop_front()
+			e.place(c, grid.height_at(c))
+			units.append(e)
 
 	battle = Battle.new()
 	add_child(battle)
 	battle.setup(grid, units, setup.seed, setup.strangeness)
-	battle.goals = FightGoals.parse(String(enc.get("goals", "")))
+	battle.goals = FightGoals.parse(String(enc.get("goals", "")), piece.piece.get("exit", []) if piece != null else [])
 	if art_set != "":
 		battle.board.art_set = art_set
 		battle.board.show_grid = false
@@ -77,7 +89,7 @@ func _ready() -> void:
 	_layout()
 	get_viewport().size_changed.connect(_layout)
 	Sfx.music("fight")
-	battle.start()
+	battle.start(walked_in)
 
 
 func _layout() -> void:

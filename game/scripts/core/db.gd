@@ -8,7 +8,7 @@ const ROSTER := [&"lead", &"stardrop", &"hunter", &"wizard", &"bushberry", &"ske
 
 var characters: Dictionary = {}  # id -> CharacterDef
 var events: Array[Dictionary] = []
-var encounters: Dictionary = {}  # id -> {"units": Array[String], "loot": String, "goals": String (FightGoals)}
+var encounters: Dictionary = {}  # id -> {"units": Array[String], "loot": String, "goals": String (FightGoals), "map", "start" (a road set piece, SetPiece)}
 var items: Dictionary = {}  # id -> row of data/items.csv
 var quests: Array[Dictionary] = []  # rows of data/quests.csv
 var bonds: Dictionary = {}  # key -> number, from data/bonds.csv (see BondRules)
@@ -54,7 +54,8 @@ func reload() -> void:
 	events = parse_events(CsvTable.load_rows("res://data/events.csv"))
 	encounters.clear()
 	for row in CsvTable.load_rows("res://data/encounters.csv"):
-		encounters[row.id] = {"units": Array(row.units.split("|")), "loot": row.loot, "goals": String(row.get("goals", ""))}
+		encounters[row.id] = {"units": Array(String(row.units).split("|", false)), "loot": row.loot, "goals": String(row.get("goals", "")),
+			"map": String(row.get("map", "")), "start": String(row.get("start", ""))}  # a road set piece: its map in data/maps and "in" or "out"
 	items.clear()
 	for row in CsvTable.load_rows("res://data/items.csv"):
 		items[row.id] = row
@@ -189,6 +190,7 @@ static func parse_events(rows: Array[Dictionary]) -> Array[Dictionary]:
 			"id": row.id, "weight": float(row.weight),
 			"min_s": float(row.min_s), "max_s": float(row.max_s),
 			"once_flag": row.once_flag, "text_key": row.text_key, "options": [],
+			"road": Array(String(row.get("road", "")).split("|", false)),  # travel events: the places whose roads it comes up on
 		}
 		for n in range(1, 4):
 			var key: String = row.get("opt%d_key" % n, "")

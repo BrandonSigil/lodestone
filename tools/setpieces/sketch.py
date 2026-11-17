@@ -109,7 +109,7 @@ def draw(key, path):
                 pass
         # blocks drawn as one shape below
     def blocks(ch, fill):
-        cells = [(x, y) for y in range(rows) for x in range(cols) if T[y][x] == ch]
+        cells = [(x, y) for y in range(rows) for x in range(cols) if T[y][x] == ch and hv(x, y) is not None]
         seen = set()
         for c in cells:
             if c in seen: continue
@@ -150,7 +150,12 @@ def draw(key, path):
                 nx, ny = x + dx, y + dy
                 if not (0 <= nx < cols and 0 <= ny < rows): continue
                 n = hv(nx, ny)
-                if n is None or h is None or n >= h: continue
+                if h is None: continue
+                if n is None:  # the map's own edge
+                    x0, y0, x1, y1 = box(x, y)
+                    d.line({(1, 0): (x1, y0, x1, y1), (-1, 0): (x0, y0, x0, y1), (0, 1): (x0, y1, x1, y1), (0, -1): (x0, y0, x1, y0)}[(dx, dy)], fill=OUT, width=3)
+                    continue
+                if n >= h: continue
                 if T[ny][nx] == "s" or T[y][x] == "s" or T[y][x] in "b" or T[ny][nx] == "b": w = 2
                 else: w = 2 + min(h - n, 6)
                 x0, y0, x1, y1 = box(x, y)
@@ -160,6 +165,7 @@ def draw(key, path):
     for y in range(rows):
         for x in range(cols):
             t = T[y][x]; cx, cy = pad + x * C + C / 2, top + y * C + C / 2
+            if hv(x, y) is None: continue
             if t == "P":
                 d.ellipse((cx - 11, cy - 11, cx + 11, cy + 11), fill=(70, 120, 200), outline=OUT, width=2)
             elif t == "p":
