@@ -878,8 +878,8 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 
 ## A piece shoved into river water at cell w ([USER] 2026-11-17, set piece W2's rapids): the current carries it
 ## downstream, toward where the river leaves the map (its lowest edge), SWEPT_RUN cells, then it washes up on the nearest free bank
-## beside the water. Returns the cells it passes, ending on the bank; empty when the water doesn't leave the map
-## (a pond or lake: the old bump) or there is no bank to wash up on.
+## beside the water. Returns the cells it passes, ending on the bank; empty for still water (a pond or a lake that
+## meets the map's edge in one stretch only: the old bump) or when there is no bank to wash up on.
 static func sweep(grid: CombatGrid, units: Array, t: CombatUnit, w: Vector2i) -> Array[Vector2i]:
 	var water := func(c: Vector2i) -> bool: return grid.in_bounds(c) and grid.terrain_at(c) == CombatGrid.T.WATER
 	# how far each water cell of this body is from where it leaves the map
@@ -895,14 +895,43 @@ static func sweep(grid: CombatGrid, units: Array, t: CombatUnit, w: Vector2i) ->
 				queue.append(c + d)
 	var dist := {}
 	var front: Array[Vector2i] = []
-	var low := CombatGrid.MAX_HEIGHT + 1  # it leaves by its lowest edge cells: the river runs downhill
+	# a river runs in at one edge and out at another: its edge cells fall in two or more separate runs. A lake or
+	# pond (one run, or none) has no current. It leaves by its lowest run: the river runs downhill.
+	var edge := {}
 	for c: Vector2i in body:
 		if c.x == 0 or c.y == 0 or c.x == grid.w - 1 or c.y == grid.h - 1:
-			low = mini(low, grid.height_at(c))
-	for c: Vector2i in body:
-		if (c.x == 0 or c.y == 0 or c.x == grid.w - 1 or c.y == grid.h - 1) and grid.height_at(c) == low:
-			dist[c] = 0
-			front.append(c)
+			edge[c] = true
+	var runs: Array = []
+	var seen := {}
+	for c: Vector2i in edge:
+		if seen.has(c):
+			continue
+		var run: Array[Vector2i] = [c]
+		seen[c] = true
+		var k := 0
+		while k < run.size():
+			for dx in [-1, 0, 1]:
+				for dy in [-1, 0, 1]:
+					var n: Vector2i = run[k] + Vector2i(dx, dy)
+					if edge.has(n) and not seen.has(n):
+						seen[n] = true
+						run.append(n)
+			k += 1
+		runs.append(run)
+	if runs.size() < 2:
+		return []
+	var low_run: Array = runs[0]
+	var low_h := CombatGrid.MAX_HEIGHT + 1
+	for run: Array in runs:
+		var rh := CombatGrid.MAX_HEIGHT + 1
+		for c: Vector2i in run:
+			rh = mini(rh, grid.height_at(c))
+		if rh < low_h:
+			low_h = rh
+			low_run = run
+	for c: Vector2i in low_run:
+		dist[c] = 0
+		front.append(c)
 	if front.is_empty():
 		return []
 	i = 0

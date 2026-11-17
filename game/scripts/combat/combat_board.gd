@@ -3939,19 +3939,16 @@ func _draw_water(c: Vector2i) -> void:
 		_water_poly(pts, poly, _water_colour(g.src))
 
 
-## A stepping stone: a STONE cell with river water on both sides along one line (a ford). Returns one of those
+## A stepping stone: a STONE cell with river water on two or more sides (a ford, straight or zig-zag). Returns one of those
 ## water cells (whose height and colour the water under the stone takes), or (-1, -1).
 func _ford_water(c: Vector2i) -> Vector2i:
 	if not grid.in_bounds(c) or grid.terrain_at(c) != CombatGrid.T.STONE:
 		return Vector2i(-1, -1)
-	for d: Vector2i in [Vector2i(1, 0), Vector2i(0, 1)]:
-		var a := c + d
-		var b := c - d
-		var wa := grid.in_bounds(a) and grid.terrain_at(a) == CombatGrid.T.WATER
-		var wb := grid.in_bounds(b) and grid.terrain_at(b) == CombatGrid.T.WATER
-		if wa and wb:
-			return a
-	return Vector2i(-1, -1)
+	var wet: Array[Vector2i] = []
+	for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		if grid.in_bounds(c + d) and grid.terrain_at(c + d) == CombatGrid.T.WATER:
+			wet.append(c + d)
+	return wet[0] if wet.size() >= 2 else Vector2i(-1, -1)
 
 
 ## The stone itself, drawn over the ford's water (GROUND slab): a flat-topped boulder a little smaller than the tile,

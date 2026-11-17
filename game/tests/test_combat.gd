@@ -2065,3 +2065,12 @@ func test_a_river_sweeps_a_pushed_piece_downstream() -> void:
 	var ev2 := CombatRules.push(p, [f2, h2], h2.cell, f2, 1)
 	ok(ev2.any(func(e: Dictionary) -> bool: return e.type == "bump"), "a pond bumps")
 	eq(f2.cell, Vector2i(2, 3), "and the piece stays put")
+	# so does a lake that runs off one edge of the map
+	var l := CombatGrid.flat(7, 7)
+	for y in 7:
+		for x in range(4, 7):
+			l.set_terrain(Vector2i(x, y), CombatGrid.T.WATER)
+	var f3 := _unit("bandit", 1, Vector2i(3, 3), l)
+	var h3 := _unit("bandit", 0, Vector2i(2, 3), l)
+	CombatRules.push(l, [f3, h3], h3.cell, f3, 1)
+	eq(f3.cell, Vector2i(3, 3), "a lake has no current")

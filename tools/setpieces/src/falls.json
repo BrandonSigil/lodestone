@@ -2,42 +2,42 @@
  "id": "falls",
  "look": "forest",
  "art_set": "forest",
- "note": "W2 Stepping-stone falls: a river falls off a rock shelf. An old footbridge crosses it at the top of the falls; below, the road fords it on four stepping stones. A trail climbs each bank, valley to shelf to top, to the bridge: the long dry way. Bandits hold the left bank: one by the stones, archers on the shelf and by the bridge.",
+ "note": "W2 Stepping-stone falls: a river falls off a rock shelf. An old track crosses it on a footbridge at the top of the falls; below, the road fords it on a zig-zag of stepping stones. A trail climbs each side of the gorge, valley to shelf to top: the dry way round, close to the edge. Bandits hold the left bank: one by the stones, an archer on the shelf over the ford and one by the bridge.",
  "levels": [
-  ".......222222222........",
-  ".......222222222222.....",
-  "....222222222222222.....",
-  "....222222222222222.....",
-  "......222222222222......",
-  ".....22221001111111.....",
-  "...1111111001111111.....",
-  "..11111111001111111.....",
-  "..1111111100111111......",
-  "..11111111000000000000..",
+  ".....22222222...........",
+  "....22222222222.........",
+  "....2222222222222.......",
+  "....2222222222222.......",
+  "....222222222222........",
+  ".....2221100111111......",
+  "....11111100111111......",
+  "....11111100111111......",
+  "...111111100111111......",
+  "...1111111000000000.....",
+  "...00000000000000000....",
   "..000000000000000000000.",
-  ".0000000000000000000000.",
-  ".0000000000000000000000.",
-  "....000000000000000.....",
-  "....000000000000000.....",
-  "....000000000...........",
-  "....0000..000...........",
-  "..........00............"
+  "..000000000000000000000.",
+  "...0000000000000........",
+  "...00000000000000.......",
+  ".....00000000000000.....",
+  ".....0000000000.........",
+  "........000000.........."
  ],
  "marks": [
-  "       t  ww t          ",
-  "    ttt   ww t  tt      ",
-  "    tttdddbbdddddd      ",
-  "      d   ww    d       ",
-  "      d   ww    d       ",
-  "      s   ww    s       ",
-  "      d   ww   d        ",
-  "      d   ww   d        ",
-  "      d   ww   d        ",
-  "      d   ww   s        ",
-  "     s    ww  d         ",
-  "     dd  wwww d         ",
-  " dddddddd    ddddddddddd",
-  "         wwww           ",
+  "       t  wwt           ",
+  "    tt    ww            ",
+  "    ttddddbbddddddd     ",
+  "          ww d          ",
+  "        ddwwdd          ",
+  "        s ww s          ",
+  "        d ww d          ",
+  "        d ww d          ",
+  "        d ww d          ",
+  "        d ww s          ",
+  "        s www           ",
+  "         w              ",
+  " dddddddd  wwddddddddddd",
+  "         www            ",
   "          ww            ",
   "          ww            ",
   "          ww            ",
@@ -49,16 +49,7 @@
    "tall": 1.6,
    "sight": 1.0,
    "cell": [
-    15,
-    0
-   ]
-  },
-  {
-   "sprite": "village/prop_tree",
-   "tall": 1.6,
-   "sight": 1.0,
-   "cell": [
-    17,
+    16,
     3
    ]
   },
@@ -67,7 +58,7 @@
    "tall": 0.6,
    "sight": 1.0,
    "cell": [
-    14,
+    16,
     6
    ]
   },
@@ -76,7 +67,7 @@
    "tall": 1.6,
    "sight": 1.0,
    "cell": [
-    18,
+    17,
     6
    ]
   },
@@ -85,7 +76,7 @@
    "tall": 1.6,
    "sight": 1.0,
    "cell": [
-    3,
+    4,
     7
    ]
   },
@@ -94,7 +85,7 @@
    "tall": 0.6,
    "sight": 1.0,
    "cell": [
-    8,
+    6,
     7
    ]
   },
@@ -103,26 +94,17 @@
    "tall": 0.55,
    "sight": 0.5,
    "cell": [
-    19,
+    3,
     10
    ]
   },
   {
-   "sprite": "village/prop_tree",
-   "tall": 1.6,
+   "sprite": "prop_boulder",
+   "tall": 0.6,
    "sight": 1.0,
    "cell": [
-    21,
+    15,
     10
-   ]
-  },
-  {
-   "sprite": "prop_bush",
-   "tall": 0.55,
-   "sight": 0.5,
-   "cell": [
-    3,
-    11
    ]
   },
   {
@@ -144,11 +126,11 @@
    ]
   },
   {
-   "sprite": "prop_boulder",
-   "tall": 0.6,
-   "sight": 1.0,
+   "sprite": "prop_bush",
+   "tall": 0.55,
+   "sight": 0.5,
    "cell": [
-    17,
+    14,
     13
    ]
   },
@@ -178,33 +160,24 @@
     12,
     14
    ]
-  },
-  {
-   "sprite": "prop_bush",
-   "tall": 0.55,
-   "sight": 0.5,
-   "cell": [
-    13,
-    14
-   ]
   }
  ],
  "party": [
   [
    13,
+   10
+  ],
+  [
+   13,
    11
   ],
   [
-   12,
-   12
+   14,
+   11
   ],
   [
    13,
    12
-  ],
-  [
-   13,
-   13
   ]
  ],
  "out": [
@@ -243,31 +216,39 @@
   {
    "id": "bandit",
    "cell": [
-    4,
-    12
+    3,
+    11
    ]
   },
   {
    "id": "ambusher",
    "hidden": true,
    "cell": [
-    8,
-    13
+    7,
+    14
    ]
   }
  ],
  "exit": [],
  "stones": [
   [
+   10,
+   11
+  ],
+  [
+   11,
+   11
+  ],
+  [
+   12,
+   11
+  ],
+  [
    9,
    12
   ],
   [
    10,
-   12
-  ],
-  [
-   11,
    12
   ]
  ],
