@@ -536,7 +536,7 @@ func _fight2(m: ExploreMap, g: Dictionary, party: Array, state: Array, seed_i: i
 			u.elite = elite
 			if boss and g.units.find(e) == 0:
 				u.armor += boss_armor
-		u.place(e.cell, grid.height_at(e.cell))
+		u.place(e.cell, grid.stand_h(e.cell))
 		u.summon_cells = g.get("summon", [] as Array[Vector2i])
 		for c in g.get("exit", []):
 			u.summon_avoid[Vector2i(int(c[0]), int(c[1]))] = true
@@ -552,12 +552,12 @@ func _fight2(m: ExploreMap, g: Dictionary, party: Array, state: Array, seed_i: i
 		if ExploreRules.sees(grid, [c], cells, ExploreRules.PARTY_SIGHT) or ExploreRules.sees(grid, cells, [c], int(g.sight)):
 			break
 	for u: CombatUnit in party:
-		u.place(at, grid.height_at(at))
+		u.place(at, grid.stand_h(at))
 	var spots := ExploreRules.auto_deploy(grid, party, "party", blocked)
 	var units: Array = []
 	for u: CombatUnit in party:
 		if spots.has(u):
-			u.place(spots[u], grid.height_at(spots[u]))
+			u.place(spots[u], grid.stand_h(spots[u]))
 			units.append(u)
 	units.append_array(enemies)
 	var rng := RandomNumberGenerator.new()

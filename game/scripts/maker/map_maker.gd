@@ -42,6 +42,7 @@ const TOOLS := [
 	["path", "path", "L", "Path", "drag a path's course (size 1 to 4: [ and ] set how wide); stairs are cut where it climbs. With 'follow ground' it finds the easiest walk from where you press to where you let go."],
 	["river", "river", "W", "River", "drag along the river's course from high ground down: it digs a channel that never runs uphill; every drop becomes a waterfall."],
 	["stairs", "stairs", "T", "Stairs", "click a cell at a cliff: stairs that join both sides. Drag from the bottom to the top of a cliff: a flight. Size 1 to 4 ([ and ]) makes it that wide: one stair, even steps across, flush at the top. Right drag: clear stairs."],
+	["slope", "slope", "Y", "Slope", "drag along the foot of a cliff: the ground there tilts up to the lip, a grassy bank instead of a cliff face (a stair turns into bank). Dragging over the lip too makes a gentler bank two cells deep. Size 1 to 4 ([ and ]) sets the brush. Right drag: flat again. The Area tool's Slope cliffs banks every cliff in a selection."],
 	["bridge", "deck", "N", "Bridge", "drag from one landing to another across water, a gap or lower ground: a bridge is built between them at the landings' height (a step if they differ by one), with rails and piers, and the ground under it is not touched. Right drag: take a bridge away along the line. Size 1 to 4 ([ and ]) makes it that many cells wide, rails on its outer edges only."],
 	["deck", "deck", "J", "Deck", "drag: a bridge floor at the level height over the cells, with the lane under it still open (it stands at least two levels over the ground). Right drag: take decks away."],
 	["|"],
@@ -60,7 +61,7 @@ const MATERIALS := [["grass", T.GRASS, ""], ["forest", T.FOREST, ""], ["snow", T
 		["ruin", T.RUIN, ""], ["water", T.WATER, ""]]
 const GROUNDS := [["grass", T.GRASS], ["forest", T.FOREST], ["road", T.ROAD], ["stone", T.STONE], ["rock", T.ROCK], ["ruin", T.RUIN], ["water", T.WATER]]
 const PATH_GROUNDS := [["road", T.ROAD], ["stone", T.STONE], ["grass", T.GRASS]]
-const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "tidy", "paint", "path", "river", "cut", "fill", "zone", "deck"]
+const BRUSH_TOOLS := ["erase", "raise", "lower", "level", "smooth", "tidy", "paint", "path", "river", "cut", "fill", "zone", "deck", "slope"]
 ## Map creation phases ([USER] 2026-10-30: "break this out into map creation phases"): 1 shape the ground, 2 dress it,
 ## 3 set up where players go. Only the current phase's tools and assets show; the view (flat or isometric) and the
 ## current tool stay as they are when either changes.
@@ -696,6 +697,23 @@ func region_shift(dz: int) -> void:
 	_say("%d cells %s one level" % [cells.size(), "raised" if dz > 0 else "lowered"])
 
 
+## Ease every cliff in the selection into a grassy bank (MapOps.bank, [USER] 2026-11-17: "add just slopes around each
+## of these cliff faces"). Undoable.
+func region_bank() -> void:
+	if region.is_empty():
+		_say("select an area first: drag a box or click a flat area with the Area tool")
+		return
+	_push_undo()
+	var cells: Array[Vector2i] = []
+	for c: Vector2i in region:
+		cells.append(c)
+	var n := MapOps.bank(doc.grid, cells)
+	if n == 0:
+		_undo.pop_back()
+	_refresh_marks()
+	_say("%d cells tilted into banks" % n if n > 0 else "no cliff one or two levels high in the selection to bank")
+
+
 ## Cut every selected cell out of the map (Delete or Backspace), or fill them back as ground (`fill`)
 ## ([USER] 2026-11-01: "select a wide area and delete it"). Undoable; the selection stays so it can be undone or filled.
 func region_cut(fill := false) -> void:
@@ -1022,6 +1040,16 @@ func _apply(c: Vector2i, right: bool) -> void:
 				MapOps.level(g, cells, level_h)
 		"smooth":
 			MapOps.smooth(g, cells)
+		"slope":
+			var flat_n := 0
+			for p in cells:
+				if right:
+					if g.is_slope(p):
+						g.set_slope(p, false)
+				elif not g.is_slope(p) and not MapOps.slope(g, p) and g.solid(p):
+					flat_n += 1
+			if flat_n > 0:
+				_say("water, rock and ruins can't tilt into a slope")
 		"tidy":
 			var area := {}
 			for p in _brush_cells(c):
@@ -2149,6 +2177,11 @@ func _build_options() -> void:
 	down.tooltip_text = "Lower every selected cell one level (PageDown)"
 	down.pressed.connect(func() -> void: region_shift(-1))
 	area.add_child(down)
+	var bank := Button.new()
+	bank.text = "Slope cliffs"
+	bank.tooltip_text = "Ease every cliff in the selection into a grassy bank: the cells at the foot of each terrace edge (one or two levels high) tilt up to its lip"
+	bank.pressed.connect(func() -> void: region_bank())
+	area.add_child(bank)
 	var cut := Button.new()
 	cut.text = "Cut out ✕"
 	cut.tooltip_text = "Cut every selected cell out of the map, leaving empty paper (Delete)"
@@ -2163,7 +2196,7 @@ func _build_options() -> void:
 	clr.text = "Clear"
 	clr.pressed.connect(func() -> void: region = {})
 	area.add_child(clr)
-	for b in [up, down, cut, fill, clr]:
+	for b in [up, down, bank, cut, fill, clr]:
 		b.focus_mode = Control.FOCUS_NONE
 	row.add_child(area)
 	_opt_groups["region"] = area

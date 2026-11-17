@@ -209,6 +209,7 @@ var _seen := {}  ## fog cells the ground slabs have drawn
 var _snap_h := PackedInt32Array()
 var _snap_t := PackedInt32Array()
 var _snap_z := PackedStringArray()
+var _snap_s := PackedByteArray()
 var _snap_props := 0
 var _snap_version := -1
 var _radii := {}  ## soft pass: cell -> its four corner radii (TerrainShape.radii)
@@ -219,6 +220,7 @@ var _shape_version := -1
 var _ribbons := {"bands": {}, "edges": {}}  ## soft pass: road ribbons cut per cell (TerrainShape.ribbons)
 var _shape_h := PackedInt32Array()  ## the heights and terrain the shape caches were built from
 var _shape_t := PackedInt32Array()
+var _shape_s := PackedByteArray()
 
 
 func _ready() -> void:
@@ -366,7 +368,7 @@ func iso(x: float, y: float, h: float) -> Vector2:
 
 func cell_top(c: Vector2i) -> Vector2:
 	var g := CombatGrid.ground(c)
-	return iso(g.x + 0.5, g.y + 0.5, grid.height_at(c))
+	return iso(g.x + 0.5, g.y + 0.5, grid.stand_h(c))
 
 
 ## Where the ground's surface is drawn: water sits a little below its banks.
@@ -483,6 +485,11 @@ func board_origin() -> Vector2:
 
 func _diamond(c: Vector2i, h: float) -> PackedVector2Array:
 	var g := CombatGrid.ground(c)
+	if grid.is_slope(c):  # a slope's top tilts: each corner keeps its rise over the cell's own height
+		var z := grid.slope_corners(c)
+		var b := float(grid.height_at(c))
+		return PackedVector2Array([iso(g.x, g.y, h + z[0] - b), iso(g.x + 1, g.y, h + z[1] - b),
+			iso(g.x + 1, g.y + 1, h + z[2] - b), iso(g.x, g.y + 1, h + z[3] - b)])
 	return PackedVector2Array([iso(g.x, g.y, h), iso(g.x + 1, g.y, h), iso(g.x + 1, g.y + 1, h), iso(g.x, g.y + 1, h)])
 
 
@@ -834,6 +841,7 @@ func _snapshot_grid() -> void:
 	_snap_h = grid.heights.duplicate()
 	_snap_t = grid.terrain.duplicate()
 	_snap_z = grid.zones.duplicate()
+	_snap_s = grid.slopes.duplicate()
 	_snap_props = grid.props.hash()
 	_snap_version = grid.version
 
@@ -845,9 +853,9 @@ func _diff_grid() -> void:
 	if grid.props.hash() != _snap_props:
 		for d in _depths.size():
 			_dirty[d] = true
-	elif grid.heights != _snap_h or grid.terrain != _snap_t or grid.zones != _snap_z:
+	elif grid.heights != _snap_h or grid.terrain != _snap_t or grid.zones != _snap_z or grid.slopes != _snap_s:
 		for i in grid.heights.size():
-			if grid.heights[i] != _snap_h[i] or grid.terrain[i] != _snap_t[i] or grid.zones[i] != _snap_z[i]:
+			if grid.heights[i] != _snap_h[i] or grid.terrain[i] != _snap_t[i] or grid.zones[i] != _snap_z[i] or grid.slopes[i] != _snap_s[i]:
 				_mark_near(Vector2i(i % grid.w, i / grid.w))
 	_snapshot_grid()
 
@@ -1290,6 +1298,9 @@ func _draw_ground(c: Vector2i) -> void:
 	if _kit_wall(c):
 		_plug(c, _surf(c))  # under a wall-kit piece (on the room's edge, _wall_piece): solid dark rock
 		return
+	if grid.is_slope(c):
+		_draw_slope(c)
+		return
 	if _soft():
 		_draw_ground_soft(c)
 		return
@@ -1327,7 +1338,7 @@ func _draw_ground(c: Vector2i) -> void:
 			var d := front_dir(shade)
 			var n := c + d
 			var edge := not grid.solid(n)  # the outline: the face runs down to the floor (or hangs below the base)
-			var nh := fl if edge else _surf(n)
+			var nh := fl if edge else _foot_of(n, -d)
 			low[shade] = nh
 			var side := _side(Vector2(c), Vector2(c) + Vector2.ONE, d)
 			var col := face.darkened(0.32 if shade else 0.12)
@@ -1392,6 +1403,230 @@ func _draw_ground(c: Vector2i) -> void:
 				_ci.draw_line(iso(e[0].x, e[0].y, h), iso(e[1].x, e[1].y, h), Color(top_col.lightened(0.35), 0.8), 1.5, true)
 
 
+# --- slopes ------------------------------------------------------------------------------------
+# [USER] 2026-11-17: "build slopes ... I feel like ultimately this windmill is ontop of a hill one that really doesnt
+# need stairs and is more just surrounded by a few stacking hills". A slope cell's top tilts between the corner
+# heights CombatGrid.slope_corners gives (from the ground below up to the lip above), drawn as two flat triangles
+# folded along the contour (CombatGrid.slope_fold). Each triangle takes one flat light by the way it faces, a step
+# lighter turned to the sun, a step darker turned away, like the faces' two values. Its sides toward the camera drop
+# to whatever is in front, in the cliff's rock: where a bank ends beside lower ground a wedge of rock shows.
+
+const SLOPE_SUN := 0.09  ## how much lighter a full slope turned to the sun is
+const SLOPE_SHADE := 0.15  ## how much darker one turned from it is
+const SLOPE_BACK := 0.07  ## and one falling away from the camera, seen edge on
+const SLOPE_STEP := 0.03  ## light comes in flat steps this big, never a blend
+
+
+func _draw_slope(c: Vector2i) -> void:
+	var t := grid.terrain_at(c)
+	var g := _ground_t(t)
+	var zone := grid.zone_at(c)
+	var z := grid.slope_corners(c)
+	var h := _surf(c)
+	var o := Vector2(c)
+	var pts: Array[Vector2] = []
+	for k in 4:
+		pts.append(o + TerrainShape.CORNERS[k])
+	var top_tex: Texture2D = BattleArt.top(g, zone)
+	var tint := _tint(g)
+	var top_col := _terrain_color(g).lightened(minf(h, 6.0) * 0.025)
+	if greybox:
+		var v := grey_of(h) + 0.06
+		top_col = Color(v, v, v)
+	# The sides turned toward the camera, down to what is in front of each.
+	var side_t := CombatGrid.T.GRASS if g == CombatGrid.T.ROAD else g
+	var body := _cliff_body(side_t, zone) if _soft() else {}
+	if body.has("strips"):
+		body = body.duplicate()
+		body.erase("strips")  # painted strips need a level top; a slope's side is a wedge
+	var face := CLIFF.lerp(ALIEN_CLIFF, strangeness)
+	if greybox:
+		face = top_col.darkened(0.35)
+	var base := float(grid.height_at(c))
+	var lip := _soft_lip_depth(g, zone) if _soft() else 0.0
+	for shade in [false, true]:
+		var d := front_dir(shade)
+		var k := TerrainShape.NORMALS.find(d)
+		var a := pts[k]
+		var b := pts[(k + 1) % 4]
+		var fa := _floor()
+		var fb := _floor()
+		var n := c + d
+		if grid.solid(n):
+			fa = _point_h(n, a)
+			fb = _point_h(n, b)
+		fa = minf(fa, z[k])
+		fb = minf(fb, z[(k + 1) % 4])
+		_slope_face(a, b, z[k], z[(k + 1) % 4], fa, fb, Vector2(d), body, tint, face)
+		if lip > 0.0:
+			_slope_lip(a, b, h + z[k] - base, h + z[(k + 1) % 4] - base, h + fa - base, h + fb - base, Vector2(d), top_tex, tint, top_col, lip)
+	# The top: two flat triangles either side of the fold.
+	var tris := [[0, 1, 2], [0, 2, 3]] if CombatGrid.slope_fold(z) == 0 else [[0, 1, 3], [1, 2, 3]]
+	var all := PackedVector2Array()
+	for tri: Array in tris:
+		var poly := PackedVector2Array()
+		var uvs := PackedVector2Array()
+		var mean := 0.0
+		for k: int in tri:
+			var zk := h + z[k] - base
+			poly.append(iso(pts[k].x, pts[k].y, zk))
+			uvs.append(pts[k] / BattleArt.TOP_TILES)
+			mean += zk / 3.0
+		var light := _slope_light(_tri_grad(pts[tri[0]], pts[tri[1]], pts[tri[2]], z[tri[0]], z[tri[1]], z[tri[2]]))
+		var lift := Color(tint * (1.0 + minf(mean, 6.0) * 0.025) * light, 1.0)
+		if top_tex != null:
+			_ci.draw_polygon(poly, PackedColorArray([lift, lift, lift]), uvs, top_tex)
+		else:
+			_ci.draw_colored_polygon(poly, Color(top_col * light, 1.0))
+	for k in 4:
+		all.append(iso(pts[k].x, pts[k].y, h + z[k] - base))
+	_road_ribbon(c, h, zone)
+	# Ink along a back edge that stands out against lower ground behind it, as on a block's top.
+	if _soft():
+		for k in 4:
+			var d: Vector2i = TerrainShape.NORMALS[k]
+			if d == front_dir(false) or d == front_dir(true):
+				continue
+			var n := c + d
+			var a := pts[k]
+			var b := pts[(k + 1) % 4]
+			var la := _point_h(n, a) if grid.solid(n) else _floor()
+			var lb := _point_h(n, b) if grid.solid(n) else _floor()
+			if z[k] - la > 0.5 and z[(k + 1) % 4] - lb > 0.5:
+				_marker_slant(a, b, h + z[k] - base, h + z[(k + 1) % 4] - base)
+	if show_grid:
+		_ci.draw_polyline(PackedVector2Array([all[0], all[1], all[2], all[3], all[0]]), Color(top_col.darkened(0.55), 0.2), 1.0, true)
+
+
+## The height of cell n's ground at grid point p (one of its corners): a slope's corner there, else its surface.
+func _point_h(n: Vector2i, p: Vector2) -> float:
+	if not grid.is_slope(n):
+		return _surf(n)
+	var k := TerrainShape.CORNERS.find(p - Vector2(n))
+	var z := grid.slope_corners(n)
+	return z[k] if k >= 0 else _surf(n)
+
+
+## How low cell n's ground comes along its side facing dir: its surface, or a slope's lower corner on that side.
+func _foot_of(n: Vector2i, dir: Vector2i) -> float:
+	if not grid.is_slope(n):
+		return _surf(n)
+	var z := grid.slope_corners(n)
+	var k := TerrainShape.NORMALS.find(dir)
+	return minf(z[k], z[(k + 1) % 4]) if k >= 0 else _surf(n)
+
+
+## The height to draw grid point p of cell c at, for a cell drawn at h: on a slope, its tilted top there.
+func _zp(c: Vector2i, p: Vector2, h: float) -> float:
+	if not grid.is_slope(c):
+		return h
+	return h + grid.surface_z(c, p - Vector2(c)) - float(grid.height_at(c))
+
+
+## A slope's side from grid point a to b: from its top (za, zb) down to the ground in front (fa, fb), in the rock.
+func _slope_face(a: Vector2, b: Vector2, za: float, zb: float, fa: float, fb: float, n: Vector2, body: Dictionary,
+		tint: Color, col: Color) -> void:
+	var up_a := za - fa > 0.01
+	var up_b := zb - fb > 0.01
+	if not up_a and not up_b:
+		return
+	var poly := PackedVector2Array()
+	var gp: Array[Vector2] = []
+	var zs: Array[float] = []
+	for item: Array in [[a, za, up_a], [b, zb, up_b]]:
+		gp.append(item[0])
+		zs.append(item[1])
+	for item: Array in [[b, fb, up_b], [a, fa, up_a]]:
+		if item[2]:
+			gp.append(item[0])
+			zs.append(item[1])
+	for i in gp.size():
+		poly.append(iso(gp[i].x, gp[i].y, zs[i]))
+	var light := _face_light(n)
+	if body.is_empty():
+		_ci.draw_colored_polygon(poly, Color(col * light, 1.0))
+		return
+	var top := maxf(za, zb)
+	var uvs := PackedVector2Array()
+	for i in gp.size():
+		uvs.append(Vector2(_screen_u(gp[i], top) / float(body.u), (top - zs[i]) / float(body.v)))
+	var ca := Color(tint * light, 1.0)
+	var cols := PackedColorArray()
+	cols.resize(poly.size())
+	cols.fill(ca)
+	_ci.draw_polygon(poly, cols, uvs, body.tex)
+
+
+## The top's ground folding over a slope's side, as _soft_lip does over a level one: from grid point a (top za, the
+## ground in front fa) to b, hanging down to the lip's depth or the ground, whichever is nearer.
+func _slope_lip(a: Vector2, b: Vector2, za: float, zb: float, fa: float, fb: float, n: Vector2, tex: Texture2D,
+		tint: Color, top_col: Color, depth: float) -> void:
+	var steps := maxi(2, ceili(a.distance_to(b) / 0.05))
+	var col := _lip_colour(tint if tex != null else top_col, n)
+	var verts := PackedVector2Array()
+	var uvs := PackedVector2Array()
+	for i in steps + 1:  # a strip of top and lower points; where there's no room the two meet (a flat triangle)
+		var f := float(i) / steps
+		var p := a.lerp(b, f)
+		var top := lerpf(za, zb, f)
+		var room := top - lerpf(fa, fb, f) - 0.06
+		var dd := 0.0 if room < 0.12 else minf(TerrainShape.lip_depth(_screen_u(p, 0.0), depth), room)
+		verts.append(iso(p.x, p.y, top))
+		uvs.append(p / BattleArt.TOP_TILES)
+		verts.append(iso(p.x, p.y, top - dd))
+		uvs.append((p + n * dd * 0.4) / BattleArt.TOP_TILES)
+	var idx := PackedInt32Array()
+	for i in steps:
+		var j := i * 2
+		idx.append_array(PackedInt32Array([j, j + 1, j + 2, j + 1, j + 3, j + 2]))
+	var cols := PackedColorArray()
+	cols.resize(verts.size())
+	cols.fill(col)
+	RenderingServer.canvas_item_add_triangle_array(_ci.get_canvas_item(), idx, verts, cols, uvs if tex != null else PackedVector2Array(),
+		PackedInt32Array(), PackedFloat32Array(), tex.get_rid() if tex != null else RID())
+
+
+## The uphill way and steepness (levels per cell) of a flat triangle over grid points p0, p1, p2.
+static func _tri_grad(p0: Vector2, p1: Vector2, p2: Vector2, z0: float, z1: float, z2: float) -> Vector2:
+	var e1 := p1 - p0
+	var e2 := p2 - p0
+	var det := e1.x * e2.y - e1.y * e2.x
+	if absf(det) < 0.0001:
+		return Vector2.ZERO
+	var d1 := z1 - z0
+	var d2 := z2 - z0
+	return Vector2((d1 * e2.y - d2 * e1.y) / det, (e1.x * d2 - e2.x * d1) / det)
+
+
+## A slope's light by the way it faces (grad: uphill, in levels per cell), in SLOPE_STEP steps.
+func _slope_light(grad: Vector2) -> float:
+	if grad.length() < 0.01:
+		return 1.0
+	var lit := Vector2(front_dir(false))
+	var away := -(lit + Vector2(front_dir(true))).normalized()
+	var sun := (lit - Vector2(front_dir(true)) * 0.4).normalized()
+	var down := -grad.normalized()
+	var steep := clampf(grad.length() / 2.0, 0.0, 1.0)
+	var f := down.dot(sun)
+	var v := 1.0 + steep * (SLOPE_SUN * f if f > 0.0 else SLOPE_SHADE * f)
+	v -= steep * SLOPE_BACK * maxf(down.dot(away), 0.0)
+	return snappedf(v, SLOPE_STEP)
+
+
+## A marker line from grid point a at za to b at zb (a slope's back edge).
+func _marker_slant(a: Vector2, b: Vector2, za: float, zb: float) -> void:
+	var pts := PackedVector2Array()
+	var ss := PackedFloat32Array()
+	var steps := maxi(1, ceili(a.distance_to(b) / 0.12))
+	for k in steps + 1:
+		var f := float(k) / steps
+		var p := a.lerp(b, f)
+		var zz := lerpf(za, zb, f)
+		pts.append(iso(p.x, p.y, zz))
+		ss.append(_screen_u(p, 0.0) + zz * 0.37)
+	_marker(pts, ss)
+
+
 # --- the soft terrain pass ------------------------------------------------------------------
 # The same cells drawn as one hand-shaped ground (docs/design/terrain-engine.md): a block's corners round off
 # where both its sides drop away, with the lower ground showing in the bit cut away; cliff faces are textured
@@ -1422,9 +1657,9 @@ func _refresh_shape() -> void:
 	var changed := {}
 	var wet := full  # the water may have changed: its strokes need a look
 	var paved := full  # a road or the ground beside one changed: the ribbons need redoing
-	if not full and (grid.heights != _shape_h or grid.terrain != _shape_t):
+	if not full and (grid.heights != _shape_h or grid.terrain != _shape_t or grid.slopes != _shape_s):
 		for i in grid.heights.size():
-			if grid.heights[i] != _shape_h[i] or grid.terrain[i] != _shape_t[i]:
+			if grid.heights[i] != _shape_h[i] or grid.terrain[i] != _shape_t[i] or grid.slopes[i] != _shape_s[i]:
 				changed[Vector2i(i % grid.w, i / grid.w)] = true
 				wet = wet or grid.terrain[i] == CombatGrid.T.WATER or _shape_t[i] == CombatGrid.T.WATER
 				paved = paved or grid.terrain[i] == CombatGrid.T.ROAD or _shape_t[i] == CombatGrid.T.ROAD \
@@ -1437,6 +1672,7 @@ func _refresh_shape() -> void:
 	_shape_version = grid.version
 	_shape_h = grid.heights.duplicate()
 	_shape_t = grid.terrain.duplicate()
+	_shape_s = grid.slopes.duplicate()
 	if full:
 		_radii.clear()
 		_pen_ends.clear()
@@ -1897,7 +2133,7 @@ func _shape_pens(c: Vector2i) -> void:
 	if not grid.solid(c):
 		return
 	var t := grid.terrain_at(c)
-	if t == CombatGrid.T.WATER or (t == CombatGrid.T.STAIRS and not MapDress.stair_run(grid, c).is_empty()):
+	if t == CombatGrid.T.WATER or grid.is_slope(c) or (t == CombatGrid.T.STAIRS and not MapDress.stair_run(grid, c).is_empty()):
 		return
 	var h := _surf(c)
 	var o := _soft_outline(c, h)
@@ -2216,7 +2452,7 @@ func _road_ribbon(c: Vector2i, h: float, zone: String) -> void:
 		var pts := PackedVector2Array()
 		var uvs := PackedVector2Array()
 		for p in poly:
-			pts.append(iso(p.x, p.y, h))
+			pts.append(iso(p.x, p.y, _zp(c, p, h)))
 			uvs.append(p / BattleArt.TOP_TILES)
 		if tex != null:
 			var cols := PackedColorArray()
@@ -2229,7 +2465,7 @@ func _road_ribbon(c: Vector2i, h: float, zone: String) -> void:
 	for line: PackedVector2Array in _ribbons.edges.get(c, []):
 		var pts := PackedVector2Array()
 		for p in line:
-			pts.append(iso(p.x, p.y, h))
+			pts.append(iso(p.x, p.y, _zp(c, p, h)))
 		_ci.draw_polyline(pts, rim, 1.0, true)
 
 
@@ -2239,7 +2475,7 @@ func _seg_foot(c: Vector2i, s: Dictionary, h: float) -> float:
 	var low: float
 	if s.edge >= 0:
 		var n: Vector2i = c + TerrainShape.NORMALS[s.edge]
-		low = _surf_or_floor(n)
+		low = _foot_of(n, -Vector2i(TerrainShape.NORMALS[s.edge])) if grid.solid(n) else _floor()
 		if grid.solid(n) and grid.terrain_at(n) == CombatGrid.T.STAIRS:  # its low steps sit under its own level
 			low = minf(low, _stair_low(n))
 	else:
@@ -3236,7 +3472,7 @@ func _prop_spots(c: Vector2i, h: float, t: int, seed_v: int, zone := "") -> Arra
 		var r := float((seed_v * (i + 5)) % 101) / 101.0
 		var tex: Texture2D = list[(seed_v + i * 7) % list.size()]
 		var o: Vector2 = spots[i] + Vector2(r - 0.5, 0.5 - r) * 0.08
-		var base := iso(c.x + 0.5 + o.x, c.y + 0.5 + o.y, h)
+		var base := iso(c.x + 0.5 + o.x, c.y + 0.5 + o.y, _zp(c, Vector2(c) + Vector2(0.5, 0.5) + o, h))  # on a slope, where its foot is
 		var ph: float = art.height * TW * (0.88 + 0.24 * r)
 		var pw := ph * tex.get_width() / float(tex.get_height())
 		if pw > TW * 0.9:  # wide props (bush, boulder) stay inside their cell
@@ -4725,8 +4961,8 @@ func animate_move(u: CombatUnit, path: Array[Vector2i]) -> void:
 	for i in range(1, path.size()):
 		var a := Vector2(CombatGrid.ground(path[i - 1]))
 		var b := Vector2(CombatGrid.ground(path[i]))
-		var ha := float(grid.height_at(path[i - 1]))
-		var hb := float(grid.height_at(path[i]))
+		var ha := grid.stand_h(path[i - 1])
+		var hb := grid.stand_h(path[i])
 		u.facing = Vector2i(b - a)
 		# Sprites walk, so they only hop to climb; pawns hop every tile like a lifted piece.
 		var lift := (2.0 if walker else 10.0) + absf(hb - ha) * HS * 0.6
@@ -4746,8 +4982,8 @@ func animate_push(u: CombatUnit, path: Array) -> void:
 	for i in range(1, path.size()):
 		var a := Vector2(CombatGrid.ground(path[i - 1]))
 		var b := Vector2(CombatGrid.ground(path[i]))
-		var ha := float(grid.height_at(path[i - 1]))
-		var hb := float(grid.height_at(path[i]))
+		var ha := grid.stand_h(path[i - 1])
+		var hb := grid.stand_h(path[i])
 		var step := func(t: float) -> void:
 			u.vis = a.lerp(b, t)
 			u.vis_h = lerpf(ha, hb, t * t)

@@ -374,7 +374,7 @@ func _ai_act(u: CombatUnit) -> void:
 	if plan.move != u.cell:
 		log_line.emit(Txt.f("LOG_MOVE", [Txt.t(u.name_key), maxi(1, plan.path.size() - 1)]))
 		await board.animate_move(u, plan.path)
-		u.place(plan.move, grid.height_at(plan.move))
+		u.place(plan.move, grid.stand_h(plan.move))
 		await _spot(u)
 		for ev in CombatRules.hand_chill(grid, u, units):  # ended its move by the Lich Prince's hand (NEPO BABY)
 			await _play(ev)
@@ -415,7 +415,7 @@ func _ai_act(u: CombatUnit) -> void:
 			var away := EnemyAi.retreat(grid, u, units)
 			if away.move != u.cell and await _leave_guards(u, away.move):
 				await board.animate_move(u, away.path)
-				u.place(away.move, grid.height_at(away.move))
+				u.place(away.move, grid.stand_h(away.move))
 				await _spot(u)
 			u.moved = true
 	elif plan.guard:
@@ -571,7 +571,7 @@ func _use(u: CombatUnit, a: Ability, aim: Vector2i) -> void:
 		if ev.type == "push":
 			var start: Vector2i = ev.path[0]
 			ev.unit.vis = Vector2(CombatGrid.ground(start))
-			ev.unit.vis_h = grid.height_at(start)
+			ev.unit.vis_h = grid.stand_h(start)
 	for ev in events:
 		await _play(ev)
 	for o: CombatUnit in units:
@@ -686,7 +686,7 @@ func _play(ev: Dictionary) -> void:
 		"carry":
 			_deed(ev.src, t, "help_up")  # counts as a help for their bond
 			t.vis = Vector2(CombatGrid.ground(ev.to))
-			t.vis_h = grid.height_at(ev.to)
+			t.vis_h = grid.stand_h(ev.to)
 			board.float_text(t.cell, Txt.t("SKILL_CARRY"), Color(0.6, 0.9, 1.0))
 			await get_tree().create_timer(0.25).timeout
 		"swap":
@@ -1116,7 +1116,7 @@ func _on_wait() -> void:
 
 
 func _undo_move() -> void:
-	selected.place(selected.move_origin, grid.height_at(selected.move_origin))
+	selected.place(selected.move_origin, grid.stand_h(selected.move_origin))
 	selected.moved = false
 	selected.move_spent = 0
 	_select(selected)
@@ -1308,7 +1308,7 @@ func _move_selected(c: Vector2i) -> void:
 	await board.animate_move(u, path)
 	if cam != null:
 		cam.track = null
-	u.place(c, grid.height_at(c))
+	u.place(c, grid.stand_h(c))
 	u.moved = true
 	await _spot(u)
 	state = S.MENU

@@ -13,7 +13,7 @@ screen), `scenes/plot_maker.tscn`. Files: `game/data/plots/<region>/<id>.json`. 
 - `levels`: one string per row. `.` outside the map, `0` to `3` the terrace (low to high; 2 heights apart, so every
   terrace edge is a cliff a stair climbs).
 - `marks`: one string per row, same size. ` ` plain ground, `d` road, `w` river water, `b` bridge (a straight run with
-  dry banks at both ends), `s` stairs, `r` rock outcrop (one height up: cover), `t` woods.
+  dry banks at both ends), `s` stairs, `/` slope (a grassy bank up to the terrace beside it, `docs/systems/slopes.md`), `r` rock outcrop (one height up: cover), `t` woods.
 - `river`: `flank` (along one side, no bridge), `crossing` (between the starts, with its one bridge) or `""`.
 - `draft` (optional): `true` keeps it out of road fights while it is being drawn.
 - `flip` (optional): `false` or `true` pins the top-to-bottom flip.

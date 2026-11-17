@@ -365,18 +365,34 @@
 				"walk": false
 			}
 		],
+		"slopes": [
+			"........................",
+			"........................",
+			"........................",
+			"........................",
+			"........................",
+			"...../........../.......",
+			"........................",
+			"........................",
+			"........................",
+			"........................",
+			"....../.................",
+			"........................",
+			"........................",
+			"........................"
+		],
 		"terrain": [
 			"....ggggg...............",
 			"...ggfggffgggg..........",
 			"..gffgggffgffgggggg.....",
 			"..gffggggggggggggggg....",
 			"..gggggggggggggggggg....",
-			"..gggtggggggggggtggg....",
+			"..gggggggggggggggggg....",
 			"gggggggggggggggggggggggg",
 			"dddddddddddddddddddddddd",
 			"dddddddddddddddddddddddd",
 			"..gggggggggggggggggggg..",
-			".gggggtgg....gggggggg...",
+			".gggggggg....gggggggg...",
 			".gggggggg......ggggg....",
 			"..gggggg................",
 			"..ggggg................."

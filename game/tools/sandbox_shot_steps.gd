@@ -84,7 +84,7 @@ func run(s: Node, _frames: int, _step: String) -> void:
 					at = foe.cell + d
 					break
 			var stand := at + Vector2i(-2, 0) if nb.grid.passable(at + Vector2i(-2, 0)) else prince.cell
-			prince.place(stand, nb.grid.height_at(stand))
+			prince.place(stand, nb.grid.stand_h(stand))
 			prince.res = prince.res_max
 			for ev in CombatRules.resolve(RandomNumberGenerator.new(), nb.grid, prince, Db.ability("nepo_baby"), at, nb.units):
 				nb._play(ev)
@@ -116,7 +116,7 @@ func run(s: Node, _frames: int, _step: String) -> void:
 		for d: Vector2i in [Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 0)]:
 			var c := foe.cell + d
 			if b.grid.passable(c) and CombatRules.unit_at(b.units, c) == null:
-				u.place(c, b.grid.height_at(c))
+				u.place(c, b.grid.stand_h(c))
 				break
 		u.facing = Vector2i(0, -1) if parts.size() > 2 and parts[2] == "ne" else Vector2i(1, 0)
 		b.board.play_anim(u, parts[1])
@@ -135,7 +135,7 @@ func run(s: Node, _frames: int, _step: String) -> void:
 				for d: Vector2i in [Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1), Vector2i(1, 0)]:
 					var c := foe.cell + d
 					if b.grid.passable(c) and CombatRules.unit_at(b.units, c) == null:
-						u.place(c, b.grid.height_at(c))
+						u.place(c, b.grid.stand_h(c))
 						break
 				b._select(u)
 				for ev in CombatRules.resolve(RandomNumberGenerator.new(), b.grid, u, Db.ability("bark"), u.cell, b.units):
@@ -147,7 +147,7 @@ func run(s: Node, _frames: int, _step: String) -> void:
 				for c: Vector2i in CombatRules.reachable(b.grid, u, b.units).cost:
 					if CombatRules.dist(c, Vector2i(b.grid.w - 1, u.cell.y)) < CombatRules.dist(best, Vector2i(b.grid.w - 1, u.cell.y)):
 						best = c
-				u.place(best, b.grid.height_at(best))
+				u.place(best, b.grid.stand_h(best))
 				u.moved = true
 			"goals":
 				# A fight written as "beat the boss or get everyone to the green": the boss tag, the way out, the goal line.
@@ -176,8 +176,8 @@ func run(s: Node, _frames: int, _step: String) -> void:
 					var c: Vector2i = foe.cell + d
 					if b.grid.passable(c) and CombatRules.occupant(b.units, c) == null:
 						spots.append(c)
-				u.place(spots[0], b.grid.height_at(spots[0]))
-				b.units[1].place(spots[1], b.grid.height_at(spots[1]))
+				u.place(spots[0], b.grid.stand_h(spots[0]))
+				b.units[1].place(spots[1], b.grid.stand_h(spots[1]))
 				u.moved = true
 				b._select(u)
 				b._start_targeting(u.abilities[0])
@@ -188,7 +188,7 @@ func run(s: Node, _frames: int, _step: String) -> void:
 				for d in CombatRules.DIRS:
 					var c: Vector2i = u.cell + d
 					if b.grid.passable(c) and CombatRules.occupant(b.units, c) == null:
-						o.place(c, b.grid.height_at(c))
+						o.place(c, b.grid.stand_h(c))
 						break
 				u.hp = 0
 				u.sync_view()
@@ -219,7 +219,7 @@ func run(s: Node, _frames: int, _step: String) -> void:
 				for d: Vector2i in CombatRules.DIRS:
 					var c := foe.cell + d
 					if b.grid.passable(c) and CombatRules.unit_at(b.units, c) == null:
-						u.place(c, b.grid.height_at(c))
+						u.place(c, b.grid.stand_h(c))
 						break
 				u.traits.append(CombatRules.TRAIT_GOOD_SHOT)
 				foe.hp = 1
@@ -241,7 +241,7 @@ func run(s: Node, _frames: int, _step: String) -> void:
 				near = o
 		var spot := near.cell + Vector2i(-3, 0)
 		if b.grid.passable(spot) and CombatRules.unit_at(b.units, spot) == null:
-			u.place(spot, b.grid.height_at(spot))
+			u.place(spot, b.grid.stand_h(spot))
 		b._select(u)
 		var a: Ability = u.abilities[1] if u.abilities.size() > 1 else u.abilities[0]
 		b._start_targeting(a)

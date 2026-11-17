@@ -853,7 +853,7 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 			var swept := sweep(grid, units, t, dest)
 			if not swept.is_empty():
 				path.append_array(swept)
-				t.place(swept[-1], grid.height_at(swept[-1]))
+				t.place(swept[-1], grid.stand_h(swept[-1]))
 				t.hp = maxi(0, t.hp - SWEPT_DAMAGE)
 				t.statuses.erase(STATUS_SLEEP)
 				events.append({"type": "swept", "unit": t, "amount": SWEPT_DAMAGE})
@@ -864,7 +864,7 @@ static func push(grid: CombatGrid, units: Array, from: Vector2i, t: CombatUnit, 
 			events.append({"type": "bump", "unit": t, "amount": BUMP_DAMAGE, "at": dest})
 			break
 		var drop := grid.height_at(t.cell) - grid.height_at(dest)
-		t.place(dest, grid.height_at(dest))
+		t.place(dest, grid.stand_h(dest))
 		path.append(dest)
 		if drop >= 2:
 			var dmg := (drop - 1) * FALL_DAMAGE
@@ -1230,7 +1230,7 @@ static func summon(grid: CombatGrid, u: CombatUnit, a: Ability, units: Array) ->
 			continue
 		var m := CombatUnit.enemy(cls)
 		m.team = u.team
-		m.place(c, grid.height_at(c))
+		m.place(c, grid.stand_h(c))
 		m.moved = true
 		m.acted = true
 		m.summoner = u
@@ -1338,8 +1338,8 @@ static func carry(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, f
 	if not u.alive():
 		return events
 	var from := friend.cell
-	u.place(dest, grid.height_at(dest))
-	friend.place(spot, grid.height_at(spot))
+	u.place(dest, grid.stand_h(dest))
+	friend.place(spot, grid.stand_h(spot))
 	events.append({"type": "carry", "src": u, "unit": friend, "from": from, "to": spot})
 	return events
 
@@ -1348,8 +1348,8 @@ static func carry(rng: RandomNumberGenerator, grid: CombatGrid, u: CombatUnit, f
 static func shadow_swap(grid: CombatGrid, u: CombatUnit, a: Ability, friend: CombatUnit) -> Array:
 	u.ready_at[a.id] = u.phase_no + a.cooldown
 	var at := u.cell
-	u.place(friend.cell, grid.height_at(friend.cell))
-	friend.place(at, grid.height_at(at))
+	u.place(friend.cell, grid.stand_h(friend.cell))
+	friend.place(at, grid.stand_h(at))
 	return [{"type": "swap", "src": u, "unit": friend, "to": friend.cell}]
 
 

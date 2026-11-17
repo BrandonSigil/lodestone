@@ -5,7 +5,10 @@ A piece is two grids of the same size. L: "." outside the map, "0"-"9" the terra
 there. Plot marks (MapPlot): d road, w water, b bridge, s stairs, r rock outcrop, t woods. Then, one per cell:
   P party start (walked in)   p party start (saw them first)   X exit cell   o stepping stone   k dock plank
   Z ruined wall (a broken stub of masonry, blocks)   Q paved floor (old flagstones)
+  / slope (a grassy bank: the ground tilts up from this cell's level to the terrace beside it, docs/systems/slopes.md)
   # filler under a big prop (ignored)
+A piece may also say banks="<levels>" (e.g. "01"): every cell on those levels at the foot of the next terrace up
+becomes a slope, so the hill rolls instead of standing in cliffs; `cliffs` (a marks() spec) keeps cells as cliff.
 and whatever the piece's own `props` and `foes` tables name. A big prop is marked at its low-x, low-y corner.
 The party side is drawn so the camera (which looks from high x + y towards low) sees the landmark behind open ground.
 """
@@ -81,7 +84,7 @@ PIECES["wagon"] = dict(
     road="d:0-23,7-8",
     M=marks(_L, "d:0-23,7-8 "
                 "K:10,7 #:11,7 #:10-11,8 c:8,7 x:7,8 x:9,9 B:7,6 "               # the wagon and its spilled load
-                "s:5,5 s:16,5 s:6,10 "                                          # thieves' trail, woodcutters' trail, way down to camp
+                "/:5,5 /:16,5 /:6,10 "                                          # worn trails up the bank (thieves, woodcutters) and down to camp
                 "t:3-4,2-3 t:8-9,1-2 t:11-12,2 t:5,1 T:13,3 T:4,4 "             # woods on the thieves' bank
                 "u:15,4 u:18,3 u:17,5 T:19,4 T:15,2 "                           # cut stumps on the woodcutters' side
                 "u:3,10 u:5,12 u:4,10 x:2,11 x:3,12 c:2,12 y:7,11 "              # camp: seats round the fire pit, the loot they hauled off
@@ -296,28 +299,30 @@ PIECES["farm"] = dict(
     foes={"C": dict(id="scarecrow"), "M": dict(id="foe_scarecrow", post=True)},
 )
 
-# E3 Windmill hill: a windmill on a terraced hill above the east road, wheat on the terraces. A cart track climbs
-# straight from the road to the mill in two wide flights of steps; the farmers' own steps come up from the meadow
-# to the wheat and from the wheat to the mill's back. Bandits hold the mill: their captain by its door,
-# an archer on the hilltop's edge, men in the wheat, one lying low in it. Fences along the terraces are the cover.
+# E3 Windmill hill: a windmill on top of a rolling hill above the east road, wheat on its lower shoulder. No stairs: the
+# hill is two stacked rises with grassy banks all round ([USER] 2026-11-17: "this windmill is ontop of a hill one that
+# really doesnt need stairs and is more just surrounded by a few stacking hills"). The cart track runs straight up the
+# banks from the road to the mill. Bandits hold the mill: their captain by its door, an archer on the hilltop's edge,
+# men in the wheat, one lying low in it. Fences along the brows of the rises are the cover.
 _L = levels(22, 16,
     "0:0-21,11-14 0:12-20,4-10 0:15-19,2-3 "                          # the road and the meadow east of the hill
-    "1:1-11,1-10 2:3-8,1-6 "                                           # the wheat terrace, the hilltop
+    "1:1-11,1-10 2:3-8,1-6 "                                           # the wheat shoulder, the hilltop
     ".:1-2,1-2 .:1,3-4 .:10-11,1 .:0,14 .:21,14 .:0-2,15 .:3-21,15 .:19-21,4-5 .:20-21,6-8 .:12-14,4 .:1,10 .:21,9-10 "
     ".:3,1 .:8,1 .:15-19,2-3 .:16-21,4-6 .:19-21,7-9 .:0,5-9 .:12-13,5 .:1-3,14 .:18-21,14 .:12,1-3 .:9-11,1 .:14-15,4 .:11-13,14 .:20-21,10-11 .:1,9 .:2,10 .:16-18,7 .:14-16,14 ")
 PIECES["mill"] = dict(
     look="farmland", art_set="farmland",
-    note="E3 Windmill hill: a windmill on a terraced hill above the east road, wheat on the terraces. A cart track "
-         "climbs straight from the road to the mill in two wide flights. Bandits hold the mill: their captain by its "
-         "door, an archer on the hilltop's edge, men in the wheat, one lying low in it. Fences along the terraces.",
+    note="E3 Windmill hill: a windmill on top of a rolling hill above the east road, wheat on its lower shoulder, grassy "
+         "banks all round and no stairs. The cart track runs straight up the banks to the mill. Bandits hold the mill: "
+         "their captain by its door, an archer on the hilltop's edge, men in the wheat, one lying low in it. Fences "
+         "along the brows of the rises.",
     L=_L,
-    road="d:0-21,12-13 d:4-6,8-10",
+    banks="01",
+    road="d:0-21,12-13 d:4-6,5-11",
     M=marks(_L, "M:5,2 #:6,2 #:5-6,3 "                                           # the mill, its door to the track
-                "S:4-6,7 S:4-6,11 s:12,9 s:9,5 "                                             # the track's two flights, lined up on the mill
-                "f:3,6 f:7-8,6 f:3,10 f:7-8,10 x:4,9 "                                  # fences along the terrace lips, either side of the track
-                "K:9-11,2-4 K:9-11,6-8 K:1,5-6 K:1-2,7-8 "                        # wheat on the terrace, in beds
-                "h:13,6 h:14,8 x:4,4 c:7,4 T:15,5 T:18,10 T:0,11 y:17,10 B:12,10 "
-                "R:6,4 V:8,3 N:5,9 L:9,7 A:1,6 "
+                "f:3,6 f:7-8,6 f:3,10 f:7-8,10 x:3,8 "                                  # fences along the brows, either side of the track
+                "K:10-11,2-4 K:10-11,6-8 K:1,5-8 "                                # wheat on the shoulder, in beds
+                "h:13,6 h:14,8 x:4,4 c:7,4 T:15,5 T:18,10 T:0,11 y:17,10 B:13,10 "
+                "R:6,4 V:8,3 N:5,9 L:9,8 A:1,6 "
                 "P:11,12 P:12,12 P:11,13 P:12,13 p:16,8 p:17,8 p:16,9 p:17,9"),
     props={"M": dict(sprite="village/prop_windmill", foot=[2, 2], tall=2.6, sight=2.0, flip=True),
            "K": dict(sprite="village/prop_crops", tall=0.5, sight=0.5, walk=True)},
@@ -336,7 +341,7 @@ def sketch(pid):
     props_def.update(p.get("props", {}))
     foes_def = p.get("foes", {})
     out = dict(id=pid, look=p["look"], art_set=p["art_set"], note=p["note"], levels=L, marks=[],
-               props=[], party=[], out=[], foes=[], exit=[], stones=[], docks=[], stairs=[], ruins=[], paving=[])
+               props=[], party=[], out=[], foes=[], exit=[], stones=[], docks=[], stairs=[], ruins=[], paving=[], slopes=[])
     road = marks_at(L, p.get("road", ""))  # road that runs on under things and pieces standing on it
     for y, row in enumerate(M):
         marks = ""
@@ -357,6 +362,8 @@ def sketch(pid):
                 out["ruins"].append([x, y])
             elif ch == "Q":
                 out["paving"].append([x, y])
+            elif ch == "/":
+                out["slopes"].append([x, y])
             elif ch == "o":
                 out["stones"].append([x, y])
             elif ch == "k":
@@ -368,6 +375,30 @@ def sketch(pid):
             else:
                 raise SystemExit("%s: unknown mark %r at %d,%d" % (pid, ch, x, y))
         out["marks"].append(marks)
+    for x, y in banks(p):
+        if [x, y] not in out["slopes"]:
+            out["slopes"].append([x, y])
+    return out
+
+
+def banks(p):
+    """The cells a piece's banks= turns into slopes: on the named levels, beside (diagonals too) the next level up, not
+    under a thing that can't tilt (a fence, a crate) and not kept by `cliffs`."""
+    L, M = p["L"], p["M"]
+    lv = p.get("banks", "")
+    keep = marks_at(L, p.get("cliffs", ""))
+    things = {k for k, v in p.get("props", {}).items() if not v.get("walk")} | {k for k, v in PROPS.items() if not v.get("walk")}
+    H, W = len(L), len(L[0])
+    out = []
+    for y in range(H):
+        for x in range(W):
+            ch = L[y][x]
+            if ch == "." or ch not in lv or (x, y) in keep or M[y][x] in things or M[y][x] in "wbsrtS#Zo":
+                continue
+            up = str(int(ch) + 1)
+            if any(0 <= x + dx < W and 0 <= y + dy < H and L[y + dy][x + dx] == up and M[y + dy][x + dx] not in "S"
+                   for dx in (-1, 0, 1) for dy in (-1, 0, 1)):
+                out.append((x, y))
     return out
 
 

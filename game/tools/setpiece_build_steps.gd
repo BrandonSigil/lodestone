@@ -2,7 +2,7 @@ extends RefCounted
 ## The work of tools/setpiece_build.gd (a -s script can't name game classes before the autoloads exist).
 ## A sketch: {"id", "art_set", "look", "note", "levels" and "marks" (a plot's two layers, MapPlot), "stones" [[x, y]]
 ## (a stepping stone standing in the water), "docks" [[x, y]] (a plank deck over the water), "climbs" [[x, y]],
-## "ruins" [[x, y]] (a broken wall stub), "paving" [[x, y]] (flagstones), "props" [{"sprite" or "blob" (a named placeholder), "cell", "foot", "tall", "sight", "walk"}],
+## "slopes" [[x, y]] (a grassy bank, MapOps.slope), "ruins" [[x, y]] (a broken wall stub), "paving" [[x, y]] (flagstones), "props" [{"sprite" or "blob" (a named placeholder), "cell", "foot", "tall", "sight", "walk"}],
 ## "party" [[x, y]] (walked in), "out" [[x, y]] (saw them first), "foes" [{"id", "cell", "hidden", "leader", "post"}],
 ## "exit" [[x, y]]}.
 
@@ -24,6 +24,9 @@ func bake(path: String, force: bool) -> String:
 	for c in d.get("stairs", []):  # each its own stair, so cells side by side make one wide flight
 		if not MapOps.stairs(grid, Vector2i(int(c[0]), int(c[1]))):
 			push_warning("stair %s has nothing to climb" % [c])
+	for c in d.get("slopes", []):  # a grassy bank from this cell's level up to the terrace beside it
+		if not MapOps.slope(grid, Vector2i(int(c[0]), int(c[1]))):
+			push_warning("slope %s can't tilt (water, rock or no ground)" % [c])
 	for c in d.get("ruins", []):  # a broken wall stub, a level above the ground it stands on
 		var cell := Vector2i(int(c[0]), int(c[1]))
 		grid.set_terrain(cell, T.RUIN)

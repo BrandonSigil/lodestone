@@ -23,7 +23,7 @@
 		{
 			"id": "bandit",
 			"x": 9,
-			"y": 7
+			"y": 8
 		},
 		{
 			"id": "bandit",
@@ -44,16 +44,16 @@
 		"heights": [
 			"0000000000000000000000",
 			"0000555500000000000000",
-			"0005555553330000000000",
-			"0035555553330000000000",
-			"0035555553330000000000",
-			"0335555554330011000000",
-			"0335555553331111000000",
-			"0333444333331111000000",
-			"0333333333331111111000",
+			"0005555554330000000000",
+			"0045555554330000000000",
+			"0045555554330000000000",
+			"0345555554330011000000",
+			"0345555554332111000000",
+			"0344444444332111000000",
+			"0333333333332111111000",
 			"0033333333332111111000",
-			"0003333333331111111100",
-			"1111222111111111111100",
+			"0003333333332111111100",
+			"1122222222222111111100",
 			"1111111111111111111111",
 			"1111111111111111111111",
 			"0000111111100000010000",
@@ -80,20 +80,6 @@
 			},
 			{
 				"cell": [
-					9,
-					2
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.5,
-				"sprite": "village/prop_crops",
-				"tall": 0.5,
-				"walk": true
-			},
-			{
-				"cell": [
 					10,
 					2
 				],
@@ -110,20 +96,6 @@
 				"cell": [
 					11,
 					2
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.5,
-				"sprite": "village/prop_crops",
-				"tall": 0.5,
-				"walk": true
-			},
-			{
-				"cell": [
-					9,
-					3
 				],
 				"foot": [
 					1,
@@ -189,20 +161,6 @@
 				"sprite": "village/prop_barrel",
 				"tall": 0.7,
 				"walk": false
-			},
-			{
-				"cell": [
-					9,
-					4
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.5,
-				"sprite": "village/prop_crops",
-				"tall": 0.5,
-				"walk": true
 			},
 			{
 				"cell": [
@@ -304,20 +262,6 @@
 			},
 			{
 				"cell": [
-					9,
-					6
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.5,
-				"sprite": "village/prop_crops",
-				"tall": 0.5,
-				"walk": true
-			},
-			{
-				"cell": [
 					10,
 					6
 				],
@@ -374,20 +318,6 @@
 			},
 			{
 				"cell": [
-					2,
-					7
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.5,
-				"sprite": "village/prop_crops",
-				"tall": 0.5,
-				"walk": true
-			},
-			{
-				"cell": [
 					10,
 					7
 				],
@@ -430,31 +360,17 @@
 			},
 			{
 				"cell": [
-					2,
+					3,
 					8
 				],
 				"foot": [
 					1,
 					1
 				],
-				"sight": 0.5,
-				"sprite": "village/prop_crops",
-				"tall": 0.5,
-				"walk": true
-			},
-			{
-				"cell": [
-					9,
-					8
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.5,
-				"sprite": "village/prop_crops",
-				"tall": 0.5,
-				"walk": true
+				"sight": 0.0,
+				"sprite": "village/prop_crates",
+				"tall": 0.8,
+				"walk": false
 			},
 			{
 				"cell": [
@@ -496,20 +412,6 @@
 				"sight": 0.5,
 				"sprite": "village/prop_hay",
 				"tall": 0.65,
-				"walk": false
-			},
-			{
-				"cell": [
-					4,
-					9
-				],
-				"foot": [
-					1,
-					1
-				],
-				"sight": 0.0,
-				"sprite": "village/prop_crates",
-				"tall": 0.8,
 				"walk": false
 			},
 			{
@@ -556,7 +458,7 @@
 			},
 			{
 				"cell": [
-					12,
+					13,
 					10
 				],
 				"foot": [
@@ -611,19 +513,37 @@
 				"walk": false
 			}
 		],
+		"slopes": [
+			"......................",
+			"......................",
+			"........./............",
+			"../....../............",
+			"../....../............",
+			"../....../............",
+			"../....../../.........",
+			"..////////../.........",
+			"............/.........",
+			"............/.........",
+			"............/.........",
+			"..///////////.........",
+			"......................",
+			"......................",
+			"......................",
+			"......................"
+		],
 		"terrain": [
 			"......................",
 			"....gggg..............",
 			"...ggggggggg..........",
 			"..gggggggggg..........",
 			"..gggggggggg..........",
-			".ggggggggtgg..gg......",
-			".ggggggggggggggg......",
-			".gggtttggggggggg......",
+			".gggdddggggg..gg......",
+			".gggdddggggggggg......",
+			".gggdddggggggggg......",
 			".gggdddgggggggggggg...",
-			"..ggdddgggggtgggggg...",
+			"..ggdddgggggggggggg...",
 			"...gdddggggggggggggg..",
-			"ggggtttggggggggggggg..",
+			"ggggdddggggggggggggg..",
 			"dddddddddddddddddddddd",
 			"dddddddddddddddddddddd",
 			"....ggggggg......g....",
@@ -663,7 +583,7 @@
 	},
 	"piece": {
 		"exit": [],
-		"note": "E3 Windmill hill: a windmill on a terraced hill above the east road, wheat on the terraces. A cart track climbs straight from the road to the mill in two wide flights. Bandits hold the mill: their captain by its door, an archer on the hilltop's edge, men in the wheat, one lying low in it. Fences along the terraces.",
+		"note": "E3 Windmill hill: a windmill on top of a rolling hill above the east road, wheat on its lower shoulder, grassy banks all round and no stairs. The cart track runs straight up the banks to the mill. Bandits hold the mill: their captain by its door, an archer on the hilltop's edge, men in the wheat, one lying low in it. Fences along the brows of the rises.",
 		"out": [
 			[
 				16,

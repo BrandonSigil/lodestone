@@ -4,7 +4,7 @@ extends RefCounted
 
 func _put(s: Node, c: Vector2i) -> void:
 	var lead: CombatUnit = s.leader()
-	lead.place(c, s.grid.height_at(c))
+	lead.place(c, s.grid.stand_h(c))
 	s._refresh_sight()
 	s._refresh_units()
 	s.focus = Vector2(CombatGrid.ground(c)) + Vector2(0.5, 0.5)

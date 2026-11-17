@@ -550,8 +550,10 @@ static func face_of(move: Vector2, facing: Vector2i) -> Vector2i:
 ## neighbour's over the last STEP_BLEND of the cell, so a step or stair is walked up instead of popped. Both sides
 ## of an edge meet at the halfway height, so the feet never jump. Only neighbours the walker can step onto count.
 static func ground_h(grid: CombatGrid, at: Vector2i, pos: Vector2, jump: int) -> float:
-	var h := float(grid.height_at(at))
 	var g := CombatGrid.ground(at)
+	if grid.is_slope(at):  # on a slope the feet follow its tilted top
+		return grid.surface_z(at, pos - Vector2(g))
+	var h := float(grid.height_at(at))
 	var out := h
 	for axis in 2:
 		var f := clampf(pos[axis] - g[axis], 0.0, 1.0)
@@ -568,7 +570,7 @@ static func ground_h(grid: CombatGrid, at: Vector2i, pos: Vector2, jump: int) ->
 		var n := grid.step_place(at, g + side, jump)
 		if n == CombatGrid.NO_PLACE or n == at:
 			continue
-		out += (grid.height_at(n) - h) * 0.5 * (1.0 - edge / STEP_BLEND)
+		out += (grid.edge_h(n, -side) - h) * 0.5 * (1.0 - edge / STEP_BLEND)
 	return out
 
 

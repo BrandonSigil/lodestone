@@ -8,9 +8,9 @@ extends Control
 
 const REGIONS := ["forest", "snow"]  ## the road-fight regions (overworld_paths.csv art_set) with plot folders
 const BRUSHES := [["0", "Low ground"], ["1", "Terrace 1"], ["2", "Terrace 2"], ["3", "High ground"], [".", "Outside"]]
-const MARKS := [["d", "Road"], ["w", "River"], ["b", "Bridge"], ["s", "Stairs"], ["r", "Rock"], ["t", "Woods"], [" ", "Clear mark"]]
+const MARKS := [["d", "Road"], ["w", "River"], ["b", "Bridge"], ["s", "Stairs"], ["/", "Slope"], ["r", "Rock"], ["t", "Woods"], [" ", "Clear mark"]]
 const LEVEL_COL := {"0": Color("#56733d"), "1": Color("#7f9e55"), "2": Color("#a9c47a"), "3": Color("#d6e8b0"), ".": Color("#1d2326")}
-const MARK_COL := {"d": Color("#c9a66b"), "w": Color("#4a82c4"), "b": Color("#8a5a32"), "s": Color("#e8e2d0"), "r": Color("#7b7f86"), "t": Color("#2f5a33")}
+const MARK_COL := {"d": Color("#c9a66b"), "w": Color("#4a82c4"), "b": Color("#8a5a32"), "s": Color("#e8e2d0"), "/": Color("#a9c97a"), "r": Color("#7b7f86"), "t": Color("#2f5a33")}
 const JOBS := ["", "flank", "crossing"]
 const PARTY_TINT := Color(0.3, 0.55, 1.0, 0.3)
 const FOE_TINT := Color(1.0, 0.35, 0.3, 0.3)
@@ -226,6 +226,8 @@ func _mark_cells(mark: String, n: int) -> Array[Vector2i]:
 					on = (v > 0.2 and v < 0.8) and fmod(u * 4.0, 1.0) < 0.75
 				"s":
 					on = fmod(v * 3.0, 1.0) < 0.5 and u > 0.15 and u < 0.85
+				"/":
+					on = v > 1.0 - u - 0.05
 				"r":
 					on = Vector2(u - 0.5, v - 0.55).length() < 0.3
 				"t":
@@ -455,7 +457,7 @@ func _draw_plot() -> void:
 				var mid := Rect2(r.position + Vector2(px - w, px - w) * 0.5, Vector2(w, w))
 				_canvas.draw_rect(mid, MARK_COL.d)
 				for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-					if MapPlot.mark_at(plot, c + d) in ["d", "s", "b"]:
+					if MapPlot.mark_at(plot, c + d) in ["d", "s", "b", "/"]:
 						_canvas.draw_rect(Rect2(mid.position + Vector2(d) * (px - w) * 0.5, mid.size).merge(mid), MARK_COL.d)
 			elif mk != " " and MARK_COL.has(mk):
 				var cells := _mark_cells(mk, 16)
@@ -517,6 +519,8 @@ func _draw_preview() -> void:
 					col = Color("#2f5a33")
 				_:
 					col = LEVEL_COL[str(clampi((_preview.height_at(c) - 1) / MapPlot.LEVEL_STEP, 0, 3))]
+			if _preview.is_slope(c):
+				col = col.lerp(MARK_COL["/"], 0.5)
 			if _preview.has_deck(c):
 				col = Color("#8a5a32")
 			if t != CombatGrid.T.VOID:

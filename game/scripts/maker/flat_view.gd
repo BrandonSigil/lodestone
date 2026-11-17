@@ -151,6 +151,14 @@ func _draw() -> void:
 				for i in 3:
 					var yy := r.position.y + cs * (0.25 + 0.25 * i)
 					draw_line(Vector2(r.position.x + cs * 0.15, yy), Vector2(r.end.x - cs * 0.15, yy), Color(0.3, 0.25, 0.1, 0.8), maxf(1.0, cs * 0.06))
+			if g.is_slope(c) and cs >= 6.0:  # a slope: a wedge pointing downhill
+				var z := g.slope_corners(c)
+				var down := -Vector2((z[1] + z[2] - z[0] - z[3]) * 0.5, (z[2] + z[3] - z[0] - z[1]) * 0.5)
+				if down.length() > 0.01:
+					var dn := down.normalized()
+					var mid := r.get_center()
+					var side := Vector2(-dn.y, dn.x)
+					draw_colored_polygon(PackedVector2Array([mid + dn * cs * 0.32, mid - dn * cs * 0.2 + side * cs * 0.28, mid - dn * cs * 0.2 - side * cs * 0.28]), Color(0.2, 0.32, 0.12, 0.55))
 			if numbers and cs >= 14.0 and t != T.VOID:
 				draw_string(font, r.position + Vector2(0, cs * 0.5 + fs * 0.35), str(g.height_at(c)), HORIZONTAL_ALIGNMENT_CENTER, cs, fs, Color(0, 0, 0, 0.55))
 			if lines and t != T.VOID:
