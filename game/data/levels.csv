@@ -50,3 +50,24 @@ fish_lost_beat,1.0,"Lost: seconds a fish that got away swims off before its card
 first_trip_food,12,"new-player bumper: on the first trip, the gate tops the pack up to this many food portions with free rations"
 gate_warn_days,3,"the get-ready screen at the gate warns when the party has fewer days of food than this"
 join_food,4,"new-player bumper: a companion joining for the first time brings this many food portions"
+hunt_dc,12,"hunting prototypes ([AI] 2026-11-17, docs/systems/hunting.md): the party's hunt roll on entering a glade or meadow"
+hunt_glade_base,3,Bow Blind: animals a glade holds; +1 on a made hunt roll and +1 more on a roll 5 over
+hunt_arrows,5,Bow Blind and Stalk: arrows in the quiver
+hunt_draw_full,0.9,seconds to a full draw (the Hunter draws in 75% of it)
+hunt_hold_ok,0.8,seconds a full draw holds steady before the aim starts to shake (the Hunter holds 60% longer)
+hunt_shake_grow,1.4,seconds from the first shake to the worst
+hunt_shake_max,36,pixels: the worst shake
+hunt_short_power,0.65,an arrow loosed under this share of a full draw drops short
+hunt_arrow_min,520,arrow speed (pixels a second) at the weakest draw
+hunt_arrow_max,1400,arrow speed at a full draw
+hunt_noise_gain,0.0016,Bow Blind: noise a second for each pixel a second the aim moves over hunt_still_speed
+hunt_still_speed,160,Bow Blind: aim speed (pixels a second) that makes no noise
+hunt_noise_decay,0.3,Bow Blind: noise lost a second
+hunt_flush_cool,6,Bow Blind: seconds between Doggo's FLUSH commands
+stalk_alert_full,1.0,Stalk: alert the deer needs to bolt (fills by how visible you are while its head is up)
+stalk_scent_range,260,Stalk: pixels inside which the deer smells you from downwind of you
+snare_count,3,Snare Line: snares a night
+snare_hunter_bonus,3,Snare Line: the Hunter's bonus on each snare's hold roll
+drive_time,60,Corgi Drive: seconds a drive lasts
+drive_barks,4,Corgi Drive: barks in hand; one comes back every drive_bark_back seconds
+drive_bark_back,6,Corgi Drive: seconds for a bark to come back

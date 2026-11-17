@@ -19,6 +19,7 @@ const PLOT_MAKER := "res://scenes/plot_maker.tscn"  ## the road-fight plot maker
 const LAUNCH := "res://scenes/launch.tscn"  ## Dev Tools: the fast-travel page of every place and tool, F7 from any screen (dev mode)
 const MAIN_MENU := "res://scenes/main_menu.tscn"  ## the player's front door, the game's main scene
 const FISHING := "res://scenes/fishing.tscn"  ## the fishing minigame on its own, for practice (launch menu)
+const HUNTING := "res://scenes/hunting.tscn"  ## the four hunting prototypes (A-D), for practice (launch menu)
 const OVERWORLD := "res://scenes/overworld.tscn"  ## the map between places: town, the snowy pass, and paths still shut
 const SQUARE := Vector2i(20, 23)  ## where the party wakes in the village: the square, by the statue
 ## Who can be in the adventure party: the hero first, then companions once their unlock flag is set.
